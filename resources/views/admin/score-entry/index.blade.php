@@ -118,7 +118,7 @@
 
 .teachers-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
     gap: 24px;
 }
 .teacher-card {
@@ -174,7 +174,7 @@
 }
 .teacher-card-body {
     padding: 16px 20px;
-    max-height: 400px;
+    max-height: 450px;
     overflow-y: auto;
 }
 .subject-item {
@@ -208,8 +208,9 @@
     display: flex;
     gap: 8px;
     margin: 8px 0 10px;
+    flex-wrap: wrap;
 }
-.badge-terminal, .badge-mock {
+.badge-terminal, .badge-mock, .badge-locked {
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 11px;
@@ -224,6 +225,11 @@
     background: #fef3c7;
     color: #b45309;
     border: 1px solid #fde68a;
+}
+.badge-locked {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
 }
 .btn-score-group {
     display: flex;
@@ -259,26 +265,23 @@
     text-decoration: none;
 }
 
-.admin-table {
-    width: 100%;
-    margin-bottom: 0;
+.lock-status-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #f3f4f6;
+    color: #6b7280;
 }
-.admin-table th {
-    background: var(--admin-primary);
-    color: #fff;
-    padding: 12px 16px;
-    font-weight: 600;
-    font-size: 13px;
-    white-space: nowrap;
+.lock-status-icon.locked {
+    background: #fee2e2;
+    color: #dc2626;
 }
-.admin-table td {
-    padding: 12px 16px;
-    vertical-align: middle;
-    border-bottom: 1px solid var(--admin-border);
-    font-size: 13px;
-}
-.admin-table tbody tr:hover td {
-    background: #eff6ff;
+.lock-status-icon.disabled {
+    background: #fef3c7;
+    color: #d97706;
 }
 
 .empty-state {
@@ -377,6 +380,7 @@
     <div class="admin-hero">
         <h1><i class="ri-admin-line me-2"></i>Admin Score Entry</h1>
         <p>View all subject teachers and their assigned classes. Enter or edit scores on behalf of teachers.</p>
+        <p class="mt-1"><i class="ri-lock-line me-1"></i> <strong>Lock Management:</strong> You can lock individual scoresheets, apply global locks, or disable teacher editing entirely.</p>
     </div>
 
     <div class="filter-card">
@@ -483,11 +487,19 @@
                         </div>
                         <div class="teacher-card-body">
                             @foreach($subjects as $subject)
+                                @php
+                                    $isLocked = !$subject->teacher_editing_enabled;
+                                @endphp
                                 <div class="subject-item">
                                     <div>
                                         <div class="subject-name">
                                             {{ $subject->subject_name }}
                                             <span class="subject-code">({{ $subject->subject_code }})</span>
+                                            @if($isLocked)
+                                                <span class="lock-status-icon locked ms-2">
+                                                    <i class="ri-lock-line"></i> Editing Disabled
+                                                </span>
+                                            @endif
                                         </div>
                                         <div class="subject-class">
                                             <i class="ri-group-line me-1"></i>{{ $subject->class_name }}
@@ -504,6 +516,9 @@
                                         @endif
                                         @if($subject->has_mock_scores)
                                             <span class="badge-mock"><i class="ri-flask-line me-1"></i>Mock Entered</span>
+                                        @endif
+                                        @if($isLocked)
+                                            <span class="badge-locked"><i class="ri-lock-line me-1"></i>Teacher Editing Locked</span>
                                         @endif
                                     </div>
                                     <div class="btn-score-group">
@@ -553,7 +568,8 @@
                                 <th>Term</th>
                                 <th>Terminal Status</th>
                                 <th>Mock Status</th>
-                                <th width="200">Actions</th>
+                                <th>Lock Status</th>
+                                <th width="220">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -578,6 +594,13 @@
                                             <span class="badge bg-success"><i class="ri-check-line me-1"></i>Entered</span>
                                         @else
                                             <span class="badge bg-danger"><i class="ri-time-line me-1"></i>Pending</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(!$subject->teacher_editing_enabled)
+                                            <span class="badge bg-danger"><i class="ri-lock-line me-1"></i>Locked</span>
+                                        @else
+                                            <span class="badge bg-success"><i class="ri-lock-unlock-line me-1"></i>Unlocked</span>
                                         @endif
                                     </td>
                                     <td>

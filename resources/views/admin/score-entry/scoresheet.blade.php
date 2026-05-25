@@ -31,6 +31,7 @@
 .score-input:focus      { outline: none; border-color: var(--ss-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
 .score-input.is-invalid { border-color: var(--ss-danger)  !important; background: #fef2f2; }
 .score-input.is-saved   { border-color: var(--ss-success) !important; background: #f0fdf4; }
+.score-input:disabled   { background: #f3f4f6; cursor: not-allowed; opacity: 0.7; }
 
 #scoresheetTable { font-size: 12.5px; }
 #scoresheetTable thead tr { background: var(--ss-primary); color: #fff; }
@@ -41,6 +42,7 @@
 .row-vetted     { background: #f0fdf4 !important; }
 .row-not-vetted { background: #fef2f2 !important; }
 .row-pending    { background: #fffbeb !important; }
+.row-locked     { background: #fef2f2 !important; opacity: 0.85; }
 
 .stat-card { background: var(--ss-card); border: 1px solid var(--ss-border); border-radius: var(--ss-radius); padding: 14px 18px; box-shadow: var(--ss-shadow); transition: transform .15s; }
 .stat-card:hover { transform: translateY(-2px); }
@@ -89,17 +91,9 @@
 #scoresheetTableBody tr.row-vetted:hover     { background: #e6faf0 !important; }
 #scoresheetTableBody tr.row-not-vetted:hover { background: #fff0f0 !important; }
 #scoresheetTableBody tr.row-pending:hover    { background: #fff8e6 !important; }
+#scoresheetTableBody tr.row-locked:hover     { background: #fef2f2 !important; }
 #scoresheetTableBody tr[data-id]:hover .student-image { transform: scale(1.12); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
 .student-image { transition: transform .18s ease, box-shadow .18s ease; }
-#scoresheetTableBody tr[data-id]:hover .score-input { border-color: #93c5fd; box-shadow: 0 1px 6px rgba(37,99,235,.10); }
-#scoresheetTableBody tr[data-id]:hover .badge { transition: transform .18s cubic-bezier(.34,1.4,.64,1); transform: scale(1.06); }
-#scoresheetTableBody tr[data-id] .score-checkbox { opacity: .35; transform: scale(.85); transition: opacity .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1); }
-#scoresheetTableBody tr[data-id]:hover .score-checkbox,
-#scoresheetTableBody tr[data-id] .score-checkbox:checked { opacity: 1; transform: scale(1); }
-@media (prefers-reduced-motion: reduce) {
-    #scoresheetTableBody tr[data-id],
-    #scoresheetTableBody tr[data-id]:hover { transition: background .15s ease !important; transform: none !important; opacity: 1 !important; }
-}
 
 /* SCORE TOOLTIP */
 #scoreTooltip {
@@ -173,6 +167,29 @@
     animation: slideIn 0.4s ease;
 }
 @keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* Lock Status Badge */
+.lock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.lock-badge.global {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.lock-badge.individual {
+    background: #fef3c7;
+    color: #d97706;
+}
+.lock-badge.disabled {
+    background: #e5e7eb;
+    color: #6b7280;
+}
 </style>
 
 {{-- ══ APPLE-STYLE SAVE MODAL ══════════════════════════════════════ --}}
@@ -272,6 +289,28 @@
             </div>
         </div>
     </div>
+
+    {{-- Lock Status Banner --}}
+    @if($globalLock || ($lockedCount ?? 0) > 0 || !$teacherEditingEnabled)
+    <div class="alert alert-warning mb-3" style="border-left: 4px solid #d97706;">
+        <div class="d-flex align-items-center gap-3">
+            <i class="ri-lock-line fs-3 text-warning"></i>
+            <div class="flex-grow-1">
+                @if(!$teacherEditingEnabled)
+                    <strong><i class="ri-alert-line me-1"></i> Teacher Editing Disabled</strong><br>
+                    <small>Teacher editing has been disabled for this subject by an administrator.</small>
+                @elseif($globalLock)
+                    <strong><i class="ri-global-line me-1"></i> Global Lock Active</strong><br>
+                    <small>This entire scoresheet is locked. Reason: {{ $globalLock->reason ?? 'No reason provided' }}</small><br>
+                    <small>Locked by: {{ optional($globalLock->lockedBy)->name }} on {{ $globalLock->locked_at->format('Y-m-d H:i:s') }}</small>
+                @elseif(($lockedCount ?? 0) > 0)
+                    <strong><i class="ri-lock-line me-1"></i> {{ $lockedCount }} of {{ $broadsheets->count() }} scoresheets are locked</strong>
+                    <small>Locked records cannot be edited by teachers.</small>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endif
 
     @if ($errors->any())
         <div class="alert alert-danger">
@@ -437,7 +476,7 @@
     </div>
     @endif
 
-    {{-- ══ POSITION LEGEND + RECALCULATE ══════════════════════════════ --}}
+    {{-- ══ POSITION LEGEND + ADMIN CONTROLS ═══════════════════════════ --}}
     <div class="d-flex align-items-start justify-content-between gap-3 mb-2 flex-wrap"
          style="font-size:12px;color:var(--ss-muted);">
         <span>
@@ -449,10 +488,93 @@
             <strong>Arm Pos (Total)</strong> = this arm, by total &nbsp;|&nbsp;
             <strong>Arm Pos (Cum)</strong> = this arm, by cum
         </span>
-        <button type="button" class="btn btn-sm btn-primary flex-shrink-0" id="updateArmPositionsBtn">
-            <i class="ri-refresh-line me-1"></i>Recalculate All Positions
-        </button>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-primary" id="updateArmPositionsBtn">
+                <i class="ri-refresh-line me-1"></i>Recalculate All Positions
+            </button>
+        </div>
     </div>
+
+    {{-- Admin Controls & Lock Management Card --}}
+    @if($broadsheets->isNotEmpty())
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header" style="background: #f8fafc; border-bottom: 1px solid var(--ss-border);">
+            <h6 class="mb-0 fw-semibold" style="color: var(--ss-primary);">
+                <i class="ri-settings-4-line me-2"></i>Admin Controls & Lock Management
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                {{-- Lock Controls --}}
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <h6 class="mb-3"><i class="ri-lock-line me-1"></i> Lock Controls</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="lockAllBtn">
+                                <i class="ri-lock-line me-1"></i> Lock All (Individual)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="globalLockBtn">
+                                <i class="ri-global-line me-1"></i> Global Lock
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" id="unlockAllBtn">
+                                <i class="ri-lock-unlock-line me-1"></i> Unlock All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleTeacherEditBtn">
+                                <i class="ri-user-settings-line me-1"></i>
+                                {{ $teacherEditingEnabled ? 'Disable' : 'Enable' }} Teacher Editing
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="ri-information-line me-1"></i>
+                                <strong>Individual Lock:</strong> Locks each student record separately.<br>
+                                <strong>Global Lock:</strong> Prevents ANY edits from teachers via a central lock.<br>
+                                <strong>Toggle Teacher Editing:</strong> Completely disable/enable all teacher access.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Audit Summary --}}
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <h6 class="mb-3"><i class="ri-history-line me-1"></i> Audit Summary</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="p-2 rounded text-center" style="background: #f0fdf4;">
+                                    <div class="small text-muted">Entered by Admin</div>
+                                    <div class="fw-bold fs-5 text-success">
+                                        {{ $broadsheets->where('entry_source', 'admin')->count() }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded text-center" style="background: #eff6ff;">
+                                    <div class="small text-muted">Entered by Teacher</div>
+                                    <div class="fw-bold fs-5 text-primary">
+                                        {{ $broadsheets->where('entry_source', 'teacher')->count() }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2 small text-muted">
+                            <i class="ri-time-line me-1"></i> Last activity:
+                            {{ $broadsheets->max('last_modified_at') ? \Carbon\Carbon::parse($broadsheets->max('last_modified_at'))->diffForHumans() : 'Never' }}
+                        </div>
+                        <div class="mt-2 small">
+                            <i class="ri-information-line me-1"></i>
+                            <span class="text-muted">Teacher editing is currently
+                                <strong class="{{ $teacherEditingEnabled ? 'text-success' : 'text-danger' }}">
+                                    {{ $teacherEditingEnabled ? 'ENABLED' : 'DISABLED' }}
+                                </strong>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- ══ MAIN SCORESHEET CARD ════════════════════════════════════════ --}}
     <div class="row"><div class="col-12"><div class="card border-0 shadow-sm">
@@ -565,6 +687,14 @@
                             Arm Pos<br><small class="fw-normal opacity-75">(Cum)</small>
                         </th>
                         <th class="col-vetted text-center">Status</th>
+                        <th class="col-lock-status text-center" style="width: 80px;">
+                            <i class="ri-lock-line"></i><br>
+                            <small>Lock</small>
+                        </th>
+                        <th class="col-audit text-center" style="width: 160px;">
+                            <i class="ri-history-line"></i><br>
+                            <small>Last Modified</small>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="scoresheetTableBody">
@@ -585,7 +715,9 @@
                             }
                             $cumColor        = $cum      >= 70 ? 'success' : ($cum      >= 50 ? 'info' : ($cum      >= 40 ? 'warning' : 'danger'));
                             $totalColor      = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
+                            $isLocked = $broadsheet->is_locked || $globalLock || !$teacherEditingEnabled;
                             $vClass = match(true) {
+                                $isLocked => 'row-locked',
                                 $broadsheet->vettedstatus === '1' => 'row-vetted',
                                 $broadsheet->vettedstatus === '0' => 'row-not-vetted',
                                 default => 'row-pending',
@@ -604,11 +736,12 @@
                             data-categoryid="{{ $broadsheet->classcategoryid ?? '' }}"
                             data-name="{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}{{ $broadsheet->mname ? ' '.$broadsheet->mname : '' }}"
                             data-admissionno="{{ $broadsheet->admissionno ?? '' }}"
-                            data-avatar="{{ $avatarUrl }}">
+                            data-avatar="{{ $avatarUrl }}"
+                            data-is-locked="{{ $isLocked ? 'true' : 'false' }}">
 
                             <td class="col-checkbox">
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}">
+                                    <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}" {{ $isLocked ? 'disabled' : '' }}>
                                 </div>
                             </td>
                             <td class="col-sn fw-medium">{{ ++$i }}</td>
@@ -649,7 +782,8 @@
                                            data-original="{{ $scoreValue }}"
                                            data-assessment-name="{{ $assessment->name }}"
                                            value="{{ $scoreValue }}"
-                                           min="0" max="{{ $assessment->max_score }}" step="0.1">
+                                           min="0" max="{{ $assessment->max_score }}" step="0.1"
+                                           {{ $isLocked ? 'disabled' : '' }}>
                                 </td>
                             @empty
                                 <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
@@ -741,10 +875,45 @@
                                     <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
                                 @endif
                             </td>
+
+                            <td class="col-lock-status text-center">
+                                @if($globalLock)
+                                    <span class="lock-badge global" title="{{ $globalLock->reason ?? 'Global lock active' }}">
+                                        <i class="ri-global-line me-1"></i>Global Lock
+                                    </span>
+                                @elseif($broadsheet->is_locked)
+                                    <span class="lock-badge individual" title="{{ $broadsheet->lock_reason ?? 'Locked by admin' }}">
+                                        <i class="ri-lock-line me-1"></i>Locked
+                                    </span>
+                                @elseif(!$teacherEditingEnabled)
+                                    <span class="lock-badge disabled" title="Teacher editing disabled">
+                                        <i class="ri-user-settings-line me-1"></i>Edit Disabled
+                                    </span>
+                                @else
+                                    <button class="btn btn-sm btn-outline-secondary lock-individual-btn"
+                                            data-id="{{ $broadsheet->id }}"
+                                            data-name="{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}"
+                                            style="padding: 2px 8px; font-size: 11px;">
+                                        <i class="ri-lock-unlock-line"></i> Lock
+                                    </button>
+                                @endif
+                            </td>
+
+                            <td class="col-audit text-center" style="font-size: 11px;">
+                                @if($broadsheet->last_modified_at)
+                                    <div>{{ \Carbon\Carbon::parse($broadsheet->last_modified_at)->format('d/m/y H:i') }}</div>
+                                    <small class="text-muted">{{ optional($broadsheet->lastModifiedBy)->name ?? 'Unknown' }}</small>
+                                    @if($broadsheet->entry_source === 'admin')
+                                        <span class="badge bg-info" style="font-size: 9px;">Admin</span>
+                                    @endif
+                                @else
+                                    -
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 17 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 19 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -757,13 +926,13 @@
             <div class="p-3 border-top" style="background:#f8fafc;">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div class="d-flex gap-2 flex-wrap">
-                        <button class="btn btn-sm btn-outline-primary"   id="selectAllScores">
+                        <button class="btn btn-sm btn-outline-primary"   id="selectAllScores" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
                             <i class="ri-check-double-line me-1"></i>Select All
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" id="clearAllScores">
+                        <button class="btn btn-sm btn-outline-secondary" id="clearAllScores" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
                             <i class="ri-close-line me-1"></i>Clear
                         </button>
-                        <button class="btn btn-sm btn-outline-danger"    id="deleteSelectedScoresBtn">
+                        <button class="btn btn-sm btn-outline-danger"    id="deleteSelectedScoresBtn" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
                             <i class="ri-delete-bin-line me-1"></i>Delete Selected
                         </button>
                         <a href="{{ route('admin.score-entry.index', ['termid' => $termId, 'sessionid' => $sessionId]) }}"
@@ -773,7 +942,7 @@
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <small class="text-muted"><i class="ri-keyboard-line me-1"></i>Ctrl+S to save</small>
-                        <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores">
+                        <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
                             <i class="ri-save-line me-1"></i>Save All Scores
                         </button>
                     </div>
@@ -832,6 +1001,8 @@
                                 ['col-arm-position',     'Arm Pos (Total) — this arm'],
                                 ['col-arm-position-cum', 'Arm Pos (Cum) — this arm'],
                                 ['col-vetted',           'Status'],
+                                ['col-lock-status',      'Lock Status'],
+                                ['col-audit',            'Audit Trail'],
                             ] as [$cls,$lbl])
                             <div class="form-check">
                                 <input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
@@ -926,6 +1097,13 @@ window.routes = {
     downloadScoresPdf : '{{ route("admin.score-entry.download-scores-pdf") }}',
     gradeForScore     : '{{ route("admin.score-entry.grade-for-score") }}',
     updateArmPositions: '{{ route("admin.score-entry.update-arm-positions") }}',
+    lockScoresheet    : '{{ route("admin.score-entry.lock-scoresheet") }}',
+    unlockScoresheet  : '{{ route("admin.score-entry.unlock-scoresheet") }}',
+    lockBatch         : '{{ route("admin.score-entry.lock-batch") }}',
+    unlockBatch       : '{{ route("admin.score-entry.unlock-batch") }}',
+    disableTeacherEditing: '{{ route("admin.score-entry.disable-teacher-editing") }}',
+    enableTeacherEditing: '{{ route("admin.score-entry.enable-teacher-editing") }}',
+    getLockStatus     : '{{ route("admin.score-entry.lock-status") }}',
 };
 window.term_id         = {{ $termId }};
 window.session_id      = {{ $sessionId }};
@@ -933,6 +1111,8 @@ window.subjectclass_id = {{ $subjectclassId }};
 window.schoolclass_id  = {{ $schoolclass->id ?? 0 }};
 window.staff_id        = {{ $teacherId }};
 window.is_senior       = {{ ($is_senior ?? false) ? 'true' : 'false' }};
+window.teacherEditingEnabled = {{ $teacherEditingEnabled ? 'true' : 'false' }};
+window.globalLockActive = {{ $globalLock ? 'true' : 'false' }};
 
 /* ══ CONSTANTS ═════════════════════════════════════════════════════════ */
 const GRADE_COLORS = {
@@ -964,9 +1144,11 @@ function showToast(msg, type = 'info') {
 function clientGrade(score) {
     score = parseFloat(score) || 0;
     if (window.is_senior) {
-        if (score >= 75) return 'A1'; if (score >= 70) return 'B2'; if (score >= 65) return 'B3';
-        if (score >= 60) return 'C4'; if (score >= 55) return 'C5'; if (score >= 50) return 'C6';
-        if (score >= 45) return 'D7'; if (score >= 40) return 'E8'; return 'F9';
+        if (score >= 75) return 'A1'; if (score >= 70) return 'B2';
+        if (score >= 65) return 'B3'; if (score >= 60) return 'C4';
+        if (score >= 55) return 'C5'; if (score >= 50) return 'C6';
+        if (score >= 45) return 'D7'; if (score >= 40) return 'E8';
+        return 'F9';
     }
     if (score >= 70) return 'A'; if (score >= 60) return 'B';
     if (score >= 50) return 'C'; if (score >= 40) return 'D'; return 'F';
@@ -1165,11 +1347,17 @@ function ssClose() {
 
 /* ══ BULK SAVE ════════════════════════════════════════════════════════ */
 function bulkSave() {
+    if (!window.teacherEditingEnabled || window.globalLockActive) {
+        showToast('Editing is currently disabled for this subject.', 'warning');
+        return;
+    }
+
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
     if (invalid) { Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` }); return; }
 
     const scores = [];
     document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
+        if (row.dataset.isLocked === 'true') return;
         const assessments = {};
         row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
         if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
@@ -1228,6 +1416,190 @@ function bulkSave() {
     .catch(err => { clearInterval(fakeIv); ssError('Please check your connection and try again.'); console.error(err); })
     .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; } });
 }
+
+/* ══ LOCK MANAGEMENT FUNCTIONS ════════════════════════════════════════ */
+function lockScoresheet(broadsheetId, studentName, reason = null) {
+    Swal.fire({
+        title: `Lock scoresheet for ${studentName}?`,
+        text: reason || 'Once locked, teachers cannot edit this scoresheet.',
+        input: 'textarea',
+        inputLabel: 'Reason for locking (optional)',
+        inputPlaceholder: 'Enter reason...',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Yes, lock it',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(window.routes.lockScoresheet, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({ broadsheet_id: broadsheetId, reason: result.value })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Scoresheet locked successfully', 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(err => showToast('Error locking scoresheet', 'error'));
+        }
+    });
+}
+
+document.getElementById('lockAllBtn')?.addEventListener('click', () => {
+    Swal.fire({
+        title: 'Lock all scoresheets?',
+        text: 'This will lock every student record in this subject individually.',
+        input: 'textarea',
+        inputLabel: 'Reason for locking (optional)',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Yes, lock all',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(window.routes.lockBatch, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({
+                    term_id: window.term_id,
+                    session_id: window.session_id,
+                    subjectclass_id: window.subjectclass_id,
+                    lock_type: 'individual',
+                    reason: result.value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    });
+});
+
+document.getElementById('globalLockBtn')?.addEventListener('click', () => {
+    Swal.fire({
+        title: 'Apply Global Lock?',
+        html: 'This will prevent <strong>ALL teacher edits</strong> to this subject.<br><br>Teachers will see a read-only view.',
+        input: 'textarea',
+        inputLabel: 'Reason for global lock',
+        inputPlaceholder: 'Enter reason...',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Apply Global Lock',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(window.routes.lockBatch, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({
+                    term_id: window.term_id,
+                    session_id: window.session_id,
+                    subjectclass_id: window.subjectclass_id,
+                    lock_type: 'global',
+                    reason: result.value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    });
+});
+
+document.getElementById('unlockAllBtn')?.addEventListener('click', () => {
+    Swal.fire({
+        title: 'Unlock all scoresheets?',
+        text: 'This will unlock all scoresheets in this subject.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        confirmButtonText: 'Yes, unlock all',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(window.routes.unlockBatch, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({
+                    term_id: window.term_id,
+                    session_id: window.session_id,
+                    subjectclass_id: window.subjectclass_id,
+                    unlock_type: 'individual'
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    });
+});
+
+document.getElementById('toggleTeacherEditBtn')?.addEventListener('click', async () => {
+    const isEnabled = window.teacherEditingEnabled;
+
+    Swal.fire({
+        title: isEnabled ? 'Disable Teacher Editing?' : 'Enable Teacher Editing?',
+        html: isEnabled
+            ? 'Teachers will <strong>NOT be able to edit</strong> any scores for this subject.<br><br>They will only see a read-only view.'
+            : 'Teachers will regain the ability to edit scores for this subject.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: isEnabled ? '#dc2626' : '#16a34a',
+        confirmButtonText: isEnabled ? 'Disable' : 'Enable',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const url = isEnabled ? window.routes.disableTeacherEditing : window.routes.enableTeacherEditing;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({ subjectclass_id: window.subjectclass_id })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    });
+});
+
+document.querySelectorAll('.lock-individual-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+        lockScoresheet(id, name);
+    });
+});
 
 /* ══ DOWNLOADS ════════════════════════════════════════════════════════ */
 function startPdfDownload(url, filename, label) {

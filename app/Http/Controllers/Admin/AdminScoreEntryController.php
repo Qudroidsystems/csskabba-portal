@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Admin/AdminScoreEntryController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -18,6 +19,7 @@ use App\Models\PromotionStatus;
 use App\Models\User;
 use App\Models\Classcategory;
 use App\Models\SchoolInformation;
+use App\Models\ScoresheetLock;
 use App\Exports\AdminRecordsheetExport;
 use App\Imports\AdminScoresheetImport;
 use Illuminate\Http\Request;
@@ -67,14 +69,14 @@ class AdminScoreEntryController extends Controller
     protected function getTeacherSubjects($termId, $sessionId)
     {
         return SubjectTeacher::query()
-            ->join('users',       'users.id',       '=', 'subjectteacher.staffid')
-            ->join('subjectclass','subjectclass.subjectteacherid', '=', 'subjectteacher.id')
+            ->join('users', 'users.id', '=', 'subjectteacher.staffid')
+            ->join('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
             ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-            ->join('schoolarm',   'schoolarm.id',   '=', 'schoolclass.arm')
-            ->join('subject',     'subject.id',     '=', 'subjectteacher.subjectid')
+            ->join('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
             ->leftJoin('schoolclass_classcategory', 'schoolclass_classcategory.schoolclass_id', '=', 'schoolclass.id')
-            ->leftJoin('classcategories',           'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
-            ->where('subjectteacher.termid',    $termId)
+            ->leftJoin('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
+            ->where('subjectteacher.termid', $termId)
             ->where('subjectteacher.sessionid', $sessionId)
             ->whereNotNull('subjectclass.id')
             ->select(
@@ -91,15 +93,16 @@ class AdminScoreEntryController extends Controller
                 'subjectteacher.termid',
                 'subjectteacher.sessionid',
                 'schoolterm.term as term_name',
-                'schoolsession.session as session_name'
+                'schoolsession.session as session_name',
+                'subjectclass.teacher_editing_enabled'
             )
-            ->leftJoin('schoolterm',   'schoolterm.id',   '=', 'subjectteacher.termid')
-            ->leftJoin('schoolsession','schoolsession.id','=', 'subjectteacher.sessionid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
             ->groupBy(
                 'subjectteacher.id', 'users.id', 'users.name', 'subject.subject',
                 'subject.subject_code', 'subjectclass.id', 'schoolclass.id', 'class_name',
                 'schoolclass.classcategoryid', 'subjectteacher.termid', 'subjectteacher.sessionid',
-                'schoolterm.term', 'schoolsession.session'
+                'schoolterm.term', 'schoolsession.session', 'subjectclass.teacher_editing_enabled'
             )
             ->orderBy('users.name')
             ->orderBy('schoolclass.schoolclass')
@@ -108,12 +111,12 @@ class AdminScoreEntryController extends Controller
             ->map(function ($item) {
                 $item->has_terminal_scores = Broadsheets::where('subjectclass_id', $item->subjectclass_id)
                     ->where('staff_id', $item->teacher_id)
-                    ->where('term_id',  $item->termid)
+                    ->where('term_id', $item->termid)
                     ->exists();
 
                 $item->has_mock_scores = \App\Models\BroadsheetsMock::where('subjectclass_id', $item->subjectclass_id)
                     ->where('staff_id', $item->teacher_id)
-                    ->where('term_id',  $item->termid)
+                    ->where('term_id', $item->termid)
                     ->exists();
 
                 return $item;
@@ -128,16 +131,15 @@ class AdminScoreEntryController extends Controller
     {
         session([
             'admin_score_entry_subjectclass_id' => $subjectclassId,
-            'admin_score_entry_teacher_id'      => $teacherId,
-            'admin_score_entry_term_id'         => $termId,
-            'admin_score_entry_session_id'      => $sessionId,
-            'admin_score_entry_type'            => $type,
-            // Mirror the keys the teacher controller uses so shared JS/routes work
-            'schoolclass_id'                    => null, // set below after subjectClass load
-            'subjectclass_id'                   => $subjectclassId,
-            'staff_id'                          => $teacherId,
-            'term_id'                           => $termId,
-            'session_id'                        => $sessionId,
+            'admin_score_entry_teacher_id' => $teacherId,
+            'admin_score_entry_term_id' => $termId,
+            'admin_score_entry_session_id' => $sessionId,
+            'admin_score_entry_type' => $type,
+            'schoolclass_id' => null,
+            'subjectclass_id' => $subjectclassId,
+            'staff_id' => $teacherId,
+            'term_id' => $termId,
+            'session_id' => $sessionId,
         ]);
 
         if ($type === 'mock') {
@@ -147,12 +149,11 @@ class AdminScoreEntryController extends Controller
         $subjectClass = Subjectclass::with(['subject', 'schoolclass.arm', 'schoolclass.classcategories'])
             ->findOrFail($subjectclassId);
 
-        $teacher    = User::findOrFail($teacherId);
-        $term       = Schoolterm::findOrFail($termId);
-        $session    = Schoolsession::findOrFail($sessionId);
+        $teacher = User::findOrFail($teacherId);
+        $term = Schoolterm::findOrFail($termId);
+        $session = Schoolsession::findOrFail($sessionId);
         $schoolclass = $subjectClass->schoolclass;
 
-        // Persist schoolclass_id into session now that we have it
         session(['schoolclass_id' => $schoolclass->id ?? null]);
 
         $broadsheets = $this->getBroadsheets($teacherId, $termId, $sessionId, $schoolclass->id, $subjectclassId);
@@ -189,10 +190,21 @@ class AdminScoreEntryController extends Controller
             ? $schoolclass->classcategories->first()->is_senior ?? false
             : false;
 
+        $globalLock = ScoresheetLock::where([
+            'subjectclass_id' => $subjectclassId,
+            'term_id' => $termId,
+            'session_id' => $sessionId,
+            'is_active' => true,
+        ])->first();
+
+        $lockedCount = $broadsheets->where('is_locked', true)->count();
+        $teacherEditingEnabled = $subjectClass->teacher_editing_enabled;
+
         return view('admin.score-entry.scoresheet', compact(
             'broadsheets', 'pagetitle', 'is_senior', 'assessments',
             'subjectclassId', 'teacherId', 'termId', 'sessionId',
-            'teacher', 'subjectClass', 'term', 'session', 'schoolclass'
+            'teacher', 'subjectClass', 'term', 'session', 'schoolclass',
+            'globalLock', 'lockedCount', 'teacherEditingEnabled'
         ));
     }
 
@@ -205,9 +217,9 @@ class AdminScoreEntryController extends Controller
         $subjectClass = Subjectclass::with(['subject', 'schoolclass.arm', 'schoolclass.classcategories'])
             ->findOrFail($subjectclassId);
 
-        $teacher     = User::findOrFail($teacherId);
-        $term        = Schoolterm::findOrFail($termId);
-        $session     = Schoolsession::findOrFail($sessionId);
+        $teacher = User::findOrFail($teacherId);
+        $term = Schoolterm::findOrFail($termId);
+        $session = Schoolsession::findOrFail($sessionId);
         $schoolclass = $subjectClass->schoolclass;
 
         session(['schoolclass_id' => $schoolclass->id ?? null]);
@@ -243,72 +255,37 @@ class AdminScoreEntryController extends Controller
     }
 
     // =========================================================================
-    // GRADE PREVIEW ENDPOINTS  (mirrors MyScoreSheetController)
-    // =========================================================================
-
-    public function calculateGradeForScore(Request $request)
-    {
-        $request->validate([
-            'schoolclass_id' => 'required|exists:schoolclass,id',
-            'total'          => 'required|numeric|min:0|max:100',
-            'cum'            => 'required|numeric|min:0|max:100',
-        ]);
-
-        $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
-        $category    = $schoolclass->classcategories->isNotEmpty()
-            ? $schoolclass->classcategories->first()
-            : null;
-
-        $totalGrade = $category
-            ? $category->calculateGrade($request->total)
-            : $this->getDefaultGrade($request->total);
-
-        $cumGrade = $category
-            ? $category->calculateGrade($request->cum)
-            : $this->getDefaultGrade($request->cum);
-
-        return response()->json([
-            'success'     => true,
-            'total_grade' => $totalGrade,
-            'cum_grade'   => $cumGrade,
-            'remark'      => $this->getRemark($totalGrade),
-        ]);
-    }
-
-    public function calculateGradePreview(Request $request)
-    {
-        $request->validate([
-            'schoolclass_id' => 'required|exists:schoolclass,id',
-            'cum'            => 'required|numeric|min:0|max:100',
-        ]);
-        $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
-        $grade = $schoolclass->classcategories->isNotEmpty()
-            ? $schoolclass->classcategories->first()->calculateGrade($request->cum)
-            : $this->getDefaultGrade($request->cum);
-        return response()->json(['grade' => $grade]);
-    }
-
-    // =========================================================================
-    // SINGLE UPDATE — terminal
+    // SINGLE UPDATE — terminal with lock check and audit
     // =========================================================================
 
     public function singleUpdate(Request $request)
     {
         try {
+            // Check lock status first
+            $broadsheetId = $request->input('broadsheet_id');
+            $lockCheck = $this->checkLockStatus($broadsheetId);
+            if (!$lockCheck['allowed']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $lockCheck['message'],
+                    'locked' => true
+                ], 423);
+            }
+
             $validated = $request->validate([
-                'broadsheet_id'     => 'required|exists:broadsheets,id',
-                'assessment_id'     => 'required|exists:assessments,id',
-                'score'             => 'required|numeric|min:0',
-                'is_sub'            => 'boolean',
+                'broadsheet_id' => 'required|exists:broadsheets,id',
+                'assessment_id' => 'required|exists:assessments,id',
+                'score' => 'required|numeric|min:0',
+                'is_sub' => 'boolean',
                 'sub_assessment_id' => 'nullable|exists:sub_assessments,id',
-                'total'             => 'nullable|numeric',
-                'raw_total'         => 'nullable|numeric',
+                'total' => 'nullable|numeric',
+                'raw_total' => 'nullable|numeric',
             ]);
 
-            $broadsheetId    = $validated['broadsheet_id'];
-            $assessmentId    = $validated['assessment_id'];
-            $score           = $validated['score'];
-            $isSub           = $validated['is_sub'] ?? false;
+            $broadsheetId = $validated['broadsheet_id'];
+            $assessmentId = $validated['assessment_id'];
+            $score = $validated['score'];
+            $isSub = $validated['is_sub'] ?? false;
             $subAssessmentId = $validated['sub_assessment_id'] ?? null;
 
             if ($isSub && !$subAssessmentId) {
@@ -316,14 +293,13 @@ class AdminScoreEntryController extends Controller
             }
 
             $broadsheet = Broadsheets::findOrFail($broadsheetId);
-            $model      = $isSub ? SubAssessment::findOrFail($subAssessmentId) : Assessment::findOrFail($assessmentId);
+            $model = $isSub ? SubAssessment::findOrFail($subAssessmentId) : Assessment::findOrFail($assessmentId);
 
             if ($score > $model->max_score) {
                 return response()->json(['success' => false, 'message' => "Score cannot exceed maximum of {$model->max_score}."], 422);
             }
 
-            // Resolve FK — handle both column name variants
-            $fkValue          = $broadsheet->broadSheet_record_id ?? $broadsheet->broadsheet_record_id;
+            $fkValue = $broadsheet->broadSheet_record_id ?? $broadsheet->broadsheet_record_id;
             $broadsheetRecord = BroadsheetRecord::find($fkValue);
 
             $schoolclassId = $broadsheetRecord?->schoolclass_id
@@ -338,28 +314,35 @@ class AdminScoreEntryController extends Controller
                 return response()->json(['success' => false, 'message' => 'Session context missing — please reload the scoresheet.'], 200);
             }
 
-            $termId      = $broadsheet->term_id ?? session('admin_score_entry_term_id');
+            $termId = $broadsheet->term_id ?? session('admin_score_entry_term_id');
             $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
-            $isSenior    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            $isSenior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? $schoolclass->classcategories->first()->is_senior ?? false : false;
 
             DB::transaction(function () use (
-                $broadsheetId, $assessmentId, $score, $broadsheet,
-                $isSub, $subAssessmentId, $broadsheetRecord, $schoolclass, $sessionId
+                $broadsheetId,
+                $assessmentId,
+                $score,
+                $broadsheet,
+                $isSub,
+                $subAssessmentId,
+                $broadsheetRecord,
+                $schoolclass,
+                $sessionId
             ) {
                 if ($isSub) {
                     BroadsheetSubAssessmentScore::updateOrCreate(
                         [
-                            'broadsheet_id'     => $broadsheetId,
+                            'broadsheet_id' => $broadsheetId,
                             'sub_assessment_id' => $subAssessmentId,
-                            'assessment_id'     => $assessmentId,
+                            'assessment_id' => $assessmentId,
                         ],
                         ['score' => $score]
                     );
                     $assessment = Assessment::with('subAssessments')->find($assessmentId);
                     if ($assessment) {
-                        $subMaxSum  = $assessment->subAssessments->sum('max_score');
-                        $subTotal   = BroadsheetSubAssessmentScore::where('broadsheet_id', $broadsheetId)
+                        $subMaxSum = $assessment->subAssessments->sum('max_score');
+                        $subTotal = BroadsheetSubAssessmentScore::where('broadsheet_id', $broadsheetId)
                             ->where('assessment_id', $assessmentId)
                             ->sum('score');
                         $normalized = $subMaxSum > 0
@@ -386,10 +369,16 @@ class AdminScoreEntryController extends Controller
                 }
                 $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
                 $this->computeDynamicTotals(
-                    collect([$broadsheet]), $assessments, $schoolclass,
-                    $broadsheet->term_id, $sessionId
+                    collect([$broadsheet]),
+                    $assessments,
+                    $schoolclass,
+                    $broadsheet->term_id,
+                    $sessionId
                 );
             });
+
+            // Update audit trail
+            $this->updateAuditTrail($broadsheetId, auth()->id(), 'admin');
 
             $this->updateClassMetrics($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $sessionId);
             $this->updateSubjectPositions($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $sessionId);
@@ -400,7 +389,11 @@ class AdminScoreEntryController extends Controller
                 ?? 0;
 
             $gpaCgpaData = $this->computeOverallForStudent(
-                $studentId, $schoolclass, $termId, $sessionId, $isSenior
+                $studentId,
+                $schoolclass,
+                $termId,
+                $sessionId,
+                $isSenior
             );
 
             $broadsheet->refresh();
@@ -408,24 +401,23 @@ class AdminScoreEntryController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Score updated successfully!',
-                'data'    => [
-                    'total'                        => $broadsheet->total,
-                    'cum'                          => $broadsheet->cum,
-                    'bf'                           => $broadsheet->bf,
-                    'grade'                        => $broadsheet->grade,
-                    'remark'                       => $broadsheet->remark,
-                    'subject_position_class'       => $broadsheet->subject_position_class,
+                'data' => [
+                    'total' => $broadsheet->total,
+                    'cum' => $broadsheet->cum,
+                    'bf' => $broadsheet->bf,
+                    'grade' => $broadsheet->grade,
+                    'remark' => $broadsheet->remark,
+                    'subject_position_class' => $broadsheet->subject_position_class,
                     'subject_position_class_total' => $broadsheet->subject_position_class_total,
-                    'arm_position'                 => $broadsheet->arm_position,
-                    'arm_position_cum'             => $broadsheet->arm_position_cum,
-                    'gpa'                          => round($gpaCgpaData['gpa'], 2),
-                    'gpa_grade'                    => $gpaCgpaData['gpa_grade'] ?? 'F',
-                    'cgpa'                         => round($gpaCgpaData['cgpa'], 2),
-                    'num_subjects'                 => $gpaCgpaData['num_subjects']       ?? 0,
-                    'total_grade_points'           => $gpaCgpaData['total_grade_points'] ?? 0.0,
+                    'arm_position' => $broadsheet->arm_position,
+                    'arm_position_cum' => $broadsheet->arm_position_cum,
+                    'gpa' => round($gpaCgpaData['gpa'], 2),
+                    'gpa_grade' => $gpaCgpaData['gpa_grade'] ?? 'F',
+                    'cgpa' => round($gpaCgpaData['cgpa'], 2),
+                    'num_subjects' => $gpaCgpaData['num_subjects'] ?? 0,
+                    'total_grade_points' => $gpaCgpaData['total_grade_points'] ?? 0.0,
                 ],
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
@@ -443,28 +435,28 @@ class AdminScoreEntryController extends Controller
         try {
             $validated = $request->validate([
                 'broadsheet_id' => 'required|exists:broadsheetmock,id',
-                'exam'          => 'required|numeric|min:0|max:100',
+                'exam' => 'required|numeric|min:0|max:100',
             ]);
 
             $broadsheetId = $validated['broadsheet_id'];
-            $examScore    = (float) $validated['exam'];
+            $examScore = (float) $validated['exam'];
 
-            $broadsheet    = \App\Models\BroadsheetsMock::findOrFail($broadsheetId);
-            $mockRecord    = \App\Models\BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
+            $broadsheet = \App\Models\BroadsheetsMock::findOrFail($broadsheetId);
+            $mockRecord = \App\Models\BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
             $schoolclassId = $mockRecord?->schoolclass_id ?? 0;
-            $sessionId     = $mockRecord?->session_id ?? session('admin_score_entry_session_id');
-            $schoolclass   = Schoolclass::with('classcategories')->find($schoolclassId);
+            $sessionId = $mockRecord?->session_id ?? session('admin_score_entry_session_id');
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
 
             $examScore = max(0, min($examScore, 100));
-            $total     = round($examScore, 2);
-            $grade     = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            $total = round($examScore, 2);
+            $grade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? $schoolclass->classcategories->first()->calculateGrade($total)
                 : $this->getDefaultGrade($total);
-            $remark    = $this->getRemark($grade);
+            $remark = $this->getRemark($grade);
 
-            $broadsheet->exam   = $examScore;
-            $broadsheet->total  = $total;
-            $broadsheet->grade  = $grade;
+            $broadsheet->exam = $examScore;
+            $broadsheet->total = $total;
+            $broadsheet->grade = $grade;
             $broadsheet->remark = $remark;
             $broadsheet->save();
 
@@ -476,10 +468,10 @@ class AdminScoreEntryController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Score updated successfully!',
-                'data'    => [
-                    'total'    => $broadsheet->total,
-                    'grade'    => $broadsheet->grade,
-                    'remark'   => $broadsheet->remark,
+                'data' => [
+                    'total' => $broadsheet->total,
+                    'grade' => $broadsheet->grade,
+                    'remark' => $broadsheet->remark,
                     'position' => $broadsheet->subject_position_class,
                 ],
             ]);
@@ -496,28 +488,45 @@ class AdminScoreEntryController extends Controller
     public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
-            'scores'               => 'required|array',
-            'scores.*.id'          => 'required|exists:broadsheets,id',
+            'scores' => 'required|array',
+            'scores.*.id' => 'required|exists:broadsheets,id',
             'scores.*.assessments' => 'sometimes|array',
-            'scores.*.total'       => 'nullable|numeric',
-            'scores.*.raw_total'   => 'nullable|numeric',
-            'term_id'              => 'required|exists:schoolterm,id',
-            'session_id'           => 'required|exists:schoolsession,id',
-            'subjectclass_id'      => 'required|exists:subjectclass,id',
-            'staff_id'             => 'required|exists:users,id',
-            'schoolclass_id'       => 'required|exists:schoolclass,id',
-            'assessment_id'        => 'nullable|exists:assessments,id',
-            'is_sub'               => 'nullable|boolean',
+            'scores.*.total' => 'nullable|numeric',
+            'scores.*.raw_total' => 'nullable|numeric',
+            'term_id' => 'required|exists:schoolterm,id',
+            'session_id' => 'required|exists:schoolsession,id',
+            'subjectclass_id' => 'required|exists:subjectclass,id',
+            'staff_id' => 'required|exists:users,id',
+            'schoolclass_id' => 'required|exists:schoolclass,id',
+            'assessment_id' => 'nullable|exists:assessments,id',
+            'is_sub' => 'nullable|boolean',
         ]);
 
-        $scores          = $validated['scores'];
-        $term_id         = $validated['term_id'];
-        $session_id      = $validated['session_id'];
+        // Check for locked scoresheets first
+        $scores = $validated['scores'];
+        $lockedIds = [];
+        foreach ($scores as $scoreData) {
+            $lockCheck = $this->checkLockStatus($scoreData['id']);
+            if (!$lockCheck['allowed']) {
+                $lockedIds[] = $scoreData['id'];
+            }
+        }
+
+        if (!empty($lockedIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => count($lockedIds) . ' scoresheet(s) are locked and cannot be edited.',
+                'locked_ids' => $lockedIds
+            ], 423);
+        }
+
+        $term_id = $validated['term_id'];
+        $session_id = $validated['session_id'];
         $subjectclass_id = $validated['subjectclass_id'];
-        $staff_id        = $validated['staff_id'];
-        $schoolclass_id  = $validated['schoolclass_id'];
-        $assessment_id   = $validated['assessment_id'] ?? null;
-        $is_sub          = (bool)($validated['is_sub'] ?? false);
+        $staff_id = $validated['staff_id'];
+        $schoolclass_id = $validated['schoolclass_id'];
+        $assessment_id = $validated['assessment_id'] ?? null;
+        $is_sub = (bool) ($validated['is_sub'] ?? false);
 
         $schoolclass = Schoolclass::with('classcategories')->find($schoolclass_id);
         if (!$schoolclass) {
@@ -533,19 +542,34 @@ class AdminScoreEntryController extends Controller
         }
 
         $updatedCount = 0;
-        $errors       = [];
+        $errors = [];
 
         DB::transaction(function () use (
-            $scores, $term_id, $session_id, $subjectclass_id, $staff_id, $schoolclass_id,
-            $schoolclass, $assessments, $is_sub, $assessment_id, &$updatedCount, &$errors
+            $scores,
+            $term_id,
+            $session_id,
+            $subjectclass_id,
+            $staff_id,
+            $schoolclass_id,
+            $schoolclass,
+            $assessments,
+            $is_sub,
+            $assessment_id,
+            &$updatedCount,
+            &$errors
         ) {
             foreach ($scores as $scoreData) {
-                $broadsheetId    = $scoreData['id'];
-                $broadsheet      = Broadsheets::find($broadsheetId);
-                if (!$broadsheet) { $errors[] = "Broadsheet ID {$broadsheetId} not found."; continue; }
+                $broadsheetId = $scoreData['id'];
+                $broadsheet = Broadsheets::find($broadsheetId);
+                if (!$broadsheet) {
+                    $errors[] = "Broadsheet ID {$broadsheetId} not found.";
+                    continue;
+                }
 
                 $assessmentsData = $scoreData['assessments'] ?? [];
-                if (empty($assessmentsData)) continue;
+                if (empty($assessmentsData)) {
+                    continue;
+                }
 
                 $localErrors = [];
 
@@ -554,22 +578,28 @@ class AdminScoreEntryController extends Controller
                         ?? Assessment::with('subAssessments')->find($assessment_id);
 
                     foreach ($assessmentsData as $subId => $inputScore) {
-                        $subId      = (int)$subId;
-                        $inputScore = max(0, (float)$inputScore);
-                        $subModel   = SubAssessment::find($subId);
+                        $subId = (int) $subId;
+                        $inputScore = max(0, (float) $inputScore);
+                        $subModel = SubAssessment::find($subId);
                         if (!$subModel || $subModel->assessment_id != $assessment_id) {
-                            $localErrors[] = "SubAssessment {$subId} invalid."; continue;
+                            $localErrors[] = "SubAssessment {$subId} invalid.";
+                            continue;
                         }
                         \App\Models\BroadsheetSubAssessmentScore::updateOrCreate(
-                            ['broadsheet_id' => $broadsheetId, 'sub_assessment_id' => $subId, 'assessment_id' => $assessment_id],
+                            [
+                                'broadsheet_id' => $broadsheetId,
+                                'sub_assessment_id' => $subId,
+                                'assessment_id' => $assessment_id
+                            ],
                             ['score' => min($inputScore, $subModel->max_score)]
                         );
                     }
 
                     if ($parentAssessment) {
-                        $subMaxSum  = $parentAssessment->subAssessments->sum('max_score');
-                        $subTotal   = \App\Models\BroadsheetSubAssessmentScore::where('broadsheet_id', $broadsheetId)
-                            ->where('assessment_id', $assessment_id)->sum('score');
+                        $subMaxSum = $parentAssessment->subAssessments->sum('max_score');
+                        $subTotal = \App\Models\BroadsheetSubAssessmentScore::where('broadsheet_id', $broadsheetId)
+                            ->where('assessment_id', $assessment_id)
+                            ->sum('score');
                         $normalized = $subMaxSum > 0
                             ? ($subTotal / $subMaxSum) * $parentAssessment->max_score
                             : 0;
@@ -580,10 +610,13 @@ class AdminScoreEntryController extends Controller
                     }
                 } else {
                     foreach ($assessmentsData as $componentId => $inputScore) {
-                        $componentId = (int)$componentId;
-                        $inputScore  = max(0, (float)$inputScore);
-                        $model       = $assessments->where('id', $componentId)->first();
-                        if (!$model) { $localErrors[] = "Assessment {$componentId} invalid."; continue; }
+                        $componentId = (int) $componentId;
+                        $inputScore = max(0, (float) $inputScore);
+                        $model = $assessments->where('id', $componentId)->first();
+                        if (!$model) {
+                            $localErrors[] = "Assessment {$componentId} invalid.";
+                            continue;
+                        }
                         BroadsheetAssessmentScore::updateOrCreate(
                             ['broadsheet_id' => $broadsheetId, 'assessment_id' => $componentId],
                             ['score' => min($inputScore, $model->max_score)]
@@ -591,12 +624,23 @@ class AdminScoreEntryController extends Controller
                     }
                 }
 
-                if (!empty($localErrors)) { $errors[] = "Broadsheet {$broadsheetId}: " . implode(', ', $localErrors); continue; }
+                if (!empty($localErrors)) {
+                    $errors[] = "Broadsheet {$broadsheetId}: " . implode(', ', $localErrors);
+                    continue;
+                }
 
                 $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
                 $this->computeDynamicTotals(
-                    collect([$broadsheet]), $assessments, $schoolclass, $term_id, $session_id
+                    collect([$broadsheet]),
+                    $assessments,
+                    $schoolclass,
+                    $term_id,
+                    $session_id
                 );
+
+                // Update audit trail
+                $this->updateAuditTrail($broadsheetId, auth()->id(), 'admin');
+
                 $updatedCount++;
             }
 
@@ -612,9 +656,11 @@ class AdminScoreEntryController extends Controller
         $response = [
             'success' => true,
             'message' => "{$updatedCount} score(s) updated!",
-            'data'    => ['broadsheets' => $updatedBroadsheets, 'assessments' => $assessments],
+            'data' => ['broadsheets' => $updatedBroadsheets, 'assessments' => $assessments],
         ];
-        if (!empty($errors)) $response['warnings'] = $errors;
+        if (!empty($errors)) {
+            $response['warnings'] = $errors;
+        }
 
         return response()->json($response, 200);
     }
@@ -626,38 +672,40 @@ class AdminScoreEntryController extends Controller
     public function mockBulkUpdate(Request $request)
     {
         $validated = $request->validate([
-            'scores'          => 'required|array',
-            'scores.*.id'     => 'required|exists:broadsheetmock,id',
-            'scores.*.exam'   => 'nullable|numeric|min:0|max:100',
-            'term_id'         => 'required|exists:schoolterm,id',
-            'session_id'      => 'required|exists:schoolsession,id',
+            'scores' => 'required|array',
+            'scores.*.id' => 'required|exists:broadsheetmock,id',
+            'scores.*.exam' => 'nullable|numeric|min:0|max:100',
+            'term_id' => 'required|exists:schoolterm,id',
+            'session_id' => 'required|exists:schoolsession,id',
             'subjectclass_id' => 'required|exists:subjectclass,id',
-            'staff_id'        => 'required|exists:users,id',
-            'schoolclass_id'  => 'required|exists:schoolclass,id',
+            'staff_id' => 'required|exists:users,id',
+            'schoolclass_id' => 'required|exists:schoolclass,id',
         ]);
 
-        $scores          = $validated['scores'];
-        $term_id         = $validated['term_id'];
-        $session_id      = $validated['session_id'];
+        $scores = $validated['scores'];
+        $term_id = $validated['term_id'];
+        $session_id = $validated['session_id'];
         $subjectclass_id = $validated['subjectclass_id'];
-        $staff_id        = $validated['staff_id'];
-        $schoolclass_id  = $validated['schoolclass_id'];
+        $staff_id = $validated['staff_id'];
+        $schoolclass_id = $validated['schoolclass_id'];
 
-        $schoolclass  = Schoolclass::with('classcategories')->find($schoolclass_id);
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclass_id);
         $updatedCount = 0;
 
         DB::transaction(function () use ($scores, $session_id, $schoolclass, &$updatedCount) {
             foreach ($scores as $scoreData) {
                 $broadsheet = \App\Models\BroadsheetsMock::find($scoreData['id']);
-                if (!$broadsheet) continue;
-                $examScore = max(0, min((float)($scoreData['exam'] ?? 0), 100));
-                $total     = round($examScore, 2);
-                $grade     = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                if (!$broadsheet) {
+                    continue;
+                }
+                $examScore = max(0, min((float) ($scoreData['exam'] ?? 0), 100));
+                $total = round($examScore, 2);
+                $grade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                     ? $schoolclass->classcategories->first()->calculateGrade($total)
                     : $this->getDefaultGrade($total);
-                $broadsheet->exam   = $examScore;
-                $broadsheet->total  = $total;
-                $broadsheet->grade  = $grade;
+                $broadsheet->exam = $examScore;
+                $broadsheet->total = $total;
+                $broadsheet->grade = $grade;
                 $broadsheet->remark = $this->getRemark($grade);
                 $broadsheet->save();
                 $updatedCount++;
@@ -672,7 +720,7 @@ class AdminScoreEntryController extends Controller
         return response()->json([
             'success' => true,
             'message' => "{$updatedCount} mock score(s) updated!",
-            'data'    => ['broadsheets' => $updatedBroadsheets],
+            'data' => ['broadsheets' => $updatedBroadsheets],
         ]);
     }
 
@@ -682,25 +730,25 @@ class AdminScoreEntryController extends Controller
 
     public function destroy(Request $request)
     {
-        $id   = $request->input('id');
+        $id = $request->input('id');
         $type = $request->input('type', 'terminal');
 
         if ($type === 'mock') {
             $broadsheet = \App\Models\BroadsheetsMock::findOrFail($id);
             $subjectclassid = $broadsheet->subjectclass_id;
-            $staffid        = $broadsheet->staff_id;
-            $termid         = $broadsheet->term_id;
-            $mockRecord     = \App\Models\BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
+            $staffid = $broadsheet->staff_id;
+            $termid = $broadsheet->term_id;
+            $mockRecord = \App\Models\BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
             $broadsheet->delete();
             if ($mockRecord) {
                 $this->updateMockClassMetrics($subjectclassid, $staffid, $termid, $mockRecord->session_id);
                 $this->updateMockSubjectPositions($subjectclassid, $staffid, $termid, $mockRecord->session_id);
             }
         } else {
-            $broadsheet       = Broadsheets::findOrFail($id);
-            $subjectclassid   = $broadsheet->subjectclass_id;
-            $staffid          = $broadsheet->staff_id;
-            $termid           = $broadsheet->term_id;
+            $broadsheet = Broadsheets::findOrFail($id);
+            $subjectclassid = $broadsheet->subjectclass_id;
+            $staffid = $broadsheet->staff_id;
+            $termid = $broadsheet->term_id;
             $broadsheetRecord = BroadsheetRecord::find($broadsheet->broadSheet_record_id);
 
             BroadsheetAssessmentScore::where('broadsheet_id', $id)->delete();
@@ -718,17 +766,17 @@ class AdminScoreEntryController extends Controller
     }
 
     // =========================================================================
-    // RESULTS — AJAX refresh (mirrors teacher results() exactly)
+    // RESULTS — AJAX refresh
     // =========================================================================
 
     public function results(Request $request)
     {
         try {
             $subjectclass_id = session('admin_score_entry_subjectclass_id') ?? session('subjectclass_id');
-            $schoolclass_id  = session('schoolclass_id') ?? $request->get('schoolclass_id');
-            $term_id         = session('admin_score_entry_term_id')   ?? session('term_id');
-            $session_id      = session('admin_score_entry_session_id') ?? session('session_id');
-            $type            = session('admin_score_entry_type', 'terminal');
+            $schoolclass_id = session('schoolclass_id') ?? $request->get('schoolclass_id');
+            $term_id = session('admin_score_entry_term_id') ?? session('term_id');
+            $session_id = session('admin_score_entry_session_id') ?? session('session_id');
+            $type = session('admin_score_entry_type', 'terminal');
 
             if (!$subjectclass_id || !$term_id || !$session_id) {
                 return response()->json(['success' => false, 'message' => 'Missing session data', 'scores' => []], 400);
@@ -736,19 +784,19 @@ class AdminScoreEntryController extends Controller
 
             if ($type === 'mock') {
                 $broadsheets = $this->getMockBroadsheets(null, $term_id, $session_id, $schoolclass_id, $subjectclass_id);
-                $scoresData  = $broadsheets->map(fn($b) => [
-                    'id'          => $b->id,
+                $scoresData = $broadsheets->map(fn($b) => [
+                    'id' => $b->id,
                     'admissionno' => $b->admissionno,
-                    'fname'       => $b->fname,
-                    'lname'       => $b->lname,
-                    'exam'        => $b->exam,
-                    'total'       => $b->total,
-                    'grade'       => $b->grade,
-                    'remark'      => $b->remark,
-                    'position'    => $b->position,
-                    'cmin'        => $b->cmin,
-                    'cmax'        => $b->cmax,
-                    'avg'         => $b->avg,
+                    'fname' => $b->fname,
+                    'lname' => $b->lname,
+                    'exam' => $b->exam,
+                    'total' => $b->total,
+                    'grade' => $b->grade,
+                    'remark' => $b->remark,
+                    'position' => $b->position,
+                    'cmin' => $b->cmin,
+                    'cmax' => $b->cmax,
+                    'avg' => $b->avg,
                 ]);
                 return response()->json(['success' => true, 'scores' => $scoresData, 'type' => 'mock']);
             }
@@ -758,14 +806,16 @@ class AdminScoreEntryController extends Controller
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 $categoryIds = $schoolclass->classcategories->pluck('id');
                 $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                    ->with('subAssessments')->orderBy('id')->get();
+                    ->with('subAssessments')
+                    ->orderBy('id')
+                    ->get();
             }
 
             $broadsheets = Broadsheets::where(['subjectclass_id' => $subjectclass_id, 'term_id' => $term_id])
-                ->with(['assessmentScores', 'subAssessmentScores'])
-                ->leftJoin('broadsheet_records',  'broadsheet_records.id',  '=', 'broadsheets.broadSheet_record_id')
+                ->with(['assessmentScores', 'subAssessmentScores', 'lastModifiedBy', 'enteredBy', 'lockedBy'])
+                ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
                 ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-                ->leftJoin('subject',             'subject.id',             '=', 'broadsheet_records.subject_id')
+                ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
                 ->where('broadsheet_records.session_id', $session_id)
                 ->orderBy('studentRegistration.lastname')
                 ->orderBy('studentRegistration.firstname')
@@ -784,6 +834,12 @@ class AdminScoreEntryController extends Controller
                     'broadsheets.arm_position',
                     'broadsheets.arm_position_cum',
                     'broadsheets.term_id',
+                    'broadsheets.is_locked',
+                    'broadsheets.last_modified_at',
+                    'broadsheets.last_modified_by',
+                    'broadsheets.entry_source',
+                    'broadsheets.entered_at',
+                    'broadsheets.lock_reason',
                 ]);
 
             $this->computeOverallGPAAndCGPA($broadsheets, $schoolclass, $term_id, $session_id);
@@ -793,31 +849,38 @@ class AdminScoreEntryController extends Controller
                 foreach ($assessments as $a) {
                     $s = $b->assessmentScores->where('assessment_id', $a->id)->first();
                     $assessmentData[$a->id] = [
-                        'name'      => $a->name,
+                        'name' => $a->name,
                         'max_score' => $a->max_score,
-                        'score'     => $s ? $s->score : 0,
+                        'score' => $s ? $s->score : 0,
                     ];
                 }
                 return [
-                    'id'                           => $b->id,
-                    'admissionno'                  => $b->admissionno,
-                    'fname'                        => $b->fname,
-                    'lname'                        => $b->lname,
-                    'assessments'                  => $assessmentData,
-                    'total'                        => $b->total,
-                    'bf'                           => $b->bf,
-                    'cum'                          => $b->cum,
-                    'avg'                          => $b->avg ?? 0,
-                    'gpa'                          => $b->gpa  ?? 0,
-                    'gpa_grade'                    => $b->gpa_grade  ?? 'F',
-                    'cgpa'                         => $b->cgpa ?? 0,
-                    'grade'                        => $b->grade,
-                    'position'                     => $b->position,
-                    'position_total'               => $b->position_total,
-                    'arm_position'                 => $b->arm_position,
-                    'arm_position_cum'             => $b->arm_position_cum,
-                    'num_subjects'                 => $b->num_subjects       ?? 0,
-                    'total_grade_points'           => $b->total_grade_points ?? 0.0,
+                    'id' => $b->id,
+                    'admissionno' => $b->admissionno,
+                    'fname' => $b->fname,
+                    'lname' => $b->lname,
+                    'assessments' => $assessmentData,
+                    'total' => $b->total,
+                    'bf' => $b->bf,
+                    'cum' => $b->cum,
+                    'avg' => $b->avg ?? 0,
+                    'gpa' => $b->gpa ?? 0,
+                    'gpa_grade' => $b->gpa_grade ?? 'F',
+                    'cgpa' => $b->cgpa ?? 0,
+                    'grade' => $b->grade,
+                    'position' => $b->position,
+                    'position_total' => $b->position_total,
+                    'arm_position' => $b->arm_position,
+                    'arm_position_cum' => $b->arm_position_cum,
+                    'num_subjects' => $b->num_subjects ?? 0,
+                    'total_grade_points' => $b->total_grade_points ?? 0.0,
+                    'is_locked' => $b->is_locked,
+                    'lock_reason' => $b->lock_reason,
+                    'last_modified_at' => $b->last_modified_at ? $b->last_modified_at->format('Y-m-d H:i:s') : null,
+                    'last_modified_by_name' => optional($b->lastModifiedBy)->name,
+                    'entered_by_name' => optional($b->enteredBy)->name,
+                    'entered_at' => $b->entered_at ? $b->entered_at->format('Y-m-d H:i:s') : null,
+                    'entry_source' => $b->entry_source,
                 ];
             });
 
@@ -829,18 +892,447 @@ class AdminScoreEntryController extends Controller
     }
 
     // =========================================================================
-    // DOWNLOAD — marks sheet PDF
+    // LOCK MANAGEMENT METHODS
+    // =========================================================================
+
+    protected function checkLockStatus($broadsheetId)
+    {
+        $broadsheet = Broadsheets::find($broadsheetId);
+        if (!$broadsheet) {
+            return ['allowed' => false, 'message' => 'Record not found'];
+        }
+
+        if ($broadsheet->is_locked) {
+            $reason = $broadsheet->lock_reason ?? 'This scoresheet has been locked by an administrator';
+            return ['allowed' => false, 'message' => $reason];
+        }
+
+        // Check for global lock
+        $globalLock = ScoresheetLock::where([
+            'subjectclass_id' => $broadsheet->subjectclass_id,
+            'term_id' => $broadsheet->term_id,
+            'session_id' => $broadsheet->session_id,
+            'is_active' => true,
+        ])->first();
+
+        if ($globalLock) {
+            return ['allowed' => false, 'message' => $globalLock->reason ?? 'This scoresheet is under global lock by administrator'];
+        }
+
+        return ['allowed' => true];
+    }
+
+    protected function updateAuditTrail($broadsheetId, $userId, $source)
+    {
+        $broadsheet = Broadsheets::find($broadsheetId);
+        if (!$broadsheet) {
+            return;
+        }
+
+        $now = now();
+        $updateData = [
+            'last_modified_by' => $userId,
+            'last_modified_at' => $now,
+        ];
+
+        if (is_null($broadsheet->entered_by)) {
+            $updateData['entered_by'] = $userId;
+            $updateData['entered_at'] = $now;
+            $updateData['entry_source'] = $source;
+        }
+
+        $broadsheet->update($updateData);
+    }
+
+    public function lockScoresheet(Request $request)
+    {
+        $request->validate([
+            'broadsheet_id' => 'required|exists:broadsheets,id',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $broadsheet = Broadsheets::findOrFail($request->broadsheet_id);
+
+        if ($broadsheet->is_locked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This scoresheet is already locked.'
+            ], 422);
+        }
+
+        $broadsheet->lock($request->reason, auth()->id());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Scoresheet locked successfully.',
+            'data' => [
+                'is_locked' => true,
+                'locked_by' => auth()->user()->name,
+                'locked_at' => now()->format('Y-m-d H:i:s'),
+                'lock_reason' => $request->reason,
+            ]
+        ]);
+    }
+
+    public function unlockScoresheet(Request $request)
+    {
+        $request->validate([
+            'broadsheet_id' => 'required|exists:broadsheets,id',
+        ]);
+
+        $broadsheet = Broadsheets::findOrFail($request->broadsheet_id);
+        $broadsheet->unlock();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Scoresheet unlocked successfully.'
+        ]);
+    }
+
+    public function lockBatchScoresheets(Request $request)
+    {
+        $request->validate([
+            'term_id' => 'required|exists:schoolterm,id',
+            'session_id' => 'required|exists:schoolsession,id',
+            'subjectclass_id' => 'required|exists:subjectclass,id',
+            'reason' => 'nullable|string|max:500',
+            'lock_type' => 'required|in:individual,global',
+        ]);
+
+        $termId = $request->term_id;
+        $sessionId = $request->session_id;
+        $subjectclassId = $request->subjectclass_id;
+        $reason = $request->reason;
+        $lockType = $request->lock_type;
+
+        if ($lockType === 'global') {
+            $lock = ScoresheetLock::updateOrCreate(
+                [
+                    'subjectclass_id' => $subjectclassId,
+                    'term_id' => $termId,
+                    'session_id' => $sessionId,
+                ],
+                [
+                    'locked_by' => auth()->id(),
+                    'locked_at' => now(),
+                    'is_active' => true,
+                    'reason' => $reason,
+                ]
+            );
+
+            $count = Broadsheets::where([
+                'subjectclass_id' => $subjectclassId,
+                'term_id' => $termId,
+            ])
+                ->whereHas('broadsheetRecord', function ($q) use ($sessionId) {
+                    $q->where('session_id', $sessionId);
+                })
+                ->update([
+                    'is_locked' => true,
+                    'locked_by' => auth()->id(),
+                    'locked_at' => now(),
+                    'lock_reason' => $reason ?: 'Batch lock applied by admin',
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Global lock applied. {$count} individual scoresheets marked as locked.",
+                'data' => ['locked_count' => $count]
+            ]);
+        } else {
+            $count = Broadsheets::where([
+                'subjectclass_id' => $subjectclassId,
+                'term_id' => $termId,
+            ])
+                ->whereHas('broadsheetRecord', function ($q) use ($sessionId) {
+                    $q->where('session_id', $sessionId);
+                })
+                ->where('is_locked', false)
+                ->update([
+                    'is_locked' => true,
+                    'locked_by' => auth()->id(),
+                    'locked_at' => now(),
+                    'lock_reason' => $reason ?: 'Individual lock applied by admin',
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} scoresheet(s) locked successfully.",
+                'data' => ['locked_count' => $count]
+            ]);
+        }
+    }
+
+    public function unlockBatchScoresheets(Request $request)
+    {
+        $request->validate([
+            'term_id' => 'required|exists:schoolterm,id',
+            'session_id' => 'required|exists:schoolsession,id',
+            'subjectclass_id' => 'required|exists:subjectclass,id',
+            'unlock_type' => 'required|in:individual,global',
+        ]);
+
+        $termId = $request->term_id;
+        $sessionId = $request->session_id;
+        $subjectclassId = $request->subjectclass_id;
+        $unlockType = $request->unlock_type;
+
+        if ($unlockType === 'global') {
+            ScoresheetLock::where([
+                'subjectclass_id' => $subjectclassId,
+                'term_id' => $termId,
+                'session_id' => $sessionId,
+            ])->update(['is_active' => false]);
+
+            $count = Broadsheets::where([
+                'subjectclass_id' => $subjectclassId,
+                'term_id' => $termId,
+            ])
+                ->whereHas('broadsheetRecord', function ($q) use ($sessionId) {
+                    $q->where('session_id', $sessionId);
+                })
+                ->update([
+                    'is_locked' => false,
+                    'locked_by' => null,
+                    'locked_at' => null,
+                    'lock_reason' => null,
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Global lock removed. {$count} scoresheets unlocked.",
+                'data' => ['unlocked_count' => $count]
+            ]);
+        } else {
+            $count = Broadsheets::where([
+                'subjectclass_id' => $subjectclassId,
+                'term_id' => $termId,
+            ])
+                ->whereHas('broadsheetRecord', function ($q) use ($sessionId) {
+                    $q->where('session_id', $sessionId);
+                })
+                ->where('is_locked', true)
+                ->update([
+                    'is_locked' => false,
+                    'locked_by' => null,
+                    'locked_at' => null,
+                    'lock_reason' => null,
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} scoresheet(s) unlocked successfully.",
+                'data' => ['unlocked_count' => $count]
+            ]);
+        }
+    }
+
+    public function disableTeacherEditing(Request $request)
+    {
+        $request->validate([
+            'subjectclass_id' => 'required|exists:subjectclass,id',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $subjectclass = Subjectclass::findOrFail($request->subjectclass_id);
+        $subjectclass->teacher_editing_enabled = false;
+        $subjectclass->teacher_editing_disabled_at = now();
+        $subjectclass->teacher_editing_disabled_by = auth()->id();
+        $subjectclass->save();
+
+        $count = Broadsheets::where('subjectclass_id', $request->subjectclass_id)
+            ->update([
+                'is_locked' => true,
+                'locked_by' => auth()->id(),
+                'locked_at' => now(),
+                'lock_reason' => $request->reason ?: 'Teacher editing disabled by admin',
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Teacher editing disabled for this subject. {$count} scoresheets locked.",
+            'data' => ['locked_count' => $count]
+        ]);
+    }
+
+    public function enableTeacherEditing(Request $request)
+    {
+        $request->validate([
+            'subjectclass_id' => 'required|exists:subjectclass,id',
+        ]);
+
+        $subjectclass = Subjectclass::findOrFail($request->subjectclass_id);
+        $subjectclass->teacher_editing_enabled = true;
+        $subjectclass->teacher_editing_disabled_at = null;
+        $subjectclass->teacher_editing_disabled_by = null;
+        $subjectclass->save();
+
+        $count = Broadsheets::where('subjectclass_id', $request->subjectclass_id)
+            ->where('is_locked', true)
+            ->update([
+                'is_locked' => false,
+                'locked_by' => null,
+                'locked_at' => null,
+                'lock_reason' => null,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Teacher editing enabled for this subject. {$count} scoresheets unlocked.",
+            'data' => ['unlocked_count' => $count]
+        ]);
+    }
+
+    public function getLockStatus(Request $request)
+    {
+        $request->validate([
+            'subjectclass_id' => 'required|exists:subjectclass,id',
+            'term_id' => 'required|exists:schoolterm,id',
+            'session_id' => 'required|exists:schoolsession,id',
+        ]);
+
+        $subjectclass = Subjectclass::findOrFail($request->subjectclass_id);
+
+        $globalLock = ScoresheetLock::where([
+            'subjectclass_id' => $request->subjectclass_id,
+            'term_id' => $request->term_id,
+            'session_id' => $request->session_id,
+            'is_active' => true,
+        ])->first();
+
+        $lockedCount = Broadsheets::where([
+            'subjectclass_id' => $request->subjectclass_id,
+            'term_id' => $request->term_id,
+            'is_locked' => true,
+        ])
+            ->whereHas('broadsheetRecord', function ($q) use ($request) {
+                $q->where('session_id', $request->session_id);
+            })
+            ->count();
+
+        $totalCount = Broadsheets::where([
+            'subjectclass_id' => $request->subjectclass_id,
+            'term_id' => $request->term_id,
+        ])
+            ->whereHas('broadsheetRecord', function ($q) use ($request) {
+                $q->where('session_id', $request->session_id);
+            })
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'teacher_editing_enabled' => $subjectclass->teacher_editing_enabled,
+                'global_lock_exists' => !is_null($globalLock),
+                'global_lock_info' => $globalLock ? [
+                    'locked_by' => optional($globalLock->lockedBy)->name,
+                    'locked_at' => $globalLock->locked_at->format('Y-m-d H:i:s'),
+                    'reason' => $globalLock->reason,
+                ] : null,
+                'locked_count' => $lockedCount,
+                'total_count' => $totalCount,
+                'lock_percentage' => $totalCount > 0 ? round(($lockedCount / $totalCount) * 100) : 0,
+            ]
+        ]);
+    }
+
+    public function updateAllArmPositions(Request $request)
+    {
+        try {
+            $request->validate([
+                'schoolclass_id' => 'required|exists:schoolclass,id',
+                'term_id' => 'required|exists:schoolterm,id',
+                'session_id' => 'required|exists:schoolsession,id',
+            ]);
+
+            $schoolclassId = $request->schoolclass_id;
+            $termId = $request->term_id;
+            $sessionId = $request->session_id;
+
+            $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)->first(['schoolclass', 'classcategoryid']);
+            if (!$baseClass) {
+                return response()->json(['success' => false, 'message' => 'Base class not found']);
+            }
+
+            $allArms = DB::table('schoolclass')
+                ->where('schoolclass', $baseClass->schoolclass)
+                ->where('classcategoryid', $baseClass->classcategoryid)
+                ->get();
+
+            $subjectclassRecords = DB::table('subjectclass')
+                ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->whereIn('subjectclass.schoolclassid', $allArms->pluck('id'))
+                ->select('subjectteacher.subjectid', DB::raw('MIN(subjectclass.id) as representative_id'))
+                ->groupBy('subjectteacher.subjectid')
+                ->get();
+
+            $subjectsProcessed = 0;
+            foreach ($subjectclassRecords as $record) {
+                $repSubjectclass = DB::table('subjectclass')->where('id', $record->representative_id)->first();
+                if (!$repSubjectclass) {
+                    continue;
+                }
+                $this->updateSubjectPositions($record->representative_id, $repSubjectclass->staffid ?? 0, $termId, $sessionId);
+                $subjectsProcessed++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Positions updated! Processed {$subjectsProcessed} subject(s) across " . $allArms->count() . " arms.",
+                'data' => ['arms_count' => $allArms->count(), 'subjects_processed' => $subjectsProcessed],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Admin updateAllArmPositions error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
+    // GRADE PREVIEW ENDPOINT
+    // =========================================================================
+
+    public function calculateGradeForScore(Request $request)
+    {
+        $request->validate([
+            'schoolclass_id' => 'required|exists:schoolclass,id',
+            'total' => 'required|numeric|min:0|max:100',
+            'cum' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
+        $category = $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()
+            : null;
+
+        $totalGrade = $category
+            ? $category->calculateGrade($request->total)
+            : $this->getDefaultGrade($request->total);
+
+        $cumGrade = $category
+            ? $category->calculateGrade($request->cum)
+            : $this->getDefaultGrade($request->cum);
+
+        return response()->json([
+            'success' => true,
+            'total_grade' => $totalGrade,
+            'cum_grade' => $cumGrade,
+            'remark' => $this->getRemark($totalGrade),
+        ]);
+    }
+
+    // =========================================================================
+    // DOWNLOAD METHODS
     // =========================================================================
 
     public function downloadMarksSheet(Request $request)
     {
         try {
             $subjectclassid = $request->input('subjectclass_id', session('admin_score_entry_subjectclass_id'));
-            $staffid        = $request->input('staff_id',        session('admin_score_entry_teacher_id'));
-            $termid         = $request->input('term_id',         session('admin_score_entry_term_id'));
-            $sessionid      = $request->input('session_id',      session('admin_score_entry_session_id'));
-            $schoolclassid  = $request->input('schoolclass_id',  session('schoolclass_id'));
-            $type           = $request->input('type',            session('admin_score_entry_type', 'terminal'));
+            $staffid = $request->input('staff_id', session('admin_score_entry_teacher_id'));
+            $termid = $request->input('term_id', session('admin_score_entry_term_id'));
+            $sessionid = $request->input('session_id', session('admin_score_entry_session_id'));
+            $schoolclassid = $request->input('schoolclass_id', session('schoolclass_id'));
+            $type = $request->input('type', session('admin_score_entry_type', 'terminal'));
 
             if ($type === 'mock') {
                 return $this->downloadMockMarksSheet($subjectclassid, $staffid, $termid, $sessionid, $schoolclassid);
@@ -855,7 +1347,7 @@ class AdminScoreEntryController extends Controller
                 return response()->json(['success' => false, 'message' => 'No students found.'], 404);
             }
 
-            $teacher     = User::find($staffid);
+            $teacher = User::find($staffid);
             $teacherName = $teacher ? ($teacher->name ?? '') : '';
             $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
             $assessments = collect();
@@ -865,11 +1357,11 @@ class AdminScoreEntryController extends Controller
             }
 
             $school = SchoolInformation::first();
-            $pdf    = Pdf::loadView('admin.score-entry.marksheet-pdf', [
+            $pdf = Pdf::loadView('admin.score-entry.marksheet-pdf', [
                 'broadsheets' => $broadsheets,
                 'assessments' => $assessments,
-                'classInfo'   => $broadsheets->first(),
-                'school'      => $school,
+                'classInfo' => $broadsheets->first(),
+                'school' => $school,
                 'teacherName' => $teacherName,
                 'isAdminView' => true,
             ]);
@@ -881,18 +1373,14 @@ class AdminScoreEntryController extends Controller
         }
     }
 
-    // =========================================================================
-    // DOWNLOAD — scores PDF  (mirrors downloadScoresPdf in teacher controller)
-    // =========================================================================
-
     public function downloadScoresPdf(Request $request)
     {
         try {
             $subjectclassid = $request->input('subjectclass_id', session('admin_score_entry_subjectclass_id'));
-            $staffid        = $request->input('staff_id',        session('admin_score_entry_teacher_id'));
-            $termid         = $request->input('term_id',         session('admin_score_entry_term_id'));
-            $sessionid      = $request->input('session_id',      session('admin_score_entry_session_id'));
-            $schoolclassid  = $request->input('schoolclass_id',  session('schoolclass_id'));
+            $staffid = $request->input('staff_id', session('admin_score_entry_teacher_id'));
+            $termid = $request->input('term_id', session('admin_score_entry_term_id'));
+            $sessionid = $request->input('session_id', session('admin_score_entry_session_id'));
+            $schoolclassid = $request->input('schoolclass_id', session('schoolclass_id'));
 
             if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
                 return response()->json(['success' => false, 'message' => 'Missing session data. Please open the scoresheet first.'], 400);
@@ -911,23 +1399,23 @@ class AdminScoreEntryController extends Controller
                 $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
             }
 
-            $teacher     = User::find($staffid);
+            $teacher = User::find($staffid);
             $teacherName = $teacher ? ($teacher->name ?? '') : '';
-            $school      = SchoolInformation::first();
+            $school = SchoolInformation::first();
 
             $pdf = Pdf::loadView('admin.score-entry.scores-pdf', [
                 'broadsheets' => $broadsheets,
                 'assessments' => $assessments,
-                'classInfo'   => $broadsheets->first(),
-                'school'      => $school,
+                'classInfo' => $broadsheets->first(),
+                'school' => $school,
                 'teacherName' => $teacherName,
                 'isAdminView' => true,
             ]);
             $pdf->setPaper('a4', 'landscape');
 
-            $subject  = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->subject   ?? 'subject');
-            $class    = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->schoolclass ?? 'class');
-            $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->term        ?? 'term');
+            $subject = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->subject ?? 'subject');
+            $class = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->schoolclass ?? 'class');
+            $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->term ?? 'term');
 
             return $pdf->download("admin-scores-{$subject}-{$class}-{$termName}-" . date('Y-m-d') . '.pdf');
         } catch (\Exception $e) {
@@ -936,10 +1424,6 @@ class AdminScoreEntryController extends Controller
         }
     }
 
-    // =========================================================================
-    // DOWNLOAD — mock marks sheet PDF
-    // =========================================================================
-
     protected function downloadMockMarksSheet($subjectclassid, $staffid, $termid, $sessionid, $schoolclassid)
     {
         $broadsheets = $this->getMockBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
@@ -947,13 +1431,13 @@ class AdminScoreEntryController extends Controller
             return response()->json(['success' => false, 'message' => 'No mock scores found.'], 404);
         }
 
-        $teacher     = User::find($staffid);
+        $teacher = User::find($staffid);
         $teacherName = $teacher ? ($teacher->name ?? '') : '';
-        $school      = SchoolInformation::first();
-        $pdf         = Pdf::loadView('admin.score-entry.mock-marksheet-pdf', [
+        $school = SchoolInformation::first();
+        $pdf = Pdf::loadView('admin.score-entry.mock-marksheet-pdf', [
             'broadsheets' => $broadsheets,
-            'classInfo'   => $broadsheets->first(),
-            'school'      => $school,
+            'classInfo' => $broadsheets->first(),
+            'school' => $school,
             'teacherName' => $teacherName,
             'isAdminView' => true,
         ]);
@@ -962,36 +1446,32 @@ class AdminScoreEntryController extends Controller
     }
 
     // =========================================================================
-    // EXPORT — Excel
+    // EXPORT & IMPORT
     // =========================================================================
 
     public function export(Request $request)
     {
-        $schoolclassId  = $request->input('schoolclass_id',  session('schoolclass_id'));
+        $schoolclassId = $request->input('schoolclass_id', session('schoolclass_id'));
         $subjectclassId = $request->input('subjectclass_id', session('admin_score_entry_subjectclass_id'));
-        $termId         = $request->input('term_id',         session('admin_score_entry_term_id'));
-        $sessionId      = $request->input('session_id',      session('admin_score_entry_session_id'));
-        $staffId        = $request->input('staff_id',        session('admin_score_entry_teacher_id'));
+        $termId = $request->input('term_id', session('admin_score_entry_term_id'));
+        $sessionId = $request->input('session_id', session('admin_score_entry_session_id'));
+        $staffId = $request->input('staff_id', session('admin_score_entry_teacher_id'));
 
         $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
-        $schoolclass  = Schoolclass::find($schoolclassId);
-        $term         = Schoolterm::find($termId);
-        $session      = Schoolsession::find($sessionId);
+        $schoolclass = Schoolclass::find($schoolclassId);
+        $term = Schoolterm::find($termId);
+        $session = Schoolsession::find($sessionId);
 
         $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectClass?->subject?->subject ?? 'subject');
-        $className   = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->schoolclass ?? 'class');
-        $termName    = preg_replace('/[^a-zA-Z0-9-]/', '_', $term?->term ?? 'term');
+        $className = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->schoolclass ?? 'class');
+        $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $term?->term ?? 'term');
         $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $session?->session ?? 'session');
 
         $filename = "admin_{$subjectName}_{$className}_{$termName}_{$sessionName}_scoresheet.xlsx";
-        $export   = new AdminRecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId);
+        $export = new AdminRecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId);
 
         return Excel::download($export, $filename);
     }
-
-    // =========================================================================
-    // IMPORT
-    // =========================================================================
 
     public function import(Request $request)
     {
@@ -1000,10 +1480,10 @@ class AdminScoreEntryController extends Controller
 
             $importData = [
                 'subjectclass_id' => $request->input('subjectclass_id', session('admin_score_entry_subjectclass_id')),
-                'staff_id'        => $request->input('staff_id',        session('admin_score_entry_teacher_id')),
-                'term_id'         => $request->input('term_id',         session('admin_score_entry_term_id')),
-                'session_id'      => $request->input('session_id',      session('admin_score_entry_session_id')),
-                'schoolclass_id'  => $request->input('schoolclass_id',  session('schoolclass_id')),
+                'staff_id' => $request->input('staff_id', session('admin_score_entry_teacher_id')),
+                'term_id' => $request->input('term_id', session('admin_score_entry_term_id')),
+                'session_id' => $request->input('session_id', session('admin_score_entry_session_id')),
+                'schoolclass_id' => $request->input('schoolclass_id', session('schoolclass_id')),
             ];
 
             if (empty($importData['subjectclass_id']) || empty($importData['staff_id'])) {
@@ -1014,7 +1494,7 @@ class AdminScoreEntryController extends Controller
             Excel::import($importer, $request->file('file'));
 
             $successCount = $importer->getSuccessCount();
-            $failures     = $importer->getFailures();
+            $failures = $importer->getFailures();
 
             $broadsheets = $this->getBroadsheets(
                 $importData['staff_id'],
@@ -1040,7 +1520,7 @@ class AdminScoreEntryController extends Controller
             $responseData = [
                 'success' => true,
                 'message' => "Successfully imported {$successCount} score(s)!",
-                'data'    => ['broadsheets' => $formattedBroadsheets, 'assessments' => $assessments],
+                'data' => ['broadsheets' => $formattedBroadsheets, 'assessments' => $assessments],
             ];
 
             if (!empty($failures)) {
@@ -1056,10 +1536,6 @@ class AdminScoreEntryController extends Controller
         }
     }
 
-    // =========================================================================
-    // FORMAT BROADSHEETS FOR RESPONSE
-    // =========================================================================
-
     protected function formatBroadsheetsForResponse($broadsheets, $assessments)
     {
         $formatted = [];
@@ -1068,85 +1544,32 @@ class AdminScoreEntryController extends Controller
             foreach ($assessments as $a) {
                 $s = $b->assessmentScores->where('assessment_id', $a->id)->first();
                 $assessmentScores[] = [
-                    'assessment_id'   => $a->id,
+                    'assessment_id' => $a->id,
                     'assessment_name' => $a->name,
-                    'max_score'       => $a->max_score,
-                    'score'           => $s ? floatval($s->score) : 0,
+                    'max_score' => $a->max_score,
+                    'score' => $s ? floatval($s->score) : 0,
                 ];
             }
             $formatted[] = [
-                'id'               => $b->id,
-                'admissionno'      => $b->admissionno,
-                'fname'            => $b->fname,
-                'lname'            => $b->lname,
-                'mname'            => $b->mname,
-                'total'            => floatval($b->total),
-                'bf'               => floatval($b->bf),
-                'cum'              => floatval($b->cum),
-                'grade'            => $b->grade,
-                'position'         => $b->position,
-                'position_total'   => $b->position_total,
-                'arm_position'     => $b->arm_position,
+                'id' => $b->id,
+                'admissionno' => $b->admissionno,
+                'fname' => $b->fname,
+                'lname' => $b->lname,
+                'mname' => $b->mname,
+                'total' => floatval($b->total),
+                'bf' => floatval($b->bf),
+                'cum' => floatval($b->cum),
+                'grade' => $b->grade,
+                'position' => $b->position,
+                'position_total' => $b->position_total,
+                'arm_position' => $b->arm_position,
                 'arm_position_cum' => $b->arm_position_cum,
-                'remark'           => $b->remark,
-                'avg'              => floatval($b->avg ?? 0),
-                'assessment_scores'=> $assessmentScores,
+                'remark' => $b->remark,
+                'avg' => floatval($b->avg ?? 0),
+                'assessment_scores' => $assessmentScores,
             ];
         }
         return $formatted;
-    }
-
-    // =========================================================================
-    // RECALCULATE ALL POSITIONS (AJAX — mirrors updateAllArmPositions)
-    // =========================================================================
-
-    public function updateAllArmPositions(Request $request)
-    {
-        try {
-            $request->validate([
-                'schoolclass_id' => 'required|exists:schoolclass,id',
-                'term_id'        => 'required|exists:schoolterm,id',
-                'session_id'     => 'required|exists:schoolsession,id',
-            ]);
-
-            $schoolclassId = $request->schoolclass_id;
-            $termId        = $request->term_id;
-            $sessionId     = $request->session_id;
-
-            $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)->first(['schoolclass', 'classcategoryid']);
-            if (!$baseClass) {
-                return response()->json(['success' => false, 'message' => 'Base class not found']);
-            }
-
-            $allArms = DB::table('schoolclass')
-                ->where('schoolclass',     $baseClass->schoolclass)
-                ->where('classcategoryid', $baseClass->classcategoryid)
-                ->get();
-
-            $subjectclassRecords = DB::table('subjectclass')
-                ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->whereIn('subjectclass.schoolclassid', $allArms->pluck('id'))
-                ->select('subjectteacher.subjectid', DB::raw('MIN(subjectclass.id) as representative_id'))
-                ->groupBy('subjectteacher.subjectid')
-                ->get();
-
-            $subjectsProcessed = 0;
-            foreach ($subjectclassRecords as $record) {
-                $repSubjectclass = DB::table('subjectclass')->where('id', $record->representative_id)->first();
-                if (!$repSubjectclass) continue;
-                $this->updateSubjectPositions($record->representative_id, $repSubjectclass->staffid ?? 0, $termId, $sessionId);
-                $subjectsProcessed++;
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => "Positions updated! Processed {$subjectsProcessed} subject(s) across " . $allArms->count() . " arms.",
-                'data'    => ['arms_count' => $allArms->count(), 'subjects_processed' => $subjectsProcessed],
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Admin updateAllArmPositions error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
-        }
     }
 
     // =========================================================================
@@ -1157,29 +1580,33 @@ class AdminScoreEntryController extends Controller
     {
         $query = Broadsheets::query()
             ->where('broadsheets.staff_id', $staffId)
-            ->where('broadsheets.term_id',  $termId)
-            ->with(['assessmentScores', 'subAssessmentScores'])
+            ->where('broadsheets.term_id', $termId)
+            ->with(['assessmentScores', 'subAssessmentScores', 'enteredBy', 'lastModifiedBy', 'lockedBy'])
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
             ->join('subjectclass', function ($join) use ($subjectClassId) {
-                $join->on('subjectclass.id',                   '=', 'broadsheets.subjectclass_id')
-                     ->on('broadsheet_records.subject_id',     '=', 'subjectclass.subjectid')
-                     ->on('broadsheet_records.schoolclass_id', '=', 'subjectclass.schoolclassid');
-                if ($subjectClassId) $join->where('subjectclass.id', $subjectClassId);
+                $join->on('subjectclass.id', '=', 'broadsheets.subjectclass_id')
+                    ->on('broadsheet_records.subject_id', '=', 'subjectclass.subjectid')
+                    ->on('broadsheet_records.schoolclass_id', '=', 'subjectclass.schoolclassid');
+                if ($subjectClassId) {
+                    $join->where('subjectclass.id', $subjectClassId);
+                }
             })
-            ->leftJoin('studentRegistration', 'studentRegistration.id',   '=', 'broadsheet_records.student_id')
-            ->leftJoin('studentpicture',       'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('subject',              'subject.id',               '=', 'broadsheet_records.subject_id')
-            ->leftJoin('schoolclass',          'schoolclass.id',           '=', 'broadsheet_records.schoolclass_id')
-            ->leftJoin('classcategories',      'classcategories.id',       '=', 'schoolclass.classcategoryid')
-            ->leftJoin('schoolarm',            'schoolarm.id',             '=', 'schoolclass.arm')
-            ->leftJoin('subjectteacher',       'subjectteacher.id',        '=', 'subjectclass.subjectteacherid')
-            ->leftJoin('schoolterm',           'schoolterm.id',            '=', 'broadsheets.term_id')
-            ->leftJoin('schoolsession',        'schoolsession.id',         '=', 'broadsheet_records.session_id')
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
+            ->leftJoin('classcategories', 'classcategories.id', '=', 'schoolclass.classcategoryid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheets.term_id')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records.session_id')
             ->where('broadsheet_records.session_id', $sessionId)
-            ->orderBy('studentRegistration.lastname',  'asc')
+            ->orderBy('studentRegistration.lastname', 'asc')
             ->orderBy('studentRegistration.firstname', 'asc');
 
-        if ($schoolClassId) $query->where('schoolclass.id', $schoolClassId);
+        if ($schoolClassId) {
+            $query->where('schoolclass.id', $schoolClassId);
+        }
 
         return $query->get([
             'broadsheets.id',
@@ -1216,6 +1643,13 @@ class AdminScoreEntryController extends Controller
             'broadsheets.avg',
             'broadsheets.cmin',
             'broadsheets.cmax',
+            'broadsheets.is_locked',
+            'broadsheets.lock_reason',
+            'broadsheets.entered_at',
+            'broadsheets.last_modified_at',
+            'broadsheets.entry_source',
+            'broadsheets.entered_by',
+            'broadsheets.last_modified_by',
         ]);
     }
 
@@ -1223,28 +1657,32 @@ class AdminScoreEntryController extends Controller
     {
         $query = \App\Models\BroadsheetsMock::query()
             ->where('broadsheetmock.staff_id', $staffId)
-            ->where('broadsheetmock.term_id',  $termId)
+            ->where('broadsheetmock.term_id', $termId)
             ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
             ->join('subjectclass', function ($join) use ($subjectClassId) {
-                $join->on('subjectclass.id',                        '=', 'broadsheetmock.subjectclass_id')
-                     ->on('broadsheet_records_mock.subject_id',     '=', 'subjectclass.subjectid')
-                     ->on('broadsheet_records_mock.schoolclass_id', '=', 'subjectclass.schoolclassid');
-                if ($subjectClassId) $join->where('subjectclass.id', $subjectClassId);
+                $join->on('subjectclass.id', '=', 'broadsheetmock.subjectclass_id')
+                    ->on('broadsheet_records_mock.subject_id', '=', 'subjectclass.subjectid')
+                    ->on('broadsheet_records_mock.schoolclass_id', '=', 'subjectclass.schoolclassid');
+                if ($subjectClassId) {
+                    $join->where('subjectclass.id', $subjectClassId);
+                }
             })
-            ->leftJoin('studentRegistration', 'studentRegistration.id',   '=', 'broadsheet_records_mock.student_id')
-            ->leftJoin('studentpicture',       'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('subject',              'subject.id',               '=', 'broadsheet_records_mock.subject_id')
-            ->leftJoin('schoolclass',          'schoolclass.id',           '=', 'broadsheet_records_mock.schoolclass_id')
-            ->leftJoin('classcategories',      'classcategories.id',       '=', 'schoolclass.classcategoryid')
-            ->leftJoin('schoolarm',            'schoolarm.id',             '=', 'schoolclass.arm')
-            ->leftJoin('subjectteacher',       'subjectteacher.id',        '=', 'subjectclass.subjectteacherid')
-            ->leftJoin('schoolterm',           'schoolterm.id',            '=', 'broadsheetmock.term_id')
-            ->leftJoin('schoolsession',        'schoolsession.id',         '=', 'broadsheet_records_mock.session_id')
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records_mock.student_id')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'broadsheet_records_mock.schoolclass_id')
+            ->leftJoin('classcategories', 'classcategories.id', '=', 'schoolclass.classcategoryid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheetmock.term_id')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records_mock.session_id')
             ->where('broadsheet_records_mock.session_id', $sessionId)
-            ->orderBy('studentRegistration.lastname',  'asc')
+            ->orderBy('studentRegistration.lastname', 'asc')
             ->orderBy('studentRegistration.firstname', 'asc');
 
-        if ($schoolClassId) $query->where('schoolclass.id', $schoolClassId);
+        if ($schoolClassId) {
+            $query->where('schoolclass.id', $schoolClassId);
+        }
 
         return $query->get([
             'broadsheetmock.id',
@@ -1285,17 +1723,21 @@ class AdminScoreEntryController extends Controller
     protected function updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
     {
         $subjectClass = DB::table('subjectclass')->where('id', $subjectclassid)->first(['subjectteacherid']);
-        if (!$subjectClass) return;
+        if (!$subjectClass) {
+            return;
+        }
         $subjectTeacher = DB::table('subjectteacher')->where('id', $subjectClass->subjectteacherid)->first(['subjectid']);
-        if (!$subjectTeacher) return;
+        if (!$subjectTeacher) {
+            return;
+        }
         $subjectId = $subjectTeacher->subjectid;
 
         $metrics = Broadsheets::where('broadsheets.subjectclass_id', $subjectclassid)
             ->where('broadsheets.staff_id', $staffid)
-            ->where('broadsheets.term_id',  $termid)
+            ->where('broadsheets.term_id', $termid)
             ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-            ->where('broadsheet_records.session_id',  $sessionid)
-            ->where('broadsheet_records.subject_id',  $subjectId)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.subject_id', $subjectId)
             ->select([
                 DB::raw('MIN(broadsheets.cum) as class_min'),
                 DB::raw('MAX(broadsheets.cum) as class_max'),
@@ -1309,36 +1751,33 @@ class AdminScoreEntryController extends Controller
 
         Broadsheets::where('subjectclass_id', $subjectclassid)
             ->where('staff_id', $staffid)
-            ->where('term_id',  $termid)
+            ->where('term_id', $termid)
             ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
             ->where('broadsheet_records.session_id', $sessionid)
             ->where('broadsheet_records.subject_id', $subjectId)
             ->update(['cmin' => $classMin, 'cmax' => $classMax, 'avg' => $classAvg]);
     }
 
-    /**
-     * Computes all four position columns:
-     *   subject_position_class        — all arms, by cum
-     *   subject_position_class_total  — all arms, by total
-     *   arm_position                  — this arm only, by total
-     *   arm_position_cum              — this arm only, by cum
-     */
     protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
     {
         $subjectClass = DB::table('subjectclass')
             ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
             ->where('subjectclass.id', $subjectclass_id)
             ->first(['subjectclass.schoolclassid', 'subjectteacher.subjectid']);
-        if (!$subjectClass) return;
+        if (!$subjectClass) {
+            return;
+        }
 
-        $subjectId     = $subjectClass->subjectid;
+        $subjectId = $subjectClass->subjectid;
         $schoolclassId = $subjectClass->schoolclassid;
 
         $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)->first(['schoolclass', 'classcategoryid']);
-        if (!$baseClass) return;
+        if (!$baseClass) {
+            return;
+        }
 
         $allArmIds = DB::table('schoolclass')
-            ->where('schoolclass',     $baseClass->schoolclass)
+            ->where('schoolclass', $baseClass->schoolclass)
             ->where('classcategoryid', $baseClass->classcategoryid)
             ->pluck('id');
 
@@ -1351,36 +1790,57 @@ class AdminScoreEntryController extends Controller
         $allStudents = DB::table('broadsheets')
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
             ->whereIn('broadsheets.subjectclass_id', $allSubjectClassIds)
-            ->where('broadsheets.term_id',           $term_id)
+            ->where('broadsheets.term_id', $term_id)
             ->where('broadsheet_records.session_id', $session_id)
             ->get(['broadsheets.id', 'broadsheets.cum', 'broadsheets.total', 'broadsheet_records.schoolclass_id']);
 
-        if ($allStudents->isEmpty()) return;
+        if ($allStudents->isEmpty()) {
+            return;
+        }
 
         // Class-wide by cum
-        $rank = $lastVal = null; $currentRank = 0;
+        $rank = $lastVal = null;
+        $currentRank = 0;
         foreach ($allStudents->sortByDesc('cum')->values() as $idx => $b) {
-            if ($lastVal === null || $b->cum != $lastVal) { $currentRank = $idx + 1; $lastVal = $b->cum; }
+            if ($lastVal === null || $b->cum != $lastVal) {
+                $currentRank = $idx + 1;
+                $lastVal = $b->cum;
+            }
             DB::table('broadsheets')->where('id', $b->id)->update(['subject_position_class' => $currentRank]);
         }
 
         // Class-wide by total
-        $rank = $lastVal = null; $currentRank = 0;
+        $rank = $lastVal = null;
+        $currentRank = 0;
         foreach ($allStudents->sortByDesc('total')->values() as $idx => $b) {
-            if ($lastVal === null || $b->total != $lastVal) { $currentRank = $idx + 1; $lastVal = $b->total; }
+            if ($lastVal === null || $b->total != $lastVal) {
+                $currentRank = $idx + 1;
+                $lastVal = $b->total;
+            }
             DB::table('broadsheets')->where('id', $b->id)->update(['subject_position_class_total' => $currentRank]);
         }
 
-        // Arm-specific
+        // Arm-specific positions
         foreach ($allStudents->groupBy('schoolclass_id') as $armClassId => $studentsInArm) {
-            $lastVal = null; $currentRank = 0;
+            // Arm position by total
+            $lastVal = null;
+            $currentRank = 0;
             foreach ($studentsInArm->sortByDesc('total')->values() as $idx => $b) {
-                if ($lastVal === null || $b->total != $lastVal) { $currentRank = $idx + 1; $lastVal = $b->total; }
+                if ($lastVal === null || $b->total != $lastVal) {
+                    $currentRank = $idx + 1;
+                    $lastVal = $b->total;
+                }
                 DB::table('broadsheets')->where('id', $b->id)->update(['arm_position' => $currentRank]);
             }
-            $lastVal = null; $currentRank = 0;
+
+            // Arm position by cum
+            $lastVal = null;
+            $currentRank = 0;
             foreach ($studentsInArm->sortByDesc('cum')->values() as $idx => $b) {
-                if ($lastVal === null || $b->cum != $lastVal) { $currentRank = $idx + 1; $lastVal = $b->cum; }
+                if ($lastVal === null || $b->cum != $lastVal) {
+                    $currentRank = $idx + 1;
+                    $lastVal = $b->cum;
+                }
                 DB::table('broadsheets')->where('id', $b->id)->update(['arm_position_cum' => $currentRank]);
             }
         }
@@ -1388,37 +1848,47 @@ class AdminScoreEntryController extends Controller
 
     protected function updateClassPositions($schoolclassid, $termid, $sessionid)
     {
-        $rank = 0; $lastScore = null; $rows = 0;
-        $pos  = PromotionStatus::where('schoolclassid', $schoolclassid)
-            ->where('termid',    $termid)
+        $rank = 0;
+        $lastScore = null;
+        $rows = 0;
+        $pos = PromotionStatus::where('schoolclassid', $schoolclassid)
+            ->where('termid', $termid)
             ->where('sessionid', $sessionid)
             ->orderBy('subjectstotalscores', 'DESC')
             ->get();
 
         foreach ($pos as $row) {
             $rows++;
-            if ($lastScore !== $row->subjectstotalscores) { $lastScore = $row->subjectstotalscores; $rank = $rows; }
-            $suffix = match ($rank) { 1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th' };
+            if ($lastScore !== $row->subjectstotalscores) {
+                $lastScore = $row->subjectstotalscores;
+                $rank = $rows;
+            }
+            $suffix = match ($rank) {
+                1 => 'st',
+                2 => 'nd',
+                3 => 'rd',
+                default => 'th'
+            };
             PromotionStatus::where('id', $row->id)->update(['position' => $rank . $suffix]);
         }
     }
 
-    // =========================================================================
-    // MOCK METRICS / POSITIONS
-    // =========================================================================
-
     protected function updateMockClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
     {
-        $subjectClass   = DB::table('subjectclass')->where('id', $subjectclassid)->first(['subjectteacherid']);
-        if (!$subjectClass) return;
+        $subjectClass = DB::table('subjectclass')->where('id', $subjectclassid)->first(['subjectteacherid']);
+        if (!$subjectClass) {
+            return;
+        }
         $subjectTeacher = DB::table('subjectteacher')->where('id', $subjectClass->subjectteacherid)->first(['subjectid']);
-        if (!$subjectTeacher) return;
+        if (!$subjectTeacher) {
+            return;
+        }
         $subjectId = $subjectTeacher->subjectid;
 
         $metrics = \App\Models\BroadsheetsMock::query()
             ->where('broadsheetmock.subjectclass_id', $subjectclassid)
-            ->where('broadsheetmock.staff_id',        $staffid)
-            ->where('broadsheetmock.term_id',         $termid)
+            ->where('broadsheetmock.staff_id', $staffid)
+            ->where('broadsheetmock.term_id', $termid)
             ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
             ->where('broadsheet_records_mock.session_id', $sessionid)
             ->where('broadsheet_records_mock.subject_id', $subjectId)
@@ -1426,17 +1896,17 @@ class AdminScoreEntryController extends Controller
                 DB::raw('MIN(broadsheetmock.total) as class_min'),
                 DB::raw('MAX(broadsheetmock.total) as class_max'),
                 DB::raw('SUM(broadsheetmock.total) as total_sum'),
-                DB::raw('COUNT(broadsheetmock.id)  as student_count'),
+                DB::raw('COUNT(broadsheetmock.id) as student_count'),
             ])->first();
 
         $classMin = $metrics->class_min ?? 0;
         $classMax = $metrics->class_max ?? 0;
-        $classAvg = $metrics->student_count > 0 ? round((float)$metrics->total_sum / $metrics->student_count, 1) : 0;
+        $classAvg = $metrics->student_count > 0 ? round((float) $metrics->total_sum / $metrics->student_count, 1) : 0;
 
         $ids = \App\Models\BroadsheetsMock::query()
             ->where('broadsheetmock.subjectclass_id', $subjectclassid)
-            ->where('broadsheetmock.staff_id',        $staffid)
-            ->where('broadsheetmock.term_id',         $termid)
+            ->where('broadsheetmock.staff_id', $staffid)
+            ->where('broadsheetmock.term_id', $termid)
             ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
             ->where('broadsheet_records_mock.session_id', $sessionid)
             ->where('broadsheet_records_mock.subject_id', $subjectId)
@@ -1449,20 +1919,27 @@ class AdminScoreEntryController extends Controller
     {
         $broadsheets = \App\Models\BroadsheetsMock::query()
             ->where('broadsheetmock.subjectclass_id', $subjectclass_id)
-            ->where('broadsheetmock.staff_id',        $staff_id)
-            ->where('broadsheetmock.term_id',         $term_id)
+            ->where('broadsheetmock.staff_id', $staff_id)
+            ->where('broadsheetmock.term_id', $term_id)
             ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
             ->where('broadsheet_records_mock.session_id', $session_id)
             ->orderByDesc('broadsheetmock.total')
             ->orderBy('broadsheetmock.id')
             ->get(['broadsheetmock.id', 'broadsheetmock.total', 'broadsheetmock.subject_position_class']);
 
-        if ($broadsheets->isEmpty()) return;
+        if ($broadsheets->isEmpty()) {
+            return;
+        }
 
-        $rank = 0; $lastTotal = null; $lastPosition = 0;
+        $rank = 0;
+        $lastTotal = null;
+        $lastPosition = 0;
         foreach ($broadsheets as $b) {
             $rank++;
-            if ($lastTotal === null || $b->total != $lastTotal) { $lastPosition = $rank; $lastTotal = $b->total; }
+            if ($lastTotal === null || $b->total != $lastTotal) {
+                $lastPosition = $rank;
+                $lastTotal = $b->total;
+            }
             if ($b->subject_position_class != $lastPosition) {
                 \App\Models\BroadsheetsMock::where('id', $b->id)->update(['subject_position_class' => $lastPosition]);
             }
@@ -1475,55 +1952,54 @@ class AdminScoreEntryController extends Controller
 
     protected function computeOverallGPAAndCGPA($broadsheets, $schoolclass, $termId, $sessionId)
     {
-        if (!$schoolclass || $schoolclass->classcategories->isEmpty()) return;
+        if (!$schoolclass || $schoolclass->classcategories->isEmpty()) {
+            return;
+        }
         $isSenior = $schoolclass->classcategories->first()->is_senior ?? false;
         foreach ($broadsheets as $b) {
-            $data               = $this->computeOverallForStudent($b->student_id, $schoolclass, $termId, $sessionId, $isSenior);
-            $b->gpa             = round($data['gpa'],  2);
-            $b->cgpa            = round($data['cgpa'], 2);
-            $b->gpa_grade       = $data['gpa_grade']         ?? 'F';
-            $b->num_subjects    = $data['num_subjects']       ?? 0;
+            $data = $this->computeOverallForStudent($b->student_id, $schoolclass, $termId, $sessionId, $isSenior);
+            $b->gpa = round($data['gpa'], 2);
+            $b->cgpa = round($data['cgpa'], 2);
+            $b->gpa_grade = $data['gpa_grade'] ?? 'F';
+            $b->num_subjects = $data['num_subjects'] ?? 0;
             $b->total_grade_points = $data['total_grade_points'] ?? 0.0;
         }
     }
 
     protected function computeOverallForStudent($studentId, $schoolclass, $termId, $sessionId, $isSenior)
     {
-        // Current term — registered subjects only (mirrors teacher controller exactly)
         $currentBroadsheets = Broadsheets::where('broadsheets.term_id', $termId)
-            ->whereHas('broadsheetRecord', fn($q) =>
-                $q->where('student_id', $studentId)->where('session_id', $sessionId)
-            )
+            ->whereHas('broadsheetRecord', fn($q) => $q->where('student_id', $studentId)->where('session_id', $sessionId))
             ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
                 $query->select(DB::raw(1))
                     ->from('subjectRegistrationStatus')
-                    ->join('subjectclass',       'subjectclass.id',   '=', 'subjectRegistrationStatus.subjectclassid')
+                    ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                     ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                     ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
-                    ->where('subjectRegistrationStatus.studentid',  $studentId)
-                    ->where('subjectRegistrationStatus.termid',     $termId)
-                    ->where('subjectRegistrationStatus.sessionid',  $sessionId);
+                    ->where('subjectRegistrationStatus.studentid', $studentId)
+                    ->where('subjectRegistrationStatus.termid', $termId)
+                    ->where('subjectRegistrationStatus.sessionid', $sessionId);
             })
             ->get(['broadsheets.total']);
 
-        $category     = $schoolclass->classcategories->first();
+        $category = $schoolclass->classcategories->first();
         $averageTotal = $currentBroadsheets->avg('total') ?? 0.0;
-        $gpaGrade     = $category
+        $gpaGrade = $category
             ? $category->calculateGrade($averageTotal)
             : $this->getDefaultGrade($averageTotal);
 
-        $termGradePoints  = $currentBroadsheets->map(fn($b) => $this->getGradePoint($b->total, $isSenior));
-        $gpa              = $termGradePoints->avg()  ?? 0.0;
-        $numSubjects      = $currentBroadsheets->count();
+        $termGradePoints = $currentBroadsheets->map(fn($b) => $this->getGradePoint($b->total, $isSenior));
+        $gpa = $termGradePoints->avg() ?? 0.0;
+        $numSubjects = $currentBroadsheets->count();
         $totalGradePoints = $termGradePoints->sum();
 
-        // CGPA — average of term GPAs across sessions
+        // CGPA - average of term GPAs across sessions
         $annualGPAs = [];
-        $sessions   = DB::table('broadsheet_records')
-            ->join('schoolclass',     'schoolclass.id',     '=', 'broadsheet_records.schoolclass_id')
+        $sessions = DB::table('broadsheet_records')
+            ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
             ->join('classcategories', 'classcategories.id', '=', 'schoolclass.classcategoryid')
             ->where('broadsheet_records.student_id', $studentId)
-            ->where('classcategories.is_senior',     $isSenior)
+            ->where('classcategories.is_senior', $isSenior)
             ->select('broadsheet_records.session_id')
             ->distinct()
             ->orderByDesc('broadsheet_records.session_id')
@@ -1534,18 +2010,16 @@ class AdminScoreEntryController extends Controller
             $sessionGPAs = [];
             for ($t = 1; $t <= 3; $t++) {
                 $tb = Broadsheets::where('broadsheets.term_id', $t)
-                    ->whereHas('broadsheetRecord', fn($q) =>
-                        $q->where('student_id', $studentId)->where('session_id', $targetSession)
-                    )
+                    ->whereHas('broadsheetRecord', fn($q) => $q->where('student_id', $studentId)->where('session_id', $targetSession))
                     ->whereExists(function ($query) use ($studentId, $t, $targetSession) {
                         $query->select(DB::raw(1))
                             ->from('subjectRegistrationStatus')
-                            ->join('subjectclass',       'subjectclass.id',   '=', 'subjectRegistrationStatus.subjectclassid')
+                            ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                             ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                             ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
-                            ->where('subjectRegistrationStatus.studentid',  $studentId)
-                            ->where('subjectRegistrationStatus.termid',     $t)
-                            ->where('subjectRegistrationStatus.sessionid',  $targetSession);
+                            ->where('subjectRegistrationStatus.studentid', $studentId)
+                            ->where('subjectRegistrationStatus.termid', $t)
+                            ->where('subjectRegistrationStatus.sessionid', $targetSession);
                     })
                     ->get(['broadsheets.total']);
 
@@ -1555,10 +2029,10 @@ class AdminScoreEntryController extends Controller
         }
 
         return [
-            'gpa'                => $gpa,
-            'cgpa'               => collect($annualGPAs)->avg() ?? 0.0,
-            'gpa_grade'          => $gpaGrade,
-            'num_subjects'       => $numSubjects,
+            'gpa' => $gpa,
+            'cgpa' => collect($annualGPAs)->avg() ?? 0.0,
+            'gpa_grade' => $gpaGrade,
+            'num_subjects' => $numSubjects,
             'total_grade_points' => $totalGradePoints,
         ];
     }
@@ -1566,19 +2040,37 @@ class AdminScoreEntryController extends Controller
     protected function getGradePoint($score, $isSenior = false)
     {
         if (!$isSenior) {
-            if ($score >= 70) return 5.0; if ($score >= 60) return 4.0;
-            if ($score >= 50) return 3.0; if ($score >= 40) return 2.0;
+            if ($score >= 70) {
+                return 5.0;
+            }
+            if ($score >= 60) {
+                return 4.0;
+            }
+            if ($score >= 50) {
+                return 3.0;
+            }
+            if ($score >= 40) {
+                return 2.0;
+            }
             return 0.0;
         }
-        if ($score >= 75) return 5.0; if ($score >= 65) return 4.0;
-        if ($score >= 50) return 3.0; if ($score >= 45) return 2.0;
-        if ($score >= 40) return 1.0;
+        if ($score >= 75) {
+            return 5.0;
+        }
+        if ($score >= 65) {
+            return 4.0;
+        }
+        if ($score >= 50) {
+            return 3.0;
+        }
+        if ($score >= 45) {
+            return 2.0;
+        }
+        if ($score >= 40) {
+            return 1.0;
+        }
         return 0.0;
     }
-
-    // =========================================================================
-    // COMPUTE DYNAMIC TOTALS
-    // =========================================================================
 
     protected function computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termId, $sessionId)
     {
@@ -1586,8 +2078,8 @@ class AdminScoreEntryController extends Controller
             $assessmentScores = $broadsheet->assessmentScores ?? collect();
             $totalRaw = 0;
             foreach ($assessments as $a) {
-                $scoreObj  = $assessmentScores->where('assessment_id', $a->id)->first();
-                $totalRaw += $scoreObj ? (float)$scoreObj->score : 0;
+                $scoreObj = $assessmentScores->where('assessment_id', $a->id)->first();
+                $totalRaw += $scoreObj ? (float) $scoreObj->score : 0;
             }
 
             $subjectId = $broadsheet->subject_id;
@@ -1608,47 +2100,55 @@ class AdminScoreEntryController extends Controller
             $newRemark = $this->getRemark($newGrade);
 
             $changed = abs($broadsheet->total - $totalRaw) > 0.001
-                || abs($broadsheet->bf  - $newBf)   > 0.001
-                || abs($broadsheet->cum - $newCum)   > 0.001
-                || $broadsheet->grade  !== $newGrade
+                || abs($broadsheet->bf - $newBf) > 0.001
+                || abs($broadsheet->cum - $newCum) > 0.001
+                || $broadsheet->grade !== $newGrade
                 || $broadsheet->remark !== $newRemark;
 
             if ($changed) {
-                $broadsheet->total  = $totalRaw;
-                $broadsheet->bf     = $newBf;
-                $broadsheet->cum    = $newCum;
-                $broadsheet->grade  = $newGrade;
+                $broadsheet->total = $totalRaw;
+                $broadsheet->bf = $newBf;
+                $broadsheet->cum = $newCum;
+                $broadsheet->grade = $newGrade;
                 $broadsheet->remark = $newRemark;
                 $broadsheet->save();
             }
         }
     }
 
-    // =========================================================================
-    // GRADING HELPERS
-    // =========================================================================
-
     protected function getDefaultGrade($score)
     {
-        if ($score >= 70) return 'A'; if ($score >= 60) return 'B';
-        if ($score >= 50) return 'C'; if ($score >= 40) return 'D';
+        if ($score >= 70) {
+            return 'A';
+        }
+        if ($score >= 60) {
+            return 'B';
+        }
+        if ($score >= 50) {
+            return 'C';
+        }
+        if ($score >= 40) {
+            return 'D';
+        }
         return 'F';
     }
 
     protected function getRemark($grade)
     {
         return match ($grade) {
-            'A',  'A1'             => 'Excellent',
-            'B',  'B2', 'B3'       => 'Very Good',
-            'C',  'C4', 'C5', 'C6' => 'Good',
-            'D',  'D7', 'E8'       => 'Pass',
-            default                => 'Fail',
+            'A', 'A1' => 'Excellent',
+            'B', 'B2', 'B3' => 'Very Good',
+            'C', 'C4', 'C5', 'C6' => 'Good',
+            'D', 'D7', 'E8' => 'Pass',
+            default => 'Fail',
         };
     }
 
     protected function getPreviousTermCum($studentId, $subjectId, $termId, $sessionId)
     {
-        if ($termId == 1) return 0;
+        if ($termId == 1) {
+            return 0;
+        }
         $prev = DB::table('broadsheets')
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
             ->where('broadsheet_records.student_id', $studentId)
@@ -1656,6 +2156,6 @@ class AdminScoreEntryController extends Controller
             ->where('broadsheet_records.session_id', $sessionId)
             ->where('broadsheets.term_id', $termId - 1)
             ->value('broadsheets.cum');
-        return $prev !== null ? round((float)$prev, 2) : 0;
+        return $prev !== null ? round((float) $prev, 2) : 0;
     }
 }
