@@ -204,53 +204,56 @@ class AdminScoreEntryController extends Controller
                     $query->where('subjectclass.teacher_editing_enabled', true)
                           ->whereNull('scoresheet_locks.is_active')
                           ->whereRaw('(SELECT COUNT(*) FROM broadsheets WHERE subjectclass_id = subjectclass.id AND is_locked = 1) = 0');
-                        break;
-                    case 'individual':
-                        $query->whereRaw('(SELECT COUNT(*) FROM broadsheets WHERE subjectclass_id = subjectclass.id AND is_locked = 1) > 0')
-                              ->whereNull('scoresheet_locks.is_active');
-                        break;
-                    case 'global':
-                        $query->where('scoresheet_locks.is_active', true);
-                        break;
-                    case 'disabled':
-                        $query->where('subjectclass.teacher_editing_enabled', false);
-                        break;
-                }
+                    break;
+                case 'individual':
+                    $query->whereRaw('(SELECT COUNT(*) FROM broadsheets WHERE subjectclass_id = subjectclass.id AND is_locked = 1) > 0')
+                          ->whereNull('scoresheet_locks.is_active');
+                    break;
+                case 'global':
+                    $query->where('scoresheet_locks.is_active', true);
+                    break;
+                case 'disabled':
+                    $query->where('subjectclass.teacher_editing_enabled', false);
+                    break;
             }
+        } // <-- this closes the if($request->filled('status')) block
 
-            $results = $query->orderBy('users.name')
-                            ->orderBy('subject.subject')
-                            ->get();
+        $results = $query->orderBy('users.name')
+                         ->orderBy('subject.subject')
+                         ->get();
 
-            // Get filters data without using arm relationship
-            $terms = Schoolterm::select('id', 'term')->get();
-            $sessions = Schoolsession::select('id', 'session')->orderBy('id', 'desc')->get();
-            $classes = DB::table('schoolclass')
-                        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                        ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
-                        ->get();
+        // Always load filters regardless of whether there are results
+        $terms    = Schoolterm::select('id', 'term')->get();
+        $sessions = Schoolsession::select('id', 'session')->orderBy('id', 'desc')->get();
+        $classes  = DB::table('schoolclass')
+                      ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                      ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
+                      ->get();
 
-            return response()->json([
-                'success' => true,
-                'data' => $results,
-                'filters' => [
-                    'terms' => $terms,
-                    'sessions' => $sessions,
-                    'classes' => $classes->map(function($cls) {
-                        return (object)[
-                            'id' => $cls->id,
-                            'schoolclass' => $cls->schoolclass,
-                            'arm' => $cls->arm ? (object)['arm' => $cls->arm] : null
-                        ];
-                    }),
-                ]
-            ]);
+        return response()->json([
+            'success' => true,
+            'data'    => $results,
+            'filters' => [
+                'terms'    => $terms,
+                'sessions' => $sessions,
+                'classes'  => $classes->map(function($cls) {
+                    return (object)[
+                        'id'         => $cls->id,
+                        'schoolclass' => $cls->schoolclass,
+                        'arm'        => $cls->arm ? (object)['arm' => $cls->arm] : null,
+                    ];
+                }),
+            ],
+        ]);
 
-        } catch (\Exception $e) {
-            Log::error('Get scoresheets list error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+    } catch (\Exception $e) {
+        Log::error('Get scoresheets list error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
+}
+
+
+
     public function bulkLockManagement(Request $request)
     {
         $request->validate([
