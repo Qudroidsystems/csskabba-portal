@@ -323,148 +323,183 @@ class AdminScoreEntryController extends Controller
         }
     }
 
+
+
     public function bulkLockManagement(Request $request)
-    {
-        // FIXED: Make 'reason' field nullable for all actions
-        $request->validate([
-            'action' => 'required|in:lock_individual,unlock_individual,lock_global,unlock_global,disable_editing,enable_editing',
-            'subjectclass_ids' => 'required|array',
-            'subjectclass_ids.*' => 'exists:subjectclass,id',
-            'reason' => 'nullable|string|max:500',  // CHANGED: Added nullable
-            'term_id' => 'required_if:action,lock_global,unlock_global',
-            'session_id' => 'required_if:action,lock_global,unlock_global',
+{
+    // FIXED: Make 'reason' field nullable and optional
+    $request->validate([
+        'action' => 'required|in:lock_individual,unlock_individual,lock_global,unlock_global,disable_editing,enable_editing',
+        'subjectclass_ids' => 'required|array',
+        'subjectclass_ids.*' => 'exists:subjectclass,id',
+        'reason' => 'nullable|string|max:500',  // KEY FIX: Added 'nullable'
+        'term_id' => 'required_if:action,lock_global,unlock_global|nullable|exists:schoolterm,id',
+        'session_id' => 'required_if:action,lock_global,unlock_global|nullable|exists:schoolsession,id',
+    ]);
+
+    $action = $request->action;
+    $subjectclassIds = $request->subjectclass_ids;
+    $reason = $request->reason;
+    $userId = auth()->id();
+
+    DB::beginTransaction();
+    try {
+        $results = [];
+        $lockedCount = 0;
+        $unlockedCount = 0;
+
+        foreach ($subjectclassIds as $subjectclassId) {
+            $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
+            if (!$subjectClass) continue;
+
+            switch ($action) {
+                case 'lock_individual':
+                    $count = Broadsheets::where('subjectclass_id', $subjectclassId)
+                        ->where('is_locked', false)
+                        ->update([
+                            'is_locked' => true,
+                            'locked_by' => $userId,
+                            'locked_at' => now(),
+                            'lock_reason' => $reason ?: 'Locked by admin',
+                        ]);
+                    $lockedCount += $count;
+                    $results[] = "Locked {$count} scoresheets for {$subjectClass->subject->subject}";
+                    break;
+
+                case 'unlock_individual':
+                    // Check for global lock first
+                    $globalLock = ScoresheetLock::where([
+                        'subjectclass_id' => $subjectclassId,
+                        'term_id' => $request->term_id,
+                        'session_id' => $request->session_id,
+                        'is_active' => true,
+                    ])->first();
+
+                    if ($globalLock) {
+                        $results[] = "Cannot unlock {$subjectClass->subject->subject}: Global lock is active. Remove global lock first.";
+                        continue 2;
+                    }
+
+                    // FIXED: Only unlock locked scoresheets and use correct condition
+                    $count = Broadsheets::where('subjectclass_id', $subjectclassId)
+                        ->where('is_locked', '=', 1)  // Explicitly check for 1/true
+                        ->update([
+                            'is_locked' => false,
+                            'locked_by' => null,
+                            'locked_at' => null,
+                            'lock_reason' => null,
+                            'scheduled_unlock_at' => null,
+                        ]);
+                    $unlockedCount += $count;
+                    $results[] = "Unlocked {$count} scoresheets for {$subjectClass->subject->subject}";
+                    break;
+
+                case 'lock_global':
+                    $lock = ScoresheetLock::updateOrCreate(
+                        [
+                            'subjectclass_id' => $subjectclassId,
+                            'term_id' => $request->term_id,
+                            'session_id' => $request->session_id,
+                        ],
+                        [
+                            'is_active' => true,
+                            'locked_by' => $userId,
+                            'locked_at' => now(),
+                            'reason' => $reason ?: 'Global lock applied by admin',
+                        ]
+                    );
+
+                    $count = Broadsheets::where('subjectclass_id', $subjectclassId)
+                        ->update([
+                            'is_locked' => true,
+                            'locked_by' => $userId,
+                            'locked_at' => now(),
+                            'lock_reason' => $reason ?: 'Global lock applied',
+                        ]);
+                    $lockedCount += $count;
+                    $results[] = "Global lock applied to {$subjectClass->subject->subject} - Locked {$count} scoresheets";
+                    break;
+
+                case 'unlock_global':
+                    // Remove global lock
+                    $updated = ScoresheetLock::where([
+                        'subjectclass_id' => $subjectclassId,
+                        'term_id' => $request->term_id,
+                        'session_id' => $request->session_id,
+                    ])->update(['is_active' => false]);
+
+                    // Optionally unlock individual scoresheets (or leave as is)
+                    // To also unlock individual scoresheets, uncomment the next lines:
+                    /*
+                    $count = Broadsheets::where('subjectclass_id', $subjectclassId)
+                        ->where('is_locked', true)
+                        ->update([
+                            'is_locked' => false,
+                            'locked_by' => null,
+                            'locked_at' => null,
+                            'lock_reason' => null,
+                        ]);
+                    $unlockedCount += $count;
+                    */
+
+                    $results[] = "Global lock removed from {$subjectClass->subject->subject}";
+                    break;
+
+                case 'disable_editing':
+                    $subjectClass->teacher_editing_enabled = false;
+                    $subjectClass->teacher_editing_disabled_at = now();
+                    $subjectClass->teacher_editing_disabled_by = $userId;
+                    $subjectClass->save();
+
+                    $count = Broadsheets::where('subjectclass_id', $subjectclassId)
+                        ->update([
+                            'is_locked' => true,
+                            'locked_by' => $userId,
+                            'locked_at' => now(),
+                            'lock_reason' => $reason ?: 'Teacher editing disabled by admin',
+                        ]);
+                    $lockedCount += $count;
+                    $results[] = "Teacher editing disabled for {$subjectClass->subject->subject} - Locked {$count} scoresheets";
+                    break;
+
+                case 'enable_editing':
+                    $subjectClass->teacher_editing_enabled = true;
+                    $subjectClass->teacher_editing_disabled_at = null;
+                    $subjectClass->teacher_editing_disabled_by = null;
+                    $subjectClass->save();
+
+                    $results[] = "Teacher editing enabled for {$subjectClass->subject->subject}";
+                    break;
+            }
+        }
+
+        DB::commit();
+
+        $message = implode("\n", $results);
+        if ($lockedCount > 0) {
+            $message = "Locked {$lockedCount} scoresheet(s).\n" . $message;
+        }
+        if ($unlockedCount > 0) {
+            $message = "Unlocked {$unlockedCount} scoresheet(s).\n" . $message;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => [
+                'results' => $results,
+                'locked_count' => $lockedCount,
+                'unlocked_count' => $unlockedCount
+            ]
         ]);
 
-        $action = $request->action;
-        $subjectclassIds = $request->subjectclass_ids;
-        $reason = $request->reason;
-        $userId = auth()->id();
-
-        DB::beginTransaction();
-        try {
-            $results = [];
-
-            foreach ($subjectclassIds as $subjectclassId) {
-                $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
-                if (!$subjectClass) continue;
-
-                switch ($action) {
-                    case 'lock_individual':
-                        $count = Broadsheets::where('subjectclass_id', $subjectclassId)
-                            ->where('is_locked', false)
-                            ->update([
-                                'is_locked' => true,
-                                'locked_by' => $userId,
-                                'locked_at' => now(),
-                                'lock_reason' => $reason ?: 'Locked by admin',
-                            ]);
-                        $results[] = "Locked {$count} scoresheets for {$subjectClass->subject->subject}";
-                        break;
-
-                    case 'unlock_individual':
-                        $globalLock = ScoresheetLock::where([
-                            'subjectclass_id' => $subjectclassId,
-                            'term_id' => $request->term_id,
-                            'session_id' => $request->session_id,
-                            'is_active' => true,
-                        ])->first();
-
-                        if ($globalLock) {
-                            $results[] = "Cannot unlock {$subjectClass->subject->subject}: Global lock is active. Remove global lock first.";
-                            continue 2;
-                        }
-
-                        $count = Broadsheets::where('subjectclass_id', $subjectclassId)
-                            ->where('is_locked', true)
-                            ->update([
-                                'is_locked' => false,
-                                'locked_by' => null,
-                                'locked_at' => null,
-                                'lock_reason' => null,
-                            ]);
-                        $results[] = "Unlocked {$count} scoresheets for {$subjectClass->subject->subject}";
-                        break;
-
-                    case 'lock_global':
-                        $lock = ScoresheetLock::updateOrCreate(
-                            [
-                                'subjectclass_id' => $subjectclassId,
-                                'term_id' => $request->term_id,
-                                'session_id' => $request->session_id,
-                            ],
-                            [
-                                'is_active' => true,
-                                'locked_by' => $userId,
-                                'locked_at' => now(),
-                                'reason' => $reason ?: 'Global lock applied by admin',
-                            ]
-                        );
-
-                        Broadsheets::where('subjectclass_id', $subjectclassId)
-                            ->update([
-                                'is_locked' => true,
-                                'locked_by' => $userId,
-                                'locked_at' => now(),
-                                'lock_reason' => $reason ?: 'Global lock applied',
-                            ]);
-
-                        $results[] = "Global lock applied to {$subjectClass->subject->subject}";
-                        break;
-
-                    case 'unlock_global':
-                        ScoresheetLock::where([
-                            'subjectclass_id' => $subjectclassId,
-                            'term_id' => $request->term_id,
-                            'session_id' => $request->session_id,
-                        ])->update(['is_active' => false]);
-
-                        // Optionally unlock individual scoresheets or leave as is
-                        // Here we're NOT auto-unlocking individual locks
-                        $results[] = "Global lock removed from {$subjectClass->subject->subject}";
-                        break;
-
-                    case 'disable_editing':
-                        $subjectClass->teacher_editing_enabled = false;
-                        $subjectClass->teacher_editing_disabled_at = now();
-                        $subjectClass->teacher_editing_disabled_by = $userId;
-                        $subjectClass->save();
-
-                        Broadsheets::where('subjectclass_id', $subjectclassId)
-                            ->update([
-                                'is_locked' => true,
-                                'locked_by' => $userId,
-                                'locked_at' => now(),
-                                'lock_reason' => $reason ?: 'Teacher editing disabled by admin',
-                            ]);
-
-                        $results[] = "Teacher editing disabled for {$subjectClass->subject->subject}";
-                        break;
-
-                    case 'enable_editing':
-                        $subjectClass->teacher_editing_enabled = true;
-                        $subjectClass->teacher_editing_disabled_at = null;
-                        $subjectClass->teacher_editing_disabled_by = null;
-                        $subjectClass->save();
-
-                        $results[] = "Teacher editing enabled for {$subjectClass->subject->subject}";
-                        break;
-                }
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => implode("\n", $results),
-                'data' => $results
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Bulk lock management error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Bulk lock management error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
+}
+
 
     // =========================================================================
     // SCORESHEET — terminal

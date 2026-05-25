@@ -25,7 +25,6 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
-    /* match container-fluid horizontal padding exactly */
     padding: 0;
     width: 100%;
 }
@@ -67,7 +66,6 @@
 /* ── Stat strip ───────────────────────────────────────────────────── */
 .lm-stats {
     display: grid;
-    /* 5 equal columns, collapses gracefully */
     grid-template-columns: repeat(5, 1fr);
     gap: 14px;
 }
@@ -163,7 +161,7 @@
 .btn-outline:hover   { background:#f8fafc; border-color:#94a3b8; color:#1e293b; }
 .btn:disabled  { opacity:.4; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
 
-/* ── Table card — KEY: no extra wrapper, same border-box as siblings ─ */
+/* ── Table card ───────────────────────────────────────────────────── */
 .lm-table-card {
     background: var(--lm-card);
     border: 1px solid var(--lm-border);
@@ -171,7 +169,6 @@
     overflow: hidden;
     box-shadow: var(--lm-shadow);
     animation: lm-fadeUp .4s .16s ease both;
-    /* Ensure it stretches to full available width */
     width: 100%;
     min-width: 0;
 }
@@ -365,7 +362,6 @@
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- single flex column — ALL children are at the same width level --}}
     <div class="lm-page">
 
         {{-- ── HERO ──────────────────────────────────────────────────── --}}
@@ -378,7 +374,7 @@
             </div>
         </div>
 
-        {{-- ── STATS (CSS grid — always same total width as siblings) ── --}}
+        {{-- ── STATS ─────────────────────────────────────────────────── --}}
         <div class="lm-stats">
             <div class="stat-card sc-total"    style="animation-delay:.04s">
                 <div class="stat-ico"><i class="ri-file-list-line"></i></div>
@@ -460,10 +456,12 @@
                 <i class="ri-checkbox-line me-1"></i>
                 <strong id="selectedCount">0</strong> scoresheet(s) selected
             </div>
-            <button class="btn btn-warning   btn-sm" id="bulkLockBtn"    disabled><i class="ri-lock-line"></i>Lock</button>
-            <button class="btn btn-success   btn-sm" id="bulkUnlockBtn"  disabled><i class="ri-lock-unlock-line"></i>Unlock</button>
-            <button class="btn btn-danger    btn-sm" id="bulkDisableBtn" disabled><i class="ri-ban-line"></i>Disable</button>
-            <button class="btn btn-secondary btn-sm" id="bulkEnableBtn"  disabled><i class="ri-check-line"></i>Enable</button>
+            <button class="btn btn-warning   btn-sm" id="bulkLockIndivBtn"    disabled><i class="ri-lock-line"></i>Lock Individual</button>
+            <button class="btn btn-success   btn-sm" id="bulkUnlockIndivBtn"  disabled><i class="ri-lock-unlock-line"></i>Unlock Individual</button>
+            <button class="btn btn-danger    btn-sm" id="bulkLockGlobalBtn"   disabled><i class="ri-global-line"></i>Lock Global</button>
+            <button class="btn btn-secondary btn-sm" id="bulkUnlockGlobalBtn" disabled><i class="ri-global-line"></i>Unlock Global</button>
+            <button class="btn btn-danger    btn-sm" id="bulkDisableBtn"      disabled><i class="ri-ban-line"></i>Disable Editing</button>
+            <button class="btn btn-success   btn-sm" id="bulkEnableBtn"       disabled><i class="ri-check-line"></i>Enable Editing</button>
             <button class="btn btn-outline   btn-sm" id="refreshBtn"><i class="ri-refresh-line"></i>Refresh</button>
             <a href="{{ route('admin.score-entry.index') }}" class="btn btn-outline btn-sm">
                 <i class="ri-arrow-left-line"></i>Back
@@ -488,7 +486,7 @@
                             <th>Term</th>
                             <th>Session</th>
                             <th>Lock Status</th>
-                            <th style="width:178px;">Actions</th>
+                            <th style="width:210px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="scoresheetsTableBody">
@@ -524,44 +522,91 @@
 const ROUTES = {
     list    : '{{ route("admin.score-entry.scoresheets-list") }}',
     bulk    : '{{ route("admin.score-entry.bulk-lock-management") }}',
-    lock    : '{{ route("admin.score-entry.lock-batch") }}',
-    unlock  : '{{ route("admin.score-entry.unlock-batch") }}',
-    disable : '{{ route("admin.score-entry.disable-teacher-editing") }}',
-    enable  : '{{ route("admin.score-entry.enable-teacher-editing") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
 /* ── State ─────────────────────────────────────────────────────────── */
-let allData      = [];   // full server response (never filtered client-side for term/session/class)
+let allData      = [];
 let selectedIds  = new Set();
 let filtersReady = false;
-let loadTimer    = null;
+
+/* ══════════════════════════════════════════════════════════════════════
+   ACTION DEFINITIONS
+   ══════════════════════════════════════════════════════════════════════ */
+const ACTION = {
+    lock_individual: {
+        title: 'Lock Scoresheets (Individual)',
+        msg: 'Lock individual student scores in selected subjects.',
+        reason: true,
+        color: '#f59e0b',
+        needsTermSession: false,
+        buttonId: 'bulkLockIndivBtn'
+    },
+    unlock_individual: {
+        title: 'Unlock Scoresheets (Individual)',
+        msg: 'Unlock individual student scores in selected subjects.',
+        reason: false,
+        color: '#10b981',
+        needsTermSession: false,
+        buttonId: 'bulkUnlockIndivBtn'
+    },
+    lock_global: {
+        title: 'Lock Scoresheets (Global)',
+        msg: 'Global lock prevents ANY edits to these subjects. All scoresheets will be locked.',
+        reason: true,
+        color: '#dc2626',
+        needsTermSession: true,
+        buttonId: 'bulkLockGlobalBtn'
+    },
+    unlock_global: {
+        title: 'Unlock Scoresheets (Global)',
+        msg: 'Remove global lock from these subjects. Individual locks will remain if they were locked separately.',
+        reason: false,
+        color: '#10b981',
+        needsTermSession: true,
+        buttonId: 'bulkUnlockGlobalBtn'
+    },
+    disable_editing: {
+        title: 'Disable Teacher Editing',
+        msg: 'Teachers cannot edit scores in these subjects. All scoresheets will be locked.',
+        reason: true,
+        color: '#ef4444',
+        needsTermSession: false,
+        buttonId: 'bulkDisableBtn'
+    },
+    enable_editing: {
+        title: 'Enable Teacher Editing',
+        msg: 'Teachers regain editing access to these subjects.',
+        reason: false,
+        color: '#10b981',
+        needsTermSession: false,
+        buttonId: 'bulkEnableBtn'
+    },
+};
 
 /* ══════════════════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
-    // First load: build filter dropdowns then render
     fetchAndRender(true);
 
-    // Apply button → full server fetch with all active filters
     document.getElementById('applyFiltersBtn').addEventListener('click', () => fetchAndRender(false));
 
-    // Dropdown changes → auto-fetch after short debounce (so tabbing through
-    // filters doesn't fire multiple requests)
     ['termFilter','sessionFilter','classFilter','statusFilter'].forEach(id => {
         document.getElementById(id).addEventListener('change', debounce(() => fetchAndRender(false), 280));
     });
 
-    // Search box → client-side instant filter (no server round-trip)
     document.getElementById('searchInput').addEventListener('input', debounce(applySearchFilter, 220));
+    document.getElementById('refreshBtn').addEventListener('click', () => { spinRefresh(); fetchAndRender(false); });
+    document.getElementById('selectAll').addEventListener('change', onSelectAll);
 
-    document.getElementById('refreshBtn')    .addEventListener('click', () => { spinRefresh(); fetchAndRender(false); });
-    document.getElementById('bulkLockBtn')   .addEventListener('click', () => bulkAction('lock_individual'));
-    document.getElementById('bulkUnlockBtn') .addEventListener('click', () => bulkAction('unlock_individual'));
+    // Action buttons
+    document.getElementById('bulkLockIndivBtn').addEventListener('click', () => bulkAction('lock_individual'));
+    document.getElementById('bulkUnlockIndivBtn').addEventListener('click', () => bulkAction('unlock_individual'));
+    document.getElementById('bulkLockGlobalBtn').addEventListener('click', () => bulkAction('lock_global'));
+    document.getElementById('bulkUnlockGlobalBtn').addEventListener('click', () => bulkAction('unlock_global'));
     document.getElementById('bulkDisableBtn').addEventListener('click', () => bulkAction('disable_editing'));
-    document.getElementById('bulkEnableBtn') .addEventListener('click', () => bulkAction('enable_editing'));
-    document.getElementById('selectAll')     .addEventListener('change', onSelectAll);
+    document.getElementById('bulkEnableBtn').addEventListener('click', () => bulkAction('enable_editing'));
 });
 
 function debounce(fn, ms) {
@@ -569,12 +614,11 @@ function debounce(fn, ms) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   FETCH — builds params from ALL filter controls, sends to server
+   FETCH
    ══════════════════════════════════════════════════════════════════════ */
 async function fetchAndRender(buildFilters) {
     showSkeleton();
 
-    // Build query string from every filter widget
     const params = new URLSearchParams();
     const search = document.getElementById('searchInput').value.trim();
     const term   = document.getElementById('termFilter').value;
@@ -582,14 +626,14 @@ async function fetchAndRender(buildFilters) {
     const cls    = document.getElementById('classFilter').value;
     const status = document.getElementById('statusFilter').value;
 
-    if (search) params.set('search',     search);
-    if (term)   params.set('term_id',    term);
+    if (search) params.set('search', search);
+    if (term)   params.set('term_id', term);
     if (sess)   params.set('session_id', sess);
-    if (cls)    params.set('class_id',   cls);
-    if (status) params.set('status',     status);
+    if (cls)    params.set('class_id', cls);
+    if (status) params.set('status', status);
 
     try {
-        const res  = await fetch(`${ROUTES.list}?${params}`, {
+        const res = await fetch(`${ROUTES.list}?${params}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF }
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -618,10 +662,6 @@ async function fetchAndRender(buildFilters) {
     }
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   CLIENT-SIDE SEARCH FILTER (instant, no server call)
-   Applies on top of the already-rendered data
-   ══════════════════════════════════════════════════════════════════════ */
 function applySearchFilter() {
     const q = document.getElementById('searchInput').value.trim().toLowerCase();
     let vis = 0;
@@ -633,37 +673,24 @@ function applySearchFilter() {
     setRecordCount(vis);
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   BUILD FILTER DROPDOWNS
-   ══════════════════════════════════════════════════════════════════════ */
 function buildFilterDropdowns(filters) {
     const term = document.getElementById('termFilter');
     const sess = document.getElementById('sessionFilter');
     const cls  = document.getElementById('classFilter');
 
-    // clear existing options (keep the "All" placeholder)
     [term, sess, cls].forEach(el => {
         while (el.options.length > 1) el.remove(1);
     });
 
-    (filters.terms    || []).forEach(t => term.insertAdjacentHTML('beforeend',
-        `<option value="${t.id}">${esc(t.term)}</option>`));
-
-    (filters.sessions || []).forEach(s => sess.insertAdjacentHTML('beforeend',
-        `<option value="${s.id}">${esc(s.session)}</option>`));
-
-    (filters.classes  || []).forEach(c => {
+    (filters.terms || []).forEach(t => term.insertAdjacentHTML('beforeend', `<option value="${t.id}">${esc(t.term)}</option>`));
+    (filters.sessions || []).forEach(s => sess.insertAdjacentHTML('beforeend', `<option value="${s.id}">${esc(s.session)}</option>`));
+    (filters.classes || []).forEach(c => {
         const arm = c.arm?.arm || '';
-        cls.insertAdjacentHTML('beforeend',
-            `<option value="${c.id}">${esc(c.schoolclass)} ${esc(arm)}</option>`);
+        cls.insertAdjacentHTML('beforeend', `<option value="${c.id}">${esc(c.schoolclass)} ${esc(arm)}</option>`);
     });
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   TABLE STATES
-   ══════════════════════════════════════════════════════════════════════ */
 function showSkeleton() {
-    // Show 6 placeholder skeleton rows for instant perceived performance
     const rows = Array.from({length:6}).map(() => `
         <tr class="lm-state-row" style="opacity:1;transform:none;">
             <td colspan="7" style="padding:0;">
@@ -677,10 +704,10 @@ function showSkeleton() {
                     <div class="skeleton" style="width:80px;"></div>
                     <div class="skeleton" style="width:80px;"></div>
                     <div class="skeleton" style="width:80px;border-radius:20px;"></div>
-                    <div class="skeleton" style="width:140px;"></div>
+                    <div class="skeleton" style="width:180px;"></div>
                 </div>
             </td>
-        </tr>`).join('');
+         </tr>`).join('');
     document.getElementById('scoresheetsTableBody').innerHTML = rows;
 }
 
@@ -692,43 +719,30 @@ function showError(msg) {
         </td></tr>`;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   RENDER TABLE
-   ══════════════════════════════════════════════════════════════════════ */
 function renderTable(data) {
     const tbody = document.getElementById('scoresheetsTableBody');
     setRecordCount(data.length);
 
     if (!data.length) {
-        tbody.innerHTML = `
-            <tr class="lm-state-row"><td colspan="7">
-                <i class="ri-inbox-line lm-state-icon"></i>
-                No scoresheets match your filters.
-            </td></tr>`;
+        tbody.innerHTML = `<tr class="lm-state-row"><td colspan="7"><i class="ri-inbox-line lm-state-icon"></i>No scoresheets match your filters.</td></tr>`;
         return;
     }
 
     const frag = document.createDocumentFragment();
     data.forEach(sheet => {
-        const st  = getStatus(sheet);
+        const st = getStatus(sheet);
         const ini = initials(sheet.teacher_name);
-        const pct = sheet.total_students > 0
-            ? Math.round(sheet.individually_locked_count / sheet.total_students * 100) : 0;
-        const searchIndex = [
-            sheet.teacher_name, sheet.subject_name, sheet.subject_code,
-            sheet.class_name, sheet.term_name, sheet.session_name
-        ].join(' ').toLowerCase();
+        const pct = sheet.total_students > 0 ? Math.round(sheet.individually_locked_count / sheet.total_students * 100) : 0;
+        const searchIndex = [sheet.teacher_name, sheet.subject_name, sheet.subject_code, sheet.class_name, sheet.term_name, sheet.session_name].join(' ').toLowerCase();
 
         const tr = document.createElement('tr');
-        tr.className   = `lm-row rs-${st.key}`;
-        tr.dataset.id  = sheet.subjectclass_id;
+        tr.className = `lm-row rs-${st.key}`;
+        tr.dataset.id = sheet.subjectclass_id;
         tr.dataset.search = searchIndex;
 
         tr.innerHTML = `
             <td style="padding-left:16px;width:42px;">
-                <input type="checkbox" class="form-check-input row-cb"
-                       data-id="${sheet.subjectclass_id}"
-                       ${selectedIds.has(sheet.subjectclass_id) ? 'checked' : ''}>
+                <input type="checkbox" class="form-check-input row-cb" data-id="${sheet.subjectclass_id}" ${selectedIds.has(sheet.subjectclass_id) ? 'checked' : ''}>
             </td>
             <td>
                 <div style="display:flex;align-items:center;gap:10px;">
@@ -751,14 +765,12 @@ function renderTable(data) {
                 </div>
             </td>
             <td><span class="class-chip">${esc(sheet.class_name)}</span></td>
-            <td style="color:#475569;white-space:nowrap;">${esc(sheet.term_name    || '—')}</td>
+            <td style="color:#475569;white-space:nowrap;">${esc(sheet.term_name || '—')}</td>
             <td style="color:#475569;white-space:nowrap;">${esc(sheet.session_name || '—')}</td>
             <td>
                 <span class="status-badge ${st.cls}"><i class="${st.icon}"></i>${st.text}</span>
                 ${sheet.global_lock_reason ? `
-                <div style="font-size:10.5px;color:var(--lm-muted);margin-top:4px;max-width:180px;
-                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
-                     title="${esc(sheet.global_lock_reason)}">
+                <div style="font-size:10.5px;color:var(--lm-muted);margin-top:4px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${esc(sheet.global_lock_reason)}">
                     <i class="ri-chat-quote-line me-1"></i>${esc(sheet.global_lock_reason.substring(0,50))}${sheet.global_lock_reason.length>50?'…':''}
                 </div>` : ''}
             </td>
@@ -768,7 +780,10 @@ function renderTable(data) {
                     <button class="ib ib-unlock"  title="Unlock individual"  onclick="quickAction(${sheet.subjectclass_id},'unlock_individual')"><i class="ri-lock-unlock-line"></i></button>
                     <button class="ib ib-disable" title="Disable editing"    onclick="quickAction(${sheet.subjectclass_id},'disable_editing')"><i class="ri-ban-line"></i></button>
                     <button class="ib ib-enable"  title="Enable editing"     onclick="quickAction(${sheet.subjectclass_id},'enable_editing')"><i class="ri-check-line"></i></button>
-                    <button class="ib ib-info"    title="Lock details"       onclick="showInfo(${sheet.subjectclass_id})"><i class="ri-history-line"></i></button>
+                    ${sheet.global_lock_active ?
+                        `<button class="ib ib-info" title="Remove global lock" onclick="quickAction(${sheet.subjectclass_id},'unlock_global')"><i class="ri-global-line"></i></button>` :
+                        `<button class="ib ib-info" title="Apply global lock" onclick="quickAction(${sheet.subjectclass_id},'lock_global')"><i class="ri-global-line"></i></button>`
+                    }
                 </div>
             </td>`;
 
@@ -778,21 +793,17 @@ function renderTable(data) {
     tbody.innerHTML = '';
     tbody.appendChild(frag);
 
-    // Re-attach checkbox listeners
     tbody.querySelectorAll('.row-cb').forEach(cb => cb.addEventListener('change', onRowCheckbox));
-
-    // Staggered entrance
     staggerRows();
 }
 
-/* ── Staggered row entrance (IntersectionObserver) ────────────────── */
 function staggerRows() {
     if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) {
         document.querySelectorAll('#scoresheetsTableBody tr.lm-row').forEach(r => r.classList.add('visible'));
         return;
     }
     const rows = Array.from(document.querySelectorAll('#scoresheetsTableBody tr.lm-row'));
-    const io   = new IntersectionObserver(entries => {
+    const io = new IntersectionObserver(entries => {
         entries.forEach(e => {
             if (!e.isIntersecting) return;
             const idx = rows.indexOf(e.target);
@@ -803,25 +814,21 @@ function staggerRows() {
     rows.forEach(r => io.observe(r));
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   STATS (with animated counter)
-   ══════════════════════════════════════════════════════════════════════ */
 function updateStats(data) {
     let open=0, indiv=0, global=0, disabled=0;
     data.forEach(s => {
-        if (!s.teacher_editing_enabled)           disabled++;
-        else if (s.global_lock_active)            global++;
+        if (!s.teacher_editing_enabled) disabled++;
+        else if (s.global_lock_active) global++;
         else if (s.individually_locked_count > 0) indiv++;
-        else                                      open++;
+        else open++;
     });
-    countUp('statTotal',      data.length);
-    countUp('statOpen',       open);
+    countUp('statTotal', data.length);
+    countUp('statOpen', open);
     countUp('statIndividual', indiv);
-    countUp('statGlobal',     global);
-    countUp('statDisabled',   disabled);
+    countUp('statGlobal', global);
+    countUp('statDisabled', disabled);
 
-    const txt = `${data.length} scoresheet${data.length!==1?'s':''} loaded`;
-    document.getElementById('heroCount').textContent = txt;
+    document.getElementById('heroCount').textContent = `${data.length} scoresheet${data.length!==1?'s':''} loaded`;
 }
 
 function countUp(id, target) {
@@ -839,20 +846,17 @@ function countUp(id, target) {
 }
 
 function setRecordCount(n) {
-    const badge  = document.getElementById('recordCount');
+    const badge = document.getElementById('recordCount');
     const footer = document.getElementById('footerCount');
-    if (badge)  { badge.textContent  = n; badge.classList.add('pop'); setTimeout(()=>badge.classList.remove('pop'),380); }
-    if (footer) footer.textContent   = `${n} record${n!==1?'s':''}`;
+    if (badge) { badge.textContent = n; badge.classList.add('pop'); setTimeout(()=>badge.classList.remove('pop'),380); }
+    if (footer) footer.textContent = `${n} record${n!==1?'s':''}`;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   SELECTION
-   ══════════════════════════════════════════════════════════════════════ */
 function onRowCheckbox() {
-    const id  = parseInt(this.dataset.id);
+    const id = parseInt(this.dataset.id);
     const row = this.closest('tr');
     if (this.checked) { selectedIds.add(id); row.style.outline='2px solid #bfdbfe'; row.style.outlineOffset='-2px'; }
-    else              { selectedIds.delete(id); row.style.outline=''; }
+    else { selectedIds.delete(id); row.style.outline=''; }
     syncSelectionUI();
 }
 
@@ -865,141 +869,231 @@ function onSelectAll() {
 }
 
 function syncSelectionUI() {
-    const n   = selectedIds.size;
+    const n = selectedIds.size;
     document.getElementById('selectedCount').textContent = n;
     document.getElementById('selInfo').classList.toggle('active', n > 0);
-    ['bulkLockBtn','bulkUnlockBtn','bulkDisableBtn','bulkEnableBtn']
-        .forEach(id => document.getElementById(id).disabled = n === 0);
 
-    const all  = document.querySelectorAll('#scoresheetsTableBody .row-cb');
-    const chk  = document.querySelectorAll('#scoresheetsTableBody .row-cb:checked');
-    const sa   = document.getElementById('selectAll');
-    sa.checked       = all.length > 0 && chk.length === all.length;
+    Object.values(ACTION).forEach(action => {
+        const btn = document.getElementById(action.buttonId);
+        if (btn) btn.disabled = n === 0;
+    });
+
+    const all = document.querySelectorAll('#scoresheetsTableBody .row-cb');
+    const chk = document.querySelectorAll('#scoresheetsTableBody .row-cb:checked');
+    const sa = document.getElementById('selectAll');
+    sa.checked = all.length > 0 && chk.length === all.length;
     sa.indeterminate = chk.length > 0 && chk.length < all.length;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   ACTION META
+   BULK ACTION
    ══════════════════════════════════════════════════════════════════════ */
-const ACTION = {
-    lock_individual  : { title:'Lock Scoresheets',        msg:'Lock all student scores in selected subjects.',   reason:true,  color:'#f59e0b' },
-    unlock_individual: { title:'Unlock Scoresheets',      msg:'Unlock all student scores in selected subjects.', reason:false, color:'#10b981' },
-    disable_editing  : { title:'Disable Teacher Editing', msg:'Teachers cannot edit scores in these subjects.',  reason:true,  color:'#ef4444' },
-    enable_editing   : { title:'Enable Teacher Editing',  msg:'Teachers regain editing access.',                 reason:false, color:'#10b981' },
-};
-
-/* ── Bulk action ──────────────────────────────────────────────────── */
 async function bulkAction(action) {
     const ids = [...selectedIds];
-    if (!ids.length) return;
+    if (!ids.length) {
+        toast('No scoresheets selected.', 'warning');
+        return;
+    }
+
     const m = ACTION[action];
+    if (!m) {
+        toast('Invalid action.', 'error');
+        return;
+    }
 
-    const { value: reason, isDismissed } = await Swal.fire({
-        title:m.title, text:m.msg, icon:'question',
-        input: m.reason ? 'textarea' : undefined,
-        inputPlaceholder:'Enter reason (optional)…',
-        showCancelButton:true, confirmButtonColor:m.color, confirmButtonText:'Confirm',
-    });
-    if (isDismissed) return;
+    let extraData = {};
+    if (m.needsTermSession) {
+        const termId = document.getElementById('termFilter').value;
+        const sessionId = document.getElementById('sessionFilter').value;
 
-    await httpPost(ROUTES.bulk, {
-        action, subjectclass_ids:ids, reason:reason||null,
-        term_id   : document.getElementById('termFilter').value    || null,
-        session_id: document.getElementById('sessionFilter').value || null,
-    });
-    selectedIds.clear();
-    fetchAndRender(false);
-}
+        if (!termId || !sessionId) {
+            Swal.fire({
+                title: 'Term & Session Required',
+                text: 'Please select a Term and Session from the filters above before performing global operations.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
+        }
+        extraData = { term_id: termId, session_id: sessionId };
+    }
 
-/* ── Quick single action ──────────────────────────────────────────── */
-window.quickAction = async function(id, action) {
-    const m = ACTION[action];
-    const { value:reason, isDismissed } = await Swal.fire({
-        title:m.title, text:m.msg, icon:'question',
-        input: m.reason ? 'textarea' : undefined,
-        inputPlaceholder:'Enter reason (optional)…',
-        showCancelButton:true, confirmButtonColor:m.color, confirmButtonText:'Confirm',
-    });
-    if (isDismissed) return;
+    let reason = null;
+    if (m.reason) {
+        const result = await Swal.fire({
+            title: m.title,
+            text: m.msg,
+            icon: 'question',
+            input: 'textarea',
+            inputPlaceholder: 'Enter reason for this action (optional)...',
+            showCancelButton: true,
+            confirmButtonColor: m.color,
+            confirmButtonText: 'Confirm',
+            cancelButtonText: 'Cancel'
+        });
 
-    const ep = {
-        lock_individual  : { url:ROUTES.lock,    body:{ subjectclass_ids:[id], reason, lock_type:'individual' } },
-        unlock_individual: { url:ROUTES.unlock,  body:{ subjectclass_ids:[id], unlock_type:'individual' } },
-        disable_editing  : { url:ROUTES.disable, body:{ subjectclass_ids:[id], reason } },
-        enable_editing   : { url:ROUTES.enable,  body:{ subjectclass_ids:[id] } },
-    }[action];
+        if (result.isDismissed) return;
+        reason = result.value || null;
+    } else {
+        const result = await Swal.fire({
+            title: m.title,
+            text: m.msg,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: m.color,
+            confirmButtonText: 'Confirm',
+            cancelButtonText: 'Cancel'
+        });
 
-    await httpPost(ep.url, ep.body);
-    fetchAndRender(false);
-};
+        if (result.isDismissed) return;
+    }
 
-/* ── Info popup ───────────────────────────────────────────────────── */
-window.showInfo = function(id) {
-    const s = allData.find(x => x.subjectclass_id === id);
-    if (!s) return;
-    const st  = getStatus(s);
-    const ini = initials(s.teacher_name);
     Swal.fire({
-        title:'Lock Details', icon:'info',
-        confirmButtonColor:'#2563eb', confirmButtonText:'Close',
-        html:`
-        <div style="text-align:left;font-size:13px;line-height:1.9;padding:2px 0;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
-                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${esc(ini)}</div>
-                <div>
-                    <div style="font-weight:700;color:#1e293b;font-size:14px;">${esc(s.teacher_name)}</div>
-                    <div style="color:#64748b;font-size:12px;">${esc(s.subject_name)} · ${esc(s.class_name)}</div>
-                </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;">
-                ${infoCard('Status', st.text)}
-                ${infoCard('Locked Students', `${s.individually_locked_count} / ${s.total_students}`)}
-                ${infoCard('Global Lock', s.global_lock_active ? '<span style="color:#dc2626;">🔴 Active</span>' : '<span style="color:#16a34a;">🟢 Inactive</span>', true)}
-                ${infoCard('Teacher Editing', s.teacher_editing_enabled ? '<span style="color:#16a34a;">✅ Enabled</span>' : '<span style="color:#dc2626;">🚫 Disabled</span>', true)}
-            </div>
-            ${s.global_lock_reason ? `<div style="padding:10px 14px;background:#fffbeb;border-radius:8px;border:1px solid #fde68a;margin-bottom:9px;">
-                <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#92400e;font-weight:700;margin-bottom:3px;">Lock Reason</div>
-                <div style="color:#78350f;">${esc(s.global_lock_reason)}</div></div>` : ''}
-            ${s.global_lock_by ? `<div style="padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-                <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;font-weight:700;margin-bottom:3px;">Locked By</div>
-                <div style="color:#1e293b;">${esc(s.global_lock_by)} <span style="color:#94a3b8;">at</span> ${esc(s.global_lock_at||'')}</div></div>` : ''}
-        </div>`,
+        title: 'Processing...',
+        text: 'Please wait while we process your request.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
     });
-};
 
-function infoCard(label, value, raw=false) {
-    return `<div style="padding:9px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-        <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;font-weight:700;margin-bottom:2px;">${label}</div>
-        <div style="font-weight:700;color:#1e293b;">${raw ? value : esc(value)}</div>
-    </div>`;
+    try {
+        const response = await fetch(ROUTES.bulk, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                action: action,
+                subjectclass_ids: ids,
+                reason: reason,
+                ...extraData
+            })
+        });
+
+        const result = await response.json();
+        Swal.close();
+
+        if (result.success) {
+            toast(result.message, 'success');
+            selectedIds.clear();
+            syncSelectionUI();
+            await fetchAndRender(false);
+        } else {
+            toast(result.message || 'Action failed.', 'error');
+            Swal.fire({
+                title: 'Action Failed',
+                text: result.message || 'An error occurred while processing your request.',
+                icon: 'error',
+                confirmButtonColor: '#dc2626'
+            });
+        }
+    } catch (error) {
+        Swal.close();
+        console.error('Bulk action error:', error);
+        toast('Network error. Please try again.', 'error');
+    }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   HTTP
+   QUICK ACTION (Single Row)
    ══════════════════════════════════════════════════════════════════════ */
-async function httpPost(url, body) {
-    try {
-        const res    = await fetch(url, {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest' },
-            body: JSON.stringify(body),
-        });
-        const result = await res.json();
-        if (result.success) toast(result.message, 'success');
-        else                toast(result.message || 'Action failed.', 'error');
-        return result;
-    } catch (e) {
-        console.error(e);
-        toast('Network error performing action.', 'error');
+window.quickAction = async function(id, action) {
+    const m = ACTION[action];
+    if (!m) {
+        toast('Invalid action.', 'error');
+        return;
     }
-}
+
+    let extraData = {};
+    if (m.needsTermSession) {
+        const termId = document.getElementById('termFilter').value;
+        const sessionId = document.getElementById('sessionFilter').value;
+
+        if (!termId || !sessionId) {
+            Swal.fire({
+                title: 'Term & Session Required',
+                text: 'Please select a Term and Session from the filters above before performing this action.',
+                icon: 'warning',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
+        }
+        extraData = { term_id: termId, session_id: sessionId };
+    }
+
+    let reason = null;
+    if (m.reason) {
+        const result = await Swal.fire({
+            title: m.title,
+            text: m.msg,
+            icon: 'question',
+            input: 'textarea',
+            inputPlaceholder: 'Enter reason (optional)...',
+            showCancelButton: true,
+            confirmButtonColor: m.color,
+            confirmButtonText: 'Confirm'
+        });
+
+        if (result.isDismissed) return;
+        reason = result.value || null;
+    } else {
+        const result = await Swal.fire({
+            title: m.title,
+            text: m.msg,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: m.color,
+            confirmButtonText: 'Confirm'
+        });
+
+        if (result.isDismissed) return;
+    }
+
+    Swal.fire({
+        title: 'Processing...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const response = await fetch(ROUTES.bulk, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                action: action,
+                subjectclass_ids: [id],
+                reason: reason,
+                ...extraData
+            })
+        });
+
+        const result = await response.json();
+        Swal.close();
+
+        if (result.success) {
+            toast(result.message, 'success');
+            await fetchAndRender(false);
+        } else {
+            toast(result.message || 'Action failed.', 'error');
+        }
+    } catch (error) {
+        Swal.close();
+        console.error('Quick action error:', error);
+        toast('Network error. Please try again.', 'error');
+    }
+};
 
 /* ══════════════════════════════════════════════════════════════════════
    HELPERS
    ══════════════════════════════════════════════════════════════════════ */
 function getStatus(s) {
-    if (!s.teacher_editing_enabled)          return { key:'disabled', cls:'sb-disabled', text:'Editing Disabled', icon:'ri-ban-line' };
-    if (s.global_lock_active)                return { key:'global',   cls:'sb-global',   text:'Globally Locked',  icon:'ri-global-line' };
+    if (!s.teacher_editing_enabled) return { key:'disabled', cls:'sb-disabled', text:'Editing Disabled', icon:'ri-ban-line' };
+    if (s.global_lock_active) return { key:'global', cls:'sb-global', text:'Globally Locked', icon:'ri-global-line' };
     const lc = parseInt(s.individually_locked_count||0);
     const tc = parseInt(s.total_students||0);
     if (lc > 0) return { key:'indiv', cls:'sb-indiv', text: lc===tc ? 'Fully Locked' : `Partial (${lc}/${tc})`, icon:'ri-lock-line' };
@@ -1020,9 +1114,9 @@ function esc(text) {
 function toast(msg, type='info') {
     const icons = {
         success:'<i class="ri-checkbox-circle-fill" style="color:#10b981;font-size:17px;"></i>',
-        error  :'<i class="ri-error-warning-fill"   style="color:#ef4444;font-size:17px;"></i>',
-        info   :'<i class="ri-information-fill"      style="color:#3b82f6;font-size:17px;"></i>',
-        warning:'<i class="ri-alert-fill"            style="color:#f59e0b;font-size:17px;"></i>',
+        error:'<i class="ri-error-warning-fill" style="color:#ef4444;font-size:17px;"></i>',
+        info:'<i class="ri-information-fill" style="color:#3b82f6;font-size:17px;"></i>',
+        warning:'<i class="ri-alert-fill" style="color:#f59e0b;font-size:17px;"></i>',
     };
     const el = document.createElement('div');
     el.className = `lm-toast t-${type}`;
