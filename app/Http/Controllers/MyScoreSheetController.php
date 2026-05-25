@@ -1478,12 +1478,12 @@ class MyScoreSheetController extends Controller
             )
             ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
                 $query->select(DB::raw(1))
-                    ->from('subject_registration_status')
+                    ->from('subjectRegistrationStatus')
                     ->join(
                         'subjectclass',
                         'subjectclass.id',
                         '=',
-                        'subject_registration_status.subjectclassid'
+                        'subjectRegistrationStatus.subjectclassid'
                     )
                     ->join(
                         'broadsheet_records as br_inner',
@@ -1492,9 +1492,9 @@ class MyScoreSheetController extends Controller
                         'subjectclass.subjectid'
                     )
                     ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
-                    ->where('subject_registration_status.studentid', $studentId)
-                    ->where('subject_registration_status.termid', $termId)
-                    ->where('subject_registration_status.sessionid', $sessionId);
+                    ->where('subjectRegistrationStatus.studentid', $studentId)
+                    ->where('subjectRegistrationStatus.termid', $termId)
+                    ->where('subjectRegistrationStatus.sessionid', $sessionId);
             })
             ->get(['broadsheets.total']);
 
@@ -1531,12 +1531,12 @@ class MyScoreSheetController extends Controller
                     )
                     ->whereExists(function ($query) use ($studentId, $t, $targetSession) {
                         $query->select(DB::raw(1))
-                            ->from('subject_registration_status')
+                            ->from('subjectRegistrationStatus')
                             ->join(
                                 'subjectclass',
                                 'subjectclass.id',
                                 '=',
-                                'subject_registration_status.subjectclassid'
+                                'subjectRegistrationStatus.subjectclassid'
                             )
                             ->join(
                                 'broadsheet_records as br_inner',
@@ -1545,9 +1545,9 @@ class MyScoreSheetController extends Controller
                                 'subjectclass.subjectid'
                             )
                             ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
-                            ->where('subject_registration_status.studentid', $studentId)
-                            ->where('subject_registration_status.termid', $t)
-                            ->where('subject_registration_status.sessionid', $targetSession);
+                            ->where('subjectRegistrationStatus.studentid', $studentId)
+                            ->where('subjectRegistrationStatus.termid', $t)
+                            ->where('subjectRegistrationStatus.sessionid', $targetSession);
                     })
                     ->get(['broadsheets.total']);
 
