@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::table('subjectclass', function (Blueprint $table) {
             // Check if columns don't exist before adding
             if (!Schema::hasColumn('subjectclass', 'teacher_editing_enabled')) {
-                $table->boolean('teacher_editing_enabled')->default(true)->after('status');
+                $table->boolean('teacher_editing_enabled')->default(true);
             }
             if (!Schema::hasColumn('subjectclass', 'teacher_editing_disabled_at')) {
                 $table->timestamp('teacher_editing_disabled_at')->nullable()->after('teacher_editing_enabled');
