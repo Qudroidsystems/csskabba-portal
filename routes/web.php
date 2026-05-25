@@ -1414,6 +1414,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
 
 
+
     // Admin Score Entry Routes
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
         Route::prefix('score-entry')->name('score-entry.')->group(function () {
@@ -1449,14 +1450,16 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             // Lock management routes
             Route::post('/lock-scoresheet', [AdminScoreEntryController::class, 'lockScoresheet'])->name('lock-scoresheet');
             Route::post('/unlock-scoresheet', [AdminScoreEntryController::class, 'unlockScoresheet'])->name('unlock-scoresheet');
+            Route::post('/lock-with-schedule', [AdminScoreEntryController::class, 'lockScoresheetWithSchedule'])->name('lock-with-schedule');
             Route::post('/lock-batch', [AdminScoreEntryController::class, 'lockBatchScoresheets'])->name('lock-batch');
+            Route::post('/lock-batch-with-schedule', [AdminScoreEntryController::class, 'lockBatchWithSchedule'])->name('lock-batch-with-schedule');
             Route::post('/unlock-batch', [AdminScoreEntryController::class, 'unlockBatchScoresheets'])->name('unlock-batch');
             Route::post('/disable-teacher-editing', [AdminScoreEntryController::class, 'disableTeacherEditing'])->name('disable-teacher-editing');
             Route::post('/enable-teacher-editing', [AdminScoreEntryController::class, 'enableTeacherEditing'])->name('enable-teacher-editing');
             Route::get('/lock-status', [AdminScoreEntryController::class, 'getLockStatus'])->name('lock-status');
-            
         });
     });
+
 
 });
 

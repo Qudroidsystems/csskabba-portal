@@ -1,4 +1,5 @@
 <?php
+// app/Models/Subjectclass.php
 
 namespace App\Models;
 
@@ -18,9 +19,9 @@ class Subjectclass extends Model
         'termid',
         'sessionid',
         'status',
-        'teacher_editing_enabled',      // New field for lock system
-        'teacher_editing_disabled_at',  // When teacher editing was disabled
-        'teacher_editing_disabled_by',  // Who disabled teacher editing
+        'teacher_editing_enabled',
+        'teacher_editing_disabled_at',
+        'teacher_editing_disabled_by',
     ];
 
     protected $casts = [
@@ -28,25 +29,16 @@ class Subjectclass extends Model
         'teacher_editing_disabled_at' => 'datetime',
     ];
 
-    /**
-     * Get the subject teacher associated with the subject class.
-     */
     public function subjectTeacher()
     {
         return $this->belongsTo(SubjectTeacher::class, 'subjectteacherid', 'id');
     }
 
-    /**
-     * Get the school class associated with the subject class.
-     */
     public function schoolClass()
     {
         return $this->belongsTo(Schoolclass::class, 'schoolclassid', 'id');
     }
 
-    /**
-     * Get the subject associated with the subject class.
-     */
     public function subject()
     {
         return $this->belongsTo(Subject::class, 'subjectid', 'id');
@@ -67,41 +59,26 @@ class Subjectclass extends Model
         return $this->belongsTo(User::class, 'staffid');
     }
 
-    /**
-     * Get the user who disabled teacher editing
-     */
     public function teacherEditingDisabledBy()
     {
         return $this->belongsTo(User::class, 'teacher_editing_disabled_by');
     }
 
-    /**
-     * Get all broadsheets for this subject class
-     */
     public function broadsheets()
     {
         return $this->hasMany(Broadsheets::class, 'subjectclass_id', 'id');
     }
 
-    /**
-     * Get all scoresheet locks for this subject class
-     */
     public function scoresheetLocks()
     {
         return $this->hasMany(ScoresheetLock::class, 'subjectclass_id', 'id');
     }
 
-    /**
-     * Check if teacher editing is currently enabled
-     */
     public function isTeacherEditingEnabled(): bool
     {
         return (bool) $this->teacher_editing_enabled;
     }
 
-    /**
-     * Disable teacher editing for this subject class
-     */
     public function disableTeacherEditing($userId = null, $reason = null)
     {
         $this->teacher_editing_enabled = false;
@@ -109,7 +86,6 @@ class Subjectclass extends Model
         $this->teacher_editing_disabled_by = $userId ?? auth()->id();
         $this->save();
 
-        // Also lock all related broadsheets
         $this->broadsheets()->update([
             'is_locked' => true,
             'locked_by' => $userId ?? auth()->id(),
@@ -120,9 +96,6 @@ class Subjectclass extends Model
         return $this;
     }
 
-    /**
-     * Enable teacher editing for this subject class
-     */
     public function enableTeacherEditing()
     {
         $this->teacher_editing_enabled = true;
@@ -130,7 +103,6 @@ class Subjectclass extends Model
         $this->teacher_editing_disabled_by = null;
         $this->save();
 
-        // Unlock all related broadsheets that don't have individual locks
         $this->broadsheets()
             ->where('is_locked', true)
             ->update([
@@ -143,9 +115,6 @@ class Subjectclass extends Model
         return $this;
     }
 
-    /**
-     * Get active global lock for this subject class in a specific term/session
-     */
     public function getActiveGlobalLock($termId, $sessionId)
     {
         return $this->scoresheetLocks()
@@ -155,9 +124,6 @@ class Subjectclass extends Model
             ->first();
     }
 
-    /**
-     * Check if there's an active global lock for this subject class in a specific term/session
-     */
     public function hasActiveGlobalLock($termId, $sessionId): bool
     {
         return $this->scoresheetLocks()
@@ -167,9 +133,6 @@ class Subjectclass extends Model
             ->exists();
     }
 
-    /**
-     * Get all locked broadsheets for this subject class
-     */
     public function getLockedBroadsheets($termId = null, $sessionId = null)
     {
         $query = $this->broadsheets()->where('is_locked', true);
@@ -186,9 +149,6 @@ class Subjectclass extends Model
         return $query->get();
     }
 
-    /**
-     * Get lock statistics for this subject class
-     */
     public function getLockStats($termId = null, $sessionId = null)
     {
         $query = $this->broadsheets();
@@ -213,18 +173,12 @@ class Subjectclass extends Model
         ];
     }
 
-    /**
-     * Get the class name with arm
-     */
     public function getFullClassNameAttribute()
     {
         $arm = $this->schoolClass?->arm?->arm ?? '';
         return trim($this->schoolClass?->schoolclass . ' ' . $arm);
     }
 
-    /**
-     * Get the subject name with code
-     */
     public function getSubjectDisplayAttribute()
     {
         return $this->subject?->subject . ' (' . $this->subject?->subject_code . ')';

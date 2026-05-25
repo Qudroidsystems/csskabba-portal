@@ -65,17 +65,11 @@
 .grade-badge.updating, .cum-grade-badge.updating { opacity: 0.5; transform: scale(0.9); }
 .grade-badge.updated,  .cum-grade-badge.updated  { animation: gradeFlash .4s ease; }
 @keyframes gradeFlash { 0% { transform: scale(1.15); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-.grade-loading {
-    display: inline-block; width: 12px; height: 12px;
-    border: 2px solid #e2e8f0; border-top-color: var(--ss-accent);
-    border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle;
-}
 
 .position-badge, .position-total-badge, .arm-position-badge, .arm-position-cum-badge {
     transition: transform .22s cubic-bezier(0.34,1.4,0.64,1), opacity .15s ease;
 }
 .pos-flash { animation: posFlash .5s cubic-bezier(0.34,1.4,0.64,1); }
-@keyframes posFlash { 0%{transform:scale(1);opacity:1;} 30%{transform:scale(1.25);opacity:.7;} 60%{transform:scale(0.95);opacity:1;} 100%{transform:scale(1);opacity:1;} }
 
 /* ROW ENTRANCE */
 #scoresheetTableBody tr[data-id] {
@@ -84,91 +78,8 @@
     will-change: opacity, transform;
 }
 #scoresheetTableBody tr[data-id].row-visible { opacity: 1; transform: translateY(0); }
-#scoresheetTableBody tr[data-id]:hover {
-    background: #f0f6ff !important; box-shadow: inset 3px 0 0 #2563eb;
-    transform: translateY(-1px) !important; position: relative; z-index: 1;
-}
-#scoresheetTableBody tr.row-vetted:hover     { background: #e6faf0 !important; }
-#scoresheetTableBody tr.row-not-vetted:hover { background: #fff0f0 !important; }
-#scoresheetTableBody tr.row-pending:hover    { background: #fff8e6 !important; }
-#scoresheetTableBody tr.row-locked:hover     { background: #fef2f2 !important; }
-#scoresheetTableBody tr[data-id]:hover .student-image { transform: scale(1.12); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
-.student-image { transition: transform .18s ease, box-shadow .18s ease; }
 
-/* SCORE TOOLTIP */
-#scoreTooltip {
-    display: none; position: fixed; z-index: 99990;
-    background: #fff; border: 0.5px solid #cbd5e1; border-radius: 10px;
-    padding: 10px 13px; width: 230px;
-    box-shadow: 0 4px 20px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
-    pointer-events: none; font-family: inherit; opacity: 0; transition: opacity .15s ease;
-}
-#scoreTooltip.tip-above { transform: translateY(-100%); }
-#scoreTooltip.tip-below { transform: translateY(0); }
-.tip-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 0.5px solid #e8ecf0; }
-.tip-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid #e2e8f0; }
-.tip-name   { font-size: 12px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tip-adm    { font-size: 10px; color: #64748b; margin-top: 1px; }
-.tip-grid   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
-.tip-stat   { text-align: center; }
-.tip-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; font-weight: 600; margin-bottom: 2px; }
-.tip-stat-val   { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
-.tip-divider    { height: 0.5px; background: #e8ecf0; margin-bottom: 8px; }
-.tip-prog-labels { display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-bottom: 3px; }
-.tip-prog-track  { height: 3px; background: #f1f5f9; border-radius: 2px; overflow: hidden; }
-.tip-prog-fill   { height: 100%; border-radius: 2px; background: #2563eb; width: 0%; transition: width .3s ease, background .3s ease; }
-
-/* APPLE-STYLE SAVE MODAL */
-#ssSaveOverlay {
-    display: none; position: fixed; inset: 0; z-index: 99999;
-    background: rgba(0,0,0,.30); align-items: center; justify-content: center;
-    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
-}
-#ssSaveOverlay.ss-visible { display: flex !important; animation: ssOverlayIn .2s ease forwards; }
-@keyframes ssOverlayIn { from { opacity:0; } to { opacity:1; } }
-#ssSaveModal {
-    background: #fff; border-radius: 20px; border: 0.5px solid rgba(0,0,0,.10);
-    box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.08);
-    padding: 32px 36px 26px; width: 310px; text-align: center;
-    transform: scale(.85) translateY(16px); opacity: 0;
-    transition: transform .32s cubic-bezier(.34,1.3,.64,1), opacity .22s ease;
-}
-#ssSaveOverlay.ss-visible  #ssSaveModal { transform: scale(1) translateY(0); opacity: 1; }
-#ssSaveOverlay.ss-closing  #ssSaveModal { transform: scale(.88) translateY(10px); opacity: 0; }
-#ssSaveOverlay.ss-closing  { animation: ssOverlayOut .22s ease forwards; }
-@keyframes ssOverlayOut { from { opacity:1; } to { opacity:0; } }
-.ss-icon-ring { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; position: relative; }
-.ss-icon-ring svg.ss-arc-svg { position: absolute; top:0; left:0; width:56px; height:56px; }
-.ss-icon-center { width: 36px; height: 36px; border-radius: 50%; background: rgba(30,58,95,.09); display: flex; align-items: center; justify-content: center; z-index: 1; position: relative; transition: background .3s; }
-.ss-modal-title { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 3px; letter-spacing: -.015em; }
-.ss-modal-sub   { font-size: 12px; color: #64748b; margin-bottom: 20px; min-height: 16px; transition: opacity .2s; }
-.ss-progress-track { height: 5px; border-radius: 3px; background: #f1f5f9; overflow: hidden; margin-bottom: 10px; }
-.ss-progress-fill  { height: 100%; border-radius: 3px; background: var(--ss-primary); width: 0%; transition: width .38s cubic-bezier(.4,0,.2,1), background .3s ease; }
-.ss-count-row  { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8; }
-.ss-count-num  { font-size: 11px; font-weight: 600; color: #334155; font-variant-numeric: tabular-nums; }
-.ss-check-path { stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .38s ease .08s; }
-.ss-check-path.drawn { stroke-dashoffset: 0; }
-
-@media (max-width: 768px) {
-    .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
-    .stat-card   { padding: 10px 12px; }
-    .stat-card .stat-value { font-size: 18px; }
-    #ssSaveModal { width: 280px; padding: 26px 24px 22px; }
-    #scoreTooltip { width: calc(100vw - 24px); }
-}
-
-/* Admin Banner */
-.admin-banner {
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-    border-left: 4px solid #0284c7;
-    border-radius: var(--ss-radius);
-    padding: 14px 20px;
-    margin-bottom: 20px;
-    animation: slideIn 0.4s ease;
-}
-@keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-/* Lock Status Badge */
+/* Lock Badge */
 .lock-badge {
     display: inline-flex;
     align-items: center;
@@ -178,91 +89,52 @@
     font-size: 11px;
     font-weight: 600;
 }
-.lock-badge.global {
-    background: #fee2e2;
-    color: #dc2626;
+.lock-badge.global { background: #fee2e2; color: #dc2626; }
+.lock-badge.individual { background: #fef3c7; color: #d97706; }
+.lock-badge.disabled { background: #e5e7eb; color: #6b7280; }
+.lock-badge.scheduled { background: #e0e7ff; color: #4338ca; }
+
+/* Admin Banner */
+.admin-banner {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border-left: 4px solid #0284c7;
+    border-radius: var(--ss-radius);
+    padding: 14px 20px;
+    margin-bottom: 20px;
 }
-.lock-badge.individual {
-    background: #fef3c7;
-    color: #d97706;
-}
-.lock-badge.disabled {
-    background: #e5e7eb;
-    color: #6b7280;
+
+/* SCORE TOOLTIP */
+#scoreTooltip {
+    display: none; position: fixed; z-index: 99990;
+    background: #fff; border: 0.5px solid #cbd5e1; border-radius: 10px;
+    padding: 10px 13px; width: 230px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
+    pointer-events: none; font-family: inherit; opacity: 0; transition: opacity .15s ease;
 }
 </style>
 
-{{-- ══ APPLE-STYLE SAVE MODAL ══════════════════════════════════════ --}}
-<div id="ssSaveOverlay">
-    <div id="ssSaveModal">
-        <div class="ss-icon-ring" id="ssIconRing">
-            <svg class="ss-arc-svg" viewBox="0 0 56 56" fill="none">
-                <circle cx="28" cy="28" r="25" stroke="#e2e8f0" stroke-width="2.5"/>
-                <circle id="ssArcFg" cx="28" cy="28" r="25"
-                    stroke="#1e3a5f" stroke-width="2.5" stroke-linecap="round"
-                    stroke-dasharray="157.08" stroke-dashoffset="157.08"
-                    transform="rotate(-90 28 28)"
-                    style="transition: stroke-dashoffset .38s cubic-bezier(.4,0,.2,1), stroke .3s ease;"/>
-            </svg>
-            <div class="ss-icon-center" id="ssIconCenter">
-                <svg id="ssIconSave" width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="2.5" y="2.5" width="13" height="13" rx="2.5" stroke="#1e3a5f" stroke-width="1.5"/>
-                    <rect x="5.5" y="2.5" width="5" height="4.5" rx="1" fill="#1e3a5f" opacity=".45"/>
-                    <path d="M5 10.5h8M5 13h5.5" stroke="#1e3a5f" stroke-width="1.3" stroke-linecap="round"/>
-                </svg>
-                <svg id="ssIconCheck" width="18" height="18" viewBox="0 0 18 18" fill="none" style="display:none;">
-                    <polyline class="ss-check-path" id="ssCheckPath"
-                        points="3.5,9.5 7.5,13.5 14.5,5.5"
-                        stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <svg id="ssIconX" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display:none;">
-                    <line x1="3.5" y1="3.5" x2="12.5" y2="12.5" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
-                    <line x1="12.5" y1="3.5" x2="3.5" y2="12.5" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
-                </svg>
-            </div>
-        </div>
+{{-- Apple-style Save Modal --}}
+<div id="ssSaveOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.30); align-items:center; justify-content:center;">
+    <div id="ssSaveModal" style="background:#fff; border-radius:20px; padding:32px 36px 26px; width:310px; text-align:center;">
         <div class="ss-modal-title" id="ssSaveTitle">Saving scores</div>
-        <div class="ss-modal-sub"  id="ssSaveSub">Please wait…</div>
-        <div class="ss-progress-track"><div class="ss-progress-fill" id="ssSaveFill"></div></div>
-        <div class="ss-count-row">
-            <span id="ssSaveCountLabel">Saved</span>
-            <span class="ss-count-num" id="ssSaveCountNum"></span>
+        <div class="ss-modal-sub" id="ssSaveSub">Please wait…</div>
+        <div class="ss-progress-track" style="height:5px; background:#f1f5f9; border-radius:3px; overflow:hidden; margin-bottom:10px;">
+            <div class="ss-progress-fill" id="ssSaveFill" style="height:100%; width:0%; background:#1e3a5f; transition:width .38s;"></div>
+        </div>
+        <div class="ss-count-row" style="display:flex; justify-content:space-between; font-size:11px;">
+            <span>Saved</span>
+            <span id="ssSaveCountNum">0 / 0</span>
         </div>
     </div>
 </div>
 
-{{-- ══ SCORE INPUT TOOLTIP ═════════════════════════════════════════ --}}
+{{-- Score Input Tooltip --}}
 <div id="scoreTooltip">
-    <div class="tip-top">
-        <img id="stAvatar" class="tip-avatar" src="" alt=""
-             onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-        <div style="min-width:0;">
-            <div class="tip-name" id="stName">—</div>
-            <div class="tip-adm"  id="stMeta">—</div>
-        </div>
+    <div class="tip-top" style="display:flex; gap:8px; margin-bottom:8px;">
+        <img id="stAvatar" style="width:28px;height:28px;border-radius:50%;">
+        <div><div id="stName" style="font-weight:600;"></div><div id="stMeta" style="font-size:10px;color:#666;"></div></div>
     </div>
-    <div class="tip-grid">
-        <div class="tip-stat">
-            <div class="tip-stat-label">Entering</div>
-            <div class="tip-stat-val" id="stVal" style="color:#2563eb;">—</div>
-        </div>
-        <div class="tip-stat">
-            <div class="tip-stat-label">Total</div>
-            <div class="tip-stat-val" id="stTotal" style="color:#1e3a5f;">—</div>
-        </div>
-        <div class="tip-stat">
-            <div class="tip-stat-label">Grade</div>
-            <div class="tip-stat-val" id="stGrade" style="color:#6b7280;">—</div>
-        </div>
-    </div>
-    <div class="tip-divider"></div>
-    <div class="tip-prog-labels">
-        <span id="stProgLabel">Score progress</span>
-        <span id="stProgPct">0%</span>
-    </div>
-    <div class="tip-prog-track">
-        <div class="tip-prog-fill" id="stProgFill"></div>
-    </div>
+    <div id="stProgFill"></div>
 </div>
 
 <div class="main-content">
@@ -275,299 +147,114 @@
             <div class="d-flex align-items-center gap-3">
                 <i class="ri-shield-user-line fs-2" style="color: #0284c7;"></i>
                 <div>
-                    <strong class="d-block" style="font-size: 15px;">Admin Score Entry Mode</strong>
-                    <small class="text-muted">
-                        Entering scores on behalf of: <strong>{{ $teacher->name }}</strong> |
-                        Subject: <strong>{{ $subjectClass->subject->subject }}</strong> ({{ $subjectClass->subject->subject_code }}) |
+                    <strong class="d-block">Admin Score Entry Mode</strong>
+                    <small>Entering scores on behalf of: <strong>{{ $teacher->name }}</strong> |
+                        Subject: <strong>{{ $subjectClass->subject->subject }}</strong> |
                         Class: <strong>{{ $schoolclass->schoolclass }} {{ $schoolclass->arm->arm ?? '' }}</strong>
                     </small>
                 </div>
             </div>
             <div class="d-flex gap-2">
-                <span class="badge bg-primary"><i class="ri-calendar-line me-1"></i>{{ $term->term }}</span>
-                <span class="badge bg-info"><i class="ri-calendar-event-line me-1"></i>{{ $session->session }}</span>
+                <span class="badge bg-primary">{{ $term->term }}</span>
+                <span class="badge bg-info">{{ $session->session }}</span>
             </div>
         </div>
     </div>
 
     {{-- Lock Status Banner --}}
     @if($globalLock || ($lockedCount ?? 0) > 0 || !$teacherEditingEnabled)
-    <div class="alert alert-warning mb-3" style="border-left: 4px solid #d97706;">
+    <div class="alert alert-warning mb-3">
         <div class="d-flex align-items-center gap-3">
-            <i class="ri-lock-line fs-3 text-warning"></i>
-            <div class="flex-grow-1">
+            <i class="ri-lock-line fs-3"></i>
+            <div>
                 @if(!$teacherEditingEnabled)
-                    <strong><i class="ri-alert-line me-1"></i> Teacher Editing Disabled</strong><br>
+                    <strong>Teacher Editing Disabled</strong><br>
                     <small>Teacher editing has been disabled for this subject by an administrator.</small>
                 @elseif($globalLock)
-                    <strong><i class="ri-global-line me-1"></i> Global Lock Active</strong><br>
-                    <small>This entire scoresheet is locked. Reason: {{ $globalLock->reason ?? 'No reason provided' }}</small><br>
-                    <small>Locked by: {{ optional($globalLock->lockedBy)->name }} on {{ $globalLock->locked_at->format('Y-m-d H:i:s') }}</small>
+                    <strong>Global Lock Active</strong><br>
+                    <small>{{ $globalLock->reason ?? 'No reason provided' }}</small>
+                    @if($globalLock->scheduled_unlock_at)
+                        <small class="d-block">Scheduled unlock: {{ \Carbon\Carbon::parse($globalLock->scheduled_unlock_at)->format('Y-m-d H:i:s') }}</small>
+                    @endif
                 @elseif(($lockedCount ?? 0) > 0)
-                    <strong><i class="ri-lock-line me-1"></i> {{ $lockedCount }} of {{ $broadsheets->count() }} scoresheets are locked</strong>
-                    <small>Locked records cannot be edited by teachers.</small>
+                    <strong>{{ $lockedCount }} of {{ $broadsheets->count() }} scoresheets are locked</strong>
                 @endif
             </div>
         </div>
     </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <strong>Error!</strong>
-            <ul class="mb-0 mt-1">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-        </div>
     @endif
 
     @if($broadsheets->isNotEmpty())
     @php
-        $first    = $broadsheets->first();
-        $total    = $broadsheets->count();
-        $passed   = $broadsheets->filter(fn($b) => ($b->total ?? 0) >= 40)->count();
-        $failed   = $total - $passed;
-        $avg      = $total > 0 ? round($broadsheets->avg('total'), 1) : 0;
-        $highest  = $total > 0 ? round($broadsheets->max('total'), 1) : 0;
-        $lowest   = $total > 0 ? round($broadsheets->min('total'), 1) : 0;
+        $first = $broadsheets->first();
+        $total = $broadsheets->count();
+        $passed = $broadsheets->filter(fn($b) => ($b->total ?? 0) >= 40)->count();
+        $avg = $total > 0 ? round($broadsheets->avg('total'), 1) : 0;
         $passRate = $total > 0 ? round($passed / $total * 100) : 0;
-        $gradeDist = $broadsheets->groupBy('grade')->map->count();
-        $gradeColors = [
-            'A'  => '#16a34a', 'A1' => '#16a34a',
-            'B'  => '#2563eb', 'B2' => '#2563eb', 'B3' => '#3b82f6',
-            'C'  => '#7c3aed', 'C4' => '#7c3aed', 'C5' => '#8b5cf6', 'C6' => '#a78bfa',
-            'D'  => '#d97706', 'D7' => '#d97706', 'E8' => '#f59e0b',
-            'F'  => '#dc2626', 'F9' => '#dc2626',
-        ];
+        $gradeColors = ['A'=>'#16a34a','B'=>'#2563eb','C'=>'#7c3aed','D'=>'#d97706','F'=>'#dc2626'];
     @endphp
 
-    {{-- ══ INFO + STATS ════════════════════════════════════════════════ --}}
+    {{-- Stats Cards --}}
     <div class="row g-3 mb-3">
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100" style="border-left:4px solid var(--ss-primary) !important;">
-                <div class="card-body py-3">
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="flex-shrink-0 rounded-3 p-2" style="background:var(--ss-primary);">
-                            <i class="ri-book-2-line text-white fs-4"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="mb-1 fw-bold" style="color:var(--ss-primary);">
-                                {{ $first->subject }}
-                                <small class="text-muted fw-normal">({{ $first->subject_code }})</small>
-                            </h5>
-                            <div class="d-flex flex-wrap gap-2 mt-1">
-                                <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2">
-                                    <i class="ri-school-line me-1"></i>{{ $first->schoolclass }} {{ $first->arm }}
-                                </span>
-                                <span class="badge bg-info-subtle text-info fs-6 px-3 py-2">
-                                    <i class="ri-calendar-line me-1"></i>{{ $first->term }} | {{ $first->session }}
-                                </span>
-                                <span class="badge bg-warning-subtle text-warning fs-6 px-3 py-2">
-                                    <i class="ri-user-line me-1"></i>{{ $teacher->name }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-value text-primary">{{ $total }}</div>
+                <div class="stat-label">Total Students</div>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div class="row g-2 h-100">
-                <div class="col-4"><div class="stat-card text-center h-100">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-value text-primary">{{ $total }}</div>
-                    <div class="stat-label">Total Students</div>
-                </div></div>
-                <div class="col-4"><div class="stat-card text-center h-100">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-value" style="color:var(--ss-warning);">{{ $avg }}</div>
-                    <div class="stat-label">Class Average</div>
-                </div></div>
-                <div class="col-4"><div class="stat-card text-center h-100">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-value" style="color:var(--ss-success);">{{ $passRate }}%</div>
-                    <div class="stat-label">Pass Rate</div>
-                    <div class="pass-bar">
-                        <div class="pass-bar-fill" style="width:{{ $passRate }}%;background:var(--ss-success);"></div>
-                    </div>
-                </div></div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-value text-warning">{{ $avg }}</div>
+                <div class="stat-label">Class Average</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-value text-success">{{ $passRate }}%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-value">{{ $passed }}</div>
+                <div class="stat-label">Passed</div>
             </div>
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header border-0 pb-0 pt-3 px-3">
-                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)">
-                        <i class="ri-bar-chart-2-line me-1"></i>Score Summary
-                    </h6>
-                </div>
-                <div class="card-body pt-2">
-                    <div class="row g-2">
-                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#f0fdf4;">
-                            <div class="fw-bold fs-5" style="color:var(--ss-success);">{{ $passed }}</div>
-                            <div class="text-muted" style="font-size:11px;">Passed (Total)</div>
-                        </div></div>
-                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fef2f2;">
-                            <div class="fw-bold fs-5" style="color:var(--ss-danger);">{{ $failed }}</div>
-                            <div class="text-muted" style="font-size:11px;">Failed (Total)</div>
-                        </div></div>
-                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#eff6ff;">
-                            <div class="fw-bold fs-5" style="color:var(--ss-accent);">{{ $highest }}</div>
-                            <div class="text-muted" style="font-size:11px;">Highest Total</div>
-                        </div></div>
-                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fffbeb;">
-                            <div class="fw-bold fs-5" style="color:var(--ss-warning);">{{ $lowest }}</div>
-                            <div class="text-muted" style="font-size:11px;">Lowest Total</div>
-                        </div></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header border-0 pb-0 pt-3 px-3">
-                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)">
-                        <i class="ri-pie-chart-line me-1"></i>Grade Distribution (Total)
-                    </h6>
-                </div>
-                <div class="card-body pt-2">
-                    @if($gradeDist->isEmpty())
-                        <p class="text-muted small text-center mt-3">No grades yet.</p>
-                    @else
-                        <div class="grade-strip">
-                            @foreach($gradeDist->sortKeysDesc() as $grade => $count)
-                                @php $pct = $total > 0 ? round($count/$total*100) : 0; $col = $gradeColors[$grade] ?? '#6b7280'; @endphp
-                                <div class="grade-pill" style="background:{{ $col }}18;color:{{ $col }};border:1px solid {{ $col }}40;">
-                                    <div style="font-size:16px;">{{ $grade }}</div>
-                                    <div style="font-size:11px;font-weight:600;">{{ $count }} <span style="opacity:.7;">({{ $pct }}%)</span></div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header border-0 pb-0 pt-3 px-3">
-                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)">
-                        <i class="ri-clipboard-line me-1"></i>Assessments
-                    </h6>
-                </div>
-                <div class="card-body pt-2">
-                    @if($assessments->isNotEmpty())
-                        <div class="d-flex flex-column gap-2">
-                            @foreach($assessments as $assessment)
-                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 assessment-btn"
-                                     style="background:#eff6ff;border:1px solid #bfdbfe;color:var(--ss-accent);">
-                                    <span><i class="ri-edit-line me-1"></i>{{ $assessment->name }}</span>
-                                    <span class="badge" style="background:var(--ss-accent);">{{ $assessment->max_score }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-muted small text-center mt-3">
-                            <i class="ri-information-line me-1"></i>No assessments defined.
-                        </p>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    {{-- ══ POSITION LEGEND + ADMIN CONTROLS ═══════════════════════════ --}}
-    <div class="d-flex align-items-start justify-content-between gap-3 mb-2 flex-wrap"
-         style="font-size:12px;color:var(--ss-muted);">
-        <span>
-            <i class="ri-information-line me-1 text-info"></i>
-            <strong>Total Grade</strong> = grade on raw total &nbsp;|&nbsp;
-            <strong>Cum Grade</strong> = grade on cumulative avg &nbsp;|&nbsp;
-            <strong>Class Pos (Cum)</strong> = all arms, by cum &nbsp;|&nbsp;
-            <strong>Class Pos (Total)</strong> = all arms, by total &nbsp;|&nbsp;
-            <strong>Arm Pos (Total)</strong> = this arm, by total &nbsp;|&nbsp;
-            <strong>Arm Pos (Cum)</strong> = this arm, by cum
-        </span>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-primary" id="updateArmPositionsBtn">
-                <i class="ri-refresh-line me-1"></i>Recalculate All Positions
-            </button>
-        </div>
-    </div>
-
-    {{-- Admin Controls & Lock Management Card --}}
-    @if($broadsheets->isNotEmpty())
-    <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header" style="background: #f8fafc; border-bottom: 1px solid var(--ss-border);">
-            <h6 class="mb-0 fw-semibold" style="color: var(--ss-primary);">
-                <i class="ri-settings-4-line me-2"></i>Admin Controls & Lock Management
-            </h6>
+    {{-- Admin Controls Card --}}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="ri-settings-4-line me-2"></i>Admin Controls & Lock Management</h6>
         </div>
         <div class="card-body">
-            <div class="row g-3">
-                {{-- Lock Controls --}}
+            <div class="row">
                 <div class="col-md-6">
-                    <div class="border rounded-3 p-3 h-100">
-                        <h6 class="mb-3"><i class="ri-lock-line me-1"></i> Lock Controls</h6>
-                        <div class="d-flex flex-wrap gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-warning" id="lockAllBtn">
-                                <i class="ri-lock-line me-1"></i> Lock All (Individual)
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="globalLockBtn">
-                                <i class="ri-global-line me-1"></i> Global Lock
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-success" id="unlockAllBtn">
-                                <i class="ri-lock-unlock-line me-1"></i> Unlock All
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleTeacherEditBtn">
-                                <i class="ri-user-settings-line me-1"></i>
-                                {{ $teacherEditingEnabled ? 'Disable' : 'Enable' }} Teacher Editing
-                            </button>
-                        </div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="ri-information-line me-1"></i>
-                                <strong>Individual Lock:</strong> Locks each student record separately.<br>
-                                <strong>Global Lock:</strong> Prevents ANY edits from teachers via a central lock.<br>
-                                <strong>Toggle Teacher Editing:</strong> Completely disable/enable all teacher access.
-                            </small>
-                        </div>
+                    <h6><i class="ri-lock-line me-1"></i> Lock Controls</h6>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <button class="btn btn-sm btn-outline-warning" id="lockAllBtn"><i class="ri-lock-line me-1"></i>Lock All</button>
+                        <button class="btn btn-sm btn-outline-danger" id="globalLockBtn"><i class="ri-global-line me-1"></i>Global Lock</button>
+                        <button class="btn btn-sm btn-outline-info" id="lockWithScheduleBtn"><i class="ri-calendar-line me-1"></i>Lock with Schedule</button>
+                        <button class="btn btn-sm btn-outline-success" id="unlockAllBtn"><i class="ri-lock-unlock-line me-1"></i>Unlock All</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="toggleTeacherEditBtn">
+                            <i class="ri-user-settings-line me-1"></i>{{ $teacherEditingEnabled ? 'Disable' : 'Enable' }} Teacher Editing
+                        </button>
                     </div>
                 </div>
-
-                {{-- Audit Summary --}}
                 <div class="col-md-6">
-                    <div class="border rounded-3 p-3 h-100">
-                        <h6 class="mb-3"><i class="ri-history-line me-1"></i> Audit Summary</h6>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <div class="p-2 rounded text-center" style="background: #f0fdf4;">
-                                    <div class="small text-muted">Entered by Admin</div>
-                                    <div class="fw-bold fs-5 text-success">
-                                        {{ $broadsheets->where('entry_source', 'admin')->count() }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded text-center" style="background: #eff6ff;">
-                                    <div class="small text-muted">Entered by Teacher</div>
-                                    <div class="fw-bold fs-5 text-primary">
-                                        {{ $broadsheets->where('entry_source', 'teacher')->count() }}
-                                    </div>
-                                </div>
+                    <h6><i class="ri-history-line me-1"></i> Audit Summary</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="p-2 bg-success-light rounded text-center">
+                                <small>Admin Entered</small>
+                                <div class="fw-bold">{{ $broadsheets->where('entry_source', 'admin')->count() }}</div>
                             </div>
                         </div>
-                        <div class="mt-2 small text-muted">
-                            <i class="ri-time-line me-1"></i> Last activity:
-                            {{ $broadsheets->max('last_modified_at') ? \Carbon\Carbon::parse($broadsheets->max('last_modified_at'))->diffForHumans() : 'Never' }}
-                        </div>
-                        <div class="mt-2 small">
-                            <i class="ri-information-line me-1"></i>
-                            <span class="text-muted">Teacher editing is currently
-                                <strong class="{{ $teacherEditingEnabled ? 'text-success' : 'text-danger' }}">
-                                    {{ $teacherEditingEnabled ? 'ENABLED' : 'DISABLED' }}
-                                </strong>
-                            </span>
+                        <div class="col-6">
+                            <div class="p-2 bg-primary-light rounded text-center">
+                                <small>Teacher Entered</small>
+                                <div class="fw-bold">{{ $broadsheets->where('entry_source', 'teacher')->count() }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -576,876 +263,224 @@
     </div>
     @endif
 
-    {{-- ══ MAIN SCORESHEET CARD ════════════════════════════════════════ --}}
-    <div class="row"><div class="col-12"><div class="card border-0 shadow-sm">
-
-        <div class="card-header d-flex align-items-center flex-wrap gap-2 py-3"
-             style="background:var(--ss-primary);">
-            <div class="flex-grow-1">
-                <h5 class="mb-0 text-white fw-semibold">
-                    <i class="ri-file-list-3-line me-2"></i>{{ $pagetitle }}
-                    @if($broadsheets->isNotEmpty())
-                        <span class="badge bg-white text-primary ms-2" id="scoreCount">{{ $broadsheets->count() }}</span>
-                    @endif
-                </h5>
-            </div>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <div class="input-group input-group-sm" style="width:240px;">
-                    <span class="input-group-text bg-white border-0"><i class="ri-search-line text-muted"></i></span>
-                    <input type="text" class="form-control border-0 ps-1" id="searchInput"
-                           placeholder="Search admission / name…"
-                           {{ $broadsheets->isEmpty() ? 'disabled' : '' }}>
-                    <button class="btn btn-light border-0" id="clearSearch"><i class="ri-close-line"></i></button>
+    {{-- Scoresheet Table --}}
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ $pagetitle }}</h5>
+                <div class="d-flex gap-2">
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search..." style="width:200px;">
+                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#columnVisibilityModal"><i class="ri-eye-line"></i> Columns</button>
+                    <button class="btn btn-sm btn-warning" id="downloadMarksSheet"><i class="ri-file-pdf-line"></i> Marks Sheet</button>
+                    <button class="btn btn-sm btn-danger" id="downloadScoresPdf"><i class="ri-file-pdf-2-line"></i> Scores PDF</button>
+                    <button class="btn btn-sm btn-success" id="downloadExcel"><i class="ri-download-line"></i> Export</button>
+                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#importModal"><i class="ri-upload-line"></i> Import</button>
                 </div>
-                @if($broadsheets->isNotEmpty())
-                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#columnVisibilityModal">
-                        <i class="ri-eye-line me-1"></i>Columns
-                    </button>
-                    <button type="button" class="btn btn-sm btn-warning" id="downloadMarksSheet">
-                        <i class="ri-file-pdf-line me-1"></i>Marks Sheet
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger" id="downloadScoresPdf">
-                        <i class="ri-file-pdf-2-line me-1"></i>Scores PDF
-                    </button>
-                    <button type="button" class="btn btn-sm btn-success" id="downloadExcel">
-                        <i class="ri-download-line me-1"></i>Export Excel
-                    </button>
-                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
-                        <i class="ri-upload-line me-1"></i>Import
-                    </button>
-                @endif
-                <a href="{{ route('admin.score-entry.index', ['termid' => $termId, 'sessionid' => $sessionId]) }}"
-                   class="btn btn-sm btn-outline-light">
-                    <i class="ri-arrow-left-line me-1"></i>Back
-                </a>
             </div>
         </div>
-
         <div class="card-body p-0">
-            <div class="alert alert-info text-center m-3 mb-0" id="noDataAlert"
-                 style="display:{{ $broadsheets->isEmpty() ? 'block' : 'none' }};">
-                <i class="ri-information-line me-2"></i>No scores available.
-            </div>
-
-            {{-- Download progress --}}
-            <div id="downloadProgressContainer" style="display:none;" class="px-3 pt-3">
-                <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#fefce8;">
-                    <div class="spinner-border spinner-border-sm text-warning"></div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold mb-1" style="font-size:13px;" id="downloadProgressLabel">Downloading…</div>
-                        <div class="progress" style="height:5px;">
-                            <div class="progress-bar progress-bar-animated bg-warning" id="downloadProgressBar" style="width:0%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="table-responsive">
-            <table class="table table-nowrap align-middle mb-0" id="scoresheetTable">
-                <thead>
-                    <tr>
-                        <th class="col-checkbox" style="width:44px;">
-                            <div class="form-check mb-0">
-                                <input class="form-check-input" type="checkbox" id="checkAll">
-                            </div>
-                        </th>
-                        <th class="col-sn">SN</th>
-                        <th class="col-admissionno">Adm. No</th>
-                        <th class="col-name">Student Name</th>
-
-                        @forelse($assessments as $assessment)
-                            <th class="col-assessment-{{ $assessment->id }} text-center">
-                                {{ $assessment->name }}<br>
-                                <small class="fw-normal opacity-75">({{ $assessment->max_score }})</small>
-                            </th>
-                        @empty
-                            <th colspan="4" class="col-no-assessments text-center text-white opacity-75">No Assessments Defined</th>
-                        @endforelse
-
-                        <th class="col-total text-center">Total</th>
-                        <th class="col-total-grade text-center" title="Grade on raw total (saved)">
-                            Total<br><small class="fw-normal opacity-75">Grade</small>
-                        </th>
-                        <th class="col-bf text-center">BF</th>
-                        <th class="col-cum text-center">Cum</th>
-                        <th class="col-cum-grade text-center" title="Grade on cumulative average (display)">
-                            Cum<br><small class="fw-normal opacity-75">Grade</small>
-                        </th>
-                        <th class="col-avg text-center" title="Subject class average">Class Avg</th>
-                        <th class="col-gpa  text-center">GPA</th>
-                        <th class="col-cgpa text-center">CGPA</th>
-                        <th class="col-position text-center" title="All arms, ranked by cumulative average">
-                            Class Pos<br><small class="fw-normal opacity-75">(Cum)</small>
-                        </th>
-                        <th class="col-position-total text-center" title="All arms, ranked by raw total">
-                            Class Pos<br><small class="fw-normal opacity-75">(Total)</small>
-                        </th>
-                        <th class="col-arm-position text-center" title="This arm only, ranked by raw total">
-                            Arm Pos<br><small class="fw-normal opacity-75">(Total)</small>
-                        </th>
-                        <th class="col-arm-position-cum text-center" title="This arm only, ranked by cumulative average">
-                            Arm Pos<br><small class="fw-normal opacity-75">(Cum)</small>
-                        </th>
-                        <th class="col-vetted text-center">Status</th>
-                        <th class="col-lock-status text-center" style="width: 80px;">
-                            <i class="ri-lock-line"></i><br>
-                            <small>Lock</small>
-                        </th>
-                        <th class="col-audit text-center" style="width: 160px;">
-                            <i class="ri-history-line"></i><br>
-                            <small>Last Modified</small>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="scoresheetTableBody">
-                    @php $i = 0; @endphp
-                    @forelse($broadsheets as $broadsheet)
-                        @php
-                            $rowTotal = 0;
-                            foreach ($assessments as $a) {
-                                $so = $broadsheet->assessmentScores->where('assessment_id', $a->id)->first();
-                                $rowTotal += $so ? $so->score : 0;
-                            }
-                            $cum         = $broadsheet->cum ?? 0;
-                            $totalGrade  = $broadsheet->grade ?? '-';
-                            $gradeForCum = '-';
-                            if (isset($broadsheet->classcategoryid)) {
-                                $cat = \App\Models\Classcategory::find($broadsheet->classcategoryid);
-                                $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
-                            }
-                            $cumColor        = $cum      >= 70 ? 'success' : ($cum      >= 50 ? 'info' : ($cum      >= 40 ? 'warning' : 'danger'));
-                            $totalColor      = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
-                            $isLocked = $broadsheet->is_locked || $globalLock || !$teacherEditingEnabled;
-                            $vClass = match(true) {
-                                $isLocked => 'row-locked',
-                                $broadsheet->vettedstatus === '1' => 'row-vetted',
-                                $broadsheet->vettedstatus === '0' => 'row-not-vetted',
-                                default => 'row-pending',
-                            };
-                            $totalGradeColor = $gradeColors[$totalGrade]  ?? '#6b7280';
-                            $cumGradeColor   = $gradeColors[$gradeForCum] ?? '#6b7280';
-                            $avatarUrl = $broadsheet->picture
-                                ? asset('storage/student_avatars/'.basename($broadsheet->picture))
-                                : asset('storage/student_avatars/unnamed.jpg');
-                        @endphp
-                        <tr class="{{ $vClass }}"
-                            data-id="{{ $broadsheet->id }}"
-                            data-bf="{{ $broadsheet->bf ?? 0 }}"
-                            data-termid="{{ $termId }}"
-                            data-schoolclassid="{{ $broadsheet->schoolclass_id ?? $schoolclass->id }}"
-                            data-categoryid="{{ $broadsheet->classcategoryid ?? '' }}"
-                            data-name="{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}{{ $broadsheet->mname ? ' '.$broadsheet->mname : '' }}"
-                            data-admissionno="{{ $broadsheet->admissionno ?? '' }}"
-                            data-avatar="{{ $avatarUrl }}"
-                            data-is-locked="{{ $isLocked ? 'true' : 'false' }}">
-
-                            <td class="col-checkbox">
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}" {{ $isLocked ? 'disabled' : '' }}>
-                                </div>
-                            </td>
-                            <td class="col-sn fw-medium">{{ ++$i }}</td>
-                            <td class="col-admissionno admissionno" data-admissionno="{{ $broadsheet->admissionno }}">
-                                <span class="text-muted small">{{ $broadsheet->admissionno ?? '-' }}</span>
-                            </td>
-                            <td class="col-name name"
-                                data-name="{{ strtolower(($broadsheet->lname ?? '').' '.($broadsheet->fname ?? '').' '.($broadsheet->mname ?? '')) }}">
-                                <div class="d-flex align-items-center gap-2">
-                                    <img src="{{ $avatarUrl }}"
-                                         class="rounded-circle student-image"
-                                         style="width:34px;height:34px;object-fit:cover;border:2px solid var(--ss-border);cursor:pointer;"
-                                         data-bs-toggle="modal" data-bs-target="#imageViewModal"
-                                         data-image="{{ $avatarUrl }}"
-                                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
-                                    <div>
-                                        <span class="fw-semibold d-block" style="font-size:12.5px;">
-                                            {{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}
-                                        </span>
-                                        @if($broadsheet->mname)
-                                            <span class="text-muted small">{{ $broadsheet->mname }}</span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </td>
-
-                            @forelse($assessments as $assessment)
-                                @php
-                                    $scoreObj   = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
-                                    $scoreValue = $scoreObj ? $scoreObj->score : 0;
-                                @endphp
-                                <td class="col-assessment-{{ $assessment->id }} assessment-col text-center">
-                                    <input type="number"
-                                           class="score-input"
-                                           data-field="{{ $assessment->id }}"
-                                           data-max="{{ $assessment->max_score }}"
-                                           data-id="{{ $broadsheet->id }}"
-                                           data-original="{{ $scoreValue }}"
-                                           data-assessment-name="{{ $assessment->name }}"
-                                           value="{{ $scoreValue }}"
-                                           min="0" max="{{ $assessment->max_score }}" step="0.1"
-                                           {{ $isLocked ? 'disabled' : '' }}>
+                <table class="table table-sm align-middle mb-0" id="scoresheetTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th width="40"><input type="checkbox" id="checkAll"></th>
+                            <th>#</th>
+                            <th>Adm No</th>
+                            <th>Student Name</th>
+                            @foreach($assessments as $assessment)
+                                <th class="text-center">{{ $assessment->name }}<br><small>({{ $assessment->max_score }})</small></th>
+                            @endforeach
+                            <th class="text-center">Total</th>
+                            <th class="text-center">Grade</th>
+                            <th class="text-center">Cum</th>
+                            <th class="text-center">Class Pos</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Lock</th>
+                            <th class="text-center">Last Modified</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoresheetTableBody">
+                        @php $sn = 0; @endphp
+                        @forelse($broadsheets as $broadsheet)
+                            @php
+                                $sn++;
+                                $totalRaw = 0;
+                                foreach($assessments as $a) {
+                                    $so = $broadsheet->assessmentScores->where('assessment_id', $a->id)->first();
+                                    $totalRaw += $so ? $so->score : 0;
+                                }
+                                $cum = $broadsheet->cum ?? 0;
+                                $isLocked = $broadsheet->is_locked || $globalLock || !$teacherEditingEnabled;
+                                $hasScheduledUnlock = !is_null($broadsheet->scheduled_unlock_at);
+                                $rowClass = $isLocked ? 'row-locked' : ($broadsheet->vettedstatus === '1' ? 'row-vetted' : ($broadsheet->vettedstatus === '0' ? 'row-not-vetted' : 'row-pending'));
+                                $totalColor = $totalRaw >= 70 ? 'success' : ($totalRaw >= 50 ? 'info' : ($totalRaw >= 40 ? 'warning' : 'danger'));
+                            @endphp
+                            <tr class="{{ $rowClass }}" data-id="{{ $broadsheet->id }}" data-name="{{ $broadsheet->lname }}, {{ $broadsheet->fname }}" data-admissionno="{{ $broadsheet->admissionno }}">
+                                <td><input type="checkbox" class="score-checkbox" data-id="{{ $broadsheet->id }}" {{ $isLocked ? 'disabled' : '' }}></td>
+                                <td>{{ $sn }}</td>
+                                <td>{{ $broadsheet->admissionno }}</td>
+                                <td>{{ $broadsheet->lname }}, {{ $broadsheet->fname }}</td>
+                                @foreach($assessments as $assessment)
+                                    @php $scoreVal = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first()->score ?? 0; @endphp
+                                    <td class="text-center">
+                                        <input type="number" class="score-input" data-field="{{ $assessment->id }}" data-max="{{ $assessment->max_score }}" data-id="{{ $broadsheet->id }}" value="{{ $scoreVal }}" min="0" max="{{ $assessment->max_score }}" step="0.1" {{ $isLocked ? 'disabled' : '' }} style="width:70px;">
+                                    </td>
+                                @endforeach
+                                <td class="text-center"><span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }}">{{ number_format($totalRaw, 1) }}</span></td>
+                                <td class="text-center"><span class="grade-badge">{{ $broadsheet->grade ?? '-' }}</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">{{ number_format($cum, 1) }}</span></td>
+                                <td class="text-center"><span class="badge bg-primary">{{ $broadsheet->position ?? '-' }}</span></td>
+                                <td class="text-center">
+                                    @if($broadsheet->vettedstatus === '1') <span class="badge bg-success">Vetted</span>
+                                    @elseif($broadsheet->vettedstatus === '0') <span class="badge bg-danger">Not Vetted</span>
+                                    @else <span class="badge bg-warning">Pending</span> @endif
                                 </td>
-                            @empty
-                                <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
-                            @endforelse
-
-                            <td class="col-total text-center">
-                                <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
-                                    {{ number_format($rowTotal, 1) }}
-                                </span>
-                            </td>
-                            <td class="col-total-grade text-center">
-                                <span class="grade-badge" style="color:{{ $totalGradeColor }};" data-score="{{ $rowTotal }}">{{ $totalGrade }}</span>
-                            </td>
-                            <td class="col-bf text-center">
-                                <span class="badge bg-secondary-subtle text-secondary bf-badge">
-                                    {{ number_format($broadsheet->bf ?? 0, 1) }}
-                                </span>
-                            </td>
-                            <td class="col-cum text-center">
-                                <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">
-                                    {{ number_format($cum, 1) }}
-                                </span>
-                            </td>
-                            <td class="col-cum-grade text-center">
-                                <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">{{ $gradeForCum }}</span>
-                            </td>
-                            <td class="col-avg text-center">
-                                <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">
-                                    {{ number_format($broadsheet->avg ?? 0, 1) }}
-                                </span>
-                            </td>
-                            <td class="col-gpa text-center">
-                                <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">
-                                    {{ number_format($broadsheet->gpa ?? 0, 2) }}
-                                </span>
-                            </td>
-                            <td class="col-cgpa text-center">
-                                <span class="badge bg-dark-subtle text-dark cgpa-badge">
-                                    {{ number_format($broadsheet->cgpa ?? 0, 2) }}
-                                </span>
-                            </td>
-
-                            {{-- Class Pos (Cum) --}}
-                            <td class="col-position text-center">
-                                <span class="badge position-badge" style="background:var(--ss-primary);"
-                                      title="All arms, ranked by cumulative average">
-                                    {{ $broadsheet->position
-                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position)
-                                        : '-' }}
-                                </span>
-                            </td>
-
-                            {{-- Class Pos (Total) --}}
-                            <td class="col-position-total text-center">
-                                <span class="badge position-total-badge" style="background:#0f766e;"
-                                      title="All arms, ranked by raw total">
-                                    {{ $broadsheet->position_total
-                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position_total)
-                                        : '-' }}
-                                </span>
-                            </td>
-
-                            {{-- Arm Pos (Total) --}}
-                            <td class="col-arm-position text-center">
-                                <span class="badge arm-position-badge" style="background:#0891b2;"
-                                      title="This arm only, ranked by raw total">
-                                    {{ $broadsheet->arm_position
-                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position)
-                                        : '-' }}
-                                </span>
-                            </td>
-
-                            {{-- Arm Pos (Cum) --}}
-                            <td class="col-arm-position-cum text-center">
-                                <span class="badge arm-position-cum-badge" style="background:#7c3aed;"
-                                      title="This arm only, ranked by cumulative average">
-                                    {{ $broadsheet->arm_position_cum
-                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position_cum)
-                                        : '-' }}
-                                </span>
-                            </td>
-
-                            <td class="col-vetted text-center">
-                                @if($broadsheet->vettedstatus === '1')
-                                    <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
-                                @elseif($broadsheet->vettedstatus === '0')
-                                    <span class="badge bg-danger-subtle text-danger"><i class="ri-close-line me-1"></i>Not Vetted</span>
-                                @else
-                                    <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
-                                @endif
-                            </td>
-
-                            <td class="col-lock-status text-center">
-                                @if($globalLock)
-                                    <span class="lock-badge global" title="{{ $globalLock->reason ?? 'Global lock active' }}">
-                                        <i class="ri-global-line me-1"></i>Global Lock
-                                    </span>
-                                @elseif($broadsheet->is_locked)
-                                    <span class="lock-badge individual" title="{{ $broadsheet->lock_reason ?? 'Locked by admin' }}">
-                                        <i class="ri-lock-line me-1"></i>Locked
-                                    </span>
-                                @elseif(!$teacherEditingEnabled)
-                                    <span class="lock-badge disabled" title="Teacher editing disabled">
-                                        <i class="ri-user-settings-line me-1"></i>Edit Disabled
-                                    </span>
-                                @else
-                                    <button class="btn btn-sm btn-outline-secondary lock-individual-btn"
-                                            data-id="{{ $broadsheet->id }}"
-                                            data-name="{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}"
-                                            style="padding: 2px 8px; font-size: 11px;">
-                                        <i class="ri-lock-unlock-line"></i> Lock
-                                    </button>
-                                @endif
-                            </td>
-
-                            <td class="col-audit text-center" style="font-size: 11px;">
-                                @if($broadsheet->last_modified_at)
-                                    <div>{{ \Carbon\Carbon::parse($broadsheet->last_modified_at)->format('d/m/y H:i') }}</div>
-                                    <small class="text-muted">{{ optional($broadsheet->lastModifiedBy)->name ?? 'Unknown' }}</small>
-                                    @if($broadsheet->entry_source === 'admin')
-                                        <span class="badge bg-info" style="font-size: 9px;">Admin</span>
+                                <td class="text-center">
+                                    @if($globalLock)
+                                        <span class="lock-badge global"><i class="ri-global-line"></i> Global</span>
+                                    @elseif($broadsheet->is_locked)
+                                        <span class="lock-badge individual" title="{{ $broadsheet->lock_reason }}">
+                                            <i class="ri-lock-line"></i> Locked
+                                            @if($hasScheduledUnlock)<br><small class="text-muted">Unlocks: {{ \Carbon\Carbon::parse($broadsheet->scheduled_unlock_at)->format('d/m H:i') }}</small>@endif
+                                        </span>
+                                    @elseif(!$teacherEditingEnabled)
+                                        <span class="lock-badge disabled"><i class="ri-user-settings-line"></i> Disabled</span>
+                                    @else
+                                        <button class="btn btn-sm btn-outline-secondary lock-individual-btn" data-id="{{ $broadsheet->id }}" data-name="{{ $broadsheet->lname }}, {{ $broadsheet->fname }}"><i class="ri-lock-unlock-line"></i> Lock</button>
                                     @endif
-                                @else
-                                    -
-                                @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 19 }}" class="text-center py-4 text-muted">
-                                <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                </td>
+                                <td class="text-center small">
+                                    @if($broadsheet->last_modified_at)
+                                        {{ \Carbon\Carbon::parse($broadsheet->last_modified_at)->format('d/m H:i') }}<br>
+                                        <span class="text-muted">{{ optional($broadsheet->lastModifiedBy)->name ?? 'Unknown' }}</span>
+                                        @if($broadsheet->entry_source === 'admin')<span class="badge bg-info">Admin</span>@endif
+                                    @else -
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="20" class="text-center py-4">No scores available.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-
             @if($broadsheets->isNotEmpty())
-            <div class="p-3 border-top" style="background:#f8fafc;">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button class="btn btn-sm btn-outline-primary"   id="selectAllScores" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
-                            <i class="ri-check-double-line me-1"></i>Select All
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" id="clearAllScores" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
-                            <i class="ri-close-line me-1"></i>Clear
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger"    id="deleteSelectedScoresBtn" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
-                            <i class="ri-delete-bin-line me-1"></i>Delete Selected
-                        </button>
-                        <a href="{{ route('admin.score-entry.index', ['termid' => $termId, 'sessionid' => $sessionId]) }}"
-                           class="btn btn-sm btn-outline-secondary">
-                            <i class="ri-arrow-left-line me-1"></i>Back
-                        </a>
+            <div class="p-3 border-top bg-light">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <button class="btn btn-sm btn-primary" id="selectAllScores">Select All</button>
+                        <button class="btn btn-sm btn-secondary" id="clearAllScores">Clear</button>
+                        <button class="btn btn-sm btn-danger" id="deleteSelectedScoresBtn">Delete Selected</button>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <small class="text-muted"><i class="ri-keyboard-line me-1"></i>Ctrl+S to save</small>
-                        <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores" {{ (!$teacherEditingEnabled || $globalLock) ? 'disabled' : '' }}>
-                            <i class="ri-save-line me-1"></i>Save All Scores
-                        </button>
-                    </div>
+                    <button class="btn btn-sm btn-success" id="bulkUpdateScores"><i class="ri-save-line"></i> Save All</button>
                 </div>
             </div>
             @endif
         </div>
-    </div></div></div>
+    </div>
 
-    {{-- ══ MODALS ══════════════════════════════════════════════════════ --}}
-
-    @if($broadsheets->isNotEmpty())
-    <div class="modal fade" id="columnVisibilityModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white"><i class="ri-eye-line me-2"></i>Column Visibility</h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+    {{-- Modals --}}
+    <div class="modal fade" id="columnVisibilityModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Column Visibility</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-4"><div class="col-group">
+                    <div class="row">
+                        <div class="col-md-6">
                             <h6>Student Info</h6>
-                            @foreach([['col-checkbox','Select'],['col-sn','SN'],['col-admissionno','Adm. No'],['col-name','Name']] as [$cls,$lbl])
-                            <div class="form-check">
-                                <input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
-                                <label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label>
-                            </div>
-                            @endforeach
-                        </div></div>
-                        @if($assessments->isNotEmpty())
-                        <div class="col-md-4"><div class="col-group">
-                            <h6>Assessments</h6>
-                            @foreach($assessments as $a)
-                            <div class="form-check">
-                                <input class="form-check-input col-toggle" type="checkbox"
-                                       id="chk-col-assessment-{{ $a->id }}" data-col="col-assessment-{{ $a->id }}" checked>
-                                <label class="form-check-label" for="chk-col-assessment-{{ $a->id }}">{{ $a->name }}</label>
-                            </div>
-                            @endforeach
-                        </div></div>
-                        @endif
-                        <div class="col-md-4"><div class="col-group">
-                            <h6>Scores &amp; Metrics</h6>
-                            @foreach([
-                                ['col-total',            'Total'],
-                                ['col-total-grade',      'Total Grade (saved)'],
-                                ['col-bf',               'BF'],
-                                ['col-cum',              'Cum'],
-                                ['col-cum-grade',        'Cum Grade (display)'],
-                                ['col-avg',              'Class Avg'],
-                                ['col-gpa',              'GPA'],
-                                ['col-cgpa',             'CGPA'],
-                                ['col-position',         'Class Pos (Cum) — all arms'],
-                                ['col-position-total',   'Class Pos (Total) — all arms'],
-                                ['col-arm-position',     'Arm Pos (Total) — this arm'],
-                                ['col-arm-position-cum', 'Arm Pos (Cum) — this arm'],
-                                ['col-vetted',           'Status'],
-                                ['col-lock-status',      'Lock Status'],
-                                ['col-audit',            'Audit Trail'],
-                            ] as [$cls,$lbl])
-                            <div class="form-check">
-                                <input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
-                                <label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label>
-                            </div>
-                            @endforeach
-                        </div></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-checkbox" checked> <label>Select</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-sn" checked> <label>SN</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-admissionno" checked> <label>Adm No</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-name" checked> <label>Name</label></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Scores & Metrics</h6>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total" checked> <label>Total</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-grade" checked> <label>Grade</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum" checked> <label>Cum</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position" checked> <label>Position</label></div>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
-    @endif
 
-    <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white"><i class="ri-upload-line me-2"></i>Import Scores</h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Import Scores</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.</div>
-                    <form method="POST" enctype="multipart/form-data" id="importForm">
+                    <form id="importForm" enctype="multipart/form-data">
                         @csrf
-                        <input type="hidden" name="schoolclass_id"  value="{{ $schoolclass->id }}">
+                        <input type="hidden" name="schoolclass_id" value="{{ $schoolclass->id }}">
                         <input type="hidden" name="subjectclass_id" value="{{ $subjectclassId }}">
-                        <input type="hidden" name="staff_id"        value="{{ $teacherId }}">
-                        <input type="hidden" name="term_id"         value="{{ $termId }}">
-                        <input type="hidden" name="session_id"      value="{{ $sessionId }}">
+                        <input type="hidden" name="staff_id" value="{{ $teacherId }}">
+                        <input type="hidden" name="term_id" value="{{ $termId }}">
+                        <input type="hidden" name="session_id" value="{{ $sessionId }}">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Excel File (.xlsx)</label>
+                            <label>Excel File</label>
                             <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
-                            <small class="text-muted">Only upload files exported from this system</small>
                         </div>
-                        <div id="importLoader" style="display:none;" class="mb-3">
-                            <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
-                                <div class="spinner-border spinner-border-sm text-success"></div>
-                                <div class="flex-grow-1">
-                                    <div style="font-size:12px;margin-bottom:3px;">Uploading...</div>
-                                    <div class="progress" style="height:5px;">
-                                        <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="importSubmit">
-                                <i class="ri-upload-line me-1"></i>Upload
-                            </button>
-                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header"><h5 class="modal-title">Student Photo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body text-center p-4">
-                    <img id="enlargedImage" src="" alt="Student" class="img-fluid rounded-3" style="max-height:400px;">
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div></div></div>
+</div>
+</div>
+</div>
 
 <script>
-/* ══ CSRF ══════════════════════════════════════════════════════════════ */
-if (!document.querySelector('meta[name="csrf-token"]')) {
-    const m = document.createElement('meta'); m.name = 'csrf-token';
-    m.content = '{{ csrf_token() }}'; document.head.appendChild(m);
-}
-const CSRF = document.querySelector('meta[name="csrf-token"]').content;
-
-/* ══ ROUTES & GLOBALS ══════════════════════════════════════════════════ */
-window.routes = {
-    singleUpdate      : '{{ route("admin.score-entry.single-update") }}',
-    bulkUpdate        : '{{ route("admin.score-entry.bulk-update") }}',
-    destroy           : '{{ route("admin.score-entry.destroy") }}',
-    results           : '{{ route("admin.score-entry.results") }}',
-    export            : '{{ route("admin.score-entry.export") }}',
-    import            : '{{ route("admin.score-entry.import") }}',
+const CSRF = '{{ csrf_token() }}';
+const routes = {
+    singleUpdate: '{{ route("admin.score-entry.single-update") }}',
+    bulkUpdate: '{{ route("admin.score-entry.bulk-update") }}',
+    destroy: '{{ route("admin.score-entry.destroy") }}',
+    results: '{{ route("admin.score-entry.results") }}',
+    export: '{{ route("admin.score-entry.export") }}',
+    import: '{{ route("admin.score-entry.import") }}',
     downloadMarksSheet: '{{ route("admin.score-entry.download-marks-sheet") }}',
-    downloadScoresPdf : '{{ route("admin.score-entry.download-scores-pdf") }}',
-    gradeForScore     : '{{ route("admin.score-entry.grade-for-score") }}',
-    updateArmPositions: '{{ route("admin.score-entry.update-arm-positions") }}',
-    lockScoresheet    : '{{ route("admin.score-entry.lock-scoresheet") }}',
-    unlockScoresheet  : '{{ route("admin.score-entry.unlock-scoresheet") }}',
-    lockBatch         : '{{ route("admin.score-entry.lock-batch") }}',
-    unlockBatch       : '{{ route("admin.score-entry.unlock-batch") }}',
+    downloadScoresPdf: '{{ route("admin.score-entry.download-scores-pdf") }}',
+    lockScoresheet: '{{ route("admin.score-entry.lock-scoresheet") }}',
+    lockBatch: '{{ route("admin.score-entry.lock-batch") }}',
+    lockBatchWithSchedule: '{{ route("admin.score-entry.lock-batch-with-schedule") }}',
+    unlockBatch: '{{ route("admin.score-entry.unlock-batch") }}',
     disableTeacherEditing: '{{ route("admin.score-entry.disable-teacher-editing") }}',
     enableTeacherEditing: '{{ route("admin.score-entry.enable-teacher-editing") }}',
-    getLockStatus     : '{{ route("admin.score-entry.lock-status") }}',
-};
-window.term_id         = {{ $termId }};
-window.session_id      = {{ $sessionId }};
-window.subjectclass_id = {{ $subjectclassId }};
-window.schoolclass_id  = {{ $schoolclass->id ?? 0 }};
-window.staff_id        = {{ $teacherId }};
-window.is_senior       = {{ ($is_senior ?? false) ? 'true' : 'false' }};
-window.teacherEditingEnabled = {{ $teacherEditingEnabled ? 'true' : 'false' }};
-window.globalLockActive = {{ $globalLock ? 'true' : 'false' }};
-
-/* ══ CONSTANTS ═════════════════════════════════════════════════════════ */
-const GRADE_COLORS = {
-    'A':'#16a34a','A1':'#16a34a','B':'#2563eb','B2':'#2563eb','B3':'#3b82f6',
-    'C':'#7c3aed','C4':'#7c3aed','C5':'#8b5cf6','C6':'#a78bfa',
-    'D':'#d97706','D7':'#d97706','E8':'#f59e0b','F':'#dc2626','F9':'#dc2626',
 };
 
-/* ══ UTILITIES ═════════════════════════════════════════════════════════ */
-const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
-
-const ord = n => {
-    if (!n || isNaN(n)) return '-';
-    n = +n; const s = n % 100;
-    return n + (s >= 11 && s <= 13 ? 'th' : (['th','st','nd','rd'][n % 10] || 'th'));
-};
-
-function showToast(msg, type = 'info') {
-    const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
-    const id = 'toast_' + Date.now();
-    document.body.insertAdjacentHTML('beforeend',
-        `<div id="${id}" class="toast align-items-center border-0 text-white show" role="alert"
-          style="position:fixed;bottom:20px;right:20px;z-index:99999;background:${colors[type]||colors.info};min-width:280px;border-radius:10px;">
-          <div class="d-flex p-3"><div class="me-auto">${msg}</div>
-          <button class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`);
-    setTimeout(() => document.getElementById(id)?.remove(), 4500);
+function showToast(msg, type) {
+    let bg = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#2563eb';
+    let toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white show position-fixed bottom-0 end-0 m-3';
+    toast.style.background = bg;
+    toast.innerHTML = `<div class="d-flex p-3"><div>${msg}</div><button class="btn-close btn-close-white ms-2" onclick="this.closest(\'.toast\').remove()"></button></div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
 }
 
-function clientGrade(score) {
-    score = parseFloat(score) || 0;
-    if (window.is_senior) {
-        if (score >= 75) return 'A1'; if (score >= 70) return 'B2';
-        if (score >= 65) return 'B3'; if (score >= 60) return 'C4';
-        if (score >= 55) return 'C5'; if (score >= 50) return 'C6';
-        if (score >= 45) return 'D7'; if (score >= 40) return 'E8';
-        return 'F9';
-    }
-    if (score >= 70) return 'A'; if (score >= 60) return 'B';
-    if (score >= 50) return 'C'; if (score >= 40) return 'D'; return 'F';
-}
-
-function applyGrade(badge, grade) {
-    if (!badge) return;
-    badge.textContent = grade || '-';
-    badge.style.color = GRADE_COLORS[grade] || '#6b7280';
-    badge.classList.remove('updating'); badge.classList.add('updated');
-    setTimeout(() => badge.classList.remove('updated'), 500);
-}
-
-function validateInput(inp) {
-    const max = parseFloat(inp.dataset.max) || 0;
-    const val = parseFloat(inp.value)       || 0;
-    inp.classList.toggle('is-invalid', val > max);
-    return val <= max;
-}
-
-/* ══ PATCH ALL FOUR POSITION BADGES ═══════════════════════════════════ */
-function applyAllPositions(broadsheets) {
-    if (!Array.isArray(broadsheets) || !broadsheets.length) return;
-    const map = {};
-    broadsheets.forEach(bs => { map[String(bs.id)] = bs; });
-    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
-        const bs = map[row.dataset.id]; if (!bs) return;
-        [
-            [row.querySelector('.position-badge'),         bs.position],
-            [row.querySelector('.position-total-badge'),   bs.position_total],
-            [row.querySelector('.arm-position-badge'),     bs.arm_position],
-            [row.querySelector('.arm-position-cum-badge'), bs.arm_position_cum],
-        ].forEach(([badge, val]) => {
-            if (!badge) return;
-            const newText = ord(val);
-            if (badge.textContent.trim() !== newText) {
-                badge.textContent = newText;
-                badge.classList.remove('pos-flash'); void badge.offsetWidth; badge.classList.add('pos-flash');
-                setTimeout(() => badge.classList.remove('pos-flash'), 520);
-            }
-        });
-    });
-}
-
-/* ══ LIVE GRADE + TOTAL PREVIEW ═══════════════════════════════════════ */
-const gradeTimers = {};
-
-function updateRowGrades(row) {
-    const bid        = row.dataset.id;
-    const bf         = parseFloat(row.dataset.bf) || 0;
-    const termId     = parseInt(row.dataset.termid) || window.term_id;
-    const schoolclsId= parseInt(row.dataset.schoolclassid) || window.schoolclass_id;
-
-    let totalRaw = 0;
-    row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
-    const cum = (termId == 1 || bf === 0) ? totalRaw : (totalRaw + bf) / 2;
-
-    const totalBadge = row.querySelector('.total-badge');
-    if (totalBadge) {
-        totalBadge.textContent = fmtN(totalRaw);
-        const tc = totalRaw >= 70 ? 'success' : totalRaw >= 50 ? 'info' : totalRaw >= 40 ? 'warning' : 'danger';
-        totalBadge.className   = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
-        totalBadge.style.fontSize = '12px';
-    }
-
-    const cumBadge = row.querySelector('.cum-badge');
-    if (cumBadge) {
-        cumBadge.textContent = fmtN(cum);
-        const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
-        cumBadge.className   = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
-        cumBadge.style.fontSize = '12px';
-    }
-
-    applyGrade(row.querySelector('.grade-badge'),     clientGrade(totalRaw));
-    applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(cum));
-
-    // Server-side grade confirmation — debounced 400 ms
-    clearTimeout(gradeTimers[bid]);
-    gradeTimers[bid] = setTimeout(async () => {
-        const tgb = row.querySelector('.grade-badge'), cgb = row.querySelector('.cum-grade-badge');
-        try {
-            if (tgb) { tgb.classList.add('updating'); tgb.innerHTML = '<span class="grade-loading"></span>'; }
-            if (cgb) { cgb.classList.add('updating'); cgb.innerHTML = '<span class="grade-loading"></span>'; }
-            const res  = await fetch(window.routes.gradeForScore, {
-                method: 'POST', headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF },
-                body: JSON.stringify({ schoolclass_id: schoolclsId, total: totalRaw, cum }),
-            });
-            const data = await res.json();
-            if (data.success) { applyGrade(tgb, data.total_grade); applyGrade(cgb, data.cum_grade); }
-            else { applyGrade(tgb, clientGrade(totalRaw)); applyGrade(cgb, clientGrade(cum)); }
-        } catch { applyGrade(tgb, clientGrade(totalRaw)); applyGrade(cgb, clientGrade(cum)); }
-    }, 400);
-}
-
-/* ══ SINGLE SCORE SAVE ════════════════════════════════════════════════ */
-function saveIndividualScore(input) {
-    const row = input.closest('tr');
-    fetch(window.routes.singleUpdate, {
-        method : 'POST',
-        headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF },
-        body   : JSON.stringify({
-            broadsheet_id   : input.dataset.id,
-            assessment_id   : parseInt(input.dataset.field),
-            score           : parseFloat(input.value) || 0,
-            is_sub          : false,
-            term_id         : window.term_id,
-            session_id      : window.session_id,
-            subjectclass_id : window.subjectclass_id,
-            schoolclass_id  : window.schoolclass_id,
-            staff_id        : window.staff_id,
-        }),
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (!data.success) { showToast(data.message || 'Could not save.', 'warning'); return; }
-        const d = data.data;
-        const bfB = row.querySelector('.bf-badge');
-        if (bfB && d.bf != null) bfB.textContent = fmtN(d.bf);
-
-        const cb = row.querySelector('.cum-badge');
-        if (cb && d.cum != null) {
-            const cum = parseFloat(d.cum);
-            cb.textContent = fmtN(cum);
-            const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
-            cb.className   = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`; cb.style.fontSize = '12px';
-        }
-        applyGrade(row.querySelector('.grade-badge'),     d.grade);
-        if (d.cum != null) applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(parseFloat(d.cum)));
-        const gb = row.querySelector('.gpa-badge'), cgb = row.querySelector('.cgpa-badge');
-        if (gb  && d.gpa  != null) gb.textContent  = fmtN(d.gpa,  2);
-        if (cgb && d.cgpa != null) cgb.textContent = fmtN(d.cgpa, 2);
-
-        input.classList.add('is-saved'); setTimeout(() => input.classList.remove('is-saved'), 2000);
-        refreshAllPositions();
-    })
-    .catch(err => { console.warn('singleUpdate error:', err); showToast('Network issue — score may not have saved.', 'danger'); });
-}
-
-/* ══ REFRESH ALL POSITIONS (de-bounced) ══════════════════════════════ */
-let positionRefreshTimer = null;
-function refreshAllPositions() {
-    clearTimeout(positionRefreshTimer);
-    positionRefreshTimer = setTimeout(() => {
-        fetch(window.routes.results, { headers: { 'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF } })
-        .then(r => r.json())
-        .then(data => { if (data.success && Array.isArray(data.scores)) applyAllPositions(data.scores); })
-        .catch(() => {});
-    }, 120);
-}
-
-/* ══ APPLE-STYLE SAVE MODAL ══════════════════════════════════════════ */
-const SS_ARC_CIRC = 157.08;
-function ssEl(id) { return document.getElementById(id); }
-function ssResetIcons() {
-    ssEl('ssIconSave').style.display  = ''; ssEl('ssIconCheck').style.display = 'none'; ssEl('ssIconX').style.display = 'none';
-    ssEl('ssCheckPath').style.strokeDashoffset = '22'; ssEl('ssCheckPath').classList.remove('drawn');
-    ssEl('ssIconCenter').style.background = 'rgba(30,58,95,0.09)'; ssEl('ssArcFg').style.stroke = '#1e3a5f';
-}
-function ssSetArc(pct) { ssEl('ssArcFg').style.strokeDashoffset = (SS_ARC_CIRC * (1 - pct / 100)).toFixed(3); }
-function ssOpen(total) {
-    ssResetIcons(); ssSetArc(0);
-    ssEl('ssSaveFill').style.width = '0%'; ssEl('ssSaveFill').style.background = '#1e3a5f';
-    ssEl('ssSaveTitle').textContent = 'Saving scores'; ssEl('ssSaveSub').textContent = 'Preparing…';
-    ssEl('ssSaveCountLabel').textContent = 'Saved'; ssEl('ssSaveCountNum').textContent = `0 / ${total}`;
-    const o = ssEl('ssSaveOverlay'); o.classList.remove('ss-closing'); o.classList.add('ss-visible');
-}
-function ssUpdate(saved, total, pct) {
-    ssEl('ssSaveFill').style.width = pct.toFixed(1) + '%'; ssEl('ssSaveCountNum').textContent = `${saved} / ${total}`; ssSetArc(pct);
-    if      (pct < 25) ssEl('ssSaveSub').textContent = 'Uploading data…';
-    else if (pct < 55) ssEl('ssSaveSub').textContent = 'Processing records…';
-    else if (pct < 85) ssEl('ssSaveSub').textContent = 'Recalculating grades & positions…';
-    else               ssEl('ssSaveSub').textContent  = 'Finalising…';
-}
-function ssSuccess(total) {
-    ssEl('ssSaveFill').style.width = '100%'; ssEl('ssSaveFill').style.background = '#16a34a';
-    ssEl('ssArcFg').style.strokeDashoffset = '0'; ssEl('ssArcFg').style.stroke = '#16a34a';
-    ssEl('ssIconCenter').style.background  = '#dcfce7';
-    ssEl('ssIconSave').style.display = 'none'; ssEl('ssIconCheck').style.display = '';
-    requestAnimationFrame(() => ssEl('ssCheckPath').classList.add('drawn'));
-    ssEl('ssSaveTitle').textContent = 'All saved';
-    ssEl('ssSaveSub').textContent   = `${total} score${total !== 1 ? 's' : ''} saved successfully`;
-    ssEl('ssSaveCountNum').textContent = `${total} / ${total}`;
-    setTimeout(ssClose, 1900);
-}
-function ssError(msg) {
-    ssEl('ssSaveFill').style.background  = '#dc2626'; ssEl('ssArcFg').style.stroke = '#dc2626';
-    ssEl('ssIconCenter').style.background = '#fee2e2';
-    ssEl('ssIconSave').style.display = 'none'; ssEl('ssIconX').style.display = '';
-    ssEl('ssSaveTitle').textContent = 'Save failed'; ssEl('ssSaveSub').textContent = msg || 'Something went wrong.';
-    setTimeout(ssClose, 2400);
-}
-function ssClose() {
-    const o = ssEl('ssSaveOverlay'); o.classList.add('ss-closing');
-    setTimeout(() => o.classList.remove('ss-visible','ss-closing'), 260);
-}
-
-/* ══ BULK SAVE ════════════════════════════════════════════════════════ */
-function bulkSave() {
-    if (!window.teacherEditingEnabled || window.globalLockActive) {
-        showToast('Editing is currently disabled for this subject.', 'warning');
-        return;
-    }
-
-    const invalid = document.querySelectorAll('.score-input.is-invalid').length;
-    if (invalid) { Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` }); return; }
-
-    const scores = [];
-    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
-        if (row.dataset.isLocked === 'true') return;
-        const assessments = {};
-        row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
-        if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
-    });
-    if (!scores.length) return;
-
-    const total = scores.length;
-    ssOpen(total);
-    let fakeProgress = 0;
-    const fakeIv = setInterval(() => {
-        fakeProgress = Math.min(fakeProgress + Math.random() * 4 + 2, 88);
-        ssUpdate(Math.round((fakeProgress / 100) * total), total, fakeProgress);
-    }, 130);
-
-    const btn = document.getElementById('bulkUpdateScores'), origHtml = btn?.innerHTML;
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Saving…'; }
-
-    fetch(window.routes.bulkUpdate, {
-        method : 'POST',
-        headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF },
-        body   : JSON.stringify({
-            scores, term_id: window.term_id, session_id: window.session_id,
-            subjectclass_id: window.subjectclass_id, staff_id: window.staff_id,
-            schoolclass_id: window.schoolclass_id, is_sub: false,
-        }),
-    })
-    .then(r => r.json())
-    .then(data => {
-        clearInterval(fakeIv);
-        if (!data.success) { ssError(data.message || 'Server error.'); return; }
-        ssUpdate(total, total, 100);
-        setTimeout(() => ssSuccess(total), 220);
-
-        (data.data?.broadsheets ?? []).forEach(bs => {
-            const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`); if (!row) return;
-
-            const ts = parseFloat(bs.total ?? 0), tb = row.querySelector('.total-badge');
-            if (tb) { tb.textContent = fmtN(ts); const tc = ts>=70?'success':ts>=50?'info':ts>=40?'warning':'danger'; tb.className=`badge fw-bold total-badge bg-${tc}-subtle text-${tc}`; tb.style.fontSize='12px'; }
-
-            const tgb = row.querySelector('.grade-badge'); if (tgb) applyGrade(tgb, bs.grade ?? '-');
-            const bfB = row.querySelector('.bf-badge');    if (bfB) bfB.textContent = fmtN(bs.bf);
-
-            const cum = parseFloat(bs.cum ?? 0), cb = row.querySelector('.cum-badge');
-            if (cb) { cb.textContent = fmtN(cum); const cc = cum>=70?'success':cum>=50?'info':cum>=40?'warning':'danger'; cb.className=`badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`; cb.style.fontSize='12px'; }
-
-            const cgb = row.querySelector('.cum-grade-badge'); if (cgb) applyGrade(cgb, clientGrade(cum));
-            const ab  = row.querySelector('.avg-badge');  if (ab  && bs.avg  != null) ab.textContent  = fmtN(bs.avg);
-            const gb  = row.querySelector('.gpa-badge');  if (gb  && bs.gpa  != null) gb.textContent  = fmtN(bs.gpa, 2);
-            const cb2 = row.querySelector('.cgpa-badge'); if (cb2 && bs.cgpa != null) cb2.textContent = fmtN(bs.cgpa, 2);
-
-            row.querySelectorAll('.score-input').forEach(i => { i.classList.add('is-saved'); setTimeout(() => i.classList.remove('is-saved'), 2000); });
-        });
-
-        applyAllPositions(data.data?.broadsheets ?? []);
-    })
-    .catch(err => { clearInterval(fakeIv); ssError('Please check your connection and try again.'); console.error(err); })
-    .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; } });
-}
-
-/* ══ LOCK MANAGEMENT FUNCTIONS ════════════════════════════════════════ */
-function lockScoresheet(broadsheetId, studentName, reason = null) {
+// Lock Functions
+function lockScoresheet(id, name) {
     Swal.fire({
-        title: `Lock scoresheet for ${studentName}?`,
-        text: reason || 'Once locked, teachers cannot edit this scoresheet.',
+        title: `Lock ${name}?`,
         input: 'textarea',
-        inputLabel: 'Reason for locking (optional)',
-        inputPlaceholder: 'Enter reason...',
+        inputLabel: 'Reason (optional)',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Yes, lock it',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
+        confirmButtonText: 'Lock'
+    }).then(result => {
         if (result.isConfirmed) {
-            fetch(window.routes.lockScoresheet, {
+            fetch(routes.lockScoresheet, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({ broadsheet_id: broadsheetId, reason: result.value })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Scoresheet locked successfully', 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
-            })
-            .catch(err => showToast('Error locking scoresheet', 'error'));
+                body: JSON.stringify({ broadsheet_id: id, reason: result.value })
+            }).then(r => r.json()).then(data => {
+                if (data.success) { showToast('Locked successfully', 'success'); location.reload(); }
+                else showToast(data.message, 'error');
+            });
         }
     });
 }
@@ -1453,35 +488,23 @@ function lockScoresheet(broadsheetId, studentName, reason = null) {
 document.getElementById('lockAllBtn')?.addEventListener('click', () => {
     Swal.fire({
         title: 'Lock all scoresheets?',
-        text: 'This will lock every student record in this subject individually.',
         input: 'textarea',
-        inputLabel: 'Reason for locking (optional)',
+        inputLabel: 'Reason',
         showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Yes, lock all',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
+        confirmButtonColor: '#dc2626'
+    }).then(result => {
         if (result.isConfirmed) {
-            fetch(window.routes.lockBatch, {
+            fetch(routes.lockBatch, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
                 body: JSON.stringify({
-                    term_id: window.term_id,
-                    session_id: window.session_id,
-                    subjectclass_id: window.subjectclass_id,
+                    term_id: {{ $termId }},
+                    session_id: {{ $sessionId }},
+                    subjectclass_id: {{ $subjectclassId }},
                     lock_type: 'individual',
                     reason: result.value
                 })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
-            });
+            }).then(r => r.json()).then(data => { showToast(data.message, 'success'); location.reload(); });
         }
     });
 });
@@ -1489,393 +512,180 @@ document.getElementById('lockAllBtn')?.addEventListener('click', () => {
 document.getElementById('globalLockBtn')?.addEventListener('click', () => {
     Swal.fire({
         title: 'Apply Global Lock?',
-        html: 'This will prevent <strong>ALL teacher edits</strong> to this subject.<br><br>Teachers will see a read-only view.',
         input: 'textarea',
-        inputLabel: 'Reason for global lock',
-        inputPlaceholder: 'Enter reason...',
+        inputLabel: 'Reason',
         showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Apply Global Lock',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
+        confirmButtonColor: '#dc2626'
+    }).then(result => {
         if (result.isConfirmed) {
-            fetch(window.routes.lockBatch, {
+            fetch(routes.lockBatch, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
                 body: JSON.stringify({
-                    term_id: window.term_id,
-                    session_id: window.session_id,
-                    subjectclass_id: window.subjectclass_id,
+                    term_id: {{ $termId }},
+                    session_id: {{ $sessionId }},
+                    subjectclass_id: {{ $subjectclassId }},
                     lock_type: 'global',
                     reason: result.value
                 })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
-            });
+            }).then(r => r.json()).then(data => { showToast(data.message, 'success'); location.reload(); });
+        }
+    });
+});
+
+document.getElementById('lockWithScheduleBtn')?.addEventListener('click', () => {
+    Swal.fire({
+        title: 'Schedule Lock',
+        html: `
+            <textarea id="lockReason" class="swal2-textarea" placeholder="Reason"></textarea>
+            <input type="datetime-local" id="scheduleDate" class="form-control mt-2" required>
+        `,
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        preConfirm: () => {
+            return { reason: document.getElementById('lockReason').value, date: document.getElementById('scheduleDate').value };
+        }
+    }).then(result => {
+        if (result.isConfirmed && result.value.date) {
+            fetch(routes.lockBatchWithSchedule, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({
+                    term_id: {{ $termId }},
+                    session_id: {{ $sessionId }},
+                    subjectclass_id: {{ $subjectclassId }},
+                    lock_type: 'individual',
+                    reason: result.value.reason,
+                    scheduled_unlock_at: result.value.date
+                })
+            }).then(r => r.json()).then(data => { showToast(data.message, 'success'); location.reload(); });
         }
     });
 });
 
 document.getElementById('unlockAllBtn')?.addEventListener('click', () => {
     Swal.fire({
-        title: 'Unlock all scoresheets?',
+        title: 'Unlock all?',
         text: 'This will unlock all scoresheets in this subject.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#16a34a',
-        confirmButtonText: 'Yes, unlock all',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
+        confirmButtonColor: '#16a34a'
+    }).then(result => {
         if (result.isConfirmed) {
-            fetch(window.routes.unlockBatch, {
+            fetch(routes.unlockBatch, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
                 body: JSON.stringify({
-                    term_id: window.term_id,
-                    session_id: window.session_id,
-                    subjectclass_id: window.subjectclass_id,
+                    term_id: {{ $termId }},
+                    session_id: {{ $sessionId }},
+                    subjectclass_id: {{ $subjectclassId }},
                     unlock_type: 'individual'
                 })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
-            });
+            }).then(r => r.json()).then(data => { showToast(data.message, 'success'); location.reload(); });
         }
     });
 });
 
-document.getElementById('toggleTeacherEditBtn')?.addEventListener('click', async () => {
-    const isEnabled = window.teacherEditingEnabled;
-
+document.getElementById('toggleTeacherEditBtn')?.addEventListener('click', () => {
+    let isEnabled = {{ $teacherEditingEnabled ? 'true' : 'false' }};
+    let url = isEnabled ? routes.disableTeacherEditing : routes.enableTeacherEditing;
     Swal.fire({
         title: isEnabled ? 'Disable Teacher Editing?' : 'Enable Teacher Editing?',
-        html: isEnabled
-            ? 'Teachers will <strong>NOT be able to edit</strong> any scores for this subject.<br><br>They will only see a read-only view.'
-            : 'Teachers will regain the ability to edit scores for this subject.',
+        text: isEnabled ? 'Teachers will not be able to edit scores.' : 'Teachers will regain editing access.',
         icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: isEnabled ? '#dc2626' : '#16a34a',
-        confirmButtonText: isEnabled ? 'Disable' : 'Enable',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
+        showCancelButton: true
+    }).then(result => {
         if (result.isConfirmed) {
-            const url = isEnabled ? window.routes.disableTeacherEditing : window.routes.enableTeacherEditing;
-
             fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({ subjectclass_id: window.subjectclass_id })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
-            });
+                body: JSON.stringify({ subjectclass_id: {{ $subjectclassId }} })
+            }).then(r => r.json()).then(data => { showToast(data.message, 'success'); location.reload(); });
         }
     });
 });
 
 document.querySelectorAll('.lock-individual-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        const name = btn.dataset.name;
-        lockScoresheet(id, name);
+    btn.addEventListener('click', () => lockScoresheet(btn.dataset.id, btn.dataset.name));
+});
+
+// Save Functions
+function bulkSave() {
+    let scores = [];
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
+        if (row.querySelector('.lock-badge')) return;
+        let assessments = {};
+        row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
+        if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
+    });
+    if (!scores.length) return;
+
+    fetch(routes.bulkUpdate, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({ scores, term_id: {{ $termId }}, session_id: {{ $sessionId }}, subjectclass_id: {{ $subjectclassId }}, staff_id: {{ $teacherId }}, schoolclass_id: {{ $schoolclass->id }}, is_sub: false })
+    }).then(r => r.json()).then(data => { showToast(data.message, 'success'); location.reload(); });
+}
+
+document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSave);
+
+// Search
+document.getElementById('searchInput')?.addEventListener('input', function() {
+    let term = this.value.toLowerCase();
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
+        let name = (row.dataset.name || '').toLowerCase();
+        let adm = (row.dataset.admissionno || '').toLowerCase();
+        row.style.display = name.includes(term) || adm.includes(term) ? '' : 'none';
     });
 });
 
-/* ══ DOWNLOADS ════════════════════════════════════════════════════════ */
-function startPdfDownload(url, filename, label) {
-    const cont = document.getElementById('downloadProgressContainer');
-    const bar  = document.getElementById('downloadProgressBar');
-    const lbl  = document.getElementById('downloadProgressLabel');
-    if (cont) cont.style.display = 'block';
-    if (bar)  bar.style.width    = '10%';
-    if (lbl)  lbl.textContent    = label || 'Downloading…';
-    fetch(url, { headers: { 'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF } })
-    .then(async r => { if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message||'Download failed.'); } if (bar) bar.style.width='90%'; return r.blob(); })
-    .then(blob => { if (bar) bar.style.width='100%'; const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); showToast('Downloaded successfully!','success'); })
-    .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
-    .finally(() => setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200));
-}
+// Checkboxes
+document.getElementById('checkAll')?.addEventListener('change', function() {
+    document.querySelectorAll('.score-checkbox:not(:disabled)').forEach(cb => cb.checked = this.checked);
+});
+document.getElementById('selectAllScores')?.addEventListener('click', () => {
+    document.querySelectorAll('.score-checkbox:not(:disabled)').forEach(cb => cb.checked = true);
+});
+document.getElementById('clearAllScores')?.addEventListener('click', () => {
+    document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
+});
 
-/* ══ DOM READY ════════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', function () {
-
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
-
-    document.getElementById('imageViewModal')?.addEventListener('show.bs.modal', function(e) {
-        const src = e.relatedTarget?.dataset?.image || e.relatedTarget?.getAttribute('data-image');
-        document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-    });
-
-    // Column visibility
-    document.querySelectorAll('.col-toggle').forEach(cb => {
-        cb.addEventListener('change', function () {
-            document.querySelectorAll(`th.${this.dataset.col}, td.${this.dataset.col}`)
-                .forEach(el => el.style.display = this.checked ? '' : 'none');
-        });
-    });
-
-    // Search
-    function applySearch() {
-        const q = (document.getElementById('searchInput')?.value ?? '').trim().toLowerCase();
-        let vis = 0;
-        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
-            const adm  = (row.querySelector('.admissionno')?.dataset?.admissionno ?? '').toLowerCase();
-            const name = (row.querySelector('.name')?.dataset?.name ?? '').toLowerCase();
-            const show = !q || adm.includes(q) || name.includes(q);
-            row.style.display = show ? '' : 'none';
-            if (show) vis++;
-        });
-        const sc = document.getElementById('scoreCount'); if (sc) sc.textContent = vis;
-        const nd = document.getElementById('noDataAlert'); if (nd) nd.style.display = vis === 0 ? 'block' : 'none';
-    }
-    document.getElementById('searchInput')?.addEventListener('input', applySearch);
-    document.getElementById('clearSearch')?.addEventListener('click', () => {
-        const si = document.getElementById('searchInput'); if (si) si.value = ''; applySearch();
-    });
-
-    // Checkboxes
-    document.getElementById('checkAll')?.addEventListener('change', function () {
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked);
-    });
-    document.addEventListener('change', function (e) {
-        if (!e.target.classList.contains('score-checkbox')) return;
-        const all = document.querySelectorAll('.score-checkbox'), chk = document.querySelectorAll('.score-checkbox:checked');
-        const ca  = document.getElementById('checkAll');
-        if (ca) { ca.checked = chk.length === all.length && all.length > 0; ca.indeterminate = chk.length > 0 && chk.length < all.length; }
-    });
-    document.getElementById('selectAllScores')?.addEventListener('click', () => {
-        const ca = document.getElementById('checkAll'); if (ca) ca.checked = true;
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true);
-    });
-    document.getElementById('clearAllScores')?.addEventListener('click', () => {
-        const ca = document.getElementById('checkAll'); if (ca) ca.checked = false;
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
-    });
-
-    /* ── Score inputs ──────────────────────────────────────────────── */
-    document.querySelectorAll('.score-input').forEach(inp => {
-        inp.addEventListener('focus', function () { this.select(); tipShow(this); });
-        inp.addEventListener('input', function () {
-            validateInput(this);
-            const row = this.closest('tr'); if (row) updateRowGrades(row);
-            if (tipInput === this) tipRefresh(this);
-        });
-        inp.addEventListener('blur', function () {
-            setTimeout(() => { if (tipInput === this) tipHide(); }, 80);
-            if (!validateInput(this)) return;
-            const orig = parseFloat(this.dataset.original) || 0;
-            const curr = parseFloat(this.value)            || 0;
-            if (Math.abs(curr - orig) > 0.001) { this.dataset.original = this.value; saveIndividualScore(this); }
-        });
-        inp.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') { e.preventDefault(); tipHide(); this.blur(); return; }
-            if (e.key !== 'Enter') return;
-            e.preventDefault();
-            if (validateInput(this)) saveIndividualScore(this);
-            const all = Array.from(document.querySelectorAll('.score-input')), idx = all.indexOf(this);
-            if (idx < all.length - 1) all[idx + 1].focus();
-        });
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && tipInput) { tipHide(); document.activeElement?.blur(); return; }
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); bulkSave(); }
-    });
-
-    document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSave);
-
-    // Delete selected
-    document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', function () {
-        const ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
-        if (!ids.length) { Swal.fire({ icon:'warning', title:'No Selection', text:'Select rows to delete.' }); return; }
-        Swal.fire({ title:'Delete selected scores?', text:'This cannot be undone.', icon:'warning',
-            showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Yes, delete' })
-        .then(r => {
-            if (!r.isConfirmed) return;
-            Promise.all(ids.map(id =>
-                fetch(window.routes.destroy, {
-                    method:'DELETE', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
-                    body: JSON.stringify({ id, type: 'terminal', _token: CSRF })
-                }).then(r => r.json())
-            ))
-            .then(results => {
-                let deleted = 0;
-                results.forEach((res, i) => { if (res.success) { document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove(); deleted++; } });
-                showToast(`${deleted} score(s) deleted.`, 'success');
-                if (!document.querySelectorAll('#scoresheetTableBody tr[data-id]').length) location.reload();
-                else refreshAllPositions();
-            });
-        });
-    });
-
-    // Recalculate All Positions
-    document.getElementById('updateArmPositionsBtn')?.addEventListener('click', async function () {
-        if (!window.schoolclass_id || !window.term_id || !window.session_id) {
-            Swal.fire({ icon:'warning', title:'Missing Data', text:'Please refresh the page and try again.' }); return;
+// Delete Selected
+document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', () => {
+    let ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
+    if (!ids.length) return;
+    Swal.fire({ title: 'Delete selected?', text: 'This cannot be undone.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626' }).then(r => {
+        if (r.isConfirmed) {
+            Promise.all(ids.map(id => fetch(routes.destroy, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, type: 'terminal' }) }).then(r => r.json()))).then(() => location.reload());
         }
-        const btn = this, origHtml = btn.innerHTML;
-        btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Recalculating…';
-        try {
-            const response = await fetch(window.routes.updateArmPositions, {
-                method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'},
-                body: JSON.stringify({ schoolclass_id: window.schoolclass_id, term_id: window.term_id, session_id: window.session_id }),
-            });
-            const data = await response.json();
-            if (data.success) {
-                await fetch(window.routes.results, { headers:{'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF} })
-                    .then(r => r.json()).then(d => { if (d.success && Array.isArray(d.scores)) applyAllPositions(d.scores); });
-                Swal.fire({ icon:'success', title:'Positions Updated!', html: data.message, timer:3000, showConfirmButton:true });
-            } else {
-                Swal.fire({ icon:'error', title:'Update Failed', text: data.message });
-            }
-        } catch { Swal.fire({ icon:'error', title:'Error', text:'Network error while updating positions.' }); }
-        finally { btn.disabled = false; btn.innerHTML = origHtml; }
     });
+});
 
-    // Downloads
-    document.getElementById('downloadMarksSheet')?.addEventListener('click', () =>
-        startPdfDownload(window.routes.downloadMarksSheet + `?subjectclass_id=${window.subjectclass_id}&staff_id=${window.staff_id}&term_id=${window.term_id}&session_id=${window.session_id}&schoolclass_id=${window.schoolclass_id}`, 'admin-marks-sheet.pdf', 'Generating Marks Sheet…'));
-    document.getElementById('downloadScoresPdf')?.addEventListener('click', () =>
-        startPdfDownload(window.routes.downloadScoresPdf  + `?subjectclass_id=${window.subjectclass_id}&staff_id=${window.staff_id}&term_id=${window.term_id}&session_id=${window.session_id}&schoolclass_id=${window.schoolclass_id}`, 'admin-scores-sheet.pdf','Generating Scores PDF…'));
+// Downloads
+document.getElementById('downloadMarksSheet')?.addEventListener('click', () => window.open(routes.downloadMarksSheet + `?subjectclass_id={{ $subjectclassId }}&staff_id={{ $teacherId }}&term_id={{ $termId }}&session_id={{ $sessionId }}&schoolclass_id={{ $schoolclass->id }}`, '_blank'));
+document.getElementById('downloadScoresPdf')?.addEventListener('click', () => window.open(routes.downloadScoresPdf + `?subjectclass_id={{ $subjectclassId }}&staff_id={{ $teacherId }}&term_id={{ $termId }}&session_id={{ $sessionId }}&schoolclass_id={{ $schoolclass->id }}`, '_blank'));
+document.getElementById('downloadExcel')?.addEventListener('click', () => window.open(routes.export + `?subjectclass_id={{ $subjectclassId }}&staff_id={{ $teacherId }}&term_id={{ $termId }}&session_id={{ $sessionId }}&schoolclass_id={{ $schoolclass->id }}`, '_blank'));
 
-    // Excel export
-    document.getElementById('downloadExcel')?.addEventListener('click', () => {
-        const btn = document.getElementById('downloadExcel'), origHtml = btn?.innerHTML;
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Generating…'; }
-        const url = window.routes.export + `?subjectclass_id=${window.subjectclass_id}&staff_id=${window.staff_id}&term_id=${window.term_id}&session_id=${window.session_id}&schoolclass_id=${window.schoolclass_id}`;
-        fetch(url, { headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'} })
-        .then(r => { const cd=r.headers.get('content-disposition')||'',m=cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/),fn=m?m[1].replace(/['"]/g,''):'scoresheet.xlsx'; return r.blob().then(b=>({blob:b,filename:fn})); })
-        .then(({blob,filename}) => { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast('Excel downloaded!','success'); })
-        .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
-        .finally(() => { if (btn) { btn.disabled=false; btn.innerHTML=origHtml; } });
+// Import
+document.getElementById('importForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    let formData = new FormData(this);
+    fetch(routes.import, { method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF }, body: formData }).then(r => r.json()).then(data => {
+        if (data.success) { showToast(data.message, 'success'); location.reload(); }
+        else showToast(data.message, 'error');
     });
+});
 
-    // Import form
-    document.getElementById('importForm')?.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const file = this.querySelector('input[name="file"]');
-        if (!file?.files?.length) { Swal.fire({ icon:'warning', title:'No File', text:'Please select an Excel file.' }); return; }
-        const btn=document.getElementById('importSubmit'), loader=document.getElementById('importLoader'),
-              bar=document.getElementById('uploadProgressBar'), origHtml=btn?.innerHTML;
-        if (btn)    { btn.disabled=true; btn.innerHTML='<i class="ri-loader-4-line"></i> Uploading…'; }
-        if (loader)   loader.style.display='block';
-        if (bar)      bar.style.width='10%';
-        fetch(window.routes.import, {
-            method:'POST', headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest'}, body: new FormData(this)
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (bar) bar.style.width = '100%';
-            if (data.success || data.warning) {
-                Swal.fire({ icon:data.warning?'warning':'success', title:data.warning?'Partial Success':'Imported!', text:data.message, timer:2500, showConfirmButton:false });
-                bootstrap.Modal.getInstance(document.getElementById('importModal'))?.hide();
-                setTimeout(() => location.reload(), 2600);
-            } else {
-                Swal.fire({ icon:'error', title:'Import Failed', text: data.message || 'Unknown error.' });
-            }
-        })
-        .catch(err => Swal.fire({ icon:'error', title:'Upload Error', text: err.message }))
-        .finally(() => {
-            setTimeout(() => { if(loader) loader.style.display='none'; if(bar) bar.style.width='0%'; }, 1000);
-            if (btn) { btn.disabled=false; btn.innerHTML=origHtml||'Upload'; }
-            if (file) file.value='';
-        });
+// Column visibility
+document.querySelectorAll('.col-toggle').forEach(cb => {
+    cb.addEventListener('change', function() {
+        document.querySelectorAll(`.${this.dataset.col}`).forEach(el => el.style.display = this.checked ? '' : 'none');
     });
+});
 
-    // Staggered row entrance
-    (function initRowEntrance() {
-        const rows = Array.from(document.querySelectorAll('#scoresheetTableBody tr[data-id]'));
-        if (!rows.length) return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            rows.forEach(r => r.classList.add('row-visible')); return;
-        }
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                const row = entry.target, index = rows.indexOf(row);
-                setTimeout(() => row.classList.add('row-visible'), Math.min(index * 38, 15 * 38) + 60);
-                observer.unobserve(row);
-            });
-        }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
-        rows.forEach(row => observer.observe(row));
-    })();
-
-}); // end DOMContentLoaded
-
-/* ══ SCORE INPUT TOOLTIP ══════════════════════════════════════════════ */
-const tip = document.getElementById('scoreTooltip');
-let tipInput = null, tipHideTimer = null;
-
-function tipPosition(inp) {
-    const r = inp.getBoundingClientRect(), tw = 230, margin = 8;
-    let left = r.left + r.width / 2 - tw / 2;
-    left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
-    tip.style.left = left + 'px';
-    tip.classList.remove('tip-above','tip-below');
-    if (r.top > 155) { tip.style.top = (r.top + window.scrollY - 8) + 'px'; tip.classList.add('tip-above'); }
-    else             { tip.style.top = (r.bottom + window.scrollY + 8) + 'px'; tip.classList.add('tip-below'); }
-}
-
-function tipRefresh(inp) {
-    if (!inp) return;
-    const row = inp.closest('tr');
-    const val = parseFloat(inp.value) || 0, max = parseFloat(inp.dataset.max) || 100;
-    const asmtName = inp.dataset.assessmentName || 'Score';
-    let total = 0, totalMax = 0;
-    row.querySelectorAll('.score-input').forEach(i => { total += parseFloat(i.value)||0; totalMax += parseFloat(i.dataset.max)||0; });
-    const grade = clientGrade(total);
-    const pct   = totalMax > 0 ? Math.min(total / totalMax * 100, 100) : 0;
-    const col   = GRADE_COLORS[grade] || '#6b7280';
-
-    document.getElementById('stAvatar').src       = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-    document.getElementById('stName').textContent  = row.dataset.name || '—';
-    document.getElementById('stMeta').textContent  = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
-    document.getElementById('stVal').textContent   = val % 1 === 0 ? String(val) : val.toFixed(1);
-    document.getElementById('stTotal').textContent = fmtN(total);
-    const gEl = document.getElementById('stGrade'); gEl.textContent = grade; gEl.style.color = col;
-    document.getElementById('stProgLabel').textContent = fmtN(total) + ' / ' + totalMax + ' marks';
-    document.getElementById('stProgPct').textContent   = Math.round(pct) + '%';
-    const fill = document.getElementById('stProgFill');
-    fill.style.width      = pct.toFixed(1) + '%';
-    fill.style.background = pct >= 70 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 40 ? '#d97706' : '#dc2626';
-    tipPosition(inp);
-}
-
-function tipShow(inp) {
-    clearTimeout(tipHideTimer); tipInput = inp;
-    tip.style.position = 'absolute'; tip.style.display = 'block';
-    tipRefresh(inp); requestAnimationFrame(() => { tip.style.opacity = '1'; });
-}
-function tipHide() {
-    tip.style.opacity = '0';
-    tipHideTimer = setTimeout(() => { if (tip.style.opacity === '0') tip.style.display = 'none'; }, 160);
-    tipInput = null;
-}
-
-/* SweetAlert2 lazy load */
-if (typeof Swal === 'undefined') {
-    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11'; document.head.appendChild(s);
-}
+// Row entrance animation
+document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach((row, i) => {
+    setTimeout(() => row.classList.add('row-visible'), i * 30);
+});
 </script>
 @endsection

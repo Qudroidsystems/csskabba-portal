@@ -19,31 +19,40 @@ return new class extends Migration
                 $table->timestamp('locked_at');
                 $table->boolean('is_active')->default(true);
                 $table->text('reason')->nullable();
+                $table->timestamp('scheduled_unlock_at')->nullable();
+                $table->string('auto_unlock_job_id')->nullable();
                 $table->timestamps();
             });
         }
 
-        // Add foreign keys separately
-        Schema::table('scoresheet_locks', function (Blueprint $table) {
-            try {
-                $table->foreign('subjectclass_id')->references('id')->on('subjectclass')->onDelete('cascade');
-                $table->foreign('term_id')->references('id')->on('schoolterm')->onDelete('cascade');
-                $table->foreign('session_id')->references('id')->on('schoolsession')->onDelete('cascade');
-                $table->foreign('locked_by')->references('id')->on('users')->onDelete('cascade');
-            } catch (\Exception $e) {
-                // Foreign keys might already exist
-            }
-        });
-
-        // Add unique constraint
+        // Add foreign keys
         try {
             Schema::table('scoresheet_locks', function (Blueprint $table) {
-                $table->unique(['subjectclass_id', 'term_id', 'session_id'], 'unique_scoresheet_lock');
-                $table->index('is_active');
+                $table->foreign('subjectclass_id', 'sl_subjectclass_id_foreign')->references('id')->on('subjectclass')->onDelete('cascade');
+                $table->foreign('term_id', 'sl_term_id_foreign')->references('id')->on('schoolterm')->onDelete('cascade');
+                $table->foreign('session_id', 'sl_session_id_foreign')->references('id')->on('schoolsession')->onDelete('cascade');
+                $table->foreign('locked_by', 'sl_locked_by_foreign')->references('id')->on('users')->onDelete('cascade');
             });
-        } catch (\Exception $e) {
-            // Constraints might already exist
-        }
+        } catch (\Exception $e) {}
+
+        // Add unique constraint and indexes
+        try {
+            if (!Schema::hasIndex('scoresheet_locks', 'unique_scoresheet_lock')) {
+                Schema::table('scoresheet_locks', function (Blueprint $table) {
+                    $table->unique(['subjectclass_id', 'term_id', 'session_id'], 'unique_scoresheet_lock');
+                });
+            }
+            if (!Schema::hasIndex('scoresheet_locks', 'sl_is_active_index')) {
+                Schema::table('scoresheet_locks', function (Blueprint $table) {
+                    $table->index('is_active', 'sl_is_active_index');
+                });
+            }
+            if (!Schema::hasIndex('scoresheet_locks', 'sl_scheduled_unlock_index')) {
+                Schema::table('scoresheet_locks', function (Blueprint $table) {
+                    $table->index('scheduled_unlock_at', 'sl_scheduled_unlock_index');
+                });
+            }
+        } catch (\Exception $e) {}
     }
 
     public function down()

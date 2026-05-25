@@ -1,3 +1,4 @@
+{{-- resources/views/subjectscoresheet/index.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -30,6 +31,7 @@
 .score-input:focus      { outline: none; border-color: var(--ss-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
 .score-input.is-invalid { border-color: var(--ss-danger)  !important; background: #fef2f2; }
 .score-input.is-saved   { border-color: var(--ss-success) !important; background: #f0fdf4; }
+.score-input:disabled   { background: #f3f4f6; cursor: not-allowed; opacity: 0.7; }
 
 #scoresheetTable { font-size: 12.5px; }
 #scoresheetTable thead tr { background: var(--ss-primary); color: #fff; }
@@ -40,6 +42,7 @@
 .row-vetted     { background: #f0fdf4 !important; }
 .row-not-vetted { background: #fef2f2 !important; }
 .row-pending    { background: #fffbeb !important; }
+.row-locked     { background: #fef2f2 !important; opacity: 0.85; }
 
 .stat-card { background: var(--ss-card); border: 1px solid var(--ss-border); border-radius: var(--ss-radius); padding: 14px 18px; box-shadow: var(--ss-shadow); transition: transform .15s; }
 .stat-card:hover { transform: translateY(-2px); }
@@ -74,13 +77,11 @@
     border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle;
 }
 
-/* Position badges flash when updated */
+/* Position badges */
 .position-badge, .position-total-badge, .arm-position-badge, .arm-position-cum-badge {
     transition: transform .22s cubic-bezier(0.34,1.4,0.64,1), opacity .15s ease;
 }
-.pos-flash {
-    animation: posFlash .5s cubic-bezier(0.34,1.4,0.64,1);
-}
+.pos-flash { animation: posFlash .5s cubic-bezier(0.34,1.4,0.64,1); }
 @keyframes posFlash {
     0%   { transform: scale(1);    opacity: 1; }
     30%  { transform: scale(1.25); opacity: .7; }
@@ -105,6 +106,7 @@
 #scoresheetTableBody tr.row-vetted:hover     { background: #e6faf0 !important; }
 #scoresheetTableBody tr.row-not-vetted:hover { background: #fff0f0 !important; }
 #scoresheetTableBody tr.row-pending:hover    { background: #fff8e6 !important; }
+#scoresheetTableBody tr.row-locked:hover     { background: #fef2f2 !important; }
 #scoresheetTableBody tr[data-id]:hover .student-image {
     transform: scale(1.12);
     transition: transform .22s cubic-bezier(.34,1.4,.64,1);
@@ -124,6 +126,30 @@
 }
 #scoresheetTableBody tr[data-id]:hover .score-checkbox,
 #scoresheetTableBody tr[data-id] .score-checkbox:checked { opacity: 1; transform: scale(1); }
+
+/* Lock Badge Styles */
+.lock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.lock-badge.global { background: #fee2e2; color: #dc2626; }
+.lock-badge.individual { background: #fef3c7; color: #d97706; }
+.lock-badge.disabled { background: #e5e7eb; color: #6b7280; }
+.lock-badge.scheduled { background: #e0e7ff; color: #4338ca; }
+
+/* Lock Status Banner */
+.lock-alert {
+    border-left: 4px solid #d97706;
+    background: #fffbeb;
+}
+.lock-alert.global { border-left-color: #dc2626; background: #fef2f2; }
+.lock-alert.disabled { border-left-color: #6b7280; background: #f3f4f6; }
+
 @media (prefers-reduced-motion: reduce) {
     #scoresheetTableBody tr[data-id],
     #scoresheetTableBody tr[data-id]:hover { transition: background .15s ease !important; transform: none !important; opacity: 1 !important; }
@@ -171,24 +197,6 @@
 #ssSaveOverlay.ss-closing  #ssSaveModal { transform: scale(.88) translateY(10px); opacity: 0; }
 #ssSaveOverlay.ss-closing  { animation: ssOverlayOut .22s ease forwards; }
 @keyframes ssOverlayOut { from { opacity:1; } to { opacity:0; } }
-.ss-icon-ring {
-    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px;
-    display: flex; align-items: center; justify-content: center; position: relative;
-}
-.ss-icon-ring svg.ss-arc-svg { position: absolute; top:0; left:0; width:56px; height:56px; }
-.ss-icon-center {
-    width: 36px; height: 36px; border-radius: 50%; background: rgba(30,58,95,.09);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1; position: relative; transition: background .3s;
-}
-.ss-modal-title { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 3px; letter-spacing: -.015em; }
-.ss-modal-sub   { font-size: 12px; color: #64748b; margin-bottom: 20px; min-height: 16px; transition: opacity .2s; }
-.ss-progress-track { height: 5px; border-radius: 3px; background: #f1f5f9; overflow: hidden; margin-bottom: 10px; }
-.ss-progress-fill  { height: 100%; border-radius: 3px; background: var(--ss-primary); width: 0%; transition: width .38s cubic-bezier(.4,0,.2,1), background .3s ease; }
-.ss-count-row  { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8; }
-.ss-count-num  { font-size: 11px; font-weight: 600; color: #334155; font-variant-numeric: tabular-nums; }
-.ss-check-path { stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .38s ease .08s; }
-.ss-check-path.drawn { stroke-dashoffset: 0; }
 
 @media (max-width: 768px) {
     .score-input  { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
@@ -290,6 +298,48 @@
             </div>
         @endif
     @endforeach
+
+    {{-- ══ LOCK STATUS BANNER FOR TEACHERS ═══════════════════════════════ --}}
+    @if(isset($globalLock) || isset($lockedCount) || isset($teacherEditingEnabled))
+        @if(!$teacherEditingEnabled)
+            <div class="alert lock-alert disabled mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="ri-user-settings-line fs-3 text-secondary"></i>
+                    <div>
+                        <strong>Teacher Editing Disabled</strong><br>
+                        <small>Teacher editing has been disabled for this subject by an administrator. You are viewing this scoresheet in read-only mode.</small>
+                    </div>
+                </div>
+            </div>
+        @elseif($globalLock)
+            <div class="alert lock-alert global mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="ri-global-line fs-3 text-danger"></i>
+                    <div>
+                        <strong>Global Lock Active</strong><br>
+                        <small>This scoresheet is locked by an administrator. Reason: {{ $globalLock->reason ?? 'No reason provided' }}</small><br>
+                        <small>Locked by: {{ optional($globalLock->lockedBy)->name }} on {{ $globalLock->locked_at->format('Y-m-d H:i:s') }}</small>
+                        @if($globalLock->scheduled_unlock_at)
+                            <small class="d-block mt-1"><i class="ri-calendar-line me-1"></i> Scheduled unlock: {{ \Carbon\Carbon::parse($globalLock->scheduled_unlock_at)->format('Y-m-d H:i:s') }}</small>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @elseif(($lockedCount ?? 0) > 0)
+            <div class="alert lock-alert mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="ri-lock-line fs-3 text-warning"></i>
+                    <div>
+                        <strong>{{ $lockedCount }} of {{ $broadsheets->count() }} scoresheets are locked</strong><br>
+                        <small>Locked records cannot be edited. Please contact your administrator if you need to make changes.</small>
+                        @if(($pendingUnlocks ?? 0) > 0)
+                            <small class="d-block mt-1"><i class="ri-calendar-line me-1"></i> {{ $pendingUnlocks }} record(s) have scheduled unlocks.</small>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
 
     {{-- ══ INFO + ASSESSMENTS HEADER ══════════════════════════════════ --}}
     @if ($broadsheets->isNotEmpty())
@@ -508,6 +558,9 @@
                         <i class="ri-upload-line me-1"></i>Import
                     </button>
                 @endif
+                <a href="{{ route('myresultroom.index') }}" class="btn btn-sm btn-outline-light">
+                    <i class="ri-arrow-left-line me-1"></i>Back
+                </a>
             </div>
         </div>
 
@@ -536,7 +589,8 @@
                     <tr>
                         <th class="col-checkbox" style="width:44px;">
                             <div class="form-check mb-0">
-                                <input class="form-check-input" type="checkbox" id="checkAll">
+                                <input class="form-check-input" type="checkbox" id="checkAll"
+                                    {{ (isset($teacherEditingEnabled) && !$teacherEditingEnabled) || isset($globalLock) ? 'disabled' : '' }}>
                             </div>
                         </th>
                         <th class="col-sn">SN</th>
@@ -565,13 +619,6 @@
                         <th class="col-gpa  text-center">GPA</th>
                         <th class="col-cgpa text-center">CGPA</th>
 
-                        {{--
-                            Four position columns — spec:
-                            subject_position_class        → all arms, by cum
-                            subject_position_class_total  → all arms, by total
-                            arm_position                  → this arm, by total
-                            arm_position_cum              → this arm, by cum
-                        --}}
                         <th class="col-position text-center"
                             title="All arms of this class combined, ranked by cumulative average">
                             Class Pos<br><small class="fw-normal opacity-75">(Cum)</small>
@@ -590,6 +637,10 @@
                         </th>
 
                         <th class="col-vetted text-center">Status</th>
+                        <th class="col-lock-status text-center" style="width: 100px;">
+                            <i class="ri-lock-line"></i><br>
+                            <small>Lock Status</small>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="scoresheetTableBody">
@@ -610,7 +661,15 @@
                             }
                             $cumColor        = $cum      >= 70 ? 'success' : ($cum      >= 50 ? 'info' : ($cum      >= 40 ? 'warning' : 'danger'));
                             $totalColor      = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
+
+                            // Determine lock status for this row
+                            $isGloballyLocked = isset($globalLock) && $globalLock;
+                            $isTeacherEditingDisabled = isset($teacherEditingEnabled) && !$teacherEditingEnabled;
+                            $isRowLocked = $broadsheet->is_locked || $isGloballyLocked || $isTeacherEditingDisabled;
+                            $hasScheduledUnlock = !is_null($broadsheet->scheduled_unlock_at);
+
                             $vClass = match(true) {
+                                $isRowLocked => 'row-locked',
                                 $broadsheet->vettedstatus === '1' => 'row-vetted',
                                 $broadsheet->vettedstatus === '0' => 'row-not-vetted',
                                 default => 'row-pending',
@@ -629,11 +688,12 @@
                             data-categoryid="{{ $broadsheet->classcategoryid ?? '' }}"
                             data-name="{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}{{ $broadsheet->mname ? ' '.$broadsheet->mname : '' }}"
                             data-admissionno="{{ $broadsheet->admissionno ?? '' }}"
-                            data-avatar="{{ $avatarUrl }}">
+                            data-avatar="{{ $avatarUrl }}"
+                            data-is-locked="{{ $isRowLocked ? 'true' : 'false' }}">
 
                             <td class="col-checkbox">
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}">
+                                    <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}" {{ $isRowLocked ? 'disabled' : '' }}>
                                 </div>
                             </td>
                             <td class="col-sn sn fw-medium">{{ ++$i }}</td>
@@ -674,7 +734,8 @@
                                            data-original="{{ $scoreValue }}"
                                            data-assessment-name="{{ $assessment->name }}"
                                            value="{{ $scoreValue }}"
-                                           min="0" max="{{ $assessment->max_score }}" step="0.1">
+                                           min="0" max="{{ $assessment->max_score }}" step="0.1"
+                                           {{ $isRowLocked ? 'disabled' : '' }}>
                                 </td>
                             @empty
                                 <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
@@ -717,7 +778,6 @@
                                 </span>
                             </td>
 
-                            {{-- subject_position_class → .position-badge (all arms, by cum) --}}
                             <td class="col-position text-center">
                                 <span class="badge position-badge" style="background:var(--ss-primary);"
                                       title="All arms of this class, ranked by cumulative average">
@@ -727,7 +787,6 @@
                                 </span>
                             </td>
 
-                            {{-- subject_position_class_total → .position-total-badge (all arms, by total) --}}
                             <td class="col-position-total text-center">
                                 <span class="badge position-total-badge" style="background:#0f766e;"
                                       title="All arms of this class, ranked by raw total">
@@ -737,7 +796,6 @@
                                 </span>
                             </td>
 
-                            {{-- arm_position → .arm-position-badge (this arm, by total) --}}
                             <td class="col-arm-position text-center">
                                 <span class="badge arm-position-badge" style="background:#0891b2;"
                                       title="Position within {{ $broadsheet->arm ?? 'this arm' }} only, ranked by raw total">
@@ -747,7 +805,6 @@
                                 </span>
                             </td>
 
-                            {{-- arm_position_cum → .arm-position-cum-badge (this arm, by cum) --}}
                             <td class="col-arm-position-cum text-center">
                                 <span class="badge arm-position-cum-badge" style="background:#7c3aed;"
                                       title="Position within {{ $broadsheet->arm ?? 'this arm' }} only, ranked by cumulative average">
@@ -766,10 +823,37 @@
                                     <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
                                 @endif
                             </td>
+
+                            {{-- Lock Status Cell --}}
+                            <td class="col-lock-status text-center">
+                                @if($isGloballyLocked)
+                                    <span class="lock-badge global" title="{{ $globalLock->reason ?? 'Global lock active' }}">
+                                        <i class="ri-global-line me-1"></i>Global Lock
+                                        @if($globalLock->scheduled_unlock_at)
+                                            <br><small class="text-muted" style="font-size: 9px;">Unlocks: {{ \Carbon\Carbon::parse($globalLock->scheduled_unlock_at)->format('d/m H:i') }}</small>
+                                        @endif
+                                    </span>
+                                @elseif($isTeacherEditingDisabled)
+                                    <span class="lock-badge disabled">
+                                        <i class="ri-user-settings-line me-1"></i>Read Only
+                                    </span>
+                                @elseif($broadsheet->is_locked)
+                                    <span class="lock-badge individual" title="{{ $broadsheet->lock_reason ?? 'Locked by admin' }}">
+                                        <i class="ri-lock-line me-1"></i>Locked
+                                        @if($hasScheduledUnlock)
+                                            <br><small class="text-muted" style="font-size: 9px;">Unlocks: {{ \Carbon\Carbon::parse($broadsheet->scheduled_unlock_at)->format('d/m H:i') }}</small>
+                                        @endif
+                                    </span>
+                                @else
+                                    <span class="lock-badge" style="background: #dcfce7; color: #15803d;">
+                                        <i class="ri-lock-unlock-line me-1"></i>Editable
+                                    </span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 17 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 18 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -782,13 +866,13 @@
             <div class="p-3 border-top" style="background:#f8fafc;">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div class="d-flex gap-2 flex-wrap">
-                        <button class="btn btn-sm btn-outline-primary"   id="selectAllScores">
+                        <button class="btn btn-sm btn-outline-primary"   id="selectAllScores" {{ (isset($teacherEditingEnabled) && !$teacherEditingEnabled) || isset($globalLock) ? 'disabled' : '' }}>
                             <i class="ri-check-double-line me-1"></i>Select All
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" id="clearAllScores">
+                        <button class="btn btn-sm btn-outline-secondary" id="clearAllScores" {{ (isset($teacherEditingEnabled) && !$teacherEditingEnabled) || isset($globalLock) ? 'disabled' : '' }}>
                             <i class="ri-close-line me-1"></i>Clear
                         </button>
-                        <button class="btn btn-sm btn-outline-danger"    id="deleteSelectedScoresBtn">
+                        <button class="btn btn-sm btn-outline-danger"    id="deleteSelectedScoresBtn" {{ (isset($teacherEditingEnabled) && !$teacherEditingEnabled) || isset($globalLock) ? 'disabled' : '' }}>
                             <i class="ri-delete-bin-line me-1"></i>Delete Selected
                         </button>
                         <a href="{{ route('myresultroom.index') }}" class="btn btn-sm btn-outline-secondary">
@@ -797,7 +881,7 @@
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <small class="text-muted"><i class="ri-keyboard-line me-1"></i>Ctrl+S to save</small>
-                        <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores">
+                        <button class="btn btn-success btn-sm px-4" id="bulkUpdateScores" {{ (isset($teacherEditingEnabled) && !$teacherEditingEnabled) || isset($globalLock) ? 'disabled' : '' }}>
                             <i class="ri-save-line me-1"></i>Save All Scores
                         </button>
                     </div>
@@ -856,6 +940,7 @@
                                 ['col-arm-position',     'Arm Pos (Total) — this arm'],
                                 ['col-arm-position-cum', 'Arm Pos (Cum) — this arm'],
                                 ['col-vetted',           'Status'],
+                                ['col-lock-status',      'Lock Status'],
                             ] as [$cls,$lbl])
                             <div class="form-check">
                                 <input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
@@ -965,6 +1050,7 @@ window.subjectclass_id = {{ session('subjectclass_id') ?? 'null' }};
 window.schoolclass_id  = {{ session('schoolclass_id')  ?? 'null' }};
 window.staff_id        = {{ session('staff_id')        ?? 'null' }};
 window.is_senior       = {{ ($is_senior ?? false) ? 'true' : 'false' }};
+window.isEditingDisabled = {{ (isset($teacherEditingEnabled) && !$teacherEditingEnabled) || isset($globalLock) ? 'true' : 'false' }};
 
 /* ══════════════════════════════════════════════════════════════════════
    CONSTANTS
@@ -1030,23 +1116,11 @@ function validateInput(inp) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   POSITION PATCH  — update all 4 position badges for EVERY visible row
-   Called after every single save AND every bulk save so the whole table
-   stays in sync without a page reload.
+   POSITION PATCH
    ══════════════════════════════════════════════════════════════════════ */
-/**
- * applyAllPositions(broadsheets)
- *
- * broadsheets: array of objects from the server, each having:
- *   id, position, position_total, arm_position, arm_position_cum
- *
- * Walks every row in the table and patches all four badge elements,
- * then plays a small pop animation so the teacher notices the change.
- */
 function applyAllPositions(broadsheets) {
     if (!Array.isArray(broadsheets) || !broadsheets.length) return;
 
-    // Build an id→data map for O(1) lookups
     const map = {};
     broadsheets.forEach(bs => { map[String(bs.id)] = bs; });
 
@@ -1066,9 +1140,7 @@ function applyAllPositions(broadsheets) {
             const newText = ord(val);
             if (badge.textContent.trim() !== newText) {
                 badge.textContent = newText;
-                // Pop animation to draw attention to the change
                 badge.classList.remove('pos-flash');
-                // Force reflow so re-adding the class restarts animation
                 void badge.offsetWidth;
                 badge.classList.add('pos-flash');
                 setTimeout(() => badge.classList.remove('pos-flash'), 520);
@@ -1078,7 +1150,7 @@ function applyAllPositions(broadsheets) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   LIVE GRADE + TOTAL PREVIEW  (fires on every keystroke)
+   LIVE GRADE + TOTAL PREVIEW
    ══════════════════════════════════════════════════════════════════════ */
 const gradeTimers = {};
 
@@ -1092,7 +1164,6 @@ function updateRowGrades(row) {
     row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
     const cum = (termId == 1 || bf === 0) ? totalRaw : (totalRaw + bf) / 2;
 
-    // Total badge
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) {
         totalBadge.textContent = fmtN(totalRaw);
@@ -1101,7 +1172,6 @@ function updateRowGrades(row) {
         totalBadge.style.fontSize = '12px';
     }
 
-    // Cum badge
     const cumBadge = row.querySelector('.cum-badge');
     if (cumBadge) {
         cumBadge.textContent = fmtN(cum);
@@ -1110,11 +1180,9 @@ function updateRowGrades(row) {
         cumBadge.style.fontSize = '12px';
     }
 
-    // Client-side grade preview (instant)
     applyGrade(row.querySelector('.grade-badge'),     clientGrade(totalRaw));
     applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(cum));
 
-    // Server-side grade confirmation (debounced 400 ms)
     clearTimeout(gradeTimers[bid]);
     gradeTimers[bid] = setTimeout(async () => {
         const totalGradeBadge = row.querySelector('.grade-badge');
@@ -1143,13 +1211,18 @@ function updateRowGrades(row) {
 
 /* ══════════════════════════════════════════════════════════════════════
    SINGLE SCORE SAVE
-   Fires on blur (if value changed) or Enter key.
-   After the server responds:
-     • patches grades / cum / bf / GPA / CGPA for this student
-     • calls applyAllPositions() so EVERY row's positions update
    ══════════════════════════════════════════════════════════════════════ */
 function saveIndividualScore(input) {
+    if (window.isEditingDisabled) {
+        showToast('Editing is currently disabled for this subject.', 'warning');
+        return;
+    }
+
     const row = input.closest('tr');
+    if (row.dataset.isLocked === 'true') {
+        showToast('This scoresheet is locked and cannot be edited.', 'warning');
+        return;
+    }
 
     fetch(window.routes.singleUpdate, {
         method : 'POST',
@@ -1168,10 +1241,17 @@ function saveIndividualScore(input) {
     })
     .then(r => r.json())
     .then(data => {
-        if (!data.success) { showToast(data.message || 'Could not save.', 'warning'); return; }
+        if (!data.success) {
+            if (data.locked) {
+                showToast(data.message || 'This scoresheet is locked.', 'warning');
+                location.reload();
+            } else {
+                showToast(data.message || 'Could not save.', 'warning');
+            }
+            return;
+        }
         const d = data.data;
 
-        // ── This student's row ────────────────────────────────────
         const bfBadge = row.querySelector('.bf-badge');
         if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
 
@@ -1195,13 +1275,9 @@ function saveIndividualScore(input) {
         if (gpaBadge  && d.gpa  != null) gpaBadge.textContent  = fmtN(d.gpa,  2);
         if (cgpaBadge && d.cgpa != null) cgpaBadge.textContent = fmtN(d.cgpa, 2);
 
-        // ── Input saved flash ─────────────────────────────────────
         input.classList.add('is-saved');
         setTimeout(() => input.classList.remove('is-saved'), 2000);
 
-        // ── Patch positions for ALL rows via the results endpoint ─
-        // The server has already recomputed all four position columns
-        // in the DB; we fetch the fresh list and push it to the DOM.
         refreshAllPositions();
     })
     .catch(err => {
@@ -1211,9 +1287,7 @@ function saveIndividualScore(input) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   REFRESH ALL POSITIONS  — fetches /results and patches every row
-   Lightweight: the results endpoint returns only what we need.
-   De-bounced with 120 ms so rapid entry doesn't hammer the server.
+   REFRESH ALL POSITIONS
    ══════════════════════════════════════════════════════════════════════ */
 let positionRefreshTimer = null;
 
@@ -1229,7 +1303,7 @@ function refreshAllPositions() {
                 applyAllPositions(data.scores);
             }
         })
-        .catch(() => {}); // silent — positions will be corrected on next save or page load
+        .catch(() => {});
     }, 120);
 }
 
@@ -1282,14 +1356,20 @@ function ssClose() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   BULK SAVE  — saves all rows, then patches the whole table
+   BULK SAVE
    ══════════════════════════════════════════════════════════════════════ */
 function bulkSave() {
+    if (window.isEditingDisabled) {
+        showToast('Editing is currently disabled for this subject.', 'warning');
+        return;
+    }
+
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
     if (invalid) { Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` }); return; }
 
     const scores = [];
     document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
+        if (row.dataset.isLocked === 'true') return;
         const assessments = {};
         row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
         if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
@@ -1320,16 +1400,22 @@ function bulkSave() {
     .then(r => r.json())
     .then(data => {
         clearInterval(fakeIv);
-        if (!data.success) { ssError(data.message || 'Server error.'); return; }
+        if (!data.success) {
+            if (data.locked) {
+                ssError('Some scoresheets are locked. Please refresh.');
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                ssError(data.message || 'Server error.');
+            }
+            return;
+        }
         ssUpdate(total, total, 100);
         setTimeout(() => ssSuccess(total), 220);
 
-        // ── Patch every row from the server response ──────────────
         (data.data?.broadsheets ?? []).forEach(bs => {
             const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
             if (!row) return;
 
-            // Total
             const ts = parseFloat(bs.total ?? 0);
             const tb = row.querySelector('.total-badge');
             if (tb) {
@@ -1339,15 +1425,12 @@ function bulkSave() {
                 tb.style.fontSize = '12px';
             }
 
-            // Total grade
             const tgb = row.querySelector('.grade-badge');
             if (tgb) applyGrade(tgb, bs.grade ?? '-');
 
-            // BF
             const bfB = row.querySelector('.bf-badge');
             if (bfB) bfB.textContent = fmtN(bs.bf);
 
-            // Cum
             const cum = parseFloat(bs.cum ?? 0);
             const cb  = row.querySelector('.cum-badge');
             if (cb) {
@@ -1357,28 +1440,23 @@ function bulkSave() {
                 cb.style.fontSize = '12px';
             }
 
-            // Cum grade
             const cgb = row.querySelector('.cum-grade-badge');
             if (cgb) applyGrade(cgb, clientGrade(cum));
 
-            // Avg
             const ab = row.querySelector('.avg-badge');
             if (ab && bs.avg != null) ab.textContent = fmtN(bs.avg);
 
-            // GPA / CGPA
             const gb    = row.querySelector('.gpa-badge');
             const cgpab = row.querySelector('.cgpa-badge');
             if (gb)    gb.textContent    = fmtN(bs.gpa,  2);
             if (cgpab) cgpab.textContent = fmtN(bs.cgpa, 2);
 
-            // Input saved flash
             row.querySelectorAll('.score-input').forEach(i => {
                 i.classList.add('is-saved');
                 setTimeout(() => i.classList.remove('is-saved'), 2000);
             });
         });
 
-        // ── Patch ALL four position columns for every row ─────────
         applyAllPositions(data.data?.broadsheets ?? []);
     })
     .catch(err => { clearInterval(fakeIv); ssError('Please check your connection and try again.'); console.error(err); })
@@ -1452,18 +1530,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Checkboxes
     document.getElementById('checkAll')?.addEventListener('change', function () {
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked);
+        if (window.isEditingDisabled) return;
+        document.querySelectorAll('.score-checkbox:not(:disabled)').forEach(cb => cb.checked = this.checked);
     });
     document.addEventListener('change', function (e) {
         if (!e.target.classList.contains('score-checkbox')) return;
-        const all = document.querySelectorAll('.score-checkbox');
+        const all = document.querySelectorAll('.score-checkbox:not(:disabled)');
         const chk = document.querySelectorAll('.score-checkbox:checked');
         const ca  = document.getElementById('checkAll');
         if (ca) { ca.checked = chk.length === all.length && all.length > 0; ca.indeterminate = chk.length > 0 && chk.length < all.length; }
     });
     document.getElementById('selectAllScores')?.addEventListener('click', () => {
+        if (window.isEditingDisabled) return;
         const ca = document.getElementById('checkAll'); if (ca) ca.checked = true;
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true);
+        document.querySelectorAll('.score-checkbox:not(:disabled)').forEach(cb => cb.checked = true);
     });
     document.getElementById('clearAllScores')?.addEventListener('click', () => {
         const ca = document.getElementById('checkAll'); if (ca) ca.checked = false;
@@ -1472,24 +1552,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ── Score inputs ────────────────────────────────────────────── */
     document.querySelectorAll('.score-input').forEach(inp => {
+        if (inp.disabled) return;
 
         inp.addEventListener('focus', function () { this.select(); tipShow(this); });
 
         inp.addEventListener('input', function () {
             validateInput(this);
             const row = this.closest('tr');
-            if (row) updateRowGrades(row);    // live total/grade/cum preview
+            if (row) updateRowGrades(row);
             if (tipInput === this) tipRefresh(this);
         });
 
         inp.addEventListener('blur', function () {
             setTimeout(() => { if (tipInput === this) tipHide(); }, 80);
             if (!validateInput(this)) return;
+            if (window.isEditingDisabled) return;
             const orig = parseFloat(this.dataset.original) || 0;
             const curr = parseFloat(this.value)            || 0;
             if (Math.abs(curr - orig) > 0.001) {
                 this.dataset.original = this.value;
-                saveIndividualScore(this);   // saves + refreshes ALL positions
+                saveIndividualScore(this);
             }
         });
 
@@ -1497,8 +1579,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (e.key === 'Escape') { e.preventDefault(); tipHide(); this.blur(); return; }
             if (e.key !== 'Enter')  return;
             e.preventDefault();
+            if (window.isEditingDisabled) return;
             if (validateInput(this)) saveIndividualScore(this);
-            const all = Array.from(document.querySelectorAll('.score-input'));
+            const all = Array.from(document.querySelectorAll('.score-input:not(:disabled)'));
             const idx = all.indexOf(this);
             if (idx < all.length - 1) all[idx + 1].focus();
         });
@@ -1514,6 +1597,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Delete selected
     document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', function () {
+        if (window.isEditingDisabled) {
+            showToast('Editing is currently disabled for this subject.', 'warning');
+            return;
+        }
         const ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
         if (!ids.length) { Swal.fire({ icon:'warning', title:'No Selection', text:'Select rows to delete.' }); return; }
         Swal.fire({ title:'Delete selected scores?', text:'This cannot be undone.', icon:'warning',
@@ -1532,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 showToast(`${deleted} score(s) deleted.`, 'success');
                 if (!document.querySelectorAll('#scoresheetTableBody tr[data-id]').length) location.reload();
-                else refreshAllPositions(); // recompute positions after deletion
+                else refreshAllPositions();
             });
         });
     });
@@ -1551,7 +1638,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             const data = await response.json();
             if (data.success) {
-                // Reload fresh positions from DB after recalculation
                 await fetch(window.routes.results, { headers:{'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF} })
                     .then(r => r.json())
                     .then(d => { if (d.success && Array.isArray(d.scores)) applyAllPositions(d.scores); });

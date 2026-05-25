@@ -12,55 +12,63 @@ return new class extends Migration
         Schema::table('broadsheets', function (Blueprint $table) {
             // Audit trail fields
             if (!Schema::hasColumn('broadsheets', 'entered_by')) {
-                $table->unsignedBigInteger('entered_by')->nullable()->after('vettedstatus');
+                $table->unsignedBigInteger('entered_by')->nullable();
             }
             if (!Schema::hasColumn('broadsheets', 'entered_at')) {
-                $table->timestamp('entered_at')->nullable()->after('entered_by');
+                $table->timestamp('entered_at')->nullable();
             }
             if (!Schema::hasColumn('broadsheets', 'last_modified_by')) {
-                $table->unsignedBigInteger('last_modified_by')->nullable()->after('entered_at');
+                $table->unsignedBigInteger('last_modified_by')->nullable();
             }
             if (!Schema::hasColumn('broadsheets', 'last_modified_at')) {
-                $table->timestamp('last_modified_at')->nullable()->after('last_modified_by');
+                $table->timestamp('last_modified_at')->nullable();
             }
             if (!Schema::hasColumn('broadsheets', 'entry_source')) {
-                $table->string('entry_source')->nullable()->default('teacher')->comment('teacher or admin')->after('last_modified_at');
+                $table->string('entry_source')->nullable()->default('teacher')->comment('teacher or admin');
             }
 
             // Lock fields
             if (!Schema::hasColumn('broadsheets', 'is_locked')) {
-                $table->boolean('is_locked')->default(false)->after('entry_source');
+                $table->boolean('is_locked')->default(false);
             }
             if (!Schema::hasColumn('broadsheets', 'locked_by')) {
-                $table->unsignedBigInteger('locked_by')->nullable()->after('is_locked');
+                $table->unsignedBigInteger('locked_by')->nullable();
             }
             if (!Schema::hasColumn('broadsheets', 'locked_at')) {
-                $table->timestamp('locked_at')->nullable()->after('locked_by');
+                $table->timestamp('locked_at')->nullable();
             }
             if (!Schema::hasColumn('broadsheets', 'lock_reason')) {
-                $table->text('lock_reason')->nullable()->after('locked_at');
+                $table->text('lock_reason')->nullable();
+            }
+
+            // Scheduled unlock fields
+            if (!Schema::hasColumn('broadsheets', 'scheduled_unlock_at')) {
+                $table->timestamp('scheduled_unlock_at')->nullable();
+            }
+            if (!Schema::hasColumn('broadsheets', 'unlock_scheduled_by')) {
+                $table->unsignedBigInteger('unlock_scheduled_by')->nullable();
             }
         });
 
-        // Add foreign keys - simple approach without Doctrine
+        // Add foreign keys
         try {
             Schema::table('broadsheets', function (Blueprint $table) {
-                // Only add foreign keys if the columns exist
-                if (Schema::hasColumn('broadsheets', 'entered_by') && !$this->foreignKeyExists('broadsheets', 'entered_by')) {
-                    $table->foreign('entered_by')->references('id')->on('users')->onDelete('set null');
+                if (Schema::hasColumn('broadsheets', 'entered_by')) {
+                    $table->foreign('entered_by', 'broadsheets_entered_by_foreign')->references('id')->on('users')->onDelete('set null');
                 }
-                if (Schema::hasColumn('broadsheets', 'last_modified_by') && !$this->foreignKeyExists('broadsheets', 'last_modified_by')) {
-                    $table->foreign('last_modified_by')->references('id')->on('users')->onDelete('set null');
+                if (Schema::hasColumn('broadsheets', 'last_modified_by')) {
+                    $table->foreign('last_modified_by', 'broadsheets_last_modified_by_foreign')->references('id')->on('users')->onDelete('set null');
                 }
-                if (Schema::hasColumn('broadsheets', 'locked_by') && !$this->foreignKeyExists('broadsheets', 'locked_by')) {
-                    $table->foreign('locked_by')->references('id')->on('users')->onDelete('set null');
+                if (Schema::hasColumn('broadsheets', 'locked_by')) {
+                    $table->foreign('locked_by', 'broadsheets_locked_by_foreign')->references('id')->on('users')->onDelete('set null');
+                }
+                if (Schema::hasColumn('broadsheets', 'unlock_scheduled_by')) {
+                    $table->foreign('unlock_scheduled_by', 'broadsheets_unlock_scheduled_by_foreign')->references('id')->on('users')->onDelete('set null');
                 }
             });
-        } catch (\Exception $e) {
-            // Foreign keys might already exist, continue
-        }
+        } catch (\Exception $e) {}
 
-        // Add indexes for performance
+        // Add indexes
         try {
             if (!Schema::hasIndex('broadsheets', 'broadsheets_lock_index')) {
                 Schema::table('broadsheets', function (Blueprint $table) {
@@ -77,34 +85,12 @@ return new class extends Migration
                     $table->index('last_modified_at', 'broadsheets_modified_at_index');
                 });
             }
-        } catch (\Exception $e) {
-            // Indexes might already exist
-        }
-    }
-
-    /**
-     * Check if a foreign key exists on a table
-     */
-    private function foreignKeyExists($table, $column)
-    {
-        try {
-            $conn = Schema::getConnection();
-            $databaseName = $conn->getDatabaseName();
-            $tableName = $conn->getTablePrefix() . $table;
-
-            $result = $conn->select("
-                SELECT CONSTRAINT_NAME
-                FROM information_schema.KEY_COLUMN_USAGE
-                WHERE TABLE_SCHEMA = ?
-                AND TABLE_NAME = ?
-                AND COLUMN_NAME = ?
-                AND REFERENCED_TABLE_NAME IS NOT NULL
-            ", [$databaseName, $tableName, $column]);
-
-            return !empty($result);
-        } catch (\Exception $e) {
-            return false;
-        }
+            if (!Schema::hasIndex('broadsheets', 'broadsheets_scheduled_unlock_index')) {
+                Schema::table('broadsheets', function (Blueprint $table) {
+                    $table->index('scheduled_unlock_at', 'broadsheets_scheduled_unlock_index');
+                });
+            }
+        } catch (\Exception $e) {}
     }
 
     public function down()
@@ -112,27 +98,29 @@ return new class extends Migration
         Schema::table('broadsheets', function (Blueprint $table) {
             // Drop foreign keys
             try {
-                $table->dropForeign(['entered_by']);
-                $table->dropForeign(['last_modified_by']);
-                $table->dropForeign(['locked_by']);
-            } catch (\Exception $e) {
-                // Foreign keys might not exist
-            }
+                $table->dropForeign('broadsheets_entered_by_foreign');
+                $table->dropForeign('broadsheets_last_modified_by_foreign');
+                $table->dropForeign('broadsheets_locked_by_foreign');
+                $table->dropForeign('broadsheets_unlock_scheduled_by_foreign');
+            } catch (\Exception $e) {}
 
             // Drop indexes
             try {
                 $table->dropIndex('broadsheets_lock_index');
                 $table->dropIndex('broadsheets_entered_at_index');
                 $table->dropIndex('broadsheets_modified_at_index');
-            } catch (\Exception $e) {
-                // Indexes might not exist
-            }
+                $table->dropIndex('broadsheets_scheduled_unlock_index');
+            } catch (\Exception $e) {}
 
             // Drop columns
-            $table->dropColumn([
-                'entered_by', 'entered_at', 'last_modified_by', 'last_modified_at',
-                'entry_source', 'is_locked', 'locked_by', 'locked_at', 'lock_reason'
-            ]);
+            $columns = ['entered_by', 'entered_at', 'last_modified_by', 'last_modified_at',
+                       'entry_source', 'is_locked', 'locked_by', 'locked_at', 'lock_reason',
+                       'scheduled_unlock_at', 'unlock_scheduled_by'];
+            foreach ($columns as $column) {
+                if (Schema::hasColumn('broadsheets', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
         });
     }
 };
