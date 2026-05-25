@@ -1415,50 +1415,54 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
 
 
-    // Admin Score Entry Routes
-    Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
-        Route::prefix('score-entry')->name('score-entry.')->group(function () {
-            // Main listing page
-            Route::get('/', [AdminScoreEntryController::class, 'index'])->name('index');
+// Admin Score Entry Routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('score-entry')->name('score-entry.')->group(function () {
+        // Main listing page
+        Route::get('/', [AdminScoreEntryController::class, 'index'])->name('index');
 
-            // Scoresheet view (terminal or mock)
-            Route::get('/scoresheet/{subjectclassId}/{teacherId}/{termId}/{sessionId}/{type?}',
-                [AdminScoreEntryController::class, 'showScoresheet'])
-                ->name('scoresheet')
-                ->where('type', 'terminal|mock');
+        // Lock Management Page
+        Route::get('/lock-management', [AdminScoreEntryController::class, 'lockManagement'])->name('lock-management');
 
-            // Terminal scoresheet endpoints
-            Route::post('/single-update', [AdminScoreEntryController::class, 'singleUpdate'])->name('single-update');
-            Route::post('/bulk-update', [AdminScoreEntryController::class, 'bulkUpdate'])->name('bulk-update');
-            Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
-            Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
+        // API endpoints for lock management
+        Route::get('/scoresheets-list', [AdminScoreEntryController::class, 'getScoresheetsList'])->name('scoresheets-list');
+        Route::post('/bulk-lock-management', [AdminScoreEntryController::class, 'bulkLockManagement'])->name('bulk-lock-management');
 
-            // Mock scoresheet endpoints
-            Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
-            Route::post('/mock-bulk-update', [AdminScoreEntryController::class, 'mockBulkUpdate'])->name('mock-bulk-update');
+        // Lock management actions
+        Route::post('/lock-scoresheet', [AdminScoreEntryController::class, 'lockScoresheet'])->name('lock-scoresheet');
+        Route::post('/unlock-scoresheet', [AdminScoreEntryController::class, 'unlockScoresheet'])->name('unlock-scoresheet');
+        Route::post('/lock-batch', [AdminScoreEntryController::class, 'lockBatchScoresheets'])->name('lock-batch');
+        Route::post('/unlock-batch', [AdminScoreEntryController::class, 'unlockBatchScoresheets'])->name('unlock-batch');
+        Route::post('/disable-teacher-editing', [AdminScoreEntryController::class, 'disableTeacherEditing'])->name('disable-teacher-editing');
+        Route::post('/enable-teacher-editing', [AdminScoreEntryController::class, 'enableTeacherEditing'])->name('enable-teacher-editing');
 
-            // Download & export endpoints
-            Route::get('/download-marks-sheet', [AdminScoreEntryController::class, 'downloadMarksSheet'])->name('download-marks-sheet');
-            Route::get('/download-scores-pdf', [AdminScoreEntryController::class, 'downloadScoresPdf'])->name('download-scores-pdf');
-            Route::get('/export', [AdminScoreEntryController::class, 'export'])->name('export');
-            Route::post('/import', [AdminScoreEntryController::class, 'import'])->name('import');
+        // Scoresheet view (terminal or mock)
+        Route::get('/scoresheet/{subjectclassId}/{teacherId}/{termId}/{sessionId}/{type?}',
+            [AdminScoreEntryController::class, 'showScoresheet'])
+            ->name('scoresheet')
+            ->where('type', 'terminal|mock');
 
-            // Utility endpoints
-            Route::post('/grade-for-score', [AdminScoreEntryController::class, 'calculateGradeForScore'])->name('grade-for-score');
-            Route::post('/update-arm-positions', [AdminScoreEntryController::class, 'updateAllArmPositions'])->name('update-arm-positions');
+        // Terminal scoresheet endpoints
+        Route::post('/single-update', [AdminScoreEntryController::class, 'singleUpdate'])->name('single-update');
+        Route::post('/bulk-update', [AdminScoreEntryController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
+        Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
 
-            // Lock management routes
-            Route::post('/lock-scoresheet', [AdminScoreEntryController::class, 'lockScoresheet'])->name('lock-scoresheet');
-            Route::post('/unlock-scoresheet', [AdminScoreEntryController::class, 'unlockScoresheet'])->name('unlock-scoresheet');
-            Route::post('/lock-with-schedule', [AdminScoreEntryController::class, 'lockScoresheetWithSchedule'])->name('lock-with-schedule');
-            Route::post('/lock-batch', [AdminScoreEntryController::class, 'lockBatchScoresheets'])->name('lock-batch');
-            Route::post('/lock-batch-with-schedule', [AdminScoreEntryController::class, 'lockBatchWithSchedule'])->name('lock-batch-with-schedule');
-            Route::post('/unlock-batch', [AdminScoreEntryController::class, 'unlockBatchScoresheets'])->name('unlock-batch');
-            Route::post('/disable-teacher-editing', [AdminScoreEntryController::class, 'disableTeacherEditing'])->name('disable-teacher-editing');
-            Route::post('/enable-teacher-editing', [AdminScoreEntryController::class, 'enableTeacherEditing'])->name('enable-teacher-editing');
-            Route::get('/lock-status', [AdminScoreEntryController::class, 'getLockStatus'])->name('lock-status');
-        });
+        // Mock scoresheet endpoints
+        Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
+        Route::post('/mock-bulk-update', [AdminScoreEntryController::class, 'mockBulkUpdate'])->name('mock-bulk-update');
+
+        // Download & export endpoints
+        Route::get('/download-marks-sheet', [AdminScoreEntryController::class, 'downloadMarksSheet'])->name('download-marks-sheet');
+        Route::get('/download-scores-pdf', [AdminScoreEntryController::class, 'downloadScoresPdf'])->name('download-scores-pdf');
+        Route::get('/export', [AdminScoreEntryController::class, 'export'])->name('export');
+        Route::post('/import', [AdminScoreEntryController::class, 'import'])->name('import');
+
+        // Utility endpoints
+        Route::post('/grade-for-score', [AdminScoreEntryController::class, 'calculateGradeForScore'])->name('grade-for-score');
+        Route::post('/update-arm-positions', [AdminScoreEntryController::class, 'updateAllArmPositions'])->name('update-arm-positions');
     });
+});
 
 
 });
