@@ -39,7 +39,7 @@ class AdminScoreEntryController extends Controller
         $this->middleware('permission:Create admin-score-entry')->only(['create', 'store']);
         $this->middleware('permission:Update admin-score-entry')->only(['edit', 'update', 'bulkUpdate', 'singleUpdate', 'lockManagement', 'getScoresheetsList', 'bulkLockManagement']);
         $this->middleware('permission:Delete admin-score-entry')->only(['destroy']);
-        $this->middleware('permission:Manage student results')->only(['studentResultManager', 'getStudentResults', 'updateStudentSubjectScore', 'bulkUpdateStudentScores']);
+        $this->middleware('permission:Manage admin-student-results')->only(['studentResultManager', 'getStudentResults', 'updateStudentSubjectScore', 'bulkUpdateStudentScores']);
     }
 
     // =========================================================================
