@@ -1413,30 +1413,47 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     });
 
 
-    // Admin Score Entry Routes
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::prefix('score-entry')->name('score-entry.')->group(function () {
-            // Main listing
-            Route::get('/', [AdminScoreEntryController::class, 'index'])->name('index');
+  // Admin Score Entry Routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('score-entry')->name('score-entry.')->group(function () {
+        // Main listing page
+        Route::get('/', [AdminScoreEntryController::class, 'index'])->name('index');
 
-            // Scoresheet views
-            Route::get('/scoresheet/{subjectclassId}/{teacherId}/{termId}/{sessionId}/{type?}',
-                [AdminScoreEntryController::class, 'showScoresheet'])->name('scoresheet');
+        // Scoresheet view (terminal or mock)
+        Route::get('/scoresheet/{subjectclassId}/{teacherId}/{termId}/{sessionId}/{type?}',
+            [AdminScoreEntryController::class, 'showScoresheet'])
+            ->name('scoresheet')
+            ->where('type', 'terminal|mock');
 
-            // AJAX endpoints
-            Route::post('/single-update', [AdminScoreEntryController::class, 'singleUpdate'])->name('single-update');
-            Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
-            Route::post('/bulk-update', [AdminScoreEntryController::class, 'bulkUpdate'])->name('bulk-update');
-            Route::post('/mock-bulk-update', [AdminScoreEntryController::class, 'mockBulkUpdate'])->name('mock-bulk-update');
-            Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
-            Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
+        // =============================================
+        // TERMINAL SCORESHEET ENDPOINTS
+        // =============================================
+        Route::post('/single-update', [AdminScoreEntryController::class, 'singleUpdate'])->name('single-update');
+        Route::post('/bulk-update', [AdminScoreEntryController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
+        Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
 
-            // Downloads
-            Route::get('/download-marks-sheet', [AdminScoreEntryController::class, 'downloadMarksSheet'])->name('download-marks-sheet');
-            Route::get('/export', [AdminScoreEntryController::class, 'export'])->name('export');
-            Route::post('/import', [AdminScoreEntryController::class, 'import'])->name('import');
-        });
+        // =============================================
+        // MOCK SCORESHEET ENDPOINTS
+        // =============================================
+        Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
+        Route::post('/mock-bulk-update', [AdminScoreEntryController::class, 'mockBulkUpdate'])->name('mock-bulk-update');
+
+        // =============================================
+        // DOWNLOAD & EXPORT ENDPOINTS
+        // =============================================
+        Route::get('/download-marks-sheet', [AdminScoreEntryController::class, 'downloadMarksSheet'])->name('download-marks-sheet');
+        Route::get('/download-scores-pdf', [AdminScoreEntryController::class, 'downloadScoresPdf'])->name('download-scores-pdf');
+        Route::get('/export', [AdminScoreEntryController::class, 'export'])->name('export');
+        Route::post('/import', [AdminScoreEntryController::class, 'import'])->name('import');
+
+        // =============================================
+        // UTILITY ENDPOINTS
+        // =============================================
+        Route::post('/grade-for-score', [AdminScoreEntryController::class, 'calculateGradeForScore'])->name('grade-for-score');
+        Route::post('/update-arm-positions', [AdminScoreEntryController::class, 'updateAllArmPositions'])->name('update-arm-positions');
     });
+});
 
 });
 
