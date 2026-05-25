@@ -91,6 +91,7 @@ class DatabaseSeeder extends Seeder
             'SubjectVettingsPermissionTableSeeder' => '  🔍 Seeding subject vettings...',
             'StudentAssessmentPermissionTableSeeder' => '  📝 Seeding student assessment permissions...',
             'IdCardPermissionTableSeeder' => '  📝 Seeding student ID Card permissions...',
+            'AdminScoreEntryPermissionSeeder' => '  📝 Seeding Admin score entry...',
 
         ];
 
