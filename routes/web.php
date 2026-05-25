@@ -1436,6 +1436,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/disable-teacher-editing', [AdminScoreEntryController::class, 'disableTeacherEditing'])->name('disable-teacher-editing');
         Route::post('/enable-teacher-editing', [AdminScoreEntryController::class, 'enableTeacherEditing'])->name('enable-teacher-editing');
 
+        // ADD THIS MISSING ROUTE:
+        Route::get('/lock-status', [AdminScoreEntryController::class, 'getLockStatus'])->name('lock-status');
+
         // Scoresheet view (terminal or mock)
         Route::get('/scoresheet/{subjectclassId}/{teacherId}/{termId}/{sessionId}/{type?}',
             [AdminScoreEntryController::class, 'showScoresheet'])
@@ -1463,7 +1466,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/update-arm-positions', [AdminScoreEntryController::class, 'updateAllArmPositions'])->name('update-arm-positions');
     });
 });
-
 
 });
 
