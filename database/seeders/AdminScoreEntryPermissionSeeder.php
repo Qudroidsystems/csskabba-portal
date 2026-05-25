@@ -20,14 +20,7 @@ class AdminScoreEntryPermissionSeeder extends Seeder
             'View teacher-subject-list',
         ];
 
-        $titles = [
-            'View admin-score-entry' => 'Admin Score Entry - View',
-            'Create admin-score-entry' => 'Admin Score Entry - Create',
-            'Update admin-score-entry' => 'Admin Score Entry - Update',
-            'Delete admin-score-entry' => 'Admin Score Entry - Delete',
-            'View teacher-subject-list' => 'View Teacher Subject Assignments',
-        ];
-
+       
         foreach ($permissions as $permission) {
             Permission::updateOrCreate(
                 ['name' => $permission, 'guard_name' => 'web'],
@@ -35,10 +28,6 @@ class AdminScoreEntryPermissionSeeder extends Seeder
             );
         }
 
-        // Assign to admin role (assuming 'admin' role exists)
-        $adminRole = Role::firstWhere('name', 'admin');
-        if ($adminRole) {
-            $adminRole->givePermissionTo($permissions);
-        }
+
     }
 }

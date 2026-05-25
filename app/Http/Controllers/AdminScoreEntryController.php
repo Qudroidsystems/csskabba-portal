@@ -31,7 +31,7 @@ class AdminScoreEntryController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View admin-score-entry|Create admin-score-entr|Update admin-score-entry|Delete admin-score-entry')->only(['index']);
+        $this->middleware('permission:View admin-score-entry|Create admin-score-entry|Update admin-score-entry|Delete admin-score-entry')->only(['index']);
         $this->middleware('permission:Create admin-score-entry')->only(['create', 'store']);
         $this->middleware('permission:Update admin-score-entry')->only(['edit', 'update', 'bulkUpdate', 'singleUpdate']);
         $this->middleware('permission:Delete admin-score-entry')->only(['destroy']);
