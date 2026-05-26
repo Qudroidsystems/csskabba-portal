@@ -1359,7 +1359,7 @@
                             <span class="hamburger-icon"><span></span><span></span><span></span></span>
                         </button>
 
-                        {{-- SPOTLIGHT SEARCH TRIGGER BUTTON (replaces old search form) --}}
+                        {{-- SPOTLIGHT SEARCH TRIGGER BUTTON (with keyboard shortcut hint) --}}
                         <div class="d-none d-md-inline-flex align-items-center">
                             <button type="button"
                                     id="spotlight-trigger"
@@ -1368,7 +1368,10 @@
                                     onmouseout="this.style.background='rgba(255,255,255,0.08)'">
                                 <i class="mdi mdi-magnify" style="font-size:16px; opacity:0.6;"></i>
                                 <span style="font-size:13px; opacity:0.55; flex:1; text-align:left;">Search pages, students…</span>
-                                <kbd style="font-size:10px; padding:1px 5px; border-radius:4px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); opacity:0.6;">⌘K</kbd>
+                                <div style="display:flex; gap:4px;">
+                                    <kbd style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); opacity:0.7;">⌘</kbd>
+                                    <kbd style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); opacity:0.7;">K</kbd>
+                                </div>
                             </button>
                         </div>
                     </div>
@@ -2128,6 +2131,38 @@
             });
         })();
 
+        // =====================================================
+        // 9. KEYBOARD SHORTCUTS FOR SPOTLIGHT SEARCH (⌘K / Ctrl+K)
+        // =====================================================
+        var spotlightTrigger = document.getElementById('spotlight-trigger');
+        var spotlightOverlay = document.getElementById('spotlight-overlay');
+        var spotlightInput = document.getElementById('spotlight-input');
+
+        function openSpotlight() {
+            if (spotlightTrigger) {
+                spotlightTrigger.click();
+            } else if (spotlightOverlay) {
+                var event = new MouseEvent('click', { bubbles: true });
+                spotlightTrigger?.dispatchEvent(event);
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            // CMD+K (Mac) or CTRL+K (Windows/Linux)
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openSpotlight();
+            }
+        });
+
+        // Also close with ESC if overlay is visible
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && spotlightOverlay && spotlightOverlay.style.display === 'flex') {
+                var escBtn = document.getElementById('spotlight-esc');
+                if (escBtn) escBtn.click();
+            }
+        });
+
     }); // end DOMContentLoaded
     </script>
 
@@ -2152,16 +2187,17 @@
             { title: 'School Session',              url: '{{ route("session.index") }}',                          icon: 'mdi-calendar-range', category: 'School Settings' },
             { title: 'School Term',                 url: '{{ route("term.index") }}',                             icon: 'mdi-calendar',       category: 'School Settings' },
             { title: 'School House',                url: '{{ route("schoolhouse.index") }}',                      icon: 'mdi-home-group',     category: 'School Settings' },
-            { title: 'Class Arm',                   url: '{{ route("schoolarm.index") }}',                        icon: 'mdi-table-chair',    category: 'Classes' },
-            { title: 'Class Category',              url: '{{ route("classcategories.index") }}',                  icon: 'mdi-format-list-bulleted', category: 'Classes' },
-            { title: 'Class Name',                  url: '{{ route("schoolclass.index") }}',                      icon: 'mdi-google-classroom', category: 'Classes' },
-            { title: 'Class Teacher',               url: '{{ route("classteacher.index") }}',                     icon: 'mdi-human-male-board', category: 'Classes' },
-            { title: 'Subject',                     url: '{{ route("subject.index") }}',                          icon: 'mdi-book-open-variant', category: 'Subjects' },
+            { title: 'Class Arm',                   url: '{{ route("schoolarm.index") }}',                        icon: 'mdi-table-chair',    category: 'School Settings' },
+            { title: 'Class Category',              url: '{{ route("classcategories.index") }}',                  icon: 'mdi-format-list-bulleted', category: 'School Settings' },
+            { title: 'Class Name',                  url: '{{ route("schoolclass.index") }}',                      icon: 'mdi-google-classroom', category: 'School Settings' },
+            { title: 'Class Teacher',               url: '{{ route("classteacher.index") }}',                     icon: 'mdi-human-male-board', category: 'School Settings' },
+            { title: 'Subjects',                    url: '{{ route("subject.index") }}',                          icon: 'mdi-book-open-variant', category: 'Subjects' },
             { title: 'Assign Subject Teacher',      url: '{{ route("subjectteacher.index") }}',                   icon: 'mdi-account-tie',    category: 'Subjects' },
             { title: 'Assign Class Subject',        url: '{{ route("subjectclass.index") }}',                     icon: 'mdi-book-plus',      category: 'Subjects' },
             { title: 'Student Subject Registration', url: '{{ route("subjectoperation.index") }}',                icon: 'mdi-clipboard-list', category: 'Subject Registration' },
             { title: 'My Class',                    url: '{{ route("myclass.index") }}',                          icon: 'mdi-google-classroom', category: 'Classes & Records' },
             { title: 'My Subject',                  url: '{{ route("mysubject.index") }}',                        icon: 'mdi-book-open',      category: 'Classes & Records' },
+            { title: 'Subjects to Vet',             url: '{{ route("mysubjectvettings.index") }}',                icon: 'mdi-check-decagram',  category: 'Classes & Records' },
             { title: 'Terminal Records',            url: '{{ route("myresultroom.index") }}',                     icon: 'mdi-file-chart',     category: 'Records & Results' },
             { title: 'Terminal Result Reports',     url: '{{ route("studentreports.index") }}',                   icon: 'mdi-file-document',  category: 'Records & Results' },
             { title: 'Terminal Result Broadsheet',  url: '{{ route("broadsheet.index") }}',                       icon: 'mdi-table-large',    category: 'Records & Results' },
@@ -2172,19 +2208,31 @@
             { title: 'All Scholarships',            url: '{{ route("admin.scholarship.index") }}',                icon: 'mdi-medal',          category: 'Finance' },
             { title: 'All Discounts',               url: '{{ route("admin.discount.index") }}',                   icon: 'mdi-tag-multiple',   category: 'Finance' },
             { title: 'Sibling Family Groups',       url: '{{ route("sibling.index") }}',                          icon: 'mdi-account-multiple', category: 'Finance' },
+            { title: 'Payment Gateways',            url: '{{ route("admin.payment-gateways.index") }}',           icon: 'mdi-credit-card',    category: 'Finance' },
             { title: 'Payroll Periods',             url: '{{ route("payroll.periods") }}',                        icon: 'mdi-calendar-clock', category: 'Payroll' },
             { title: 'Payroll Summary',             url: '{{ route("payroll.summary") }}',                        icon: 'mdi-cash-multiple',  category: 'Payroll' },
+            { title: 'Salary Structures',           url: '{{ route("payroll.salary-structures") }}',              icon: 'mdi-bank',           category: 'Payroll' },
             { title: 'All Examinations',            url: '{{ route("exams.index") }}',                            icon: 'mdi-clipboard-text', category: 'Exams & CBT' },
             { title: 'Questions Management',        url: '{{ route("questions.all") }}',                          icon: 'mdi-help-circle',    category: 'Exams & CBT' },
             { title: 'CBT Exercise',                url: '{{ route("cbt.index") }}',                              icon: 'mdi-monitor',        category: 'Exams & CBT' },
-            { title: 'Timetable',                   url: '{{ route("timetable.index") }}',                        icon: 'mdi-table-clock',    category: 'Timetable' },
+            { title: 'Admin Timetable',             url: '{{ route("timetable.index") }}',                        icon: 'mdi-table-clock',    category: 'Timetable' },
+            { title: 'My Timetable',                url: '{{ route("timetable.teacher") }}',                      icon: 'mdi-calendar-clock', category: 'Timetable' },
+            { title: 'Room Management',             url: '{{ route("rooms.index") }}',                            icon: 'mdi-door',           category: 'Timetable' },
+            { title: 'Exam Timetable',              url: '{{ route("exam-timetable.index") }}',                   icon: 'mdi-calendar-check', category: 'Timetable' },
+            { title: 'Holidays',                    url: '{{ route("holidays.index") }}',                         icon: 'mdi-calendar-blank', category: 'Timetable' },
             { title: 'Mark Attendance',             url: '{{ route("attendance.my-classes") }}',                  icon: 'mdi-clipboard-check', category: 'Attendance' },
+            { title: 'Attendance Settings',         url: '{{ route("attendance.settings") }}',                    icon: 'mdi-cog',            category: 'Attendance' },
+            { title: 'Attendance School Report',    url: '{{ route("attendance.school-report") }}',               icon: 'mdi-chart-line',     category: 'Attendance' },
             { title: 'Principal\'s Comment',        url: '{{ route("principalscomment.index") }}',                icon: 'mdi-comment-text',   category: 'Records' },
             { title: 'Balance Sheet',               url: '{{ route("reports.financial.balance-sheet") }}',        icon: 'mdi-scale-balance',  category: 'Accounting' },
             { title: 'Income Statement',            url: '{{ route("reports.financial.income-statement") }}',     icon: 'mdi-chart-line',     category: 'Accounting' },
             { title: 'Cash Flow',                   url: '{{ route("reports.financial.cash-flow") }}',            icon: 'mdi-cash-refund',    category: 'Accounting' },
             { title: 'Student Debtors List',        url: '{{ route("reports.financial.debtors") }}',              icon: 'mdi-account-alert',  category: 'Accounting' },
-            { title: 'Transcript',                  url: '{{ route("transcript.index") }}',                       icon: 'mdi-file-account',   category: 'Transcripts' },
+            { title: 'Class Analysis',              url: '{{ route("reports.analysis.index") }}',                 icon: 'mdi-school',         category: 'Accounting' },
+            { title: 'Generate Transcript',         url: '{{ route("transcript.index") }}',                       icon: 'mdi-file-account',   category: 'Transcripts' },
+            { title: 'Admin Score Entry',           url: '{{ route("admin.score-entry.index") }}',                icon: 'mdi-clipboard-edit', category: 'Admin Tools' },
+            { title: 'Score Entry Lock Management', url: '{{ route("admin.score-entry.lock-management") }}',      icon: 'mdi-lock',           category: 'Admin Tools' },
+            { title: 'Student Result Manager',      url: '{{ route("admin.score-entry.student-result-manager") }}', icon: 'mdi-chart-line',   category: 'Admin Tools' },
         ];
 
         // Category colors for visual grouping
@@ -2194,7 +2242,6 @@
             'Students':             '#e76f51',
             'My Account':           '#2a9d8f',
             'School Settings':      '#6a0572',
-            'Classes':              '#0a9396',
             'Subjects':             '#e9c46a',
             'Subject Registration': '#e9c46a',
             'Classes & Records':    '#0a9396',
@@ -2208,6 +2255,7 @@
             'Records':              '#6a0572',
             'Accounting':           '#10b981',
             'Transcripts':          '#457b9d',
+            'Admin Tools':          '#ef4444',
         };
 
         // DOM Elements
@@ -2226,21 +2274,25 @@
 
         // Open Spotlight
         function openSpotlight() {
+            if (!overlay) return;
             overlay.style.display = 'flex';
             requestAnimationFrame(function () {
-                box.style.transform = 'scale(1)';
-                box.style.opacity   = '1';
+                if (box) {
+                    box.style.transform = 'scale(1)';
+                    box.style.opacity   = '1';
+                }
             });
-            setTimeout(function () { input.focus(); }, 50);
+            setTimeout(function () { if (input) input.focus(); }, 50);
         }
 
         // Close Spotlight
         function closeSpotlight() {
+            if (!box) return;
             box.style.transform = 'scale(0.95)';
             box.style.opacity   = '0';
             setTimeout(function () {
-                overlay.style.display = 'none';
-                input.value = '';
+                if (overlay) overlay.style.display = 'none';
+                if (input) input.value = '';
                 showEmpty();
             }, 180);
         }
@@ -2249,38 +2301,31 @@
         if (trigger) trigger.addEventListener('click', openSpotlight);
         if (escBtn)  escBtn.addEventListener('click',  closeSpotlight);
 
-        overlay.addEventListener('click', function (e) {
-            if (e.target === overlay) closeSpotlight();
-        });
-
-        // Keyboard Shortcuts (Cmd/Ctrl + K)
-        document.addEventListener('keydown', function (e) {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                overlay.style.display === 'flex' ? closeSpotlight() : openSpotlight();
-            }
-            if (e.key === 'Escape' && overlay.style.display === 'flex') {
-                closeSpotlight();
-            }
-        });
+        if (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeSpotlight();
+            });
+        }
 
         // Arrow/Enter Navigation
-        input.addEventListener('keydown', function (e) {
-            var items = list.querySelectorAll('li[data-idx]');
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                activeIndex = Math.min(activeIndex + 1, items.length - 1);
-                highlightItem(items);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                activeIndex = Math.max(activeIndex - 1, 0);
-                highlightItem(items);
-            } else if (e.key === 'Enter') {
-                if (activeIndex >= 0 && currentResults[activeIndex]) {
-                    window.location.href = currentResults[activeIndex].url;
+        if (input) {
+            input.addEventListener('keydown', function (e) {
+                var items = list.querySelectorAll('li[data-idx]');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                    highlightItem(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                    highlightItem(items);
+                } else if (e.key === 'Enter') {
+                    if (activeIndex >= 0 && currentResults[activeIndex]) {
+                        window.location.href = currentResults[activeIndex].url;
+                    }
                 }
-            }
-        });
+            });
+        }
 
         function highlightItem(items) {
             items.forEach(function (li, i) {
@@ -2296,22 +2341,26 @@
 
         // UI Helpers
         function showEmpty() {
-            emptyState.style.display  = 'block';
-            loadingEl.style.display   = 'none';
-            list.style.display        = 'none';
-            list.innerHTML            = '';
-            currentResults            = [];
-            activeIndex               = -1;
+            if (emptyState) emptyState.style.display = 'block';
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (list) {
+                list.style.display = 'none';
+                list.innerHTML = '';
+            }
+            currentResults = [];
+            activeIndex = -1;
         }
 
         function showLoading() {
-            emptyState.style.display = 'none';
-            loadingEl.style.display  = 'block';
-            list.style.display       = 'none';
+            if (emptyState) emptyState.style.display = 'none';
+            if (loadingEl) loadingEl.style.display = 'block';
+            if (list) list.style.display = 'none';
         }
 
         // Render Results with Grouping
         function renderResults(results) {
+            if (!loadingEl || !emptyState || !list) return;
+
             loadingEl.style.display  = 'none';
             emptyState.style.display = 'none';
             list.innerHTML           = '';
@@ -2421,33 +2470,35 @@
         }
 
         // Input Handler with Debounce
-        input.addEventListener('input', function () {
-            var query = input.value.trim();
+        if (input) {
+            input.addEventListener('input', function () {
+                var query = input.value.trim();
 
-            if (!query) { showEmpty(); return; }
+                if (!query) { showEmpty(); return; }
 
-            // Show static results instantly
-            var staticResults = searchStatic(query);
-            renderResults(staticResults);
+                // Show static results instantly
+                var staticResults = searchStatic(query);
+                renderResults(staticResults);
 
-            // Debounce AJAX for dynamic results
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function () {
-                if (query.length < 2) return;
-                searchDynamic(query).then(function (dynamicResults) {
-                    if (input.value.trim() !== query) return;
-                    var merged = staticResults.concat(dynamicResults);
-                    // Deduplicate by URL
-                    var seen  = {};
-                    var deduped = merged.filter(function (r) {
-                        if (seen[r.url]) return false;
-                        seen[r.url] = true;
-                        return true;
+                // Debounce AJAX for dynamic results
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    if (query.length < 2) return;
+                    searchDynamic(query).then(function (dynamicResults) {
+                        if (input.value.trim() !== query) return;
+                        var merged = staticResults.concat(dynamicResults);
+                        // Deduplicate by URL
+                        var seen  = {};
+                        var deduped = merged.filter(function (r) {
+                            if (seen[r.url]) return false;
+                            seen[r.url] = true;
+                            return true;
+                        });
+                        renderResults(deduped);
                     });
-                    renderResults(deduped);
-                });
-            }, 280);
-        });
+                }, 280);
+            });
+        }
 
     })();
     </script>
