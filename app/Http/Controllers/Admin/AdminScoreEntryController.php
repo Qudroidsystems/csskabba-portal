@@ -2171,11 +2171,6 @@ public function getStudentResults(Request $request)
         }
 
         // ── Step 4: ALL subjectclass rows for this class ──────────────────
-        // We need subjectclass rows so we can look up broadsheets.
-        // Mirror exactly what MyScoreSheetController does:
-        // subjectRegistrationStatus → subjectclass → subject
-        // But also keep a fallback: if subjectRegistrationStatus is empty,
-        // use every subjectclass for this class (teacher-assigned subjects).
         $allSubjectClassRows = DB::table('subjectclass as sjc')
             ->join('subjectteacher as st', 'st.id', '=', 'sjc.subjectteacherid')
             ->join('subject as s',         's.id',  '=', 'st.subjectid')
@@ -2191,7 +2186,7 @@ public function getStudentResults(Request $request)
             )
             ->distinct()
             ->get()
-            ->keyBy('subjectclass_id');   // keyed by subjectclass_id for quick lookup
+            ->keyBy('subjectclass_id');
 
         // ── Step 5: build per-student data ────────────────────────────────
         $results = [];
@@ -2200,14 +2195,12 @@ public function getStudentResults(Request $request)
             $sid = (int) $student->student_id;
 
             // --- 5a. Find this student's registered subjects -----------------
-            // Try subjectRegistrationStatus first (same as MyScoreSheetController)
             $registeredSubjectclassIds = DB::table('subjectRegistrationStatus')
                 ->where('studentid', $sid)
                 ->where('termid',    $termId)
                 ->where('sessionid', $sessionId)
                 ->whereIn('Status', ['active', 'Active', 'ACTIVE', '1'])
                 ->where(function ($q) use ($classId) {
-                    // subjectclass must belong to this class
                     $q->whereIn('subjectclassid',
                         DB::table('subjectclass')
                             ->where('schoolclassid', $classId)
@@ -2219,7 +2212,6 @@ public function getStudentResults(Request $request)
                 ->unique()
                 ->values();
 
-            // If subjectRegistrationStatus has nothing, fall back to ALL class subjects
             if ($registeredSubjectclassIds->isEmpty()) {
                 $registeredSubjectclassIds = $allSubjectClassRows->keys()
                     ->map(fn ($v) => (int) $v)
@@ -2232,13 +2224,12 @@ public function getStudentResults(Request $request)
 
             foreach ($registeredSubjectclassIds as $sjcId) {
                 $subjInfo = $allSubjectClassRows->get($sjcId);
-                if (!$subjInfo) continue;   // not a class subject
+                if (!$subjInfo) continue;
 
                 $subjectId      = (int) $subjInfo->subject_id;
                 $subjectclassId = (int) $sjcId;
                 $staffId        = (int) ($subjInfo->staff_id ?? auth()->id());
 
-                // BroadsheetRecord  (mirrors getBroadsheets join logic)
                 $broadsheetRecord = BroadsheetRecord::firstOrCreate([
                     'student_id'     => $sid,
                     'subject_id'     => $subjectId,
@@ -2246,7 +2237,6 @@ public function getStudentResults(Request $request)
                     'session_id'     => $sessionId,
                 ]);
 
-                // Broadsheets row — MUST use exact mixed-case column name
                 $broadsheet = Broadsheets::firstOrCreate(
                     [
                         'broadSheet_record_id' => $broadsheetRecord->id,
@@ -2289,7 +2279,6 @@ public function getStudentResults(Request $request)
                     : $this->getDefaultGrade($totalRaw);
                 $remark   = $this->getRemark($grade);
 
-                // Sync stored values if they drifted
                 if (
                     abs((float)$broadsheet->total - $totalRaw) > 0.01 ||
                     abs((float)$broadsheet->bf    - $bf)       > 0.01 ||
@@ -2338,9 +2327,22 @@ public function getStudentResults(Request $request)
                 ? $schoolclass->classcategories->first()->calculateGrade($average)
                 : $this->getDefaultGrade($average);
 
+            // ✅ FIXED: Build correct photo URL based on actual storage
             $photoUrl = null;
             if (!empty($student->picture)) {
-                $photoUrl = asset('storage/' . $student->picture);
+                // Check if the picture path already contains 'student_avatars/'
+                if (strpos($student->picture, 'student_avatars/') !== false) {
+                    // Already has the folder path
+                    $photoUrl = asset('storage/' . $student->picture);
+                } else {
+                    // Picture is directly in storage/app/public/ (no subfolder)
+                    $photoUrl = asset('storage/' . ltrim($student->picture, '/'));
+                }
+            }
+
+            // If no photo found or URL is invalid, use default
+            if (!$photoUrl || !$this->urlExists($photoUrl)) {
+                $photoUrl = asset('storage/student_avatars/unnamed.jpg');
             }
 
             $fullName = trim(
@@ -2350,7 +2352,7 @@ public function getStudentResults(Request $request)
             );
 
             $results[] = [
-                'student_id'    => $sid,           // always int
+                'student_id'    => $sid,
                 'admission_no'  => $student->admissionno ?? '',
                 'full_name'     => $fullName,
                 'firstname'     => $student->firstname ?? '',
@@ -2368,12 +2370,6 @@ public function getStudentResults(Request $request)
             'success'     => true,
             'assessments' => $assessments,
             'data'        => $results,
-            // dev helper — remove in production if you like
-            'debug' => [
-                'student_count'     => count($results),
-                'assessment_count'  => $assessments->count(),
-                'class_subjects'    => $allSubjectClassRows->count(),
-            ],
         ]);
 
     } catch (\Exception $e) {
@@ -2383,6 +2379,19 @@ public function getStudentResults(Request $request)
             'message' => 'Server error: ' . $e->getMessage(),
         ], 500);
     }
+}
+
+// Add this helper method to check if URL exists (optional but helpful)
+protected function urlExists($url)
+{
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return $httpCode >= 200 && $httpCode < 400;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
