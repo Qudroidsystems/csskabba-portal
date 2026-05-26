@@ -762,7 +762,7 @@ function renderStudentsTable(students){
              class="rounded-circle student-avatar-img"
              style="width:40px;height:40px;object-fit:cover;border:2px solid var(--ss-border);cursor:pointer"
              data-bs-toggle="modal" data-bs-target="#imageViewModal"
-             data-bs-image="${esc(avatarUrl)}"
+             data-image="${esc(avatarUrl)}"
              onerror="this.onerror=null;this.src='${DEFAULT_AVT}'"
              alt="Photo">
       </td>
@@ -857,11 +857,10 @@ function renderStudentModal(){
 
   $('modalStudentInfo').innerHTML=`
     <div class="student-info-header">
-      <div class="student-avatar-large" id="modalAvtWrap"
-           style="cursor:pointer"
-           data-bs-toggle="modal" data-bs-target="#imageViewModal"
-           data-bs-image="${esc(avatarUrl)}">
+      <div class="student-avatar-large" id="modalAvtWrap" style="cursor:pointer">
         <img id="modalAvtImg" src="${esc(avatarUrl)}"
+             class="srm-enlargeable"
+             data-image="${esc(avatarUrl)}"
              onerror="this.onerror=null;this.src='${DEFAULT_AVT}'"
              alt="Photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
       </div>
@@ -1215,6 +1214,7 @@ function updateCardRowMetrics(idx){
   const remark=clientRemark(grade);
   const gradeColor=GRADE_COLORS[grade]||'#6b7280';
 
+
   const pfx=currentView==='card'?'c':'m';
   const totalEl=document.getElementById(`${pfx}total_${idx}`);
   const gradeEl=document.getElementById(`${pfx}grade_${idx}`);
@@ -1230,222 +1230,10 @@ function updateCardRowMetrics(idx){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SAVE SINGLE SUBJECT
+   SCORE INPUT TOOLTIP  (exact copy from scoresheet — position:fixed
+   so it works correctly inside a scrolling modal)
    ════════════════════════════════════════════════════════════════ */
-async function saveSubjectByIndex(idx){
-  const subj=currentStudentData?.subjects?.[idx];
-  if(!subj)return;
-
-  const scores=[];let valid=true;
-  document.querySelectorAll(`.score-input[data-idx="${idx}"]`).forEach(inp=>{
-    if(!validateInput(inp)){valid=false;return;}
-    scores.push({assessment_id:parseInt(inp.dataset.assessmentId),score:parseFloat(inp.value)||0});
-  });
-  if(!valid){showToast('Some scores exceed maximum.','warning');return;}
-
-  const btn=document.querySelector(`.btn-save-subject[data-idx="${idx}"]`);
-  const orig=btn?btn.innerHTML:'';
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm"></span>';}
-
-  try{
-    const r=await fetch(ROUTES.updateSubject,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF(),'Accept':'application/json'},
-      body:JSON.stringify({
-        student_id:currentStudentData.student_id,
-        subject_id:subj.subject_id,
-        subjectclass_id:subj.subjectclass_id,
-        term_id:currentFilters.term_id,
-        session_id:currentFilters.session_id,
-        class_id:currentFilters.class_id,
-        scores
-      })
-    });
-    const result=await r.json();
-
-    if(result.success){
-      const d=result.data;
-      subj.total=d.total;subj.bf=d.bf;subj.cum=d.cum;subj.grade=d.grade;subj.remark=d.remark;
-      if(d.subject_position_class)subj.subject_position_class=d.subject_position_class;
-      if(d.subject_position_class_total)subj.subject_position_class_total=d.subject_position_class_total;
-
-      const pfx=currentView==='card'?'c':'m';
-      // Patch server values into DOM
-      const totalEl=document.getElementById(`${pfx}total_${idx}`);
-      const gradeEl=document.getElementById(`${pfx}grade_${idx}`);
-      const bfEl=document.getElementById(`${pfx}bf_${idx}`);
-      const cumEl=document.getElementById(`${pfx}cum_${idx}`);
-      const cgEl=document.getElementById(`${pfx}cumgrade_${idx}`);
-      const remarkEl=document.getElementById(`${pfx}remark_${idx}`);
-      const posEl=document.getElementById(`${pfx}pos_${idx}`);
-      const postotalEl=document.getElementById(`${pfx}postotal_${idx}`);
-
-      const totalColor=d.total>=70?'success':d.total>=50?'info':d.total>=40?'warning':'danger';
-      const cumColor=d.cum>=70?'success':d.cum>=50?'info':d.cum>=40?'warning':'danger';
-
-      if(totalEl){
-        totalEl.textContent=fmtN(d.total);
-        if(currentView==='table'){totalEl.className=`badge fw-bold mtotal-badge bg-${totalColor}-subtle text-${totalColor}`;totalEl.style.fontSize='12px';}
-      }
-      if(gradeEl)applyGrade(gradeEl,d.grade);
-      if(bfEl)bfEl.textContent=fmtN(d.bf);
-      if(cumEl){
-        cumEl.textContent=fmtN(d.cum);
-        if(currentView==='table'){cumEl.className=`badge fw-bold mcum-badge bg-${cumColor}-subtle text-${cumColor}`;cumEl.style.fontSize='12px';}
-      }
-      if(cgEl)applyGrade(cgEl,clientGrade(d.cum));
-      if(remarkEl){remarkEl.textContent=d.remark;remarkEl.style.color=GRADE_COLORS[d.grade]||'#6b7280';}
-      if(posEl&&d.subject_position_class){
-        posEl.textContent=ordinal(d.subject_position_class);
-        posEl.classList.remove('pos-flash');void posEl.offsetWidth;posEl.classList.add('pos-flash');
-        setTimeout(()=>posEl.classList.remove('pos-flash'),520);
-      }
-      if(postotalEl&&d.subject_position_class_total){
-        postotalEl.textContent=ordinal(d.subject_position_class_total);
-        postotalEl.classList.remove('pos-flash');void postotalEl.offsetWidth;postotalEl.classList.add('pos-flash');
-        setTimeout(()=>postotalEl.classList.remove('pos-flash'),520);
-      }
-
-      // Flash inputs
-      document.querySelectorAll(`.score-input[data-idx="${idx}"]`).forEach(i=>{
-        i.classList.add('is-saved');setTimeout(()=>i.classList.remove('is-saved'),2000);
-      });
-
-      // Mark row saved
-      const row=document.querySelector(`tr[data-midx="${idx}"]`);
-      if(row){row.classList.remove('mrow-unsaved');row.classList.add('mrow-saved');}
-
-      showToast(`${esc(subj.subject_name)} saved!`,'success');
-      refreshStudentRow(currentStudentData.student_id);
-    }else{
-      Swal.fire('Error',result.message||'Failed to save','error');
-    }
-  }catch(e){
-    console.error(e);Swal.fire('Error','Network error.','error');
-  }finally{
-    if(btn){btn.disabled=false;btn.innerHTML=orig;}
-  }
-}
-
-/* ════════════════════════════════════════════════════════════════
-   SAVE ALL SUBJECTS
-   ════════════════════════════════════════════════════════════════ */
-async function saveAllSubjects(){
-  const conf=await Swal.fire({
-    title:'Save All Subjects?',text:'This saves scores for all subjects at once.',
-    icon:'question',showCancelButton:true,confirmButtonColor:'#10b981',confirmButtonText:'Yes, save all'
-  });
-  if(!conf.isConfirmed)return;
-
-  const subjects=(currentStudentData?.subjects||[]).map((subj,idx)=>{
-    const scores=[];
-    document.querySelectorAll(`.score-input[data-idx="${idx}"]`).forEach(inp=>{
-      scores.push({assessment_id:parseInt(inp.dataset.assessmentId),score:parseFloat(inp.value)||0});
-    });
-    return{subject_id:subj.subject_id,subjectclass_id:subj.subjectclass_id,scores};
-  });
-
-  const total=subjects.length;
-  srmOpen(total);
-  let fakePct=0;
-  const fakeIv=setInterval(()=>{
-    fakePct=Math.min(fakePct+Math.random()*4+2,88);
-    srmUpdate(Math.round((fakePct/100)*total),total,fakePct);
-  },130);
-
-  const saveBtn=$('saveAllSubjectsBtn'),modalBtn=$('modalSaveAllBtn');
-  const origHtml=saveBtn.innerHTML;
-  if(saveBtn){saveBtn.disabled=true;saveBtn.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Saving…';}
-  if(modalBtn)modalBtn.disabled=true;
-
-  try{
-    const r=await fetch(ROUTES.bulkUpdate,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF(),'Accept':'application/json'},
-      body:JSON.stringify({
-        student_id:currentStudentData.student_id,
-        class_id:currentFilters.class_id,
-        term_id:currentFilters.term_id,
-        session_id:currentFilters.session_id,
-        subjects
-      })
-    });
-    const result=await r.json();
-    clearInterval(fakeIv);
-
-    if(result.success){
-      srmUpdate(total,total,100);
-      setTimeout(()=>srmSuccess(total),220);
-
-      (result.data||[]).forEach(d=>{
-        const subj=(currentStudentData.subjects||[]).find(s=>s.subject_id===d.subject_id);
-        if(subj){
-          const idx=currentStudentData.subjects.indexOf(subj);
-          subj.total=d.total;subj.bf=d.bf;subj.cum=d.cum;subj.grade=d.grade;subj.remark=d.remark;
-          // patch DOM
-          const pfx=currentView==='card'?'c':'m';
-          const gradeEl=document.getElementById(`${pfx}grade_${idx}`);
-          const totalEl=document.getElementById(`${pfx}total_${idx}`);
-          const cumEl=document.getElementById(`${pfx}cum_${idx}`);
-          if(totalEl)totalEl.textContent=fmtN(d.total);
-          if(gradeEl)applyGrade(gradeEl,d.grade);
-          if(cumEl)cumEl.textContent=fmtN(d.cum);
-          document.querySelectorAll(`.score-input[data-idx="${idx}"]`).forEach(i=>{
-            i.classList.add('is-saved');setTimeout(()=>i.classList.remove('is-saved'),2500);
-          });
-          const row=document.querySelector(`tr[data-midx="${idx}"]`);
-          if(row){row.classList.remove('mrow-unsaved');row.classList.add('mrow-saved');}
-        }
-      });
-
-      setTimeout(async()=>{
-        bootstrap.Modal.getInstance($('studentResultsModal'))?.hide();
-        await loadStudents();
-      },2100);
-    }else{
-      srmError(result.message||'Failed to save');
-    }
-  }catch(e){
-    clearInterval(fakeIv);srmError('Network error. Please try again.');console.error(e);
-  }finally{
-    if(saveBtn){saveBtn.disabled=false;saveBtn.innerHTML=origHtml;}
-    if(modalBtn)modalBtn.disabled=false;
-  }
-}
-
-/* ════════════════════════════════════════════════════════════════
-   REFRESH STUDENT ROW IN LIST
-   ════════════════════════════════════════════════════════════════ */
-function refreshStudentRow(studentId){
-  const s=currentStudentData;if(!s)return;
-  const totalScore=(s.subjects||[]).reduce((sum,sub)=>sum+parseFloat(sub.total||0),0);
-  const n=s.subjects?.length||1;
-  const avg=n>0?totalScore/n:0;
-  const done=(s.subjects||[]).filter(sub=>parseFloat(sub.total||0)>0).length;
-  const avgGrade=clientGrade(avg);
-
-  const ds=allStudentsData.find(x=>x.student_id===studentId);
-  if(ds){ds.average=avg;ds.average_grade=avgGrade;}
-
-  const row=document.querySelector(`#studentsTableBody tr[data-sid="${studentId}"]`);
-  if(!row)return;
-  const avgBadge=row.querySelector('.col-avg span');
-  const gradeCell=row.querySelector('.col-grade span');
-  const statusCell=row.querySelector('.col-status');
-  if(avgBadge)avgBadge.textContent=fmtN(avg,2);
-  if(gradeCell){gradeCell.textContent=avgGrade;gradeCell.style.color=GRADE_COLORS[avgGrade]||'#6b7280';}
-  if(statusCell){
-    const total2=s.total_subjects||0;
-    if(done===0)statusCell.innerHTML='<span class="status-badge status-pending">Pending</span>';
-    else if(done===total2)statusCell.innerHTML='<span class="status-badge status-complete">Complete</span>';
-    else statusCell.innerHTML=`<span class="status-badge status-incomplete">${done}/${total2}</span>`;
-  }
-}
-
-/* ════════════════════════════════════════════════════════════════
-   SCORE INPUT TOOLTIP (exact copy from scoresheet)
-   ════════════════════════════════════════════════════════════════ */
-const tip=$('srmTooltip');
+const tip=document.getElementById('srmTooltip');
 let tipInput=null,tipHideTimer=null;
 
 function tipPosition(inp){
@@ -1455,9 +1243,9 @@ function tipPosition(inp){
   tip.style.left=left+'px';
   tip.classList.remove('tip-above','tip-below');
   if(r.top>155){
-    tip.style.top=(r.top+window.scrollY-8)+'px';tip.classList.add('tip-above');
+    tip.style.top=(r.top-8)+'px';tip.classList.add('tip-above');
   }else{
-    tip.style.top=(r.bottom+window.scrollY+8)+'px';tip.classList.add('tip-below');
+    tip.style.top=(r.bottom+8)+'px';tip.classList.add('tip-below');
   }
 }
 
@@ -1474,15 +1262,15 @@ function tipRefresh(inp){
   const grade=clientGrade(total);
   const pct=totalMax>0?Math.min(total/totalMax*100,100):0;
   const col=GRADE_COLORS[grade]||'#6b7280';
-  $('stAvatar').src=inp.dataset.studentAvatar||DEFAULT_AVT;
-  $('stName').textContent=inp.dataset.studentName||'—';
-  $('stMeta').textContent=(inp.dataset.studentAdm||'—')+' · '+name+' (max '+max+')';
-  $('stVal').textContent=val%1===0?String(val):val.toFixed(1);
-  $('stTotal').textContent=fmtN(total);
-  const gEl=$('stGrade');gEl.textContent=grade;gEl.style.color=col;
-  $('stProgLabel').textContent=fmtN(total)+' / '+totalMax+' marks';
-  $('stProgPct').textContent=Math.round(pct)+'%';
-  const fill=$('stProgFill');
+  document.getElementById('stAvatar').src=inp.dataset.studentAvatar||DEFAULT_AVT;
+  document.getElementById('stName').textContent=inp.dataset.studentName||'—';
+  document.getElementById('stMeta').textContent=(inp.dataset.studentAdm||'—')+' · '+name+' (max '+max+')';
+  document.getElementById('stVal').textContent=val%1===0?String(val):val.toFixed(1);
+  document.getElementById('stTotal').textContent=fmtN(total);
+  const gEl=document.getElementById('stGrade');gEl.textContent=grade;gEl.style.color=col;
+  document.getElementById('stProgLabel').textContent=fmtN(total)+' / '+totalMax+' marks';
+  document.getElementById('stProgPct').textContent=Math.round(pct)+'%';
+  const fill=document.getElementById('stProgFill');
   fill.style.width=pct.toFixed(1)+'%';
   fill.style.background=pct>=70?'#16a34a':pct>=50?'#2563eb':pct>=40?'#d97706':'#dc2626';
   tipPosition(inp);
@@ -1490,7 +1278,7 @@ function tipRefresh(inp){
 
 function tipShow(inp){
   clearTimeout(tipHideTimer);tipInput=inp;
-  tip.style.position='fixed';tip.style.display='block';
+  tip.style.display='block';
   tipRefresh(inp);requestAnimationFrame(()=>{tip.style.opacity='1';});
 }
 function tipHide(){
@@ -1500,48 +1288,68 @@ function tipHide(){
 }
 
 /* ════════════════════════════════════════════════════════════════
+   OPEN IMAGE ENLARGER  — called from any img with data-image
+   Uses the same pattern as scoresheet: read data-image attribute,
+   set #enlargedImage src, show the #imageViewModal manually via JS.
+   Works for both the students list AND the modal header avatar
+   because both are in the same document (nested-modal-safe).
+   ════════════════════════════════════════════════════════════════ */
+function openEnlarger(src){
+  if(!src)return;
+  document.getElementById('enlargedImage').src=src;
+  // If the score-entry modal is open, hide it briefly while enlarger shows,
+  // then restore — or simply stack them (Bootstrap allows z-index stacking).
+  const enlargeModal=new bootstrap.Modal(document.getElementById('imageViewModal'));
+  enlargeModal.show();
+}
+
+/* ════════════════════════════════════════════════════════════════
    DOM READY
    ════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded',function(){
 
-  // Lazy SweetAlert2
+  // ── Lazy SweetAlert2 ──
   if(typeof Swal==='undefined'){
-    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/sweetalert2@11';document.head.appendChild(s);
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/sweetalert2@11';
+    document.head.appendChild(s);
   }
 
-  // Image view modal — works for both data-bs-image and data-image
-  $('imageViewModal')?.addEventListener('show.bs.modal',function(e){
-    // relatedTarget is the element that triggered the modal
-    const src=e.relatedTarget?.dataset?.bsImage||e.relatedTarget?.getAttribute('data-bs-image')||DEFAULT_AVT;
-    $('enlargedImage').src=src;
+  // ── IMAGE ENLARGER — identical to scoresheet ──
+  // The scoresheet uses: data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="…"
+  // Bootstrap fires show.bs.modal with e.relatedTarget = the triggering element,
+  // and we read relatedTarget.dataset.image (NOT data-bs-image).
+  document.getElementById('imageViewModal').addEventListener('show.bs.modal',function(e){
+    const src=(e.relatedTarget?.dataset?.image)
+           || (e.relatedTarget?.getAttribute('data-image'))
+           || DEFAULT_AVT;
+    document.getElementById('enlargedImage').src=src;
   });
 
-  // Also wire the modal avatar (which uses data-bs-image on its parent wrapper)
-  // Bootstrap 5 reads data-bs-* attrs on the triggering element
-  $('studentResultsModal')?.addEventListener('shown.bs.modal',function(){
-    // re-wire modal avatar enlarger since it's rendered dynamically
-    const wrap=$('modalAvtWrap');
-    if(wrap){
-      wrap.addEventListener('click',function(){
-        const src=this.dataset.bsImage||DEFAULT_AVT;
-        $('enlargedImage').src=src;
-        new bootstrap.Modal($('imageViewModal')).show();
-      },{once:false});
+  // ── Modal avatar (inside score-entry modal) — use delegated click ──
+  // We can't use data-bs-toggle inside another Bootstrap modal safely,
+  // so we wire a delegated click that calls openEnlarger() directly.
+  document.getElementById('studentResultsModal').addEventListener('click',function(e){
+    const img=e.target.closest('.srm-enlargeable');
+    if(img){
+      openEnlarger(img.dataset.image||DEFAULT_AVT);
     }
   });
 
-  // Load students
-  $('loadStudentsBtn').addEventListener('click',loadStudents);
+  // ── Load students ──
+  document.getElementById('loadStudentsBtn').addEventListener('click',loadStudents);
 
-  // Save all
-  $('saveAllSubjectsBtn').addEventListener('click',saveAllSubjects);
-  $('modalSaveAllBtn')?.addEventListener('click',saveAllSubjects);
+  // ── Save all ──
+  document.getElementById('saveAllSubjectsBtn').addEventListener('click',saveAllSubjects);
+  document.getElementById('modalSaveAllBtn')?.addEventListener('click',saveAllSubjects);
 
-  // Search
-  $('studentSearchInput').addEventListener('input',applySearch);
-  $('clearSearch').addEventListener('click',()=>{$('studentSearchInput').value='';applySearch();});
+  // ── Search ──
+  document.getElementById('studentSearchInput').addEventListener('input',applySearch);
+  document.getElementById('clearSearch').addEventListener('click',()=>{
+    document.getElementById('studentSearchInput').value='';applySearch();
+  });
 
-  // Column toggles
+  // ── Column toggles ──
   document.querySelectorAll('.col-toggle').forEach(cb=>{
     cb.addEventListener('change',function(){
       document.querySelectorAll(`th.${this.dataset.col},td.${this.dataset.col}`)
@@ -1549,24 +1357,28 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 
-  // VIEW TOGGLE
-  $('btnViewTable')?.addEventListener('click',function(){
+  // ── VIEW TOGGLE ──
+  document.getElementById('btnViewTable')?.addEventListener('click',function(){
     if(currentView==='table')return;
     currentView='table';
-    this.classList.add('active');$('btnViewCard').classList.remove('active');
+    this.classList.add('active');
+    document.getElementById('btnViewCard').classList.remove('active');
     if(currentStudentData)renderModalContent();
   });
-  $('btnViewCard')?.addEventListener('click',function(){
+  document.getElementById('btnViewCard')?.addEventListener('click',function(){
     if(currentView==='card')return;
     currentView='card';
-    this.classList.add('active');$('btnViewTable').classList.remove('active');
+    this.classList.add('active');
+    document.getElementById('btnViewTable').classList.remove('active');
     if(currentStudentData)renderModalContent();
   });
 
-  // Ctrl+S
+  // ── Keyboard shortcuts ──
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key==='s'){
-      if($('studentResultsModal').classList.contains('show')){e.preventDefault();saveAllSubjects();}
+      if(document.getElementById('studentResultsModal').classList.contains('show')){
+        e.preventDefault();saveAllSubjects();
+      }
     }
     if(e.key==='Escape'&&tipInput){tipHide();document.activeElement?.blur();}
   });
