@@ -2094,265 +2094,259 @@ class AdminScoreEntryController extends Controller
         ));
     }
 
+
     public function getStudentResults(Request $request)
-    {
-        try {
-            $request->validate([
-                'class_id'   => 'required|exists:schoolclass,id',
-                'term_id'    => 'required|exists:schoolterm,id',
-                'session_id' => 'required|exists:schoolsession,id',
+{
+    try {
+        $request->validate([
+            'class_id'   => 'required|exists:schoolclass,id',
+            'term_id'    => 'required|exists:schoolterm,id',
+            'session_id' => 'required|exists:schoolsession,id',
+        ]);
+
+        $classId   = (int) $request->class_id;
+        $termId    = (int) $request->term_id;
+        $sessionId = (int) $request->session_id;
+
+        $studentRows = DB::table('studentRegistration as sr')
+            ->join('studentclass as sc', 'sc.studentId', '=', 'sr.id')
+            ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 'sr.id')
+            ->where('sc.schoolclassid', $classId)
+            ->where('sc.sessionid',     $sessionId)
+            ->select(
+                'sr.id        as student_id',
+                'sr.admissionNo as admissionno',
+                'sr.firstname',
+                'sr.lastname',
+                'sr.othername',
+                'sp.picture'
+            )
+            ->orderBy('sr.lastname')
+            ->orderBy('sr.firstname')
+            ->get();
+
+        if ($studentRows->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => "No students found in studentclass for class_id={$classId}, session_id={$sessionId}.",
             ]);
+        }
 
-            $classId   = (int) $request->class_id;
-            $termId    = (int) $request->term_id;
-            $sessionId = (int) $request->session_id;
+        $schoolclass = Schoolclass::with('classcategories', 'armRelation')->find($classId);
+        $isSenior    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? ($schoolclass->classcategories->first()->is_senior ?? false)
+            : false;
 
-            $studentRows = DB::table('studentRegistration as sr')
-                ->join('studentclass as sc', 'sc.studentId', '=', 'sr.id')
-                ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 'sr.id')
-                ->where('sc.schoolclassid', $classId)
-                ->where('sc.sessionid',     $sessionId)
-                ->select(
-                    'sr.id        as student_id',
-                    'sr.admissionNo as admissionno',
-                    'sr.firstname',
-                    'sr.lastname',
-                    'sr.othername',
-                    'sp.picture'
-                )
-                ->orderBy('sr.lastname')
-                ->orderBy('sr.firstname')
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->with('subAssessments')
+                ->orderBy('id')
                 ->get();
+        }
 
-            if ($studentRows->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "No students found in studentclass for class_id={$classId}, session_id={$sessionId}.",
-                ]);
-            }
+        $allSubjectClassRows = DB::table('subjectclass as sjc')
+            ->join('subjectteacher as st', 'st.id', '=', 'sjc.subjectteacherid')
+            ->join('subject as s',         's.id',  '=', 'st.subjectid')
+            ->where('sjc.schoolclassid', $classId)
+            ->where('st.termid',         $termId)
+            ->where('st.sessionid',      $sessionId)
+            ->select(
+                's.id          as subject_id',
+                's.subject     as subject_name',
+                's.subject_code',
+                'sjc.id        as subjectclass_id',
+                'st.staffid    as staff_id'
+            )
+            ->distinct()
+            ->get()
+            ->keyBy('subjectclass_id');
 
-            $schoolclass = Schoolclass::with('classcategories', 'armRelation')->find($classId);
-            $isSenior    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
-                ? ($schoolclass->classcategories->first()->is_senior ?? false)
-                : false;
+        $results = [];
 
-            $assessments = collect();
-            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-                $categoryIds = $schoolclass->classcategories->pluck('id');
-                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                    ->with('subAssessments')
-                    ->orderBy('id')
-                    ->get();
-            }
+        foreach ($studentRows as $student) {
+            $sid = (int) $student->student_id;
 
-            $allSubjectClassRows = DB::table('subjectclass as sjc')
-                ->join('subjectteacher as st', 'st.id', '=', 'sjc.subjectteacherid')
-                ->join('subject as s',         's.id',  '=', 'st.subjectid')
-                ->where('sjc.schoolclassid', $classId)
-                ->where('st.termid',         $termId)
-                ->where('st.sessionid',      $sessionId)
-                ->select(
-                    's.id          as subject_id',
-                    's.subject     as subject_name',
-                    's.subject_code',
-                    'sjc.id        as subjectclass_id',
-                    'st.staffid    as staff_id'
-                )
-                ->distinct()
-                ->get()
-                ->keyBy('subjectclass_id');
-
-            $results = [];
-
-            foreach ($studentRows as $student) {
-                $sid = (int) $student->student_id;
-
-                $registeredSubjectclassIds = DB::table('subjectRegistrationStatus')
-                    ->where('studentid', $sid)
-                    ->where('termid',    $termId)
-                    ->where('sessionid', $sessionId)
-                    ->whereIn('Status', ['active', 'Active', 'ACTIVE', '1'])
-                    ->where(function ($q) use ($classId) {
-                        $q->whereIn('subjectclassid',
-                            DB::table('subjectclass')
-                                ->where('schoolclassid', $classId)
-                                ->pluck('id')
-                        );
-                    })
-                    ->pluck('subjectclassid')
-                    ->map(fn ($v) => (int) $v)
-                    ->unique()
-                    ->values();
-
-                if ($registeredSubjectclassIds->isEmpty()) {
-                    $registeredSubjectclassIds = $allSubjectClassRows->keys()
-                        ->map(fn ($v) => (int) $v)
-                        ->values();
-                }
-
-                $studentSubjects = [];
-                $totalScores     = 0;
-
-                foreach ($registeredSubjectclassIds as $sjcId) {
-                    $subjInfo = $allSubjectClassRows->get($sjcId);
-                    if (!$subjInfo) continue;
-
-                    $subjectId      = (int) $subjInfo->subject_id;
-                    $subjectclassId = (int) $sjcId;
-                    $staffId        = (int) ($subjInfo->staff_id ?? auth()->id());
-
-                    $broadsheetRecord = BroadsheetRecord::firstOrCreate([
-                        'student_id'     => $sid,
-                        'subject_id'     => $subjectId,
-                        'schoolclass_id' => $classId,
-                        'session_id'     => $sessionId,
-                    ]);
-
-                    $broadsheet = Broadsheets::firstOrCreate(
-                        [
-                            'broadSheet_record_id' => $broadsheetRecord->id,
-                            'term_id'              => $termId,
-                            'subjectclass_id'      => $subjectclassId,
-                        ],
-                        [
-                            'staff_id'     => $staffId,
-                            'entered_by'   => auth()->id(),
-                            'entered_at'   => now(),
-                            'entry_source' => 'admin_student_manager',
-                        ]
+            $registeredSubjectclassIds = DB::table('subjectRegistrationStatus')
+                ->where('studentid', $sid)
+                ->where('termid',    $termId)
+                ->where('sessionid', $sessionId)
+                ->whereIn('Status', ['active', 'Active', 'ACTIVE', '1'])
+                ->where(function ($q) use ($classId) {
+                    $q->whereIn('subjectclassid',
+                        DB::table('subjectclass')
+                            ->where('schoolclassid', $classId)
+                            ->pluck('id')
                     );
+                })
+                ->pluck('subjectclassid')
+                ->map(fn ($v) => (int) $v)
+                ->unique()
+                ->values();
 
-                    $assessmentScores = [];
-                    $totalRaw         = 0.0;
+            if ($registeredSubjectclassIds->isEmpty()) {
+                $registeredSubjectclassIds = $allSubjectClassRows->keys()
+                    ->map(fn ($v) => (int) $v)
+                    ->values();
+            }
 
-                    foreach ($assessments as $assessment) {
-                        $scoreRec   = BroadsheetAssessmentScore::where([
-                            'broadsheet_id' => $broadsheet->id,
-                            'assessment_id' => $assessment->id,
-                        ])->first();
-                        $scoreValue = $scoreRec ? (float) $scoreRec->score : 0.0;
+            $studentSubjects = [];
+            $totalScores     = 0;
 
-                        $assessmentScores[] = [
-                            'assessment_id'   => (int) $assessment->id,
-                            'assessment_name' => $assessment->name,
-                            'max_score'       => (float) $assessment->max_score,
-                            'score'           => $scoreValue,
-                        ];
-                        $totalRaw += $scoreValue;
-                    }
+            foreach ($registeredSubjectclassIds as $sjcId) {
+                $subjInfo = $allSubjectClassRows->get($sjcId);
+                if (!$subjInfo) continue;
 
-                    $totalRaw = round($totalRaw, 2);
-                    $bf       = $this->getPreviousTermCum($sid, $subjectId, $termId, $sessionId);
-                    $cum      = ($termId == 1 || $bf == 0) ? $totalRaw : round(($totalRaw + $bf) / 2, 2);
-                    $grade    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
-                        ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
-                        : $this->getDefaultGrade($totalRaw);
-                    $remark   = $this->getRemark($grade);
+                $subjectId      = (int) $subjInfo->subject_id;
+                $subjectclassId = (int) $sjcId;
+                $staffId        = (int) ($subjInfo->staff_id ?? auth()->id());
 
-                    if (
-                        abs((float)$broadsheet->total - $totalRaw) > 0.01 ||
-                        abs((float)$broadsheet->bf    - $bf)       > 0.01 ||
-                        abs((float)$broadsheet->cum   - $cum)      > 0.01 ||
-                        $broadsheet->grade  !== $grade ||
-                        $broadsheet->remark !== $remark
-                    ) {
-                        $broadsheet->total            = $totalRaw;
-                        $broadsheet->bf               = $bf;
-                        $broadsheet->cum              = $cum;
-                        $broadsheet->grade            = $grade;
-                        $broadsheet->remark           = $remark;
-                        $broadsheet->last_modified_by = auth()->id();
-                        $broadsheet->last_modified_at = now();
-                        $broadsheet->save();
-                    }
+                $broadsheetRecord = BroadsheetRecord::firstOrCreate([
+                    'student_id'     => $sid,
+                    'subject_id'     => $subjectId,
+                    'schoolclass_id' => $classId,
+                    'session_id'     => $sessionId,
+                ]);
 
-                    $totalScores += $totalRaw;
+                $broadsheet = Broadsheets::firstOrCreate(
+                    [
+                        'broadSheet_record_id' => $broadsheetRecord->id,
+                        'term_id'              => $termId,
+                        'subjectclass_id'      => $subjectclassId,
+                    ],
+                    [
+                        'staff_id'     => $staffId,
+                        'entered_by'   => auth()->id(),
+                        'entered_at'   => now(),
+                        'entry_source' => 'admin_student_manager',
+                    ]
+                );
 
-                    $studentSubjects[] = [
-                        'subject_id'        => $subjectId,
-                        'subject_name'      => $subjInfo->subject_name,
-                        'subject_code'      => $subjInfo->subject_code ?? '',
-                        'subjectclass_id'   => $subjectclassId,
-                        'broadsheet_id'     => (int) $broadsheet->id,
-                        'total'             => $totalRaw,
-                        'bf'                => (float) $bf,
-                        'cum'               => (float) $cum,
-                        'grade'             => $grade,
-                        'remark'            => $remark,
-                        'assessment_scores' => $assessmentScores,
+                $assessmentScores = [];
+                $totalRaw         = 0.0;
+
+                foreach ($assessments as $assessment) {
+                    $scoreRec   = BroadsheetAssessmentScore::where([
+                        'broadsheet_id' => $broadsheet->id,
+                        'assessment_id' => $assessment->id,
+                    ])->first();
+                    $scoreValue = $scoreRec ? (float) $scoreRec->score : 0.0;
+
+                    $assessmentScores[] = [
+                        'assessment_id'   => (int) $assessment->id,
+                        'assessment_name' => $assessment->name,
+                        'max_score'       => (float) $assessment->max_score,
+                        'score'           => $scoreValue,
                     ];
+                    $totalRaw += $scoreValue;
                 }
 
-                $numSubj      = count($studentSubjects);
-                $average      = $numSubj > 0 ? round($totalScores / $numSubj, 2) : 0.0;
-                $gradePoints  = array_map(
-                    fn ($sub) => $this->getGradePoint($sub['total'], $isSenior),
-                    $studentSubjects
-                );
-                $gpa          = !empty($gradePoints)
-                    ? round(array_sum($gradePoints) / count($gradePoints), 2)
-                    : 0.0;
-                $averageGrade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
-                    ? $schoolclass->classcategories->first()->calculateGrade($average)
-                    : $this->getDefaultGrade($average);
+                $totalRaw = round($totalRaw, 2);
+                $bf       = $this->getPreviousTermCum($sid, $subjectId, $termId, $sessionId);
+                $cum      = ($termId == 1 || $bf == 0) ? $totalRaw : round(($totalRaw + $bf) / 2, 2);
+                $grade    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                    ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
+                    : $this->getDefaultGrade($totalRaw);
+                $remark   = $this->getRemark($grade);
 
-                // ========== FIXED PHOTO URL ==========
-                $photoUrl = null;
-                if (!empty($student->picture)) {
-                    $picture = $student->picture;
-                    // If it already has a proper path
-                    if (strpos($picture, 'student_avatars/') !== false || strpos($picture, 'storage/') === 0) {
-                        $photoUrl = asset('storage/' . str_replace('storage/', '', $picture));
-                    } else {
-                        // Just a filename - stored directly in storage/app/public/
-                        $photoUrl = asset('storage/' . ltrim($picture, '/'));
-                    }
-                }
-                // Fallback to default if no photo or URL is invalid
-                if (!$photoUrl) {
-                    $photoUrl = asset('storage/student_avatars/unnamed.jpg');
+                if (
+                    abs((float)$broadsheet->total - $totalRaw) > 0.01 ||
+                    abs((float)$broadsheet->bf    - $bf)       > 0.01 ||
+                    abs((float)$broadsheet->cum   - $cum)      > 0.01 ||
+                    $broadsheet->grade  !== $grade ||
+                    $broadsheet->remark !== $remark
+                ) {
+                    $broadsheet->total            = $totalRaw;
+                    $broadsheet->bf               = $bf;
+                    $broadsheet->cum              = $cum;
+                    $broadsheet->grade            = $grade;
+                    $broadsheet->remark           = $remark;
+                    $broadsheet->last_modified_by = auth()->id();
+                    $broadsheet->last_modified_at = now();
+                    $broadsheet->save();
                 }
 
-                $fullName = trim(
-                    ($student->lastname  ?? '') . ' ' .
-                    ($student->firstname ?? '') . ' ' .
-                    ($student->othername ?? '')
-                );
+                $totalScores += $totalRaw;
 
-                $results[] = [
-                    'student_id'    => $sid,
-                    'admission_no'  => $student->admissionno ?? '',
-                    'full_name'     => $fullName,
-                    'firstname'     => $student->firstname ?? '',
-                    'lastname'      => $student->lastname  ?? '',
-                    'photo'         => $photoUrl,
-                    'subjects'      => $studentSubjects,
-                    'average'       => $average,
-                    'average_grade' => $averageGrade,
-                    'gpa'           => $gpa,
-                    'total_subjects'=> $numSubj,
+                $studentSubjects[] = [
+                    'subject_id'        => $subjectId,
+                    'subject_name'      => $subjInfo->subject_name,
+                    'subject_code'      => $subjInfo->subject_code ?? '',
+                    'subjectclass_id'   => $subjectclassId,
+                    'broadsheet_id'     => (int) $broadsheet->id,
+                    'total'             => $totalRaw,
+                    'bf'                => (float) $bf,
+                    'cum'               => (float) $cum,
+                    'grade'             => $grade,
+                    'remark'            => $remark,
+                    'assessment_scores' => $assessmentScores,
                 ];
             }
 
-            return response()->json([
-                'success'     => true,
-                'assessments' => $assessments,
-                'data'        => $results,
-                'debug' => [
-                    'student_count'     => count($results),
-                    'assessment_count'  => $assessments->count(),
-                    'class_subjects'    => $allSubjectClassRows->count(),
-                ],
-            ]);
+            $numSubj      = count($studentSubjects);
+            $average      = $numSubj > 0 ? round($totalScores / $numSubj, 2) : 0.0;
+            $gradePoints  = array_map(
+                fn ($sub) => $this->getGradePoint($sub['total'], $isSenior),
+                $studentSubjects
+            );
+            $gpa          = !empty($gradePoints)
+                ? round(array_sum($gradePoints) / count($gradePoints), 2)
+                : 0.0;
+            $averageGrade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                ? $schoolclass->classcategories->first()->calculateGrade($average)
+                : $this->getDefaultGrade($average);
 
-        } catch (\Exception $e) {
-            Log::error('getStudentResults: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return response()->json([
-                'success' => false,
-                'message' => 'Server error: ' . $e->getMessage(),
-            ], 500);
+            // ========== FIXED PHOTO URL ==========
+            // The picture is stored in storage/app/public/student_avatars/
+            $photoUrl = asset('storage/student_avatars/unnamed.jpg'); // default
+            if (!empty($student->picture)) {
+                $picture = $student->picture;
+                // Remove any leading slashes or paths
+                $filename = basename($picture);
+                $photoUrl = asset('storage/student_avatars/' . $filename);
+            }
+
+            $fullName = trim(
+                ($student->lastname  ?? '') . ' ' .
+                ($student->firstname ?? '') . ' ' .
+                ($student->othername ?? '')
+            );
+
+            $results[] = [
+                'student_id'    => $sid,
+                'admission_no'  => $student->admissionno ?? '',
+                'full_name'     => $fullName,
+                'firstname'     => $student->firstname ?? '',
+                'lastname'      => $student->lastname  ?? '',
+                'photo'         => $photoUrl,
+                'subjects'      => $studentSubjects,
+                'average'       => $average,
+                'average_grade' => $averageGrade,
+                'gpa'           => $gpa,
+                'total_subjects'=> $numSubj,
+            ];
         }
+
+        return response()->json([
+            'success'     => true,
+            'assessments' => $assessments,
+            'data'        => $results,
+            'debug' => [
+                'student_count'     => count($results),
+                'assessment_count'  => $assessments->count(),
+                'class_subjects'    => $allSubjectClassRows->count(),
+            ],
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('getStudentResults: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
     public function updateStudentSubjectScore(Request $request)
     {
