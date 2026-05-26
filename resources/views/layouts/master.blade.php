@@ -37,203 +37,53 @@
         #nprogress .spinner { display: none !important; }
 
         /* =====================================================
-           PAGE TRANSITION ANIMATIONS
-           ===================================================== */
-
-        /* Page entrance animation */
-        .page-content {
-            animation: pageFadeInUp 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
-        }
-
-        @keyframes pageFadeInUp {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Page exit animation (for navigation) */
-        .page-exit {
-            animation: pageFadeOutDown 0.3s ease forwards;
-        }
-
-        @keyframes pageFadeOutDown {
-            0% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-        }
-
-        /* Content reveal with stagger effect */
-        .content-section {
-            animation: contentReveal 0.4s ease forwards;
-            opacity: 0;
-            transform-origin: top;
-        }
-
-        @keyframes contentReveal {
-            0% {
-                opacity: 0;
-                transform: scaleY(0.95);
-            }
-            100% {
-                opacity: 1;
-                transform: scaleY(1);
-            }
-        }
-
-        /* =====================================================
-           FOOTER ANIMATED TEXT
-           ===================================================== */
-
-        .footer-animated-text {
-            display: inline-block;
-            animation: textGlow 2s ease-in-out infinite;
-        }
-
-        @keyframes textGlow {
-            0%, 100% {
-                text-shadow: 0 0 0px rgba(79, 142, 247, 0);
-                letter-spacing: normal;
-            }
-            50% {
-                text-shadow: 0 0 8px rgba(79, 142, 247, 0.5);
-                letter-spacing: 0.5px;
-            }
-        }
-
-        .footer-switch-text {
-            display: inline-block;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        .footer-switch-text.fade-out {
-            opacity: 0;
-            transform: translateY(-10px) scale(0.9);
-        }
-
-        .footer-switch-text.fade-in {
-            animation: textPopIn 0.5s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
-        }
-
-        @keyframes textPopIn {
-            0% {
-                opacity: 0;
-                transform: translateY(15px) scale(0.8);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* Footer divider animation */
-        .footer-divider {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .footer-divider::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -100%;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4f8ef7, transparent);
-            animation: dividerSlide 10s ease-in-out infinite;
-        }
-
-        @keyframes dividerSlide {
-            0%, 100% { left: -100%; }
-            50% { left: 100%; }
-        }
-
-        /* Footer container hover effect */
-        .footer:hover .footer-brand {
-            transform: scale(1.05);
-            color: #4f8ef7;
-        }
-
-        .footer-brand {
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-
-        /* Page loader animation */
-        .page-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .page-loader.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .loader-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(79, 142, 247, 0.2);
-            border-top-color: #4f8ef7;
-            border-radius: 50%;
-            animation: loaderSpin 0.8s linear infinite;
-        }
-
-        .loader-spinner::before {
-            content: '';
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border: 3px solid rgba(79, 142, 247, 0.1);
-            border-top-color: #7eb8fb;
-            border-radius: 50%;
-            animation: loaderSpin 1s linear infinite reverse;
-        }
-
-        @keyframes loaderSpin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* =====================================================
-           EXISTING STYLES (keep all your existing CSS)
+           PAGINATION
            ===================================================== */
         .pagination-wrap .page-item { margin: 0 5px; }
         .pagination-wrap .page-link { padding: 5px 10px; }
         .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
         .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
+
+        /* =====================================================
+           LOADING SPINNER
+           ===================================================== */
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin {
             0%   { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* =====================================================
+           CHECKBOX
+           ===================================================== */
         .form-check-input:checked { background-color: #405189; border-color: #405189; }
+
+        /* =====================================================
+           SWEETALERT CUSTOMIZATION
+           ===================================================== */
         .swal2-toast { font-size: 14px !important; }
         .swal2-container.swal2-top-end { top: 70px !important; }
-        .table tbody tr { transition: background-color 0.15s ease; }
+
+        /* =====================================================
+           TABLE ROW HOVER
+           ===================================================== */
+        .table tbody tr {
+            transition: background-color 0.15s ease;
+        }
         .table tbody tr:hover { background-color: rgba(67, 97, 238, 0.05); }
-        .modal.fade .modal-dialog { transform: translate(0, -50px); transition: transform 0.3s ease-out; }
+
+        /* =====================================================
+           MODAL ANIMATIONS
+           ===================================================== */
+        .modal.fade .modal-dialog {
+            transform: translate(0, -50px);
+            transition: transform 0.3s ease-out;
+        }
         .modal.show .modal-dialog { transform: translate(0, 0); }
+
+        /* =====================================================
+           SIDEBAR SCROLLBAR
+           ===================================================== */
         #scrollbar { overflow-y: auto; }
         #scrollbar::-webkit-scrollbar { width: 4px; }
         #scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -243,37 +93,212 @@
         .bg-light::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .bg-light::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
         .bg-light::-webkit-scrollbar-thumb:hover { background: #555; }
-        #navbar-nav .menu-dropdown { overflow: hidden; }
-        #navbar-nav .nav-link.menu-link .ri-arrow-down-s-line { transition: transform 0.25s ease; display: inline-block; }
-        #navbar-nav .nav-link.menu-link[aria-expanded="true"] .ri-arrow-down-s-line { transform: rotate(180deg); }
-        #navbar-nav .nav-link.menu-link.nav-active-parent { color: #fff !important; background: rgba(79, 142, 247, 0.18) !important; border-left: 3px solid #4f8ef7; padding-left: calc(1.3rem - 3px); }
-        #navbar-nav .nav-link.menu-link.nav-active-parent i { color: #4f8ef7 !important; }
-        #navbar-nav .nav-sm .nav-link.nav-active-child { color: #7eb8fb !important; font-weight: 500; }
-        #navbar-nav .nav-sm .nav-link.nav-active-child::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #4f8ef7; margin-right: 8px; box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.25); vertical-align: middle; flex-shrink: 0; animation: dotPop 0.25s ease; }
-        @keyframes dotPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        #navbar-nav .nav-link { transition: color 0.18s ease, background-color 0.18s ease, padding-left 0.18s ease; position: relative; overflow: hidden; }
-        .nav-ripple { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.18); transform: scale(0); animation: ripple-anim 0.55s linear; pointer-events: none; z-index: 0; }
-        @keyframes ripple-anim { to { transform: scale(5); opacity: 0; } }
-        #back-to-top { opacity: 0; visibility: hidden; transform: translateY(12px); transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease; }
-        #back-to-top.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        #back-to-top:hover { transform: translateY(-3px) !important; }
-        #page-topbar .header-item { transition: color 0.2s ease, background-color 0.2s ease; }
-        .header-profile-user-enhanced { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-        .header-profile-user-enhanced:hover { transform: scale(1.07); box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.35) !important; }
-        .finance-stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 20px; color: white; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .finance-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35); }
-        .payment-method-icon { width: 40px; height: 40px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; }
-        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); font-size: 16px; line-height: 24px; font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif; color: #555; }
+
+        /* =====================================================
+           SIDEBAR: SMOOTH ACCORDION
+           ===================================================== */
+        #navbar-nav .menu-dropdown {
+            overflow: hidden;
+        }
+
+        /* Chevron rotation */
+        #navbar-nav .nav-link.menu-link .ri-arrow-down-s-line {
+            transition: transform 0.25s ease;
+            display: inline-block;
+        }
+        #navbar-nav .nav-link.menu-link[aria-expanded="true"] .ri-arrow-down-s-line {
+            transform: rotate(180deg);
+        }
+
+        /* =====================================================
+           SIDEBAR: ACTIVE PARENT ITEM
+           ===================================================== */
+        #navbar-nav .nav-link.menu-link.nav-active-parent {
+            color: #fff !important;
+            background: rgba(79, 142, 247, 0.18) !important;
+            border-left: 3px solid #4f8ef7;
+            padding-left: calc(1.3rem - 3px);
+        }
+        #navbar-nav .nav-link.menu-link.nav-active-parent i {
+            color: #4f8ef7 !important;
+        }
+
+        /* =====================================================
+           SIDEBAR: ACTIVE CHILD LINK
+           ===================================================== */
+        #navbar-nav .nav-sm .nav-link.nav-active-child {
+            color: #7eb8fb !important;
+            font-weight: 500;
+        }
+        #navbar-nav .nav-sm .nav-link.nav-active-child::before {
+            content: '';
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #4f8ef7;
+            margin-right: 8px;
+            box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.25);
+            vertical-align: middle;
+            flex-shrink: 0;
+            animation: dotPop 0.25s ease;
+        }
+        @keyframes dotPop {
+            from { transform: scale(0); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        /* =====================================================
+           SIDEBAR: HOVER TRANSITIONS
+           ===================================================== */
+        #navbar-nav .nav-link {
+            transition: color 0.18s ease, background-color 0.18s ease, padding-left 0.18s ease;
+        }
+
+        /* =====================================================
+           RIPPLE EFFECT ON NAV LINKS
+           ===================================================== */
+        #navbar-nav .nav-link {
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            transform: scale(0);
+            animation: ripple-anim 0.55s linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(5); opacity: 0; }
+        }
+
+        /* =====================================================
+           BACK TO TOP BUTTON — ANIMATED
+           ===================================================== */
+        #back-to-top {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(12px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+        }
+        #back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        #back-to-top:hover {
+            transform: translateY(-3px) !important;
+        }
+
+        /* =====================================================
+           PAGE CONTENT FADE-IN
+           ===================================================== */
+        .page-content {
+            animation: pageFadeIn 0.35s ease;
+        }
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =====================================================
+           TOPBAR BUTTON HOVER EFFECTS
+           ===================================================== */
+        #page-topbar .header-item {
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+
+        /* =====================================================
+           PROFILE AVATAR HOVER
+           ===================================================== */
+        .header-profile-user-enhanced {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .header-profile-user-enhanced:hover {
+            transform: scale(1.07);
+            box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.35) !important;
+        }
+
+        /* =====================================================
+           FINANCE MODULE CUSTOM CSS
+           ===================================================== */
+        .finance-stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .finance-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35);
+        }
+
+        .payment-method-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            font-size: 16px;
+            line-height: 24px;
+            font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif;
+            color: #555;
+        }
+
         .payment-progress { height: 8px; border-radius: 4px; background: #e2e8f0; }
         .payment-progress-bar { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
-        .scholarship-card { border-left: 4px solid #10b981; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .scholarship-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .scholarship-card {
+            border-left: 4px solid #10b981;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .scholarship-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
         .payroll-table th { background: #1e293b; color: white; }
-        .card { transition: box-shadow 0.25s ease, transform 0.25s ease; }
-        .card:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
-        .btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .btn:active { transform: scale(0.97); }
-        #navbar-nav > li { animation: navItemFadeIn 0.4s ease both; }
+
+        /* =====================================================
+           CARD HOVER LIFT (GENERAL)
+           ===================================================== */
+        .card {
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
+        }
+        .card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        /* =====================================================
+           BUTTON MICRO-INTERACTION
+           ===================================================== */
+        .btn {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* =====================================================
+           MENU TITLE FADE-IN (stagger)
+           ===================================================== */
+        #navbar-nav > li {
+            animation: navItemFadeIn 0.4s ease both;
+        }
         #navbar-nav > li:nth-child(1)  { animation-delay: 0.02s; }
         #navbar-nav > li:nth-child(2)  { animation-delay: 0.04s; }
         #navbar-nav > li:nth-child(3)  { animation-delay: 0.06s; }
@@ -287,25 +312,110 @@
         #navbar-nav > li:nth-child(11) { animation-delay: 0.22s; }
         #navbar-nav > li:nth-child(12) { animation-delay: 0.24s; }
         #navbar-nav > li:nth-child(n+13) { animation-delay: 0.26s; }
-        @keyframes navItemFadeIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
-        .dropdown-menu { animation: dropdownFadeIn 0.2s ease; }
-        @keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        [data-sidebar-size="sm"] #navbar-nav .nav-link span[data-key],
-        [data-sidebar-size="sm"] #navbar-nav .menu-title span { display: none; }
-        @media print { .no-print { display: none !important; } .invoice-box { box-shadow: none; border: none; padding: 0; } body { padding: 0; margin: 0; } }
+        @keyframes navItemFadeIn {
+            from { opacity: 0; transform: translateX(-8px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
 
-        /* Spotlight animations */
-        @keyframes spotlightOverlayFadeIn { from { background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(0px); } to { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); } }
-        @keyframes spotlightOverlayFadeOut { from { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); } to { background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(0px); } }
-        @keyframes spotlightModalBounceIn { 0% { opacity: 0; transform: translateY(-40px) scale(0.9); } 40% { opacity: 0.8; transform: translateY(8px) scale(1.02); } 70% { opacity: 0.95; transform: translateY(-3px) scale(0.99); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes spotlightModalFadeOut { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-20px) scale(0.95); } }
-        @keyframes resultBounceIn { 0% { opacity: 0; transform: translateX(-20px) scale(0.95); } 60% { opacity: 0.8; transform: translateX(4px) scale(1.02); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
-        @keyframes resultGlowPulse { 0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(79, 142, 247, 0); } 100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); } }
-        @keyframes topMatchPulse { 0%, 100% { border-left-color: #4f8ef7; background: rgba(79, 142, 247, 0.05); } 50% { border-left-color: #7eb8fb; background: rgba(79, 142, 247, 0.12); } }
-        @keyframes loadingSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes skeletonPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
-        @keyframes historySlideIn { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
-        .spotlight-result-item { animation: resultBounceIn 0.35s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; opacity: 0; }
+        /* =====================================================
+           DROPDOWN MENU ANIMATION
+           ===================================================== */
+        .dropdown-menu {
+            animation: dropdownFadeIn 0.2s ease;
+        }
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =====================================================
+           TOOLTIP-STYLE TITLE ON COLLAPSED SIDEBAR
+           ===================================================== */
+        [data-sidebar-size="sm"] #navbar-nav .nav-link span[data-key],
+        [data-sidebar-size="sm"] #navbar-nav .menu-title span {
+            display: none;
+        }
+
+        /* =====================================================
+           PRINT STYLES
+           ===================================================== */
+        @media print {
+            .no-print { display: none !important; }
+            .invoice-box { box-shadow: none; border: none; padding: 0; }
+            body { padding: 0; margin: 0; }
+        }
+
+        /* =====================================================
+           SPOTLIGHT SEARCH ENHANCED ANIMATIONS
+           ===================================================== */
+
+        /* Overlay fade animation - perfect transparency (70% dark, not too translucent) */
+        @keyframes spotlightOverlayFadeIn {
+            from { background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(0px); }
+            to { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); }
+        }
+
+        @keyframes spotlightOverlayFadeOut {
+            from { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); }
+            to { background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(0px); }
+        }
+
+        /* Modal entrance animation - bounce effect */
+        @keyframes spotlightModalBounceIn {
+            0% { opacity: 0; transform: translateY(-40px) scale(0.9); }
+            40% { opacity: 0.8; transform: translateY(8px) scale(1.02); }
+            70% { opacity: 0.95; transform: translateY(-3px) scale(0.99); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes spotlightModalFadeOut {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        }
+
+        /* Result item animations - bounce in with stagger */
+        @keyframes resultBounceIn {
+            0% { opacity: 0; transform: translateX(-20px) scale(0.95); }
+            60% { opacity: 0.8; transform: translateX(4px) scale(1.02); }
+            100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        @keyframes resultGlowPulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(79, 142, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
+        }
+
+        /* Top match indicator animation */
+        @keyframes topMatchPulse {
+            0%, 100% { border-left-color: #4f8ef7; background: rgba(79, 142, 247, 0.05); }
+            50% { border-left-color: #7eb8fb; background: rgba(79, 142, 247, 0.12); }
+        }
+
+        /* Loading spinner animation */
+        @keyframes loadingSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Skeleton loading animation */
+        @keyframes skeletonPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        /* History item fade in */
+        @keyframes historySlideIn {
+            from { opacity: 0; transform: translateX(-15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Result items - staggered animation */
+        .spotlight-result-item {
+            animation: resultBounceIn 0.35s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+            opacity: 0;
+        }
+
         .spotlight-result-item:nth-child(1) { animation-delay: 0.00s; }
         .spotlight-result-item:nth-child(2) { animation-delay: 0.03s; }
         .spotlight-result-item:nth-child(3) { animation-delay: 0.06s; }
@@ -316,20 +426,54 @@
         .spotlight-result-item:nth-child(8) { animation-delay: 0.21s; }
         .spotlight-result-item:nth-child(9) { animation-delay: 0.24s; }
         .spotlight-result-item:nth-child(10) { animation-delay: 0.27s; }
-        .spotlight-result-item.top-match { animation: resultBounceIn 0.4s cubic-bezier(0.34, 1.3, 0.64, 1) forwards, resultGlowPulse 0.6s ease 0.3s; border-left: 3px solid #4f8ef7; background: linear-gradient(90deg, rgba(79, 142, 247, 0.08) 0%, transparent 100%); }
-        .spotlight-result-item.top-match:hover { background: linear-gradient(90deg, rgba(79, 142, 247, 0.15) 0%, rgba(79, 142, 247, 0.05) 100%); }
-        .spotlight-category-header { animation: historySlideIn 0.25s ease forwards; }
-        .spotlight-history-item { animation: historySlideIn 0.25s ease forwards; opacity: 0; animation-fill-mode: forwards; }
+
+        /* Top match (best suggestion) gets extra glow */
+        .spotlight-result-item.top-match {
+            animation: resultBounceIn 0.4s cubic-bezier(0.34, 1.3, 0.64, 1) forwards, resultGlowPulse 0.6s ease 0.3s;
+            border-left: 3px solid #4f8ef7;
+            background: linear-gradient(90deg, rgba(79, 142, 247, 0.08) 0%, transparent 100%);
+        }
+
+        .spotlight-result-item.top-match:hover {
+            background: linear-gradient(90deg, rgba(79, 142, 247, 0.15) 0%, rgba(79, 142, 247, 0.05) 100%);
+        }
+
+        /* Category header animation */
+        .spotlight-category-header {
+            animation: historySlideIn 0.25s ease forwards;
+        }
+
+        /* History items animation */
+        .spotlight-history-item {
+            animation: historySlideIn 0.25s ease forwards;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
         .spotlight-history-item:nth-child(1) { animation-delay: 0.00s; }
         .spotlight-history-item:nth-child(2) { animation-delay: 0.04s; }
         .spotlight-history-item:nth-child(3) { animation-delay: 0.08s; }
         .spotlight-history-item:nth-child(4) { animation-delay: 0.12s; }
         .spotlight-history-item:nth-child(5) { animation-delay: 0.16s; }
-        .spotlight-result-item:hover { transform: translateX(4px); transition: transform 0.2s ease, background 0.2s ease; }
-        .typing-dot { display: inline-block; animation: typingDot 1.4s infinite ease-in-out; }
+
+        /* Hover effect for results */
+        .spotlight-result-item:hover {
+            transform: translateX(4px);
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        /* Typing indicator animation */
+        @keyframes typingDot {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        .typing-dot {
+            display: inline-block;
+            animation: typingDot 1.4s infinite ease-in-out;
+        }
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typingDot { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
     </style>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -405,11 +549,6 @@
 </head>
 
 <body>
-
-    <!-- Page Loader -->
-    <div id="page-loader" class="page-loader">
-        <div class="loader-spinner"></div>
-    </div>
 
     <!-- Begin page -->
     <div id="layout-wrapper">
@@ -1592,33 +1731,19 @@
         </div>
 
         <!-- Main Content -->
-        <div class="page-content-wrapper">
-            @yield('content')
-        </div>
+        @yield('content')
 
-        <!-- ============================================================
-             ANIMATED FOOTER WITH TEXT CYCLING
-             ============================================================ -->
-        <footer class="footer" style="position: relative; overflow: hidden;">
-            <div class="footer-divider" style="position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(79, 142, 247, 0.3), transparent);"></div>
+        <!-- Footer -->
+        <footer class="footer">
             <div class="container-fluid">
-                <div class="row align-items-center">
+                <div class="row">
                     <div class="col-sm-6">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="mdi mdi-school footer-brand" style="font-size: 18px; transition: all 0.3s ease;"></i>
-                            <span id="footer-school-text" class="footer-switch-text footer-brand" style="font-weight: 500;">
-                                @php $school = App\Models\SchoolInformation::where('is_active', true)->first(); @endphp
-                                {{ $school->school_name ?? 'Vite-ESchool' }}
-                            </span>
-                            <span class="footer-animated-text" style="font-size: 12px; opacity: 0.6;">© <script>document.write(new Date().getFullYear())</script></span>
-                        </div>
+                        <script>document.write(new Date().getFullYear())</script>
+                        @php $school = App\Models\SchoolInformation::where('is_active', true)->first(); @endphp
+                        {{ $school->school_name ?? 'Vite-ESchool' }}
                     </div>
                     <div class="col-sm-6">
-                        <div class="text-sm-end d-flex align-items-center justify-content-sm-end gap-2">
-                            <span class="footer-animated-text" style="font-size: 12px;">Created with</span>
-                            <i class="mdi mdi-heart" style="color: #ef4444; animation: heartbeat 1.5s ease infinite;"></i>
-                            <span id="footer-creator-text" class="footer-switch-text" style="font-weight: 500;">by Qudroid Systems</span>
-                        </div>
+                        <div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div>
                     </div>
                 </div>
             </div>
@@ -1732,152 +1857,28 @@
     @endif
 
     <!-- ====================================================
-         MASTER ENHANCEMENT SCRIPTS (with animations)
+         MASTER ENHANCEMENT SCRIPTS (with keyboard shortcuts)
          ==================================================== -->
     <script>
     document.addEventListener('DOMContentLoaded', function () {
 
         // =====================================================
-        // 1. PAGE LOADER & TRANSITION ANIMATIONS
-        // =====================================================
-        var pageLoader = document.getElementById('page-loader');
-
-        // Hide loader when page fully loads
-        window.addEventListener('load', function() {
-            if (pageLoader) {
-                setTimeout(function() {
-                    pageLoader.classList.remove('show');
-                }, 300);
-            }
-        });
-
-        // Show loader on navigation (for anchor clicks)
-        document.querySelectorAll('a[href]').forEach(function(link) {
-            var href = link.getAttribute('href');
-            if (href && !href.startsWith('#') && !href.startsWith('javascript') && !href.startsWith('mailto') && !href.startsWith('tel') && !link.hasAttribute('data-bs-toggle') && !link.hasAttribute('data-bs-dismiss') && link.getAttribute('target') !== '_blank') {
-                link.addEventListener('click', function(e) {
-                    // Don't show loader for same-page anchors
-                    if (href === window.location.pathname || href === '') return;
-                    if (pageLoader) pageLoader.classList.add('show');
-                });
-            }
-        });
-
-        // Animate content sections when they come into view
-        var contentSections = document.querySelectorAll('.content-section, .card, .table, .row > div');
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-
-        contentSections.forEach(function(section) {
-            section.style.opacity = '0';
-            section.style.transform = 'translateY(20px)';
-            section.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            observer.observe(section);
-        });
-
-        // =====================================================
-        // 2. ANIMATED FOOTER TEXT CYCLING
-        // =====================================================
-        var schoolText = document.getElementById('footer-school-text');
-        var creatorText = document.getElementById('footer-creator-text');
-
-        // Text arrays to cycle through
-        var schoolMessages = [];
-        var creatorMessages = [];
-
-        // Populate messages
-        @php
-            $school = App\Models\SchoolInformation::where('is_active', true)->first();
-            $schoolName = $school->school_name ?? 'Vite-ESchool';
-        @endphp
-
-        schoolMessages.push('{{ $schoolName }}');
-        schoolMessages.push('Excellence in Education');
-        schoolMessages.push('Shaping Futures');
-        schoolMessages.push('Knowledge for Life');
-        schoolMessages.push('{{ $schoolName }}');
-
-        creatorMessages.push('by Qudroid Systems');
-        creatorMessages.push('❤️ with Laravel');
-        creatorMessages.push('Innovation First');
-        creatorMessages.push('Tech for Education');
-        creatorMessages.push('by Qudroid Systems');
-
-        var currentSchoolIndex = 0;
-        var currentCreatorIndex = 0;
-
-        function animateTextChange(element, newText, isSchool = true) {
-            if (!element) return;
-
-            // Fade out
-            element.classList.add('fade-out');
-
-            setTimeout(function() {
-                // Change text
-                element.textContent = newText;
-
-                // Remove fade-out, add fade-in
-                element.classList.remove('fade-out');
-                element.classList.add('fade-in');
-
-                // Remove fade-in after animation
-                setTimeout(function() {
-                    element.classList.remove('fade-in');
-                }, 500);
-            }, 300);
-        }
-
-        // Cycle texts every 10 seconds
-        setInterval(function() {
-            // Cycle school text
-            currentSchoolIndex = (currentSchoolIndex + 1) % schoolMessages.length;
-            animateTextChange(schoolText, schoolMessages[currentSchoolIndex], true);
-
-            // Cycle creator text (every other cycle for variety)
-            currentCreatorIndex = (currentCreatorIndex + 1) % creatorMessages.length;
-            setTimeout(function() {
-                animateTextChange(creatorText, creatorMessages[currentCreatorIndex], false);
-            }, 500);
-        }, 10000);
-
-        // Add hover effect to footer
-        var footer = document.querySelector('.footer');
-        if (footer) {
-            footer.addEventListener('mouseenter', function() {
-                this.style.background = 'rgba(79, 142, 247, 0.02)';
-                this.style.transition = 'background 0.3s ease';
-            });
-            footer.addEventListener('mouseleave', function() {
-                this.style.background = 'transparent';
-            });
-        }
-
-        // =====================================================
-        // 3. NPROGRESS — page transition bar
+        // 1. NPROGRESS — page transition bar
         // =====================================================
         if (typeof NProgress !== 'undefined') {
             NProgress.configure({ showSpinner: false, speed: 400, minimum: 0.1 });
-
-            document.querySelectorAll('a[href]').forEach(function(a) {
+            document.querySelectorAll('a[href]').forEach(function (a) {
                 var href = a.getAttribute('href');
                 if (href && !href.startsWith('#') && !href.startsWith('javascript') && !href.startsWith('mailto') && !href.startsWith('tel') && !a.hasAttribute('data-bs-toggle') && !a.hasAttribute('data-bs-dismiss') && a.getAttribute('target') !== '_blank') {
-                    a.addEventListener('click', function() { NProgress.start(); });
+                    a.addEventListener('click', function () { NProgress.start(); });
                 }
             });
-
-            window.addEventListener('pageshow', function() { NProgress.done(); });
-            window.addEventListener('load', function() { NProgress.done(); });
+            window.addEventListener('pageshow', function () { NProgress.done(); });
+            window.addEventListener('load', function () { NProgress.done(); });
         }
 
         // =====================================================
-        // 4. ACTIVE LINK DETECTION
+        // 2. ACTIVE LINK DETECTION
         // =====================================================
         (function () {
             var currentPath = window.location.pathname;
@@ -1899,13 +1900,13 @@
                             parentToggle.classList.add('nav-active-parent');
                         }
                     }
-                    setTimeout(function() { link.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 350);
+                    setTimeout(function () { link.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 350);
                 } catch (e) {}
             });
         })();
 
         // =====================================================
-        // 5. RIPPLE EFFECT
+        // 3. RIPPLE EFFECT
         // =====================================================
         document.querySelectorAll('#navbar-nav .nav-link').forEach(function (link) {
             link.addEventListener('click', function (e) {
@@ -1918,21 +1919,21 @@
                 var y = e.clientY - rect.top - size / 2;
                 ripple.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + x + 'px;top:' + y + 'px;';
                 link.appendChild(ripple);
-                setTimeout(function() { if (ripple.parentNode) ripple.parentNode.removeChild(ripple); }, 650);
+                setTimeout(function () { if (ripple.parentNode) ripple.parentNode.removeChild(ripple); }, 650);
             });
         });
 
         // =====================================================
-        // 6. BACK-TO-TOP
+        // 4. BACK-TO-TOP
         // =====================================================
         var backToTop = document.getElementById('back-to-top');
         if (backToTop) {
-            window.addEventListener('scroll', function() { backToTop.classList.toggle('show', window.scrollY > 300); }, { passive: true });
-            backToTop.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+            window.addEventListener('scroll', function () { backToTop.classList.toggle('show', window.scrollY > 300); }, { passive: true });
+            backToTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
         }
 
         // =====================================================
-        // 7. IMAGE MODAL
+        // 5. IMAGE MODAL
         // =====================================================
         var imageModal = document.getElementById('imageViewModal');
         if (imageModal) {
@@ -1945,24 +1946,24 @@
         }
 
         // =====================================================
-        // 8. RESET LAYOUT
+        // 6. RESET LAYOUT
         // =====================================================
         var resetBtn = document.getElementById('reset-layout');
         if (resetBtn) {
-            resetBtn.addEventListener('click', function() { localStorage.clear(); location.reload(); });
+            resetBtn.addEventListener('click', function () { localStorage.clear(); location.reload(); });
         }
 
         // =====================================================
-        // 9. FORM SUBMISSION NPROGRESS
+        // 7. FORM SUBMISSION NPROGRESS
         // =====================================================
         document.querySelectorAll('form').forEach(function (form) {
             if (form.getAttribute('action') && !form.dataset.noProgress) {
-                form.addEventListener('submit', function() { if (typeof NProgress !== 'undefined') NProgress.start(); });
+                form.addEventListener('submit', function () { if (typeof NProgress !== 'undefined') NProgress.start(); });
             }
         });
 
         // =====================================================
-        // 10. ACTIVE STATE ON DIRECT NAV LINKS
+        // 8. ACTIVE STATE ON DIRECT NAV LINKS
         // =====================================================
         (function () {
             var currentPath = window.location.pathname;
@@ -1976,26 +1977,14 @@
         })();
 
         // =====================================================
-        // 11. TOOLTIP HOVER
+        // 9. TOOLTIP HOVER
         // =====================================================
         var triggerBtn = document.getElementById('spotlight-trigger');
         var tooltip = document.querySelector('.search-tooltip');
         if (triggerBtn && tooltip) {
-            triggerBtn.addEventListener('mouseenter', function() { tooltip.style.opacity = '1'; });
-            triggerBtn.addEventListener('mouseleave', function() { tooltip.style.opacity = '0'; });
+            triggerBtn.addEventListener('mouseenter', function () { tooltip.style.opacity = '1'; });
+            triggerBtn.addEventListener('mouseleave', function () { tooltip.style.opacity = '0'; });
         }
-
-        // =====================================================
-        // 12. HEARTBEAT ANIMATION FOR FOOTER HEART ICON
-        // =====================================================
-        var style = document.createElement('style');
-        style.textContent = `
-            @keyframes heartbeat {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.2); }
-            }
-        `;
-        document.head.appendChild(style);
 
     });
     </script>
