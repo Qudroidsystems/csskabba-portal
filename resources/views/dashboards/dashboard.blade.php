@@ -1,5 +1,237 @@
 @extends('layouts.master')
 @section('content')
+<style>
+    /* =====================================================
+       ENHANCED DASHBOARD ANIMATIONS & STYLES
+       ===================================================== */
+
+    /* Card entrance animations */
+    @keyframes cardFadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes cardScaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes numberCount {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulseGlow {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(79, 142, 247, 0);
+        }
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+
+    /* Animated cards */
+    .dashboard-card {
+        animation: cardFadeInUp 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+        transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+    }
+
+    .dashboard-card:nth-child(1) { animation-delay: 0.00s; }
+    .dashboard-card:nth-child(2) { animation-delay: 0.05s; }
+    .dashboard-card:nth-child(3) { animation-delay: 0.10s; }
+    .dashboard-card:nth-child(4) { animation-delay: 0.15s; }
+    .dashboard-card:nth-child(5) { animation-delay: 0.20s; }
+    .dashboard-card:nth-child(6) { animation-delay: 0.25s; }
+
+    /* Card gradients */
+    .card-gradient-1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .card-gradient-2 {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .card-gradient-3 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .card-gradient-4 {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .card-gradient-5 {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .card-gradient-6 {
+        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    }
+
+    /* Stat numbers */
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        animation: numberCount 0.8s ease forwards;
+        background: linear-gradient(135deg, #1e293b, #334155);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    /* Icon containers */
+    .stat-icon {
+        width: 55px;
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        transition: all 0.3s ease;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .dashboard-card:hover .stat-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Progress bar animation */
+    .progress-bar-animated {
+        animation: shimmer 2s infinite linear;
+        background: linear-gradient(90deg, #4f8ef7, #a855f7, #4f8ef7);
+        background-size: 200% 100%;
+    }
+
+    /* Chart containers */
+    .chart-container {
+        animation: cardScaleIn 0.5s ease forwards;
+        transition: all 0.3s ease;
+    }
+
+    .chart-container:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Activity timeline */
+    .activity-item {
+        animation: slideInRight 0.4s ease forwards;
+        opacity: 0;
+        animation-fill-mode: forwards;
+    }
+
+    .activity-item:nth-child(1) { animation-delay: 0.00s; }
+    .activity-item:nth-child(2) { animation-delay: 0.05s; }
+    .activity-item:nth-child(3) { animation-delay: 0.10s; }
+    .activity-item:nth-child(4) { animation-delay: 0.15s; }
+    .activity-item:nth-child(5) { animation-delay: 0.20s; }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Pulse animation for live indicators */
+    .live-pulse {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: pulseGlow 1.5s infinite;
+        margin-right: 8px;
+    }
+
+    /* Custom scrollbar for charts */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 1.75rem;
+        }
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+        }
+    }
+
+    /* Loading skeleton animation */
+    .skeleton-loading {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+</style>
+
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -7,9 +239,14 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">School Analytics</h4>
+                        <div>
+                            <h4 class="mb-sm-0 fw-semibold">School Analytics Dashboard</h4>
+                            <p class="text-muted mb-0 mt-1">
+                                <span class="live-pulse"></span> Live data updated just now
+                            </p>
+                        </div>
                         <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
+                            <ol class="breadcrumb m-0 bg-transparent">
                                 <li class="breadcrumb-item"><a href="javascript: void(0);">Dashboards</a></li>
                                 <li class="breadcrumb-item active">School Analytics</li>
                             </ol>
@@ -20,1050 +257,583 @@
             <!-- end page title -->
 
             @hasrole('Super Admin')
+                <!-- Stats Cards Row -->
                 <div class="row">
                     <div class="col-xxl-3 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-column h-100">
-                                            <p class="fs-md text-muted mb-4">Population</p>
-                                            <h3 class="mb-0 mt-auto">
-                                                <span class="counter-value" data-target="{{ $total_population }}">0</span>
-                                                <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 06.19%</small>
-                                            </h3>
-                                        </div>
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Total Population</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="{{ $total_population }}">0</span>
+                                        </h2>
+                                        <p class="mb-0 mt-2">
+                                            <span class="badge bg-success bg-opacity-10 text-success">
+                                                <i class="bi bi-arrow-up me-1"></i>{{ $population_percentage }}%
+                                            </span>
+                                            <span class="text-muted ms-1">vs last month</span>
+                                        </p>
                                     </div>
-                                    <div class="flex-shrink-0">
-                                        <div id="population_chart" data-colors='["--tb-primary"]' dir="ltr"></div>
+                                    <div class="stat-icon bg-primary bg-opacity-10">
+                                        <i class="ph-users-three fs-2xl text-primary"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ min(100, $population_percentage * 5) }}%; background: linear-gradient(90deg, #4f8ef7, #a855f7);"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div><!--end col-->
+                    </div>
+
                     <div class="col-xxl-3 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-column h-100">
-                                            <p class="fs-md text-muted mb-4">Staff</p>
-                                            <h3 class="mb-0 mt-auto">
-                                                <span class="counter-value" data-target="{{ $staff_count }}">0</span>
-                                                <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 02.33%</small>
-                                            </h3>
-                                        </div>
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Staff Count</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="{{ $staff_count }}">0</span>
+                                        </h2>
+                                        <p class="mb-0 mt-2">
+                                            <span class="badge bg-success bg-opacity-10 text-success">
+                                                <i class="bi bi-arrow-up me-1"></i>{{ $staff_percentage }}%
+                                            </span>
+                                            <span class="text-muted ms-1">vs last month</span>
+                                        </p>
                                     </div>
-                                    <div class="flex-shrink-0">
-                                        <div id="staff_chart" data-colors='["--tb-warning"]' dir="ltr"></div>
+                                    <div class="stat-icon bg-warning bg-opacity-10">
+                                        <i class="ph-chalkboard-teacher fs-2xl text-warning"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ min(100, $staff_percentage * 5) }}%; background: linear-gradient(90deg, #f59e0b, #ef4444);"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div><!--end col-->
+                    </div>
+
                     <div class="col-xxl-3 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-column h-100">
-                                            <p class="fs-md text-muted mb-4">Male</p>
-                                            <h3 class="mb-0 mt-auto">
-                                                <span class="counter-value" data-target="{{ $gender_counts['Male'] }}">0</span>
-                                                <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 12.33%</small>
-                                            </h3>
-                                        </div>
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Male Students</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="{{ $gender_counts['Male'] }}">0</span>
+                                        </h2>
+                                        <p class="mb-0 mt-2">
+                                            <span class="badge bg-success bg-opacity-10 text-success">
+                                                <i class="bi bi-arrow-up me-1"></i>{{ $male_percentage }}%
+                                            </span>
+                                            <span class="text-muted ms-1">vs last month</span>
+                                        </p>
                                     </div>
-                                    <div class="flex-shrink-0">
-                                        <div id="male_chart" data-colors='["--tb-secondary"]' dir="ltr"></div>
+                                    <div class="stat-icon bg-info bg-opacity-10">
+                                        <i class="ph-gender-male fs-2xl text-info"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ ($gender_counts['Male'] / max(1, $total_population)) * 100 }}%; background: linear-gradient(90deg, #0ea5e9, #06b6d4);"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div><!--end col-->
+                    </div>
+
                     <div class="col-xxl-3 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-column h-100">
-                                            <p class="fs-md text-muted mb-4">Female</p>
-                                            <h3 class="mb-0 mt-auto">
-                                                <span class="counter-value" data-target="{{ $gender_counts['Female'] }}">0</span>
-                                                <small class="text-danger fs-xs mb-0 ms-1"><i class="bi bi-arrow-down me-1"></i> 09.57%</small>
-                                            </h3>
-                                        </div>
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Female Students</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="{{ $gender_counts['Female'] }}">0</span>
+                                        </h2>
+                                        <p class="mb-0 mt-2">
+                                            <span class="badge bg-danger bg-opacity-10 text-danger">
+                                                <i class="bi bi-arrow-down me-1"></i>{{ abs($female_percentage) }}%
+                                            </span>
+                                            <span class="text-muted ms-1">vs last month</span>
+                                        </p>
                                     </div>
-                                    <div class="flex-shrink-0">
-                                        <div id="female_chart" data-colors='["--tb-success"]' dir="ltr"></div>
+                                    <div class="stat-icon bg-danger bg-opacity-10">
+                                        <i class="ph-gender-female fs-2xl text-danger"></i>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ ($gender_counts['Female'] / max(1, $total_population)) * 100 }}%; background: linear-gradient(90deg, #ef4444, #f97316);"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div><!--end col-->
-                </div><!--end row-->
-            @endhasrole
-            {{-- Commented sections remain unchanged --}}
-            {{-- <div class="row">
-                <div class="col-xxl-4 order-last order-xxl-first">
-                        <div class="card">
-                            <div class="card-header d-flex">
-                                <h4 class="card-title mb-0 flex-grow-1">School Population Census</h4>
-                                <div class="dropdown card-header-dropdown float-end">
-                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    </div>
+                </div>
+
+                <!-- Additional Stats Row -->
+                <div class="row mt-3">
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Old Students</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="{{ $status_counts['Old Student'] ?? 0 }}">0</span>
+                                        </h2>
+                                        <p class="text-muted mb-0 mt-2"><i class="bi bi-people me-1"></i> Returning students</p>
+                                    </div>
+                                    <div class="stat-icon bg-success bg-opacity-10">
+                                        <i class="ph-star fs-2xl text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">New Students</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="{{ $status_counts['New Student'] ?? 0 }}">0</span>
+                                        </h2>
+                                        <p class="text-muted mb-0 mt-2"><i class="bi bi-person-plus me-1"></i> New enrollments</p>
+                                    </div>
+                                    <div class="stat-icon bg-secondary bg-opacity-10">
+                                        <i class="ph-rocket-launch fs-2xl text-secondary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Classes</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="0">0</span>
+                                        </h2>
+                                        <p class="text-muted mb-0 mt-2"><i class="bi bi-grid-3x3 me-1"></i> Active classes</p>
+                                    </div>
+                                    <div class="stat-icon bg-purple bg-opacity-10">
+                                        <i class="ph-graduation-cap fs-2xl text-purple"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card dashboard-card">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Subjects</p>
+                                        <h2 class="stat-number mb-0">
+                                            <span class="counter-value" data-target="0">0</span>
+                                        </h2>
+                                        <p class="text-muted mb-0 mt-2"><i class="bi bi-book me-1"></i> Active subjects</p>
+                                    </div>
+                                    <div class="stat-icon bg-cyan bg-opacity-10">
+                                        <i class="ph-book-open fs-2xl text-cyan"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row mt-4">
+                    <div class="col-xxl-6">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">Population Distribution</h5>
+                                <p class="text-muted small mb-0">Gender and status breakdown</p>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="populationChart" style="height: 300px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xxl-6">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">Quick Stats Overview</h5>
+                                <p class="text-muted small mb-0">Key metrics at a glance</p>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="statsChart" style="height: 300px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity and Recent Data Row -->
+                <div class="row mt-4">
+                    <div class="col-xxl-7">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h5 class="card-title mb-0">Recent Activity Timeline</h5>
+                                    <p class="text-muted small mb-0">Latest updates from your school</p>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
                                         <i class="bi bi-three-dots-vertical"></i>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Today</a>
-                                        <a class="dropdown-item" href="#">Last Week</a>
-                                        <a class="dropdown-item" href="#">Last Month</a>
-                                        <a class="dropdown-item" href="#">Current Year</a>
-                                    </div>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#">Last 7 days</a></li>
+                                        <li><a class="dropdown-item" href="#">Last 30 days</a></li>
+                                        <li><a class="dropdown-item" href="#">This year</a></li>
+                                    </ul>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div id="property_type" data-colors='["--tb-primary", "--tb-secondary", "--tb-light","--tb-danger", "--tb-success"]' class="e-charts shadow-none" style="height: 336px;"></div>
+                                <div class="acitivity-timeline">
+                                    <div class="activity-item d-flex align-items-start mb-4 pb-2">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="ph-user-plus fs-xl text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">New Student Enrollment</h6>
+                                            <p class="text-muted mb-1">5 new students joined the school today</p>
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i> Just now</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item d-flex align-items-start mb-4 pb-2">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-sm bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="ph-chalkboard-teacher fs-xl text-success"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">Staff Meeting Scheduled</h6>
+                                            <p class="text-muted mb-1">Monthly staff meeting set for Friday 10:00 AM</p>
+                                            <small class="text-muted"><i class="bi bi-calendar me-1"></i> Tomorrow</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item d-flex align-items-start mb-4 pb-2">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-sm bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="ph-file-text fs-xl text-warning"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">Exam Results Published</h6>
+                                            <p class="text-muted mb-1">Terminal examination results are now available</p>
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i> 2 hours ago</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item d-flex align-items-start">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-sm bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="ph-currency-circle-dollar fs-xl text-info"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">Payment Received</h6>
+                                            <p class="text-muted mb-1">School fee payments processed for 25 students</p>
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i> Yesterday</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                <!--end col-->
-                <div class="col-xxl-8">
-                    <div class="card">
-                        <div class="card-header d-flex align-items-center">
-                            <h5 class="card-title flex-grow-1 mb-0">Revenue Overview</h5>
-                            <div class="flex-shrink-0">
-                                <input type="text" class="form-control form-control-sm" id="exampleInputPassword1" data-provider="flatpickr" data-range-date="true" data-date-format="d M, Y" data-default-date="01 Feb 2023 to 28 Feb 2023">
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-lg-3">
-                                    <div class="nav flex-column nav-light nav-pills gap-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                                        <a class="nav-link d-flex p-2 gap-3 active" id="revenue-tab" data-bs-toggle="pill" href="#revenue" role="tab" aria-controls="revenue" aria-selected="true">
-                                            <div class="avatar-sm flex-shrink-0">
-                                                <div class="avatar-title rounded bg-warning-subtle text-warning fs-2xl">
-                                                    <i class="bi bi-coin"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <h5 class="text-reset">$<span class="counter-value" data-target="2478">0</span>M</h5>
-                                                <p class="mb-0">Total Revenue</p>
-                                            </div>
-                                        </a>
-                                        <a class="nav-link d-flex p-2 gap-3" id="income-tab" data-bs-toggle="pill" href="#income" role="tab" aria-controls="income" aria-selected="false">
-                                            <div class="avatar-sm flex-shrink-0">
-                                                <div class="avatar-title rounded bg-success-subtle text-success fs-2xl">
-                                                    <i class="bi bi-coin"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <h5 class="text-reset">$<span class="counter-value" data-target="14587.37">0</span></h5>
-                                                <p class="mb-0">Prev. Session</p>
-                                            </div>
-                                        </a>
-                                        <a class="nav-link d-flex p-2 gap-3" id="property-sale-tab" data-bs-toggle="pill" href="#property-sale" role="tab" aria-controls="property-sale" aria-selected="false">
-                                            <div class="avatar-sm flex-shrink-0">
-                                                <div class="avatar-title rounded bg-danger-subtle text-danger fs-2xl">
-                                                    <i class="bi bi-coin"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <h5 class="text-reset"><span class="counter-value" data-target="2365">0</span></h5>
-                                                <p class="mb-0">Current Session</p>
-                                            </div>
-                                        </a>
-                                        <a class="nav-link d-flex p-2 gap-3" id="_-tab" data-bs-toggle="pill" href="#propetry-rent" role="tab" aria-controls="propetry-rent" aria-selected="false">
-                                            <div class="avatar-sm flex-shrink-0">
-                                                <div class="avatar-title rounded bg-primary-subtle text-primary fs-2xl">
-                                                    <i class="bi bi-coin"></i>
-                                                </div>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <h5 class="text-reset"><span class="counter-value" data-target="3456">0</span></h5>
-                                                <p class="mb-0">Total Expenditure</p>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div><!--end col-->
-                                <div class="col-lg-9">
-                                    <div class="tab-content text-muted">
-                                        <div class="tab-pane active" id="revenue" role="tabpanel">
-                                            <div id="total_revenue" data-colors='["--tb-primary"]' class="apex-charts effect-chart" dir="ltr"></div>
-                                        </div><!--end tab-->
-                                        <div class="tab-pane" id="income" role="tabpanel">
-                                            <div id="total_income" data-colors='["--tb-success"]' class="apex-charts" dir="ltr"></div>
-                                        </div>
-                                        <div class="tab-pane" id="property-sale" role="tabpanel">
-                                            <div id="property_sale_chart" data-colors='["--tb-danger"]' class="apex-charts" dir="ltr"></div>
-                                        </div>
-                                        <div class="tab-pane" id="propetry-rent" role="tabpanel">
-                                            <div id="propetry_rent" data-colors='["--tb-info"]' class="apex-charts" dir="ltr"></div>
-                                        </div>
-                                    </div>
-                                </div><!--end col-->
-                            </div><!--end row-->
-                        </div>
-                    </div>
-                </div><!--end col-->
-            </div>  --}}
-            <!--end row-->
 
-            {{-- <div class="row">
-                <div class="col-xxl-9">
-                    <div class="card" id="propertyList">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Recently Added Property</h4>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown card-header-dropdown sortble-dropdown">
-                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="fw-semibold text-uppercase fs-12">Sort by:
-                                        </span><span class="text-muted dropdown-title">Property Name</span> <i class="mdi mdi-chevron-down ms-1"></i>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <button class="dropdown-item sort" data-sort="propert_name">Property Name</button>
-                                        <button class="dropdown-item sort" data-sort="price">Price</button>
-                                        <button class="dropdown-item sort" data-sort="agent_name">Agent Name</button>
-                                        <button class="dropdown-item sort" data-sort="status">Status</button>
-                                    </div>
-                                </div>
+                    <div class="col-xxl-5">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">Quick Actions</h5>
+                                <p class="text-muted small mb-0">Frequently used features</p>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-borderless table-centered align-middle table-nowrap mb-0">
-                                    <thead class="text-muted table-light">
-                                        <tr>
-                                            <th scope="col" class="sort cursor-pointer" data-sort="propert_id">#</th>
-                                            <th scope="col" class="sort cursor-pointer" data-sort="propert_type">Property Type</th>
-                                            <th scope="col" class="sort cursor-pointer" data-sort="propert_name">Property Name</th>
-                                            <th scope="col" class="sort cursor-pointer" data-sort="address">Address</th>
-                                            <th scope="col" class="sort cursor-pointer" data-sort="agent_name">Agent Name</th>
-                                            <th scope="col" class="sort cursor-pointer" data-sort="price">Price</th>
-                                            <th scope="col" class="sort cursor-pointer" data-sort="status">Status</th>
-                                            <th scope="col" class="sort cursor-pointer">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="list">
-                                        <tr>
-                                            <td class="propert_id">
-                                                <a href="apps-ecommerce-order-details.html" class="fw-medium link-primary">#TBS01</a>
-                                            </td>
-                                            <td class="propert_type">Villa</td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2 position-relative">
-                                                    <img src="assets/images/real-estate/img-01.jpg" alt="" height="35" class="rounded">
-                                                    <a href="apps-real-estate-property-overview.html" class="propert_name text-reset stretched-link">The Country House</a>
-                                                </div>
-                                            </td>
-                                            <td class="address">United Kingdom</td>
-                                            <td class="agent_name">Josefa Weissnat</td>
-                                            <td class="price"><span class="fw-medium">$2451.39</span></td>
-                                            <td><span class="badge bg-danger-subtle text-danger status">Sale</span></td>
-                                            <td>
-                                                <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                    <li><a href="apps-real-estate-property-overview.html" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="propert_id">
-                                                <a href="apps-ecommerce-order-details.html" class="fw-medium link-primary">#TBS02</a>
-                                            </td>
-                                            <td class="propert_type">Residency</td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2 position-relative">
-                                                    <img src="assets/images/real-estate/img-02.jpg" alt="" height="35" class="rounded">
-                                                    <a href="apps-real-estate-property-overview.html" class="propert_name text-reset stretched-link">Classic White House</a>
-                                                </div>
-                                            </td>
-                                            <td class="address">Germany</td>
-                                            <td class="agent_name">Jerry Emard</td>
-                                            <td class="price"><span class="fw-medium">$2451.20</span></td>
-                                            <td><span class="badge bg-info-subtle text-info status">Rent</span></td>
-                                            <td>
-                                                <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                    <li><a href="apps-real-estate-property-overview.html" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="propert_id">
-                                                <a href="apps-ecommerce-order-details.html" class="fw-medium link-primary">#TBS03</a>
-                                            </td>
-                                            <td class="propert_type">Apartment</td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2 position-relative">
-                                                    <img src="assets/images/real-estate/img-03.jpg" alt="" height="35" class="rounded">
-                                                    <a href="apps-real-estate-property-overview.html" class="propert_name text-reset stretched-link">Vintage Apartment</a>
-                                                </div>
-                                            </td>
-                                            <td class="address">Brazil</td>
-                                            <td class="agent_name">Domenic Dach</td>
-                                            <td class="price"><span class="fw-medium">$1249.99</span></td>
-                                            <td><span class="badge bg-info-subtle text-info status">Rent</span></td>
-                                            <td>
-                                                <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                    <li><a href="apps-real-estate-property-overview.html" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="propert_id">
-                                                <a href="apps-ecommerce-order-details.html" class="fw-medium link-primary">#TBS04</a>
-                                            </td>
-                                            <td class="propert_type">Villa</td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2 position-relative">
-                                                    <img src="assets/images/real-estate/img-04.jpg" alt="" height="35" class="rounded">
-                                                    <a href="apps-real-estate-property-overview.html" class="propert_name text-reset stretched-link">Whitespace Vintage Villa</a>
-                                                </div>
-                                            </td>
-                                            <td class="address">Spain</td>
-                                            <td class="agent_name">Axel Kozey</td>
-                                            <td class="price"><span class="fw-medium">$3495.76</span></td>
-                                            <td><span class="badge bg-danger-subtle text-danger status">Sale</span></td>
-                                            <td>
-                                                <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                    <li><a href="apps-real-estate-property-overview.html" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="propert_id">
-                                                <a href="apps-ecommerce-order-details.html" class="fw-medium link-primary">#TBS05</a>
-                                            </td>
-                                            <td class="propert_type">Residency</td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2 position-relative">
-                                                    <img src="assets/images/real-estate/img-05.jpg" alt="" height="35" class="rounded">
-                                                    <a href="apps-real-estate-property-overview.html" class="propert_name text-reset stretched-link">Duplex Square Valley</a>
-                                                </div>
-                                            </td>
-                                            <td class="address">Mexico</td>
-                                            <td class="agent_name">Buck Roberts</td>
-                                            <td class="price"><span class="fw-medium">$2579.31</span></td>
-                                            <td><span class="badge bg-info-subtle text-info status">Rent</span></td>
-                                            <td>
-                                                <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                    <li><a href="apps-real-estate-property-overview.html" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="propert_id">
-                                                <a href="apps-ecommerce-order-details.html" class="fw-medium link-primary">#TBS06</a>
-                                            </td>
-                                            <td class="propert_type">Residency</td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2 position-relative">
-                                                    <img src="assets/images/real-estate/img-06.jpg" alt="" height="35" class="rounded">
-                                                    <a href="apps-real-estate-property-overview.html" class="propert_name text-reset stretched-link">Small Grey Brick Home In A Subdivision</a>
-                                                </div>
-                                            </td>
-                                            <td class="address">USA</td>
-                                            <td class="agent_name">Josefa Weissnat</td>
-                                            <td class="price"><span class="fw-medium">$1478.00</span></td>
-                                            <td><span class="badge bg-danger-subtle text-danger status">Sale</span></td>
-                                            <td>
-                                                <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                    <li><a href="apps-real-estate-property-overview.html" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li>
-                                                    <li><a href="#!" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <div class="noresult" style="display: none">
-                                    <div class="text-center">
-                                        <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px"></lord-icon>
-                                        <h5 class="mt-2">Sorry! No Result Found</h5>
-                                        <p class="text-muted mb-0">We've searched more than 150+ transactions We did not find any transactions for you search.</p>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <a href="{{ route('student.index') }}" class="text-decoration-none">
+                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                                <i class="ph-users-four fs-2xl text-primary"></i>
+                                                <h6 class="mt-2 mb-0">Manage Students</h6>
+                                                <small class="text-muted">View all students</small>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="{{ route('staff.payments.dashboard') }}" class="text-decoration-none">
+                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                                <i class="ph-wallet fs-2xl text-success"></i>
+                                                <h6 class="mt-2 mb-0">Payroll</h6>
+                                                <small class="text-muted">Staff payments</small>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="{{ route('exams.index') }}" class="text-decoration-none">
+                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                                <i class="ph-clipboard-text fs-2xl text-warning"></i>
+                                                <h6 class="mt-2 mb-0">Examinations</h6>
+                                                <small class="text-muted">Manage exams</small>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="{{ route('attendance.my-classes') }}" class="text-decoration-none">
+                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                                <i class="ph-calendar-check fs-2xl text-info"></i>
+                                                <h6 class="mt-2 mb-0">Attendance</h6>
+                                                <small class="text-muted">Mark attendance</small>
+                                            </div>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xxl-3 col-lg-6">
-                    <div class="card">
-                        <div class="card-header d-flex align-items-center">
-                            <h4 class="card-title mb-0 flex-grow-1">Customer Feedback</h4>
-                            <div class="flex-shrink-0">
-                                <a href="#!" class="text-muted">View All <i class="bi bi-chevron-right align-baseline"></i></a>
-                            </div>
-                        </div>
-                        <div class="card-body px-0">
-                            <div data-simplebar style="max-height: 400px;">
-                                <div class="card border-bottom rounded-0 border-0 shadow-none mb-0">
-                                    <div class="card-body pt-0">
-                                        <div class="d-flex gap-2">
-                                            <div class="flex-shrink-0">
-                                                <img src="assets/images/users/48/avatar-2.jpg" alt="" class="avatar-sm rounded">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <span class="text-muted clearfix float-end">04:47 PM</span>
-                                                <h6 class="fs-md mb-1"><a href="#!" class="text-reset">Josefa Weissnat</a></h6>
-                                                <div class="text-warning mb-2 fs-xs">
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                </div>
-                                                <p class="text-muted mb-0">" Themebrand used AnyDesk to fix the bug in Flask and django version. I highly recommend this product! "</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card border-bottom rounded-0 border-0 shadow-none mb-0">
-                                    <div class="card-body">
-                                        <div class="d-flex gap-2">
-                                            <div class="flex-shrink-0">
-                                                <img src="assets/images/users/48/avatar-3.jpg" alt="" class="avatar-sm rounded">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <span class="text-muted clearfix float-end">11:24 AM</span>
-                                                <h6 class="fs-md mb-1"><a href="#!" class="text-reset">Ophelia Steuber</a></h6>
-                                                <div class="text-warning mb-2 fs-xs">
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                </div>
-                                                <p class="text-muted mb-0">" Thank you for this awesome admin panel. I'm very happy with it, it's a pleasure to work with it! "</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card border-bottom rounded-0 border-0 shadow-none mb-0">
-                                    <div class="card-body">
-                                        <div class="d-flex gap-2">
-                                            <div class="flex-shrink-0">
-                                                <img src="assets/images/users/48/avatar-4.jpg" alt="" class="avatar-sm rounded">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <span class="text-muted clearfix float-end">03:19 PM</span>
-                                                <h6 class="fs-md mb-1"><a href="#!" class="text-reset">Dianna Bogan</a></h6>
-                                                <div class="text-warning mb-2 fs-xs">
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                </div>
-                                                <p class="text-muted mb-0">" High theme quality. Very good support, they spent almost an hour remotely to fix a problem. I hope this theme will have a long term support. "</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card border-bottom rounded-0 border-0 shadow-none mb-0">
-                                    <div class="card-body">
-                                        <div class="d-flex gap-2">
-                                            <div class="flex-shrink-0">
-                                                <img src="assets/images/users/48/avatar-5.jpg" alt="" class="avatar-sm rounded">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <span class="text-muted clearfix float-end">06:39 AM</span>
-                                                <h6 class="fs-md mb-1"><a href="#!" class="text-reset">Jerry Emard</a></h6>
-                                                <div class="text-warning mb-2 fs-xs">
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                </div>
-                                                <p class="text-muted mb-0">" There is as lot packed in this template. The savings in time and energy is so worth it. "</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card border-bottom rounded-0 border-0 shadow-none mb-0">
-                                    <div class="card-body">
-                                        <div class="d-flex gap-2">
-                                            <div class="flex-shrink-0">
-                                                <img src="assets/images/users/48/avatar-6.jpg" alt="" class="avatar-sm rounded">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <span class="text-muted clearfix float-end">09:18 AM</span>
-                                                <h6 class="fs-md mb-1"><a href="#!" class="text-reset">Axel Kozey</a></h6>
-                                                <div class="text-warning mb-2 fs-xs">
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                    <i class="bi bi-star-fill"></i>
-                                                </div>
-                                                <p class="text-muted mb-0">" Works like a component library, a crazy amount of design elements already built and given. "</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xxl-4 col-lg-6">
-                    <div class="card">
-                        <div class="card-header d-flex align-items-center">
-                            <h4 class="card-title mb-0 flex-grow-1">Popular Property</h4>
-                            <div class="flex-shrink-0">
-                                <div class="nav nav-pills gap-1" id="popularProperty" role="tablist" aria-orientation="vertical">
-                                    <button class="btn btn-ghost-danger btn-sm active" id="saleProperty" data-bs-toggle="pill" data-bs-target="#salePropertyTabs" type="button" role="tab" aria-controls="salePropertyTabs" aria-selected="true">Sale</button>
-                                    <button class="btn btn-ghost-info btn-sm" id="rentProperty" data-bs-toggle="pill" data-bs-target="#rentPropertyTabs" type="button" role="tab" aria-controls="rentPropertyTabs" aria-selected="false" tabindex="-1">Rent</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="tab-content mb-2" id="popularPropertyContent">
-                                <div class="tab-pane show active" id="salePropertyTabs" role="tabpanel" aria-labelledby="saleProperty" tabindex="0">
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-08.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Crystal House</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 2 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 1 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 1039 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.5</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-07.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Whitespace Vintage Villa</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 4 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 2 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 1145 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-05.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Northlight Residency</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 3 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 3 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 1859 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.7</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-08.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Park Side Colonial</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 5 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 3 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 5643 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.7</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-04.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Marina Hill Vintage</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 4 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 3 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 1963 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.8</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-07.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Grand Cub Hotel</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 3 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 1 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 1543 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.4</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-03.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Evergreen Villa with Residency</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 5 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 3 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 3652 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.5</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="tab-pane" id="rentPropertyTabs" role="tabpanel" aria-labelledby="rentProperty" tabindex="0">
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-01.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Liberty Property</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 1 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 1 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 958 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.3</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-02.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Duplex Square Valley</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 3 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 2 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 2659 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 3.8</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-03.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Small house on an autumn’s</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 2 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 1 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 2230 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.3</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-07.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>New Grand Hotel Room</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 3 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 2 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 2785 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-08.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Park Side Colonial</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 5 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 3 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 5643 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.7</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative mb-3">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-07.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Whitespace Vintage Villa</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 4 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 2 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 1145 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2 align-items-center position-relative">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/real-estate/img-05.jpg" alt="" height="44" class="object-fit-cover rounded">
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <a href="apps-real-estate-property-overview.html" class="stretched-link">
-                                                <h6>Nightlight Residency</h6>
-                                            </a>
-                                            <ul class="d-flex align-items-center gap-2 flex-wrap list-unstyled mb-0">
-                                                <li><p class="text-muted mb-0"><i class="bi bi-house align-baseline text-primary me-1"></i> 2 Bedroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="ph ph-bathtub align-middle text-primary me-1"></i> 1 Bathroom</p></li>
-                                                <li><p class="text-muted mb-0"><i class="bi bi-columns align-baseline text-primary me-1"></i> 1324 sqft</p></li>
-                                            </ul>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <span class="badge bg-warning-subtle text-warning"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <a href="apps-real-estate-list.html" class="icon-link">View All <i class="bi bi-arrow-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row g-4">
-                                <div class="col-xxl-3 col-md-6 border-end-md border-dashed">
-                                    <div class="text-center">
-                                        <p class="text-muted">Project On Hold</p>
-                                        <div class="mx-3 mb-3 pb-1">
-                                            <div id="mini-chart-6" data-colors='["--tb-secondary"]' class="apex-charts" dir="ltr"></div>
-                                        </div>
-                                        <h5 class="mb-0">2451 <small class="badge fs-2xs bg-danger-subtle text-danger ms-1"><i class="ph-arrow-down align-baseline"></i> 1.02%</small></h5>
-                                    </div>
-                                </div>
-                                <div class="col-xxl-3 col-md-6 border-end-xxl border-dashed">
-                                    <div class="text-center">
-                                        <p class="text-muted">Ongoing Properties</p>
-                                        <div class="mx-3 mb-3 pb-1">
-                                            <div id="mini-chart-7" data-colors='["--tb-primary"]' class="apex-charts" dir="ltr"></div>
-                                        </div>
-                                        <h5 class="mb-0">$750.36M <small class="badge fs-2xs bg-success-subtle text-success ms-1"><i class="ph-arrow-up align-baseline"></i> 2.17%</small></h5>
-                                    </div>
-                                </div>
-                                <div class="col-xxl-3 col-md-6 border-end-md border-dashed">
-                                    <div class="text-center">
-                                        <p class="text-muted">Pending Properties</p>
-                                        <div class="mx-3 mb-3 pb-1">
-                                            <div id="mini-chart-8" data-colors='["--tb-warning"]' class="apex-charts" dir="ltr"></div>
-                                        </div>
-                                        <h5 class="mb-0">$750.36M <small class="badge fs-2xs bg-success-subtle text-success ms-1"><i class="ph-arrow-up align-baseline"></i> 07.26%</small></h5>
-                                    </div>
-                                </div>
-                                <div class="col-xxl-3 col-md-6">
-                                    <div class="text-center">
-                                        <p class="text-muted">Completed Project</p>
-                                        <div class="mx-3 mb-3 pb-1">
-                                            <div id="mini-chart-9" data-colors='["--tb-success"]' class="apex-charts" dir="ltr"></div>
-                                        </div>
-                                        <h5 class="mb-0">4689 <small class="badge fs-2xs bg-success-subtle text-success ms-1"><i class="ph-arrow-up align-baseline"></i> 3.62%</small></h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header d-flex align-items-center">
-                            <h4 class="card-title mb-0 flex-grow-1">Recent Activity</h4>
-                            <div class="flex-shrink-0">
-                                <a href="pages-timeline.html" class="text-muted">View All <i class="bi bi-chevron-right align-baseline"></i></a>
-                            </div>
-                        </div>
-                        <div class="card-body px-0">
-                            <div class="px-3" data-simplebar style="height: 255px">
-                                <div class="acitivity-timeline acitivity-main">
-                                    <div class="acitivity-item d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/32/avatar-2.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1 lh-base">Purchased by James Price</h6>
-                                            <p class="text-muted mb-2">Product noise evolve smartwatch </p>
-                                            <small class="mb-0 text-muted">05:57 AM Today</small>
-                                        </div>
-                                    </div>
-                                    <div class="acitivity-item py-3 d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/32/avatar-1.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1 lh-base">Natasha Carey have liked the products</h6>
-                                            <p class="text-muted mb-2">Allow users to like products in your WooCommerce store.</p>
-                                            <small class="mb-0 text-muted">25 Dec, 2022</small>
-                                        </div>
-                                    </div>
-                                    <div class="acitivity-item py-3 d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/32/avatar-3.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1 lh-base">Today offers by <a href="apps-ecommerce-seller-details.html" class="link-secondary">Digitech Galaxy</a></h6>
-                                            <p class="text-muted mb-2">Offer is valid on orders of $230 Or above for selected products only.</p>
-                                            <small class="mb-0 text-muted">12 Dec, 2022</small>
-                                        </div>
-                                    </div>
-                                    <div class="acitivity-item py-3 d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/32/avatar-2.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1 lh-base">Favorites Product</h6>
-                                            <p class="text-muted mb-2">Esther James have favorites product.</p>
-                                            <small class="mb-0 text-muted">25 Nov, 2022</small>
-                                        </div>
-                                    </div>
-                                    <div class="acitivity-item py-3 d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/32/avatar-2.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1 lh-base">Flash sale starting <span class="text-primary">Tomorrow.</span></h6>
-                                            <p class="text-muted mb-2">Flash sale by <a href="javascript:void(0);" class="link-secondary fw-medium">Zoetic Fashion</a></p>
-                                            <small class="mb-0 text-muted">22 Oct, 2022</small>
-                                        </div>
-                                    </div>
-                                    <div class="acitivity-item d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img src="assets/images/users/32/avatar-5.jpg" alt="" class="avatar-xs rounded-circle acitivity-avatar">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1 lh-base">Monthly sales report</h6>
-                                            <p class="text-muted mb-2"><span class="text-danger">2 days left</span> notification to submit the monthly sales report. <a href="javascript:void(0);" class="link-warning text-decoration-underline">Reports Builder</a></p>
-                                            <small class="mb-0 text-muted">15 Oct, 2022</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header d-flex align-items-center">
-                            <h4 class="card-title mb-0 flex-grow-1">Agent List</h4>
-                            <div class="flex-shrink-0">
-                                <a href="apps-real-estate-agent-list.html" class="text-muted">View All <i class="bi bi-chevron-right align-baseline"></i></a>
-                            </div>
-                        </div>
-                        <div class="card-body pt-4">
-                            <div class="table-responsive table-card">
-                                <table class="table table-borderless table-centered align-middle table-nowrap mb-0">
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-shrink-0 me-2">
-                                                        <img src="assets/images/users/avatar-1.jpg" alt="" class="avatar-xxs rounded-circle">
-                                                    </div>
-                                                    <div class="flex-grow-1">Dianna Bogan</div>
-                                                </div>
-                                            </td>
-                                            <td>United Kingdom</td>
-                                            <td>+(86) 9985-9220</td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-shrink-0 me-2">
-                                                        <img src="assets/images/users/avatar-2.jpg" alt="" class="avatar-xxs rounded-circle">
-                                                    </div>
-                                                    <div class="flex-grow-1">Jansh Brown</div>
-                                                </div>
-                                            </td>
-                                            <td>Germany</td>
-                                            <td>+(27) 3041-1766</td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-shrink-0 me-2">
-                                                        <img src="assets/images/users/avatar-3.jpg" alt="" class="avatar-xxs rounded-circle">
-                                                    </div>
-                                                    <div class="flex-grow-1">Ayaan Bowen</div>
-                                                </div>
-                                            </td>
-                                            <td>Brazil</td>
-                                            <td>+(51) 3233-7909</td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-shrink-0 me-2">
-                                                        <img src="assets/images/users/avatar-4.jpg" alt="" class="avatar-xxs rounded-circle">
-                                                    </div>
-                                                    <div class="flex-grow-1">Prezy Mark</div>
-                                                </div>
-                                            </td>
-                                            <td>Spain</td>
-                                            <td>+(48) 3877-9000</td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-shrink-0 me-2">
-                                                        <img src="assets/images/users/avatar-6.jpg" alt="" class="avatar-xxs rounded-circle">
-                                                    </div>
-                                                    <div class="flex-grow-1">Vihan Hudda</div>
-                                                </div>
-                                            </td>
-                                            <td>Brazil</td>
-                                            <td>+(11) 3885-1022</td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-shrink-0 me-2">
-                                                        <img src="assets/images/users/avatar-8.jpg" alt="" class="avatar-xxs rounded-circle">
-                                                    </div>
-                                                    <div class="flex-grow-1">Uriel King</div>
-                                                </div>
-                                            </td>
-                                            <td>USA</td>
-                                            <td>+(21) 2345-6789</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
+            @endhasrole
         </div>
-        <!-- container-fluid -->
     </div>
-    <!-- End Page-content -->
+</div>
 
-    <!-- JAVASCRIPT -->
-    <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/libs/list.js/list.min.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/libs/echarts/echarts.min.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/libs/apexcharts/apexcharts.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
-  
-   <!-- Doughnut Chart Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const ctx = document.getElementById('property_type').getContext('2d');
-            const maleCount = {{ $gender_counts['Male'] }};
-            const femaleCount = {{ $gender_counts['Female'] }};
-            const staffCount = {{ $staff_count }};
+<!-- JAVASCRIPT -->
+<script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-            new Chart(ctx, {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Counter animation function
+        function animateCounter(element, target) {
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+            }, 20);
+        }
+
+        // Initialize counter animations
+        const counters = document.querySelectorAll('.counter-value');
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            if (target > 0) {
+                animateCounter(counter, target);
+            } else {
+                counter.textContent = '0';
+            }
+        });
+
+        // Population Distribution Chart (Doughnut)
+        const ctx1 = document.getElementById('populationChart')?.getContext('2d');
+        if (ctx1) {
+            new Chart(ctx1, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Male', 'Female', 'Staff'],
+                    labels: ['Male Students', 'Female Students', 'Staff'],
                     datasets: [{
-                        data: [maleCount, femaleCount, staffCount],
+                        data: [{{ $gender_counts['Male'] }}, {{ $gender_counts['Female'] }}, {{ $staff_count }}],
                         backgroundColor: [
-                            'rgba(113, 128, 150, 0.8)', // --tb-secondary
-                            'rgba(16, 185, 129, 0.8)',  // --tb-success
-                            'rgba(245, 158, 11, 0.8)'   // --tb-warning
+                            'rgba(14, 165, 233, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
                         ],
                         borderColor: [
-                            'rgba(113, 128, 150, 1)',
-                            'rgba(16, 185, 129, 1)',
+                            'rgba(14, 165, 233, 1)',
+                            'rgba(239, 68, 68, 1)',
                             'rgba(245, 158, 11, 1)'
                         ],
-                        borderWidth: 1
+                        borderWidth: 2,
+                        hoverOffset: 10
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
                     plugins: {
                         legend: {
-                            position: 'top',
+                            position: 'bottom',
                             labels: {
-                                font: {
-                                    size: 12
-                                }
+                                font: { size: 12 },
+                                usePointStyle: true,
+                                padding: 15
                             }
                         },
                         tooltip: {
                             callbacks: {
-                                label: function (context) {
-                                    let label = context.label || '';
-                                    let value = context.raw || 0;
-                                    return `${label}: ${value}`;
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value.toLocaleString()} (${percentage}%)`;
                                 }
                             }
                         }
                     },
-                    cutout: '60%'
+                    cutout: '65%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 1500
+                    }
                 }
             });
+        }
+
+        // Stats Overview Chart (Bar)
+        const ctx2 = document.getElementById('statsChart')?.getContext('2d');
+        if (ctx2) {
+            new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Male', 'Female', 'Staff', 'Old Students', 'New Students'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [
+                            {{ $gender_counts['Male'] }},
+                            {{ $gender_counts['Female'] }},
+                            {{ $staff_count }},
+                            {{ $status_counts['Old Student'] ?? 0 }},
+                            {{ $status_counts['New Student'] ?? 0 }}
+                        ],
+                        backgroundColor: [
+                            'rgba(14, 165, 233, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderRadius: 8,
+                        barPercentage: 0.65,
+                        categoryPercentage: 0.8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Count: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [5, 5],
+                                drawBorder: true
+                            },
+                            ticks: {
+                                stepSize: Math.ceil(Math.max(
+                                    {{ $gender_counts['Male'] }},
+                                    {{ $gender_counts['Female'] }},
+                                    {{ $staff_count }}
+                                ) / 5)
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Add hover scale effect to quick action cards
+        const actionCards = document.querySelectorAll('.hover-scale');
+        actionCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)';
+                this.style.transition = 'all 0.3s ease';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
         });
-    </script> 
-</div>
+    });
+</script>
+
+<style>
+    .hover-scale {
+        transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        cursor: pointer;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .bg-purple {
+        background-color: #8b5cf6;
+    }
+
+    .text-purple {
+        color: #8b5cf6;
+    }
+
+    .bg-cyan {
+        background-color: #06b6d4;
+    }
+
+    .text-cyan {
+        color: #06b6d4;
+    }
+
+    .bg-opacity-10 {
+        opacity: 0.1;
+    }
+
+    /* Custom animation delays */
+    .activity-item {
+        animation: slideInRight 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+    }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
 @endsection
