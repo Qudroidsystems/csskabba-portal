@@ -95,9 +95,23 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* EXACT SPIRAL ANIMATION FROM REGISTER PAGE */
         @keyframes pulse {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        /* Spiral effect for the center circle - exact same as register */
+        @keyframes spiralPulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(79, 142, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
+        }
+
+        /* Continuous rotation for spiral effect */
+        @keyframes spiralRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         @keyframes orbitClockwise {
@@ -116,18 +130,6 @@
 
         @keyframes fadeOut {
             to { opacity: 0; transform: translateX(20px); }
-        }
-
-        /* Spiral effect for the center circle */
-        @keyframes spiralPulse {
-            0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(79, 142, 247, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
-        }
-
-        @keyframes spiralRotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
 
         /* Page container animation */
@@ -277,7 +279,11 @@
             opacity: 0;
         }
 
-        /* Effect circles with spiral animation */
+        /* =====================================================
+           EXACT SPIRAL EFFECT CIRCLES FROM REGISTER PAGE
+           ===================================================== */
+
+        /* Effect circles with spiral pulse animation - EXACT SAME AS REGISTER */
         .effect-circle-1,
         .effect-circle-2,
         .effect-circle-3 {
@@ -288,6 +294,7 @@
             width: 260px;
             height: 260px;
             background: rgba(79, 142, 247, 0.05);
+            border-radius: 50%;
             animation: spiralPulse 3s infinite;
         }
 
@@ -295,6 +302,7 @@
             width: 200px;
             height: 200px;
             background: rgba(79, 142, 247, 0.08);
+            border-radius: 50%;
             animation: spiralPulse 3s infinite 0.5s;
         }
 
@@ -303,6 +311,7 @@
             height: 140px;
             background: rgba(79, 142, 247, 0.12);
             backdrop-filter: blur(8px);
+            border-radius: 50%;
             border: 1px solid rgba(79, 142, 247, 0.3);
             animation: spiralPulse 3s infinite 1s;
         }
@@ -323,6 +332,8 @@
             list-style: none;
             padding: 0;
             margin: 0;
+            top: 0;
+            left: 0;
         }
 
         .auth-user-list li {
@@ -381,6 +392,7 @@
             overflow: hidden;
             border: 2px solid white;
             transition: box-shadow 0.3s ease;
+            border-radius: 50%;
         }
 
         .avatar-title img {
@@ -458,6 +470,17 @@
             background: #ef4444;
         }
 
+        /* Pulse animation for the center content */
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.98); }
+        }
+
+        .effect-circle-3 span {
+            animation: textPulse 3s ease-in-out infinite;
+            display: inline-block;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 576px) {
             .auth-effect-main { width: 200px; height: 200px; }
@@ -522,6 +545,7 @@
                                             <p class="text-white opacity-75 fs-base">It makes school operations SEAMLESS...</p>
                                         </div>
 
+                                        <!-- EXACT SPIRAL EFFECT CONTAINER FROM REGISTER PAGE -->
                                         <div class="auth-effect-main my-5 position-relative rounded-circle d-flex align-items-center justify-content-center mx-auto">
                                             <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                 <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
