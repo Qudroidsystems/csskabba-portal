@@ -541,7 +541,7 @@
                 <select id="classFilter" class="form-select" required>
                     <option value="">— Select Class —</option>
                     @foreach($classes as $class)
-                        <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm->arm ?? '' }}</option>
+                        <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->armRelation->arm ?? $class->arm ?? '' }}</option>
                     @endforeach
                 </select>
             </div>
@@ -571,12 +571,6 @@
             </div>
         </form>
     </div>
-
-    @php
-        $totalStudents = 0;
-        $totalWithComplete = 0;
-        $averageCompletion = 0;
-    @endphp
 
     <div class="stats-dashboard" id="statsDashboard" style="display: none;">
         <div class="stat-card-enhanced">
@@ -842,7 +836,7 @@ function renderStudentsTable(students) {
     const tbody = document.getElementById('studentsTableBody');
 
     if (!students || students.length === 0) {
-        tbody.innerHTML = `<tr class="empty-state-row"><td colspan="8" class="empty-state"><i class="ri-user-unfollow-line"></i><h5>No students found</h5><p class="text-muted">Try adjusting your search or filters</p></td></tr>`;
+        tbody.innerHTML = `<tr class="empty-state-row"><td colspan="8" class="empty-state"><i class="ri-user-unfollow-line"></i><h5>No students found</h5><p class="text-muted">Try adjusting your search or filters</p><\/td><\/tr>`;
         return;
     }
 
@@ -852,365 +846,356 @@ function renderStudentsTable(students) {
                 <div class="student-avatar">
                     ${student.photo ? `<img src="${student.photo}" alt="Photo" onerror="this.style.display='none';this.parentElement.innerHTML='${getInitials(student.full_name)}'">` : getInitials(student.full_name)}
                 </div>
-                        </td>
-                        <td><strong>${escapeHtml(student.admission_no || 'N/A')}</strong></td>
-                        <td>${escapeHtml(student.full_name)}</td>
-                        <td><strong>${student.average || 0}</strong></td>
-                        <td><span class="status-badge ${getGradeClass(student.average_grade)}">${student.average_grade || 'F'}</span></td>
-                        <td>${student.gpa || 0}</td>
-                        <td>${getStatusBadge(student)}</td>
-                        <td>
-                            <button class="btn-sm-custom btn-primary-custom" onclick="event.stopPropagation(); openStudentModal(${student.student_id})">
-                                <i class="ri-edit-line"></i> Enter Scores
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
+            <\/td>
+            <td><strong>${escapeHtml(student.admission_no || 'N/A')}</strong><\/td>
+            <td>${escapeHtml(student.full_name)}<\/td>
+            <td><strong>${student.average || 0}<\/strong><\/td>
+            <td><span class="status-badge ${getGradeClass(student.average_grade)}">${student.average_grade || 'F'}</span><\/td>
+            <td>${student.gpa || 0}<\/td>
+            <td>${getStatusBadge(student)}<\/td>
+            <td>
+                <button class="btn-sm-custom btn-primary-custom" onclick="event.stopPropagation(); openStudentModal(${student.student_id})">
+                    <i class="ri-edit-line"></i> Enter Scores
+                </button>
+            <\/td>
+        <\/tr>
+    `).join('');
+}
 
-            function getInitials(fullName) {
-                if (!fullName) return '?';
-                const parts = fullName.trim().split(' ');
-                return (parts[0]?.charAt(0) || '') + (parts[1]?.charAt(0) || '');
-            }
+function getInitials(fullName) {
+    if (!fullName) return '?';
+    const parts = fullName.trim().split(' ');
+    return (parts[0]?.charAt(0) || '') + (parts[1]?.charAt(0) || '');
+}
 
-            function getGradeClass(grade) {
-                if (!grade) return 'status-pending';
-                if (grade.startsWith('A')) return 'status-complete';
-                if (grade.startsWith('B') || grade.startsWith('C')) return 'status-incomplete';
-                return 'status-pending';
-            }
+function getGradeClass(grade) {
+    if (!grade) return 'status-pending';
+    if (grade.startsWith('A')) return 'status-complete';
+    if (grade.startsWith('B') || grade.startsWith('C')) return 'status-incomplete';
+    return 'status-pending';
+}
 
-            function getStatusBadge(student) {
-                const totalSubjects = student.total_subjects || 0;
-                const completedSubjects = student.subjects.filter(s => s.total > 0).length;
+function getStatusBadge(student) {
+    const totalSubjects = student.total_subjects || 0;
+    const completedSubjects = student.subjects.filter(s => s.total > 0).length;
 
-                if (completedSubjects === 0) return '<span class="status-badge status-pending">Pending</span>';
-                if (completedSubjects === totalSubjects) return '<span class="status-badge status-complete">Complete</span>';
-                return `<span class="status-badge status-incomplete">${completedSubjects}/${totalSubjects}</span>`;
-            }
+    if (completedSubjects === 0) return '<span class="status-badge status-pending">Pending</span>';
+    if (completedSubjects === totalSubjects) return '<span class="status-badge status-complete">Complete</span>';
+    return `<span class="status-badge status-incomplete">${completedSubjects}/${totalSubjects}</span>`;
+}
 
-            function renderEmptyTable() {
-                document.getElementById('studentsTableBody').innerHTML = `
-                    <tr class="empty-state-row">
-                        <td colspan="8" class="empty-state">
-                            <i class="ri-inbox-line"></i>
-                            <h5>No students found</h5>
-                            <p class="text-muted">Select a class, term, and session to load students</p>
-                        </td>
-                    </tr>
-                `;
-            }
+function renderEmptyTable() {
+    document.getElementById('studentsTableBody').innerHTML = `
+        <tr class="empty-state-row">
+            <td colspan="8" class="empty-state">
+                <i class="ri-inbox-line"></i>
+                <h5>No students found</h5>
+                <p class="text-muted">Select a class, term, and session to load students</p>
+            <\/td>
+        <\/tr>
+    `;
+}
 
-            window.openStudentModal = async function(studentId) {
-                const student = allStudentsData.find(s => s.student_id === studentId);
-                if (!student) {
-                    Swal.fire('Error', 'Student data not found', 'error');
-                    return;
-                }
+window.openStudentModal = async function(studentId) {
+    const student = allStudentsData.find(s => s.student_id === studentId);
+    if (!student) {
+        Swal.fire('Error', 'Student data not found', 'error');
+        return;
+    }
 
-                currentStudentData = student;
-                renderStudentModal();
-                $('#studentResultsModal').modal('show');
-            };
+    currentStudentData = student;
+    renderStudentModal();
+    $('#studentResultsModal').modal('show');
+};
 
-            function renderStudentModal() {
-                if (!currentStudentData) return;
+function renderStudentModal() {
+    if (!currentStudentData) return;
 
-                // Render student info
-                document.getElementById('modalStudentInfo').innerHTML = `
-                    <div class="student-info-header">
-                        <div class="student-avatar-large">
-                            ${currentStudentData.photo ? `<img src="${currentStudentData.photo}" alt="Photo" onerror="this.style.display='none';this.parentElement.innerHTML='${getInitials(currentStudentData.full_name)}'">` : getInitials(currentStudentData.full_name)}
-                        </div>
-                        <div>
-                            <h4 class="mb-1">${escapeHtml(currentStudentData.full_name)}</h4>
-                            <p class="mb-1"><i class="ri-id-card-line me-1"></i> Admission: ${escapeHtml(currentStudentData.admission_no || 'N/A')}</p>
-                            <div class="summary-stats">
-                                <div class="stat-box"><div class="label">Average</div><div class="value">${currentStudentData.average || 0}</div></div>
-                                <div class="stat-box"><div class="label">GPA</div><div class="value">${currentStudentData.gpa || 0}</div></div>
-                                <div class="stat-box"><div class="label">Subjects</div><div class="value">${currentStudentData.total_subjects || 0}</div></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+    document.getElementById('modalStudentInfo').innerHTML = `
+        <div class="student-info-header">
+            <div class="student-avatar-large">
+                ${currentStudentData.photo ? `<img src="${currentStudentData.photo}" alt="Photo" onerror="this.style.display='none';this.parentElement.innerHTML='${getInitials(currentStudentData.full_name)}'">` : getInitials(currentStudentData.full_name)}
+            </div>
+            <div>
+                <h4 class="mb-1">${escapeHtml(currentStudentData.full_name)}</h4>
+                <p class="mb-1"><i class="ri-id-card-line me-1"></i> Admission: ${escapeHtml(currentStudentData.admission_no || 'N/A')}</p>
+                <div class="summary-stats">
+                    <div class="stat-box"><div class="label">Average</div><div class="value">${currentStudentData.average || 0}</div></div>
+                    <div class="stat-box"><div class="label">GPA</div><div class="value">${currentStudentData.gpa || 0}</div></div>
+                    <div class="stat-box"><div class="label">Subjects</div><div class="value">${currentStudentData.total_subjects || 0}</div></div>
+                </div>
+            </div>
+        </div>
+    `;
 
-                // Render subjects
-                const container = document.getElementById('modalSubjectsContainer');
-                if (!currentStudentData.subjects || currentStudentData.subjects.length === 0) {
-                    container.innerHTML = '<div class="alert alert-info">No subjects registered for this student in the selected term.</div>';
-                    return;
-                }
+    const container = document.getElementById('modalSubjectsContainer');
+    if (!currentStudentData.subjects || currentStudentData.subjects.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">No subjects registered for this student in the selected term.</div>';
+        return;
+    }
 
-                container.innerHTML = currentStudentData.subjects.map(subject => `
-                    <div class="subject-score-card" data-subject-id="${subject.subject_id}" data-subjectclass-id="${subject.subjectclass_id}">
-                        <div class="subject-header">
-                            <div>
-                                <strong><i class="ri-book-open-line me-1"></i> ${escapeHtml(subject.subject_name)}</strong>
-                                <span class="badge bg-light text-dark ms-2">${escapeHtml(subject.subject_code)}</span>
-                            </div>
-                            <div>
-                                <span class="me-3">Total: <strong id="total_${subject.subject_id}">${subject.total || 0}</strong></span>
-                                <span class="me-3">Grade: <strong id="grade_${subject.subject_id}">${subject.grade || 'F'}</strong></span>
-                                <span>Remark: <strong id="remark_${subject.subject_id}">${escapeHtml(subject.remark || 'Not Entered')}</strong></span>
-                            </div>
-                        </div>
-                        <div class="assessments-container" id="assessments_${subject.subject_id}">
-                            ${renderAssessments(subject)}
-                        </div>
-                        <div class="subject-total">
-                            <button class="btn-save-subject" onclick="saveSubjectScores('${subject.subject_id}', '${subject.subjectclass_id}')">
-                                <i class="ri-save-line me-1"></i> Save Subject
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+    container.innerHTML = currentStudentData.subjects.map(subject => `
+        <div class="subject-score-card" data-subject-id="${subject.subject_id}" data-subjectclass-id="${subject.subjectclass_id}">
+            <div class="subject-header">
+                <div>
+                    <strong><i class="ri-book-open-line me-1"></i> ${escapeHtml(subject.subject_name)}</strong>
+                    <span class="badge bg-light text-dark ms-2">${escapeHtml(subject.subject_code)}</span>
+                </div>
+                <div>
+                    <span class="me-3">Total: <strong id="total_${subject.subject_id}">${subject.total || 0}</strong></span>
+                    <span class="me-3">Grade: <strong id="grade_${subject.subject_id}">${subject.grade || 'F'}</strong></span>
+                    <span>Remark: <strong id="remark_${subject.subject_id}">${escapeHtml(subject.remark || 'Not Entered')}</strong></span>
+                </div>
+            </div>
+            <div class="assessments-container" id="assessments_${subject.subject_id}">
+                ${renderAssessments(subject)}
+            </div>
+            <div class="subject-total">
+                <button class="btn-save-subject" onclick="saveSubjectScores('${subject.subject_id}', '${subject.subjectclass_id}')">
+                    <i class="ri-save-line me-1"></i> Save Subject
+                </button>
+            </div>
+        </div>
+    `).join('');
 
-                // Initialize cache
-                currentStudentData.subjects.forEach(subject => {
-                    subjectScoresCache[subject.subject_id] = {};
-                    subject.assessment_scores.forEach(score => {
-                        subjectScoresCache[subject.subject_id][score.assessment_id] = score.score;
-                    });
+    currentStudentData.subjects.forEach(subject => {
+        subjectScoresCache[subject.subject_id] = {};
+        subject.assessment_scores.forEach(score => {
+            subjectScoresCache[subject.subject_id][score.assessment_id] = score.score;
+        });
+    });
+}
+
+function renderAssessments(subject) {
+    if (!subject.assessment_scores || subject.assessment_scores.length === 0) {
+        return '<div class="text-muted text-center py-3">No assessments configured for this class</div>';
+    }
+
+    return subject.assessment_scores.map(assessment => `
+        <div class="assessment-row">
+            <div class="assessment-label">${escapeHtml(assessment.assessment_name)}</div>
+            <div class="assessment-input">
+                <input type="number"
+                       class="form-control score-input"
+                       data-subject-id="${subject.subject_id}"
+                       data-assessment-id="${assessment.assessment_id}"
+                       data-max-score="${assessment.max_score}"
+                       value="${assessment.score}"
+                       step="0.5"
+                       min="0"
+                       max="${assessment.max_score}"
+                       onchange="updateSubjectTotal('${subject.subject_id}')">
+            </div>
+            <div class="assessment-score">/ ${assessment.max_score}</div>
+        </div>
+    `).join('');
+}
+
+window.updateSubjectTotal = function(subjectId) {
+    const inputs = document.querySelectorAll(`.score-input[data-subject-id="${subjectId}"]`);
+    let total = 0;
+
+    inputs.forEach(input => {
+        let value = parseFloat(input.value) || 0;
+        const maxScore = parseFloat(input.dataset.maxScore) || 100;
+        if (value > maxScore) {
+            value = maxScore;
+            input.value = maxScore;
+        }
+        if (value < 0) {
+            value = 0;
+            input.value = 0;
+        }
+        total += value;
+
+        const assessmentId = input.dataset.assessmentId;
+        if (subjectScoresCache[subjectId]) {
+            subjectScoresCache[subjectId][assessmentId] = value;
+        }
+    });
+
+    total = Math.round(total * 100) / 100;
+    const totalSpan = document.getElementById(`total_${subjectId}`);
+    if (totalSpan) totalSpan.textContent = total;
+
+    updateGradeFromTotal(subjectId, total);
+};
+
+function updateGradeFromTotal(subjectId, total) {
+    let grade = 'F';
+    let remark = 'Fail';
+
+    if (total >= 70) { grade = 'A'; remark = 'Excellent'; }
+    else if (total >= 60) { grade = 'B'; remark = 'Very Good'; }
+    else if (total >= 50) { grade = 'C'; remark = 'Good'; }
+    else if (total >= 40) { grade = 'D'; remark = 'Pass'; }
+
+    const gradeSpan = document.getElementById(`grade_${subjectId}`);
+    const remarkSpan = document.getElementById(`remark_${subjectId}`);
+
+    if (gradeSpan) gradeSpan.textContent = grade;
+    if (remarkSpan) remarkSpan.textContent = remark;
+}
+
+window.saveSubjectScores = async function(subjectId, subjectclassId) {
+    const classId = classFilter.value;
+    const termId = termFilter.value;
+    const sessionId = sessionFilter.value;
+
+    const scores = [];
+    const inputs = document.querySelectorAll(`.score-input[data-subject-id="${subjectId}"]`);
+
+    inputs.forEach(input => {
+        scores.push({
+            assessment_id: parseInt(input.dataset.assessmentId),
+            score: parseFloat(input.value) || 0
+        });
+    });
+
+    const button = document.querySelector(`.btn-save-subject[onclick*="${subjectId}"]`);
+    const originalHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="loading-spinner"></span> Saving...';
+
+    try {
+        const response = await fetch(ROUTES.updateSubject, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                student_id: currentStudentData.student_id,
+                subject_id: subjectId,
+                subjectclass_id: subjectclassId,
+                term_id: termId,
+                session_id: sessionId,
+                class_id: classId,
+                scores: scores
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            Swal.fire('Success', 'Subject scores saved successfully!', 'success');
+            const subjectData = currentStudentData.subjects.find(s => s.subject_id == subjectId);
+            if (subjectData) {
+                subjectData.total = result.data.total;
+                subjectData.grade = result.data.grade;
+                subjectData.remark = result.data.remark;
+                result.data.assessment_scores.forEach(score => {
+                    const existingScore = subjectData.assessment_scores.find(s => s.assessment_id == score.assessment_id);
+                    if (existingScore) existingScore.score = score.score;
                 });
             }
+        } else {
+            Swal.fire('Error', result.message || 'Failed to save scores', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Failed to save scores. Please try again.', 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+    }
+};
 
-            function renderAssessments(subject) {
-                if (!subject.assessment_scores || subject.assessment_scores.length === 0) {
-                    return '<div class="text-muted text-center py-3">No assessments configured for this class</div>';
-                }
+async function saveAllSubjects() {
+    const classId = classFilter.value;
+    const termId = termFilter.value;
+    const sessionId = sessionFilter.value;
 
-                return subject.assessment_scores.map(assessment => `
-                    <div class="assessment-row">
-                        <div class="assessment-label">${escapeHtml(assessment.assessment_name)}</div>
-                        <div class="assessment-input">
-                            <input type="number"
-                                   class="form-control score-input"
-                                   data-subject-id="${subject.subject_id}"
-                                   data-assessment-id="${assessment.assessment_id}"
-                                   data-max-score="${assessment.max_score}"
-                                   value="${assessment.score}"
-                                   step="0.5"
-                                   min="0"
-                                   max="${assessment.max_score}"
-                                   onchange="updateSubjectTotal('${subject.subject_id}')">
-                        </div>
-                        <div class="assessment-score">/ ${assessment.max_score}</div>
-                    </div>
-                `).join('');
-            }
+    const subjects = [];
 
-            window.updateSubjectTotal = function(subjectId) {
-                const inputs = document.querySelectorAll(`.score-input[data-subject-id="${subjectId}"]`);
-                let total = 0;
+    for (const subject of currentStudentData.subjects) {
+        const scores = [];
+        const inputs = document.querySelectorAll(`.score-input[data-subject-id="${subject.subject_id}"]`);
 
-                inputs.forEach(input => {
-                    let value = parseFloat(input.value) || 0;
-                    const maxScore = parseFloat(input.dataset.maxScore) || 100;
-                    if (value > maxScore) {
-                        value = maxScore;
-                        input.value = maxScore;
-                    }
-                    if (value < 0) {
-                        value = 0;
-                        input.value = 0;
-                    }
-                    total += value;
+        inputs.forEach(input => {
+            scores.push({
+                assessment_id: parseInt(input.dataset.assessmentId),
+                score: parseFloat(input.value) || 0
+            });
+        });
 
-                    // Update cache
-                    const assessmentId = input.dataset.assessmentId;
-                    if (subjectScoresCache[subjectId]) {
-                        subjectScoresCache[subjectId][assessmentId] = value;
-                    }
-                });
+        subjects.push({
+            subject_id: subject.subject_id,
+            subjectclass_id: subject.subjectclass_id,
+            scores: scores
+        });
+    }
 
-                total = Math.round(total * 100) / 100;
-                const totalSpan = document.getElementById(`total_${subjectId}`);
-                if (totalSpan) totalSpan.textContent = total;
+    const result = await Swal.fire({
+        title: 'Save All Subjects?',
+        text: 'This will save all scores for all subjects',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        confirmButtonText: 'Yes, save all',
+        cancelButtonText: 'Cancel'
+    });
 
-                // Update grade based on total
-                updateGradeFromTotal(subjectId, total);
-            };
+    if (!result.isConfirmed) return;
 
-            function updateGradeFromTotal(subjectId, total) {
-                let grade = 'F';
-                let remark = 'Fail';
+    const saveBtn = document.getElementById('saveAllSubjectsBtn');
+    const originalHtml = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="loading-spinner"></span> Saving All...';
 
-                if (total >= 70) { grade = 'A'; remark = 'Excellent'; }
-                else if (total >= 60) { grade = 'B'; remark = 'Very Good'; }
-                else if (total >= 50) { grade = 'C'; remark = 'Good'; }
-                else if (total >= 40) { grade = 'D'; remark = 'Pass'; }
+    try {
+        const response = await fetch(ROUTES.bulkUpdate, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                student_id: currentStudentData.student_id,
+                class_id: classId,
+                term_id: termId,
+                session_id: sessionId,
+                subjects: subjects
+            })
+        });
 
-                const gradeSpan = document.getElementById(`grade_${subjectId}`);
-                const remarkSpan = document.getElementById(`remark_${subjectId}`);
+        const responseData = await response.json();
 
-                if (gradeSpan) gradeSpan.textContent = grade;
-                if (remarkSpan) remarkSpan.textContent = remark;
-            }
+        if (responseData.success) {
+            Swal.fire('Success', 'All scores saved successfully!', 'success');
+            $('#studentResultsModal').modal('hide');
+            loadStudents();
+        } else {
+            Swal.fire('Error', responseData.message || 'Failed to save scores', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Failed to save scores. Please try again.', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHtml;
+    }
+}
 
-            window.saveSubjectScores = async function(subjectId, subjectclassId) {
-                const classId = classFilter.value;
-                const termId = termFilter.value;
-                const sessionId = sessionFilter.value;
+function showLoading() {
+    loadStudentsBtn.disabled = true;
+    loadStudentsBtn.innerHTML = '<span class="loading-spinner"></span> Loading...';
+    setTimeout(() => {
+        if (loadStudentsBtn.disabled) {
+            loadStudentsBtn.disabled = false;
+            loadStudentsBtn.innerHTML = '<i class="ri-user-search-line me-1"></i> Load Students';
+        }
+    }, 30000);
+}
 
-                // Prepare scores array
-                const scores = [];
-                const inputs = document.querySelectorAll(`.score-input[data-subject-id="${subjectId}"]`);
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
 
-                inputs.forEach(input => {
-                    scores.push({
-                        assessment_id: parseInt(input.dataset.assessmentId),
-                        score: parseFloat(input.value) || 0
-                    });
-                });
-
-                const button = document.querySelector(`.btn-save-subject[onclick*="${subjectId}"]`);
-                const originalHtml = button.innerHTML;
-                button.disabled = true;
-                button.innerHTML = '<span class="loading-spinner"></span> Saving...';
-
-                try {
-                    const response = await fetch(ROUTES.updateSubject, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            student_id: currentStudentData.student_id,
-                            subject_id: subjectId,
-                            subjectclass_id: subjectclassId,
-                            term_id: termId,
-                            session_id: sessionId,
-                            class_id: classId,
-                            scores: scores
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        Swal.fire('Success', 'Subject scores saved successfully!', 'success');
-                        // Update local data
-                        const subjectData = currentStudentData.subjects.find(s => s.subject_id == subjectId);
-                        if (subjectData) {
-                            subjectData.total = result.data.total;
-                            subjectData.grade = result.data.grade;
-                            subjectData.remark = result.data.remark;
-                            // Update assessment scores in local data
-                            result.data.assessment_scores.forEach(score => {
-                                const existingScore = subjectData.assessment_scores.find(s => s.assessment_id == score.assessment_id);
-                                if (existingScore) existingScore.score = score.score;
-                            });
-                        }
-                    } else {
-                        Swal.fire('Error', result.message || 'Failed to save scores', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Failed to save scores. Please try again.', 'error');
-                } finally {
-                    button.disabled = false;
-                    button.innerHTML = originalHtml;
-                }
-            };
-
-            async function saveAllSubjects() {
-                const classId = classFilter.value;
-                const termId = termFilter.value;
-                const sessionId = sessionFilter.value;
-
-                // Prepare all subjects data
-                const subjects = [];
-
-                for (const subject of currentStudentData.subjects) {
-                    const scores = [];
-                    const inputs = document.querySelectorAll(`.score-input[data-subject-id="${subject.subject_id}"]`);
-
-                    inputs.forEach(input => {
-                        scores.push({
-                            assessment_id: parseInt(input.dataset.assessmentId),
-                            score: parseFloat(input.value) || 0
-                        });
-                    });
-
-                    subjects.push({
-                        subject_id: subject.subject_id,
-                        subjectclass_id: subject.subjectclass_id,
-                        scores: scores
-                    });
-                }
-
-                const result = await Swal.fire({
-                    title: 'Save All Subjects?',
-                    text: 'This will save all scores for all subjects',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#10b981',
-                    confirmButtonText: 'Yes, save all',
-                    cancelButtonText: 'Cancel'
-                });
-
-                if (!result.isConfirmed) return;
-
-                const saveBtn = document.getElementById('saveAllSubjectsBtn');
-                const originalHtml = saveBtn.innerHTML;
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<span class="loading-spinner"></span> Saving All...';
-
-                try {
-                    const response = await fetch(ROUTES.bulkUpdate, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            student_id: currentStudentData.student_id,
-                            class_id: classId,
-                            term_id: termId,
-                            session_id: sessionId,
-                            subjects: subjects
-                        })
-                    });
-
-                    const responseData = await response.json();
-
-                    if (responseData.success) {
-                        Swal.fire('Success', 'All scores saved successfully!', 'success');
-                        $('#studentResultsModal').modal('hide');
-                        loadStudents(); // Reload the students list
-                    } else {
-                        Swal.fire('Error', responseData.message || 'Failed to save scores', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Failed to save scores. Please try again.', 'error');
-                } finally {
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = originalHtml;
-                }
-            }
-
-            function showLoading() {
-                loadStudentsBtn.disabled = true;
-                loadStudentsBtn.innerHTML = '<span class="loading-spinner"></span> Loading...';
-                setTimeout(() => {
-                    if (loadStudentsBtn.disabled) {
-                        loadStudentsBtn.disabled = false;
-                        loadStudentsBtn.innerHTML = '<i class="ri-user-search-line me-1"></i> Load Students';
-                    }
-                }, 30000);
-            }
-
-            function escapeHtml(text) {
-                if (!text) return '';
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-            </script>
-
-            @endsection
+@endsection
