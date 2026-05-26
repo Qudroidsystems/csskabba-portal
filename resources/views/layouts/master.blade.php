@@ -318,14 +318,36 @@
         }
 
         /* =====================================================
-           DROPDOWN MENU ANIMATION
+           DROPDOWN MENU ANIMATION - SLOWER AND SMOOTHER
            ===================================================== */
         .dropdown-menu {
-            animation: dropdownFadeIn 0.2s ease;
+            animation: dropdownFadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: top right;
         }
         @keyframes dropdownFadeIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-15px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* User dropdown specific animation - even smoother */
+        .topbar-user .dropdown-menu {
+            animation: userDropdownSlideIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+        @keyframes userDropdownSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.94);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         /* =====================================================
@@ -1445,11 +1467,11 @@
                     <div class="d-flex align-items-center">
                         {{-- =====================================================
                              FIXED TOPBAR USER DROPDOWN BUTTON
-                             Works on all pages including dashboard
+                             Roles ONLY in dropdown, not beside username
                              ===================================================== --}}
                         <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button"
-                                    class="btn shadow-none p-0 dropdown-toggle"
+                                    class="btn shadow-none p-0"
                                     id="page-header-user-dropdown"
                                     data-bs-toggle="dropdown"
                                     data-bs-auto-close="outside"
@@ -1490,18 +1512,9 @@
                                         }
 
                                         $userRoles     = $userdata->roles->pluck('name');
-                                        $roleBadgeMap  = [
-                                            'admin'       => '#405189',
-                                            'teacher'     => '#0a9396',
-                                            'student'     => '#e76f51',
-                                            'bursar'      => '#2a9d8f',
-                                            'principal'   => '#6a0572',
-                                            'parent'      => '#e9c46a',
-                                            'staff'       => '#457b9d',
-                                        ];
                                     @endphp
 
-                                    {{-- AVATAR — fixed size, no cropping --}}
+                                    {{-- AVATAR ONLY — no roles beside name --}}
                                     <span style="display:inline-block; width:42px; height:42px; flex-shrink:0; position:relative;">
                                         @if($srcPath)
                                             <img
@@ -1529,62 +1542,71 @@
                                         @endif
                                     </span>
 
-                                    {{-- Name + Role Badges (stacked, no shift) --}}
-                                    <span class="d-none d-xl-flex flex-column align-items-start ms-1" style="line-height:1.2; gap:3px;">
+                                    {{-- Name only — no role badges --}}
+                                    <span class="d-none d-xl-flex flex-column align-items-start ms-1" style="line-height:1.2;">
                                         <span class="fw-medium" style="font-size:13px; color:inherit; white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis;">
                                             {{ $userdata->name }}
-                                        </span>
-                                        <span class="d-flex flex-wrap gap-1" style="max-width:160px;">
-                                            @foreach($userRoles->take(3) as $roleName)
-                                                @php
-                                                    $lc    = strtolower($roleName);
-                                                    $color = $roleBadgeMap[$lc] ?? '#6c757d';
-                                                @endphp
-                                                <span style="display:inline-block; font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; padding:1px 6px; border-radius:20px; background:{{ $color }}22; color:{{ $color }}; border:1px solid {{ $color }}44; white-space:nowrap; line-height:1.6;">
-                                                    {{ $roleName }}
-                                                </span>
-                                            @endforeach
-                                            @if($userRoles->count() > 3)
-                                                <span style="font-size:9px; color:#6c757d;">+{{ $userRoles->count()-3 }}</span>
-                                            @endif
                                         </span>
                                     </span>
 
                                 </span>
                             </button>
 
-                            {{-- Dropdown menu with role badges --}}
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Welcome {{ $userdata->name }}!</h6>
-
-                                <div class="px-3 pb-2 d-flex flex-wrap gap-1">
-                                    @foreach($userRoles as $roleName)
-                                        @php
-                                            $lc    = strtolower($roleName);
-                                            $color = $roleBadgeMap[$lc] ?? '#6c757d';
-                                        @endphp
-                                        <span style="display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px; border-radius:20px; background:{{ $color }}18; color:{{ $color }}; border:1px solid {{ $color }}33;">
-                                            {{ $roleName }}
-                                        </span>
-                                    @endforeach
+                            {{-- Dropdown menu with role badges ONLY here --}}
+                            <div class="dropdown-menu dropdown-menu-end" style="min-width: 220px;">
+                                <div class="dropdown-header">
+                                    <h6 class="mb-0">Welcome back!</h6>
+                                    <small class="text-muted">{{ $userdata->name }}</small>
                                 </div>
 
                                 <div class="dropdown-divider"></div>
+
+                                {{-- Roles section in dropdown --}}
+                                <div class="px-3 py-2">
+                                    <div class="small text-muted mb-2 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">Your Roles</div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach($userRoles as $roleName)
+                                            @php
+                                                $roleColors = [
+                                                    'admin' => ['bg' => '#405189', 'light' => '#eef2ff'],
+                                                    'teacher' => ['bg' => '#0a9396', 'light' => '#e0f2fe'],
+                                                    'student' => ['bg' => '#e76f51', 'light' => '#fff0ed'],
+                                                    'bursar' => ['bg' => '#2a9d8f', 'light' => '#e6f7f5'],
+                                                    'principal' => ['bg' => '#6a0572', 'light' => '#f3e8ff'],
+                                                    'parent' => ['bg' => '#e9c46a', 'light' => '#fefce8'],
+                                                    'staff' => ['bg' => '#457b9d', 'light' => '#e8f0fe'],
+                                                ];
+                                                $roleKey = strtolower($roleName);
+                                                $color = $roleColors[$roleKey]['bg'] ?? '#6c757d';
+                                                $bgLight = $roleColors[$roleKey]['light'] ?? '#f8fafc';
+                                            @endphp
+                                            <span style="display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; padding:3px 10px; border-radius:20px; background:{{ $bgLight }}; color:{{ $color }}; border:1px solid {{ $color }}22;">
+                                                {{ $roleName }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="dropdown-divider"></div>
+
                                 @if (!$isStudent)
                                     <a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}">
-                                        <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i>
-                                        <span class="align-middle">Profile</span>
+                                        <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-2"></i>
+                                        <span class="align-middle">My Profile</span>
                                     </a>
                                 @endif
                                 <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}">
-                                    <i class="mdi mdi-cog text-muted fs-lg align-middle me-1"></i>
-                                    <span class="align-middle">Settings</span>
+                                    <i class="mdi mdi-cog text-muted fs-lg align-middle me-2"></i>
+                                    <span class="align-middle">Account Settings</span>
                                 </a>
+
+                                <div class="dropdown-divider"></div>
+
                                 <form method="POST" action="{{ route('logout') }}" class="d-inline" data-no-progress>
                                     @csrf
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
+                                    <a class="dropdown-item text-danger" href="{{ route('logout') }}"
                                        onclick="event.preventDefault(); this.closest('form').submit();">
-                                        <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i>
+                                        <i class="mdi mdi-logout text-muted fs-lg align-middle me-2"></i>
                                         <span class="align-middle" data-key="t-logout">Logout</span>
                                     </a>
                                 </form>
@@ -1719,7 +1741,7 @@
         <div class="offcanvas-body p-0">
             <div data-simplebar class="h-100">
                 <div class="p-4">
-                    <!-- Customizer content - keep as is -->
+                    <!-- Customizer content -->
                 </div>
             </div>
         </div>
@@ -1802,7 +1824,7 @@
     @endif
 
     <!-- ====================================================
-         MASTER ENHANCEMENT SCRIPTS (with keyboard shortcuts)
+         MASTER ENHANCEMENT SCRIPTS
          ==================================================== -->
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -1932,36 +1954,21 @@
         }
 
         // =====================================================
-        // 10. FORCE RE-INITIALIZE USER DROPDOWN (Fix for dashboard)
+        // 10. ENSURE SIDEBAR SCROLLBAR WORKS ON ALL PAGES
         // =====================================================
-        var userDropdownBtn = document.getElementById('page-header-user-dropdown');
-        if (userDropdownBtn) {
-            // Ensure Bootstrap dropdown is properly initialized
-            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+        var scrollbar = document.getElementById('scrollbar');
+        if (scrollbar) {
+            // Ensure SimpleBar is properly initialized
+            if (typeof SimpleBar !== 'undefined') {
                 try {
-                    var existingDropdown = bootstrap.Dropdown.getInstance(userDropdownBtn);
-                    if (existingDropdown) {
-                        existingDropdown.dispose();
-                    }
-                    new bootstrap.Dropdown(userDropdownBtn);
+                    new SimpleBar(scrollbar);
                 } catch(e) {
-                    console.log('Dropdown init error:', e);
+                    console.log('SimpleBar init skipped');
                 }
             }
-
-            // Fallback: if dropdown still doesn't work, add manual click handler
-            userDropdownBtn.addEventListener('click', function(e) {
-                var menu = this.nextElementSibling;
-                if (menu && !menu.classList.contains('show')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    menu.classList.add('show');
-                    this.setAttribute('aria-expanded', 'true');
-                } else if (menu && menu.classList.contains('show')) {
-                    menu.classList.remove('show');
-                    this.setAttribute('aria-expanded', 'false');
-                }
-            });
+            // Ensure scrollbar has proper height
+            scrollbar.style.maxHeight = 'calc(100vh - 70px)';
+            scrollbar.style.overflowY = 'auto';
         }
 
     });
