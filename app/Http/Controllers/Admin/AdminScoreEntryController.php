@@ -2083,7 +2083,7 @@ class AdminScoreEntryController extends Controller
     // =========================================================================
 
 // =========================================================================
-// STUDENT RESULT MANAGER
+// STUDENT RESULT MANAGER - COMPLETE WORKING METHODS
 // =========================================================================
 
 public function studentResultManager()
@@ -2145,48 +2145,51 @@ public function getStudentResults(Request $request)
 
         $results = [];
         foreach ($students as $student) {
-            // Get subjects registered for this student using subjectclassid
-            $subjectRegistrations = SubjectRegistrationStatus::where('studentid', $student->id)
-                ->where('termid', $termId)
-                ->where('sessionid', $sessionId)
-                ->where('Status', 'active')
-                ->with(['subjectclass', 'subjectclass.subject', 'subjectclass.schoolClass'])
+            // Get subjects registered for this student using subjectRegistrationStatus
+            // Join with subjectclass to get the subjectclass_id needed for broadsheets
+            $subjectRegistrations = DB::table('subjectRegistrationStatus')
+                ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
+                ->join('subject', 'subject.id', '=', 'subjectclass.subjectid')
+                ->where('subjectRegistrationStatus.studentid', $student->id)
+                ->where('subjectRegistrationStatus.termid', $termId)
+                ->where('subjectRegistrationStatus.sessionid', $sessionId)
+                ->where('subjectRegistrationStatus.Status', 'active')
+                ->where('subjectclass.schoolclassid', $classId)
+                ->select(
+                    'subject.id as subject_id',
+                    'subject.subject',
+                    'subject.subject_code',
+                    'subjectclass.id as subjectclass_id'
+                )
+                ->distinct()
                 ->get();
 
             $studentSubjects = [];
             $totalScores = 0;
 
-            foreach ($subjectRegistrations as $registration) {
-                $subjectClass = $registration->subjectclass;
-                if (!$subjectClass || !$subjectClass->subject) {
-                    continue;
-                }
-
-                $subject = $subjectClass->subject;
-                $subjectClassId = $subjectClass->id;
-
-                // Get or create broadsheet record
+            foreach ($subjectRegistrations as $subject) {
+                // Get or create broadsheet record (same as in MyScoreSheetController)
                 $broadsheetRecord = BroadsheetRecord::firstOrCreate(
                     [
                         'student_id' => $student->id,
-                        'subject_id' => $subject->id,
+                        'subject_id' => $subject->subject_id,
                         'schoolclass_id' => $classId,
                         'session_id' => $sessionId
                     ],
                     [
                         'student_id' => $student->id,
-                        'subject_id' => $subject->id,
+                        'subject_id' => $subject->subject_id,
                         'schoolclass_id' => $classId,
                         'session_id' => $sessionId
                     ]
                 );
 
-                // Get or create broadsheet
+                // Get or create broadsheet (same as in MyScoreSheetController)
                 $broadsheet = Broadsheets::firstOrCreate(
                     [
                         'broadsheet_record_id' => $broadsheetRecord->id,
                         'term_id' => $termId,
-                        'subjectclass_id' => $subjectClassId,
+                        'subjectclass_id' => $subject->subjectclass_id,
                     ],
                     [
                         'staff_id' => auth()->id(),
@@ -2196,7 +2199,7 @@ public function getStudentResults(Request $request)
                     ]
                 );
 
-                // Get assessment scores
+                // Get assessment scores (same calculation as in MyScoreSheetController)
                 $assessmentScores = [];
                 $totalRaw = 0;
 
@@ -2216,9 +2219,9 @@ public function getStudentResults(Request $request)
                     $totalRaw += $scoreValue;
                 }
 
-                // Calculate total, grade, remark
+                // Calculate total, BF, CUM (same logic as in MyScoreSheetController)
                 $totalRaw = round($totalRaw, 2);
-                $bf = $this->getPreviousTermCum($student->id, $subject->id, $termId, $sessionId);
+                $bf = $this->getPreviousTermCum($student->id, $subject->subject_id, $termId, $sessionId);
                 $cum = ($termId == 1 || $bf == 0) ? $totalRaw : round(($totalRaw + $bf) / 2, 2);
                 $grade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                     ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
@@ -2242,10 +2245,10 @@ public function getStudentResults(Request $request)
                 $totalScores += $totalRaw;
 
                 $studentSubjects[] = [
-                    'subject_id' => $subject->id,
+                    'subject_id' => $subject->subject_id,
                     'subject_name' => $subject->subject,
                     'subject_code' => $subject->subject_code,
-                    'subjectclass_id' => $subjectClassId,
+                    'subjectclass_id' => $subject->subjectclass_id,
                     'broadsheet_id' => $broadsheet->id,
                     'total' => $totalRaw,
                     'bf' => $bf,
@@ -2294,7 +2297,7 @@ public function getStudentResults(Request $request)
         Log::error('Error trace: ' . $e->getTraceAsString());
         return response()->json([
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => 'Database error: ' . $e->getMessage()
         ], 500);
     }
 }
@@ -2324,7 +2327,7 @@ public function updateStudentSubjectScore(Request $request)
 
         DB::beginTransaction();
 
-        // Get or create broadsheet record
+        // Get or create broadsheet record (same as in MyScoreSheetController)
         $broadsheetRecord = BroadsheetRecord::firstOrCreate(
             [
                 'student_id' => $studentId,
@@ -2340,7 +2343,7 @@ public function updateStudentSubjectScore(Request $request)
             ]
         );
 
-        // Get or create broadsheet
+        // Get or create broadsheet (same as in MyScoreSheetController)
         $broadsheet = Broadsheets::firstOrCreate(
             [
                 'broadsheet_record_id' => $broadsheetRecord->id,
@@ -2355,7 +2358,7 @@ public function updateStudentSubjectScore(Request $request)
             ]
         );
 
-        // Update assessment scores
+        // Update assessment scores (same logic as in MyScoreSheetController)
         $totalRaw = 0;
         foreach ($scores as $scoreData) {
             $assessmentId = $scoreData['assessment_id'];
@@ -2382,19 +2385,19 @@ public function updateStudentSubjectScore(Request $request)
         // Get schoolclass for grade calculation
         $schoolclass = Schoolclass::with('classcategories')->find($classId);
 
-        // Calculate BF (previous term cum)
+        // Calculate BF (previous term cum) - same as in MyScoreSheetController
         $bf = $this->getPreviousTermCum($studentId, $subjectId, $termId, $sessionId);
 
-        // Calculate CUM
+        // Calculate CUM - same as in MyScoreSheetController
         $cum = ($termId == 1 || $bf == 0) ? $totalRaw : round(($totalRaw + $bf) / 2, 2);
 
-        // Calculate grade and remark
+        // Calculate grade and remark - same as in MyScoreSheetController
         $grade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
             ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
             : $this->getDefaultGrade($totalRaw);
         $remark = $this->getRemark($grade);
 
-        // Update broadsheet
+        // Update broadsheet - same as in MyScoreSheetController
         $broadsheet->total = $totalRaw;
         $broadsheet->bf = $bf;
         $broadsheet->cum = $cum;
@@ -2406,7 +2409,7 @@ public function updateStudentSubjectScore(Request $request)
 
         DB::commit();
 
-        // Recalculate subject positions for this class
+        // Recalculate subject positions for this class (same as in MyScoreSheetController)
         $this->updateSubjectPositions($subjectclassId, $broadsheet->staff_id, $termId, $sessionId);
 
         // Get updated data for response
