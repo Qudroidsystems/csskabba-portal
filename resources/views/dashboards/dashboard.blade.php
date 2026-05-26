@@ -390,7 +390,6 @@
                         </span>
                         <span>vs last month</span>
                     </div>
-                    {{-- Avatar strip of recent students --}}
                     <div class="avatar-strip mt-2">
                         @foreach(\App\Models\Student::latest()->take(5)->get() as $rs)
                         @php $pic = $rs->picture?->picture; @endphp
@@ -756,7 +755,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="text-center text-muted py-3" style="font-size:13px;">No academic data available yet</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-3" style="font-size:13px;">No academic data available yet</td></td>
                     @endforelse
                     </tbody>
                 </table>
@@ -1170,7 +1169,7 @@
                 <div class="info-kpi"><div class="info-kpi-label">Total Subjects</div><div class="info-kpi-value">{{ $total_subjects }}</div></div>
             </div>
             <table class="dash-table">
-                <thead><tr><th>Subject</th><th>Teachers Assigned</th><th>Classes</th></tr></thead>
+                <thead></tr><th>Subject</th><th>Teachers Assigned</th><th>Classes</th></tr></thead>
                 <tbody>
                 @foreach(\App\Models\Subject::withCount('subjectTeachers')->take(30)->get() as $sub)
                 <tr>
@@ -1711,6 +1710,30 @@ function switchTab(groupId, panelId) {
   });
   panels.forEach(p => p.classList.toggle('active', p.id === panelId));
 }
+
+/* ======================================
+   FIX FOR USER AVATAR DROPDOWN ON DASHBOARD
+   ====================================== */
+(function() {
+    function reinitUserDropdown() {
+        var dropdownBtn = document.getElementById('page-header-user-dropdown');
+        if (dropdownBtn && typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+            try {
+                var existingDropdown = bootstrap.Dropdown.getInstance(dropdownBtn);
+                if (existingDropdown) {
+                    existingDropdown.dispose();
+                }
+                new bootstrap.Dropdown(dropdownBtn);
+                console.log('Dropdown reinitialized on dashboard');
+            } catch(e) {
+                console.log('Dropdown reinit error:', e);
+            }
+        }
+    }
+
+    // Run after all other scripts
+    setTimeout(reinitUserDropdown, 300);
+})();
 </script>
 
 @endsection
