@@ -1315,24 +1315,41 @@ document.addEventListener('DOMContentLoaded',function(){
     document.head.appendChild(s);
   }
 
-  // ── IMAGE ENLARGER — identical to scoresheet ──
-  // The scoresheet uses: data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="…"
-  // Bootstrap fires show.bs.modal with e.relatedTarget = the triggering element,
-  // and we read relatedTarget.dataset.image (NOT data-bs-image).
+  // ── IMAGE ENLARGER ──
+  // Exact pattern from subjectoperation blade:
+  //   <img data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="URL">
+  // Bootstrap 5 sets e.relatedTarget = the triggering <img>.
+  // We read relatedTarget.dataset.image (plain data-image, NOT data-bs-image).
+  //
+  // IMPORTANT: when triggered via JS (openEnlarger), relatedTarget is null.
+  // openEnlarger() sets enlargedImage.src BEFORE calling .show(), so we must
+  // NOT overwrite it here when relatedTarget is absent.
   document.getElementById('imageViewModal').addEventListener('show.bs.modal',function(e){
-    const src=(e.relatedTarget?.dataset?.image)
-           || (e.relatedTarget?.getAttribute('data-image'))
-           || DEFAULT_AVT;
-    document.getElementById('enlargedImage').src=src;
+    if(e.relatedTarget){
+      const src=e.relatedTarget.dataset.image
+             || e.relatedTarget.getAttribute('data-image')
+             || DEFAULT_AVT;
+      document.getElementById('enlargedImage').src=src;
+    }
+    // If relatedTarget is null → triggered by openEnlarger() which already set src. Do nothing.
   });
 
-  // ── Modal avatar (inside score-entry modal) — use delegated click ──
-  // We can't use data-bs-toggle inside another Bootstrap modal safely,
-  // so we wire a delegated click that calls openEnlarger() directly.
+  // ── Modal avatar (inside score-entry modal) — delegated click ──
+  // data-bs-toggle from inside another Bootstrap 5 modal is unreliable,
+  // so .srm-enlargeable images call openEnlarger() directly via delegation.
   document.getElementById('studentResultsModal').addEventListener('click',function(e){
     const img=e.target.closest('.srm-enlargeable');
-    if(img){
-      openEnlarger(img.dataset.image||DEFAULT_AVT);
+    if(img) openEnlarger(img.dataset.image||DEFAULT_AVT);
+  });
+
+  // ── Safety net for student-list table photos ──
+  // The img tags already have data-bs-toggle so Bootstrap handles opening,
+  // but we also set src directly so it's never blank even if relatedTarget
+  // is lost (e.g. due to DOM re-render timing).
+  document.getElementById('studentsTableBody')?.addEventListener('click',function(e){
+    const img=e.target.closest('img.student-avatar-img');
+    if(img&&img.dataset.image){
+      document.getElementById('enlargedImage').src=img.dataset.image||DEFAULT_AVT;
     }
   });
 
