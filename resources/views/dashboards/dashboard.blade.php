@@ -66,6 +66,17 @@
         }
     }
 
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
     /* Animated cards */
     .dashboard-card {
         animation: cardFadeInUp 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
@@ -87,31 +98,6 @@
     .dashboard-card:nth-child(4) { animation-delay: 0.15s; }
     .dashboard-card:nth-child(5) { animation-delay: 0.20s; }
     .dashboard-card:nth-child(6) { animation-delay: 0.25s; }
-
-    /* Card gradients */
-    .card-gradient-1 {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .card-gradient-2 {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .card-gradient-3 {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    .card-gradient-4 {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    }
-
-    .card-gradient-5 {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    }
-
-    .card-gradient-6 {
-        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
-    }
 
     /* Stat numbers */
     .stat-number {
@@ -142,15 +128,16 @@
 
     /* Progress bar animation */
     .progress-bar-animated {
-        animation: shimmer 2s infinite linear;
         background: linear-gradient(90deg, #4f8ef7, #a855f7, #4f8ef7);
         background-size: 200% 100%;
+        animation: shimmer 2s infinite linear;
     }
 
     /* Chart containers */
     .chart-container {
         animation: cardScaleIn 0.5s ease forwards;
         transition: all 0.3s ease;
+        border-radius: 20px;
     }
 
     .chart-container:hover {
@@ -171,18 +158,7 @@
     .activity-item:nth-child(4) { animation-delay: 0.15s; }
     .activity-item:nth-child(5) { animation-delay: 0.20s; }
 
-    @keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    /* Pulse animation for live indicators */
+    /* Live pulse indicator */
     .live-pulse {
         display: inline-block;
         width: 10px;
@@ -193,27 +169,18 @@
         margin-right: 8px;
     }
 
-    /* Custom scrollbar for charts */
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+    /* Hover scale effect */
+    .hover-scale {
+        transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        cursor: pointer;
     }
 
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
+    .hover-scale:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
     }
 
-    ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-
-    /* Responsive adjustments */
+    /* Responsive */
     @media (max-width: 768px) {
         .stat-number {
             font-size: 1.75rem;
@@ -224,12 +191,11 @@
         }
     }
 
-    /* Loading skeleton animation */
-    .skeleton-loading {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-    }
+    .bg-purple { background-color: #8b5cf6; }
+    .text-purple { color: #8b5cf6; }
+    .bg-cyan { background-color: #06b6d4; }
+    .text-cyan { color: #06b6d4; }
+    .bg-opacity-10 { opacity: 0.1; }
 </style>
 
 <div class="main-content">
@@ -269,8 +235,9 @@
                                             <span class="counter-value" data-target="{{ $total_population }}">0</span>
                                         </h2>
                                         <p class="mb-0 mt-2">
+                                            @php $popPercent = is_numeric($population_percentage) ? $population_percentage : 0; @endphp
                                             <span class="badge bg-success bg-opacity-10 text-success">
-                                                <i class="bi bi-arrow-up me-1"></i>{{ $population_percentage }}%
+                                                <i class="bi bi-arrow-up me-1"></i>{{ $popPercent }}%
                                             </span>
                                             <span class="text-muted ms-1">vs last month</span>
                                         </p>
@@ -281,7 +248,8 @@
                                 </div>
                                 <div class="mt-3">
                                     <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar progress-bar-animated" style="width: {{ min(100, $population_percentage * 5) }}%; background: linear-gradient(90deg, #4f8ef7, #a855f7);"></div>
+                                        @php $progressWidth = min(100, $popPercent * 5); @endphp
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ $progressWidth }}%; background: linear-gradient(90deg, #4f8ef7, #a855f7);"></div>
                                     </div>
                                 </div>
                             </div>
@@ -298,8 +266,9 @@
                                             <span class="counter-value" data-target="{{ $staff_count }}">0</span>
                                         </h2>
                                         <p class="mb-0 mt-2">
+                                            @php $staffPercent = is_numeric($staff_percentage) ? $staff_percentage : 0; @endphp
                                             <span class="badge bg-success bg-opacity-10 text-success">
-                                                <i class="bi bi-arrow-up me-1"></i>{{ $staff_percentage }}%
+                                                <i class="bi bi-arrow-up me-1"></i>{{ $staffPercent }}%
                                             </span>
                                             <span class="text-muted ms-1">vs last month</span>
                                         </p>
@@ -310,7 +279,8 @@
                                 </div>
                                 <div class="mt-3">
                                     <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar progress-bar-animated" style="width: {{ min(100, $staff_percentage * 5) }}%; background: linear-gradient(90deg, #f59e0b, #ef4444);"></div>
+                                        @php $staffProgress = min(100, $staffPercent * 5); @endphp
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ $staffProgress }}%; background: linear-gradient(90deg, #f59e0b, #ef4444);"></div>
                                     </div>
                                 </div>
                             </div>
@@ -327,8 +297,9 @@
                                             <span class="counter-value" data-target="{{ $gender_counts['Male'] }}">0</span>
                                         </h2>
                                         <p class="mb-0 mt-2">
+                                            @php $malePercent = is_numeric($male_percentage) ? $male_percentage : 0; @endphp
                                             <span class="badge bg-success bg-opacity-10 text-success">
-                                                <i class="bi bi-arrow-up me-1"></i>{{ $male_percentage }}%
+                                                <i class="bi bi-arrow-up me-1"></i>{{ $malePercent }}%
                                             </span>
                                             <span class="text-muted ms-1">vs last month</span>
                                         </p>
@@ -339,7 +310,8 @@
                                 </div>
                                 <div class="mt-3">
                                     <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar progress-bar-animated" style="width: {{ ($gender_counts['Male'] / max(1, $total_population)) * 100 }}%; background: linear-gradient(90deg, #0ea5e9, #06b6d4);"></div>
+                                        @php $maleWidth = ($gender_counts['Male'] / max(1, $total_population)) * 100; @endphp
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ $maleWidth }}%; background: linear-gradient(90deg, #0ea5e9, #06b6d4);"></div>
                                     </div>
                                 </div>
                             </div>
@@ -356,8 +328,9 @@
                                             <span class="counter-value" data-target="{{ $gender_counts['Female'] }}">0</span>
                                         </h2>
                                         <p class="mb-0 mt-2">
+                                            @php $femalePercent = is_numeric($female_percentage) ? abs($female_percentage) : 0; @endphp
                                             <span class="badge bg-danger bg-opacity-10 text-danger">
-                                                <i class="bi bi-arrow-down me-1"></i>{{ abs($female_percentage) }}%
+                                                <i class="bi bi-arrow-down me-1"></i>{{ $femalePercent }}%
                                             </span>
                                             <span class="text-muted ms-1">vs last month</span>
                                         </p>
@@ -368,7 +341,8 @@
                                 </div>
                                 <div class="mt-3">
                                     <div class="progress" style="height: 6px;">
-                                        <div class="progress-bar progress-bar-animated" style="width: {{ ($gender_counts['Female'] / max(1, $total_population)) * 100 }}%; background: linear-gradient(90deg, #ef4444, #f97316);"></div>
+                                        @php $femaleWidth = ($gender_counts['Female'] / max(1, $total_population)) * 100; @endphp
+                                        <div class="progress-bar progress-bar-animated" style="width: {{ $femaleWidth }}%; background: linear-gradient(90deg, #ef4444, #f97316);"></div>
                                     </div>
                                 </div>
                             </div>
@@ -421,9 +395,9 @@
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
-                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Classes</p>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Total Classes</p>
                                         <h2 class="stat-number mb-0">
-                                            <span class="counter-value" data-target="0">0</span>
+                                            <span class="counter-value" data-target="{{ $total_classes ?? 0 }}">0</span>
                                         </h2>
                                         <p class="text-muted mb-0 mt-2"><i class="bi bi-grid-3x3 me-1"></i> Active classes</p>
                                     </div>
@@ -440,9 +414,9 @@
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
-                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Subjects</p>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-xs">Total Subjects</p>
                                         <h2 class="stat-number mb-0">
-                                            <span class="counter-value" data-target="0">0</span>
+                                            <span class="counter-value" data-target="{{ $total_subjects ?? 0 }}">0</span>
                                         </h2>
                                         <p class="text-muted mb-0 mt-2"><i class="bi bi-book me-1"></i> Active subjects</p>
                                     </div>
@@ -455,13 +429,124 @@
                     </div>
                 </div>
 
+                <!-- Academic Performance Row -->
+                <div class="row mt-4">
+                    <div class="col-xxl-6">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">Academic Performance by Class</h5>
+                                <p class="text-muted small mb-0">Average scores across classes</p>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="academicPerformanceChart" style="height: 300px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xxl-6">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">Grade Distribution</h5>
+                                <p class="text-muted small mb-0">Current term performance breakdown</p>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="gradeDistributionChart" style="height: 300px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Students and Subjects Row -->
+                <div class="row mt-4">
+                    <div class="col-xxl-6">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">Top Performing Students</h5>
+                                <p class="text-muted small mb-0">Highest academic achievers</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Student Name</th>
+                                                <th>Admission No</th>
+                                                <th>Average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($top_students ?? [] as $index => $student)
+                                            <tr>
+                                                <td>{{ $index + 1 }}</td>
+                                                <td class="fw-medium">{{ $student['name'] }}</td>
+                                                <td>{{ $student['admission_no'] }}</td>
+                                                <td><span class="badge bg-primary">{{ $student['average'] }}%</span></td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">No data available</td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xxl-6">
+                        <div class="card chart-container">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">Subject Performance</h5>
+                                <p class="text-muted small mb-0">Best performing subjects</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Subject</th>
+                                                <th>Average</th>
+                                                <th>Pass Rate</th>
+                                                <th>Highest</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($subject_performance ?? [] as $subject)
+                                            <tr>
+                                                <td class="fw-medium">{{ $subject['subject_name'] }}</td>
+                                                <td><span class="badge bg-info">{{ $subject['avg_score'] }}%</span></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="progress flex-grow-1" style="height: 5px;">
+                                                            <div class="progress-bar bg-success" style="width: {{ $subject['pass_rate'] }}%"></div>
+                                                        </div>
+                                                        <span class="small">{{ $subject['pass_rate'] }}%</span>
+                                                    </div>
+                                                </td>
+                                                <td>{{ $subject['max_score'] }}%</td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">No data available</td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Charts Row -->
                 <div class="row mt-4">
                     <div class="col-xxl-6">
                         <div class="card chart-container">
                             <div class="card-header bg-transparent">
                                 <h5 class="card-title mb-0">Population Distribution</h5>
-                                <p class="text-muted small mb-0">Gender and status breakdown</p>
+                                <p class="text-muted small mb-0">Gender breakdown</p>
                             </div>
                             <div class="card-body">
                                 <canvas id="populationChart" style="height: 300px;"></canvas>
@@ -472,17 +557,17 @@
                     <div class="col-xxl-6">
                         <div class="card chart-container">
                             <div class="card-header bg-transparent">
-                                <h5 class="card-title mb-0">Quick Stats Overview</h5>
-                                <p class="text-muted small mb-0">Key metrics at a glance</p>
+                                <h5 class="card-title mb-0">Yearly Student Trends</h5>
+                                <p class="text-muted small mb-0">Last 12 months enrollment</p>
                             </div>
                             <div class="card-body">
-                                <canvas id="statsChart" style="height: 300px;"></canvas>
+                                <canvas id="trendsChart" style="height: 300px;"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Activity and Recent Data Row -->
+                <!-- Activity Timeline -->
                 <div class="row mt-4">
                     <div class="col-xxl-7">
                         <div class="card chart-container">
@@ -491,67 +576,25 @@
                                     <h5 class="card-title mb-0">Recent Activity Timeline</h5>
                                     <p class="text-muted small mb-0">Latest updates from your school</p>
                                 </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="#">Last 7 days</a></li>
-                                        <li><a class="dropdown-item" href="#">Last 30 days</a></li>
-                                        <li><a class="dropdown-item" href="#">This year</a></li>
-                                    </ul>
-                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="acitivity-timeline">
+                                    @forelse($recent_activities ?? [] as $activity)
                                     <div class="activity-item d-flex align-items-start mb-4 pb-2">
                                         <div class="flex-shrink-0">
-                                            <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
-                                                <i class="ph-user-plus fs-xl text-primary"></i>
+                                            <div class="avatar-sm bg-{{ $activity['color'] }} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                                                <i class="{{ $activity['icon'] }} fs-xl text-{{ $activity['color'] }}"></i>
                                             </div>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1">New Student Enrollment</h6>
-                                            <p class="text-muted mb-1">5 new students joined the school today</p>
-                                            <small class="text-muted"><i class="bi bi-clock me-1"></i> Just now</small>
+                                            <h6 class="mb-1">{{ $activity['title'] }}</h6>
+                                            <p class="text-muted mb-1">{{ $activity['description'] }}</p>
+                                            <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ $activity['time'] }}</small>
                                         </div>
                                     </div>
-                                    <div class="activity-item d-flex align-items-start mb-4 pb-2">
-                                        <div class="flex-shrink-0">
-                                            <div class="avatar-sm bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
-                                                <i class="ph-chalkboard-teacher fs-xl text-success"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1">Staff Meeting Scheduled</h6>
-                                            <p class="text-muted mb-1">Monthly staff meeting set for Friday 10:00 AM</p>
-                                            <small class="text-muted"><i class="bi bi-calendar me-1"></i> Tomorrow</small>
-                                        </div>
-                                    </div>
-                                    <div class="activity-item d-flex align-items-start mb-4 pb-2">
-                                        <div class="flex-shrink-0">
-                                            <div class="avatar-sm bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
-                                                <i class="ph-file-text fs-xl text-warning"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1">Exam Results Published</h6>
-                                            <p class="text-muted mb-1">Terminal examination results are now available</p>
-                                            <small class="text-muted"><i class="bi bi-clock me-1"></i> 2 hours ago</small>
-                                        </div>
-                                    </div>
-                                    <div class="activity-item d-flex align-items-start">
-                                        <div class="flex-shrink-0">
-                                            <div class="avatar-sm bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
-                                                <i class="ph-currency-circle-dollar fs-xl text-info"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-1">Payment Received</h6>
-                                            <p class="text-muted mb-1">School fee payments processed for 25 students</p>
-                                            <small class="text-muted"><i class="bi bi-clock me-1"></i> Yesterday</small>
-                                        </div>
-                                    </div>
+                                    @empty
+                                    <div class="text-center text-muted py-4">No recent activities</div>
+                                    @endforelse
                                 </div>
                             </div>
                         </div>
@@ -567,7 +610,7 @@
                                 <div class="row g-3">
                                     <div class="col-6">
                                         <a href="{{ route('student.index') }}" class="text-decoration-none">
-                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                            <div class="p-3 text-center border rounded-3 hover-scale">
                                                 <i class="ph-users-four fs-2xl text-primary"></i>
                                                 <h6 class="mt-2 mb-0">Manage Students</h6>
                                                 <small class="text-muted">View all students</small>
@@ -576,7 +619,7 @@
                                     </div>
                                     <div class="col-6">
                                         <a href="{{ route('staff.payments.dashboard') }}" class="text-decoration-none">
-                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                            <div class="p-3 text-center border rounded-3 hover-scale">
                                                 <i class="ph-wallet fs-2xl text-success"></i>
                                                 <h6 class="mt-2 mb-0">Payroll</h6>
                                                 <small class="text-muted">Staff payments</small>
@@ -585,7 +628,7 @@
                                     </div>
                                     <div class="col-6">
                                         <a href="{{ route('exams.index') }}" class="text-decoration-none">
-                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                            <div class="p-3 text-center border rounded-3 hover-scale">
                                                 <i class="ph-clipboard-text fs-2xl text-warning"></i>
                                                 <h6 class="mt-2 mb-0">Examinations</h6>
                                                 <small class="text-muted">Manage exams</small>
@@ -594,7 +637,7 @@
                                     </div>
                                     <div class="col-6">
                                         <a href="{{ route('attendance.my-classes') }}" class="text-decoration-none">
-                                            <div class="p-3 text-center border rounded-3 hover-scale transition-all">
+                                            <div class="p-3 text-center border rounded-3 hover-scale">
                                                 <i class="ph-calendar-check fs-2xl text-info"></i>
                                                 <h6 class="mt-2 mb-0">Attendance</h6>
                                                 <small class="text-muted">Mark attendance</small>
@@ -626,7 +669,7 @@
             const timer = setInterval(() => {
                 current += increment;
                 if (current >= target) {
-                    element.textContent = target.toLocaleString();
+                    element.textContent = Math.round(target).toLocaleString();
                     clearInterval(timer);
                 } else {
                     element.textContent = Math.floor(current).toLocaleString();
@@ -637,7 +680,7 @@
         // Initialize counter animations
         const counters = document.querySelectorAll('.counter-value');
         counters.forEach(counter => {
-            const target = parseInt(counter.getAttribute('data-target'));
+            const target = parseInt(counter.getAttribute('data-target')) || 0;
             if (target > 0) {
                 animateCounter(counter, target);
             } else {
@@ -653,17 +696,9 @@
                 data: {
                     labels: ['Male Students', 'Female Students', 'Staff'],
                     datasets: [{
-                        data: [{{ $gender_counts['Male'] }}, {{ $gender_counts['Female'] }}, {{ $staff_count }}],
-                        backgroundColor: [
-                            'rgba(14, 165, 233, 0.8)',
-                            'rgba(239, 68, 68, 0.8)',
-                            'rgba(245, 158, 11, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(14, 165, 233, 1)',
-                            'rgba(239, 68, 68, 1)',
-                            'rgba(245, 158, 11, 1)'
-                        ],
+                        data: [{{ $gender_counts['Male'] ?? 0 }}, {{ $gender_counts['Female'] ?? 0 }}, {{ $staff_count ?? 0 }}],
+                        backgroundColor: ['rgba(14, 165, 233, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)'],
+                        borderColor: ['rgba(14, 165, 233, 1)', 'rgba(239, 68, 68, 1)', 'rgba(245, 158, 11, 1)'],
                         borderWidth: 2,
                         hoverOffset: 10
                     }]
@@ -672,168 +707,108 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: { size: 12 },
-                                usePointStyle: true,
-                                padding: 15
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `${label}: ${value.toLocaleString()} (${percentage}%)`;
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { font: { size: 12 }, usePointStyle: true, padding: 15 } },
+                        tooltip: { callbacks: { label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                        } } }
                     },
                     cutout: '65%',
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true,
-                        duration: 1500
-                    }
+                    animation: { animateScale: true, animateRotate: true, duration: 1500 }
                 }
             });
         }
 
-        // Stats Overview Chart (Bar)
-        const ctx2 = document.getElementById('statsChart')?.getContext('2d');
+        // Academic Performance Chart (Bar)
+        const ctx2 = document.getElementById('academicPerformanceChart')?.getContext('2d');
         if (ctx2) {
+            const classLabels = @json(array_column($academic_performance ?? [], 'class_name'));
+            const classScores = @json(array_column($academic_performance ?? [], 'avg_score'));
+
             new Chart(ctx2, {
                 type: 'bar',
                 data: {
-                    labels: ['Male', 'Female', 'Staff', 'Old Students', 'New Students'],
+                    labels: classLabels,
                     datasets: [{
-                        label: 'Count',
-                        data: [
-                            {{ $gender_counts['Male'] }},
-                            {{ $gender_counts['Female'] }},
-                            {{ $staff_count }},
-                            {{ $status_counts['Old Student'] ?? 0 }},
-                            {{ $status_counts['New Student'] ?? 0 }}
-                        ],
-                        backgroundColor: [
-                            'rgba(14, 165, 233, 0.7)',
-                            'rgba(239, 68, 68, 0.7)',
-                            'rgba(245, 158, 11, 0.7)',
-                            'rgba(16, 185, 129, 0.7)',
-                            'rgba(139, 92, 246, 0.7)'
-                        ],
+                        label: 'Average Score (%)',
+                        data: classScores,
+                        backgroundColor: 'rgba(79, 142, 247, 0.7)',
                         borderRadius: 8,
-                        barPercentage: 0.65,
-                        categoryPercentage: 0.8
+                        barPercentage: 0.65
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `Count: ${context.raw.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                borderDash: [5, 5],
-                                drawBorder: true
-                            },
-                            ticks: {
-                                stepSize: Math.ceil(Math.max(
-                                    {{ $gender_counts['Male'] }},
-                                    {{ $gender_counts['Female'] }},
-                                    {{ $staff_count }}
-                                ) / 5)
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    animation: {
-                        duration: 1500,
-                        easing: 'easeInOutQuart'
-                    }
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { return `Average: ${context.raw}%`; } } } },
+                    scales: { y: { beginAtZero: true, max: 100, grid: { borderDash: [5, 5] }, title: { display: true, text: 'Score (%)' } } },
+                    animation: { duration: 1500, easing: 'easeInOutQuart' }
                 }
             });
         }
 
-        // Add hover scale effect to quick action cards
-        const actionCards = document.querySelectorAll('.hover-scale');
-        actionCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px)';
-                this.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)';
-                this.style.transition = 'all 0.3s ease';
+        // Grade Distribution Chart
+        const ctx3 = document.getElementById('gradeDistributionChart')?.getContext('2d');
+        if (ctx3) {
+            const gradeLabels = @json(array_keys($grade_distribution ?? []));
+            const gradeCounts = @json(array_values($grade_distribution ?? []));
+
+            new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: gradeLabels,
+                    datasets: [{
+                        label: 'Number of Students',
+                        data: gradeCounts,
+                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] }, title: { display: true, text: 'Student Count' } } },
+                    animation: { duration: 1500 }
+                }
             });
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = 'none';
+        }
+
+        // Yearly Trends Chart (Line)
+        const ctx4 = document.getElementById('trendsChart')?.getContext('2d');
+        if (ctx4) {
+            const trendMonths = @json(array_column($yearly_trends ?? [], 'month'));
+            const trendStudents = @json(array_column($yearly_trends ?? [], 'students'));
+
+            new Chart(ctx4, {
+                type: 'line',
+                data: {
+                    labels: trendMonths,
+                    datasets: [{
+                        label: 'New Students',
+                        data: trendStudents,
+                        borderColor: '#4f8ef7',
+                        backgroundColor: 'rgba(79, 142, 247, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#4f8ef7',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { tooltip: { callbacks: { label: function(context) { return `Students: ${context.raw}`; } } } },
+                    scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] }, title: { display: true, text: 'Number of Students' } } },
+                    animation: { duration: 1500 }
+                }
             });
-        });
+        }
     });
 </script>
-
-<style>
-    .hover-scale {
-        transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-        cursor: pointer;
-    }
-
-    .transition-all {
-        transition: all 0.3s ease;
-    }
-
-    .bg-purple {
-        background-color: #8b5cf6;
-    }
-
-    .text-purple {
-        color: #8b5cf6;
-    }
-
-    .bg-cyan {
-        background-color: #06b6d4;
-    }
-
-    .text-cyan {
-        color: #06b6d4;
-    }
-
-    .bg-opacity-10 {
-        opacity: 0.1;
-    }
-
-    /* Custom animation delays */
-    .activity-item {
-        animation: slideInRight 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
-    }
-
-    @keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-</style>
 @endsection
