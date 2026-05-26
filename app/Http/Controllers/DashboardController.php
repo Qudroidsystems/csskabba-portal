@@ -8,15 +8,17 @@ use App\Models\Schoolclass;
 use App\Models\Subject;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
-use App\Models\Staff;
-use App\Models\Payment;
+use App\Models\Studentclass;
 use App\Models\Exam;
 use App\Models\AttendanceSummary;
 use App\Models\SchoolBill;
 use App\Models\SchoolPayment;
+use App\Models\Broadsheets;
+use App\Models\Subjectclass;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -94,14 +96,16 @@ class DashboardController extends Controller
             ? number_format((($gender_counts['Female'] - $previous_female) / $previous_female) * 100, 2)
             : ($gender_counts['Female'] > 0 ? 100.00 : 0.00);
 
-        // Students by class
-        $students_by_class = Student::with('schoolclass')
-            ->select('schoolclassid', \DB::raw('count(*) as total'))
+        // FIXED: Students by class (using studentclass pivot table)
+        $students_by_class = Studentclass::with('schoolclass')
+            ->where('sessionid', $currentSession?->id ?? 0)
+            ->select('schoolclassid', DB::raw('count(*) as total'))
             ->groupBy('schoolclassid')
             ->get()
             ->map(function($item) {
                 return [
-                    'class_name' => $item->schoolclass?->class_name ?? 'N/A',
+                    'class_name' => $item->schoolclass?->schoolclass ?? 'N/A',
+                    'arm' => $item->schoolclass?->armRelation?->arm ?? '',
                     'total' => $item->total
                 ];
             })
@@ -110,11 +114,98 @@ class DashboardController extends Controller
             ->values()
             ->toArray();
 
-        // Students by term/session
-        $students_in_current_term = Student::whereHas('studentTerms', function($q) use ($currentTerm, $currentSession) {
-            if ($currentTerm) $q->where('term_id', $currentTerm->id);
-            if ($currentSession) $q->where('session_id', $currentSession->id);
-        })->count();
+        // Students by term/session (using studentclass table)
+        $students_in_current_term = Studentclass::where('sessionid', $currentSession?->id ?? 0)
+            ->where('termid', $currentTerm?->id ?? 0)
+            ->distinct('studentId')
+            ->count('studentId');
+
+        // ============================================================
+        // ACADEMIC STATISTICS
+        // ============================================================
+
+        // Student academic performance - average scores by class
+        $academic_performance = [];
+        if (class_exists(Broadsheets::class) && $currentTerm && $currentSession) {
+            $academic_performance = Broadsheets::where('term_id', $currentTerm->id)
+                ->whereHas('broadsheetRecord', function($q) use ($currentSession) {
+                    $q->where('session_id', $currentSession->id);
+                })
+                ->select('broadsheet_records.schoolclass_id', DB::raw('AVG(broadsheets.total) as avg_score'))
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->groupBy('broadsheet_records.schoolclass_id')
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'class_name' => Schoolclass::find($item->schoolclass_id)?->schoolclass ?? 'N/A',
+                        'avg_score' => round($item->avg_score, 1)
+                    ];
+                })
+                ->toArray();
+        }
+
+        // Top performing students (based on cumulative scores)
+        $top_students = [];
+        if (class_exists(Broadsheets::class) && $currentTerm && $currentSession) {
+            $top_students = Broadsheets::where('term_id', $currentTerm->id)
+                ->whereHas('broadsheetRecord', function($q) use ($currentSession) {
+                    $q->where('session_id', $currentSession->id);
+                })
+                ->select(
+                    'broadsheet_records.student_id',
+                    DB::raw('SUM(broadsheets.cum) as total_cum'),
+                    DB::raw('COUNT(DISTINCT broadsheet_records.subject_id) as subject_count')
+                )
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->groupBy('broadsheet_records.student_id')
+                ->orderBy('total_cum', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function($item) {
+                    $student = Student::find($item->student_id);
+                    return [
+                        'name' => $student ? $student->firstname . ' ' . $student->lastname : 'N/A',
+                        'admission_no' => $student?->admissionNo ?? 'N/A',
+                        'average' => $item->subject_count > 0 ? round($item->total_cum / $item->subject_count, 1) : 0
+                    ];
+                })
+                ->toArray();
+        }
+
+        // Subject performance - best and worst performing subjects
+        $subject_performance = [];
+        if (class_exists(Subjectclass::class) && class_exists(Broadsheets::class) && $currentTerm && $currentSession) {
+            $subject_performance = Broadsheets::where('term_id', $currentTerm->id)
+                ->whereHas('broadsheetRecord', function($q) use ($currentSession) {
+                    $q->where('session_id', $currentSession->id);
+                })
+                ->select(
+                    'broadsheet_records.subject_id',
+                    DB::raw('AVG(broadsheets.total) as avg_score'),
+                    DB::raw('MAX(broadsheets.total) as max_score'),
+                    DB::raw('MIN(broadsheets.total) as min_score')
+                )
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->groupBy('broadsheet_records.subject_id')
+                ->get()
+                ->map(function($item) {
+                    $subject = Subject::find($item->subject_id);
+                    return [
+                        'subject_name' => $subject?->subject ?? 'N/A',
+                        'avg_score' => round($item->avg_score, 1),
+                        'max_score' => round($item->max_score, 1),
+                        'min_score' => round($item->min_score, 1),
+                        'pass_rate' => $this->calculatePassRate($item->subject_id)
+                    ];
+                })
+                ->sortByDesc('avg_score')
+                ->take(5)
+                ->values()
+                ->toArray();
+        }
+
+        // Grade distribution
+        $grade_distribution = $this->getGradeDistribution($currentTerm, $currentSession);
 
         // ============================================================
         // STAFF STATISTICS
@@ -175,14 +266,17 @@ class DashboardController extends Controller
             : ($total_subjects > 0 ? 100.00 : 0.00);
 
         // Class capacity and utilization
-        $class_capacity_data = Schoolclass::withCount('students')
+        $class_capacity_data = Schoolclass::withCount(['studentCurrentTerms' => function($q) use ($currentSession) {
+                if ($currentSession) $q->where('sessionId', $currentSession->id);
+            }])
             ->get()
             ->map(function($class) {
                 $capacity = $class->capacity ?? 50;
-                $utilization = $capacity > 0 ? ($class->students_count / $capacity) * 100 : 0;
+                $utilization = $capacity > 0 ? ($class->student_current_terms_count / $capacity) * 100 : 0;
                 return [
-                    'class_name' => $class->class_name,
-                    'students' => $class->students_count,
+                    'class_name' => $class->schoolclass,
+                    'arm' => $class->armRelation?->arm ?? '',
+                    'students' => $class->student_current_terms_count,
                     'capacity' => $capacity,
                     'utilization' => round($utilization, 1)
                 ];
@@ -196,13 +290,13 @@ class DashboardController extends Controller
         // PAYMENT & FINANCE STATISTICS
         // ============================================================
 
-        // Total payments (if Payment model exists)
+        // Total payments
         $total_payments = 0;
         $payment_percentage = 0;
         $pending_payments = 0;
         $completed_payments = 0;
 
-        if (class_exists(\App\Models\SchoolPayment::class)) {
+        if (class_exists(SchoolPayment::class)) {
             $total_payments = SchoolPayment::sum('amount_paid') ?? 0;
             $previous_payments = SchoolPayment::where('created_at', '<', $currentMonth)
                 ->where('created_at', '>=', $previousMonth)
@@ -217,7 +311,7 @@ class DashboardController extends Controller
 
         // Total bills amount
         $total_bills = 0;
-        if (class_exists(\App\Models\SchoolBill::class)) {
+        if (class_exists(SchoolBill::class)) {
             $total_bills = SchoolBill::sum('amount') ?? 0;
         }
 
@@ -225,15 +319,14 @@ class DashboardController extends Controller
         $collection_rate = $total_bills > 0 ? round(($total_payments / $total_bills) * 100, 1) : 0;
 
         // ============================================================
-        // EXAM & ASSESSMENT STATISTICS
+        // EXAM STATISTICS
         // ============================================================
 
-        // Total exams
         $total_exams = 0;
         $upcoming_exams = 0;
         $completed_exams = 0;
 
-        if (class_exists(\App\Models\Exam::class)) {
+        if (class_exists(Exam::class)) {
             $total_exams = Exam::count();
             $upcoming_exams = Exam::where('start_time', '>', Carbon::now())->count();
             $completed_exams = Exam::where('end_time', '<', Carbon::now())->count();
@@ -243,9 +336,8 @@ class DashboardController extends Controller
         // ATTENDANCE STATISTICS
         // ============================================================
 
-        // Overall attendance rate
         $overall_attendance_rate = 0;
-        if (class_exists(\App\Models\AttendanceSummary::class) && $currentTerm && $currentSession) {
+        if (class_exists(AttendanceSummary::class) && $currentTerm && $currentSession) {
             $attendance_summary = AttendanceSummary::where('term_id', $currentTerm->id)
                 ->where('session_id', $currentSession->id)
                 ->selectRaw('SUM(days_present) as total_present, SUM(total_school_days) as total_days')
@@ -257,13 +349,13 @@ class DashboardController extends Controller
         }
 
         // ============================================================
-        // RECENT ACTIVITIES (Simulated for dashboard)
+        // RECENT ACTIVITIES
         // ============================================================
 
         $recent_activities = $this->getRecentActivities();
 
         // ============================================================
-        // YEARLY TRENDS (Last 12 months)
+        // YEARLY TRENDS
         // ============================================================
 
         $yearly_trends = [];
@@ -279,17 +371,20 @@ class DashboardController extends Controller
         }
 
         // ============================================================
-        // TOP PERFORMING CLASSES (Based on student count)
+        // TOP CLASSES (Based on student count)
         // ============================================================
 
-        $top_classes = Schoolclass::withCount('students')
-            ->orderBy('students_count', 'desc')
+        $top_classes = Schoolclass::withCount(['studentCurrentTerms' => function($q) use ($currentSession) {
+                if ($currentSession) $q->where('sessionId', $currentSession->id);
+            }])
+            ->orderBy('student_current_terms_count', 'desc')
             ->take(5)
             ->get()
             ->map(function($class) {
                 return [
-                    'name' => $class->class_name,
-                    'student_count' => $class->students_count
+                    'name' => $class->schoolclass,
+                    'arm' => $class->armRelation?->arm ?? '',
+                    'student_count' => $class->student_current_terms_count
                 ];
             })
             ->toArray();
@@ -305,6 +400,11 @@ class DashboardController extends Controller
             'female_percentage',
             'students_by_class',
             'students_in_current_term',
+            // Academic stats
+            'academic_performance',
+            'top_students',
+            'subject_performance',
+            'grade_distribution',
             // Staff stats
             'staff_count',
             'staff_percentage',
@@ -339,6 +439,51 @@ class DashboardController extends Controller
     }
 
     /**
+     * Calculate pass rate for a subject
+     */
+    private function calculatePassRate($subjectId)
+    {
+        $totalStudents = Broadsheets::whereHas('broadsheetRecord', function($q) use ($subjectId) {
+            $q->where('subject_id', $subjectId);
+        })->count();
+
+        $passedStudents = Broadsheets::whereHas('broadsheetRecord', function($q) use ($subjectId) {
+            $q->where('subject_id', $subjectId);
+        })->where('total', '>=', 40)->count();
+
+        return $totalStudents > 0 ? round(($passedStudents / $totalStudents) * 100, 1) : 0;
+    }
+
+    /**
+     * Get grade distribution for the current term
+     */
+    private function getGradeDistribution($term, $session)
+    {
+        if (!$term || !$session || !class_exists(Broadsheets::class)) {
+            return [];
+        }
+
+        $grades = Broadsheets::where('term_id', $term->id)
+            ->whereHas('broadsheetRecord', function($q) use ($session) {
+                $q->where('session_id', $session->id);
+            })
+            ->select('grade', DB::raw('count(*) as count'))
+            ->groupBy('grade')
+            ->get()
+            ->pluck('count', 'grade')
+            ->toArray();
+
+        $gradeOrder = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
+        $result = [];
+
+        foreach ($gradeOrder as $grade) {
+            $result[$grade] = $grades[$grade] ?? 0;
+        }
+
+        return $result;
+    }
+
+    /**
      * Get recent activities for the dashboard
      */
     private function getRecentActivities()
@@ -351,7 +496,7 @@ class DashboardController extends Controller
             $activities[] = [
                 'type' => 'student',
                 'title' => 'New Student Enrolled',
-                'description' => $student->first_name . ' ' . $student->last_name . ' joined the school',
+                'description' => $student->firstname . ' ' . $student->lastname . ' joined the school',
                 'time' => $student->created_at->diffForHumans(),
                 'icon' => 'ph-user-plus',
                 'color' => 'primary'
@@ -382,104 +527,5 @@ class DashboardController extends Controller
         });
 
         return array_slice($activities, 0, 5);
-    }
-
-    /**
-     * Get chart data for the dashboard (AJAX endpoint)
-     */
-    public function getChartData(Request $request)
-    {
-        $type = $request->get('type', 'students');
-
-        switch ($type) {
-            case 'students':
-                $data = Student::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                    ->where('created_at', '>=', Carbon::now()->subDays(30))
-                    ->groupBy('date')
-                    ->orderBy('date')
-                    ->get();
-                break;
-
-            case 'payments':
-                $data = SchoolPayment::selectRaw('DATE(created_at) as date, SUM(amount_paid) as total')
-                    ->where('created_at', '>=', Carbon::now()->subDays(30))
-                    ->groupBy('date')
-                    ->orderBy('date')
-                    ->get();
-                break;
-
-            case 'attendance':
-                $data = AttendanceSummary::selectRaw('date, AVG(attendance_percentage) as rate')
-                    ->where('created_at', '>=', Carbon::now()->subDays(30))
-                    ->groupBy('date')
-                    ->orderBy('date')
-                    ->get();
-                break;
-
-            default:
-                $data = collect();
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $data
-        ]);
-    }
-
-    /**
-     * Get quick stats for dashboard widgets (AJAX endpoint)
-     */
-    public function getQuickStats()
-    {
-        $currentTerm = Schoolterm::where('status', true)->first();
-        $currentSession = Schoolsession::where('status', 'Current')->first();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_students' => Student::count(),
-                'total_staff' => User::whereHas('roles', function($q) {
-                    $q->whereIn('name', ['staff', 'teacher']);
-                })->count(),
-                'total_classes' => Schoolclass::count(),
-                'total_subjects' => Subject::count(),
-                'attendance_rate' => $this->calculateAttendanceRate($currentTerm, $currentSession),
-                'collection_rate' => $this->calculateCollectionRate(),
-            ]
-        ]);
-    }
-
-    /**
-     * Calculate overall attendance rate
-     */
-    private function calculateAttendanceRate($term, $session)
-    {
-        if (!$term || !$session) return 0;
-
-        $summary = AttendanceSummary::where('term_id', $term->id)
-            ->where('session_id', $session->id)
-            ->selectRaw('SUM(days_present) as total_present, SUM(total_school_days) as total_days')
-            ->first();
-
-        if ($summary && $summary->total_days > 0) {
-            return round(($summary->total_present / $summary->total_days) * 100, 1);
-        }
-
-        return 0;
-    }
-
-    /**
-     * Calculate collection rate
-     */
-    private function calculateCollectionRate()
-    {
-        $total_bills = SchoolBill::sum('amount') ?? 0;
-        $total_payments = SchoolPayment::sum('amount_paid') ?? 0;
-
-        if ($total_bills > 0) {
-            return round(($total_payments / $total_bills) * 100, 1);
-        }
-
-        return 0;
     }
 }
