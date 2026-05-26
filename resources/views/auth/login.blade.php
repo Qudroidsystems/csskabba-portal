@@ -30,7 +30,7 @@
 
     <style>
         /* =====================================================
-           APPLE OS STYLE LOGIN PAGE WITH FULL ANIMATIONS
+           APPLE OS STYLE LOGIN PAGE - EXACT SAME AS REGISTER
            ===================================================== */
 
         /* Smooth page entrance animation */
@@ -95,25 +95,6 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* EXACT SPIRAL ANIMATION FROM REGISTER PAGE */
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.9; }
-        }
-
-        /* Spiral effect for the center circle - exact same as register */
-        @keyframes spiralPulse {
-            0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(79, 142, 247, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
-        }
-
-        /* Continuous rotation for spiral effect */
-        @keyframes spiralRotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
         @keyframes orbitClockwise {
             from { transform: rotate(0deg) translate(120px, 0) rotate(0deg); }
             to { transform: rotate(360deg) translate(120px, 0) rotate(-360deg); }
@@ -124,12 +105,10 @@
             to { transform: rotate(-360deg) translate(120px, 0) rotate(360deg); }
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeOut {
-            to { opacity: 0; transform: translateX(20px); }
+        /* EXACT SAME PULSE ANIMATION AS REGISTER PAGE */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
         }
 
         /* Page container animation */
@@ -279,41 +258,20 @@
             opacity: 0;
         }
 
-        /* =====================================================
-           EXACT SPIRAL EFFECT CIRCLES FROM REGISTER PAGE
-           ===================================================== */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-        /* Effect circles with spiral pulse animation - EXACT SAME AS REGISTER */
+        /* Effect circles - EXACT SAME AS REGISTER PAGE */
         .effect-circle-1,
         .effect-circle-2,
         .effect-circle-3 {
             transition: all 0.3s ease;
         }
 
+        /* EXACT SAME PULSE ANIMATION - ONLY ON effect-circle-1 */
         .effect-circle-1 {
-            width: 260px;
-            height: 260px;
-            background: rgba(79, 142, 247, 0.05);
-            border-radius: 50%;
-            animation: spiralPulse 3s infinite;
-        }
-
-        .effect-circle-2 {
-            width: 200px;
-            height: 200px;
-            background: rgba(79, 142, 247, 0.08);
-            border-radius: 50%;
-            animation: spiralPulse 3s infinite 0.5s;
-        }
-
-        .effect-circle-3 {
-            width: 140px;
-            height: 140px;
-            background: rgba(79, 142, 247, 0.12);
-            backdrop-filter: blur(8px);
-            border-radius: 50%;
-            border: 1px solid rgba(79, 142, 247, 0.3);
-            animation: spiralPulse 3s infinite 1s;
+            animation: pulse 2s infinite;
         }
 
         /* Auth effect main container */
@@ -342,7 +300,7 @@
             height: 50px;
             transform-origin: center center;
             cursor: pointer;
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: transform 0.3s ease;
         }
 
         .auth-user-list li:nth-child(1) {
@@ -470,23 +428,13 @@
             background: #ef4444;
         }
 
-        /* Pulse animation for the center content */
-        @keyframes textPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.85; transform: scale(0.98); }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(20px); }
         }
 
-        .effect-circle-3 span {
-            animation: textPulse 3s ease-in-out infinite;
-            display: inline-block;
-        }
-
-        /* Responsive adjustments */
+        /* Responsive adjustments - EXACT SAME AS REGISTER */
         @media (max-width: 576px) {
             .auth-effect-main { width: 200px; height: 200px; }
-            .effect-circle-1 { width: 180px; height: 180px; }
-            .effect-circle-2 { width: 140px; height: 140px; }
-            .effect-circle-3 { width: 100px; height: 100px; }
             .auth-user-list li { width: 40px; height: 40px; }
             .auth-user-list li:nth-child(1) { transform: translate(80px, 0); }
             .auth-user-list li:nth-child(2) { transform: rotate(72deg) translate(78px, 0); }
@@ -545,11 +493,11 @@
                                             <p class="text-white opacity-75 fs-base">It makes school operations SEAMLESS...</p>
                                         </div>
 
-                                        <!-- EXACT SPIRAL EFFECT CONTAINER FROM REGISTER PAGE -->
+                                        <!-- EXACT SAME SPIRAL EFFECT CONTAINER AS REGISTER PAGE -->
                                         <div class="auth-effect-main my-5 position-relative rounded-circle d-flex align-items-center justify-content-center mx-auto">
-                                            <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
+                                            <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center" style="animation: pulse 2s infinite;">
                                                 <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
-                                                    <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center">
+                                                    <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
                                                         <span class="text-primary ms-1" style="font-weight: 600;">Vite-eSchool 1.1</span>
                                                     </div>
                                                 </div>
@@ -712,7 +660,7 @@
 
     <script>
         // =====================================================
-        // APPLE OS STYLE LOGIN PAGE WITH FULL ANIMATIONS
+        // APPLE OS STYLE LOGIN PAGE - EXACT SAME AS REGISTER
         // =====================================================
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -725,7 +673,7 @@
             });
 
             // =====================================================
-            // AVATAR ORBIT ANIMATION - PAUSE ON HOVER
+            // AVATAR HOVER PAUSE ANIMATION (EXACT SAME AS REGISTER)
             // =====================================================
             const avatarItems = document.querySelectorAll('.auth-user-list li');
             avatarItems.forEach(item => {
