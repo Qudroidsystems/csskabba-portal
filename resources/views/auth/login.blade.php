@@ -30,7 +30,7 @@
 
     <style>
         /* =====================================================
-           APPLE OS STYLE LOGIN PAGE
+           APPLE OS STYLE LOGIN PAGE WITH FULL ANIMATIONS
            ===================================================== */
 
         /* Smooth page entrance animation */
@@ -78,16 +78,6 @@
             }
         }
 
-        @keyframes avatarOrbit {
-            from { transform: rotate(0deg) translate(var(--orbit-radius, 120px), 0) rotate(0deg); }
-            to { transform: rotate(360deg) translate(var(--orbit-radius, 120px), 0) rotate(-360deg); }
-        }
-
-        @keyframes avatarOrbitReverse {
-            from { transform: rotate(0deg) translate(var(--orbit-radius, 120px), 0) rotate(0deg); }
-            to { transform: rotate(-360deg) translate(var(--orbit-radius, 120px), 0) rotate(360deg); }
-        }
-
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
@@ -105,6 +95,41 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        @keyframes orbitClockwise {
+            from { transform: rotate(0deg) translate(120px, 0) rotate(0deg); }
+            to { transform: rotate(360deg) translate(120px, 0) rotate(-360deg); }
+        }
+
+        @keyframes orbitCounterClockwise {
+            from { transform: rotate(0deg) translate(120px, 0) rotate(0deg); }
+            to { transform: rotate(-360deg) translate(120px, 0) rotate(360deg); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(20px); }
+        }
+
+        /* Spiral effect for the center circle */
+        @keyframes spiralPulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(79, 142, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
+        }
+
+        @keyframes spiralRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         /* Page container animation */
         .auth-page-wrapper {
             animation: pageFadeInUp 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
@@ -113,6 +138,8 @@
         /* Card entrance animation */
         .card {
             animation: fadeInScale 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+            border-radius: 28px !important;
+            overflow: hidden;
             backdrop-filter: blur(20px);
             background: rgba(255, 255, 255, 0.98);
         }
@@ -120,6 +147,8 @@
         /* Left panel animation */
         .auth-card {
             animation: slideInLeft 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+            border-radius: 0 !important;
         }
 
         /* Right panel animation */
@@ -185,17 +214,12 @@
             animation: fieldPulse 0.6s ease;
         }
 
-        /* Label animation */
+        /* Label styling */
         .form-label {
             transition: all 0.2s ease;
             font-weight: 500;
             font-size: 14px;
             margin-bottom: 6px;
-        }
-
-        /* Floating label effect on focus */
-        .input-group-floating {
-            position: relative;
         }
 
         /* Checkbox styling */
@@ -228,25 +252,6 @@
             opacity: 0.7;
         }
 
-        /* Success indicator */
-        .login-success {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 9999;
-            animation: successCheck 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         /* Loading state on button */
         .apple-button.loading {
             pointer-events: none;
@@ -272,24 +277,117 @@
             opacity: 0;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        /* Effect circles with spiral animation */
+        .effect-circle-1,
+        .effect-circle-2,
+        .effect-circle-3 {
+            transition: all 0.3s ease;
         }
 
-        /* Avatar orbit enhancements */
+        .effect-circle-1 {
+            width: 260px;
+            height: 260px;
+            background: rgba(79, 142, 247, 0.05);
+            animation: spiralPulse 3s infinite;
+        }
+
+        .effect-circle-2 {
+            width: 200px;
+            height: 200px;
+            background: rgba(79, 142, 247, 0.08);
+            animation: spiralPulse 3s infinite 0.5s;
+        }
+
+        .effect-circle-3 {
+            width: 140px;
+            height: 140px;
+            background: rgba(79, 142, 247, 0.12);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(79, 142, 247, 0.3);
+            animation: spiralPulse 3s infinite 1s;
+        }
+
+        /* Auth effect main container */
+        .auth-effect-main {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+
+        /* Avatar orbit animations */
+        .auth-user-list {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
         .auth-user-list li {
-            --orbit-radius: 120px;
-            animation-duration: var(--orbit-duration, 10s);
-            animation-iteration-count: infinite;
-            animation-timing-function: linear;
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            transform-origin: center center;
+            cursor: pointer;
             transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
 
-        .auth-user-list li:nth-child(1) { animation-name: avatarOrbit; --orbit-duration: 12s; }
-        .auth-user-list li:nth-child(2) { animation-name: avatarOrbitReverse; --orbit-duration: 14s; }
-        .auth-user-list li:nth-child(3) { animation-name: avatarOrbit; --orbit-duration: 10s; }
-        .auth-user-list li:nth-child(4) { animation-name: avatarOrbitReverse; --orbit-duration: 11s; }
-        .auth-user-list li:nth-child(5) { animation-name: avatarOrbit; --orbit-duration: 13s; }
+        .auth-user-list li:nth-child(1) {
+            animation: orbitClockwise 12s linear infinite;
+            transform: translate(120px, 0);
+        }
+
+        .auth-user-list li:nth-child(2) {
+            animation: orbitCounterClockwise 14s linear infinite;
+            transform: rotate(72deg) translate(115px, 0);
+        }
+
+        .auth-user-list li:nth-child(3) {
+            animation: orbitClockwise 10s linear infinite;
+            transform: rotate(144deg) translate(125px, 0);
+        }
+
+        .auth-user-list li:nth-child(4) {
+            animation: orbitCounterClockwise 11s linear infinite;
+            transform: rotate(216deg) translate(118px, 0);
+        }
+
+        .auth-user-list li:nth-child(5) {
+            animation: orbitClockwise 13s linear infinite;
+            transform: rotate(288deg) translate(122px, 0);
+        }
+
+        .auth-user-list li:hover {
+            animation-play-state: paused !important;
+            transform: scale(1.2) !important;
+            z-index: 10;
+        }
+
+        .auth-user-list li:hover .avatar-title {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+        }
+
+        /* Avatar styling */
+        .avatar-sm {
+            width: 50px;
+            height: 50px;
+        }
+
+        .avatar-title {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border: 2px solid white;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .avatar-title img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
         /* Tooltip styling */
         .avatar-tooltip {
@@ -299,14 +397,6 @@
             padding: 4px 10px;
             font-size: 12px;
             font-weight: 500;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 576px) {
-            .auth-effect-main { width: 200px; height: 200px; }
-            .auth-user-list li { width: 40px; height: 40px; --orbit-radius: 80px; }
-            .school-login-logo { height: 40px; }
-            .login-form-container { padding: 30px 16px; }
         }
 
         /* School logo styling */
@@ -344,6 +434,52 @@
             margin-bottom: 10px;
             animation: fadeInScale 0.5s ease;
         }
+
+        /* Toast notification */
+        .login-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 9999;
+            animation: successCheck 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .login-success.error {
+            background: #ef4444;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .auth-effect-main { width: 200px; height: 200px; }
+            .effect-circle-1 { width: 180px; height: 180px; }
+            .effect-circle-2 { width: 140px; height: 140px; }
+            .effect-circle-3 { width: 100px; height: 100px; }
+            .auth-user-list li { width: 40px; height: 40px; }
+            .auth-user-list li:nth-child(1) { transform: translate(80px, 0); }
+            .auth-user-list li:nth-child(2) { transform: rotate(72deg) translate(78px, 0); }
+            .auth-user-list li:nth-child(3) { transform: rotate(144deg) translate(82px, 0); }
+            .auth-user-list li:nth-child(4) { transform: rotate(216deg) translate(79px, 0); }
+            .auth-user-list li:nth-child(5) { transform: rotate(288deg) translate(81px, 0); }
+            @keyframes orbitClockwise {
+                from { transform: rotate(0deg) translate(80px, 0) rotate(0deg); }
+                to { transform: rotate(360deg) translate(80px, 0) rotate(-360deg); }
+            }
+            @keyframes orbitCounterClockwise {
+                from { transform: rotate(0deg) translate(80px, 0) rotate(0deg); }
+                to { transform: rotate(-360deg) translate(80px, 0) rotate(360deg); }
+            }
+            .school-login-logo { height: 40px; }
+        }
     </style>
 </head>
 
@@ -369,17 +505,17 @@
         }
 
         // Check for error from session
-        $hasError = session('errors') && session('errors')->has('email') || session('errors') && session('errors')->has('password');
+        $hasError = session('errors') && (session('errors')->has('email') || session('errors')->has('password'));
     @endphp
 
     <section class="auth-page-wrapper position-relative d-flex align-items-center justify-content-center min-vh-100">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-11">
-                    <div class="card mb-0 border-0 shadow-lg" style="border-radius: 28px; overflow: hidden;">
+                    <div class="card mb-0 border-0 shadow-lg">
                         <div class="row g-0 align-items-center">
                             <div class="col-xxl-5">
-                                <div class="card auth-card bg-secondary h-100 border-0 shadow-none d-none d-sm-block mb-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 0;">
+                                <div class="card auth-card bg-secondary h-100 border-0 shadow-none d-none d-sm-block mb-0">
                                     <div class="card-body py-5 d-flex justify-content-between flex-column">
                                         <div class="text-center">
                                             <h3 class="text-white" style="animation: fadeInScale 0.6s ease;">Start your journey with us.</h3>
@@ -387,10 +523,10 @@
                                         </div>
 
                                         <div class="auth-effect-main my-5 position-relative rounded-circle d-flex align-items-center justify-content-center mx-auto">
-                                            <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center" style="animation: pulse 2s infinite;">
+                                            <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                 <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
-                                                    <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
-                                                       <span class="text-primary ms-1" style="font-weight: 600;">Vite-eSchool 1.1</span>
+                                                    <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center">
+                                                        <span class="text-primary ms-1" style="font-weight: 600;">Vite-eSchool 1.1</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -472,7 +608,7 @@
                                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                                                     <div class="position-relative">
                                                         <input type="email"
-                                                               class="form-control apple-input @error('email') is-invalid shake-field @enderror"
+                                                               class="form-control apple-input @error('email') is-invalid @enderror"
                                                                id="email"
                                                                name="email"
                                                                placeholder="Enter your email"
@@ -498,7 +634,7 @@
                                                     <div class="position-relative auth-pass-inputgroup">
                                                         <input type="password"
                                                                id="password"
-                                                               class="form-control apple-input pe-5 @error('password') is-invalid shake-field @enderror"
+                                                               class="form-control apple-input pe-5 @error('password') is-invalid @enderror"
                                                                name="password"
                                                                autocomplete="current-password"
                                                                placeholder="Enter your password"
@@ -549,17 +685,10 @@
     <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js')}}"></script>
     <script src="{{ asset('theme/layouts/assets/js/plugins.js')}}"></script>
-    <script src="{{ asset('theme/layouts/assets/js/pages/password-addon.init.js')}}"></script>
-
-    <!--Swiper slider js-->
-    <script src="{{ asset('theme/layouts/assets/libs/swiper/swiper-bundle.min.js')}}"></script>
-
-    <!-- swiper.init js -->
-    <script src="{{ asset('theme/layouts/assets/js/pages/swiper.init.js')}}"></script>
 
     <script>
         // =====================================================
-        // APPLE OS STYLE LOGIN PAGE WITH ANIMATIONS
+        // APPLE OS STYLE LOGIN PAGE WITH FULL ANIMATIONS
         // =====================================================
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -571,7 +700,9 @@
                 });
             });
 
-            // Enhanced hover pause functionality for avatars
+            // =====================================================
+            // AVATAR ORBIT ANIMATION - PAUSE ON HOVER
+            // =====================================================
             const avatarItems = document.querySelectorAll('.auth-user-list li');
             avatarItems.forEach(item => {
                 item.addEventListener('mouseenter', function() {
@@ -583,9 +714,8 @@
             });
 
             // =====================================================
-            // APPLE-STYLE FIELD INTERACTIONS
+            // FIELD INTERACTIONS
             // =====================================================
-
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
             const loginForm = document.getElementById('loginForm');
@@ -593,6 +723,7 @@
 
             // Add focus pulse animation to fields
             function addFieldPulse(inputElement) {
+                if (!inputElement) return;
                 inputElement.addEventListener('focus', function() {
                     this.classList.add('field-pulse');
                     setTimeout(() => {
@@ -607,30 +738,13 @@
             // =====================================================
             // SHAKE ANIMATION ON ERROR (Apple OS Style)
             // =====================================================
-
             function shakeElement(element) {
                 if (!element) return;
                 element.classList.add('shake-field');
 
-                // Actual vibration for devices that support it
+                // Vibration for mobile devices
                 if (window.navigator && window.navigator.vibrate) {
                     window.navigator.vibrate(100);
-                }
-
-                // Play error sound (optional - using Web Audio API)
-                try {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    oscillator.frequency.value = 220;
-                    gainNode.gain.value = 0.1;
-                    oscillator.start();
-                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.3);
-                    oscillator.stop(audioContext.currentTime + 0.3);
-                } catch(e) {
-                    // Silent fail if audio not supported
                 }
 
                 setTimeout(() => {
@@ -651,10 +765,8 @@
             // =====================================================
             // FORM SUBMIT WITH LOADING STATE
             // =====================================================
-
             if (loginForm) {
                 loginForm.addEventListener('submit', function(e) {
-                    // Validate fields before submit
                     let hasValidationError = false;
 
                     if (emailInput && !emailInput.value.trim()) {
@@ -671,6 +783,7 @@
 
                     if (hasValidationError) {
                         e.preventDefault();
+                        showToast('Validation Error', 'Please enter your email and password', 'error');
                         return false;
                     }
 
@@ -705,30 +818,9 @@
                     } else if (email && emailRegex.test(email)) {
                         this.classList.remove('is-invalid');
                         const errorDiv = this.parentElement.querySelector('.invalid-feedback');
-                        if (errorDiv) errorDiv.remove();
-                    }
-                });
-            }
-
-            // Password validation on blur
-            if (passwordInput) {
-                passwordInput.addEventListener('blur', function() {
-                    const password = this.value;
-                    if (password && password.length < 6) {
-                        this.classList.add('is-invalid');
-                        let errorDiv = this.parentElement.querySelector('.invalid-feedback');
-                        if (!errorDiv) {
-                            errorDiv = document.createElement('span');
-                            errorDiv.className = 'invalid-feedback';
-                            errorDiv.setAttribute('role', 'alert');
-                            this.parentElement.appendChild(errorDiv);
+                        if (errorDiv && !errorDiv.innerHTML.includes('credentials')) {
+                            errorDiv.remove();
                         }
-                        errorDiv.innerHTML = '<strong>Password must be at least 6 characters.</strong>';
-                        shakeElement(this);
-                    } else if (password && password.length >= 6) {
-                        this.classList.remove('is-invalid');
-                        const errorDiv = this.parentElement.querySelector('.invalid-feedback');
-                        if (errorDiv) errorDiv.remove();
                     }
                 });
             }
@@ -738,7 +830,9 @@
                 emailInput.addEventListener('input', function() {
                     this.classList.remove('is-invalid');
                     const errorDiv = this.parentElement.querySelector('.invalid-feedback');
-                    if (errorDiv) errorDiv.remove();
+                    if (errorDiv && !errorDiv.innerHTML.includes('credentials')) {
+                        errorDiv.remove();
+                    }
                 });
             }
 
@@ -746,7 +840,24 @@
                 passwordInput.addEventListener('input', function() {
                     this.classList.remove('is-invalid');
                     const errorDiv = this.parentElement.querySelector('.invalid-feedback');
-                    if (errorDiv) errorDiv.remove();
+                    if (errorDiv && !errorDiv.innerHTML.includes('credentials')) {
+                        errorDiv.remove();
+                    }
+                });
+            }
+
+            // =====================================================
+            // PASSWORD TOGGLE FUNCTIONALITY
+            // =====================================================
+            const passwordAddon = document.getElementById('password-addon');
+            if (passwordAddon && passwordInput) {
+                passwordAddon.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.className = type === 'password' ? 'ri-eye-fill align-middle' : 'ri-eye-off-fill align-middle';
+                    }
                 });
             }
         });
@@ -754,7 +865,6 @@
         // =====================================================
         // STAFF CREDENTIAL FILL FUNCTION
         // =====================================================
-
         function fillStaffCredentials(email) {
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
@@ -764,7 +874,7 @@
                 emailInput.classList.remove('is-invalid');
                 emailInput.dispatchEvent(new Event('focus'));
 
-                // Add a nice visual feedback
+                // Add visual feedback
                 emailInput.style.transition = 'all 0.3s ease';
                 emailInput.style.backgroundColor = '#e8f0fe';
                 setTimeout(() => {
@@ -774,19 +884,14 @@
 
             if (passwordInput) {
                 passwordInput.focus();
-
-                // Optional: You can pre-fill a demo password or leave it empty
-                // passwordInput.value = '';
             }
 
-            // Show a subtle toast notification
-            showToast('Staff selected', 'Click Sign In to continue', 'info');
+            showToast('Staff Selected', 'Email filled. Enter your password to continue.', 'info');
         }
 
         // =====================================================
         // TOAST NOTIFICATION (Apple Style)
         // =====================================================
-
         function showToast(title, message, type = 'info') {
             const colors = {
                 success: '#10b981',
@@ -796,7 +901,7 @@
             };
 
             const toast = document.createElement('div');
-            toast.className = 'login-success';
+            toast.className = 'login-success ' + (type === 'error' ? 'error' : '');
             toast.style.background = colors[type] || colors.info;
             toast.innerHTML = `
                 <i class="mdi mdi-${type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'information'}"></i>
@@ -812,15 +917,6 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
-
-        // Add fadeOut keyframe
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeOut {
-                to { opacity: 0; transform: translateX(20px); }
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
