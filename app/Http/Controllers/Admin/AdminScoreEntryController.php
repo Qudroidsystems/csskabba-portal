@@ -2103,7 +2103,7 @@ public function studentResultManager()
 }
 
 
-<?php
+
 /**
  * PASTE THESE THREE METHODS INTO AdminScoreEntryController
  * replacing the existing getStudentResults / updateStudentSubjectScore / bulkUpdateStudentScores
