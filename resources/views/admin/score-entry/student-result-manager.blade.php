@@ -46,7 +46,7 @@
 #studentsTableBody tr.row-pending:hover{background:#fef0f0!important}
 #studentsTableBody tr[data-sid]:hover .student-avatar-img{transform:scale(1.12);
   transition:transform .22s cubic-bezier(.34,1.4,.64,1);box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.student-avatar-img{transition:transform .18s ease,box-shadow .18s ease}
+.student-avatar-img{transition:transform .18s ease,box-shadow .18s ease;cursor:pointer}
 #studentsTableBody tr[data-sid]:hover .badge{transform:scale(1.06);
   transition:transform .18s cubic-bezier(.34,1.4,.64,1)}
 
@@ -123,7 +123,7 @@
 .student-avatar-large{width:68px;height:68px;border-radius:50%;
   background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.4);
   display:flex;align-items:center;justify-content:center;
-  font-size:26px;font-weight:bold;flex-shrink:0;overflow:hidden}
+  font-size:26px;font-weight:bold;flex-shrink:0;overflow:hidden;cursor:pointer}
 .student-avatar-large img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .summary-stats{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
 .stat-box{background:rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;
@@ -390,18 +390,20 @@
   <div class="card-body p-0">
     <div class="table-responsive">
     <table class="table table-nowrap align-middle mb-0" id="studentsTable">
-      <thead><tr>
-        <th class="col-photo" style="width:52px">Photo</th>
-        <th class="col-sn"    style="width:42px">SN</th>
-        <th class="col-adm">Adm. No</th>
-        <th class="col-name">Student Name</th>
-        <th class="col-avg text-center">Average</th>
-        <th class="col-grade text-center">Grade</th>
-        <th class="col-gpa text-center">GPA</th>
-        <th class="col-subjects text-center">Subjects</th>
-        <th class="col-status text-center">Status</th>
-        <th class="col-action" style="width:140px">Action</th>
-      </tr></thead>
+      <thead>
+        <tr>
+          <th class="col-photo" style="width:52px">Photo</th>
+          <th class="col-sn"    style="width:42px">SN</th>
+          <th class="col-adm">Adm. No</th>
+          <th class="col-name">Student Name</th>
+          <th class="col-avg text-center">Average</th>
+          <th class="col-grade text-center">Grade</th>
+          <th class="col-gpa text-center">GPA</th>
+          <th class="col-subjects text-center">Subjects</th>
+          <th class="col-status text-center">Status</th>
+          <th class="col-action" style="width:140px">Action</th>
+        </tr>
+      </thead>
       <tbody id="studentsTableBody">
         <tr id="emptyStateRow"><td colspan="10" class="text-center py-5 text-muted">
           <i class="ri-filter-line" style="font-size:40px;color:#cbd5e1;display:block;margin-bottom:12px"></i>
@@ -510,13 +512,16 @@
   </div>
 </div>
 
-{{-- Photo enlarger --}}
+{{-- Photo enlarger modal (same as MyScoreSheetController) --}}
 <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header"><h5 class="modal-title">Student Photo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-header">
+        <h5 class="modal-title">Student Photo</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
       <div class="modal-body text-center p-4">
-        <img id="enlargedImage" src="" alt="Student" class="img-fluid rounded-3" style="max-height:420px">
+        <img id="enlargedImage" src="" alt="Student" class="img-fluid rounded-3" style="max-height:400px;">
       </div>
     </div>
   </div>
@@ -625,6 +630,16 @@ function validateInput(inp){
   const val=parseFloat(inp.value)||0;
   inp.classList.toggle('is-invalid',val>max||val<0);
   return val<=max&&val>=0;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   IMAGE ENLARGER HANDLER (same pattern as MyScoreSheetController)
+   ════════════════════════════════════════════════════════════════ */
+function openEnlarger(src){
+  if(!src)return;
+  document.getElementById('enlargedImage').src=src;
+  const enlargeModal=new bootstrap.Modal(document.getElementById('imageViewModal'));
+  enlargeModal.show();
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -761,8 +776,8 @@ function renderStudentsTable(students){
         <img src="${esc(avatarUrl)}"
              class="rounded-circle student-avatar-img"
              style="width:40px;height:40px;object-fit:cover;border:2px solid var(--ss-border);cursor:pointer"
-             data-bs-toggle="modal" data-bs-target="#imageViewModal"
              data-image="${esc(avatarUrl)}"
+             onclick="openEnlarger('${esc(avatarUrl)}')"
              onerror="this.onerror=null;this.src='${DEFAULT_AVT}'"
              alt="Photo">
       </td>
@@ -790,7 +805,7 @@ function renderStudentsTable(students){
           <i class="ri-edit-line me-1"></i>Enter Scores
         </button>
       </td>
-    </tr>`;
+     </tr>`;
   }).join('');
   initRowEntrance('#studentsTableBody tr[data-sid]');
 }
@@ -799,11 +814,11 @@ function renderEmptyTable(msg){
   $('studentsTableBody').innerHTML=`<tr><td colspan="10" class="text-center py-5 text-muted">
     <i class="ri-inbox-line" style="font-size:40px;color:#cbd5e1;display:block;margin-bottom:12px"></i>
     <h5>No students found</h5><p class="mb-0 small">${esc(msg||'')}</p>
-  </td></tr>`;
+   </td></tr>`;
 }
 
 /* ════════════════════════════════════════════════════════════════
-   ROW ENTRANCE ANIMATION (identical logic for both tables)
+   ROW ENTRANCE ANIMATION
    ════════════════════════════════════════════════════════════════ */
 function initRowEntrance(selector){
   const rows=Array.from(document.querySelectorAll(selector));
@@ -857,9 +872,8 @@ function renderStudentModal(){
 
   $('modalStudentInfo').innerHTML=`
     <div class="student-info-header">
-      <div class="student-avatar-large" id="modalAvtWrap" style="cursor:pointer">
+      <div class="student-avatar-large" onclick="openEnlarger('${esc(avatarUrl)}')">
         <img id="modalAvtImg" src="${esc(avatarUrl)}"
-             class="srm-enlargeable"
              data-image="${esc(avatarUrl)}"
              onerror="this.onerror=null;this.src='${DEFAULT_AVT}'"
              alt="Photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
@@ -902,14 +916,12 @@ function renderTableView(){
     </div>`;return;
   }
 
-  /* Build assessment column headers */
   const assessmentHeaders=currentAssessments.map(a=>
     `<th class="text-center" style="white-space:nowrap">
       ${esc(a.name)}<br><small class="fw-normal opacity-75">(${a.max_score})</small>
     </th>`
   ).join('');
 
-  /* Search bar above table */
   let html=`
   <div class="px-3 pt-3 pb-2 d-flex align-items-center gap-2 flex-wrap" style="background:#f8fafc;border-bottom:1px solid var(--ss-border)">
     <div class="input-group input-group-sm" style="width:220px">
@@ -920,20 +932,22 @@ function renderTableView(){
   </div>
   <div class="table-responsive">
   <table class="table table-nowrap align-middle mb-0" id="modalScoreTable">
-    <thead><tr>
-      <th style="width:42px">SN</th>
-      <th>Subject</th>
-      ${assessmentHeaders}
-      <th class="text-center">Total</th>
-      <th class="text-center">Total<br><small class="fw-normal opacity-75">Grade</small></th>
-      <th class="text-center">BF</th>
-      <th class="text-center">Cum</th>
-      <th class="text-center">Cum<br><small class="fw-normal opacity-75">Grade</small></th>
-      <th class="text-center" title="Position in class by cumulative">Pos<br><small class="fw-normal opacity-75">(Cum)</small></th>
-      <th class="text-center" title="Position in class by total">Pos<br><small class="fw-normal opacity-75">(Total)</small></th>
-      <th class="text-center">Remark</th>
-      <th class="text-center" style="width:90px">Save</th>
-    </tr></thead>
+    <thead>
+      <tr>
+        <th style="width:42px">SN</th>
+        <th>Subject</th>
+        ${assessmentHeaders}
+        <th class="text-center">Total</th>
+        <th class="text-center">Total<br><small class="fw-normal opacity-75">Grade</small></th>
+        <th class="text-center">BF</th>
+        <th class="text-center">Cum</th>
+        <th class="text-center">Cum<br><small class="fw-normal opacity-75">Grade</small></th>
+        <th class="text-center" title="Position in class by cumulative">Pos<br><small class="fw-normal opacity-75">(Cum)</small></th>
+        <th class="text-center" title="Position in class by total">Pos<br><small class="fw-normal opacity-75">(Total)</small></th>
+        <th class="text-center">Remark</th>
+        <th class="text-center" style="width:90px">Save</th>
+      </tr>
+    </thead>
     <tbody id="modalScoreTableBody">`;
 
   s.subjects.forEach((subj,idx)=>{
@@ -948,7 +962,6 @@ function renderTableView(){
     const cumColor=cum>=70?'success':cum>=50?'info':cum>=40?'warning':'danger';
     const rowCls=totalRaw>0?'mrow-saved':'mrow-unsaved';
 
-    // Build score map
     const scoreMap={};(subj.assessment_scores||[]).forEach(a=>{scoreMap[a.assessment_id]=a.score;});
 
     const assessmentInputs=currentAssessments.map(a=>`
@@ -961,7 +974,7 @@ function renderTableView(){
           data-student-avatar="${esc(s.photo||DEFAULT_AVT)}"
           value="${parseFloat(scoreMap[a.id]||0)}"
           min="0" max="${a.max_score}" step="0.5">
-      </td>`).join('');
+       </td>`).join('');
 
     html+=`
     <tr class="${rowCls}" data-midx="${idx}" data-subject-name="${esc(subj.subject_name||'').toLowerCase()}">
@@ -1006,12 +1019,9 @@ function renderTableView(){
   html+=`</tbody></table></div>`;
   container.innerHTML=html;
 
-  // Wire inputs and buttons
   wireTableInputs();
-  // Row entrance
   initRowEntrance('#modalScoreTableBody tr[data-midx]');
 
-  // Subject search inside modal
   $('modalSubjectSearch')?.addEventListener('input',function(){
     const q=this.value.toLowerCase();
     document.querySelectorAll('#modalScoreTableBody tr[data-midx]').forEach(row=>{
@@ -1050,7 +1060,6 @@ function wireTableInputs(){
   });
 }
 
-/* live metrics update for table view row */
 function updateTableRowMetrics(idx){
   const inputs=document.querySelectorAll(`.score-input[data-idx="${idx}"]`);
   let total=0;
@@ -1085,7 +1094,7 @@ function updateTableRowMetrics(idx){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   CARD VIEW  (legacy pill layout)
+   CARD VIEW
    ════════════════════════════════════════════════════════════════ */
 function renderCardView(){
   const s=currentStudentData;
@@ -1100,12 +1109,10 @@ function renderCardView(){
 
   container.innerHTML=s.subjects.map((subj,idx)=>renderSubjectCard(subj,idx)).join('');
 
-  // Wire save buttons
   container.querySelectorAll('.btn-save-subject[data-idx]').forEach(btn=>{
     btn.addEventListener('click',function(){saveSubjectByIndex(parseInt(this.dataset.idx));});
   });
 
-  // Wire score inputs
   container.querySelectorAll('.score-input[data-idx]').forEach(inp=>{
     inp.addEventListener('focus',function(){this.select();tipShow(this);});
     inp.addEventListener('input',function(){
@@ -1214,7 +1221,6 @@ function updateCardRowMetrics(idx){
   const remark=clientRemark(grade);
   const gradeColor=GRADE_COLORS[grade]||'#6b7280';
 
-
   const pfx=currentView==='card'?'c':'m';
   const totalEl=document.getElementById(`${pfx}total_${idx}`);
   const gradeEl=document.getElementById(`${pfx}grade_${idx}`);
@@ -1230,8 +1236,135 @@ function updateCardRowMetrics(idx){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SCORE INPUT TOOLTIP  (exact copy from scoresheet — position:fixed
-   so it works correctly inside a scrolling modal)
+   SAVE SUBJECT SCORES
+   ════════════════════════════════════════════════════════════════ */
+async function saveSubjectByIndex(idx){
+  const subj=currentStudentData?.subjects?.[idx];
+  if(!subj)return;
+
+  const scores=[];
+  let totalRaw=0;
+  document.querySelectorAll(`.score-input[data-idx="${idx}"]`).forEach(inp=>{
+    const aid=parseInt(inp.dataset.assessmentId);
+    let val=parseFloat(inp.value)||0;
+    const max=parseFloat(inp.dataset.max)||100;
+    if(val>max)val=max;
+    if(val<0)val=0;
+    scores.push({assessment_id:aid,score:val});
+    totalRaw+=val;
+  });
+
+  const btn=document.querySelector(`.btn-save-subject[data-idx="${idx}"]`);
+  const origHtml=btn?.innerHTML;
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Saving…';}
+
+  try{
+    const res=await fetch(ROUTES.updateSubject,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF()},
+      body:JSON.stringify({
+        student_id:currentStudentData.student_id,
+        subject_id:subj.subject_id,
+        subjectclass_id:subj.subjectclass_id,
+        term_id:currentFilters.term_id,
+        session_id:currentFilters.session_id,
+        class_id:currentFilters.class_id,
+        scores:scores
+      })
+    });
+    const data=await res.json();
+    if(data.success){
+      subj.total=data.data.total;
+      subj.bf=data.data.bf;
+      subj.cum=data.data.cum;
+      subj.grade=data.data.grade;
+      subj.remark=data.data.remark;
+      if(currentView==='table'){
+        updateTableRowMetrics(idx);
+      }else{
+        updateCardRowMetrics(idx);
+      }
+      showToast('Subject scores saved!','success');
+    }else{
+      showToast(data.message||'Save failed','danger');
+    }
+  }catch(err){
+    showToast('Network error','danger');
+  }finally{
+    if(btn){btn.disabled=false;btn.innerHTML=origHtml||'<i class="ri-save-line"></i>';}
+  }
+}
+
+async function saveAllSubjects(){
+  if(!currentStudentData||!currentStudentData.subjects)return;
+
+  const updates=[];
+  for(let idx=0;idx<currentStudentData.subjects.length;idx++){
+    const subj=currentStudentData.subjects[idx];
+    const scores=[];
+    document.querySelectorAll(`.score-input[data-idx="${idx}"]`).forEach(inp=>{
+      const aid=parseInt(inp.dataset.assessmentId);
+      let val=parseFloat(inp.value)||0;
+      const max=parseFloat(inp.dataset.max)||100;
+      if(val>max)val=max;
+      if(val<0)val=0;
+      scores.push({assessment_id:aid,score:val});
+    });
+    updates.push({
+      subject_id:subj.subject_id,
+      subjectclass_id:subj.subjectclass_id,
+      scores:scores
+    });
+  }
+
+  srmOpen(updates.length);
+  let saved=0;
+  const total=updates.length;
+  let pct=0;
+
+  for(let i=0;i<updates.length;i++){
+    try{
+      const res=await fetch(ROUTES.updateSubject,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF()},
+        body:JSON.stringify({
+          student_id:currentStudentData.student_id,
+          subject_id:updates[i].subject_id,
+          subjectclass_id:updates[i].subjectclass_id,
+          term_id:currentFilters.term_id,
+          session_id:currentFilters.session_id,
+          class_id:currentFilters.class_id,
+          scores:updates[i].scores
+        })
+      });
+      const data=await res.json();
+      if(data.success){
+        const subj=currentStudentData.subjects[i];
+        subj.total=data.data.total;
+        subj.bf=data.data.bf;
+        subj.cum=data.data.cum;
+        subj.grade=data.data.grade;
+        subj.remark=data.data.remark;
+        saved++;
+        pct=(saved/total)*100;
+        srmUpdate(saved,total,pct);
+        if(currentView==='table'){
+          updateTableRowMetrics(i);
+        }else{
+          updateCardRowMetrics(i);
+        }
+      }
+    }catch(err){
+      srmError('Save failed for subject '+(i+1));
+      return;
+    }
+  }
+  srmSuccess(saved);
+  showToast(`${saved} subject(s) saved!`,'success');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCORE INPUT TOOLTIP
    ════════════════════════════════════════════════════════════════ */
 const tip=document.getElementById('srmTooltip');
 let tipInput=null,tipHideTimer=null;
@@ -1288,85 +1421,39 @@ function tipHide(){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   OPEN IMAGE ENLARGER  — called from any img with data-image
-   Uses the same pattern as scoresheet: read data-image attribute,
-   set #enlargedImage src, show the #imageViewModal manually via JS.
-   Works for both the students list AND the modal header avatar
-   because both are in the same document (nested-modal-safe).
-   ════════════════════════════════════════════════════════════════ */
-function openEnlarger(src){
-  if(!src)return;
-  document.getElementById('enlargedImage').src=src;
-  // If the score-entry modal is open, hide it briefly while enlarger shows,
-  // then restore — or simply stack them (Bootstrap allows z-index stacking).
-  const enlargeModal=new bootstrap.Modal(document.getElementById('imageViewModal'));
-  enlargeModal.show();
-}
-
-/* ════════════════════════════════════════════════════════════════
    DOM READY
    ════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded',function(){
 
-  // ── Lazy SweetAlert2 ──
   if(typeof Swal==='undefined'){
     const s=document.createElement('script');
     s.src='https://cdn.jsdelivr.net/npm/sweetalert2@11';
     document.head.appendChild(s);
   }
 
-  // ── IMAGE ENLARGER ──
-  // Exact pattern from subjectoperation blade:
-  //   <img data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="URL">
-  // Bootstrap 5 sets e.relatedTarget = the triggering <img>.
-  // We read relatedTarget.dataset.image (plain data-image, NOT data-bs-image).
-  //
-  // IMPORTANT: when triggered via JS (openEnlarger), relatedTarget is null.
-  // openEnlarger() sets enlargedImage.src BEFORE calling .show(), so we must
-  // NOT overwrite it here when relatedTarget is absent.
-  document.getElementById('imageViewModal').addEventListener('show.bs.modal',function(e){
-    if(e.relatedTarget){
-      const src=e.relatedTarget.dataset.image
-             || e.relatedTarget.getAttribute('data-image')
-             || DEFAULT_AVT;
-      document.getElementById('enlargedImage').src=src;
-    }
-    // If relatedTarget is null → triggered by openEnlarger() which already set src. Do nothing.
-  });
-
-  // ── Modal avatar (inside score-entry modal) — delegated click ──
-  // data-bs-toggle from inside another Bootstrap 5 modal is unreliable,
-  // so .srm-enlargeable images call openEnlarger() directly via delegation.
-  document.getElementById('studentResultsModal').addEventListener('click',function(e){
-    const img=e.target.closest('.srm-enlargeable');
-    if(img) openEnlarger(img.dataset.image||DEFAULT_AVT);
-  });
-
-  // ── Safety net for student-list table photos ──
-  // The img tags already have data-bs-toggle so Bootstrap handles opening,
-  // but we also set src directly so it's never blank even if relatedTarget
-  // is lost (e.g. due to DOM re-render timing).
-  document.getElementById('studentsTableBody')?.addEventListener('click',function(e){
-    const img=e.target.closest('img.student-avatar-img');
-    if(img&&img.dataset.image){
-      document.getElementById('enlargedImage').src=img.dataset.image||DEFAULT_AVT;
+  // Image enlarger handler for dynamic images via event delegation
+  document.addEventListener('click',function(e){
+    const img=e.target.closest('.student-avatar-img, .srm-enlargeable, [onclick*="openEnlarger"]');
+    if(img&&img.tagName==='IMG'&&img.dataset.image){
+      e.preventDefault();
+      openEnlarger(img.dataset.image);
     }
   });
 
-  // ── Load students ──
+  // Load students
   document.getElementById('loadStudentsBtn').addEventListener('click',loadStudents);
 
-  // ── Save all ──
+  // Save all
   document.getElementById('saveAllSubjectsBtn').addEventListener('click',saveAllSubjects);
   document.getElementById('modalSaveAllBtn')?.addEventListener('click',saveAllSubjects);
 
-  // ── Search ──
+  // Search
   document.getElementById('studentSearchInput').addEventListener('input',applySearch);
   document.getElementById('clearSearch').addEventListener('click',()=>{
     document.getElementById('studentSearchInput').value='';applySearch();
   });
 
-  // ── Column toggles ──
+  // Column toggles
   document.querySelectorAll('.col-toggle').forEach(cb=>{
     cb.addEventListener('change',function(){
       document.querySelectorAll(`th.${this.dataset.col},td.${this.dataset.col}`)
@@ -1374,7 +1461,7 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 
-  // ── VIEW TOGGLE ──
+  // VIEW TOGGLE
   document.getElementById('btnViewTable')?.addEventListener('click',function(){
     if(currentView==='table')return;
     currentView='table';
@@ -1390,7 +1477,7 @@ document.addEventListener('DOMContentLoaded',function(){
     if(currentStudentData)renderModalContent();
   });
 
-  // ── Keyboard shortcuts ──
+  // Keyboard shortcuts
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key==='s'){
       if(document.getElementById('studentResultsModal').classList.contains('show')){
