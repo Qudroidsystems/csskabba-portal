@@ -117,7 +117,7 @@
             color: #fff !important;
             background: rgba(79, 142, 247, 0.18) !important;
             border-left: 3px solid #4f8ef7;
-            padding-left: calc(1.3rem - 3px); /* compensate border width */
+            padding-left: calc(1.3rem - 3px);
         }
         #navbar-nav .nav-link.menu-link.nav-active-parent i {
             color: #4f8ef7 !important;
@@ -343,6 +343,14 @@
             .no-print { display: none !important; }
             .invoice-box { box-shadow: none; border: none; padding: 0; }
             body { padding: 0; margin: 0; }
+        }
+
+        /* =====================================================
+           SPOTLIGHT SEARCH ANIMATION
+           ===================================================== */
+        @keyframes spotlightSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 
@@ -1351,116 +1359,160 @@
                             <span class="hamburger-icon"><span></span><span></span><span></span></span>
                         </button>
 
-                        <form class="app-search d-none d-md-inline-flex">
-                            <div class="position-relative">
-                                <input type="text" class="form-control" placeholder="Search..." autocomplete="off" id="search-options" value="">
-                                <span class="mdi mdi-magnify search-widget-icon"></span>
-                                <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" id="search-close-options"></span>
-                            </div>
-                            <div class="dropdown-menu dropdown-menu-lg" id="search-dropdown">
-                                <div data-simplebar style="max-height: 320px;">
-                                    <div class="dropdown-header"><h6 class="text-overflow text-muted mb-0 text-uppercase">Recent Searches</h6></div>
-                                    <div class="dropdown-item bg-transparent text-wrap">
-                                        <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">how to setup <i class="mdi mdi-magnify ms-1"></i></a>
-                                        <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">buttons <i class="mdi mdi-magnify ms-1"></i></a>
-                                    </div>
-                                    <div class="dropdown-header mt-2"><h6 class="text-overflow text-muted mb-1 text-uppercase">Pages</h6></div>
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                        <i class="ri-bubble-chart-line align-middle fs-18 text-muted me-2"></i>
-                                        <span>Analytics Dashboard</span>
-                                    </a>
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                        <i class="ri-lifebuoy-line align-middle fs-18 text-muted me-2"></i>
-                                        <span>Help Center</span>
-                                    </a>
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                        <i class="ri-user-settings-line align-middle fs-18 text-muted me-2"></i>
-                                        <span>My account settings</span>
-                                    </a>
-                                    <div class="dropdown-header mt-2"><h6 class="text-overflow text-muted mb-2 text-uppercase">Members</h6></div>
-                                    <div class="notification-list">
-                                        <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                            <div class="d-flex">
-                                                <img src="assets/images/users/avatar-2.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                                <div class="flex-1"><h6 class="m-0">Angela Bernier</h6><span class="fs-11 mb-0 text-muted">Manager</span></div>
-                                            </div>
-                                        </a>
-                                        <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                            <div class="d-flex">
-                                                <img src="assets/images/users/avatar-3.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                                <div class="flex-1"><h6 class="m-0">David Grasso</h6><span class="fs-11 mb-0 text-muted">Web Designer</span></div>
-                                            </div>
-                                        </a>
-                                        <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                            <div class="d-flex">
-                                                <img src="assets/images/users/avatar-5.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                                <div class="flex-1"><h6 class="m-0">Mike Bunch</h6><span class="fs-11 mb-0 text-muted">React Developer</span></div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-                                <div class="text-center pt-3 pb-1">
-                                    <a href="#" class="btn btn-primary btn-sm">View All Results <i class="ri-arrow-right-line ms-1"></i></a>
-                                </div>
-                            </div>
-                        </form>
+                        {{-- SPOTLIGHT SEARCH TRIGGER BUTTON (replaces old search form) --}}
+                        <div class="d-none d-md-inline-flex align-items-center">
+                            <button type="button"
+                                    id="spotlight-trigger"
+                                    style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:7px 14px; cursor:pointer; transition:background 0.2s ease; min-width:220px;"
+                                    onmouseover="this.style.background='rgba(255,255,255,0.13)'"
+                                    onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                                <i class="mdi mdi-magnify" style="font-size:16px; opacity:0.6;"></i>
+                                <span style="font-size:13px; opacity:0.55; flex:1; text-align:left;">Search pages, students…</span>
+                                <kbd style="font-size:10px; padding:1px 5px; border-radius:4px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); opacity:0.6;">⌘K</kbd>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="d-flex align-items-center">
+                        {{-- TOPBAR USER DROPDOWN BUTTON (FIXED AVATAR + ROLES) --}}
                         <div class="dropdown ms-sm-3 header-item topbar-user">
-                            <button type="button" class="btn shadow-none" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="d-flex align-items-center">
+                            <button type="button"
+                                    class="btn shadow-none p-0"
+                                    id="page-header-user-dropdown"
+                                    data-bs-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                    style="background: transparent; border: none; line-height: 1;">
+                                <span class="d-flex align-items-center gap-2">
+
                                     @php
-                                        use App\Models\User;
+                                        use App\Models\User as UserModel;
                                         use App\Models\Student;
                                         use Illuminate\Support\Facades\Storage;
-                                        $userdata = Auth::user();
-                                        $isStudent = $userdata->hasRole('student');
-                                        $fullName = $userdata->name ?? 'User';
-                                        $srcPath = asset('assets/images/users/avatar-1.jpg');
-                                        $fallbackSrc = asset('assets/images/users/avatar-1.jpg');
+                                        use Illuminate\Support\Facades\Auth;
+
+                                        $userdata   = Auth::user();
+                                        $isStudent  = $userdata->hasRole('student');
+                                        $fullName   = $userdata->name ?? 'User';
+                                        $initials   = collect(explode(' ', $fullName))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->implode('');
+                                        $fallback   = asset('assets/images/users/avatar-1.jpg');
+                                        $srcPath    = null;
 
                                         if ($isStudent) {
-                                            $student = Student::where('id', $userdata->student_id)->first();
-                                            $studentPicture = $student ? $student->picture : null;
-                                            if ($studentPicture && Storage::disk('public')->exists('student_avatars/' . basename($studentPicture))) {
-                                                $srcPath = asset('storage/student_avatars/' . basename($studentPicture));
+                                            $student        = Student::where('id', $userdata->student_id)->first();
+                                            $studentPicture = $student?->picture;
+                                            if ($studentPicture) {
+                                                $basename = basename($studentPicture);
+                                                if (Storage::disk('public')->exists('student_avatars/' . $basename)) {
+                                                    $srcPath = asset('storage/student_avatars/' . $basename);
+                                                }
                                             }
                                         } else {
-                                            if ($userdata->avatar && Storage::disk('public')->exists('staff_avatars/' . basename($userdata->avatar))) {
-                                                $srcPath = asset('storage/staff_avatars/' . basename($userdata->avatar));
+                                            if ($userdata->avatar) {
+                                                $basename = basename($userdata->avatar);
+                                                if (Storage::disk('public')->exists('staff_avatars/' . $basename)) {
+                                                    $srcPath = asset('storage/staff_avatars/' . $basename);
+                                                }
                                             }
                                         }
+
+                                        $userRoles     = $userdata->roles->pluck('name');
+                                        $roleBadgeMap  = [
+                                            'admin'       => '#405189',
+                                            'teacher'     => '#0a9396',
+                                            'student'     => '#e76f51',
+                                            'bursar'      => '#2a9d8f',
+                                            'principal'   => '#6a0572',
+                                            'parent'      => '#e9c46a',
+                                            'staff'       => '#457b9d',
+                                        ];
                                     @endphp
-                                    <div class="avatar-lg me-2 position-relative">
-                                        <img src="{{ $srcPath }}"
-                                             alt="{{ $fullName }}"
-                                             class="w-100 header-profile-user-enhanced"
-                                             style="border-radius: 12px; object-fit: cover; height: 48px; width: 48px; cursor: pointer; border: 2px solid #fff;"
-                                             data-bs-toggle="modal"
-                                             data-bs-target="#imageViewModal"
-                                             data-image="{{ $srcPath }}"
-                                             onerror="this.onerror=null; this.src='{{ $fallbackSrc }}';">
-                                    </div>
-                                    @if ($userdata)
-                                        <span class="text-start ms-xl-2">
-                                            <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ $userdata->name }}</span>
-                                            <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">{{ $userdata->roles->pluck('name')->implode(', ') ?? 'No Role' }}</span>
+
+                                    {{-- AVATAR — fixed size, no cropping --}}
+                                    <span style="display:inline-block; width:42px; height:42px; flex-shrink:0; position:relative;">
+                                        @if($srcPath)
+                                            <img
+                                                id="topbar-avatar-img"
+                                                src="{{ $srcPath }}"
+                                                alt="{{ $fullName }}"
+                                                class="header-profile-user-enhanced"
+                                                style="width:42px; height:42px; border-radius:10px; object-fit:cover; object-position:center top; display:block; border:2px solid rgba(255,255,255,0.25);"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#imageViewModal"
+                                                data-image="{{ $srcPath }}"
+                                                onerror="this.style.display='none'; document.getElementById('topbar-avatar-fallback').style.display='flex';"
+                                            >
+                                            <span
+                                                id="topbar-avatar-fallback"
+                                                style="display:none; width:42px; height:42px; border-radius:10px; background:#405189; color:#fff; font-size:14px; font-weight:600; align-items:center; justify-content:center; position:absolute; top:0; left:0;">
+                                                {{ $initials }}
+                                            </span>
+                                        @else
+                                            <span
+                                                id="topbar-avatar-fallback"
+                                                style="display:flex; width:42px; height:42px; border-radius:10px; background:#405189; color:#fff; font-size:14px; font-weight:600; align-items:center; justify-content:center;">
+                                                {{ $initials }}
+                                            </span>
+                                        @endif
+                                    </span>
+
+                                    {{-- Name + Role Badges (stacked, no shift) --}}
+                                    <span class="d-none d-xl-flex flex-column align-items-start ms-1" style="line-height:1.2; gap:3px;">
+                                        <span class="fw-medium" style="font-size:13px; color:inherit; white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis;">
+                                            {{ $userdata->name }}
                                         </span>
-                                    @endif
+                                        <span class="d-flex flex-wrap gap-1" style="max-width:160px;">
+                                            @foreach($userRoles->take(3) as $roleName)
+                                                @php
+                                                    $lc    = strtolower($roleName);
+                                                    $color = $roleBadgeMap[$lc] ?? '#6c757d';
+                                                @endphp
+                                                <span style="display:inline-block; font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; padding:1px 6px; border-radius:20px; background:{{ $color }}22; color:{{ $color }}; border:1px solid {{ $color }}44; white-space:nowrap; line-height:1.6;">
+                                                    {{ $roleName }}
+                                                </span>
+                                            @endforeach
+                                            @if($userRoles->count() > 3)
+                                                <span style="font-size:9px; color:#6c757d;">+{{ $userRoles->count()-3 }}</span>
+                                            @endif
+                                        </span>
+                                    </span>
+
                                 </span>
                             </button>
+
+                            {{-- Dropdown menu with role badges --}}
                             <div class="dropdown-menu dropdown-menu-end">
                                 <h6 class="dropdown-header">Welcome {{ $userdata->name }}!</h6>
-                                <p class="dropdown-item-text text-muted mb-1">Roles: {{ $userdata->roles->pluck('name')->implode(', ') ?? 'No Role' }}</p>
+
+                                <div class="px-3 pb-2 d-flex flex-wrap gap-1">
+                                    @foreach($userRoles as $roleName)
+                                        @php
+                                            $lc    = strtolower($roleName);
+                                            $color = $roleBadgeMap[$lc] ?? '#6c757d';
+                                        @endphp
+                                        <span style="display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px; border-radius:20px; background:{{ $color }}18; color:{{ $color }}; border:1px solid {{ $color }}33;">
+                                            {{ $roleName }}
+                                        </span>
+                                    @endforeach
+                                </div>
+
+                                <div class="dropdown-divider"></div>
                                 @if (!$isStudent)
-                                    <a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i><span class="align-middle">Profile</span></a>
+                                    <a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}">
+                                        <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i>
+                                        <span class="align-middle">Profile</span>
+                                    </a>
                                 @endif
-                                <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog text-muted fs-lg align-middle me-1"></i><span class="align-middle">Settings</span></a>
-                                <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                                <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}">
+                                    <i class="mdi mdi-cog text-muted fs-lg align-middle me-1"></i>
+                                    <span class="align-middle">Settings</span>
+                                </a>
+                                <form method="POST" action="{{ route('logout') }}" class="d-inline" data-no-progress>
                                     @csrf
-                                    <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
-                                        <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i><span class="align-middle" data-key="t-logout">Logout</span>
+                                    <a class="dropdown-item" href="{{ route('logout') }}"
+                                       onclick="event.preventDefault(); this.closest('form').submit();">
+                                        <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i>
+                                        <span class="align-middle" data-key="t-logout">Logout</span>
                                     </a>
                                 </form>
                             </div>
@@ -1476,6 +1528,58 @@
                 <div class="modal-content border-0 shadow-lg">
                     <div class="modal-header"><h5 class="modal-title">Profile Photo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body text-center p-4"><img id="enlargedImage" src="" alt="Profile" class="img-fluid rounded-3" style="max-height:400px;"></div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ============================================================
+             SPOTLIGHT SEARCH MODAL (macOS style)
+             ============================================================ --}}
+        <div id="spotlight-overlay"
+             style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.45); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); align-items:flex-start; justify-content:center; padding-top:10vh;">
+
+            <div id="spotlight-box"
+                 style="width:100%; max-width:620px; margin:0 16px; background:rgba(30,32,40,0.92); border:1px solid rgba(255,255,255,0.12); border-radius:16px; box-shadow:0 32px 80px rgba(0,0,0,0.6); overflow:hidden; transform:scale(0.95); opacity:0; transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s ease;">
+
+                {{-- Search Input --}}
+                <div style="display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <i class="mdi mdi-magnify" style="font-size:22px; color:rgba(255,255,255,0.5); flex-shrink:0;"></i>
+                    <input
+                        id="spotlight-input"
+                        type="text"
+                        placeholder="Search for pages, students, staff, classes…"
+                        autocomplete="off"
+                        style="flex:1; background:transparent; border:none; outline:none; font-size:16px; color:#fff; caret-color:#4f8ef7;"
+                    >
+                    <kbd id="spotlight-esc"
+                         style="font-size:11px; padding:2px 7px; border-radius:5px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18); color:rgba(255,255,255,0.5); cursor:pointer; flex-shrink:0;">
+                        ESC
+                    </kbd>
+                </div>
+
+                {{-- Results Container --}}
+                <div id="spotlight-results" style="max-height:420px; overflow-y:auto; padding:8px 0;">
+
+                    {{-- Empty/Initial State --}}
+                    <div id="spotlight-empty" style="padding:32px 20px; text-align:center; color:rgba(255,255,255,0.3);">
+                        <i class="mdi mdi-lightning-bolt" style="font-size:32px; display:block; margin-bottom:8px; opacity:0.4;"></i>
+                        <span style="font-size:13px;">Start typing to search…</span>
+                    </div>
+
+                    {{-- Results List --}}
+                    <ul id="spotlight-list" style="list-style:none; margin:0; padding:0; display:none;"></ul>
+
+                    {{-- Loading Spinner --}}
+                    <div id="spotlight-loading" style="display:none; padding:20px; text-align:center;">
+                        <div style="display:inline-block; width:20px; height:20px; border:2px solid rgba(255,255,255,0.15); border-top-color:#4f8ef7; border-radius:50%; animation:spin 0.7s linear infinite;"></div>
+                    </div>
+                </div>
+
+                {{-- Footer Keyboard Hints --}}
+                <div style="padding:10px 20px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:16px; font-size:11px; color:rgba(255,255,255,0.3);">
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">↑↓</kbd> navigate</span>
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">↵</kbd> open</span>
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">ESC</kbd> close</span>
                 </div>
             </div>
         </div>
@@ -1997,10 +2101,8 @@
 
         // =====================================================
         // 7. FORM SUBMISSION — start NProgress on any form submit
-        //    (covers POST forms like logout, filters, etc.)
         // =====================================================
         document.querySelectorAll('form').forEach(function (form) {
-            // Skip forms that are purely modal/ajax — check for action attribute
             if (form.getAttribute('action') && !form.dataset.noProgress) {
                 form.addEventListener('submit', function () {
                     if (typeof NProgress !== 'undefined') {
@@ -2012,7 +2114,6 @@
 
         // =====================================================
         // 8. ACTIVE STATE on direct (non-collapse) nav links
-        //    e.g. Payment Gateways single link
         // =====================================================
         (function () {
             var currentPath = window.location.pathname;
@@ -2028,6 +2129,328 @@
         })();
 
     }); // end DOMContentLoaded
+    </script>
+
+    <!-- ====================================================
+         SPOTLIGHT SEARCH JAVASCRIPT
+         ==================================================== -->
+    <script>
+    (function () {
+        // ============================================================
+        // STATIC PAGE INDEX (all menu links)
+        // ============================================================
+        var STATIC_PAGES = [
+            { title: 'Administration Dashboard',    url: '{{ route("dashboard") }}',                              icon: 'mdi-gauge',          category: 'Dashboards' },
+            { title: 'User Management',             url: '{{ route("users.index") }}',                            icon: 'mdi-account-group',  category: 'Users & Privileges' },
+            { title: 'Roles & Permissions',         url: '{{ route("roles.index") }}',                            icon: 'mdi-shield-account', category: 'Users & Privileges' },
+            { title: 'All Students',                url: '{{ route("student.index") }}',                          icon: 'mdi-school',         category: 'Students' },
+            { title: 'Batch Student Registration',  url: '{{ route("studentbatchindex") }}',                      icon: 'mdi-account-multiple-plus', category: 'Students' },
+            { title: 'ID Card Generator',           url: '{{ route("student-id-cards.index") }}',                 icon: 'mdi-card-account-details', category: 'Students' },
+            { title: 'My Profile',                  url: '{{ route("users.overview", ["id" => Auth::id()]) }}',   icon: 'mdi-account-circle', category: 'My Account' },
+            { title: 'Account Settings',            url: '{{ route("profile.settings", ["id" => Auth::id()]) }}', icon: 'mdi-cog',            category: 'My Account' },
+            { title: 'School Information',          url: '{{ route("school-information.index") }}',               icon: 'mdi-domain',         category: 'School Settings' },
+            { title: 'School Session',              url: '{{ route("session.index") }}',                          icon: 'mdi-calendar-range', category: 'School Settings' },
+            { title: 'School Term',                 url: '{{ route("term.index") }}',                             icon: 'mdi-calendar',       category: 'School Settings' },
+            { title: 'School House',                url: '{{ route("schoolhouse.index") }}',                      icon: 'mdi-home-group',     category: 'School Settings' },
+            { title: 'Class Arm',                   url: '{{ route("schoolarm.index") }}',                        icon: 'mdi-table-chair',    category: 'Classes' },
+            { title: 'Class Category',              url: '{{ route("classcategories.index") }}',                  icon: 'mdi-format-list-bulleted', category: 'Classes' },
+            { title: 'Class Name',                  url: '{{ route("schoolclass.index") }}',                      icon: 'mdi-google-classroom', category: 'Classes' },
+            { title: 'Class Teacher',               url: '{{ route("classteacher.index") }}',                     icon: 'mdi-human-male-board', category: 'Classes' },
+            { title: 'Subject',                     url: '{{ route("subject.index") }}',                          icon: 'mdi-book-open-variant', category: 'Subjects' },
+            { title: 'Assign Subject Teacher',      url: '{{ route("subjectteacher.index") }}',                   icon: 'mdi-account-tie',    category: 'Subjects' },
+            { title: 'Assign Class Subject',        url: '{{ route("subjectclass.index") }}',                     icon: 'mdi-book-plus',      category: 'Subjects' },
+            { title: 'Student Subject Registration', url: '{{ route("subjectoperation.index") }}',                icon: 'mdi-clipboard-list', category: 'Subject Registration' },
+            { title: 'My Class',                    url: '{{ route("myclass.index") }}',                          icon: 'mdi-google-classroom', category: 'Classes & Records' },
+            { title: 'My Subject',                  url: '{{ route("mysubject.index") }}',                        icon: 'mdi-book-open',      category: 'Classes & Records' },
+            { title: 'Terminal Records',            url: '{{ route("myresultroom.index") }}',                     icon: 'mdi-file-chart',     category: 'Records & Results' },
+            { title: 'Terminal Result Reports',     url: '{{ route("studentreports.index") }}',                   icon: 'mdi-file-document',  category: 'Records & Results' },
+            { title: 'Terminal Result Broadsheet',  url: '{{ route("broadsheet.index") }}',                       icon: 'mdi-table-large',    category: 'Records & Results' },
+            { title: 'Mock Result Reports',         url: '{{ route("studentmockreports.index") }}',               icon: 'mdi-file-document-edit', category: 'Records & Results' },
+            { title: 'Student Promotions',          url: '{{ route("promotions.index") }}',                       icon: 'mdi-arrow-up-circle', category: 'Promotions' },
+            { title: 'Student Bill',                url: '{{ route("schoolpayment.index") }}',                    icon: 'mdi-receipt',        category: 'Finance' },
+            { title: 'Payment Portal',              url: '{{ route("payment.index") }}',                          icon: 'mdi-wallet',         category: 'Finance' },
+            { title: 'Payment Analysis',            url: '{{ route("analysis.index") }}',                         icon: 'mdi-chart-bar',      category: 'Finance' },
+            { title: 'All Scholarships',            url: '{{ route("admin.scholarship.index") }}',                icon: 'mdi-medal',          category: 'Finance' },
+            { title: 'All Discounts',               url: '{{ route("admin.discount.index") }}',                   icon: 'mdi-tag-multiple',   category: 'Finance' },
+            { title: 'Sibling Family Groups',       url: '{{ route("sibling.index") }}',                          icon: 'mdi-account-multiple', category: 'Finance' },
+            { title: 'Payroll Periods',             url: '{{ route("payroll.periods") }}',                        icon: 'mdi-calendar-clock', category: 'Payroll' },
+            { title: 'Payroll Summary',             url: '{{ route("payroll.summary") }}',                        icon: 'mdi-cash-multiple',  category: 'Payroll' },
+            { title: 'All Examinations',            url: '{{ route("exams.index") }}',                            icon: 'mdi-clipboard-text', category: 'Exams & CBT' },
+            { title: 'Questions Management',        url: '{{ route("questions.all") }}',                          icon: 'mdi-help-circle',    category: 'Exams & CBT' },
+            { title: 'CBT Exercise',                url: '{{ route("cbt.index") }}',                              icon: 'mdi-monitor',        category: 'Exams & CBT' },
+            { title: 'Timetable',                   url: '{{ route("timetable.index") }}',                        icon: 'mdi-table-clock',    category: 'Timetable' },
+            { title: 'Mark Attendance',             url: '{{ route("attendance.my-classes") }}',                  icon: 'mdi-clipboard-check', category: 'Attendance' },
+            { title: 'Principal\'s Comment',        url: '{{ route("principalscomment.index") }}',                icon: 'mdi-comment-text',   category: 'Records' },
+            { title: 'Balance Sheet',               url: '{{ route("reports.financial.balance-sheet") }}',        icon: 'mdi-scale-balance',  category: 'Accounting' },
+            { title: 'Income Statement',            url: '{{ route("reports.financial.income-statement") }}',     icon: 'mdi-chart-line',     category: 'Accounting' },
+            { title: 'Cash Flow',                   url: '{{ route("reports.financial.cash-flow") }}',            icon: 'mdi-cash-refund',    category: 'Accounting' },
+            { title: 'Student Debtors List',        url: '{{ route("reports.financial.debtors") }}',              icon: 'mdi-account-alert',  category: 'Accounting' },
+            { title: 'Transcript',                  url: '{{ route("transcript.index") }}',                       icon: 'mdi-file-account',   category: 'Transcripts' },
+        ];
+
+        // Category colors for visual grouping
+        var CAT_COLORS = {
+            'Dashboards':           '#4f8ef7',
+            'Users & Privileges':   '#405189',
+            'Students':             '#e76f51',
+            'My Account':           '#2a9d8f',
+            'School Settings':      '#6a0572',
+            'Classes':              '#0a9396',
+            'Subjects':             '#e9c46a',
+            'Subject Registration': '#e9c46a',
+            'Classes & Records':    '#0a9396',
+            'Records & Results':    '#457b9d',
+            'Promotions':           '#2a9d8f',
+            'Finance':              '#10b981',
+            'Payroll':              '#e76f51',
+            'Exams & CBT':          '#f4a261',
+            'Timetable':            '#4f8ef7',
+            'Attendance':           '#e9c46a',
+            'Records':              '#6a0572',
+            'Accounting':           '#10b981',
+            'Transcripts':          '#457b9d',
+        };
+
+        // DOM Elements
+        var overlay      = document.getElementById('spotlight-overlay');
+        var box          = document.getElementById('spotlight-box');
+        var input        = document.getElementById('spotlight-input');
+        var emptyState   = document.getElementById('spotlight-empty');
+        var loadingEl    = document.getElementById('spotlight-loading');
+        var list         = document.getElementById('spotlight-list');
+        var trigger      = document.getElementById('spotlight-trigger');
+        var escBtn       = document.getElementById('spotlight-esc');
+
+        var debounceTimer  = null;
+        var activeIndex    = -1;
+        var currentResults = [];
+
+        // Open Spotlight
+        function openSpotlight() {
+            overlay.style.display = 'flex';
+            requestAnimationFrame(function () {
+                box.style.transform = 'scale(1)';
+                box.style.opacity   = '1';
+            });
+            setTimeout(function () { input.focus(); }, 50);
+        }
+
+        // Close Spotlight
+        function closeSpotlight() {
+            box.style.transform = 'scale(0.95)';
+            box.style.opacity   = '0';
+            setTimeout(function () {
+                overlay.style.display = 'none';
+                input.value = '';
+                showEmpty();
+            }, 180);
+        }
+
+        // Event Listeners
+        if (trigger) trigger.addEventListener('click', openSpotlight);
+        if (escBtn)  escBtn.addEventListener('click',  closeSpotlight);
+
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) closeSpotlight();
+        });
+
+        // Keyboard Shortcuts (Cmd/Ctrl + K)
+        document.addEventListener('keydown', function (e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                overlay.style.display === 'flex' ? closeSpotlight() : openSpotlight();
+            }
+            if (e.key === 'Escape' && overlay.style.display === 'flex') {
+                closeSpotlight();
+            }
+        });
+
+        // Arrow/Enter Navigation
+        input.addEventListener('keydown', function (e) {
+            var items = list.querySelectorAll('li[data-idx]');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                highlightItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                highlightItem(items);
+            } else if (e.key === 'Enter') {
+                if (activeIndex >= 0 && currentResults[activeIndex]) {
+                    window.location.href = currentResults[activeIndex].url;
+                }
+            }
+        });
+
+        function highlightItem(items) {
+            items.forEach(function (li, i) {
+                var isActive = i === activeIndex;
+                li.style.background = isActive ? 'rgba(79,142,247,0.18)' : '';
+                var titleSpan = li.querySelector('.result-title');
+                if (titleSpan) {
+                    titleSpan.style.color = isActive ? '#4f8ef7' : '#fff';
+                }
+                if (isActive) li.scrollIntoView({ block: 'nearest' });
+            });
+        }
+
+        // UI Helpers
+        function showEmpty() {
+            emptyState.style.display  = 'block';
+            loadingEl.style.display   = 'none';
+            list.style.display        = 'none';
+            list.innerHTML            = '';
+            currentResults            = [];
+            activeIndex               = -1;
+        }
+
+        function showLoading() {
+            emptyState.style.display = 'none';
+            loadingEl.style.display  = 'block';
+            list.style.display       = 'none';
+        }
+
+        // Render Results with Grouping
+        function renderResults(results) {
+            loadingEl.style.display  = 'none';
+            emptyState.style.display = 'none';
+            list.innerHTML           = '';
+            activeIndex              = -1;
+            currentResults           = results;
+
+            if (!results.length) {
+                emptyState.innerHTML = '<i class="mdi mdi-magnify-close" style="font-size:32px; display:block; margin-bottom:8px; opacity:0.4;"></i><span style="font-size:13px;">No results found</span>';
+                emptyState.style.display = 'block';
+                list.style.display    = 'none';
+                return;
+            }
+
+            emptyState.innerHTML = '<i class="mdi mdi-lightning-bolt" style="font-size:32px; display:block; margin-bottom:8px; opacity:0.4;"></i><span style="font-size:13px;">Start typing to search…</span>';
+
+            // Group by category
+            var grouped = {};
+            results.forEach(function (r) {
+                if (!grouped[r.category]) grouped[r.category] = [];
+                grouped[r.category].push(r);
+            });
+
+            var idx = 0;
+            Object.keys(grouped).forEach(function (cat) {
+                // Category Header
+                var header = document.createElement('li');
+                header.style.cssText = 'padding:6px 20px 3px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3);';
+                header.textContent   = cat;
+                list.appendChild(header);
+
+                grouped[cat].forEach(function (r) {
+                    var li = document.createElement('li');
+                    li.setAttribute('data-idx', idx);
+                    li.style.cssText = 'display:flex; align-items:center; gap:12px; padding:9px 20px; cursor:pointer; transition:background 0.1s ease; border-radius:6px; margin:0 8px;';
+
+                    var accentColor = CAT_COLORS[r.category] || '#4f8ef7';
+
+                    var iconWrap = document.createElement('span');
+                    iconWrap.style.cssText = 'width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:' + accentColor + '22;';
+
+                    var icon = document.createElement('i');
+                    icon.className   = (r.icon || 'mdi-chevron-right') + ' mdi';
+                    icon.style.cssText = 'font-size:16px; color:' + accentColor + ';';
+                    iconWrap.appendChild(icon);
+
+                    var textWrap = document.createElement('span');
+                    textWrap.style.cssText = 'flex:1; min-width:0;';
+
+                    var title = document.createElement('span');
+                    title.className    = 'result-title';
+                    title.style.cssText = 'display:block; font-size:14px; font-weight:500; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+                    title.textContent  = r.title;
+
+                    var sub = document.createElement('span');
+                    sub.style.cssText  = 'display:block; font-size:11px; color:rgba(255,255,255,0.35);';
+                    sub.textContent    = r.subtitle || r.category;
+
+                    textWrap.appendChild(title);
+                    textWrap.appendChild(sub);
+
+                    var arrow = document.createElement('i');
+                    arrow.className    = 'mdi mdi-arrow-right';
+                    arrow.style.cssText = 'font-size:14px; color:rgba(255,255,255,0.2); flex-shrink:0;';
+
+                    li.appendChild(iconWrap);
+                    li.appendChild(textWrap);
+                    li.appendChild(arrow);
+
+                    (function (item, itemIdx) {
+                        li.addEventListener('mouseenter', function () {
+                            li.style.background = 'rgba(79,142,247,0.12)';
+                            activeIndex = itemIdx;
+                        });
+                        li.addEventListener('mouseleave', function () {
+                            li.style.background = activeIndex === itemIdx ? 'rgba(79,142,247,0.18)' : '';
+                        });
+                        li.addEventListener('click', function () {
+                            window.location.href = item.url;
+                        });
+                    })(r, idx);
+
+                    list.appendChild(li);
+                    idx++;
+                });
+            });
+
+            list.style.display = 'block';
+        }
+
+        // Search Static Pages
+        function searchStatic(query) {
+            var q = query.toLowerCase().trim();
+            return STATIC_PAGES.filter(function (p) {
+                return p.title.toLowerCase().includes(q) ||
+                       p.category.toLowerCase().includes(q);
+            }).slice(0, 12);
+        }
+
+        // Dynamic Search (AJAX)
+        function searchDynamic(query) {
+            return fetch('{{ url("/api/search") }}?q=' + encodeURIComponent(query) + '&_token={{ csrf_token() }}', {
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+            })
+            .then(function (r) { return r.ok ? r.json() : { results: [] }; })
+            .then(function (data) { return data.results || []; })
+            .catch(function () { return []; });
+        }
+
+        // Input Handler with Debounce
+        input.addEventListener('input', function () {
+            var query = input.value.trim();
+
+            if (!query) { showEmpty(); return; }
+
+            // Show static results instantly
+            var staticResults = searchStatic(query);
+            renderResults(staticResults);
+
+            // Debounce AJAX for dynamic results
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                if (query.length < 2) return;
+                searchDynamic(query).then(function (dynamicResults) {
+                    if (input.value.trim() !== query) return;
+                    var merged = staticResults.concat(dynamicResults);
+                    // Deduplicate by URL
+                    var seen  = {};
+                    var deduped = merged.filter(function (r) {
+                        if (seen[r.url]) return false;
+                        seen[r.url] = true;
+                        return true;
+                    });
+                    renderResults(deduped);
+                });
+            }, 280);
+        });
+
+    })();
     </script>
 
 </body>
