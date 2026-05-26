@@ -159,8 +159,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/users/roles',            [UserController::class, 'roles']);
         Route::resource('permissions', PermissionController::class);
 
+        Route::prefix('dashboard')->name('dashboard.')->group(function () {
+            Route::get('/chart-data', [DashboardController::class, 'getChartData'])->name('chart-data');
+            Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
+        });
 
         Route::get('/dashboard',              [DashboardController::class, 'index'])->name('dashboard');
+        // Dashboard AJAX endpoints
+
 
         // Remove these — they were the duplicates/conflicts:
         // Route::get('/get-students', ...)           ← DELETE this line
