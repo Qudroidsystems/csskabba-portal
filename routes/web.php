@@ -56,6 +56,7 @@ use App\Http\Controllers\SchoolHouseController;
 use App\Http\Controllers\SchoolPaymentController;
 use App\Http\Controllers\SchoolsessionController;
 use App\Http\Controllers\SchooltermController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffImageUploadController;
 use App\Http\Controllers\StudentAssessmentController;
@@ -1471,6 +1472,10 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             Route::post('/bulk-update-student-scores', [AdminScoreEntryController::class, 'bulkUpdateStudentScores'])->name('bulk-update-student-scores');
         });
     });
+
+
+    // Spotlight Search API
+   Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
 
 });
 
