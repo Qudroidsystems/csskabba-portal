@@ -20,4 +20,29 @@ class Subject extends Model
     {
         return $this->hasMany(BroadsheetRecord::class, 'subject_id', 'id');
     }
+    /**
+     * Relationship to SubjectTeacher
+     */
+    public function subjectTeachers()
+    {
+        return $this->hasMany(SubjectTeacher::class, 'subjectid', 'id');
+    }
+
+    /**
+     * Relationship to SubjectTeacher with staff details
+     */
+    public function teachers()
+    {
+        return $this->belongsToMany(User::class, 'subjectteacher', 'subjectid', 'staffid')
+            ->distinct();
+    }
+
+    /**
+     * Get the classes where this subject is taught
+     */
+    public function classes()
+    {
+        return $this->belongsToMany(Schoolclass::class, 'subjectclass', 'subjectid', 'schoolclassid')
+            ->via('subjectTeachers');
+    }
 }
