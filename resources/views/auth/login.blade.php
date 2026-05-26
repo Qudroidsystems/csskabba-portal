@@ -519,14 +519,14 @@
                                                                             ? asset('storage/staff_avatars/' . $staff->avatar)
                                                                             : ($staff->staffPicture?->picture
                                                                                 ? asset('storage/staff_avatars/' . $staff->staffPicture->picture)
-                                                                                : asset('theme/layouts/assets/images/users/avatar-default.jpg'));
+                                                                                : asset('storage/staff_avatars/unnamed.jpg'));
                                                                     @endphp
 
                                                                     <img src="{{ $avatarUrl }}"
                                                                          alt="{{ $staff->name }}"
                                                                          class="img-fluid"
                                                                          style="width: 100%; height: 100%; object-fit: cover;"
-                                                                         onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/users/avatar-default.jpg') }}'">
+                                                                         onerror="this.onerror=null; this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'">
                                                                 </div>
                                                             </a>
                                                         </li>
