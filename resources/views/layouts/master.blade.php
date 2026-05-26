@@ -346,10 +346,10 @@
         }
 
         /* =====================================================
-           SPOTLIGHT SEARCH ENHANCED ANIMATIONS
+           SPOTLIGHT SEARCH ENHANCED ANIMATIONS - LARGER MODAL
            ===================================================== */
 
-        /* Overlay fade animation - perfect transparency (70% dark, not too translucent) */
+        /* Overlay fade animation */
         @keyframes spotlightOverlayFadeIn {
             from { background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(0px); }
             to { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); }
@@ -373,7 +373,7 @@
             100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
         }
 
-        /* Result item animations - bounce in with stagger */
+        /* Result item animations */
         @keyframes resultBounceIn {
             0% { opacity: 0; transform: translateX(-20px) scale(0.95); }
             60% { opacity: 0.8; transform: translateX(4px) scale(1.02); }
@@ -386,22 +386,16 @@
             100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
         }
 
-        /* Top match indicator animation */
+        /* Top match indicator */
         @keyframes topMatchPulse {
             0%, 100% { border-left-color: #4f8ef7; background: rgba(79, 142, 247, 0.05); }
             50% { border-left-color: #7eb8fb; background: rgba(79, 142, 247, 0.12); }
         }
 
-        /* Loading spinner animation */
+        /* Loading spinner */
         @keyframes loadingSpin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        /* Skeleton loading animation */
-        @keyframes skeletonPulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
         }
 
         /* History item fade in */
@@ -1661,71 +1655,71 @@
         </div>
 
         {{-- ============================================================
-             ENHANCED SPOTLIGHT SEARCH MODAL (Animated + History)
+             ENHANCED SPOTLIGHT SEARCH MODAL - LARGER VERSION
              ============================================================ --}}
         <div id="spotlight-overlay"
-             style="display:none; position:fixed; inset:0; z-index:9999; align-items:flex-start; justify-content:center; padding-top:8vh;">
+             style="display:none; position:fixed; inset:0; z-index:9999; align-items:flex-start; justify-content:center; padding-top:6vh;">
 
             <div id="spotlight-box"
-                 style="width:100%; max-width:620px; margin:0 16px; background:rgba(24, 26, 32, 0.96); border:1px solid rgba(255,255,255,0.1); border-radius:24px; box-shadow:0 32px 80px rgba(0,0,0,0.5); overflow:hidden;">
+                 style="width:100%; max-width:860px; margin:0 24px; background:rgba(24, 26, 32, 0.96); border:1px solid rgba(255,255,255,0.1); border-radius:28px; box-shadow:0 32px 80px rgba(0,0,0,0.6); overflow:hidden;">
 
-                {{-- Search Input Row --}}
-                <div style="display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.08);">
-                    <i class="mdi mdi-magnify" style="font-size:22px; color:#4f8ef7; flex-shrink:0;"></i>
+                {{-- Search Input Row - Larger padding and font --}}
+                <div style="display:flex; align-items:center; gap:16px; padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <i class="mdi mdi-magnify" style="font-size:26px; color:#4f8ef7; flex-shrink:0;"></i>
                     <input
                         id="spotlight-input"
                         type="text"
                         placeholder="Search for pages, students, staff, classes…"
                         autocomplete="off"
-                        style="flex:1; background:transparent; border:none; outline:none; font-size:16px; color:#fff; caret-color:#4f8ef7;"
+                        style="flex:1; background:transparent; border:none; outline:none; font-size:18px; color:#fff; caret-color:#4f8ef7; padding:8px 0;"
                     >
-                    <div style="display:flex; gap:6px;">
-                        <button id="spotlight-clear-history" style="background:rgba(255,255,255,0.06); border:none; border-radius:8px; padding:4px 8px; color:rgba(255,255,255,0.5); font-size:11px; cursor:pointer; transition:all 0.2s ease; display:none;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                    <div style="display:flex; gap:8px;">
+                        <button id="spotlight-clear-history" style="background:rgba(255,255,255,0.08); border:none; border-radius:10px; padding:6px 12px; color:rgba(255,255,255,0.6); font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s ease; display:none;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
                             Clear History
                         </button>
                         <kbd id="spotlight-esc"
-                             style="font-size:11px; padding:2px 7px; border-radius:5px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.5); cursor:pointer; flex-shrink:0; transition:all 0.2s ease;">
+                             style="font-size:12px; padding:4px 10px; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); cursor:pointer; flex-shrink:0; transition:all 0.2s ease; font-weight:500;">
                             ESC
                         </kbd>
                     </div>
                 </div>
 
-                {{-- Results Container --}}
-                <div id="spotlight-results" style="max-height:460px; overflow-y:auto; padding:8px 0;">
+                {{-- Results Container - Taller for more results --}}
+                <div id="spotlight-results" style="max-height:520px; overflow-y:auto; padding:12px 0;">
 
                     {{-- Search History Section --}}
                     <div id="spotlight-history-section" style="display:none;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 20px 4px;">
-                            <span style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.35);">Recent Searches</span>
-                            <button id="spotlight-clear-history-btn" style="background:transparent; border:none; color:rgba(255,255,255,0.35); font-size:11px; cursor:pointer; transition:color 0.2s ease;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Clear All</button>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 24px 8px;">
+                            <span style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.4);">Recent Searches</span>
+                            <button id="spotlight-clear-history-btn" style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:12px; cursor:pointer; transition:color 0.2s ease; font-weight:500;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">Clear All</button>
                         </div>
                         <div id="spotlight-history-list" style="list-style:none; margin:0; padding:0;"></div>
-                        <div style="height:1px; background:rgba(255,255,255,0.06); margin:8px 16px;"></div>
+                        <div style="height:1px; background:rgba(255,255,255,0.06); margin:12px 20px;"></div>
                     </div>
 
                     {{-- Suggestions / Empty State --}}
-                    <div id="spotlight-empty" style="padding:40px 20px; text-align:center; color:rgba(255,255,255,0.3);">
-                        <i class="mdi mdi-lightning-bolt" style="font-size:36px; display:block; margin-bottom:12px; opacity:0.4;"></i>
-                        <span style="font-size:13px;">Start typing to search…</span>
-                        <div style="margin-top:16px; font-size:11px; opacity:0.4;">Popular: Students, Classes, Payments</div>
+                    <div id="spotlight-empty" style="padding:48px 24px; text-align:center; color:rgba(255,255,255,0.35);">
+                        <i class="mdi mdi-lightning-bolt" style="font-size:48px; display:block; margin-bottom:16px; opacity:0.4;"></i>
+                        <span style="font-size:15px;">Start typing to search…</span>
+                        <div style="margin-top:16px; font-size:12px; opacity:0.4;">Popular: Students, Classes, Payments, Exams</div>
                     </div>
 
                     {{-- Results List --}}
                     <ul id="spotlight-list" style="list-style:none; margin:0; padding:0; display:none;"></ul>
 
                     {{-- Loading Spinner --}}
-                    <div id="spotlight-loading" style="display:none; padding:40px; text-align:center;">
-                        <div style="display:inline-block; width:28px; height:28px; border:2px solid rgba(255,255,255,0.15); border-top-color:#4f8ef7; border-radius:50%; animation:loadingSpin 0.7s linear infinite;"></div>
-                        <div style="margin-top:12px; font-size:12px; color:rgba(255,255,255,0.4);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
+                    <div id="spotlight-loading" style="display:none; padding:48px; text-align:center;">
+                        <div style="display:inline-block; width:32px; height:32px; border:2px solid rgba(255,255,255,0.15); border-top-color:#4f8ef7; border-radius:50%; animation:loadingSpin 0.7s linear infinite;"></div>
+                        <div style="margin-top:16px; font-size:13px; color:rgba(255,255,255,0.45);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
                     </div>
                 </div>
 
-                {{-- Footer Keyboard Hints --}}
-                <div style="padding:10px 20px; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:16px; font-size:11px; color:rgba(255,255,255,0.3); flex-wrap:wrap;">
-                    <span><kbd style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:3px; padding:0 4px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:3px; padding:0 4px;">Ctrl+K</kbd> open</span>
-                    <span><kbd style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:3px; padding:0 4px;">↑↓</kbd> navigate</span>
-                    <span><kbd style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:3px; padding:0 4px;">↵</kbd> open</span>
-                    <span><kbd style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:3px; padding:0 4px;">ESC</kbd> close</span>
+                {{-- Footer Keyboard Hints - Larger and more visible --}}
+                <div style="padding:14px 24px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:24px; font-size:12px; color:rgba(255,255,255,0.35); flex-wrap:wrap;">
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">Ctrl+K</kbd> open</span>
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">↑↓</kbd> navigate</span>
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">↵</kbd> open</span>
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">ESC</kbd> close</span>
                 </div>
             </div>
         </div>
@@ -2124,33 +2118,33 @@
                 history.forEach(function(item, idx) {
                     var div = document.createElement('div');
                     div.className = 'spotlight-history-item';
-                    div.style.cssText = 'display:flex; align-items:center; gap:12px; padding:8px 20px; cursor:pointer; transition:background 0.15s ease; border-radius:8px; margin:0 12px;';
+                    div.style.cssText = 'display:flex; align-items:center; gap:14px; padding:10px 24px; cursor:pointer; transition:background 0.15s ease; border-radius:10px; margin:0 16px;';
                     div.setAttribute('data-history-index', idx);
 
                     var accentColor = CAT_COLORS[item.category] || '#4f8ef7';
                     var iconWrap = document.createElement('span');
-                    iconWrap.style.cssText = 'width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:' + accentColor + '22;';
+                    iconWrap.style.cssText = 'width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:' + accentColor + '22;';
                     var icon = document.createElement('i');
                     icon.className = (item.icon || 'mdi-history') + ' mdi';
-                    icon.style.cssText = 'font-size:14px; color:' + accentColor + ';';
+                    icon.style.cssText = 'font-size:16px; color:' + accentColor + ';';
                     iconWrap.appendChild(icon);
 
                     var textWrap = document.createElement('span');
                     textWrap.style.cssText = 'flex:1; min-width:0;';
                     var title = document.createElement('span');
-                    title.style.cssText = 'display:block; font-size:13px; font-weight:500; color:rgba(255,255,255,0.85); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+                    title.style.cssText = 'display:block; font-size:14px; font-weight:500; color:rgba(255,255,255,0.9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
                     title.textContent = item.title;
                     var querySpan = document.createElement('span');
-                    querySpan.style.cssText = 'display:block; font-size:10px; color:rgba(255,255,255,0.35);';
+                    querySpan.style.cssText = 'display:block; font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px;';
                     querySpan.textContent = item.query;
                     textWrap.appendChild(title);
                     textWrap.appendChild(querySpan);
 
                     var removeBtn = document.createElement('button');
                     removeBtn.innerHTML = '✕';
-                    removeBtn.style.cssText = 'background:transparent; border:none; color:rgba(255,255,255,0.3); cursor:pointer; font-size:12px; padding:4px 8px; border-radius:4px; transition:all 0.2s ease;';
+                    removeBtn.style.cssText = 'background:transparent; border:none; color:rgba(255,255,255,0.35); cursor:pointer; font-size:13px; padding:6px 10px; border-radius:6px; transition:all 0.2s ease;';
                     removeBtn.onmouseover = function() { this.style.color = '#ef4444'; this.style.background = 'rgba(239,68,68,0.15)'; };
-                    removeBtn.onmouseout = function() { this.style.color = 'rgba(255,255,255,0.3)'; this.style.background = 'transparent'; };
+                    removeBtn.onmouseout = function() { this.style.color = 'rgba(255,255,255,0.35)'; this.style.background = 'transparent'; };
                     removeBtn.onclick = function(e) { e.stopPropagation(); removeFromHistory(idx); };
 
                     div.appendChild(iconWrap);
@@ -2251,7 +2245,7 @@
 
             if (!results.length) {
                 if (emptyState) {
-                    emptyState.innerHTML = '<i class="mdi mdi-magnify-close" style="font-size:36px; display:block; margin-bottom:12px; opacity:0.4;"></i><span style="font-size:13px;">No results found for "' + (input ? input.value : '') + '"</span>';
+                    emptyState.innerHTML = '<i class="mdi mdi-magnify-close" style="font-size:42px; display:block; margin-bottom:16px; opacity:0.4;"></i><span style="font-size:15px;">No results found for "' + (input ? input.value : '') + '"</span>';
                     emptyState.style.display = 'block';
                 }
                 if (list) list.style.display = 'none';
@@ -2265,7 +2259,7 @@
             Object.keys(grouped).forEach(function(cat) {
                 var header = document.createElement('li');
                 header.className = 'spotlight-category-header';
-                header.style.cssText = 'padding:8px 20px 4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.3);';
+                header.style.cssText = 'padding:12px 24px 6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.35);';
                 header.textContent = cat;
                 list.appendChild(header);
 
@@ -2274,37 +2268,37 @@
                     var isTopMatch = idx === 0 && groupIdx === 0;
                     li.className = 'spotlight-result-item' + (isTopMatch ? ' top-match' : '');
                     li.setAttribute('data-idx', idx);
-                    li.style.cssText = 'display:flex; align-items:center; gap:12px; padding:10px 20px; cursor:pointer; transition:all 0.2s ease; border-radius:8px; margin:4px 12px;';
+                    li.style.cssText = 'display:flex; align-items:center; gap:14px; padding:12px 24px; cursor:pointer; transition:all 0.2s ease; border-radius:10px; margin:4px 12px;';
 
                     var accentColor = CAT_COLORS[r.category] || '#4f8ef7';
                     var iconWrap = document.createElement('span');
-                    iconWrap.style.cssText = 'width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:' + accentColor + '22;';
+                    iconWrap.style.cssText = 'width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:' + accentColor + '22;';
                     var icon = document.createElement('i');
                     icon.className = (r.icon || 'mdi-chevron-right') + ' mdi';
-                    icon.style.cssText = 'font-size:16px; color:' + accentColor + ';';
+                    icon.style.cssText = 'font-size:18px; color:' + accentColor + ';';
                     iconWrap.appendChild(icon);
 
                     var textWrap = document.createElement('span');
                     textWrap.style.cssText = 'flex:1; min-width:0;';
                     var title = document.createElement('span');
                     title.className = 'result-title';
-                    title.style.cssText = 'display:block; font-size:14px; font-weight:500; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+                    title.style.cssText = 'display:block; font-size:15px; font-weight:500; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
                     title.textContent = r.title;
                     var sub = document.createElement('span');
-                    sub.style.cssText = 'display:block; font-size:11px; color:rgba(255,255,255,0.35);';
+                    sub.style.cssText = 'display:block; font-size:12px; color:rgba(255,255,255,0.4); margin-top:2px;';
                     sub.textContent = r.subtitle || r.category;
                     textWrap.appendChild(title);
                     textWrap.appendChild(sub);
 
                     var arrow = document.createElement('i');
                     arrow.className = 'mdi mdi-arrow-right';
-                    arrow.style.cssText = 'font-size:14px; color:rgba(255,255,255,0.2); flex-shrink:0; transition:transform 0.2s ease;';
+                    arrow.style.cssText = 'font-size:16px; color:rgba(255,255,255,0.25); flex-shrink:0; transition:transform 0.2s ease;';
 
                     li.appendChild(iconWrap);
                     li.appendChild(textWrap);
                     li.appendChild(arrow);
 
-                    li.addEventListener('mouseenter', function() { this.style.background = 'rgba(79,142,247,0.12)'; arrow.style.transform = 'translateX(4px)'; activeIndex = idx; });
+                    li.addEventListener('mouseenter', function() { this.style.background = 'rgba(79,142,247,0.12)'; arrow.style.transform = 'translateX(6px)'; activeIndex = idx; });
                     li.addEventListener('mouseleave', function() { this.style.background = activeIndex === idx ? 'rgba(79,142,247,0.18)' : ''; arrow.style.transform = 'translateX(0)'; });
                     li.addEventListener('click', function() { addToSearchHistory(input ? input.value : '', r); window.location.href = r.url; });
 
@@ -2316,7 +2310,7 @@
 
         function searchStatic(query) {
             var q = query.toLowerCase().trim();
-            return STATIC_PAGES.filter(function(p) { return p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q); }).slice(0, 12);
+            return STATIC_PAGES.filter(function(p) { return p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q); }).slice(0, 15);
         }
 
         function searchDynamic(query) {
@@ -2332,7 +2326,7 @@
                 var titleSpan = li.querySelector('.result-title');
                 if (titleSpan) titleSpan.style.color = isActive ? '#4f8ef7' : '#fff';
                 var arrow = li.querySelector('.mdi-arrow-right');
-                if (arrow && isActive) arrow.style.transform = 'translateX(4px)';
+                if (arrow && isActive) arrow.style.transform = 'translateX(6px)';
                 else if (arrow) arrow.style.transform = 'translateX(0)';
                 if (isActive) li.scrollIntoView({ block: 'nearest' });
             });
