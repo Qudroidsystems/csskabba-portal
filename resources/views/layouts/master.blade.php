@@ -352,6 +352,28 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* =====================================================
+           KEYBOARD SHORTCUT ANIMATIONS
+           ===================================================== */
+        @keyframes shortcutPulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .shortcut-hint {
+            animation: shortcutPulse 2s ease-in-out 3;
+        }
+        .shortcut-badge {
+            transition: all 0.2s ease;
+        }
+        .shortcut-badge:hover {
+            background: rgba(79, 142, 247, 0.3) !important;
+            transform: scale(1.05);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -1359,20 +1381,28 @@
                             <span class="hamburger-icon"><span></span><span></span><span></span></span>
                         </button>
 
-                        {{-- SPOTLIGHT SEARCH TRIGGER BUTTON (with keyboard shortcut hint) --}}
-                        <div class="d-none d-md-inline-flex align-items-center">
+                        {{-- SPOTLIGHT SEARCH TRIGGER BUTTON (with enhanced keyboard shortcut hints) --}}
+                        <div class="d-none d-md-inline-flex align-items-center" style="position:relative;">
                             <button type="button"
                                     id="spotlight-trigger"
-                                    style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:7px 14px; cursor:pointer; transition:background 0.2s ease; min-width:220px;"
-                                    onmouseover="this.style.background='rgba(255,255,255,0.13)'"
-                                    onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+                                    class="shortcut-badge"
+                                    style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:7px 14px; cursor:pointer; transition:all 0.2s ease; min-width:220px;">
                                 <i class="mdi mdi-magnify" style="font-size:16px; opacity:0.6;"></i>
-                                <span style="font-size:13px; opacity:0.55; flex:1; text-align:left;">Search pages, students…</span>
+                                <span style="font-size:13px; opacity:0.55; flex:1; text-align:left;">Search everything…</span>
+
+                                {{-- Keyboard shortcut badges --}}
                                 <div style="display:flex; gap:4px;">
                                     <kbd style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); opacity:0.7;">⌘</kbd>
                                     <kbd style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); opacity:0.7;">K</kbd>
                                 </div>
                             </button>
+
+                            {{-- Tooltip on hover --}}
+                            <div class="search-tooltip"
+                                 style="position:absolute; bottom:-35px; left:0; background:rgba(0,0,0,0.85); color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; opacity:0; transition:opacity 0.2s; pointer-events:none; z-index:100; backdrop-filter:blur(4px);">
+                                Press <kbd style="background:rgba(255,255,255,0.2); padding:2px 5px; border-radius:4px; margin:0 2px;">⌘K</kbd> or
+                                <kbd style="background:rgba(255,255,255,0.2); padding:2px 5px; border-radius:4px; margin:0 2px;">Ctrl+K</kbd> to search
+                            </div>
                         </div>
                     </div>
 
@@ -1578,8 +1608,9 @@
                     </div>
                 </div>
 
-                {{-- Footer Keyboard Hints --}}
-                <div style="padding:10px 20px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:16px; font-size:11px; color:rgba(255,255,255,0.3);">
+                {{-- Footer Keyboard Hints (full reference) --}}
+                <div style="padding:10px 20px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:16px; font-size:11px; color:rgba(255,255,255,0.3); flex-wrap:wrap;">
+                    <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">Ctrl+K</kbd> open</span>
                     <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">↑↓</kbd> navigate</span>
                     <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">↵</kbd> open</span>
                     <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:3px; padding:0 4px;">ESC</kbd> close</span>
@@ -1942,7 +1973,7 @@
     @endif
 
     <!-- ====================================================
-         MASTER ENHANCEMENT SCRIPTS
+         MASTER ENHANCEMENT SCRIPTS (with keyboard shortcuts)
          ==================================================== -->
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -2136,32 +2167,59 @@
         // =====================================================
         var spotlightTrigger = document.getElementById('spotlight-trigger');
         var spotlightOverlay = document.getElementById('spotlight-overlay');
-        var spotlightInput = document.getElementById('spotlight-input');
 
         function openSpotlight() {
             if (spotlightTrigger) {
                 spotlightTrigger.click();
-            } else if (spotlightOverlay) {
-                var event = new MouseEvent('click', { bubbles: true });
-                spotlightTrigger?.dispatchEvent(event);
             }
         }
 
+        // Listen for CMD+K (Mac) or CTRL+K (Windows/Linux)
         document.addEventListener('keydown', function(e) {
-            // CMD+K (Mac) or CTRL+K (Windows/Linux)
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
                 openSpotlight();
             }
         });
 
-        // Also close with ESC if overlay is visible
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && spotlightOverlay && spotlightOverlay.style.display === 'flex') {
-                var escBtn = document.getElementById('spotlight-esc');
-                if (escBtn) escBtn.click();
-            }
-        });
+        // Show tooltip on hover
+        var triggerBtn = document.getElementById('spotlight-trigger');
+        var tooltip = document.querySelector('.search-tooltip');
+        if (triggerBtn && tooltip) {
+            triggerBtn.addEventListener('mouseenter', function() {
+                tooltip.style.opacity = '1';
+            });
+            triggerBtn.addEventListener('mouseleave', function() {
+                tooltip.style.opacity = '0';
+            });
+        }
+
+        // =====================================================
+        // 10. ONE-TIME WELCOME HINT FOR NEW USERS
+        // =====================================================
+        if (!localStorage.getItem('spotlight_hint_shown')) {
+            var hint = document.createElement('div');
+            hint.id = 'spotlight-welcome-hint';
+            hint.innerHTML = `
+                <div style="position:fixed; bottom:100px; right:20px; background:#1e293b; border-radius:12px; padding:12px 16px; box-shadow:0 8px 24px rgba(0,0,0,0.3); z-index:10000; display:flex; align-items:center; gap:12px; border-left:3px solid #4f8ef7; max-width:280px; backdrop-filter:blur(8px); background:rgba(30,41,59,0.95); animation:slideIn 0.3s ease;">
+                    <i class="mdi mdi-lightning-bolt" style="font-size:24px; color:#4f8ef7;"></i>
+                    <div style="flex:1;">
+                        <div style="font-size:12px; font-weight:600; margin-bottom:4px;">Quick Search Available</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.7);">Press <kbd style="background:rgba(255,255,255,0.15); padding:2px 6px; border-radius:4px; margin:0 2px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,0.15); padding:2px 6px; border-radius:4px; margin:0 2px;">Ctrl+K</kbd> to search</div>
+                    </div>
+                    <button onclick="this.closest('#spotlight-welcome-hint').remove()" style="background:transparent; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:14px;">✕</button>
+                </div>
+            `;
+            document.body.appendChild(hint);
+
+            // Auto remove after 8 seconds
+            setTimeout(function() {
+                var el = document.getElementById('spotlight-welcome-hint');
+                if (el) el.remove();
+            }, 8000);
+
+            localStorage.setItem('spotlight_hint_shown', 'true');
+        }
 
     }); // end DOMContentLoaded
     </script>
