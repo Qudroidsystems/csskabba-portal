@@ -2169,7 +2169,6 @@
             { title: 'Student Promotions',          url: '{{ route("promotions.index") }}',                       icon: 'mdi-arrow-up-circle', category: 'Promotions' },
             { title: 'Student Bill',                url: '{{ route("schoolpayment.index") }}',                    icon: 'mdi-receipt',        category: 'Finance' },
             { title: 'Payment Portal',              url: '{{ route("payment.index") }}',                          icon: 'mdi-wallet',         category: 'Finance' },
-            // { title: 'Payment Analysis',            url: '{{ route("analysis.index") }}',                         icon: 'mdi-chart-bar',      category: 'Finance' },
             { title: 'All Scholarships',            url: '{{ route("admin.scholarship.index") }}',                icon: 'mdi-medal',          category: 'Finance' },
             { title: 'All Discounts',               url: '{{ route("admin.discount.index") }}',                   icon: 'mdi-tag-multiple',   category: 'Finance' },
             { title: 'Sibling Family Groups',       url: '{{ route("sibling.index") }}',                          icon: 'mdi-account-multiple', category: 'Finance' },
