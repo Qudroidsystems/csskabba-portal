@@ -346,122 +346,69 @@
         }
 
         /* =====================================================
-           SPOTLIGHT SEARCH ENHANCED ANIMATIONS - LARGER MODAL
+           SPOTLIGHT SEARCH ENHANCED ANIMATIONS
            ===================================================== */
-
-        /* Overlay fade animation */
         @keyframes spotlightOverlayFadeIn {
             from { background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(0px); }
             to { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); }
         }
-
         @keyframes spotlightOverlayFadeOut {
             from { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); }
             to { background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(0px); }
         }
-
-        /* Modal entrance animation - bounce effect */
         @keyframes spotlightModalBounceIn {
             0% { opacity: 0; transform: translateY(-40px) scale(0.9); }
             40% { opacity: 0.8; transform: translateY(8px) scale(1.02); }
             70% { opacity: 0.95; transform: translateY(-3px) scale(0.99); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-
         @keyframes spotlightModalFadeOut {
             0% { opacity: 1; transform: translateY(0) scale(1); }
             100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
         }
-
-        /* Result item animations */
         @keyframes resultBounceIn {
             0% { opacity: 0; transform: translateX(-20px) scale(0.95); }
             60% { opacity: 0.8; transform: translateX(4px) scale(1.02); }
             100% { opacity: 1; transform: translateX(0) scale(1); }
         }
-
         @keyframes resultGlowPulse {
             0% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.4); }
             70% { box-shadow: 0 0 0 6px rgba(79, 142, 247, 0); }
             100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
         }
-
-        /* Top match indicator */
-        @keyframes topMatchPulse {
-            0%, 100% { border-left-color: #4f8ef7; background: rgba(79, 142, 247, 0.05); }
-            50% { border-left-color: #7eb8fb; background: rgba(79, 142, 247, 0.12); }
-        }
-
-        /* Loading spinner */
         @keyframes loadingSpin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* History item fade in */
         @keyframes historySlideIn {
             from { opacity: 0; transform: translateX(-15px); }
             to { opacity: 1; transform: translateX(0); }
         }
-
-        /* Result items - staggered animation */
-        .spotlight-result-item {
-            animation: resultBounceIn 0.35s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
-            opacity: 0;
-        }
-
-        .spotlight-result-item:nth-child(1) { animation-delay: 0.00s; }
-        .spotlight-result-item:nth-child(2) { animation-delay: 0.03s; }
-        .spotlight-result-item:nth-child(3) { animation-delay: 0.06s; }
-        .spotlight-result-item:nth-child(4) { animation-delay: 0.09s; }
-        .spotlight-result-item:nth-child(5) { animation-delay: 0.12s; }
-        .spotlight-result-item:nth-child(6) { animation-delay: 0.15s; }
-        .spotlight-result-item:nth-child(7) { animation-delay: 0.18s; }
-        .spotlight-result-item:nth-child(8) { animation-delay: 0.21s; }
-        .spotlight-result-item:nth-child(9) { animation-delay: 0.24s; }
-        .spotlight-result-item:nth-child(10) { animation-delay: 0.27s; }
-
-        /* Top match (best suggestion) gets extra glow */
-        .spotlight-result-item.top-match {
-            animation: resultBounceIn 0.4s cubic-bezier(0.34, 1.3, 0.64, 1) forwards, resultGlowPulse 0.6s ease 0.3s;
-            border-left: 3px solid #4f8ef7;
-            background: linear-gradient(90deg, rgba(79, 142, 247, 0.08) 0%, transparent 100%);
-        }
-
-        .spotlight-result-item.top-match:hover {
-            background: linear-gradient(90deg, rgba(79, 142, 247, 0.15) 0%, rgba(79, 142, 247, 0.05) 100%);
-        }
-
-        /* Category header animation */
-        .spotlight-category-header {
-            animation: historySlideIn 0.25s ease forwards;
-        }
-
-        /* History items animation */
-        .spotlight-history-item {
-            animation: historySlideIn 0.25s ease forwards;
-            opacity: 0;
-            animation-fill-mode: forwards;
-        }
-
-        .spotlight-history-item:nth-child(1) { animation-delay: 0.00s; }
-        .spotlight-history-item:nth-child(2) { animation-delay: 0.04s; }
-        .spotlight-history-item:nth-child(3) { animation-delay: 0.08s; }
-        .spotlight-history-item:nth-child(4) { animation-delay: 0.12s; }
-        .spotlight-history-item:nth-child(5) { animation-delay: 0.16s; }
-
-        /* Hover effect for results */
-        .spotlight-result-item:hover {
-            transform: translateX(4px);
-            transition: transform 0.2s ease, background 0.2s ease;
-        }
-
-        /* Typing indicator animation */
         @keyframes typingDot {
             0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
             30% { transform: translateY(-4px); opacity: 1; }
         }
 
+        .spotlight-result-item {
+            animation: resultBounceIn 0.35s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+            opacity: 0;
+        }
+        .spotlight-result-item:nth-child(1) { animation-delay: 0.00s; }
+        .spotlight-result-item:nth-child(2) { animation-delay: 0.03s; }
+        .spotlight-result-item:nth-child(3) { animation-delay: 0.06s; }
+        .spotlight-result-item.top-match {
+            animation: resultBounceIn 0.4s cubic-bezier(0.34, 1.3, 0.64, 1) forwards, resultGlowPulse 0.6s ease 0.3s;
+            border-left: 3px solid #4f8ef7;
+            background: linear-gradient(90deg, rgba(79, 142, 247, 0.08) 0%, transparent 100%);
+        }
+        .spotlight-history-item {
+            animation: historySlideIn 0.25s ease forwards;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        .spotlight-history-item:nth-child(1) { animation-delay: 0.00s; }
+        .spotlight-history-item:nth-child(2) { animation-delay: 0.04s; }
+        .spotlight-history-item:nth-child(3) { animation-delay: 0.08s; }
         .typing-dot {
             display: inline-block;
             animation: typingDot 1.4s infinite ease-in-out;
@@ -1496,15 +1443,19 @@
                     </div>
 
                     <div class="d-flex align-items-center">
-                        {{-- TOPBAR USER DROPDOWN BUTTON (FIXED AVATAR + ROLES) --}}
+                        {{-- =====================================================
+                             FIXED TOPBAR USER DROPDOWN BUTTON
+                             Works on all pages including dashboard
+                             ===================================================== --}}
                         <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button"
-                                    class="btn shadow-none p-0"
+                                    class="btn shadow-none p-0 dropdown-toggle"
                                     id="page-header-user-dropdown"
                                     data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
                                     aria-haspopup="true"
                                     aria-expanded="false"
-                                    style="background: transparent; border: none; line-height: 1;">
+                                    style="background: transparent; border: none; line-height: 1; box-shadow: none !important;">
                                 <span class="d-flex align-items-center gap-2">
 
                                     @php
@@ -1663,7 +1614,7 @@
             <div id="spotlight-box"
                  style="width:100%; max-width:860px; margin:0 24px; background:rgba(24, 26, 32, 0.96); border:1px solid rgba(255,255,255,0.1); border-radius:28px; box-shadow:0 32px 80px rgba(0,0,0,0.6); overflow:hidden;">
 
-                {{-- Search Input Row - Larger padding and font --}}
+                {{-- Search Input Row --}}
                 <div style="display:flex; align-items:center; gap:16px; padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.08);">
                     <i class="mdi mdi-magnify" style="font-size:26px; color:#4f8ef7; flex-shrink:0;"></i>
                     <input
@@ -1684,7 +1635,7 @@
                     </div>
                 </div>
 
-                {{-- Results Container - Taller for more results --}}
+                {{-- Results Container --}}
                 <div id="spotlight-results" style="max-height:520px; overflow-y:auto; padding:12px 0;">
 
                     {{-- Search History Section --}}
@@ -1714,7 +1665,7 @@
                     </div>
                 </div>
 
-                {{-- Footer Keyboard Hints - Larger and more visible --}}
+                {{-- Footer Keyboard Hints --}}
                 <div style="padding:14px 24px; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:24px; font-size:12px; color:rgba(255,255,255,0.35); flex-wrap:wrap;">
                     <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">Ctrl+K</kbd> open</span>
                     <span><kbd style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:5px; padding:2px 6px; font-size:11px;">↑↓</kbd> navigate</span>
@@ -1978,6 +1929,39 @@
         if (triggerBtn && tooltip) {
             triggerBtn.addEventListener('mouseenter', function () { tooltip.style.opacity = '1'; });
             triggerBtn.addEventListener('mouseleave', function () { tooltip.style.opacity = '0'; });
+        }
+
+        // =====================================================
+        // 10. FORCE RE-INITIALIZE USER DROPDOWN (Fix for dashboard)
+        // =====================================================
+        var userDropdownBtn = document.getElementById('page-header-user-dropdown');
+        if (userDropdownBtn) {
+            // Ensure Bootstrap dropdown is properly initialized
+            if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                try {
+                    var existingDropdown = bootstrap.Dropdown.getInstance(userDropdownBtn);
+                    if (existingDropdown) {
+                        existingDropdown.dispose();
+                    }
+                    new bootstrap.Dropdown(userDropdownBtn);
+                } catch(e) {
+                    console.log('Dropdown init error:', e);
+                }
+            }
+
+            // Fallback: if dropdown still doesn't work, add manual click handler
+            userDropdownBtn.addEventListener('click', function(e) {
+                var menu = this.nextElementSibling;
+                if (menu && !menu.classList.contains('show')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    menu.classList.add('show');
+                    this.setAttribute('aria-expanded', 'true');
+                } else if (menu && menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                    this.setAttribute('aria-expanded', 'false');
+                }
+            });
         }
 
     });
