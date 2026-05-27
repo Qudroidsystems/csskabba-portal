@@ -30,7 +30,7 @@
 
     <style>
         /* =====================================================
-           APPLE OS STYLE LOGIN PAGE - EXACT SAME AS REGISTER
+           APPLE OS STYLE LOGIN PAGE
            ===================================================== */
 
         /* Smooth page entrance animation */
@@ -105,7 +105,6 @@
             to { transform: rotate(-360deg) translate(120px, 0) rotate(360deg); }
         }
 
-        /* EXACT SAME PULSE ANIMATION AS REGISTER PAGE */
         @keyframes pulse {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.05); opacity: 0.9; }
@@ -262,14 +261,13 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Effect circles - EXACT SAME AS REGISTER PAGE */
+        /* Effect circles */
         .effect-circle-1,
         .effect-circle-2,
         .effect-circle-3 {
             transition: all 0.3s ease;
         }
 
-        /* EXACT SAME PULSE ANIMATION - ONLY ON effect-circle-1 */
         .effect-circle-1 {
             animation: pulse 2s infinite;
         }
@@ -432,7 +430,7 @@
             to { opacity: 0; transform: translateX(20px); }
         }
 
-        /* Responsive adjustments - EXACT SAME AS REGISTER */
+        /* Responsive adjustments */
         @media (max-width: 576px) {
             .auth-effect-main { width: 200px; height: 200px; }
             .auth-user-list li { width: 40px; height: 40px; }
@@ -474,9 +472,6 @@
         if($recentStaff->isEmpty()) {
             $recentStaff = collect([]);
         }
-
-        // Check for error from session
-        $hasError = session('errors') && (session('errors')->has('email') || session('errors')->has('password'));
     @endphp
 
     <section class="auth-page-wrapper position-relative d-flex align-items-center justify-content-center min-vh-100">
@@ -493,12 +488,11 @@
                                             <p class="text-white opacity-75 fs-base">It makes school operations SEAMLESS...</p>
                                         </div>
 
-                                        <!-- EXACT SAME SPIRAL EFFECT CONTAINER AS REGISTER PAGE -->
                                         <div class="auth-effect-main my-5 position-relative rounded-circle d-flex align-items-center justify-content-center mx-auto">
                                             <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center" style="animation: pulse 2s infinite;">
                                                 <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                     <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
-                                                        <span class="text-primary ms-1" style="font-weight: 600;">ViteESchool 2.0</span>
+                                                        <span class="text-primary ms-1" style="font-weight: 600;">Vite-eSchool 1.1</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -519,14 +513,14 @@
                                                                             ? asset('storage/staff_avatars/' . $staff->avatar)
                                                                             : ($staff->staffPicture?->picture
                                                                                 ? asset('storage/staff_avatars/' . $staff->staffPicture->picture)
-                                                                                : asset('storage/staff_avatars/unnamed.jpg'));
+                                                                                : asset('theme/layouts/assets/images/users/avatar-default.jpg'));
                                                                     @endphp
 
                                                                     <img src="{{ $avatarUrl }}"
                                                                          alt="{{ $staff->name }}"
                                                                          class="img-fluid"
                                                                          style="width: 100%; height: 100%; object-fit: cover;"
-                                                                         onerror="this.onerror=null; this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'">
+                                                                         onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/users/avatar-default.jpg') }}'">
                                                                 </div>
                                                             </a>
                                                         </li>
@@ -660,7 +654,7 @@
 
     <script>
         // =====================================================
-        // APPLE OS STYLE LOGIN PAGE - EXACT SAME AS REGISTER
+        // APPLE OS STYLE LOGIN PAGE
         // =====================================================
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -672,9 +666,7 @@
                 });
             });
 
-            // =====================================================
-            // AVATAR HOVER PAUSE ANIMATION (EXACT SAME AS REGISTER)
-            // =====================================================
+            // Avatar hover pause animation
             const avatarItems = document.querySelectorAll('.auth-user-list li');
             avatarItems.forEach(item => {
                 item.addEventListener('mouseenter', function() {
@@ -685,9 +677,7 @@
                 });
             });
 
-            // =====================================================
-            // FIELD INTERACTIONS
-            // =====================================================
+            // Field interactions
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
             const loginForm = document.getElementById('loginForm');
@@ -707,97 +697,31 @@
             if (emailInput) addFieldPulse(emailInput);
             if (passwordInput) addFieldPulse(passwordInput);
 
-            // =====================================================
-            // SHAKE ANIMATION ON ERROR (Apple OS Style)
-            // =====================================================
+            // Shake animation for error
             function shakeElement(element) {
                 if (!element) return;
                 element.classList.add('shake-field');
-
-                // Vibration for mobile devices
                 if (window.navigator && window.navigator.vibrate) {
                     window.navigator.vibrate(100);
                 }
-
                 setTimeout(() => {
                     element.classList.remove('shake-field');
                 }, 400);
             }
 
-            // Check for existing errors and shake fields
-            @if($hasError)
-                if (emailInput && emailInput.classList.contains('is-invalid')) {
-                    shakeElement(emailInput);
-                }
-                if (passwordInput && passwordInput.classList.contains('is-invalid')) {
-                    shakeElement(passwordInput);
-                }
+            // Check for existing errors on page load
+            @if($errors->any())
+                @if($errors->has('email'))
+                    if (emailInput) shakeElement(emailInput);
+                @endif
+                @if($errors->has('password'))
+                    if (passwordInput) shakeElement(passwordInput);
+                @endif
+                // Show error toast for login failure
+                showToast('Login Failed', 'Invalid email or password. Please try again.', 'error');
             @endif
 
-            // =====================================================
-            // FORM SUBMIT WITH LOADING STATE
-            // =====================================================
-            if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
-                    let hasValidationError = false;
-
-                    if (emailInput && !emailInput.value.trim()) {
-                        emailInput.classList.add('is-invalid');
-                        shakeElement(emailInput);
-                        hasValidationError = true;
-                    }
-
-                    if (passwordInput && !passwordInput.value) {
-                        passwordInput.classList.add('is-invalid');
-                        shakeElement(passwordInput);
-                        hasValidationError = true;
-                    }
-
-                    if (hasValidationError) {
-                        e.preventDefault();
-                        showToast('Validation Error', 'Please enter your email and password', 'error');
-                        return false;
-                    }
-
-                    // Add loading state to button
-                    if (loginButton) {
-                        loginButton.classList.add('loading');
-                    }
-                });
-            }
-
-            // =====================================================
-            // REAL-TIME VALIDATION (Apple Style)
-            // =====================================================
-
-            // Email validation on blur
-            if (emailInput) {
-                emailInput.addEventListener('blur', function() {
-                    const email = this.value.trim();
-                    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
-
-                    if (email && !emailRegex.test(email)) {
-                        this.classList.add('is-invalid');
-                        let errorDiv = this.parentElement.querySelector('.invalid-feedback');
-                        if (!errorDiv) {
-                            errorDiv = document.createElement('span');
-                            errorDiv.className = 'invalid-feedback';
-                            errorDiv.setAttribute('role', 'alert');
-                            this.parentElement.appendChild(errorDiv);
-                        }
-                        errorDiv.innerHTML = '<strong>Please enter a valid email address.</strong>';
-                        shakeElement(this);
-                    } else if (email && emailRegex.test(email)) {
-                        this.classList.remove('is-invalid');
-                        const errorDiv = this.parentElement.querySelector('.invalid-feedback');
-                        if (errorDiv && !errorDiv.innerHTML.includes('credentials')) {
-                            errorDiv.remove();
-                        }
-                    }
-                });
-            }
-
-            // Remove error styling on input
+            // Real-time validation - remove error on input
             if (emailInput) {
                 emailInput.addEventListener('input', function() {
                     this.classList.remove('is-invalid');
@@ -818,9 +742,27 @@
                 });
             }
 
-            // =====================================================
-            // PASSWORD TOGGLE FUNCTIONALITY
-            // =====================================================
+            // Email validation on blur
+            if (emailInput) {
+                emailInput.addEventListener('blur', function() {
+                    const email = this.value.trim();
+                    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+                    if (email && !emailRegex.test(email)) {
+                        this.classList.add('is-invalid');
+                        let errorDiv = this.parentElement.querySelector('.invalid-feedback');
+                        if (!errorDiv) {
+                            errorDiv = document.createElement('span');
+                            errorDiv.className = 'invalid-feedback';
+                            errorDiv.setAttribute('role', 'alert');
+                            this.parentElement.appendChild(errorDiv);
+                        }
+                        errorDiv.innerHTML = '<strong>Please enter a valid email address.</strong>';
+                        shakeElement(this);
+                    }
+                });
+            }
+
+            // Password toggle functionality
             const passwordAddon = document.getElementById('password-addon');
             if (passwordAddon && passwordInput) {
                 passwordAddon.addEventListener('click', function() {
@@ -832,11 +774,12 @@
                     }
                 });
             }
+
+            // NOTE: We DO NOT add a submit event listener that prevents default
+            // Let the form submit naturally to Laravel's login route
         });
 
-        // =====================================================
-        // STAFF CREDENTIAL FILL FUNCTION
-        // =====================================================
+        // Staff credential fill function
         function fillStaffCredentials(email) {
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
@@ -845,8 +788,6 @@
                 emailInput.value = email;
                 emailInput.classList.remove('is-invalid');
                 emailInput.dispatchEvent(new Event('focus'));
-
-                // Add visual feedback
                 emailInput.style.transition = 'all 0.3s ease';
                 emailInput.style.backgroundColor = '#e8f0fe';
                 setTimeout(() => {
@@ -861,9 +802,7 @@
             showToast('Staff Selected', 'Email filled. Enter your password to continue.', 'info');
         }
 
-        // =====================================================
-        // TOAST NOTIFICATION (Apple Style)
-        // =====================================================
+        // Toast notification function
         function showToast(title, message, type = 'info') {
             const colors = {
                 success: '#10b981',
@@ -871,6 +810,10 @@
                 info: '#4f8ef7',
                 warning: '#f59e0b'
             };
+
+            // Remove existing toasts
+            const existingToasts = document.querySelectorAll('.login-success');
+            existingToasts.forEach(toast => toast.remove());
 
             const toast = document.createElement('div');
             toast.className = 'login-success ' + (type === 'error' ? 'error' : '');
