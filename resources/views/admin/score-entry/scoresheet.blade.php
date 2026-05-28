@@ -550,7 +550,7 @@
                     @if($assessments->isNotEmpty())
                         <div class="d-flex flex-column gap-2">
                             @foreach($assessments as $assessment)
-                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 assessment-btn"
+                                <div class="d-flex align-items-center justify-between p-2 rounded-3 assessment-btn"
                                      style="background:#eff6ff;border:1px solid #bfdbfe;color:var(--ss-accent);">
                                     <span><i class="ri-edit-line me-1"></i>{{ $assessment->name }}</span>
                                     <span class="badge" style="background:var(--ss-accent);">{{ $assessment->max_score }}</span>
@@ -575,8 +575,10 @@
             <i class="ri-information-line me-1 text-info"></i>
             <strong>Total Grade</strong> = grade on raw total &nbsp;|&nbsp;
             <strong>Cum Grade</strong> = grade on cumulative avg &nbsp;|&nbsp;
-            <strong>Class Pos (Cum)</strong> = all arms, by cum &nbsp;|&nbsp;
-            <strong>Arm Pos (Cum)</strong> = this arm, by cum
+            <strong>Class Pos (Cum)</strong> = all arms, ranked by cumulative avg &nbsp;|&nbsp;
+            <strong>Class Pos (Total)</strong> = all arms, ranked by raw total &nbsp;|&nbsp;
+            <strong>Arm Pos (Total)</strong> = this arm only, ranked by raw total &nbsp;|&nbsp;
+            <strong>Arm Pos (Cum)</strong> = this arm only, ranked by cumulative avg
         </span>
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-sm btn-primary" id="updateArmPositionsBtn">
@@ -760,12 +762,21 @@
                             Cum<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
                         <th class="col-avg text-center" title="Subject class average">Class Avg</th>
-                        <th class="col-position text-center" title="All arms, ranked by cumulative average">
+
+                        {{-- POSITION COLUMNS --}}
+                        <th class="col-position text-center" title="All arms of this class combined, ranked by cumulative average">
                             Class Pos<br><small class="fw-normal opacity-75">(Cum)</small>
                         </th>
-                        <th class="col-arm-position text-center" title="This arm only, ranked by cumulative average">
+                        <th class="col-position-total text-center" title="All arms of this class combined, ranked by raw total">
+                            Class Pos<br><small class="fw-normal opacity-75">(Total)</small>
+                        </th>
+                        <th class="col-arm-position text-center" title="This arm only, ranked by raw total">
+                            Arm Pos<br><small class="fw-normal opacity-75">(Total)</small>
+                        </th>
+                        <th class="col-arm-position-cum text-center" title="This arm only, ranked by cumulative average">
                             Arm Pos<br><small class="fw-normal opacity-75">(Cum)</small>
                         </th>
+
                         <th class="col-vetted text-center">Status</th>
                         <th class="col-lock-status text-center" style="width: 100px;">
                             <i class="ri-lock-line"></i><br>
@@ -881,9 +892,16 @@
                                     {{ number_format($broadsheet->avg ?? 0, 1) }}
                                 </span>
                             </td>
+
+                            {{-- POSITION CELLS --}}
                             <td class="col-position text-center">
                                 <span class="badge position-badge" style="background:var(--ss-primary);">
                                     {{ $broadsheet->position ? $broadsheet->position . ($broadsheet->position == 1 ? 'st' : ($broadsheet->position == 2 ? 'nd' : ($broadsheet->position == 3 ? 'rd' : 'th'))) : '-' }}
+                                </span>
+                            </td>
+                            <td class="col-position-total text-center">
+                                <span class="badge position-total-badge" style="background:#0f766e;">
+                                    {{ $broadsheet->position_total ? $broadsheet->position_total . ($broadsheet->position_total == 1 ? 'st' : ($broadsheet->position_total == 2 ? 'nd' : ($broadsheet->position_total == 3 ? 'rd' : 'th'))) : '-' }}
                                 </span>
                             </td>
                             <td class="col-arm-position text-center">
@@ -891,6 +909,12 @@
                                     {{ $broadsheet->arm_position ? $broadsheet->arm_position . ($broadsheet->arm_position == 1 ? 'st' : ($broadsheet->arm_position == 2 ? 'nd' : ($broadsheet->arm_position == 3 ? 'rd' : 'th'))) : '-' }}
                                 </span>
                             </td>
+                            <td class="col-arm-position-cum text-center">
+                                <span class="badge arm-position-cum-badge" style="background:#7c3aed;">
+                                    {{ $broadsheet->arm_position_cum ? $broadsheet->arm_position_cum . ($broadsheet->arm_position_cum == 1 ? 'st' : ($broadsheet->arm_position_cum == 2 ? 'nd' : ($broadsheet->arm_position_cum == 3 ? 'rd' : 'th'))) : '-' }}
+                                </span>
+                            </td>
+
                             <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
                                     <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
@@ -928,7 +952,7 @@
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 16 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 20 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -1006,8 +1030,10 @@
                         </div></div>
                         <div class="col-md-3"><div class="col-group">
                             <h6>Rankings &amp; Status</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position" checked><label>Class Pos</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position" checked><label>Arm Pos</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position" checked><label>Class Pos (Cum)</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position-total" checked><label>Class Pos (Total)</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position" checked><label>Arm Pos (Total)</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position-cum" checked><label>Arm Pos (Cum)</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted" checked><label>Status</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-status" checked><label>Lock</label></div>
                         </div></div>
@@ -1476,7 +1502,7 @@ function refreshAllPositions() {
 
 // Open Score Entry Modal
 function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studentAvatar, currentScores, assessments, bf) {
-    console.log('Opening modal for:', studentName); // Debug log
+    console.log('Opening modal for:', studentName);
 
     const modal = new bootstrap.Modal(document.getElementById('scoreEntryModal'));
     const modalBody = document.getElementById('modalAssessmentsList');
