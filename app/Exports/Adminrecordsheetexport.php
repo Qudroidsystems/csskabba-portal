@@ -6,9 +6,6 @@ use App\Models\Assessment;
 use App\Models\Broadsheets;
 use App\Models\Schoolclass;
 use App\Models\SchoolInformation;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
-use App\Models\Subjectclass;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
@@ -19,17 +16,18 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Illuminate\Support\Facades\Log;
 
 class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEvents, WithProperties
 {
     use Exportable;
 
-    protected int    $schoolclassId;
-    protected int    $subjectclassId;
-    protected int    $termId;
-    protected int    $sessionId;
-    protected int    $staffId;
-    protected        $assessments;
+    protected int $schoolclassId;
+    protected int $subjectclassId;
+    protected int $termId;
+    protected int $sessionId;
+    protected int $staffId;
+    protected $assessments;
     protected string $password;
 
     public function __construct(
@@ -57,26 +55,19 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Password
-    // -------------------------------------------------------------------------
-
     protected function generateFilePassword(): string
     {
-        $subjectClass = Subjectclass::with('subject')->find($this->subjectclassId);
-        $schoolclass  = Schoolclass::find($this->schoolclassId);
-        $term         = Schoolterm::find($this->termId);
-        $session      = Schoolsession::find($this->sessionId);
+        $subjectClass = \App\Models\Subjectclass::with('subject')->find($this->subjectclassId);
+        $schoolclass  = \App\Models\Schoolclass::find($this->schoolclassId);
+        $term         = \App\Models\Schoolterm::find($this->termId);
+        $session      = \App\Models\Schoolsession::find($this->sessionId);
 
-        $subjectCode = ($subjectClass && $subjectClass->subject)
-            ? $subjectClass->subject->subject_code
-            : 'SUBJ';
+        $subjectCode = ($subjectClass && $subjectClass->subject) ? $subjectClass->subject->subject_code : 'SUBJ';
         $className   = $schoolclass ? $schoolclass->schoolclass : 'CLASS';
         $termName    = $term ? substr(preg_replace('/[^a-zA-Z]/', '', $term->term), 0, 3) : 'TRM';
         $sessionYear = $session ? preg_replace('/[^0-9]/', '', $session->session) : date('Y');
 
         $password = strtoupper($subjectCode . '_' . $className . '_' . $termName . '_' . $sessionYear);
-
         return preg_replace('/[^A-Z0-9_]/', '', $password);
     }
 
@@ -85,13 +76,17 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
         return $this->password;
     }
 
-    // -------------------------------------------------------------------------
-    // View
-    // -------------------------------------------------------------------------
-
     public function view(): View
     {
-        // Use the same join pattern as AdminScoreEntryController::getBroadsheets()
+        Log::info('AdminRecordsheetExport view() called', [
+            'subjectclass_id' => $this->subjectclassId,
+            'staff_id' => $this->staffId,
+            'term_id' => $this->termId,
+            'session_id' => $this->sessionId,
+            'schoolclass_id' => $this->schoolclassId
+        ]);
+
+        // Get broadsheets with proper joins
         $broadsheets = Broadsheets::query()
             ->where('broadsheets.staff_id', $this->staffId)
             ->where('broadsheets.term_id', $this->termId)
@@ -146,9 +141,10 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
                 'broadsheets.cmax',
             ]);
 
+        Log::info('Broadsheets retrieved count: ' . $broadsheets->count());
+
         $school = SchoolInformation::first();
 
-        // Reuse the teacher export view — it only cares about $broadsheets, $assessments, $school
         return view('exports.admin_scoresheet_export', [
             'broadsheets' => $broadsheets,
             'assessments' => $this->assessments,
@@ -156,16 +152,12 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
         ]);
     }
 
-    // -------------------------------------------------------------------------
-    // Properties
-    // -------------------------------------------------------------------------
-
     public function properties(): array
     {
-        $subjectClass = Subjectclass::with('subject')->find($this->subjectclassId);
-        $schoolclass  = Schoolclass::find($this->schoolclassId);
-        $term         = Schoolterm::find($this->termId);
-        $session      = Schoolsession::find($this->sessionId);
+        $subjectClass = \App\Models\Subjectclass::with('subject')->find($this->subjectclassId);
+        $schoolclass  = \App\Models\Schoolclass::find($this->schoolclassId);
+        $term         = \App\Models\Schoolterm::find($this->termId);
+        $session      = \App\Models\Schoolsession::find($this->sessionId);
 
         $subjectName = ($subjectClass && $subjectClass->subject) ? $subjectClass->subject->subject : 'subject';
         $className   = $schoolclass ? $schoolclass->schoolclass : 'class';
@@ -183,17 +175,13 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
         ];
     }
 
-    // -------------------------------------------------------------------------
-    // Styles
-    // -------------------------------------------------------------------------
-
     public function styles(Worksheet $sheet)
     {
         $assessmentCount = $this->assessments->count();
-        $lastColIndex    = 2 + $assessmentCount + 6; // A=0, so col index from D onwards
-        $lastCol         = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex + 1);
+        $lastColIndex    = 3 + $assessmentCount + 7; // A=1, so col index
+        $lastCol         = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex);
 
-        // Unlock all data cells first
+        // Unlock all data cells first (rows 7 and below)
         $sheet->getStyle("A7:{$lastCol}1000")
             ->getProtection()->setLocked(Protection::PROTECTION_UNPROTECTED);
 
@@ -207,11 +195,10 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
                 ->getProtection()->setLocked(Protection::PROTECTION_PROTECTED);
         }
 
-        // Lock calculated columns: Total, BF, Cum, Grade, Position, Remark
-        // These start after the assessment columns (column D = index 4 = offset 3)
-        $calcStartIndex = 4 + $assessmentCount; // 1-based: D=4
-        foreach (range(0, 5) as $offset) {
-            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($calcStartIndex + $offset);
+        // Lock calculated columns (after assessment columns)
+        $calcStartCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(4 + $assessmentCount);
+        for ($i = 0; $i < 7; $i++) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(4 + $assessmentCount + $i);
             $sheet->getStyle("{$col}7:{$col}1000")
                 ->getProtection()->setLocked(Protection::PROTECTION_PROTECTED);
         }
@@ -222,14 +209,8 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
         $sheet->getStyle("A3:{$lastCol}3")->getFont()->setBold(true);
         $sheet->getStyle("A6:{$lastCol}6")->getFont()->setBold(true);
 
-        $sheet->freezePane('A7');
-
         return [];
     }
-
-    // -------------------------------------------------------------------------
-    // Events
-    // -------------------------------------------------------------------------
 
     public function registerEvents(): array
     {
@@ -238,15 +219,15 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A7');
 
-                // Sheet-level protection (locks locked cells)
+                // Only apply sheet protection, skip workbook password for now
                 $sheet->getProtection()->setSheet(true);
                 $sheet->getProtection()->setPassword($this->password);
 
-                // Workbook-level protection (prompts on open)
-                $spreadsheet = $sheet->getParent();
-                $spreadsheet->getSecurity()->setLockWindows(true);
-                $spreadsheet->getSecurity()->setLockStructure(true);
-                $spreadsheet->getSecurity()->setWorkbookPassword($this->password);
+                // DO NOT add workbook password - this often causes corruption
+                // $spreadsheet = $sheet->getParent();
+                // $spreadsheet->getSecurity()->setLockWindows(true);
+                // $spreadsheet->getSecurity()->setLockStructure(true);
+                // $spreadsheet->getSecurity()->setWorkbookPassword($this->password);
             },
         ];
     }
