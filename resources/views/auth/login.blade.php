@@ -6,12 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="school App" name="description">
     <meta content="Themesbrand" name="author">
-    <!-- App favicon -->
-    <link rel="shortcut icon" href="{{ $schoolInfo?->getLogoUrlAttribute() ?? asset('theme/layouts/assets/images/favicon.ico') }}">
-
-    <!-- School Logo for browsers that support it -->
-    <link rel="icon" type="image/png" href="{{ $schoolInfo?->getLogoUrlAttribute() ?? asset('theme/layouts/assets/images/logo-dark.png') }}">
-
+     <!-- App favicon - Using School Logo -->
+    @if($schoolInfo && $schoolInfo->getLogoUrlAttribute())
+        <link rel="shortcut icon" href="{{ $schoolInfo->getLogoUrlAttribute() }}">
+        <link rel="icon" type="image/png" href="{{ $schoolInfo->getLogoUrlAttribute() }}">
+        <!-- Apple Touch Icon (for iOS) -->
+        <link rel="apple-touch-icon" href="{{ $schoolInfo->getLogoUrlAttribute() }}">
+    @else
+        <link rel="shortcut icon" href="{{ asset('theme/layouts/assets/images/favicon.ico') }}">
+        <link rel="icon" type="image/png" href="{{ asset('theme/layouts/assets/images/logo-dark.png') }}">
+    @endif
     <!-- Fonts css load -->
     <link rel="preconnect" href="https://fonts.googleapis.com/">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
