@@ -151,7 +151,8 @@
     height: 70px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid var(--ss-primary);
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
 .score-entry-modal .assessment-score-row {
     display: flex;
@@ -171,6 +172,11 @@
     border: 1.5px solid var(--ss-border);
     border-radius: 8px;
 }
+.score-entry-modal .score-input-large:focus {
+    outline: none;
+    border-color: var(--ss-accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
 .score-entry-modal .modal-footer {
     border-top: 1px solid var(--ss-border);
     padding: 16px 24px;
@@ -182,7 +188,9 @@
     border-radius: var(--ss-radius);
     padding: 14px 20px;
     margin-bottom: 20px;
+    animation: slideIn 0.4s ease;
 }
+@keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 .lock-badge {
     display: inline-flex; align-items: center; gap: 4px;
@@ -192,12 +200,20 @@
 .lock-badge.individual { background: #fef3c7; color: #d97706; }
 .lock-badge.disabled { background: #e5e7eb; color: #6b7280; }
 
+.lock-alert {
+    border-left: 4px solid #d97706;
+    background: #fffbeb;
+}
+.lock-alert.global { border-left-color: #dc2626; background: #fef2f2; }
+.lock-alert.disabled { border-left-color: #6b7280; background: #f3f4f6; }
+
 @media (max-width: 768px) {
     .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
     .stat-card   { padding: 10px 12px; }
     .stat-card .stat-value { font-size: 18px; }
     #ssSaveModal { width: 280px; padding: 26px 24px 22px; }
     #scoreTooltip { width: calc(100vw - 24px); }
+    .score-entry-modal .score-input-large { width: 80px; font-size: 14px; }
 }
 </style>
 
@@ -290,18 +306,18 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="row">
+                <div class="row mb-4">
                     <div class="col-md-6">
-                        <div class="card bg-light border-0 mb-3">
+                        <div class="card bg-light border-0">
                             <div class="card-body text-center">
                                 <h6 class="text-muted mb-2">Current Scores</h6>
                                 <div class="row">
                                     <div class="col-6">
-                                        <div class="fw-bold fs-4" id="modalCurrentTotal">0.0</div>
+                                        <div class="fw-bold fs-3" id="modalCurrentTotal">0.0</div>
                                         <small class="text-muted">Total</small>
                                     </div>
                                     <div class="col-6">
-                                        <div class="fw-bold fs-4" id="modalCurrentGrade">-</div>
+                                        <div class="fw-bold fs-3" id="modalCurrentGrade">-</div>
                                         <small class="text-muted">Grade</small>
                                     </div>
                                 </div>
@@ -309,16 +325,16 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card bg-light border-0 mb-3">
+                        <div class="card bg-light border-0">
                             <div class="card-body text-center">
                                 <h6 class="text-muted mb-2">Cumulative</h6>
                                 <div class="row">
                                     <div class="col-6">
-                                        <div class="fw-bold fs-4" id="modalCurrentCum">0.0</div>
+                                        <div class="fw-bold fs-3" id="modalCurrentCum">0.0</div>
                                         <small class="text-muted">Cumulative</small>
                                     </div>
                                     <div class="col-6">
-                                        <div class="fw-bold fs-4" id="modalCurrentCumGrade">-</div>
+                                        <div class="fw-bold fs-3" id="modalCurrentCumGrade">-</div>
                                         <small class="text-muted">Grade</small>
                                     </div>
                                 </div>
@@ -326,7 +342,7 @@
                         </div>
                     </div>
                 </div>
-                <h6 class="fw-semibold mb-3">Assessment Scores</h6>
+                <h6 class="fw-semibold mb-3"><i class="ri-edit-line me-2"></i>Assessment Scores</h6>
                 <div id="modalAssessmentsList" class="border rounded-3 overflow-hidden">
                     <!-- Dynamic assessment inputs will appear here -->
                 </div>
@@ -368,22 +384,31 @@
 
     {{-- Lock Status Banner --}}
     @if($globalLock || ($lockedCount ?? 0) > 0 || !$teacherEditingEnabled)
-    <div class="alert alert-warning mb-3" style="border-left: 4px solid #d97706;">
+    <div class="alert lock-alert {{ $globalLock ? 'global' : ($teacherEditingEnabled ? '' : 'disabled') }} mb-3">
         <div class="d-flex align-items-center gap-3">
-            <i class="ri-lock-line fs-3 text-warning"></i>
+            <i class="ri-lock-line fs-3 {{ $globalLock ? 'text-danger' : ($teacherEditingEnabled ? 'text-warning' : 'text-secondary') }}"></i>
             <div class="flex-grow-1">
                 @if(!$teacherEditingEnabled)
                     <strong><i class="ri-alert-line me-1"></i> Teacher Editing Disabled</strong><br>
                     <small>Teacher editing has been disabled for this subject by an administrator.</small>
                 @elseif($globalLock)
                     <strong><i class="ri-global-line me-1"></i> Global Lock Active</strong><br>
-                    <small>This entire scoresheet is locked. Reason: {{ $globalLock->reason ?? 'No reason provided' }}</small>
+                    <small>This entire scoresheet is locked. Reason: {{ $globalLock->reason ?? 'No reason provided' }}</small><br>
+                    <small>Locked by: {{ optional($globalLock->lockedBy)->name }} on {{ $globalLock->locked_at->format('Y-m-d H:i:s') }}</small>
                 @elseif(($lockedCount ?? 0) > 0)
                     <strong><i class="ri-lock-line me-1"></i> {{ $lockedCount }} of {{ $broadsheets->count() }} scoresheets are locked</strong>
+                    <small>Locked records cannot be edited by teachers.</small>
                 @endif
             </div>
         </div>
     </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <strong>Error!</strong>
+            <ul class="mb-0 mt-1">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+        </div>
     @endif
 
     @if($broadsheets->isNotEmpty())
@@ -459,6 +484,88 @@
             </div>
         </div>
     </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header border-0 pb-0 pt-3 px-3">
+                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)">
+                        <i class="ri-bar-chart-2-line me-1"></i>Score Summary
+                    </h6>
+                </div>
+                <div class="card-body pt-2">
+                    <div class="row g-2">
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#f0fdf4;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-success);">{{ $passed }}</div>
+                            <div class="text-muted" style="font-size:11px;">Passed (Total)</div>
+                        </div></div>
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fef2f2;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-danger);">{{ $failed }}</div>
+                            <div class="text-muted" style="font-size:11px;">Failed (Total)</div>
+                        </div></div>
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#eff6ff;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-accent);">{{ $highest }}</div>
+                            <div class="text-muted" style="font-size:11px;">Highest Total</div>
+                        </div></div>
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fffbeb;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-warning);">{{ $lowest }}</div>
+                            <div class="text-muted" style="font-size:11px;">Lowest Total</div>
+                        </div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header border-0 pb-0 pt-3 px-3">
+                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)">
+                        <i class="ri-pie-chart-line me-1"></i>Grade Distribution (Total)
+                    </h6>
+                </div>
+                <div class="card-body pt-2">
+                    @if($gradeDist->isEmpty())
+                        <p class="text-muted small text-center mt-3">No grades yet.</p>
+                    @else
+                        <div class="grade-strip">
+                            @foreach($gradeDist->sortKeysDesc() as $grade => $count)
+                                @php $pct = $total > 0 ? round($count/$total*100) : 0; $col = $gradeColors[$grade] ?? '#6b7280'; @endphp
+                                <div class="grade-pill" style="background:{{ $col }}18;color:{{ $col }};border:1px solid {{ $col }}40;">
+                                    <div style="font-size:16px;">{{ $grade }}</div>
+                                    <div style="font-size:11px;font-weight:600;">{{ $count }} <span style="opacity:.7;">({{ $pct }}%)</span></div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header border-0 pb-0 pt-3 px-3">
+                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)">
+                        <i class="ri-clipboard-line me-1"></i>Assessments
+                    </h6>
+                </div>
+                <div class="card-body pt-2">
+                    @if($assessments->isNotEmpty())
+                        <div class="d-flex flex-column gap-2">
+                            @foreach($assessments as $assessment)
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 assessment-btn"
+                                     style="background:#eff6ff;border:1px solid #bfdbfe;color:var(--ss-accent);">
+                                    <span><i class="ri-edit-line me-1"></i>{{ $assessment->name }}</span>
+                                    <span class="badge" style="background:var(--ss-accent);">{{ $assessment->max_score }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-muted small text-center mt-3">
+                            <i class="ri-information-line me-1"></i>No assessments defined.
+                        </p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
     @endif
 
     {{-- ══ POSITION LEGEND + ADMIN CONTROLS ═══════════════════════════ --}}
@@ -510,7 +617,8 @@
                             <small class="text-muted">
                                 <i class="ri-information-line me-1"></i>
                                 <strong>Individual Lock:</strong> Locks each student record separately.<br>
-                                <strong>Global Lock:</strong> Prevents ANY edits from teachers via a central lock.
+                                <strong>Global Lock:</strong> Prevents ANY edits from teachers via a central lock.<br>
+                                <strong>Toggle Teacher Editing:</strong> Completely disable/enable all teacher access.
                             </small>
                         </div>
                     </div>
@@ -540,6 +648,14 @@
                         <div class="mt-2 small text-muted">
                             <i class="ri-time-line me-1"></i> Last activity:
                             {{ $broadsheets->max('last_modified_at') ? \Carbon\Carbon::parse($broadsheets->max('last_modified_at'))->diffForHumans() : 'Never' }}
+                        </div>
+                        <div class="mt-2 small">
+                            <i class="ri-information-line me-1"></i>
+                            <span class="text-muted">Teacher editing is currently
+                                <strong class="{{ $teacherEditingEnabled ? 'text-success' : 'text-danger' }}">
+                                    {{ $teacherEditingEnabled ? 'ENABLED' : 'DISABLED' }}
+                                </strong>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -599,6 +715,19 @@
                 <i class="ri-information-line me-2"></i>No scores available.
             </div>
 
+            {{-- Download progress bar --}}
+            <div id="downloadProgressContainer" style="display:none;" class="px-3 pt-3">
+                <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#fefce8;">
+                    <div class="spinner-border spinner-border-sm text-warning"></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1" style="font-size:13px;" id="downloadProgressLabel">Downloading…</div>
+                        <div class="progress" style="height:5px;">
+                            <div class="progress-bar progress-bar-animated bg-warning" id="downloadProgressBar" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-responsive">
             <table class="table table-nowrap align-middle mb-0" id="scoresheetTable">
                 <thead>
@@ -622,15 +751,26 @@
                         @endforelse
 
                         <th class="col-total text-center">Total</th>
-                        <th class="col-total-grade text-center">Grade</th>
+                        <th class="col-total-grade text-center" title="Grade on raw total (saved)">
+                            Total<br><small class="fw-normal opacity-75">Grade</small>
+                        </th>
                         <th class="col-bf text-center">BF</th>
                         <th class="col-cum text-center">Cum</th>
-                        <th class="col-cum-grade text-center">Cum Grade</th>
-                        <th class="col-avg text-center">Class Avg</th>
-                        <th class="col-position text-center">Position</th>
-                        <th class="col-arm-position text-center">Arm Pos</th>
+                        <th class="col-cum-grade text-center" title="Grade on cumulative average (display)">
+                            Cum<br><small class="fw-normal opacity-75">Grade</small>
+                        </th>
+                        <th class="col-avg text-center" title="Subject class average">Class Avg</th>
+                        <th class="col-position text-center" title="All arms, ranked by cumulative average">
+                            Class Pos<br><small class="fw-normal opacity-75">(Cum)</small>
+                        </th>
+                        <th class="col-arm-position text-center" title="This arm only, ranked by cumulative average">
+                            Arm Pos<br><small class="fw-normal opacity-75">(Cum)</small>
+                        </th>
                         <th class="col-vetted text-center">Status</th>
-                        <th class="col-lock-status text-center" style="width: 80px;">Lock</th>
+                        <th class="col-lock-status text-center" style="width: 100px;">
+                            <i class="ri-lock-line"></i><br>
+                            <small>Lock Status</small>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="scoresheetTableBody">
@@ -642,6 +782,9 @@
                                 $so = $broadsheet->assessmentScores->where('assessment_id', $a->id)->first();
                                 $rowTotal += $so ? $so->score : 0;
                             }
+                            $cum = $broadsheet->cum ?? 0;
+                            $totalGrade = $broadsheet->grade ?? '-';
+                            $cumGrade = $broadsheet->grade ?? '-';
                             $isLocked = $broadsheet->is_locked || $globalLock || !$teacherEditingEnabled;
                             $vClass = match(true) {
                                 $isLocked => 'row-locked',
@@ -682,6 +825,9 @@
                                         <span class="fw-semibold d-block" style="font-size:12.5px;">
                                             {{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}
                                         </span>
+                                        @if($broadsheet->mname)
+                                            <span class="text-muted small">{{ $broadsheet->mname }}</span>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -713,7 +859,7 @@
                                 </span>
                             </td>
                             <td class="col-total-grade text-center">
-                                <span class="grade-badge">{{ $broadsheet->grade ?? '-' }}</span>
+                                <span class="grade-badge">{{ $totalGrade }}</span>
                             </td>
                             <td class="col-bf text-center">
                                 <span class="badge bg-secondary-subtle text-secondary bf-badge">
@@ -722,11 +868,11 @@
                             </td>
                             <td class="col-cum text-center">
                                 <span class="badge bg-secondary-subtle text-secondary fw-bold cum-badge">
-                                    {{ number_format($broadsheet->cum ?? 0, 1) }}
+                                    {{ number_format($cum, 1) }}
                                 </span>
                             </td>
                             <td class="col-cum-grade text-center">
-                                <span class="cum-grade-badge">{{ $broadsheet->grade ?? '-' }}</span>
+                                <span class="cum-grade-badge">{{ $cumGrade }}</span>
                             </td>
                             <td class="col-avg text-center">
                                 <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">
@@ -745,27 +891,35 @@
                             </td>
                             <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
-                                    <span class="badge bg-success-subtle text-success">Vetted</span>
+                                    <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
                                 @elseif($broadsheet->vettedstatus === '0')
-                                    <span class="badge bg-danger-subtle text-danger">Not Vetted</span>
+                                    <span class="badge bg-danger-subtle text-danger"><i class="ri-close-line me-1"></i>Not Vetted</span>
                                 @else
-                                    <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                    <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
                                 @endif
                             </td>
                             <td class="col-lock-status text-center">
                                 @if($globalLock)
-                                    <span class="lock-badge global">Global Lock</span>
+                                    <span class="lock-badge global" title="{{ $globalLock->reason ?? 'Global lock active' }}">
+                                        <i class="ri-global-line me-1"></i>Global Lock
+                                    </span>
                                 @elseif($broadsheet->is_locked)
-                                    <span class="lock-badge individual">Locked</span>
+                                    <span class="lock-badge individual" title="{{ $broadsheet->lock_reason ?? 'Locked by admin' }}">
+                                        <i class="ri-lock-line me-1"></i>Locked
+                                    </span>
+                                @elseif(!$teacherEditingEnabled)
+                                    <span class="lock-badge disabled" title="Teacher editing disabled">
+                                        <i class="ri-user-settings-line me-1"></i>Read Only
+                                    </span>
                                 @else
-                                    <button class="btn btn-sm btn-outline-secondary edit-scores-btn"
+                                    <button class="btn btn-sm btn-outline-primary edit-scores-btn"
                                             data-id="{{ $broadsheet->id }}"
                                             data-name="{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}"
                                             data-admission="{{ $broadsheet->admissionno ?? '' }}"
                                             data-avatar="{{ $avatarUrl }}"
                                             data-bf="{{ $broadsheet->bf ?? 0 }}"
                                             style="padding: 2px 8px; font-size: 11px;">
-                                        <i class="ri-edit-line"></i> Edit
+                                        <i class="ri-edit-line me-1"></i> Edit
                                     </button>
                                 @endif
                             </td>
@@ -773,7 +927,7 @@
                     @empty
                         <tr id="noDataRow">
                             <td colspan="{{ ($assessments->count() ?: 4) + 16 }}" class="text-center py-4 text-muted">
-                                No scores available.
+                                <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
                     @endforelse
@@ -816,7 +970,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white">Column Visibility</h5>
+                    <h5 class="modal-title text-white"><i class="ri-eye-line me-2"></i>Column Visibility</h5>
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -842,7 +996,7 @@
                         <div class="col-md-3"><div class="col-group">
                             <h6>Scores &amp; Metrics</h6>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total" checked><label>Total</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total-grade" checked><label>Grade</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total-grade" checked><label>Total Grade</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-bf" checked><label>BF</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum" checked><label>Cum</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum-grade" checked><label>Cum Grade</label></div>
@@ -869,11 +1023,11 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white">Import Scores</h5>
+                    <h5 class="modal-title text-white"><i class="ri-upload-line me-2"></i>Import Scores</h5>
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">Upload the Excel file exported from this scoresheet.</div>
+                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.</div>
                     <form method="POST" enctype="multipart/form-data" id="importForm">
                         @csrf
                         <input type="hidden" name="schoolclass_id" value="{{ $schoolclass->id }}">
@@ -884,10 +1038,24 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Excel File (.xlsx)</label>
                             <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                            <small class="text-muted">Only upload files exported from this system</small>
+                        </div>
+                        <div id="importLoader" style="display:none;" class="mb-3">
+                            <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
+                                <div class="spinner-border spinner-border-sm text-success"></div>
+                                <div class="flex-grow-1">
+                                    <div style="font-size:12px;margin-bottom:3px;">Uploading...</div>
+                                    <div class="progress" style="height:5px;">
+                                        <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Upload</button>
+                            <button type="submit" class="btn btn-primary" id="importSubmit">
+                                <i class="ri-upload-line me-1"></i>Upload
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -958,6 +1126,10 @@ function updateRowGrades(row) {
     });
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) totalBadge.textContent = totalRaw.toFixed(1);
+
+    const grade = totalRaw >= 70 ? 'A' : (totalRaw >= 60 ? 'B' : (totalRaw >= 50 ? 'C' : (totalRaw >= 40 ? 'D' : 'F')));
+    const gradeBadge = row.querySelector('.grade-badge');
+    if (gradeBadge) gradeBadge.textContent = grade;
 }
 
 // Save individual score
@@ -1226,6 +1398,8 @@ function bulkSaveScores() {
                 }
             });
         }
+
+        refreshAllPositions();
     })
     .catch(err => {
         clearInterval(fakeIv);
@@ -1280,6 +1454,24 @@ function deleteSelectedScores() {
     });
 }
 
+// Refresh positions
+let positionRefreshTimer = null;
+
+function refreshAllPositions() {
+    clearTimeout(positionRefreshTimer);
+    positionRefreshTimer = setTimeout(() => {
+        fetch(routes.updateArmPositions, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({
+                schoolclass_id: {{ $schoolclass->id ?? 0 }},
+                term_id: {{ $termId }},
+                session_id: {{ $sessionId }}
+            })
+        }).catch(() => {});
+    }, 500);
+}
+
 // Open Score Entry Modal
 function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studentAvatar, currentScores, assessments, bf) {
     const modal = new bootstrap.Modal(document.getElementById('scoreEntryModal'));
@@ -1299,7 +1491,7 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
     });
 
     const grade = currentTotal >= 70 ? 'A' : (currentTotal >= 60 ? 'B' : (currentTotal >= 50 ? 'C' : (currentTotal >= 40 ? 'D' : 'F')));
-    const cum = bf;
+    const cum = parseFloat(bf) || 0;
     const cumGrade = cum >= 70 ? 'A' : (cum >= 60 ? 'B' : (cum >= 50 ? 'C' : (cum >= 40 ? 'D' : 'F')));
 
     document.getElementById('modalCurrentTotal').textContent = currentTotal.toFixed(1);
@@ -1350,7 +1542,7 @@ function saveModalScores() {
         let value = parseFloat(input.value) || 0;
 
         if (value > maxScore) {
-            Swal.fire({ icon: 'error', title: 'Invalid Score', text: `Score cannot exceed ${maxScore}` });
+            Swal.fire({ icon: 'error', title: 'Invalid Score', text: `${assessmentId} score cannot exceed ${maxScore}` });
             hasError = true;
             return;
         }
@@ -1360,57 +1552,66 @@ function saveModalScores() {
 
     if (hasError) return;
 
-    // Save each score
+    Swal.fire({
+        title: 'Saving Scores...',
+        text: 'Please wait',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
     const savePromises = [];
     for (const [assessmentId, score] of Object.entries(scores)) {
-        const row = document.querySelector(`tr[data-id="${broadsheetId}"]`);
-        const input = row?.querySelector(`.score-input[data-field="${assessmentId}"]`);
-        if (input) {
-            input.value = score;
-            input.dataset.original = score;
-            savePromises.push(fetch(routes.singleUpdate, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({
-                    broadsheet_id: broadsheetId,
-                    assessment_id: parseInt(assessmentId),
-                    score: score,
-                    is_sub: false,
-                    term_id: {{ $termId }},
-                    session_id: {{ $sessionId }},
-                    subjectclass_id: {{ $subjectclassId }},
-                    schoolclass_id: {{ $schoolclass->id ?? 0 }},
-                    staff_id: {{ $teacherId }}
-                })
-            }));
-        }
-    }
-
-    Promise.all(savePromises).then(() => {
-        bootstrap.Modal.getInstance(document.getElementById('scoreEntryModal'))?.hide();
-        showToast('Scores saved successfully', 'success');
-        refreshAllPositions();
-    }).catch(() => {
-        showToast('Error saving scores', 'danger');
-    });
-}
-
-// Refresh positions
-let positionRefreshTimer = null;
-
-function refreshAllPositions() {
-    clearTimeout(positionRefreshTimer);
-    positionRefreshTimer = setTimeout(() => {
-        fetch(routes.updateArmPositions, {
+        savePromises.push(fetch(routes.singleUpdate, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
             body: JSON.stringify({
-                schoolclass_id: {{ $schoolclass->id ?? 0 }},
+                broadsheet_id: broadsheetId,
+                assessment_id: parseInt(assessmentId),
+                score: score,
+                is_sub: false,
                 term_id: {{ $termId }},
-                session_id: {{ $sessionId }}
+                session_id: {{ $sessionId }},
+                subjectclass_id: {{ $subjectclassId }},
+                schoolclass_id: {{ $schoolclass->id ?? 0 }},
+                staff_id: {{ $teacherId }}
             })
-        }).catch(() => {});
-    }, 500);
+        }));
+    }
+
+    Promise.all(savePromises)
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(() => {
+            Swal.close();
+            bootstrap.Modal.getInstance(document.getElementById('scoreEntryModal'))?.hide();
+            showToast('Scores saved successfully', 'success');
+
+            // Update the row in the table
+            const row = document.querySelector(`tr[data-id="${broadsheetId}"]`);
+            if (row) {
+                let newTotal = 0;
+                for (const [assessmentId, score] of Object.entries(scores)) {
+                    const input = row.querySelector(`.score-input[data-field="${assessmentId}"]`);
+                    if (input) {
+                        input.value = score;
+                        input.dataset.original = score;
+                        newTotal += score;
+                    }
+                }
+                const totalBadge = row.querySelector('.total-badge');
+                if (totalBadge) totalBadge.textContent = newTotal.toFixed(1);
+
+                const grade = newTotal >= 70 ? 'A' : (newTotal >= 60 ? 'B' : (newTotal >= 50 ? 'C' : (newTotal >= 40 ? 'D' : 'F')));
+                const gradeBadge = row.querySelector('.grade-badge');
+                if (gradeBadge) gradeBadge.textContent = grade;
+            }
+
+            refreshAllPositions();
+        })
+        .catch(err => {
+            Swal.close();
+            showToast('Error saving scores', 'danger');
+            console.error(err);
+        });
 }
 
 // Lock management functions
@@ -1618,7 +1819,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('unlockAllBtn')?.addEventListener('click', unlockAllScoresheets);
     document.getElementById('toggleTeacherEditBtn')?.addEventListener('click', toggleTeacherEditing);
 
-    // Edit button modal
+    // Edit button modal data
     const assessmentsData = @json($assessments->map(function($a) {
         return ['id' => $a->id, 'name' => $a->name, 'max_score' => $a->max_score];
     }));
@@ -1629,7 +1830,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const studentName = this.dataset.name;
             const studentAdmission = this.dataset.admission;
             const studentAvatar = this.dataset.avatar;
-            const bf = parseFloat(this.dataset.bf) || 0;
+            const bf = this.dataset.bf;
 
             // Get current scores from the row
             const row = document.querySelector(`tr[data-id="${broadsheetId}"]`);
@@ -1695,9 +1896,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('importForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(this);
-        const btn = this.querySelector('button[type="submit"]');
+        const btn = document.getElementById('importSubmit');
+        const loader = document.getElementById('importLoader');
+        const bar = document.getElementById('uploadProgressBar');
         const origHtml = btn?.innerHTML;
+
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Uploading...'; }
+        if (loader) loader.style.display = 'block';
+        if (bar) bar.style.width = '10%';
 
         fetch(routes.import, {
             method: 'POST',
@@ -1706,6 +1912,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(r => r.json())
         .then(data => {
+            if (bar) bar.style.width = '100%';
             if (data.success) {
                 Swal.fire({ icon: 'success', title: 'Success!', text: data.message, timer: 2000, showConfirmButton: false });
                 setTimeout(() => location.reload(), 2000);
@@ -1715,6 +1922,10 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => Swal.fire({ icon: 'error', title: 'Error', text: 'Network error' }))
         .finally(() => {
+            setTimeout(() => {
+                if (loader) loader.style.display = 'none';
+                if (bar) bar.style.width = '0%';
+            }, 1000);
             if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
         });
     });
