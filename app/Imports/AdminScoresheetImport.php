@@ -23,7 +23,8 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
 
     protected array $importData;
     protected int   $successCount  = 0;
-    protected array $failures      = [];
+    // Custom failures array (different name to avoid conflict with trait)
+    protected array $importFailures = [];
     protected       $assessments;
     protected       $schoolclass   = null;
     protected       $subjectId     = null;
@@ -76,7 +77,7 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
     public function collection(Collection $rows): void
     {
         if ($rows->isEmpty()) {
-            $this->failures[] = ['row' => 0, 'errors' => ['The Excel file is empty.']];
+            $this->importFailures[] = ['row' => 0, 'errors' => ['The Excel file is empty.']];
             return;
         }
 
@@ -86,7 +87,7 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
         $this->findHeaderRow($rows);
 
         if ($this->headerRowIndex === -1) {
-            $this->failures[] = [
+            $this->importFailures[] = [
                 'row'    => 0,
                 'errors' => [
                     'Could not find a header row containing "Admission No". '
@@ -133,7 +134,7 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                 try {
                     $this->processRow($rowValues, $index + 1);
                 } catch (\Exception $e) {
-                    $this->failures[] = [
+                    $this->importFailures[] = [
                         'row'    => $index + 1,
                         'errors' => [$e->getMessage()],
                     ];
@@ -143,7 +144,7 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
 
             DB::commit();
             Log::info("[AdminImport] Done. Success={$this->successCount}, "
-                . "Failures=" . count($this->failures));
+                . "Failures=" . count($this->importFailures));
 
             session([
                 'import_progress' => 100,
@@ -153,7 +154,7 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('[AdminImport] Transaction failed: ' . $e->getMessage());
-            $this->failures[] = ['row' => 0, 'errors' => ['Transaction failed: ' . $e->getMessage()]];
+            $this->importFailures[] = ['row' => 0, 'errors' => ['Transaction failed: ' . $e->getMessage()]];
             session([
                 'import_progress' => 0,
                 'import_status'   => 'error',
@@ -404,7 +405,7 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
 
     public function getFailures(): array
     {
-        return $this->failures;
+        return $this->importFailures;
     }
 
     // =========================================================================
