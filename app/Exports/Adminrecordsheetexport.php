@@ -149,7 +149,7 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
         $school = SchoolInformation::first();
 
         // Reuse the teacher export view — it only cares about $broadsheets, $assessments, $school
-        return view('exports.studentscoresheet', [
+        return view('exports.admin_scoresheet_export', [
             'broadsheets' => $broadsheets,
             'assessments' => $this->assessments,
             'school'      => $school,
