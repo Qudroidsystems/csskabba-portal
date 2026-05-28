@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Log;
 class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEvents, WithProperties
 {
     use Exportable;
-
     protected int $schoolclassId;
     protected int $subjectclassId;
     protected int $termId;
