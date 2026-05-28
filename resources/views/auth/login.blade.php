@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="school App" name="description">
     <meta content="Themesbrand" name="author">
+    @php
+        $schoolInfo = App\Models\SchoolInformation::getActiveSchool();
+    @endphp
      <!-- App favicon - Using School Logo -->
     @if($schoolInfo && $schoolInfo->getLogoUrlAttribute())
         <link rel="shortcut icon" href="{{ $schoolInfo->getLogoUrlAttribute() }}">
