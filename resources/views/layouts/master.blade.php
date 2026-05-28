@@ -9,9 +9,13 @@
     <meta content="school management software" name="description">
     <meta content="" name="author">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- App favicon -->
-    <link rel="shortcut icon" href="{{ asset('theme/layouts/assets/images/favicon.ico')}}">
-
+    <!-- Dynamic Favicon from School Logo -->
+    @php
+        $activeSchool = App\Models\SchoolInformation::getActiveSchool();
+        $faviconUrl = $activeSchool ? $activeSchool->getLogoWithFallbackAttribute() : asset('theme/layouts/assets/images/favicon.ico');
+    @endphp
+    <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
+    <link rel="shortcut icon" type="image/png" href="{{ $faviconUrl }}">
     <!-- Fonts css load -->
     <link rel="preconnect" href="https://fonts.googleapis.com/">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
