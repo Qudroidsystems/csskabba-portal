@@ -248,7 +248,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // CLASS POSITIONS AND AVERAGES — REGISTERED SUBJECTS ONLY
+    // CLASS POSITIONS AND AVERAGES — REGISTERED SUBJECTS ONLY (FIXED)
     // =========================================================================
 
     /**
@@ -304,9 +304,6 @@ class ViewStudentReportController extends Controller
 
             // ── CORE FIX: only include broadsheet rows where the student is
             // actually registered for that subject in this term/session.
-            // Previously every broadsheet_records row was included regardless
-            // of registration, causing F9 grades and zero scores from
-            // unregistered students to corrupt averages and positions.
             $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
@@ -382,31 +379,33 @@ class ViewStudentReportController extends Controller
 
                 $updatesCount = 0;
 
+                // ── FIXED: Use strict comparison for positions and handle nulls properly ──
                 foreach ($subjectRecords as $record) {
-                    $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
-                    $remark = $this->getRemark($grade);
+                    $grade  = ($record->total == 0 || $record->total === null) ? '-' : $this->calculateGrade($record->total);
+                    $remark = ($grade === '-') ? '-' : $this->getRemark($grade);
 
-                    $newPositionCum = ($record->cum == 0 || $record->cum === null) ? null :
-                        ($positionMapCum[$record->id] ?? null);
+                    $newPositionCum = ($record->cum == 0 || $record->cum === null)
+                        ? null : ($positionMapCum[$record->id] ?? null);
 
-                    $newPositionTotal = ($record->total == 0 || $record->total === null) ? null :
-                        ($positionMapTotal[$record->id] ?? null);
+                    $newPositionTotal = ($record->total == 0 || $record->total === null)
+                        ? null : ($positionMapTotal[$record->id] ?? null);
 
-                    $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId) ? null :
-                        ($armPositionMapTotal[$record->id] ?? null);
+                    $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId)
+                        ? null : ($armPositionMapTotal[$record->id] ?? null);
 
-                    $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId) ? null :
-                        ($armPositionMapCum[$record->id] ?? null);
+                    $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId)
+                        ? null : ($armPositionMapCum[$record->id] ?? null);
 
-                    if (
-                        $record->avg != $classAvg ||
-                        $record->subject_position_class != $newPositionCum ||
-                        $record->subject_position_class_total != $newPositionTotal ||
-                        $record->arm_position != $newArmPositionTotal ||
-                        $record->arm_position_cum != $newArmPositionCum ||
-                        $record->grade != $grade ||
-                        $record->remark != $remark
-                    ) {
+                    $changed =
+                        $record->avg                          != $classAvg             ||
+                        $record->subject_position_class       !== $newPositionCum      ||
+                        $record->subject_position_class_total !== $newPositionTotal    ||
+                        $record->arm_position                 !== $newArmPositionTotal ||
+                        $record->arm_position_cum             !== $newArmPositionCum   ||
+                        $record->grade                        != $grade                ||
+                        $record->remark                       != $remark;
+
+                    if ($changed) {
                         Broadsheets::where('id', $record->id)->update([
                             'avg'                          => $classAvg,
                             'subject_position_class'       => $newPositionCum,
@@ -427,6 +426,24 @@ class ViewStudentReportController extends Controller
                     'class_avg'       => $classAvg,
                 ]);
             }
+
+            // ── NEW: Null-out stale positions for unregistered rows ──
+            $registeredBroadsheetIds = $broadsheets->pluck('id');
+
+            Broadsheets::whereIn('broadsheet_records.student_id', $students)
+                ->where('broadsheets.term_id', $termid)
+                ->where('broadsheet_records.session_id', $sessionid)
+                ->whereIn('broadsheet_records.schoolclass_id', $classIds)
+                ->whereNotIn('broadsheets.id', $registeredBroadsheetIds)
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->update([
+                    'broadsheets.subject_position_class'       => null,
+                    'broadsheets.subject_position_class_total' => null,
+                    'broadsheets.arm_position'                 => null,
+                    'broadsheets.arm_position_cum'             => null,
+                    'broadsheets.grade'                        => '-',
+                    'broadsheets.remark'                       => '-',
+                ]);
 
             return true;
         });
@@ -557,9 +574,6 @@ class ViewStudentReportController extends Controller
             }
 
             // ── CORE FIX: gate scores to registered subjects only ─────────
-            // Previously fetched ALL broadsheet_records for the student in
-            // this class/session/term — including subjects not registered —
-            // causing F9 placeholders and inflating obtainable totals.
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
@@ -632,8 +646,6 @@ class ViewStudentReportController extends Controller
             }
 
             // ── Totals summary ────────────────────────────────────────────
-            // Now accurate: $scores only contains registered subjects, so
-            // obtainable = 100 × registered subject count (not class total).
             $totalObtained   = 0;
             $totalObtainable = 0;
 
