@@ -55,6 +55,7 @@ class ViewStudentReportController extends Controller
             return '-';
         }
 
+        $number = (int) $number;
         $lastDigit     = $number % 10;
         $lastTwoDigits = $number % 100;
 
@@ -408,10 +409,10 @@ class ViewStudentReportController extends Controller
                     if ($changed) {
                         Broadsheets::where('id', $record->id)->update([
                             'avg'                          => $classAvg,
-                            'subject_position_class'       => $newPositionCum,
-                            'subject_position_class_total' => $newPositionTotal,
-                            'arm_position'                 => $newArmPositionTotal,
-                            'arm_position_cum'             => $newArmPositionCum,
+                            'subject_position_class'       => is_numeric($newPositionCum) ? (int)$newPositionCum : null,
+                            'subject_position_class_total' => is_numeric($newPositionTotal) ? (int)$newPositionTotal : null,
+                            'arm_position'                 => is_numeric($newArmPositionTotal) ? (int)$newArmPositionTotal : null,
+                            'arm_position_cum'             => is_numeric($newArmPositionCum) ? (int)$newArmPositionCum : null,
                             'grade'                        => $grade,
                             'remark'                       => $remark,
                         ]);
@@ -503,7 +504,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // GET STUDENT RESULT DATA — REGISTERED SUBJECTS ONLY
+    // GET STUDENT RESULT DATA — REGISTERED SUBJECTS ONLY (FIXED POSITIONS)
     // =========================================================================
 
     /**
@@ -608,12 +609,26 @@ class ViewStudentReportController extends Controller
                     'broadsheets.vettedstatus',
                 ])->get();
 
-            // Add formatted positions and per-row assessment scores
+            // ── FIXED: Add formatted positions with proper ordinal formatting ──
             foreach ($scores as $score) {
-                $score->position_formatted         = $score->position         ? $this->formatOrdinal($score->position)         : '-';
-                $score->position_total_formatted   = $score->position_total   ? $this->formatOrdinal($score->position_total)   : '-';
-                $score->arm_position_formatted     = $score->arm_position     ? $this->formatOrdinal($score->arm_position)     : '-';
-                $score->arm_position_cum_formatted = $score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-';
+                // Convert to integer if it's numeric string, otherwise use as is
+                $positionNum = is_numeric($score->position) ? (int)$score->position : null;
+                $positionTotalNum = is_numeric($score->position_total) ? (int)$score->position_total : null;
+                $armPositionNum = is_numeric($score->arm_position) ? (int)$score->arm_position : null;
+                $armPositionCumNum = is_numeric($score->arm_position_cum) ? (int)$score->arm_position_cum : null;
+
+                $score->position_formatted = ($positionNum && $positionNum > 0)
+                    ? $this->formatOrdinal($positionNum)
+                    : '-';
+                $score->position_total_formatted = ($positionTotalNum && $positionTotalNum > 0)
+                    ? $this->formatOrdinal($positionTotalNum)
+                    : '-';
+                $score->arm_position_formatted = ($armPositionNum && $armPositionNum > 0)
+                    ? $this->formatOrdinal($armPositionNum)
+                    : '-';
+                $score->arm_position_cum_formatted = ($armPositionCumNum && $armPositionCumNum > 0)
+                    ? $this->formatOrdinal($armPositionCumNum)
+                    : '-';
 
                 try {
                     if (class_exists(\App\Models\BroadsheetAssessmentScore::class)) {
@@ -1514,7 +1529,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // DRAWER DATA — REGISTERED SUBJECTS ONLY
+    // DRAWER DATA — REGISTERED SUBJECTS ONLY (FIXED POSITIONS)
     // =========================================================================
 
     public function drawerData($studentId, $schoolclassId, $sessionId, $termId)
@@ -1583,9 +1598,10 @@ class ViewStudentReportController extends Controller
                     'cum'               => $score->cum   !== null ? (float) $score->cum   : null,
                     'grade'             => $score->grade,
                     'remark'            => $score->remark,
-                    'position'          => $score->position_formatted     ?? ($score->position         ? $this->formatOrdinal($score->position)         : '-'),
-                    'position_total'    => $score->position_total_formatted ?? ($score->position_total  ? $this->formatOrdinal($score->position_total)   : '-'),
-                    'arm_position'      => $score->arm_position_formatted   ?? ($score->arm_position    ? $this->formatOrdinal($score->arm_position)     : '-'),
+                    // Use the formatted positions from the score object
+                    'position'          => $score->position_formatted ?? ($score->position ? $this->formatOrdinal($score->position) : '-'),
+                    'position_total'    => $score->position_total_formatted ?? ($score->position_total ? $this->formatOrdinal($score->position_total) : '-'),
+                    'arm_position'      => $score->arm_position_formatted ?? ($score->arm_position ? $this->formatOrdinal($score->arm_position) : '-'),
                     'arm_position_cum'  => $score->arm_position_cum_formatted ?? ($score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-'),
                     'class_average'     => $score->class_average !== null ? (float) $score->class_average : null,
                     'is_compulsory'     => $score->is_compulsory ?? false,
