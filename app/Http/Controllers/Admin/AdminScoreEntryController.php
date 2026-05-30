@@ -1040,19 +1040,18 @@ class AdminScoreEntryController extends Controller
     public function bulkExport(Request $request)
 {
     $request->validate([
-        'subjects'                           => 'required|array|min:1',
-        'subjects.*.subjectclass_id'         => 'required|exists:subjectclass,id',
-        'subjects.*.teacher_id'              => 'required|exists:users,id',
-        'subjects.*.schoolclass_id'          => 'required|exists:schoolclass,id',
-        'subjects.*.term_id'                 => 'required|exists:schoolterm,id',
-        'subjects.*.session_id'              => 'required|exists:schoolsession,id',
+        'subjects'                   => 'required|array|min:1',
+        'subjects.*.subjectclass_id' => 'required|exists:subjectclass,id',
+        'subjects.*.teacher_id'      => 'required|exists:users,id',
+        'subjects.*.schoolclass_id'  => 'required|exists:schoolclass,id',
+        'subjects.*.term_id'         => 'required|exists:schoolterm,id',
+        'subjects.*.session_id'      => 'required|exists:schoolsession,id',
     ]);
 
     $subjects = $request->input('subjects');
     $tempDir  = storage_path('app/temp');
 
     try {
-        // Ensure temp dir exists
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
@@ -1066,7 +1065,7 @@ class AdminScoreEntryController extends Controller
         }
 
         $added     = 0;
-        $tempFiles = []; // track for cleanup if something goes wrong
+        $tempFiles = [];
 
         foreach ($subjects as $subjectData) {
             $subjectclassId = (int) $subjectData['subjectclass_id'];
@@ -1075,13 +1074,16 @@ class AdminScoreEntryController extends Controller
             $termId         = (int) $subjectData['term_id'];
             $sessionId      = (int) $subjectData['session_id'];
 
-            $hasScores = Broadsheets::where('subjectclass_id', $subjectclassId)
-                ->where('staff_id', $teacherId)
-                ->where('term_id', $termId)
-                ->whereHas('broadsheetRecord', fn($q) => $q->where('session_id', $sessionId))
+            // Match exactly how getBroadsheets() queries — no staff_id filter
+            $hasScores = DB::table('broadsheets')
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                ->where('broadsheets.subjectclass_id', $subjectclassId)
+                ->where('broadsheets.term_id', $termId)
+                ->where('broadsheet_records.session_id', $sessionId)
                 ->exists();
 
             if (!$hasScores) {
+                Log::info("AdminBulkExport: skipping subjectclass {$subjectclassId} — no scores found for term {$termId} session {$sessionId}");
                 continue;
             }
 
@@ -1096,10 +1098,11 @@ class AdminScoreEntryController extends Controller
             $termName    = preg_replace('/[^a-zA-Z0-9-]/', '_', $term?->term ?? 'term');
             $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $session?->session ?? 'session');
 
-            $filenameInZip = "admin_{$subjectName}_{$className}" . ($armName ? "_{$armName}" : '') . "_{$termName}_{$sessionName}_scoresheet.xlsx";
+            $filenameInZip = "admin_{$subjectName}_{$className}"
+                . ($armName ? "_{$armName}" : '')
+                . "_{$termName}_{$sessionName}_scoresheet.xlsx";
 
-            // Use a unique key for the local disk path (relative to storage/app/)
-            $relativeKey = 'temp/' . uniqid('sheet_') . '.xlsx';
+            $relativeKey  = 'temp/' . uniqid('sheet_') . '.xlsx';
             $absolutePath = storage_path('app/' . $relativeKey);
 
             $export = new AdminRecordsheetExport(
@@ -1110,12 +1113,10 @@ class AdminScoreEntryController extends Controller
                 $teacherId
             );
 
-            // Store to local disk — returns true on success
             \Maatwebsite\Excel\Facades\Excel::store($export, $relativeKey, 'local');
 
-            // Verify the file actually exists before adding
             if (!file_exists($absolutePath)) {
-                Log::warning("AdminBulkExport: file not found after store: {$absolutePath}");
+                Log::warning("AdminBulkExport: file not written — {$absolutePath}");
                 continue;
             }
 
@@ -1126,7 +1127,6 @@ class AdminScoreEntryController extends Controller
 
         $zip->close();
 
-        // Clean up temp xlsx files
         foreach ($tempFiles as $f) {
             @unlink($f);
         }
@@ -1144,8 +1144,7 @@ class AdminScoreEntryController extends Controller
         ])->deleteFileAfterSend(true);
 
     } catch (\Exception $e) {
-        Log::error('Admin bulkExport error: ' . $e->getMessage());
-        // Clean up orphaned zip if it exists
+        Log::error('Admin bulkExport error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
         if (!empty($zipPath) && file_exists($zipPath)) {
             @unlink($zipPath);
         }
