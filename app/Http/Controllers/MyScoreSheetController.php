@@ -1393,7 +1393,8 @@ class MyScoreSheetController extends Controller
             ->update(['cmin' => $classMin, 'cmax' => $classMax, 'avg' => $classAvg]);
     }
 
- protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+
+    protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
 {
     Log::info('[updateSubjectPositions] START', [
         'subjectclass_id' => $subjectclass_id,
@@ -1558,6 +1559,9 @@ class MyScoreSheetController extends Controller
         'rows_nulled'     => $nulledCount,
     ]);
 }
+
+
+
 
     protected function updateClassPositions($schoolclassid, $termid, $sessionid)
     {
