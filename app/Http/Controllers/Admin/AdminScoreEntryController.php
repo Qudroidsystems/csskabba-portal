@@ -1052,8 +1052,14 @@ class AdminScoreEntryController extends Controller
     $tempDir  = storage_path('app/temp');
 
     try {
+        // Ensure temp dir exists and is writable
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
+        }
+
+        if (!is_writable($tempDir)) {
+            Log::error("AdminBulkExport: temp dir not writable: {$tempDir}");
+            return response()->json(['success' => false, 'message' => 'Temp directory is not writable.'], 500);
         }
 
         $zip     = new \ZipArchive();
@@ -1074,7 +1080,6 @@ class AdminScoreEntryController extends Controller
             $termId         = (int) $subjectData['term_id'];
             $sessionId      = (int) $subjectData['session_id'];
 
-            // Match exactly how getBroadsheets() queries — no staff_id filter
             $hasScores = DB::table('broadsheets')
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
                 ->where('broadsheets.subjectclass_id', $subjectclassId)
@@ -1083,7 +1088,7 @@ class AdminScoreEntryController extends Controller
                 ->exists();
 
             if (!$hasScores) {
-                Log::info("AdminBulkExport: skipping subjectclass {$subjectclassId} — no scores found for term {$termId} session {$sessionId}");
+                Log::info("AdminBulkExport: skipping subjectclass {$subjectclassId} — no scores");
                 continue;
             }
 
@@ -1102,9 +1107,6 @@ class AdminScoreEntryController extends Controller
                 . ($armName ? "_{$armName}" : '')
                 . "_{$termName}_{$sessionName}_scoresheet.xlsx";
 
-            $relativeKey  = 'temp/' . uniqid('sheet_') . '.xlsx';
-            $absolutePath = storage_path('app/' . $relativeKey);
-
             $export = new AdminRecordsheetExport(
                 $schoolclassId,
                 $subjectclassId,
@@ -1113,20 +1115,42 @@ class AdminScoreEntryController extends Controller
                 $teacherId
             );
 
-            \Maatwebsite\Excel\Facades\Excel::store($export, $relativeKey, 'local');
+            try {
+                // Generate the xlsx binary in memory — no disk write needed
+                $xlsxContent = \Maatwebsite\Excel\Facades\Excel::raw(
+                    $export,
+                    \Maatwebsite\Excel\Excel::XLSX
+                );
 
-            if (!file_exists($absolutePath)) {
-                Log::warning("AdminBulkExport: file not written — {$absolutePath}");
+                if (empty($xlsxContent)) {
+                    Log::warning("AdminBulkExport: empty xlsx content for subjectclass {$subjectclassId}");
+                    continue;
+                }
+
+                // Write binary to temp file directly via file_put_contents
+                $absolutePath = $tempDir . '/' . uniqid('sheet_') . '.xlsx';
+                $written = file_put_contents($absolutePath, $xlsxContent);
+
+                if ($written === false || $written === 0) {
+                    Log::warning("AdminBulkExport: file_put_contents failed for {$absolutePath}");
+                    continue;
+                }
+
+                Log::info("AdminBulkExport: wrote {$written} bytes to {$absolutePath}");
+
+                $zip->addFile($absolutePath, $filenameInZip);
+                $tempFiles[] = $absolutePath;
+                $added++;
+
+            } catch (\Exception $e) {
+                Log::error("AdminBulkExport: failed for subjectclass {$subjectclassId}: " . $e->getMessage());
                 continue;
             }
-
-            $zip->addFile($absolutePath, $filenameInZip);
-            $tempFiles[] = $absolutePath;
-            $added++;
         }
 
         $zip->close();
 
+        // Clean up temp xlsx files now that zip is closed
         foreach ($tempFiles as $f) {
             @unlink($f);
         }
@@ -1135,12 +1159,13 @@ class AdminScoreEntryController extends Controller
             @unlink($zipPath);
             return response()->json([
                 'success' => false,
-                'message' => 'No scoresheets with data found for the selected subjects.',
+                'message' => 'No scoresheets could be generated. Check logs for details.',
             ], 422);
         }
 
         return response()->download($zipPath, $zipName, [
-            'Content-Type' => 'application/zip',
+            'Content-Type'        => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="' . $zipName . '"',
         ])->deleteFileAfterSend(true);
 
     } catch (\Exception $e) {
