@@ -1396,23 +1396,51 @@ class MyScoreSheetController extends Controller
 
     protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
 {
+    Log::info('[updateSubjectPositions] START', [
+        'subjectclass_id' => $subjectclass_id,
+        'staff_id'        => $staff_id,
+        'term_id'         => $term_id,
+        'session_id'      => $session_id,
+    ]);
+
     $subjectClass = DB::table('subjectclass')
         ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
         ->where('subjectclass.id', $subjectclass_id)
         ->first(['subjectclass.schoolclassid', 'subjectteacher.subjectid']);
 
-    if (!$subjectClass) return;
+    if (!$subjectClass) {
+        Log::warning('[updateSubjectPositions] subjectClass not found', ['subjectclass_id' => $subjectclass_id]);
+        return;
+    }
 
     $subjectId     = $subjectClass->subjectid;
     $schoolclassId = $subjectClass->schoolclassid;
 
-    $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)->first(['schoolclass', 'classcategoryid']);
-    if (!$baseClass) return;
+    Log::info('[updateSubjectPositions] Resolved subject', [
+        'subject_id'     => $subjectId,
+        'schoolclass_id' => $schoolclassId,
+    ]);
+
+    $baseClass = DB::table('schoolclass')
+        ->where('id', $schoolclassId)
+        ->first(['schoolclass', 'classcategoryid']);
+
+    if (!$baseClass) {
+        Log::warning('[updateSubjectPositions] baseClass not found', ['schoolclass_id' => $schoolclassId]);
+        return;
+    }
+
+    Log::info('[updateSubjectPositions] Base class resolved', [
+        'schoolclass'      => $baseClass->schoolclass,
+        'classcategoryid'  => $baseClass->classcategoryid,
+    ]);
 
     $allArmIds = DB::table('schoolclass')
         ->where('schoolclass', $baseClass->schoolclass)
         ->where('classcategoryid', $baseClass->classcategoryid)
         ->pluck('id');
+
+    Log::info('[updateSubjectPositions] All arm IDs', ['arm_ids' => $allArmIds->toArray()]);
 
     $allSubjectClassIds = DB::table('subjectclass')
         ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
@@ -1420,7 +1448,73 @@ class MyScoreSheetController extends Controller
         ->where('subjectteacher.subjectid', $subjectId)
         ->pluck('subjectclass.id');
 
-    // ── KEY FIX: only include students registered for this subject ──────────
+    Log::info('[updateSubjectPositions] All subjectclass IDs for this subject', [
+        'subjectclass_ids' => $allSubjectClassIds->toArray(),
+    ]);
+
+    // ── Step 1: raw broadsheet rows (NO registration filter) ──────────────
+    $rawRows = DB::table('broadsheets')
+        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+        ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+        ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+        ->whereIn('broadsheets.subjectclass_id', $allSubjectClassIds)
+        ->where('broadsheets.term_id', $term_id)
+        ->where('broadsheet_records.session_id', $session_id)
+        ->get([
+            'broadsheets.id',
+            'broadsheets.subjectclass_id',
+            'broadsheets.total',
+            'broadsheets.cum',
+            'broadsheets.subject_position_class',
+            'broadsheets.subject_position_class_total',
+            'broadsheets.arm_position',
+            'broadsheets.arm_position_cum',
+            'broadsheet_records.student_id',
+            'broadsheet_records.subject_id',
+            'broadsheet_records.schoolclass_id',
+            'studentRegistration.admissionNo',
+            'subject.subject as subject_name',
+        ]);
+
+    Log::info('[updateSubjectPositions] RAW broadsheet rows (before registration filter)', [
+        'count' => $rawRows->count(),
+        'rows'  => $rawRows->map(fn($r) => [
+            'broadsheet_id'   => $r->id,
+            'admission_no'    => $r->admissionNo,
+            'subject_name'    => $r->subject_name,
+            'total'           => $r->total,
+            'cum'             => $r->cum,
+            'pos_class'       => $r->subject_position_class,
+            'pos_class_total' => $r->subject_position_class_total,
+            'arm_position'    => $r->arm_position,
+            'arm_position_cum'=> $r->arm_position_cum,
+            'subjectclass_id' => $r->subjectclass_id,
+        ])->toArray(),
+    ]);
+
+    // ── Step 2: registration status rows for these students ───────────────
+    $studentIdsInRaw = $rawRows->pluck('student_id')->unique()->values();
+
+    $regRows = DB::table('subjectRegistrationStatus')
+        ->join('subjectclass as sjc_reg', 'sjc_reg.id', '=', 'subjectRegistrationStatus.subjectclassid')
+        ->whereIn('subjectRegistrationStatus.studentid', $studentIdsInRaw)
+        ->where('sjc_reg.subjectid', $subjectId)  // NOTE: subjectclass.subjectid — adjust if your schema differs
+        ->where('subjectRegistrationStatus.termid', $term_id)
+        ->where('subjectRegistrationStatus.sessionid', $session_id)
+        ->get([
+            'subjectRegistrationStatus.studentid',
+            'subjectRegistrationStatus.subjectclassid',
+            'subjectRegistrationStatus.Status',
+            'sjc_reg.subjectid',
+        ]);
+
+    Log::info('[updateSubjectPositions] Registration status rows', [
+        'count'            => $regRows->count(),
+        'registered_students' => $regRows->pluck('studentid')->toArray(),
+        'rows'             => $regRows->toArray(),
+    ]);
+
+    // ── Step 3: apply registration filter (same whereExists as the fix) ───
     $allStudents = DB::table('broadsheets')
         ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
         ->whereIn('broadsheets.subjectclass_id', $allSubjectClassIds)
@@ -1440,11 +1534,30 @@ class MyScoreSheetController extends Controller
             'broadsheets.cum',
             'broadsheets.total',
             'broadsheet_records.schoolclass_id',
+            'broadsheet_records.student_id',
         ]);
 
-    if ($allStudents->isEmpty()) return;
+    Log::info('[updateSubjectPositions] FILTERED broadsheet rows (after registration filter)', [
+        'count'          => $allStudents->count(),
+        'student_ids'    => $allStudents->pluck('student_id')->toArray(),
+        'totals'         => $allStudents->pluck('total')->toArray(),
+        'raw_count'      => $rawRows->count(),
+        'filtered_out'   => $rawRows->count() - $allStudents->count(),
+    ]);
 
-    // Class-wide position by cum
+    if ($allStudents->isEmpty()) {
+        Log::warning('[updateSubjectPositions] No students after registration filter — positions NOT updated', [
+            'subjectclass_id' => $subjectclass_id,
+            'subject_id'      => $subjectId,
+            'raw_had_rows'    => $rawRows->count(),
+            'hint'            => $rawRows->count() > 0
+                ? 'Rows exist but were all filtered out — check subjectRegistrationStatus for these students'
+                : 'No broadsheet rows found at all — check subjectclass_id linkage',
+        ]);
+        return;
+    }
+
+    // ── Class-wide position by cum ─────────────────────────────────────────
     $lastVal = null; $currentRank = 0;
     foreach ($allStudents->sortByDesc('cum')->values() as $idx => $b) {
         if ($lastVal === null || $b->cum != $lastVal) {
@@ -1454,7 +1567,9 @@ class MyScoreSheetController extends Controller
         DB::table('broadsheets')->where('id', $b->id)->update(['subject_position_class' => $currentRank]);
     }
 
-    // Class-wide position by total
+    Log::info('[updateSubjectPositions] Class positions by CUM written');
+
+    // ── Class-wide position by total ──────────────────────────────────────
     $lastVal = null; $currentRank = 0;
     foreach ($allStudents->sortByDesc('total')->values() as $idx => $b) {
         if ($lastVal === null || $b->total != $lastVal) {
@@ -1464,8 +1579,15 @@ class MyScoreSheetController extends Controller
         DB::table('broadsheets')->where('id', $b->id)->update(['subject_position_class_total' => $currentRank]);
     }
 
-    // Arm-specific positions
+    Log::info('[updateSubjectPositions] Class positions by TOTAL written');
+
+    // ── Arm-specific positions ─────────────────────────────────────────────
     foreach ($allStudents->groupBy('schoolclass_id') as $armClassId => $studentsInArm) {
+        Log::info('[updateSubjectPositions] Processing arm positions', [
+            'arm_schoolclass_id' => $armClassId,
+            'students_in_arm'    => $studentsInArm->count(),
+        ]);
+
         $lastVal = null; $currentRank = 0;
         foreach ($studentsInArm->sortByDesc('total')->values() as $idx => $b) {
             if ($lastVal === null || $b->total != $lastVal) {
@@ -1485,12 +1607,12 @@ class MyScoreSheetController extends Controller
         }
     }
 
-    // ── NULL OUT positions for unregistered students ────────────────────────
-    // Any broadsheet rows for this subject that were NOT in the registered set
-    // should have their position columns cleared so they don't show stale ranks.
+    Log::info('[updateSubjectPositions] Arm positions written');
+
+    // ── NULL OUT positions for unregistered rows ───────────────────────────
     $rankedIds = $allStudents->pluck('id');
 
-    DB::table('broadsheets')
+    $nulledCount = DB::table('broadsheets')
         ->whereIn('subjectclass_id', $allSubjectClassIds)
         ->where('term_id', $term_id)
         ->whereNotIn('id', $rankedIds)
@@ -1506,6 +1628,16 @@ class MyScoreSheetController extends Controller
             'arm_position'                 => null,
             'arm_position_cum'             => null,
         ]);
+
+    Log::info('[updateSubjectPositions] Unregistered rows nulled out', [
+        'nulled_count' => $nulledCount,
+    ]);
+
+    Log::info('[updateSubjectPositions] DONE', [
+        'subjectclass_id'  => $subjectclass_id,
+        'students_ranked'  => $allStudents->count(),
+        'students_nulled'  => $nulledCount,
+    ]);
 }
 
     protected function updateClassPositions($schoolclassid, $termid, $sessionid)
