@@ -267,11 +267,18 @@ class ViewStudentReportController extends Controller
      * position recalculation after an unregistration event.
      */
 
-    protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
+protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
 {
-    $cacheKey = "class_metrics_{$schoolclassid}_{$sessionid}_{$termid}";
+    // ── REMOVED: caching causes stale positions after score saves ─────────
+    // Cache::forget($cacheKey) was not sufficient because a prior cached
+    // 'true' result causes the method to appear to succeed without running.
+    // Position calculations are fast enough (~1s) to run fresh every time.
 
-    Cache::forget($cacheKey);
+    Log::info('Starting class metrics calculation', [
+        'schoolclassid' => $schoolclassid,
+        'sessionid'     => $sessionid,
+        'termid'        => $termid,
+    ]);
 
     $schoolclass = Schoolclass::with(['classcategories', 'arms'])
         ->where('id', $schoolclassid)
@@ -353,24 +360,19 @@ class ViewStudentReportController extends Controller
         foreach ($subjectGroups as $subjectId => $subjectRecords) {
             $subjectName = $subjectRecords->first()->subject_name;
 
-            // 1. CLASS POSITION (CUM)
-            $validRecordsCum = $subjectRecords->filter(fn($r) => $r->cum != 0 && $r->cum !== null);
-            $positionMapCum  = $this->calculatePositionsRaw($validRecordsCum->sortByDesc('cum')->values(), 'cum');
+            $validRecordsCum   = $subjectRecords->filter(fn($r) => $r->cum != 0 && $r->cum !== null);
+            $positionMapCum    = $this->calculatePositionsRaw($validRecordsCum->sortByDesc('cum')->values(), 'cum');
 
-            // 2. CLASS POSITION (TOTAL)
             $validRecordsTotal = $subjectRecords->filter(fn($r) => $r->total != 0 && $r->total !== null);
             $positionMapTotal  = $this->calculatePositionsRaw($validRecordsTotal->sortByDesc('total')->values(), 'total');
 
-            // 3. ARM POSITION (TOTAL)
             $armOnlyRecords      = $subjectRecords->filter(fn($r) => $r->student_arm_id == $armId);
             $validArmTotal       = $armOnlyRecords->filter(fn($r) => $r->total != 0 && $r->total !== null);
             $armPositionMapTotal = $this->calculatePositionsRaw($validArmTotal->sortByDesc('total')->values(), 'total');
 
-            // 4. ARM POSITION (CUM)
             $validArmCum       = $armOnlyRecords->filter(fn($r) => $r->cum != 0 && $r->cum !== null);
             $armPositionMapCum = $this->calculatePositionsRaw($validArmCum->sortByDesc('cum')->values(), 'cum');
 
-            // Class average
             $totalScores  = $validRecordsTotal->sum('total');
             $studentCount = $validRecordsTotal->count();
             $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
@@ -393,12 +395,9 @@ class ViewStudentReportController extends Controller
                 $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId)
                     ? null : ($armPositionMapCum[$record->id] ?? null);
 
-                // ── KEY FIX: null-safe comparison ─────────────────────────
-                // PHP's != treats NULL != NULL as false (equal), so a column
-                // that was wrongly NULLed and now has a valid position would
-                // never get updated. Use a helper that treats them correctly.
+                // Null-safe comparison — prevents NULL vs integer being missed
                 $hasChanged =
-                    ((float) $record->avg !== (float) $classAvg) ||
+                    ((string) $record->avg !== (string) $classAvg) ||
                     !$this->nullSafeEquals($record->subject_position_class,       $newPositionCum) ||
                     !$this->nullSafeEquals($record->subject_position_class_total, $newPositionTotal) ||
                     !$this->nullSafeEquals($record->arm_position,                 $newArmPositionTotal) ||
@@ -431,11 +430,18 @@ class ViewStudentReportController extends Controller
         return true;
     });
 
-    if ($success) {
-        Cache::put($cacheKey, true, now()->addHours(1));
-    }
-
+    // ── REMOVED Cache::put — stale cache was preventing position updates ──
     return $success;
+}
+
+/**
+ * Null-safe equality: true only when both null, or both equal non-null.
+ */
+private function nullSafeEquals($a, $b): bool
+{
+    if (is_null($a) && is_null($b)) return true;
+    if (is_null($a) || is_null($b)) return false;
+    return (string) $a === (string) $b;
 }
 
 /**
