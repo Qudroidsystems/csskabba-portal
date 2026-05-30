@@ -198,7 +198,35 @@
             margin: 0 10px 8px 10px;
         }
 
-        /* ── Attendance Box ── */
+        /* FIXED: Position styling - guaranteed to be visible in PDF */
+        .position-cell {
+            font-weight: 900;
+            text-align: center;
+            padding: 2px 4px;
+        }
+
+        .position-1 {
+            background-color: #FFD700;
+            color: #000000;
+            font-weight: 900;
+        }
+        .position-2 {
+            background-color: #C0C0C0;
+            color: #000000;
+            font-weight: 900;
+        }
+        .position-3 {
+            background-color: #CD7F32;
+            color: #000000;  /* BLACK text for visibility on bronze background */
+            font-weight: 900;
+        }
+
+        /* Ensure text is always visible */
+        td.position-1, td.position-2, td.position-3 {
+            color: #000000 !important;
+        }
+
+        /* Attendance Box */
         .attendance-box {
             width: calc(100% - 20px);
             margin: 0 10px 8px 10px;
@@ -273,8 +301,7 @@
             background: linear-gradient(90deg, #f59e0b, #dc2626);
         }
 
-        /* ── end attendance ── */
-
+        /* Remarks Table */
         .remarks-table {
             width: calc(100% - 20px);
             border: 2px solid #000000;
@@ -298,6 +325,7 @@
             display: inline-block;
         }
 
+        /* Bottom Strip */
         .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 6px; }
         .bottom-strip table { width: 100%; border-collapse: collapse; }
         .bottom-strip td { padding: 8px 10px; vertical-align: middle; }
@@ -324,11 +352,6 @@
         .grade-C { color: #ca8a04; font-weight: 900; }
         .grade-D { color: #ea580c; font-weight: 900; }
         .grade-F { color: #dc2626; font-weight: 900; }
-
-        /* Position medal colours (top 3) */
-        .position-1 { background: gold;    color: black; font-weight: 900; }
-        .position-2 { background: silver;  color: black; font-weight: 900; }
-        .position-3 { background: #cd7f32; color: white; font-weight: 900; }
 
         @media print {
             body { background: white; padding: 0; }
@@ -578,14 +601,13 @@
                     <tbody>
                         @forelse ($studentData['scores'] as $scoreIndex => $score)
                         @php
-                            // CRITICAL FIX: Get position values directly from the score object
-                            // The score object has properties: position, position_total, arm_position, arm_position_cum
+                            // Extract position values directly from the score object
                             $posCum = isset($score->position) && $score->position > 0 ? $score->position : null;
                             $posTotal = isset($score->position_total) && $score->position_total > 0 ? $score->position_total : null;
                             $armPos = isset($score->arm_position) && $score->arm_position > 0 ? $score->arm_position : null;
                             $armPosCum = isset($score->arm_position_cum) && $score->arm_position_cum > 0 ? $score->arm_position_cum : null;
 
-                            // Also try to get from raw properties if the above are not set
+                            // Fallback to raw properties if needed
                             if (!$posCum && property_exists($score, 'subject_position_class')) {
                                 $posCum = $score->subject_position_class > 0 ? $score->subject_position_class : null;
                             }
@@ -593,25 +615,17 @@
                                 $posTotal = $score->subject_position_class_total > 0 ? $score->subject_position_class_total : null;
                             }
 
-                            $posClass = '';
-                            if ($posCum == 1) $posClass = 'position-1';
-                            elseif ($posCum == 2) $posClass = 'position-2';
-                            elseif ($posCum == 3) $posClass = 'position-3';
+                            // Position classes for styling
+                            $posCumClass = ($posCum == 1) ? 'position-1' : (($posCum == 2) ? 'position-2' : (($posCum == 3) ? 'position-3' : ''));
+                            $posTotalClass = ($posTotal == 1) ? 'position-1' : (($posTotal == 2) ? 'position-2' : (($posTotal == 3) ? 'position-3' : ''));
+                            $armPosClass = ($armPos == 1) ? 'position-1' : (($armPos == 2) ? 'position-2' : (($armPos == 3) ? 'position-3' : ''));
+                            $armPosCumClass = ($armPosCum == 1) ? 'position-1' : (($armPosCum == 2) ? 'position-2' : (($armPosCum == 3) ? 'position-3' : ''));
 
-                            $posTotalClass = '';
-                            if ($posTotal == 1) $posTotalClass = 'position-1';
-                            elseif ($posTotal == 2) $posTotalClass = 'position-2';
-                            elseif ($posTotal == 3) $posTotalClass = 'position-3';
-
-                            $armPosClass = '';
-                            if ($armPos == 1) $armPosClass = 'position-1';
-                            elseif ($armPos == 2) $armPosClass = 'position-2';
-                            elseif ($armPos == 3) $armPosClass = 'position-3';
-
-                            $armPosCumClass = '';
-                            if ($armPosCum == 1) $armPosCumClass = 'position-1';
-                            elseif ($armPosCum == 2) $armPosCumClass = 'position-2';
-                            elseif ($armPosCum == 3) $armPosCumClass = 'position-3';
+                            // Formatted values
+                            $posCumFormatted = formatOrdinal($posCum);
+                            $posTotalFormatted = formatOrdinal($posTotal);
+                            $armPosFormatted = formatOrdinal($armPos);
+                            $armPosCumFormatted = formatOrdinal($armPosCum);
                         @endphp
                         <tr>
                             {{-- Student info cells --}}
@@ -672,22 +686,22 @@
 
                             {{-- Class Position (Cumulative) --}}
                             @if(in_array('position', $columnsToShow))
-                                <td class="{{ $posClass }}">{{ formatOrdinal($posCum) }}</td>
+                                <td class="{{ $posCumClass }}">{{ $posCumFormatted }}</td>
                             @endif
 
                             {{-- Class Position (Total) --}}
                             @if(in_array('position_total', $columnsToShow))
-                                <td class="{{ $posTotalClass }}">{{ formatOrdinal($posTotal) }}</td>
+                                <td class="{{ $posTotalClass }}">{{ $posTotalFormatted }}</td>
                             @endif
 
                             {{-- Arm Position (Total) --}}
                             @if(in_array('arm_position', $columnsToShow))
-                                <td class="{{ $armPosClass }}">{{ formatOrdinal($armPos) }}</td>
+                                <td class="{{ $armPosClass }}">{{ $armPosFormatted }}</td>
                             @endif
 
                             {{-- Arm Position (Cumulative) --}}
                             @if(in_array('arm_position_cum', $columnsToShow))
-                                <td class="{{ $armPosCumClass }}">{{ formatOrdinal($armPosCum) }}</td>
+                                <td class="{{ $armPosCumClass }}">{{ $armPosCumFormatted }}</td>
                             @endif
 
                             @if(in_array('class_average', $columnsToShow))
@@ -840,7 +854,7 @@
                         </td>
                         <td class="cell-stamp">
                             <img src="{{ $stampSrc }}" alt="School Stamp">
-                        </td>
+                        </tr>
                     </tr>
                 </table>
             </div>
