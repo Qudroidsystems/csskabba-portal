@@ -434,15 +434,6 @@ protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid
     return $success;
 }
 
-/**
- * Null-safe equality: true only when both null, or both equal non-null.
- */
-private function nullSafeEquals($a, $b): bool
-{
-    if (is_null($a) && is_null($b)) return true;
-    if (is_null($a) || is_null($b)) return false;
-    return (string) $a === (string) $b;
-}
 
 /**
  * Null-safe equality check.
