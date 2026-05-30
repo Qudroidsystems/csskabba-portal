@@ -266,178 +266,189 @@ class ViewStudentReportController extends Controller
      * causing still-registered subjects to be silently dropped from the
      * position recalculation after an unregistration event.
      */
+
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
-    {
-        $cacheKey = "class_metrics_{$schoolclassid}_{$sessionid}_{$termid}";
+{
+    $cacheKey = "class_metrics_{$schoolclassid}_{$sessionid}_{$termid}";
 
-        Log::info('Starting class metrics calculation', [
-            'schoolclassid' => $schoolclassid,
-            'sessionid'     => $sessionid,
-            'termid'        => $termid,
-            'cache_key'     => $cacheKey,
-        ]);
+    Cache::forget($cacheKey);
 
-        Cache::forget($cacheKey);
+    $schoolclass = Schoolclass::with(['classcategories', 'arms'])
+        ->where('id', $schoolclassid)
+        ->first(['id', 'schoolclass', 'arm']);
 
-        $schoolclass = Schoolclass::with(['classcategories', 'arms'])->where('id', $schoolclassid)->first(['id', 'schoolclass', 'arm']);
-        if (!$schoolclass) {
-            Log::error('Schoolclass not found', compact('schoolclassid', 'sessionid', 'termid'));
-            return false;
-        }
-
-        $className = $schoolclass->schoolclass;
-        $classIds  = Schoolclass::where('schoolclass', $className)->pluck('id')->toArray();
-
-        if (empty($classIds)) {
-            Log::error('No schoolclass IDs found for class name', compact('className', 'schoolclassid'));
-            return false;
-        }
-
-        $students = Studentclass::whereIn('schoolclassid', $classIds)
-            ->where('sessionid', $sessionid)
-            ->pluck('studentId')
-            ->toArray();
-
-        if (empty($students)) {
-            Log::error('No students found for class', compact('className', 'classIds', 'sessionid'));
-            return false;
-        }
-
-        $armId = $schoolclass->arm;
-
-        $success = DB::transaction(function () use ($schoolclassid, $sessionid, $termid, $className, $classIds, $students, $armId) {
-
-            $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
-                ->where('broadsheets.term_id', $termid)
-                ->where('broadsheet_records.session_id', $sessionid)
-                ->whereIn('broadsheet_records.schoolclass_id', $classIds)
-                ->whereExists(function ($query) use ($termid, $sessionid, $classIds) {  // ← $classIds added
-                    $query->select(DB::raw(1))
-                        ->from('subjectRegistrationStatus')
-                        ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
-                        ->whereColumn('subjectclass.subjectid', 'broadsheet_records.subject_id')
-                        ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
-                        ->whereIn('subjectclass.schoolclassid', $classIds)  // ← FIX: pin to this class's arms
-                        ->where('subjectRegistrationStatus.termid', $termid)
-                        ->where('subjectRegistrationStatus.sessionid', $sessionid);
-                })
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-                ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
-                ->select([
-                    'broadsheets.id',
-                    'broadsheet_records.student_id',
-                    'broadsheet_records.subject_id',
-                    'subject.subject as subject_name',
-                    'studentRegistration.admissionNo as admission_no',
-                    'broadsheets.total',
-                    'broadsheets.bf',
-                    'broadsheets.cum',
-                    'broadsheets.subject_position_class',
-                    'broadsheets.subject_position_class_total',
-                    'broadsheets.arm_position',
-                    'broadsheets.arm_position_cum',
-                    'broadsheets.avg',
-                    'broadsheets.grade',
-                    'broadsheets.remark',
-                    'schoolclass.arm as student_arm_id',
-                ])
-                ->get();
-
-            if ($broadsheets->isEmpty()) {
-                Log::warning('No broadsheet records found (after registration filter)', compact('className', 'classIds', 'sessionid', 'termid'));
-                return false;
-            }
-
-            $subjectGroups = $broadsheets->groupBy('subject_id');
-
-            foreach ($subjectGroups as $subjectId => $subjectRecords) {
-                $subjectName = $subjectRecords->first()->subject_name;
-
-                // 1. CLASS POSITION (CUM) — all arms, ranked by cumulative
-                $validRecordsCum = $subjectRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
-                $sortedByCum     = $validRecordsCum->sortByDesc('cum')->values();
-                $positionMapCum  = $this->calculatePositionsRaw($sortedByCum, 'cum');
-
-                // 2. CLASS POSITION (TOTAL) — all arms, ranked by raw total
-                $validRecordsTotal = $subjectRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
-                $sortedByTotal     = $validRecordsTotal->sortByDesc('total')->values();
-                $positionMapTotal  = $this->calculatePositionsRaw($sortedByTotal, 'total');
-
-                // 3. ARM POSITION (TOTAL) — this arm only, ranked by total
-                $armOnlyRecords       = $subjectRecords->filter(fn ($r) => $r->student_arm_id == $armId);
-                $validArmRecordsTotal = $armOnlyRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
-                $sortedByArmTotal     = $validArmRecordsTotal->sortByDesc('total')->values();
-                $armPositionMapTotal  = $this->calculatePositionsRaw($sortedByArmTotal, 'total');
-
-                // 4. ARM POSITION (CUM) — this arm only, ranked by cumulative
-                $validArmRecordsCum = $armOnlyRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
-                $sortedByArmCum     = $validArmRecordsCum->sortByDesc('cum')->values();
-                $armPositionMapCum  = $this->calculatePositionsRaw($sortedByArmCum, 'cum');
-
-                // Class average — only registered students' scores
-                $totalScores  = $validRecordsTotal->sum('total');
-                $studentCount = $validRecordsTotal->count();
-                $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
-
-                $updatesCount = 0;
-
-                foreach ($subjectRecords as $record) {
-                    $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
-                    $remark = $this->getRemark($grade);
-
-                    $newPositionCum = ($record->cum == 0 || $record->cum === null) ? null :
-                        ($positionMapCum[$record->id] ?? null);
-
-                    $newPositionTotal = ($record->total == 0 || $record->total === null) ? null :
-                        ($positionMapTotal[$record->id] ?? null);
-
-                    $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId) ? null :
-                        ($armPositionMapTotal[$record->id] ?? null);
-
-                    $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId) ? null :
-                        ($armPositionMapCum[$record->id] ?? null);
-
-                    if (
-                        $record->avg != $classAvg ||
-                        $record->subject_position_class != $newPositionCum ||
-                        $record->subject_position_class_total != $newPositionTotal ||
-                        $record->arm_position != $newArmPositionTotal ||
-                        $record->arm_position_cum != $newArmPositionCum ||
-                        $record->grade != $grade ||
-                        $record->remark != $remark
-                    ) {
-                        Broadsheets::where('id', $record->id)->update([
-                            'avg'                          => $classAvg,
-                            'subject_position_class'       => $newPositionCum,
-                            'subject_position_class_total' => $newPositionTotal,
-                            'arm_position'                 => $newArmPositionTotal,
-                            'arm_position_cum'             => $newArmPositionCum,
-                            'grade'                        => $grade,
-                            'remark'                       => $remark,
-                        ]);
-                        $updatesCount++;
-                    }
-                }
-
-                Log::info('Subject processing completed', [
-                    'subject_name'    => $subjectName,
-                    'registered_rows' => $subjectRecords->count(),
-                    'updates_applied' => $updatesCount,
-                    'class_avg'       => $classAvg,
-                ]);
-            }
-
-            return true;
-        });
-
-        if ($success) {
-            Cache::put($cacheKey, true, now()->addHours(1));
-        }
-
-        return $success;
+    if (!$schoolclass) {
+        Log::error('Schoolclass not found', compact('schoolclassid', 'sessionid', 'termid'));
+        return false;
     }
+
+    $className = $schoolclass->schoolclass;
+    $classIds  = Schoolclass::where('schoolclass', $className)->pluck('id')->toArray();
+
+    if (empty($classIds)) {
+        Log::error('No schoolclass IDs found', compact('className', 'schoolclassid'));
+        return false;
+    }
+
+    $students = Studentclass::whereIn('schoolclassid', $classIds)
+        ->where('sessionid', $sessionid)
+        ->pluck('studentId')
+        ->toArray();
+
+    if (empty($students)) {
+        Log::error('No students found for class', compact('className', 'classIds', 'sessionid'));
+        return false;
+    }
+
+    $armId = $schoolclass->arm;
+
+    $success = DB::transaction(function () use (
+        $schoolclassid, $sessionid, $termid, $className, $classIds, $students, $armId
+    ) {
+        $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
+            ->where('broadsheets.term_id', $termid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->whereIn('broadsheet_records.schoolclass_id', $classIds)
+            ->whereExists(function ($query) use ($termid, $sessionid) {
+                $query->select(DB::raw(1))
+                    ->from('subjectRegistrationStatus')
+                    ->join('subjectclass as sjc_reg', 'sjc_reg.id', '=', 'subjectRegistrationStatus.subjectclassid')
+                    ->join('subjectteacher as st_reg', 'st_reg.id', '=', 'sjc_reg.subjectteacherid')
+                    ->whereColumn('st_reg.subjectid', 'broadsheet_records.subject_id')
+                    ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
+                    ->where('subjectRegistrationStatus.termid', $termid)
+                    ->where('subjectRegistrationStatus.sessionid', $sessionid);
+            })
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+            ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
+            ->select([
+                'broadsheets.id',
+                'broadsheet_records.student_id',
+                'broadsheet_records.subject_id',
+                'subject.subject as subject_name',
+                'studentRegistration.admissionNo as admission_no',
+                'broadsheets.total',
+                'broadsheets.bf',
+                'broadsheets.cum',
+                'broadsheets.subject_position_class',
+                'broadsheets.subject_position_class_total',
+                'broadsheets.arm_position',
+                'broadsheets.arm_position_cum',
+                'broadsheets.avg',
+                'broadsheets.grade',
+                'broadsheets.remark',
+                'schoolclass.arm as student_arm_id',
+            ])
+            ->get();
+
+        if ($broadsheets->isEmpty()) {
+            Log::warning('No broadsheet records found (after registration filter)', compact('className', 'classIds', 'sessionid', 'termid'));
+            return false;
+        }
+
+        $subjectGroups = $broadsheets->groupBy('subject_id');
+
+        foreach ($subjectGroups as $subjectId => $subjectRecords) {
+            $subjectName = $subjectRecords->first()->subject_name;
+
+            // 1. CLASS POSITION (CUM)
+            $validRecordsCum = $subjectRecords->filter(fn($r) => $r->cum != 0 && $r->cum !== null);
+            $positionMapCum  = $this->calculatePositionsRaw($validRecordsCum->sortByDesc('cum')->values(), 'cum');
+
+            // 2. CLASS POSITION (TOTAL)
+            $validRecordsTotal = $subjectRecords->filter(fn($r) => $r->total != 0 && $r->total !== null);
+            $positionMapTotal  = $this->calculatePositionsRaw($validRecordsTotal->sortByDesc('total')->values(), 'total');
+
+            // 3. ARM POSITION (TOTAL)
+            $armOnlyRecords      = $subjectRecords->filter(fn($r) => $r->student_arm_id == $armId);
+            $validArmTotal       = $armOnlyRecords->filter(fn($r) => $r->total != 0 && $r->total !== null);
+            $armPositionMapTotal = $this->calculatePositionsRaw($validArmTotal->sortByDesc('total')->values(), 'total');
+
+            // 4. ARM POSITION (CUM)
+            $validArmCum       = $armOnlyRecords->filter(fn($r) => $r->cum != 0 && $r->cum !== null);
+            $armPositionMapCum = $this->calculatePositionsRaw($validArmCum->sortByDesc('cum')->values(), 'cum');
+
+            // Class average
+            $totalScores  = $validRecordsTotal->sum('total');
+            $studentCount = $validRecordsTotal->count();
+            $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
+
+            $updatesCount = 0;
+
+            foreach ($subjectRecords as $record) {
+                $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
+                $remark = $this->getRemark($grade);
+
+                $newPositionCum = ($record->cum == 0 || $record->cum === null)
+                    ? null : ($positionMapCum[$record->id] ?? null);
+
+                $newPositionTotal = ($record->total == 0 || $record->total === null)
+                    ? null : ($positionMapTotal[$record->id] ?? null);
+
+                $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId)
+                    ? null : ($armPositionMapTotal[$record->id] ?? null);
+
+                $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId)
+                    ? null : ($armPositionMapCum[$record->id] ?? null);
+
+                // ── KEY FIX: null-safe comparison ─────────────────────────
+                // PHP's != treats NULL != NULL as false (equal), so a column
+                // that was wrongly NULLed and now has a valid position would
+                // never get updated. Use a helper that treats them correctly.
+                $hasChanged =
+                    ((float) $record->avg !== (float) $classAvg) ||
+                    !$this->nullSafeEquals($record->subject_position_class,       $newPositionCum) ||
+                    !$this->nullSafeEquals($record->subject_position_class_total, $newPositionTotal) ||
+                    !$this->nullSafeEquals($record->arm_position,                 $newArmPositionTotal) ||
+                    !$this->nullSafeEquals($record->arm_position_cum,             $newArmPositionCum) ||
+                    $record->grade  !== $grade ||
+                    $record->remark !== $remark;
+
+                if ($hasChanged) {
+                    Broadsheets::where('id', $record->id)->update([
+                        'avg'                          => $classAvg,
+                        'subject_position_class'       => $newPositionCum,
+                        'subject_position_class_total' => $newPositionTotal,
+                        'arm_position'                 => $newArmPositionTotal,
+                        'arm_position_cum'             => $newArmPositionCum,
+                        'grade'                        => $grade,
+                        'remark'                       => $remark,
+                    ]);
+                    $updatesCount++;
+                }
+            }
+
+            Log::info('Subject processing completed', [
+                'subject_name'    => $subjectName,
+                'registered_rows' => $subjectRecords->count(),
+                'updates_applied' => $updatesCount,
+                'class_avg'       => $classAvg,
+            ]);
+        }
+
+        return true;
+    });
+
+    if ($success) {
+        Cache::put($cacheKey, true, now()->addHours(1));
+    }
+
+    return $success;
+}
+
+/**
+ * Null-safe equality check.
+ * Returns true only if both values are null, or both are non-null and equal.
+ * Prevents NULL != 3 being skipped when the DB has NULL but should have 3.
+ */
+private function nullSafeEquals($a, $b): bool
+{
+    if (is_null($a) && is_null($b)) return true;
+    if (is_null($a) || is_null($b)) return false;
+    return (string) $a === (string) $b;
+}
 
     // =========================================================================
     // ATTENDANCE SUMMARY
