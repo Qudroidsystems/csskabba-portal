@@ -371,7 +371,6 @@
         ];
         $columnsToShow = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
 
-        // Helper: is any attendance column requested?
         $showAnyAttendance = collect([
             'attendance_days_present', 'attendance_days_absent', 'attendance_days_late',
             'attendance_sick_leave', 'attendance_excused',
@@ -408,7 +407,6 @@
                 ? $studentData['school_stamp_base64']
                 : asset('stamp.jpeg');
 
-            // Attendance computed values
             $attPct    = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
             $attWarn   = $attPct < 75;
             $attFound  = $attendance['found'] ?? false;
@@ -557,36 +555,64 @@
                                 <th class="col-grade">Grade</th>
                             @endif
 
-                            {{-- Four position columns --}}
+                            {{-- Position columns --}}
                             @if(in_array('position', $columnsToShow))
-                                <th class="col-position" title="All arms of this class, ranked by cumulative average">
-                                    Class Pos<br><span style="font-size:5px;">(Cum)</span>
-                                </th>
+                                <th class="col-position">Class Pos<br>(Cum)</th>
                             @endif
                             @if(in_array('position_total', $columnsToShow))
-                                <th class="col-position" title="All arms of this class, ranked by raw total">
-                                    Class Pos<br><span style="font-size:5px;">(Total)</span>
-                                </th>
+                                <th class="col-position">Class Pos<br>(Total)</th>
                             @endif
                             @if(in_array('arm_position', $columnsToShow))
-                                <th class="col-position" title="This arm only, ranked by raw total">
-                                    Arm Pos<br><span style="font-size:5px;">(Total)</span>
-                                </th>
+                                <th class="col-position">Arm Pos<br>(Total)</th>
                             @endif
                             @if(in_array('arm_position_cum', $columnsToShow))
-                                <th class="col-position" title="This arm only, ranked by cumulative average">
-                                    Arm Pos<br><span style="font-size:5px;">(Cum)</span>
-                                </th>
+                                <th class="col-position">Arm Pos<br>(Cum)</th>
                             @endif
 
                             @if(in_array('class_average', $columnsToShow))
-                                <th class="col-class-average">Av</th>
+                                <th class="col-class-average">Avg</th>
                             @endif
                         </tr>
                     </thead>
 
                     <tbody>
                         @forelse ($studentData['scores'] as $scoreIndex => $score)
+                        @php
+                            // CRITICAL FIX: Get position values directly from the score object
+                            // The score object has properties: position, position_total, arm_position, arm_position_cum
+                            $posCum = isset($score->position) && $score->position > 0 ? $score->position : null;
+                            $posTotal = isset($score->position_total) && $score->position_total > 0 ? $score->position_total : null;
+                            $armPos = isset($score->arm_position) && $score->arm_position > 0 ? $score->arm_position : null;
+                            $armPosCum = isset($score->arm_position_cum) && $score->arm_position_cum > 0 ? $score->arm_position_cum : null;
+
+                            // Also try to get from raw properties if the above are not set
+                            if (!$posCum && property_exists($score, 'subject_position_class')) {
+                                $posCum = $score->subject_position_class > 0 ? $score->subject_position_class : null;
+                            }
+                            if (!$posTotal && property_exists($score, 'subject_position_class_total')) {
+                                $posTotal = $score->subject_position_class_total > 0 ? $score->subject_position_class_total : null;
+                            }
+
+                            $posClass = '';
+                            if ($posCum == 1) $posClass = 'position-1';
+                            elseif ($posCum == 2) $posClass = 'position-2';
+                            elseif ($posCum == 3) $posClass = 'position-3';
+
+                            $posTotalClass = '';
+                            if ($posTotal == 1) $posTotalClass = 'position-1';
+                            elseif ($posTotal == 2) $posTotalClass = 'position-2';
+                            elseif ($posTotal == 3) $posTotalClass = 'position-3';
+
+                            $armPosClass = '';
+                            if ($armPos == 1) $armPosClass = 'position-1';
+                            elseif ($armPos == 2) $armPosClass = 'position-2';
+                            elseif ($armPos == 3) $armPosClass = 'position-3';
+
+                            $armPosCumClass = '';
+                            if ($armPosCum == 1) $armPosCumClass = 'position-1';
+                            elseif ($armPosCum == 2) $armPosCumClass = 'position-2';
+                            elseif ($armPosCum == 3) $armPosCumClass = 'position-3';
+                        @endphp
                         <tr>
                             {{-- Student info cells --}}
                             @if(in_array('sn', $columnsToShow))
@@ -644,88 +670,24 @@
                                 <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
                             @endif
 
-                            {{-- Class Pos (Cum) - FIXED to handle null/zero properly --}}
+                            {{-- Class Position (Cumulative) --}}
                             @if(in_array('position', $columnsToShow))
-                                @php
-                                    $posVal = $score->position ?? $score->subject_position_class ?? null;
-                                    $posNum = is_numeric($posVal) ? (int)$posVal : 0;
-                                    $posClass = '';
-                                    $displayPos = '-';
-
-                                    if ($posNum > 0) {
-                                        $displayPos = formatOrdinal($posNum);
-                                        $posClass = match($posNum) {
-                                            1 => 'position-1',
-                                            2 => 'position-2',
-                                            3 => 'position-3',
-                                            default => ''
-                                        };
-                                    }
-                                @endphp
-                                <td class="{{ $posClass }}">{{ $displayPos }}</td>
+                                <td class="{{ $posClass }}">{{ formatOrdinal($posCum) }}</td>
                             @endif
 
-                            {{-- Class Pos (Total) - FIXED --}}
+                            {{-- Class Position (Total) --}}
                             @if(in_array('position_total', $columnsToShow))
-                                @php
-                                    $posTotalVal = $score->position_total ?? null;
-                                    $posTotalNum = is_numeric($posTotalVal) ? (int)$posTotalVal : 0;
-                                    $posTotalClass = '';
-                                    $displayPosTotal = '-';
-
-                                    if ($posTotalNum > 0) {
-                                        $displayPosTotal = formatOrdinal($posTotalNum);
-                                        $posTotalClass = match($posTotalNum) {
-                                            1 => 'position-1',
-                                            2 => 'position-2',
-                                            3 => 'position-3',
-                                            default => ''
-                                        };
-                                    }
-                                @endphp
-                                <td class="{{ $posTotalClass }}">{{ $displayPosTotal }}</td>
+                                <td class="{{ $posTotalClass }}">{{ formatOrdinal($posTotal) }}</td>
                             @endif
 
-                            {{-- Arm Pos (Total) - FIXED --}}
+                            {{-- Arm Position (Total) --}}
                             @if(in_array('arm_position', $columnsToShow))
-                                @php
-                                    $armPosVal = $score->arm_position ?? null;
-                                    $armPosNum = is_numeric($armPosVal) ? (int)$armPosVal : 0;
-                                    $armPosClass = '';
-                                    $displayArmPos = '-';
-
-                                    if ($armPosNum > 0) {
-                                        $displayArmPos = formatOrdinal($armPosNum);
-                                        $armPosClass = match($armPosNum) {
-                                            1 => 'position-1',
-                                            2 => 'position-2',
-                                            3 => 'position-3',
-                                            default => ''
-                                        };
-                                    }
-                                @endphp
-                                <td class="{{ $armPosClass }}">{{ $displayArmPos }}</td>
+                                <td class="{{ $armPosClass }}">{{ formatOrdinal($armPos) }}</td>
                             @endif
 
-                            {{-- Arm Pos (Cum) - FIXED --}}
+                            {{-- Arm Position (Cumulative) --}}
                             @if(in_array('arm_position_cum', $columnsToShow))
-                                @php
-                                    $armPosCumVal = $score->arm_position_cum ?? null;
-                                    $armPosCumNum = is_numeric($armPosCumVal) ? (int)$armPosCumVal : 0;
-                                    $armPosCumClass = '';
-                                    $displayArmPosCum = '-';
-
-                                    if ($armPosCumNum > 0) {
-                                        $displayArmPosCum = formatOrdinal($armPosCumNum);
-                                        $armPosCumClass = match($armPosCumNum) {
-                                            1 => 'position-1',
-                                            2 => 'position-2',
-                                            3 => 'position-3',
-                                            default => ''
-                                        };
-                                    }
-                                @endphp
-                                <td class="{{ $armPosCumClass }}">{{ $displayArmPosCum }}</td>
+                                <td class="{{ $armPosCumClass }}">{{ formatOrdinal($armPosCum) }}</td>
                             @endif
 
                             @if(in_array('class_average', $columnsToShow))
@@ -750,7 +712,7 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            {{-- ── ATTENDANCE BOX ────────────────────────────────────────── --}}
+            {{-- ATTENDANCE BOX --}}
             @if($showAnyAttendance)
             <div class="attendance-box">
                 <div class="attendance-box-header">📅 Attendance Record — {{ $term }}</div>
@@ -815,7 +777,6 @@
                         @endif
                     </div>
 
-                    {{-- Progress bar --}}
                     @if(in_array('attendance_percentage', $columnsToShow))
                     <div style="padding:4px 10px 6px;">
                         <div class="att-pct-bar-wrap">
@@ -830,7 +791,6 @@
                 @endif
             </div>
             @endif
-            {{-- ── END ATTENDANCE BOX ── --}}
 
             {{-- REMARKS --}}
             <table class="remarks-table">
@@ -848,7 +808,7 @@
                 </tbody>
             </table>
 
-            {{-- BOTTOM STRIP: QR | Footer | Stamp --}}
+            {{-- BOTTOM STRIP --}}
             <div class="bottom-strip">
                 <table>
                     <tr>
@@ -856,7 +816,6 @@
                             <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
                             <div class="qr-label">Scan for Verification</div>
                         </td>
-
                         <td class="cell-footer">
                             <div>
                                 <strong>Issued:</strong>
@@ -879,14 +838,12 @@
                             </div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
-
                         <td class="cell-stamp">
                             <img src="{{ $stampSrc }}" alt="School Stamp">
                         </td>
                     </tr>
                 </table>
             </div>
-
         </div>
     @endforeach
 </body>
