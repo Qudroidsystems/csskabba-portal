@@ -1036,95 +1036,125 @@ class AdminScoreEntryController extends Controller
     // BULK EXPORT — multiple scoresheets from index, returned as a ZIP
     // =========================================================================
 
+
     public function bulkExport(Request $request)
-    {
-        $request->validate([
-            'subjects'           => 'required|array|min:1',
-            'subjects.*.subjectclass_id' => 'required|exists:subjectclass,id',
-            'subjects.*.teacher_id'      => 'required|exists:users,id',
-            'subjects.*.schoolclass_id'  => 'required|exists:schoolclass,id',
-            'subjects.*.term_id'         => 'required|exists:schoolterm,id',
-            'subjects.*.session_id'      => 'required|exists:schoolsession,id',
-        ]);
+{
+    $request->validate([
+        'subjects'                           => 'required|array|min:1',
+        'subjects.*.subjectclass_id'         => 'required|exists:subjectclass,id',
+        'subjects.*.teacher_id'              => 'required|exists:users,id',
+        'subjects.*.schoolclass_id'          => 'required|exists:schoolclass,id',
+        'subjects.*.term_id'                 => 'required|exists:schoolterm,id',
+        'subjects.*.session_id'              => 'required|exists:schoolsession,id',
+    ]);
 
-        $subjects = $request->input('subjects');
+    $subjects = $request->input('subjects');
+    $tempDir  = storage_path('app/temp');
 
-        try {
-            $zip      = new \ZipArchive();
-            $zipName  = 'admin_scoresheets_' . now()->format('Y-m-d_His') . '.zip';
-            $zipPath  = storage_path('app/temp/' . $zipName);
-
-            // Ensure temp directory exists
-            if (!is_dir(storage_path('app/temp'))) {
-                mkdir(storage_path('app/temp'), 0755, true);
-            }
-
-            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-                return response()->json(['success' => false, 'message' => 'Could not create ZIP archive.'], 500);
-            }
-
-            $added = 0;
-
-            foreach ($subjects as $subjectData) {
-                $subjectclassId = (int) $subjectData['subjectclass_id'];
-                $teacherId      = (int) $subjectData['teacher_id'];
-                $schoolclassId  = (int) $subjectData['schoolclass_id'];
-                $termId         = (int) $subjectData['term_id'];
-                $sessionId      = (int) $subjectData['session_id'];
-
-                // Check that there are scores to export
-                $hasScores = Broadsheets::where('subjectclass_id', $subjectclassId)
-                    ->where('staff_id', $teacherId)
-                    ->where('term_id', $termId)
-                    ->whereHas('broadsheetRecord', fn($q) => $q->where('session_id', $sessionId))
-                    ->exists();
-
-                if (!$hasScores) {
-                    continue; // silently skip empty scoresheets
-                }
-
-                $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
-                $schoolclass  = Schoolclass::find($schoolclassId);
-                $term         = Schoolterm::find($termId);
-                $session      = Schoolsession::find($sessionId);
-
-                $subjectName  = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectClass?->subject?->subject ?? 'subject');
-                $className    = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->schoolclass ?? 'class');
-                $termName     = preg_replace('/[^a-zA-Z0-9-]/', '_', $term?->term ?? 'term');
-                $sessionName  = preg_replace('/[^a-zA-Z0-9-]/', '_', $session?->session ?? 'session');
-                $filename     = "admin_{$subjectName}_{$className}_{$termName}_{$sessionName}_scoresheet.xlsx";
-
-                $export     = new AdminRecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $teacherId);
-                $tempFile   = storage_path('app/temp/' . uniqid('sheet_') . '.xlsx');
-
-                // Write to temp file
-                \Maatwebsite\Excel\Facades\Excel::store(
-                    $export,
-                    'temp/' . basename($tempFile),
-                    'local'
-                );
-
-                $zip->addFile($tempFile, $filename);
-                $added++;
-            }
-
-            $zip->close();
-
-            if ($added === 0) {
-                @unlink($zipPath);
-                return response()->json(['success' => false, 'message' => 'No scoresheets with data found for the selected subjects.'], 422);
-            }
-
-            // Stream the ZIP then delete it
-            return response()->download($zipPath, $zipName, [
-                'Content-Type' => 'application/zip',
-            ])->deleteFileAfterSend(true);
-        } catch (\Exception $e) {
-            Log::error('Admin bulkExport error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Export failed: ' . $e->getMessage()], 500);
+    try {
+        // Ensure temp dir exists
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
         }
-    }
 
+        $zip     = new \ZipArchive();
+        $zipName = 'admin_scoresheets_' . now()->format('Y-m-d_His') . '.zip';
+        $zipPath = $tempDir . '/' . $zipName;
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['success' => false, 'message' => 'Could not create ZIP archive.'], 500);
+        }
+
+        $added     = 0;
+        $tempFiles = []; // track for cleanup if something goes wrong
+
+        foreach ($subjects as $subjectData) {
+            $subjectclassId = (int) $subjectData['subjectclass_id'];
+            $teacherId      = (int) $subjectData['teacher_id'];
+            $schoolclassId  = (int) $subjectData['schoolclass_id'];
+            $termId         = (int) $subjectData['term_id'];
+            $sessionId      = (int) $subjectData['session_id'];
+
+            $hasScores = Broadsheets::where('subjectclass_id', $subjectclassId)
+                ->where('staff_id', $teacherId)
+                ->where('term_id', $termId)
+                ->whereHas('broadsheetRecord', fn($q) => $q->where('session_id', $sessionId))
+                ->exists();
+
+            if (!$hasScores) {
+                continue;
+            }
+
+            $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
+            $schoolclass  = Schoolclass::with('arm')->find($schoolclassId);
+            $term         = Schoolterm::find($termId);
+            $session      = Schoolsession::find($sessionId);
+
+            $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectClass?->subject?->subject ?? 'subject');
+            $className   = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->schoolclass ?? 'class');
+            $armName     = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->arm?->arm ?? '');
+            $termName    = preg_replace('/[^a-zA-Z0-9-]/', '_', $term?->term ?? 'term');
+            $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $session?->session ?? 'session');
+
+            $filenameInZip = "admin_{$subjectName}_{$className}" . ($armName ? "_{$armName}" : '') . "_{$termName}_{$sessionName}_scoresheet.xlsx";
+
+            // Use a unique key for the local disk path (relative to storage/app/)
+            $relativeKey = 'temp/' . uniqid('sheet_') . '.xlsx';
+            $absolutePath = storage_path('app/' . $relativeKey);
+
+            $export = new AdminRecordsheetExport(
+                $schoolclassId,
+                $subjectclassId,
+                $termId,
+                $sessionId,
+                $teacherId
+            );
+
+            // Store to local disk — returns true on success
+            \Maatwebsite\Excel\Facades\Excel::store($export, $relativeKey, 'local');
+
+            // Verify the file actually exists before adding
+            if (!file_exists($absolutePath)) {
+                Log::warning("AdminBulkExport: file not found after store: {$absolutePath}");
+                continue;
+            }
+
+            $zip->addFile($absolutePath, $filenameInZip);
+            $tempFiles[] = $absolutePath;
+            $added++;
+        }
+
+        $zip->close();
+
+        // Clean up temp xlsx files
+        foreach ($tempFiles as $f) {
+            @unlink($f);
+        }
+
+        if ($added === 0) {
+            @unlink($zipPath);
+            return response()->json([
+                'success' => false,
+                'message' => 'No scoresheets with data found for the selected subjects.',
+            ], 422);
+        }
+
+        return response()->download($zipPath, $zipName, [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+
+    } catch (\Exception $e) {
+        Log::error('Admin bulkExport error: ' . $e->getMessage());
+        // Clean up orphaned zip if it exists
+        if (!empty($zipPath) && file_exists($zipPath)) {
+            @unlink($zipPath);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Export failed: ' . $e->getMessage(),
+        ], 500);
+    }
+}
     // =========================================================================
     // IMPORT — single scoresheet (from scoresheet view)
     // =========================================================================
