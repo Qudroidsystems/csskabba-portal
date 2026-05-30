@@ -1394,7 +1394,7 @@ class MyScoreSheetController extends Controller
     }
 
 
-    protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
 {
     Log::info('[updateSubjectPositions] START', [
         'subjectclass_id' => $subjectclass_id,
@@ -1441,17 +1441,7 @@ class MyScoreSheetController extends Controller
         'all_subjectclass_ids' => $allSubjectClassIds->toArray(),
     ]);
 
-    // Raw count before filter — for debugging
-    $rawCount = DB::table('broadsheets')
-        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-        ->whereIn('broadsheets.subjectclass_id', $allSubjectClassIds)
-        ->where('broadsheets.term_id', $term_id)
-        ->where('broadsheet_records.session_id', $session_id)
-        ->count();
-
-    Log::info('[updateSubjectPositions] Raw broadsheet rows (no filter)', ['raw_count' => $rawCount]);
-
-    // ── FIXED whereExists: joins through subjectteacher to get subject_id ──
+    // FIXED: Get all students with their scores, including registration filter
     $allStudents = DB::table('broadsheets')
         ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
         ->whereIn('broadsheets.subjectclass_id', $allSubjectClassIds)
@@ -1460,13 +1450,12 @@ class MyScoreSheetController extends Controller
         ->whereExists(function ($query) use ($term_id, $session_id) {
             $query->select(DB::raw(1))
                 ->from('subjectRegistrationStatus')
-                // ── join through subjectteacher to resolve subject_id ──────
-                ->join('subjectclass as sjc_reg', 'sjc_reg.id', '=', 'subjectRegistrationStatus.subjectclassid')
-                ->join('subjectteacher as st_reg', 'st_reg.id', '=', 'sjc_reg.subjectteacherid')
-                ->whereColumn('st_reg.subjectid', 'broadsheet_records.subject_id')
+                ->join('subjectclass as srs_sc', 'srs_sc.id', '=', 'subjectRegistrationStatus.subjectclassid')
+                ->whereColumn('srs_sc.subjectid', 'broadsheet_records.subject_id')
                 ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
                 ->where('subjectRegistrationStatus.termid', $term_id)
-                ->where('subjectRegistrationStatus.sessionid', $session_id);
+                ->where('subjectRegistrationStatus.sessionid', $session_id)
+                ->where('subjectRegistrationStatus.Status', 1);
         })
         ->get([
             'broadsheets.id',
@@ -1478,74 +1467,91 @@ class MyScoreSheetController extends Controller
 
     Log::info('[updateSubjectPositions] After registration filter', [
         'filtered_count' => $allStudents->count(),
-        'filtered_out'   => $rawCount - $allStudents->count(),
     ]);
 
     if ($allStudents->isEmpty()) {
-        Log::warning('[updateSubjectPositions] No students after filter — positions NOT updated', [
-            'subjectclass_id' => $subjectclass_id,
-            'subject_id'      => $subjectId,
-            'raw_count'       => $rawCount,
-        ]);
+        Log::warning('[updateSubjectPositions] No students after filter — positions NOT updated');
+        $this->nullOutStalePositions($allSubjectClassIds, $term_id, $session_id);
         return;
     }
 
-    // Class-wide position by cum
-    $lastVal = null; $currentRank = 0;
-    foreach ($allStudents->sortByDesc('cum')->values() as $idx => $b) {
+    // Class-wide position by cum (using DENSE_RANK logic for ties)
+    $lastVal = null;
+    $currentRank = 0;
+    $sortedByCum = $allStudents->sortByDesc('cum')->values();
+    foreach ($sortedByCum as $idx => $b) {
         if ($lastVal === null || $b->cum != $lastVal) {
             $currentRank = $idx + 1;
             $lastVal = $b->cum;
         }
-        DB::table('broadsheets')->where('id', $b->id)
-            ->update(['subject_position_class' => $currentRank]);
+        DB::table('broadsheets')->where('id', $b->id)->update(['subject_position_class' => $currentRank]);
     }
 
     // Class-wide position by total
-    $lastVal = null; $currentRank = 0;
-    foreach ($allStudents->sortByDesc('total')->values() as $idx => $b) {
+    $lastVal = null;
+    $currentRank = 0;
+    $sortedByTotal = $allStudents->sortByDesc('total')->values();
+    foreach ($sortedByTotal as $idx => $b) {
         if ($lastVal === null || $b->total != $lastVal) {
             $currentRank = $idx + 1;
             $lastVal = $b->total;
         }
-        DB::table('broadsheets')->where('id', $b->id)
-            ->update(['subject_position_class_total' => $currentRank]);
+        DB::table('broadsheets')->where('id', $b->id)->update(['subject_position_class_total' => $currentRank]);
     }
 
-    // Arm-specific positions
+    // Arm-specific positions by total
     foreach ($allStudents->groupBy('schoolclass_id') as $armClassId => $studentsInArm) {
-        $lastVal = null; $currentRank = 0;
-        foreach ($studentsInArm->sortByDesc('total')->values() as $idx => $b) {
+        $lastVal = null;
+        $currentRank = 0;
+        $sortedByTotalArm = $studentsInArm->sortByDesc('total')->values();
+        foreach ($sortedByTotalArm as $idx => $b) {
             if ($lastVal === null || $b->total != $lastVal) {
                 $currentRank = $idx + 1;
                 $lastVal = $b->total;
             }
-            DB::table('broadsheets')->where('id', $b->id)
-                ->update(['arm_position' => $currentRank]);
+            DB::table('broadsheets')->where('id', $b->id)->update(['arm_position' => $currentRank]);
         }
 
-        $lastVal = null; $currentRank = 0;
-        foreach ($studentsInArm->sortByDesc('cum')->values() as $idx => $b) {
+        // Arm-specific positions by cum
+        $lastVal = null;
+        $currentRank = 0;
+        $sortedByCumArm = $studentsInArm->sortByDesc('cum')->values();
+        foreach ($sortedByCumArm as $idx => $b) {
             if ($lastVal === null || $b->cum != $lastVal) {
                 $currentRank = $idx + 1;
                 $lastVal = $b->cum;
             }
-            DB::table('broadsheets')->where('id', $b->id)
-                ->update(['arm_position_cum' => $currentRank]);
+            DB::table('broadsheets')->where('id', $b->id)->update(['arm_position_cum' => $currentRank]);
         }
     }
 
-    // NULL OUT positions for unregistered rows
-    $rankedIds   = $allStudents->pluck('id');
-    $nulledCount = DB::table('broadsheets')
-        ->whereIn('subjectclass_id', $allSubjectClassIds)
-        ->where('term_id', $term_id)
-        ->whereNotIn('id', $rankedIds)
-        ->whereExists(function ($query) use ($session_id) {
+    // Null out positions for unregistered students
+    $this->nullOutStalePositions($allSubjectClassIds, $term_id, $session_id);
+
+    Log::info('[updateSubjectPositions] DONE', [
+        'students_ranked' => $allStudents->count(),
+    ]);
+}
+
+/**
+ * Helper method to null-out positions for unregistered students
+ */
+protected function nullOutStalePositions($subjectClassIds, $term_id, $session_id)
+{
+    DB::table('broadsheets')
+        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+        ->whereIn('broadsheets.subjectclass_id', $subjectClassIds)
+        ->where('broadsheets.term_id', $term_id)
+        ->where('broadsheet_records.session_id', $session_id)
+        ->whereNotExists(function ($query) use ($term_id, $session_id) {
             $query->select(DB::raw(1))
-                ->from('broadsheet_records')
-                ->whereColumn('broadsheet_records.id', 'broadsheets.broadSheet_record_id')
-                ->where('broadsheet_records.session_id', $session_id);
+                ->from('subjectRegistrationStatus')
+                ->join('subjectclass as srs_sc', 'srs_sc.id', '=', 'subjectRegistrationStatus.subjectclassid')
+                ->whereColumn('srs_sc.subjectid', 'broadsheet_records.subject_id')
+                ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
+                ->where('subjectRegistrationStatus.termid', $term_id)
+                ->where('subjectRegistrationStatus.sessionid', $session_id)
+                ->where('subjectRegistrationStatus.Status', 1);
         })
         ->update([
             'subject_position_class'       => null,
@@ -1553,13 +1559,7 @@ class MyScoreSheetController extends Controller
             'arm_position'                 => null,
             'arm_position_cum'             => null,
         ]);
-
-    Log::info('[updateSubjectPositions] DONE', [
-        'students_ranked' => $allStudents->count(),
-        'rows_nulled'     => $nulledCount,
-    ]);
 }
-
 
 
 

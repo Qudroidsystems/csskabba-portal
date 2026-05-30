@@ -144,11 +144,8 @@ class ViewStudentReportController extends Controller
             'class_name' => $schoolclass->schoolclass ?? 'Unknown',
         ]);
 
-        // Resolve all arm IDs so the subjectclass scope covers the same
-        // set used by calculateClassPositionsAndAverages.
         $classIds = Schoolclass::where('schoolclass', $schoolclass->schoolclass)->pluck('id')->toArray();
 
-        // ── Current term broadsheets — registered subjects only ───────────
         $currentTermBroadsheets = Broadsheets::where('broadsheets.term_id', $termId)
             ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
                 $q->where('student_id', $studentId)->where('session_id', $sessionId);
@@ -166,18 +163,11 @@ class ViewStudentReportController extends Controller
             })
             ->get(['broadsheets.total']);
 
-        Log::debug('Current term broadsheets (registered only)', [
-            'student_id'   => $studentId,
-            'count'        => $currentTermBroadsheets->count(),
-            'total_scores' => $currentTermBroadsheets->pluck('total')->toArray(),
-        ]);
-
         $termGradePoints    = $currentTermBroadsheets->map(fn ($b) => $this->getGradePoint($b->total));
         $gpa                = $termGradePoints->avg() ?? 0.0;
         $num_subjects       = $currentTermBroadsheets->count();
         $total_grade_points = $termGradePoints->sum();
 
-        // ── CGPA: average of all completed term GPAs in the current session ──
         $termGPAs = [];
         for ($t = 1; $t <= $termId; $t++) {
             $termBroadsheets = Broadsheets::where('broadsheets.term_id', $t)
@@ -223,7 +213,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // POSITION HELPERS
+    // POSITION HELPERS - FIXED to handle ties correctly
     // =========================================================================
 
     protected function calculatePositionsRaw($sortedRecords, $field)
@@ -231,24 +221,27 @@ class ViewStudentReportController extends Controller
         $positionMap  = [];
         $rank         = 0;
         $lastValue    = null;
-        $lastPosition = 0;
+        $currentPosition = 0;
 
         foreach ($sortedRecords as $record) {
             $rank++;
             $currentValue = $record->$field;
+
             if ($lastValue !== null && $currentValue == $lastValue) {
-                $positionMap[$record->id] = $lastPosition;
+                // Tie - use same position as previous
+                $positionMap[$record->id] = $currentPosition;
             } else {
-                $lastPosition             = $rank;
-                $lastValue                = $currentValue;
-                $positionMap[$record->id] = $lastPosition;
+                // New position
+                $currentPosition = $rank;
+                $lastValue = $currentValue;
+                $positionMap[$record->id] = $currentPosition;
             }
         }
         return $positionMap;
     }
 
     // =========================================================================
-    // CLASS POSITIONS AND AVERAGES — REGISTERED SUBJECTS ONLY
+    // CLASS POSITIONS AND AVERAGES — FIXED
     // =========================================================================
 
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
@@ -339,7 +332,7 @@ class ViewStudentReportController extends Controller
             foreach ($subjectGroups as $subjectId => $subjectRecords) {
                 $subjectName = $subjectRecords->first()->subject_name;
 
-                // FIX: Include zero scores in position calculation
+                // Include zero scores and null values in position calculation
                 $validRecordsCum   = $subjectRecords->filter(fn($r) => $r->cum !== null);
                 $positionMapCum    = $this->calculatePositionsRaw($validRecordsCum->sortByDesc('cum')->values(), 'cum');
 
@@ -364,40 +357,22 @@ class ViewStudentReportController extends Controller
                     $grade  = $record->total == 0 ? 'F9' : $this->calculateGrade($record->total);
                     $remark = $this->getRemark($grade);
 
-                    $newPositionCum = ($record->cum === null)
-                        ? null : ($positionMapCum[$record->id] ?? null);
+                    $newPositionCum = ($record->cum === null) ? null : ($positionMapCum[$record->id] ?? null);
+                    $newPositionTotal = ($record->total === null) ? null : ($positionMapTotal[$record->id] ?? null);
+                    $newArmPositionTotal = ($record->total === null || $record->student_arm_id != $armId) ? null : ($armPositionMapTotal[$record->id] ?? null);
+                    $newArmPositionCum = ($record->cum === null || $record->student_arm_id != $armId) ? null : ($armPositionMapCum[$record->id] ?? null);
 
-                    $newPositionTotal = ($record->total === null)
-                        ? null : ($positionMapTotal[$record->id] ?? null);
-
-                    $newArmPositionTotal = ($record->total === null || $record->student_arm_id != $armId)
-                        ? null : ($armPositionMapTotal[$record->id] ?? null);
-
-                    $newArmPositionCum = ($record->cum === null || $record->student_arm_id != $armId)
-                        ? null : ($armPositionMapCum[$record->id] ?? null);
-
-                    // Null-safe comparison
-                    $hasChanged =
-                        ((string) $record->avg !== (string) $classAvg) ||
-                        !$this->nullSafeEquals($record->subject_position_class,       $newPositionCum) ||
-                        !$this->nullSafeEquals($record->subject_position_class_total, $newPositionTotal) ||
-                        !$this->nullSafeEquals($record->arm_position,                 $newArmPositionTotal) ||
-                        !$this->nullSafeEquals($record->arm_position_cum,             $newArmPositionCum) ||
-                        $record->grade  !== $grade ||
-                        $record->remark !== $remark;
-
-                    if ($hasChanged) {
-                        Broadsheets::where('id', $record->id)->update([
-                            'avg'                          => $classAvg,
-                            'subject_position_class'       => $newPositionCum,
-                            'subject_position_class_total' => $newPositionTotal,
-                            'arm_position'                 => $newArmPositionTotal,
-                            'arm_position_cum'             => $newArmPositionCum,
-                            'grade'                        => $grade,
-                            'remark'                       => $remark,
-                        ]);
-                        $updatesCount++;
-                    }
+                    // Force update to ensure positions are correct
+                    Broadsheets::where('id', $record->id)->update([
+                        'avg'                          => $classAvg,
+                        'subject_position_class'       => $newPositionCum,
+                        'subject_position_class_total' => $newPositionTotal,
+                        'arm_position'                 => $newArmPositionTotal,
+                        'arm_position_cum'             => $newArmPositionCum,
+                        'grade'                        => $grade,
+                        'remark'                       => $remark,
+                    ]);
+                    $updatesCount++;
                 }
 
                 Log::info('Subject processing completed', [
@@ -530,7 +505,6 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // FIX: Explicitly select all position fields with proper aliases
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
@@ -567,8 +541,8 @@ class ViewStudentReportController extends Controller
                     'broadsheets.vettedstatus',
                 ])->get();
 
-            // Debug: Log position values from database
-            Log::channel('pdf')->info('Scores after registration filter with positions', [
+            // Debug: Log position values
+            Log::channel('pdf')->info('Scores with positions from database', [
                 'student_id' => $id,
                 'count'      => $scores->count(),
                 'positions'  => $scores->map(fn($s) => [
@@ -578,11 +552,10 @@ class ViewStudentReportController extends Controller
                     'position_total' => $s->position_total,
                     'arm_position'   => $s->arm_position,
                     'arm_position_cum' => $s->arm_position_cum,
-                    'class_average'  => $s->class_average,
                 ])->toArray(),
             ]);
 
-            // Add formatted positions and per-row assessment scores
+            // Add formatted positions
             foreach ($scores as $score) {
                 $score->position_formatted         = ($score->position && $score->position > 0) ? $this->formatOrdinal($score->position) : '-';
                 $score->position_total_formatted   = ($score->position_total && $score->position_total > 0) ? $this->formatOrdinal($score->position_total) : '-';
@@ -962,6 +935,27 @@ class ViewStudentReportController extends Controller
             ->get();
 
         return response()->json(['success' => true, 'data' => $classes]);
+    }
+
+    // =========================================================================
+    // DEBUG METHODS
+    // =========================================================================
+
+    public function forceRecalculatePositions($schoolclassid, $sessionid, $termid)
+    {
+        try {
+            $result = $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
+
+            return response()->json([
+                'success' => $result,
+                'message' => $result ? 'Positions recalculated successfully' : 'Failed to recalculate'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     // =========================================================================
@@ -1355,7 +1349,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // MOCK SCORES FOR DRAWER — REGISTERED SUBJECTS ONLY
+    // MOCK SCORES FOR DRAWER
     // =========================================================================
 
     private function fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId): array
@@ -1482,7 +1476,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // DRAWER DATA — REGISTERED SUBJECTS ONLY
+    // DRAWER DATA
     // =========================================================================
 
     public function drawerData($studentId, $schoolclassId, $sessionId, $termId)
@@ -1551,9 +1545,9 @@ class ViewStudentReportController extends Controller
                     'cum'               => $score->cum   !== null ? (float) $score->cum   : null,
                     'grade'             => $score->grade,
                     'remark'            => $score->remark,
-                    'position'          => $score->position_formatted     ?? ($score->position         ? $this->formatOrdinal($score->position)         : '-'),
-                    'position_total'    => $score->position_total_formatted ?? ($score->position_total  ? $this->formatOrdinal($score->position_total)   : '-'),
-                    'arm_position'      => $score->arm_position_formatted   ?? ($score->arm_position    ? $this->formatOrdinal($score->arm_position)     : '-'),
+                    'position'          => $score->position_formatted ?? ($score->position ? $this->formatOrdinal($score->position) : '-'),
+                    'position_total'    => $score->position_total_formatted ?? ($score->position_total ? $this->formatOrdinal($score->position_total) : '-'),
+                    'arm_position'      => $score->arm_position_formatted ?? ($score->arm_position ? $this->formatOrdinal($score->arm_position) : '-'),
                     'arm_position_cum'  => $score->arm_position_cum_formatted ?? ($score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-'),
                     'class_average'     => $score->class_average !== null ? (float) $score->class_average : null,
                     'is_compulsory'     => $score->is_compulsory ?? false,
