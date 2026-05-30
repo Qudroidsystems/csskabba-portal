@@ -55,7 +55,6 @@ class ViewStudentReportController extends Controller
             return '-';
         }
 
-        $number = (int) $number;
         $lastDigit     = $number % 10;
         $lastTwoDigits = $number % 100;
 
@@ -137,10 +136,11 @@ class ViewStudentReportController extends Controller
     // =========================================================================
 
     /**
-     * Compute GPA and CGPA for a student using ONLY subjects they are
-     * registered for (subjectRegistrationStatus). Unregistered subject
-     * placeholders in broadsheet_records are excluded so they cannot
-     * inflate denominators or drag down grade-point averages.
+     * FIX APPLIED: Added ->whereIn('subjectclass.schoolclassid', $classIds)
+     * inside every whereExists closure to prevent the subjectclass join from
+     * matching rows from OTHER arms/classes that teach the same subject.
+     * Without this scope, unregistering one subject caused the ambiguous join
+     * to silently exclude still-registered subjects from GPA calculations.
      */
     protected function computeOverallGPAAndCGPAForStudent($studentId, $schoolclass, $termId, $sessionId)
     {
@@ -151,17 +151,22 @@ class ViewStudentReportController extends Controller
             'class_name' => $schoolclass->schoolclass ?? 'Unknown',
         ]);
 
+        // Resolve all arm IDs so the subjectclass scope covers the same
+        // set used by calculateClassPositionsAndAverages.
+        $classIds = Schoolclass::where('schoolclass', $schoolclass->schoolclass)->pluck('id')->toArray();
+
         // ── Current term broadsheets — registered subjects only ───────────
         $currentTermBroadsheets = Broadsheets::where('broadsheets.term_id', $termId)
             ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
                 $q->where('student_id', $studentId)->where('session_id', $sessionId);
             })
-            ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
+            ->whereExists(function ($query) use ($studentId, $termId, $sessionId, $classIds) {
                 $query->select(DB::raw(1))
                     ->from('subjectRegistrationStatus')
                     ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                     ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                     ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
+                    ->whereIn('subjectclass.schoolclassid', $classIds)  // ← FIX
                     ->where('subjectRegistrationStatus.studentid', $studentId)
                     ->where('subjectRegistrationStatus.termid', $termId)
                     ->where('subjectRegistrationStatus.sessionid', $sessionId);
@@ -186,12 +191,13 @@ class ViewStudentReportController extends Controller
                 ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
                     $q->where('student_id', $studentId)->where('session_id', $sessionId);
                 })
-                ->whereExists(function ($query) use ($studentId, $t, $sessionId) {
+                ->whereExists(function ($query) use ($studentId, $t, $sessionId, $classIds) {
                     $query->select(DB::raw(1))
                         ->from('subjectRegistrationStatus')
                         ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                         ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
+                        ->whereIn('subjectclass.schoolclassid', $classIds)  // ← FIX
                         ->where('subjectRegistrationStatus.studentid', $studentId)
                         ->where('subjectRegistrationStatus.termid', $t)
                         ->where('subjectRegistrationStatus.sessionid', $sessionId);
@@ -249,18 +255,16 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // CLASS POSITIONS AND AVERAGES — REGISTERED SUBJECTS ONLY (FIXED)
+    // CLASS POSITIONS AND AVERAGES — REGISTERED SUBJECTS ONLY
     // =========================================================================
 
     /**
-     * Calculate positions, averages, and grades for all subjects in a class.
-     *
-     * KEY FIX: the broadsheet query now contains a whereExists sub-query that
-     * gates each row through subjectRegistrationStatus. This means:
-     *   - Students NOT registered for a subject are excluded from that
-     *     subject's average and position ranking.
-     *   - Unregistered subject placeholder rows (total = 0) can no longer
-     *     drag down class averages or inflate position counts.
+     * FIX APPLIED: Added ->whereIn('subjectclass.schoolclassid', $classIds)
+     * inside the whereExists closure so the subjectclass join is pinned to
+     * arms of this class only. Previously the unscoped join could match a
+     * subjectclass row from another class that teaches the same subject,
+     * causing still-registered subjects to be silently dropped from the
+     * position recalculation after an unregistration event.
      */
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
     {
@@ -303,18 +307,17 @@ class ViewStudentReportController extends Controller
 
         $success = DB::transaction(function () use ($schoolclassid, $sessionid, $termid, $className, $classIds, $students, $armId) {
 
-            // ── CORE FIX: only include broadsheet rows where the student is
-            // actually registered for that subject in this term/session.
             $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
                 ->whereIn('broadsheet_records.schoolclass_id', $classIds)
-                ->whereExists(function ($query) use ($termid, $sessionid) {
+                ->whereExists(function ($query) use ($termid, $sessionid, $classIds) {  // ← $classIds added
                     $query->select(DB::raw(1))
                         ->from('subjectRegistrationStatus')
                         ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->whereColumn('subjectclass.subjectid', 'broadsheet_records.subject_id')
                         ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
+                        ->whereIn('subjectclass.schoolclassid', $classIds)  // ← FIX: pin to this class's arms
                         ->where('subjectRegistrationStatus.termid', $termid)
                         ->where('subjectRegistrationStatus.sessionid', $sessionid);
                 })
@@ -380,39 +383,37 @@ class ViewStudentReportController extends Controller
 
                 $updatesCount = 0;
 
-                // ── FIXED: Use strict comparison for positions and handle nulls properly ──
                 foreach ($subjectRecords as $record) {
-                    $grade  = ($record->total == 0 || $record->total === null) ? '-' : $this->calculateGrade($record->total);
-                    $remark = ($grade === '-') ? '-' : $this->getRemark($grade);
+                    $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
+                    $remark = $this->getRemark($grade);
 
-                    $newPositionCum = ($record->cum == 0 || $record->cum === null)
-                        ? null : ($positionMapCum[$record->id] ?? null);
+                    $newPositionCum = ($record->cum == 0 || $record->cum === null) ? null :
+                        ($positionMapCum[$record->id] ?? null);
 
-                    $newPositionTotal = ($record->total == 0 || $record->total === null)
-                        ? null : ($positionMapTotal[$record->id] ?? null);
+                    $newPositionTotal = ($record->total == 0 || $record->total === null) ? null :
+                        ($positionMapTotal[$record->id] ?? null);
 
-                    $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId)
-                        ? null : ($armPositionMapTotal[$record->id] ?? null);
+                    $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId) ? null :
+                        ($armPositionMapTotal[$record->id] ?? null);
 
-                    $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId)
-                        ? null : ($armPositionMapCum[$record->id] ?? null);
+                    $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId) ? null :
+                        ($armPositionMapCum[$record->id] ?? null);
 
-                    $changed =
-                        $record->avg                          != $classAvg             ||
-                        $record->subject_position_class       !== $newPositionCum      ||
-                        $record->subject_position_class_total !== $newPositionTotal    ||
-                        $record->arm_position                 !== $newArmPositionTotal ||
-                        $record->arm_position_cum             !== $newArmPositionCum   ||
-                        $record->grade                        != $grade                ||
-                        $record->remark                       != $remark;
-
-                    if ($changed) {
+                    if (
+                        $record->avg != $classAvg ||
+                        $record->subject_position_class != $newPositionCum ||
+                        $record->subject_position_class_total != $newPositionTotal ||
+                        $record->arm_position != $newArmPositionTotal ||
+                        $record->arm_position_cum != $newArmPositionCum ||
+                        $record->grade != $grade ||
+                        $record->remark != $remark
+                    ) {
                         Broadsheets::where('id', $record->id)->update([
                             'avg'                          => $classAvg,
-                            'subject_position_class'       => is_numeric($newPositionCum) ? (int)$newPositionCum : null,
-                            'subject_position_class_total' => is_numeric($newPositionTotal) ? (int)$newPositionTotal : null,
-                            'arm_position'                 => is_numeric($newArmPositionTotal) ? (int)$newArmPositionTotal : null,
-                            'arm_position_cum'             => is_numeric($newArmPositionCum) ? (int)$newArmPositionCum : null,
+                            'subject_position_class'       => $newPositionCum,
+                            'subject_position_class_total' => $newPositionTotal,
+                            'arm_position'                 => $newArmPositionTotal,
+                            'arm_position_cum'             => $newArmPositionCum,
                             'grade'                        => $grade,
                             'remark'                       => $remark,
                         ]);
@@ -427,24 +428,6 @@ class ViewStudentReportController extends Controller
                     'class_avg'       => $classAvg,
                 ]);
             }
-
-            // ── NEW: Null-out stale positions for unregistered rows ──
-            $registeredBroadsheetIds = $broadsheets->pluck('id');
-
-            Broadsheets::whereIn('broadsheet_records.student_id', $students)
-                ->where('broadsheets.term_id', $termid)
-                ->where('broadsheet_records.session_id', $sessionid)
-                ->whereIn('broadsheet_records.schoolclass_id', $classIds)
-                ->whereNotIn('broadsheets.id', $registeredBroadsheetIds)
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->update([
-                    'broadsheets.subject_position_class'       => null,
-                    'broadsheets.subject_position_class_total' => null,
-                    'broadsheets.arm_position'                 => null,
-                    'broadsheets.arm_position_cum'             => null,
-                    'broadsheets.grade'                        => '-',
-                    'broadsheets.remark'                       => '-',
-                ]);
 
             return true;
         });
@@ -504,19 +487,15 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // GET STUDENT RESULT DATA — REGISTERED SUBJECTS ONLY (FIXED POSITIONS)
+    // GET STUDENT RESULT DATA — REGISTERED SUBJECTS ONLY
     // =========================================================================
 
     /**
-     * Get complete student result data.
-     *
-     * KEY FIX: the scores query is now filtered through
-     * subjectRegistrationStatus so that only subjects the student is
-     * actually registered for appear. This fixes:
-     *   - F9 grades appearing for unregistered subjects
-     *   - Obtainable being inflated (e.g. 1200 instead of 800)
-     *   - % obtained being artificially low
-     *   - GPA being dragged down by zero-score placeholders
+     * FIX APPLIED: Added ->where('subjectclass.schoolclassid', $schoolclassid)
+     * inside the whereExists closure and added $schoolclassid to the closure's
+     * use() list. This pins the subjectclass join to the student's own class,
+     * preventing cross-class subject matches from dropping still-registered
+     * subjects after an unregistration event.
      */
     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
     {
@@ -574,16 +553,20 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // ── CORE FIX: gate scores to registered subjects only ─────────
+            // ── SCORES: gate to registered subjects only ──────────────────
+            // FIX: $schoolclassid added to use() and used inside the EXISTS
+            // subquery to prevent the subjectclass join from matching rows
+            // from other classes that share the same subject.
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
                 ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-                ->whereExists(function ($query) use ($id, $termid, $sessionid) {
+                ->whereExists(function ($query) use ($id, $termid, $sessionid, $schoolclassid) {  // ← $schoolclassid added
                     $query->select(DB::raw(1))
                         ->from('subjectRegistrationStatus')
                         ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->whereColumn('subjectclass.subjectid', 'broadsheet_records.subject_id')
+                        ->where('subjectclass.schoolclassid', $schoolclassid)  // ← FIX
                         ->where('subjectRegistrationStatus.studentid', $id)
                         ->where('subjectRegistrationStatus.termid', $termid)
                         ->where('subjectRegistrationStatus.sessionid', $sessionid);
@@ -609,26 +592,12 @@ class ViewStudentReportController extends Controller
                     'broadsheets.vettedstatus',
                 ])->get();
 
-            // ── FIXED: Add formatted positions with proper ordinal formatting ──
+            // Add formatted positions and per-row assessment scores
             foreach ($scores as $score) {
-                // Convert to integer if it's numeric string, otherwise use as is
-                $positionNum = is_numeric($score->position) ? (int)$score->position : null;
-                $positionTotalNum = is_numeric($score->position_total) ? (int)$score->position_total : null;
-                $armPositionNum = is_numeric($score->arm_position) ? (int)$score->arm_position : null;
-                $armPositionCumNum = is_numeric($score->arm_position_cum) ? (int)$score->arm_position_cum : null;
-
-                $score->position_formatted = ($positionNum && $positionNum > 0)
-                    ? $this->formatOrdinal($positionNum)
-                    : '-';
-                $score->position_total_formatted = ($positionTotalNum && $positionTotalNum > 0)
-                    ? $this->formatOrdinal($positionTotalNum)
-                    : '-';
-                $score->arm_position_formatted = ($armPositionNum && $armPositionNum > 0)
-                    ? $this->formatOrdinal($armPositionNum)
-                    : '-';
-                $score->arm_position_cum_formatted = ($armPositionCumNum && $armPositionCumNum > 0)
-                    ? $this->formatOrdinal($armPositionCumNum)
-                    : '-';
+                $score->position_formatted         = $score->position         ? $this->formatOrdinal($score->position)         : '-';
+                $score->position_total_formatted   = $score->position_total   ? $this->formatOrdinal($score->position_total)   : '-';
+                $score->arm_position_formatted     = $score->arm_position     ? $this->formatOrdinal($score->arm_position)     : '-';
+                $score->arm_position_cum_formatted = $score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-';
 
                 try {
                     if (class_exists(\App\Models\BroadsheetAssessmentScore::class)) {
@@ -1413,12 +1382,13 @@ class ViewStudentReportController extends Controller
                 ->where('broadsheetmock.term_id', $termId)
                 ->where('broadsheet_records_mock.session_id', $sessionId)
                 ->where('broadsheet_records_mock.schoolclass_id', $schoolclassId)
-                ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
+                ->whereExists(function ($query) use ($studentId, $termId, $sessionId, $schoolclassId) {
                     $query->select(DB::raw(1))
                         ->from('subjectRegistrationStatus')
                         ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->join('broadsheet_records_mock as brm_inner', 'brm_inner.subject_id', '=', 'subjectclass.subjectid')
                         ->whereColumn('brm_inner.id', 'broadsheetmock.broadsheet_records_mock_id')
+                        ->where('subjectclass.schoolclassid', $schoolclassId)  // ← FIX applied here too
                         ->where('subjectRegistrationStatus.studentid', $studentId)
                         ->where('subjectRegistrationStatus.termid', $termId)
                         ->where('subjectRegistrationStatus.sessionid', $sessionId);
@@ -1529,7 +1499,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // DRAWER DATA — REGISTERED SUBJECTS ONLY (FIXED POSITIONS)
+    // DRAWER DATA — REGISTERED SUBJECTS ONLY
     // =========================================================================
 
     public function drawerData($studentId, $schoolclassId, $sessionId, $termId)
@@ -1598,10 +1568,9 @@ class ViewStudentReportController extends Controller
                     'cum'               => $score->cum   !== null ? (float) $score->cum   : null,
                     'grade'             => $score->grade,
                     'remark'            => $score->remark,
-                    // Use the formatted positions from the score object
-                    'position'          => $score->position_formatted ?? ($score->position ? $this->formatOrdinal($score->position) : '-'),
-                    'position_total'    => $score->position_total_formatted ?? ($score->position_total ? $this->formatOrdinal($score->position_total) : '-'),
-                    'arm_position'      => $score->arm_position_formatted ?? ($score->arm_position ? $this->formatOrdinal($score->arm_position) : '-'),
+                    'position'          => $score->position_formatted     ?? ($score->position         ? $this->formatOrdinal($score->position)         : '-'),
+                    'position_total'    => $score->position_total_formatted ?? ($score->position_total  ? $this->formatOrdinal($score->position_total)   : '-'),
+                    'arm_position'      => $score->arm_position_formatted   ?? ($score->arm_position    ? $this->formatOrdinal($score->arm_position)     : '-'),
                     'arm_position_cum'  => $score->arm_position_cum_formatted ?? ($score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-'),
                     'class_average'     => $score->class_average !== null ? (float) $score->class_average : null,
                     'is_compulsory'     => $score->is_compulsory ?? false,
