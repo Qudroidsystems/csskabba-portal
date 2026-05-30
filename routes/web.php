@@ -1198,23 +1198,6 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     Route::get('/cbt/{examid}/takecbt', [CBTController::class, 'takeCBT'])->name('cbt.take');
     Route::post('/cbt/submit', [CBTController::class, 'submit'])->name('cbt.submit');
 
-    // //Exams routes...
-    // Route::resource('exams', ExamController::class);
-
-
-    // //Questions routes...
-    // Route::resource('questions', QuestionController::class);
-    // Route::get('/questions/{question}/details', [QuestionController::class, 'showDetails']);
-    // Route::post('/{exam}', [QuestionController::class, 'store'])->name('questions.store');
-    // Route::get('/{question}/details', [QuestionController::class, 'details'])->name('questions.details');
-    // Route::get('/questions/{question}/edit', [QuestionController::class, 'edit'])->name('questions.edit');
-    // Route::put('/questions/{question}', [QuestionController::class, 'update'])->name('questions.update');
-    // Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('questions.destroy');
-
-    // //CBT  routes...
-    // Route::resource('cbt', CBTController::class);
-    // Route::get('/cbt/{examid}/takecbt', [CBTController::class, 'takeCBT'])->name('cbt.take');
-    // Route::post('/cbt/submit', [CBTController::class, 'submit'])->name('cbt.submit');
 
 
     Route::post('/admin/exams/{exam}/pause', [ExamPauseController::class, 'pause'])->name('admin.exams.pause');
@@ -1458,6 +1441,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             Route::post('/bulk-update', [AdminScoreEntryController::class, 'bulkUpdate'])->name('bulk-update');
             Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
             Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
+            Route::post('/bulk-export', [AdminScoreEntryController::class, 'bulkExport'])->name('bulk-export');
 
             // Mock scoresheet endpoints
             Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
