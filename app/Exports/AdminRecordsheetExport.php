@@ -75,81 +75,73 @@ class AdminRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wi
         return $this->password;
     }
 
+
     public function view(): View
-    {
-        Log::info('AdminRecordsheetExport view() called', [
-            'subjectclass_id' => $this->subjectclassId,
-            'staff_id' => $this->staffId,
-            'term_id' => $this->termId,
-            'session_id' => $this->sessionId,
-            'schoolclass_id' => $this->schoolclassId
+{
+    $broadsheets = Broadsheets::query()
+        ->where('broadsheets.term_id', $this->termId)
+        ->where('broadsheets.subjectclass_id', $this->subjectclassId)
+        ->with('assessmentScores')
+        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+        ->join('subjectclass', function ($join) {
+            $join->on('subjectclass.id', '=', 'broadsheets.subjectclass_id')
+                ->on('broadsheet_records.subject_id', '=', 'subjectclass.subjectid')
+                ->on('broadsheet_records.schoolclass_id', '=', 'subjectclass.schoolclassid')
+                ->where('subjectclass.id', $this->subjectclassId);
+        })
+        ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+        ->leftJoin('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+        ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+        ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheets.term_id')
+        ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records.session_id')
+        ->where('broadsheet_records.session_id', $this->sessionId)
+        ->where('schoolclass.id', $this->schoolclassId)
+        ->orderBy('studentRegistration.lastname')
+        ->orderBy('studentRegistration.firstname')
+        ->get([
+            'broadsheets.id',
+            'studentRegistration.admissionNO as admissionno',
+            'studentRegistration.firstname as fname',
+            'studentRegistration.lastname as lname',
+            'studentRegistration.othername as mname',
+            'subject.subject',
+            'subject.subject_code',
+            'schoolclass.schoolclass',
+            'schoolarm.arm',                          // ← arm from correct join
+            'schoolterm.term',
+            'schoolsession.session',
+            'subjectclass.id as subjectclid',
+            'broadsheets.staff_id',
+            'broadsheets.term_id',
+            'broadsheet_records.session_id as sessionid',
+            'users.name as staffname',
+            'studentpicture.picture',
+            'broadsheets.total',
+            'broadsheets.bf',
+            'broadsheets.cum',
+            'broadsheets.grade',
+            'broadsheets.subject_position_class as position',
+            'broadsheets.remark',
+            'broadsheets.avg',
+            'broadsheets.cmin',
+            'broadsheets.cmax',
         ]);
 
-        // Get broadsheets with proper joins
-        $broadsheets = Broadsheets::query()
-            ->where('broadsheets.staff_id', $this->staffId)
-            ->where('broadsheets.term_id', $this->termId)
-            ->where('broadsheets.subjectclass_id', $this->subjectclassId)
-            ->with('assessmentScores')
-            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-            ->join('subjectclass', function ($join) {
-                $join->on('subjectclass.id', '=', 'broadsheets.subjectclass_id')
-                    ->on('broadsheet_records.subject_id', '=', 'subjectclass.subjectid')
-                    ->on('broadsheet_records.schoolclass_id', '=', 'subjectclass.schoolclassid')
-                    ->where('subjectclass.id', $this->subjectclassId);
-            })
-            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-            ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheets.term_id')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records.session_id')
-            ->where('broadsheet_records.session_id', $this->sessionId)
-            ->where('schoolclass.id', $this->schoolclassId)
-            ->orderBy('studentRegistration.lastname')
-            ->orderBy('studentRegistration.firstname')
-            ->get([
-                'broadsheets.id',
-                'studentRegistration.admissionNO as admissionno',
-                'studentRegistration.firstname as fname',
-                'studentRegistration.lastname as lname',
-                'studentRegistration.othername as mname',
-                'subject.subject',
-                'subject.subject_code',
-                'schoolclass.schoolclass',
-                'schoolarm.arm',
-                'schoolterm.term',
-                'schoolsession.session',
-                'subjectclass.id as subjectclid',
-                'broadsheets.staff_id',
-                'broadsheets.term_id',
-                'broadsheet_records.session_id as sessionid',
-                'users.name as staffname',
-                'studentpicture.picture',
-                'broadsheets.total',
-                'broadsheets.bf',
-                'broadsheets.cum',
-                'broadsheets.grade',
-                'broadsheets.subject_position_class as position',
-                'broadsheets.remark',
-                'broadsheets.avg',
-                'broadsheets.cmin',
-                'broadsheets.cmax',
-            ]);
+    Log::info('Broadsheets retrieved count: ' . $broadsheets->count());
 
-        Log::info('Broadsheets retrieved count: ' . $broadsheets->count());
+    $school = SchoolInformation::first();
 
-        $school = SchoolInformation::first();
+    return view('exports.admin_scoresheet_export', [
+        'broadsheets' => $broadsheets,
+        'assessments' => $this->assessments,
+        'school'      => $school,
+    ]);
+}
 
-        return view('exports.admin_scoresheet_export', [
-            'broadsheets' => $broadsheets,
-            'assessments' => $this->assessments,
-            'school'      => $school,
-        ]);
-    }
 
     public function properties(): array
     {

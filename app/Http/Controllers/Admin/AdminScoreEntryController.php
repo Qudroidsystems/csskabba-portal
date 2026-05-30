@@ -1073,80 +1073,94 @@ class AdminScoreEntryController extends Controller
         $added     = 0;
         $tempFiles = [];
 
-        foreach ($subjects as $subjectData) {
-            $subjectclassId = (int) $subjectData['subjectclass_id'];
-            $teacherId      = (int) $subjectData['teacher_id'];
-            $schoolclassId  = (int) $subjectData['schoolclass_id'];
-            $termId         = (int) $subjectData['term_id'];
-            $sessionId      = (int) $subjectData['session_id'];
+       foreach ($subjects as $subjectData) {
+    $subjectclassId = (int) $subjectData['subjectclass_id'];
+    $teacherId      = (int) $subjectData['teacher_id'];
+    $schoolclassId  = (int) $subjectData['schoolclass_id'];
+    $termId         = (int) $subjectData['term_id'];
+    $sessionId      = (int) $subjectData['session_id'];
 
-            $hasScores = DB::table('broadsheets')
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-                ->where('broadsheets.subjectclass_id', $subjectclassId)
-                ->where('broadsheets.term_id', $termId)
-                ->where('broadsheet_records.session_id', $sessionId)
-                ->exists();
+    $hasScores = DB::table('broadsheets')
+        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+        ->where('broadsheets.subjectclass_id', $subjectclassId)
+        ->where('broadsheets.term_id', $termId)
+        ->where('broadsheet_records.session_id', $sessionId)
+        ->exists();
 
-            if (!$hasScores) {
-                Log::info("AdminBulkExport: skipping subjectclass {$subjectclassId} — no scores");
-                continue;
-            }
+    if (!$hasScores) {
+        Log::info("AdminBulkExport: skipping subjectclass {$subjectclassId} — no scores");
+        continue;
+    }
 
-            $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
-            $schoolclass  = Schoolclass::with('arm')->find($schoolclassId);
-            $term         = Schoolterm::find($termId);
-            $session      = Schoolsession::find($sessionId);
+    // Resolve all naming info in one query
+    $info = DB::table('subjectclass')
+        ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+        ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+        ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+        ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+        ->where('subjectclass.id', $subjectclassId)
+        ->select(
+            'subject.subject as subject_name',
+            'subject.subject_code',
+            'schoolclass.schoolclass as class_name',
+            'schoolarm.arm as arm_name',
+            'schoolterm.term as term_name',
+            'schoolsession.session as session_name'
+        )
+        ->first();
 
-            $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectClass?->subject?->subject ?? 'subject');
-            $className   = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->schoolclass ?? 'class');
-            $armName     = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->arm?->arm ?? '');
-            $termName    = preg_replace('/[^a-zA-Z0-9-]/', '_', $term?->term ?? 'term');
-            $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $session?->session ?? 'session');
+    $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $info?->subject_name ?? 'subject');
+    $className   = preg_replace('/[^a-zA-Z0-9-]/', '_', $info?->class_name  ?? 'class');
+    $armName     = preg_replace('/[^a-zA-Z0-9-]/', '_', $info?->arm_name    ?? '');
+    $termName    = preg_replace('/[^a-zA-Z0-9-]/', '_', $info?->term_name   ?? 'term');
+    $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $info?->session_name ?? 'session');
 
-            $filenameInZip = "admin_{$subjectName}_{$className}"
-                . ($armName ? "_{$armName}" : '')
-                . "_{$termName}_{$sessionName}_scoresheet.xlsx";
+    // Format: admin_subject_class_arm_term_session_scoresheet.xlsx
+    $filenameInZip = 'admin_' . $subjectName
+        . '_' . $className
+        . ($armName ? '_' . $armName : '')
+        . '_' . $termName
+        . '_' . $sessionName
+        . '_scoresheet.xlsx';
 
-            $export = new AdminRecordsheetExport(
-                $schoolclassId,
-                $subjectclassId,
-                $termId,
-                $sessionId,
-                $teacherId
-            );
+    $export = new AdminRecordsheetExport(
+        $schoolclassId,
+        $subjectclassId,
+        $termId,
+        $sessionId,
+        $teacherId
+    );
 
-            try {
-                // Generate the xlsx binary in memory — no disk write needed
-                $xlsxContent = \Maatwebsite\Excel\Facades\Excel::raw(
-                    $export,
-                    \Maatwebsite\Excel\Excel::XLSX
-                );
+    try {
+        $xlsxContent = \Maatwebsite\Excel\Facades\Excel::raw(
+            $export,
+            \Maatwebsite\Excel\Excel::XLSX
+        );
 
-                if (empty($xlsxContent)) {
-                    Log::warning("AdminBulkExport: empty xlsx content for subjectclass {$subjectclassId}");
-                    continue;
-                }
-
-                // Write binary to temp file directly via file_put_contents
-                $absolutePath = $tempDir . '/' . uniqid('sheet_') . '.xlsx';
-                $written = file_put_contents($absolutePath, $xlsxContent);
-
-                if ($written === false || $written === 0) {
-                    Log::warning("AdminBulkExport: file_put_contents failed for {$absolutePath}");
-                    continue;
-                }
-
-                Log::info("AdminBulkExport: wrote {$written} bytes to {$absolutePath}");
-
-                $zip->addFile($absolutePath, $filenameInZip);
-                $tempFiles[] = $absolutePath;
-                $added++;
-
-            } catch (\Exception $e) {
-                Log::error("AdminBulkExport: failed for subjectclass {$subjectclassId}: " . $e->getMessage());
-                continue;
-            }
+        if (empty($xlsxContent)) {
+            Log::warning("AdminBulkExport: empty content for subjectclass {$subjectclassId}");
+            continue;
         }
+
+        $absolutePath = $tempDir . '/' . uniqid('sheet_') . '.xlsx';
+        $written      = file_put_contents($absolutePath, $xlsxContent);
+
+        if ($written === false || $written === 0) {
+            Log::warning("AdminBulkExport: file_put_contents failed for {$absolutePath}");
+            continue;
+        }
+
+        $zip->addFile($absolutePath, $filenameInZip);
+        $tempFiles[] = $absolutePath;
+        $added++;
+
+    } catch (\Exception $e) {
+        Log::error("AdminBulkExport: failed for subjectclass {$subjectclassId}: " . $e->getMessage());
+        continue;
+    }
+}
 
         $zip->close();
 
@@ -1179,6 +1193,9 @@ class AdminScoreEntryController extends Controller
         ], 500);
     }
 }
+
+
+
     // =========================================================================
     // IMPORT — single scoresheet (from scoresheet view)
     // =========================================================================
