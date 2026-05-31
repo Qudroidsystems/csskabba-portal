@@ -531,19 +531,12 @@ class DashboardController extends Controller
             return [];
         }
 
+        // Simplified query to avoid closure issues
         $rows = DB::table('broadsheets')
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->where('broadsheets.term_id', $term->id)
             ->where('broadsheet_records.session_id', $session->id)
-            ->join('subjectteacher', function ($join) {
-                $join->on('subjectteacher.subjectid', '=', 'broadsheet_records.subject_id')
-                     ->on('subjectteacher.id', '=', function ($sub) {
-                         // latest assignment
-                         $sub->select('id')->from('subjectteacher as st2')
-                             ->whereColumn('st2.subjectid', 'broadsheet_records.subject_id')
-                             ->limit(1);
-                     });
-            })
+            ->join('subjectteacher', 'subjectteacher.subjectid', '=', 'broadsheet_records.subject_id')
             ->join('users', 'users.id', '=', 'subjectteacher.staffid')
             ->select(
                 'users.id as teacher_id',
@@ -561,38 +554,16 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
-        // Fallback if join is too complex: simpler query
-        if ($rows->isEmpty()) {
-            $rows = DB::table('broadsheets')
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->where('broadsheets.term_id', $term->id)
-                ->where('broadsheet_records.session_id', $session->id)
-                ->join('subjectteacher', 'subjectteacher.subjectid', '=', 'broadsheet_records.subject_id')
-                ->join('users', 'users.id', '=', 'subjectteacher.staffid')
-                ->select(
-                    'users.id as teacher_id',
-                    'users.name as teacher_name',
-                    'users.avatar as teacher_avatar',
-                    DB::raw('AVG(broadsheets.total) as avg_score'),
-                    DB::raw('COUNT(DISTINCT broadsheet_records.subject_id) as subject_count'),
-                    DB::raw('COUNT(DISTINCT broadsheet_records.student_id) as student_count'),
-                    DB::raw('SUM(CASE WHEN broadsheets.total >= 40 THEN 1 ELSE 0 END) as passed'),
-                    DB::raw('COUNT(*) as total_entries'),
-                    DB::raw('MAX(broadsheets.total) as max_score')
-                )
-                ->groupBy('users.id', 'users.name', 'users.avatar')
-                ->orderByDesc('avg_score')
-                ->limit(8)
-                ->get();
-        }
-
         return $rows->map(function ($row) use ($term, $session) {
             // Get subjects this teacher handles
             $subjects = DB::table('subjectteacher')
                 ->where('staffid', $row->teacher_id)
                 ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
                 ->select('subject.subject')
-                ->distinct()->limit(4)->pluck('subject')->toArray();
+                ->distinct()
+                ->limit(4)
+                ->pluck('subject')
+                ->toArray();
 
             // Subjects taught in this term
             $termSubjects = DB::table('broadsheet_records')
@@ -603,7 +574,10 @@ class DashboardController extends Controller
                 ->where('broadsheets.term_id', $term->id)
                 ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
                 ->select('subject.subject')
-                ->distinct()->limit(4)->pluck('subject')->toArray();
+                ->distinct()
+                ->limit(4)
+                ->pluck('subject')
+                ->toArray();
 
             $passRate = $row->total_entries > 0
                 ? round(($row->passed / $row->total_entries) * 100, 1) : 0;
