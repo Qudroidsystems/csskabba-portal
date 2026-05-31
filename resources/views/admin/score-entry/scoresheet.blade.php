@@ -957,25 +957,23 @@
                                 </div>
                             </td>
 
-                            @forelse($assessments as $assessment)
-                                @php
-                                    $scoreObj   = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
-                                    $scoreValue = $scoreObj ? $scoreObj->score : 0;
-                                @endphp
+                           @forelse($assessments as $assessment)
                                 <td class="col-assessment-{{ $assessment->id }} assessment-col text-center">
                                     <input type="number"
-                                           class="score-input"
-                                           data-field="{{ $assessment->id }}"
-                                           data-max="{{ $assessment->max_score }}"
-                                           data-id="{{ $broadsheet->id }}"
-                                           data-original="{{ $scoreValue }}"
-                                           data-assessment-name="{{ $assessment->name }}"
-                                           value="{{ $scoreValue }}"
-                                           min="0" max="{{ $assessment->max_score }}" step="0.1"
-                                           {{ $isLocked ? 'disabled' : '' }}>
+                                        class="score-input"
+                                        data-field="{{ $assessment->id }}"
+                                        data-max="{{ $assessment->max_score }}"
+                                        data-id="{{ $broadsheet->id }}"
+                                        data-original="{{ $scoreValue }}"
+                                        data-assessment-name="{{ $assessment->name }}"
+                                        value="{{ $scoreValue }}"
+                                        min="0" max="{{ $assessment->max_score }}" step="0.1"
+                                        {{ $isLocked ? 'disabled' : '' }}>
+                                </td>
+                            @empty
+                                <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
                             @endforelse
-
-                            <td class="col-total text-center">
+                                                        <td class="col-total text-center">
                                 <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
                                     {{ number_format($rowTotal, 1) }}
                                 </span>
