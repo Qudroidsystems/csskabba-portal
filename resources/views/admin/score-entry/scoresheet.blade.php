@@ -155,6 +155,25 @@
     font-weight: 600;
 }
 
+/* Audit column styles */
+.audit-cell small {
+    font-size: 11px;
+    line-height: 1.3;
+    display: block;
+}
+.audit-cell .audit-date {
+    font-size: 10px;
+    color: var(--ss-muted);
+}
+.source-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
 @media (prefers-reduced-motion: reduce) {
     #scoresheetTableBody tr[data-id],
     #scoresheetTableBody tr[data-id]:hover { transition: background .15s ease !important; transform: none !important; opacity: 1 !important; }
@@ -829,9 +848,51 @@
                         </th>
 
                         <th class="col-vetted text-center">Status</th>
+
+                        {{-- ══ AUDIT & LOCK DETAIL COLUMNS ══ --}}
+                        <th class="col-submitted-by text-center" title="Submitted by">
+                            Submitted<br><small class="fw-normal opacity-75">By</small>
+                        </th>
+                        <th class="col-vetted-by text-center" title="Vetted by">
+                            Vetted<br><small class="fw-normal opacity-75">By</small>
+                        </th>
+                        <th class="col-entered-by text-center" title="Entered by">
+                            Entered<br><small class="fw-normal opacity-75">By</small>
+                        </th>
+                        <th class="col-entered-at text-center" title="Date/time score was first entered">
+                            Entered<br><small class="fw-normal opacity-75">At</small>
+                        </th>
+                        <th class="col-last-modified-by text-center" title="Last modified by">
+                            Modified<br><small class="fw-normal opacity-75">By</small>
+                        </th>
+                        <th class="col-last-modified-at text-center" title="Date/time score was last modified">
+                            Modified<br><small class="fw-normal opacity-75">At</small>
+                        </th>
+                        <th class="col-entry-source text-center" title="Entry source (admin / teacher / import)">
+                            Entry<br><small class="fw-normal opacity-75">Source</small>
+                        </th>
+                        <th class="col-is-locked text-center" title="Lock status">
+                            Locked<br><small class="fw-normal opacity-75">?</small>
+                        </th>
+                        <th class="col-locked-by text-center" title="Locked by">
+                            Locked<br><small class="fw-normal opacity-75">By</small>
+                        </th>
+                        <th class="col-locked-at text-center" title="Date/time locked">
+                            Locked<br><small class="fw-normal opacity-75">At</small>
+                        </th>
+                        <th class="col-lock-reason text-center" title="Lock reason">
+                            Lock<br><small class="fw-normal opacity-75">Reason</small>
+                        </th>
+                        <th class="col-scheduled-unlock text-center" title="Scheduled auto-unlock datetime">
+                            Sched.<br><small class="fw-normal opacity-75">Unlock At</small>
+                        </th>
+                        <th class="col-unlock-scheduled-by text-center" title="Unlock scheduled by">
+                            Unlock<br><small class="fw-normal opacity-75">Sched. By</small>
+                        </th>
+
                         <th class="col-lock-status text-center" style="width: 100px;">
                             <i class="ri-lock-line"></i><br>
-                            <small>Lock Status</small>
+                            <small>Action</small>
                         </th>
                     </tr>
                 </thead>
@@ -868,6 +929,17 @@
                             $avatarUrl = $broadsheet->picture
                                 ? asset('storage/student_avatars/'.basename($broadsheet->picture))
                                 : asset('storage/student_avatars/unnamed.jpg');
+
+                            // Audit helpers
+                            $enteredByName      = optional($broadsheet->enteredBy)->name ?? '-';
+                            $lastModifiedByName  = optional($broadsheet->lastModifiedBy)->name ?? '-';
+                            $lockedByName        = optional($broadsheet->lockedBy)->name ?? '-';
+                            $unlockSchedByName   = optional($broadsheet->unlockScheduledBy)->name ?? '-';
+
+                            $enteredAt       = $broadsheet->entered_at       ? \Carbon\Carbon::parse($broadsheet->entered_at)->format('d/m/y H:i')       : '-';
+                            $lastModifiedAt  = $broadsheet->last_modified_at ? \Carbon\Carbon::parse($broadsheet->last_modified_at)->format('d/m/y H:i') : '-';
+                            $lockedAt        = $broadsheet->locked_at        ? \Carbon\Carbon::parse($broadsheet->locked_at)->format('d/m/y H:i')        : '-';
+                            $scheduledUnlock = $broadsheet->scheduled_unlock_at ? \Carbon\Carbon::parse($broadsheet->scheduled_unlock_at)->format('d/m/y H:i') : '-';
                         @endphp
                         <tr class="{{ $vClass }}"
                             data-id="{{ $broadsheet->id }}"
@@ -996,6 +1068,132 @@
                                     <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
                                 @endif
                             </td>
+
+                            {{-- ══ AUDIT & LOCK DETAIL CELLS ══ --}}
+
+                            {{-- Submitted By --}}
+                            <td class="col-submitted-by text-center audit-cell">
+                                <small>{{ $broadsheet->submiitedby ?? '-' }}</small>
+                            </td>
+
+                            {{-- Vetted By --}}
+                            <td class="col-vetted-by text-center audit-cell">
+                                <small>{{ $broadsheet->vettedby ?? '-' }}</small>
+                            </td>
+
+                            {{-- Entered By --}}
+                            <td class="col-entered-by text-center audit-cell">
+                                <small>{{ $enteredByName }}</small>
+                            </td>
+
+                            {{-- Entered At --}}
+                            <td class="col-entered-at text-center audit-cell">
+                                @if($broadsheet->entered_at)
+                                    <small class="d-block">{{ \Carbon\Carbon::parse($broadsheet->entered_at)->format('d/m/y') }}</small>
+                                    <small class="audit-date">{{ \Carbon\Carbon::parse($broadsheet->entered_at)->format('H:i') }}</small>
+                                @else
+                                    <small class="text-muted">-</small>
+                                @endif
+                            </td>
+
+                            {{-- Last Modified By --}}
+                            <td class="col-last-modified-by text-center audit-cell">
+                                <small>{{ $lastModifiedByName }}</small>
+                            </td>
+
+                            {{-- Last Modified At --}}
+                            <td class="col-last-modified-at text-center audit-cell">
+                                @if($broadsheet->last_modified_at)
+                                    <small class="d-block">{{ \Carbon\Carbon::parse($broadsheet->last_modified_at)->format('d/m/y') }}</small>
+                                    <small class="audit-date">{{ \Carbon\Carbon::parse($broadsheet->last_modified_at)->format('H:i') }}</small>
+                                @else
+                                    <small class="text-muted">-</small>
+                                @endif
+                            </td>
+
+                            {{-- Entry Source --}}
+                            <td class="col-entry-source text-center">
+                                @php
+                                    $src = $broadsheet->entry_source ?? '';
+                                    $srcStyle = match(strtolower($src)) {
+                                        'admin'               => 'background:#eff6ff;color:#2563eb;',
+                                        'teacher'             => 'background:#f0fdf4;color:#16a34a;',
+                                        'import'              => 'background:#fef9c3;color:#854d0e;',
+                                        'admin_student_manager' => 'background:#f3e8ff;color:#7c3aed;',
+                                        default               => 'background:#f1f5f9;color:#64748b;',
+                                    };
+                                    $srcLabel = match(strtolower($src)) {
+                                        'admin'               => 'Admin',
+                                        'teacher'             => 'Teacher',
+                                        'import'              => 'Import',
+                                        'admin_student_manager' => 'Mgr',
+                                        default               => $src ?: '-',
+                                    };
+                                @endphp
+                                @if($src)
+                                    <span class="source-badge" style="{{ $srcStyle }}">{{ $srcLabel }}</span>
+                                @else
+                                    <small class="text-muted">-</small>
+                                @endif
+                            </td>
+
+                            {{-- Is Locked --}}
+                            <td class="col-is-locked text-center">
+                                @if($broadsheet->is_locked)
+                                    <span class="badge bg-danger-subtle text-danger" style="font-size:10px;">
+                                        <i class="ri-lock-line me-1"></i>Yes
+                                    </span>
+                                @else
+                                    <span class="badge bg-success-subtle text-success" style="font-size:10px;">
+                                        <i class="ri-lock-unlock-line me-1"></i>No
+                                    </span>
+                                @endif
+                            </td>
+
+                            {{-- Locked By --}}
+                            <td class="col-locked-by text-center audit-cell">
+                                <small>{{ $broadsheet->is_locked ? $lockedByName : '-' }}</small>
+                            </td>
+
+                            {{-- Locked At --}}
+                            <td class="col-locked-at text-center audit-cell">
+                                @if($broadsheet->is_locked && $broadsheet->locked_at)
+                                    <small class="d-block">{{ \Carbon\Carbon::parse($broadsheet->locked_at)->format('d/m/y') }}</small>
+                                    <small class="audit-date">{{ \Carbon\Carbon::parse($broadsheet->locked_at)->format('H:i') }}</small>
+                                @else
+                                    <small class="text-muted">-</small>
+                                @endif
+                            </td>
+
+                            {{-- Lock Reason --}}
+                            <td class="col-lock-reason text-center audit-cell" style="max-width:150px;">
+                                @if($broadsheet->lock_reason)
+                                    <small class="d-block text-truncate" style="max-width:140px;" title="{{ $broadsheet->lock_reason }}">
+                                        {{ Str::limit($broadsheet->lock_reason, 35) }}
+                                    </small>
+                                @else
+                                    <small class="text-muted">-</small>
+                                @endif
+                            </td>
+
+                            {{-- Scheduled Unlock At --}}
+                            <td class="col-scheduled-unlock text-center audit-cell">
+                                @if($broadsheet->scheduled_unlock_at)
+                                    <small class="d-block" style="color:#d97706;">
+                                        {{ \Carbon\Carbon::parse($broadsheet->scheduled_unlock_at)->format('d/m/y') }}
+                                    </small>
+                                    <small class="audit-date">{{ \Carbon\Carbon::parse($broadsheet->scheduled_unlock_at)->format('H:i') }}</small>
+                                @else
+                                    <small class="text-muted">-</small>
+                                @endif
+                            </td>
+
+                            {{-- Unlock Scheduled By --}}
+                            <td class="col-unlock-scheduled-by text-center audit-cell">
+                                <small>{{ $broadsheet->scheduled_unlock_at ? $unlockSchedByName : '-' }}</small>
+                            </td>
+
+                            {{-- Action / Lock Status --}}
                             <td class="col-lock-status text-center">
                                 @if($isGloballyLocked)
                                     <span class="lock-badge global" title="{{ $globalLock->reason ?? 'Global lock active' }}">
@@ -1024,7 +1222,7 @@
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 20 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 32 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -1065,7 +1263,7 @@
     {{-- ══ MODALS ══════════════════════════════════════════════════════ --}}
     @if($broadsheets->isNotEmpty())
     <div class="modal fade" id="columnVisibilityModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header" style="background:var(--ss-primary);">
                     <h5 class="modal-title text-white"><i class="ri-eye-line me-2"></i>Column Visibility</h5>
@@ -1073,44 +1271,87 @@
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
+                        {{-- Student Info --}}
                         <div class="col-md-3"><div class="col-group">
                             <h6>Student Info</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-checkbox" checked><label>Select</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-sn" checked><label>SN</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-admissionno" checked><label>Adm. No</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-name" checked><label>Name</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-checkbox" checked><label class="form-check-label">Select</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-sn" checked><label class="form-check-label">SN</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-admissionno" checked><label class="form-check-label">Adm. No</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-name" checked><label class="form-check-label">Name</label></div>
                         </div></div>
+
+                        {{-- Assessments --}}
                         @if($assessments->isNotEmpty())
                         <div class="col-md-3"><div class="col-group">
                             <h6>Assessments</h6>
                             @foreach($assessments as $a)
                             <div class="form-check">
                                 <input class="form-check-input col-toggle" type="checkbox" data-col="col-assessment-{{ $a->id }}" checked>
-                                <label>{{ $a->name }}</label>
+                                <label class="form-check-label">{{ $a->name }}</label>
                             </div>
                             @endforeach
                         </div></div>
                         @endif
+
+                        {{-- Scores & Metrics --}}
                         <div class="col-md-3"><div class="col-group">
                             <h6>Scores &amp; Metrics</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total" checked><label>Total</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total-grade" checked><label>Total Grade</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-bf" checked><label>BF</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum" checked><label>Cum</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum-grade" checked><label>Cum Grade</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-avg" checked><label>Class Avg</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-gpa" checked><label>GPA</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cgpa" checked><label>CGPA</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total" checked><label class="form-check-label">Total</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total-grade" checked><label class="form-check-label">Total Grade</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-bf" checked><label class="form-check-label">BF</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum" checked><label class="form-check-label">Cum</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum-grade" checked><label class="form-check-label">Cum Grade</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-avg" checked><label class="form-check-label">Class Avg</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-gpa" checked><label class="form-check-label">GPA</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cgpa" checked><label class="form-check-label">CGPA</label></div>
                         </div></div>
+
+                        {{-- Rankings & Status --}}
                         <div class="col-md-3"><div class="col-group">
                             <h6>Rankings &amp; Status</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position" checked><label>Class Pos (Cum)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position-total" checked><label>Class Pos (Total)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position" checked><label>Arm Pos (Total)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position-cum" checked><label>Arm Pos (Cum)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted" checked><label>Status</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-status" checked><label>Lock</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position" checked><label class="form-check-label">Class Pos (Cum)</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position-total" checked><label class="form-check-label">Class Pos (Total)</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position" checked><label class="form-check-label">Arm Pos (Total)</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position-cum" checked><label class="form-check-label">Arm Pos (Cum)</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted" checked><label class="form-check-label">Status</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-status" checked><label class="form-check-label">Action</label></div>
                         </div></div>
+
+                        {{-- Audit Trail --}}
+                        <div class="col-md-3"><div class="col-group">
+                            <h6><i class="ri-shield-user-line me-1 text-primary"></i>Audit Trail</h6>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-submitted-by"><label class="form-check-label">Submitted By</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted-by"><label class="form-check-label">Vetted By</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entered-by"><label class="form-check-label">Entered By</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entered-at"><label class="form-check-label">Entered At</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-last-modified-by"><label class="form-check-label">Modified By</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-last-modified-at"><label class="form-check-label">Modified At</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entry-source"><label class="form-check-label">Entry Source</label></div>
+                        </div></div>
+
+                        {{-- Lock Detail --}}
+                        <div class="col-md-3"><div class="col-group">
+                            <h6><i class="ri-lock-line me-1 text-danger"></i>Lock Detail</h6>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-is-locked"><label class="form-check-label">Locked?</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-locked-by"><label class="form-check-label">Locked By</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-locked-at"><label class="form-check-label">Locked At</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-reason"><label class="form-check-label">Lock Reason</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-scheduled-unlock"><label class="form-check-label">Sched. Unlock At</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-unlock-scheduled-by"><label class="form-check-label">Unlock Sched. By</label></div>
+                        </div></div>
+                    </div>
+
+                    {{-- Quick toggle buttons --}}
+                    <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                        <button class="btn btn-sm btn-outline-primary" id="showAuditCols">
+                            <i class="ri-shield-user-line me-1"></i>Show All Audit
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" id="showLockCols">
+                            <i class="ri-lock-line me-1"></i>Show All Lock Detail
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="hideAuditLockCols">
+                            <i class="ri-eye-off-line me-1"></i>Hide Audit &amp; Lock
+                        </button>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1209,12 +1450,10 @@ const GRADE_COLORS = {
     'F': '#dc2626', 'F9': '#dc2626',
 };
 
-// Helper function to get grade color
 function getGradeColor(grade) {
     return GRADE_COLORS[grade] || '#6b7280';
 }
 
-// Apply grade with color
 function applyGrade(badge, grade) {
     if (!badge) return;
     badge.textContent = grade || '-';
@@ -1224,7 +1463,6 @@ function applyGrade(badge, grade) {
     setTimeout(() => badge.classList.remove('updated'), 500);
 }
 
-// Client-side grade calculation (for preview)
 function clientGrade(score) {
     score = parseFloat(score) || 0;
     if (score >= 70) return 'A';
@@ -1234,7 +1472,6 @@ function clientGrade(score) {
     return 'F';
 }
 
-// Toast notification
 function showToast(msg, type = 'info') {
     const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
     const id = 'toast_' + Date.now();
@@ -1246,7 +1483,6 @@ function showToast(msg, type = 'info') {
     setTimeout(() => document.getElementById(id)?.remove(), 4500);
 }
 
-// Validate input
 function validateInput(inp) {
     const max = parseFloat(inp.dataset.max) || 0;
     const val = parseFloat(inp.value) || 0;
@@ -1254,17 +1490,15 @@ function validateInput(inp) {
     return val <= max;
 }
 
-// Update row grades with colors
 function updateRowGrades(row) {
     let totalRaw = 0;
     row.querySelectorAll('.score-input').forEach(inp => {
         totalRaw += parseFloat(inp.value) || 0;
     });
 
-    const cum = parseFloat(row.dataset.bf) || 0;
-    const finalCum = cum > 0 ? (totalRaw + cum) / 2 : totalRaw;
+    const bf = parseFloat(row.dataset.bf) || 0;
+    const finalCum = bf > 0 ? (totalRaw + bf) / 2 : totalRaw;
 
-    // Update total badge with color
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) {
         totalBadge.textContent = totalRaw.toFixed(1);
@@ -1273,7 +1507,6 @@ function updateRowGrades(row) {
         totalBadge.style.fontSize = '12px';
     }
 
-    // Update cum badge with color
     const cumBadge = row.querySelector('.cum-badge');
     if (cumBadge) {
         cumBadge.textContent = finalCum.toFixed(1);
@@ -1282,15 +1515,10 @@ function updateRowGrades(row) {
         cumBadge.style.fontSize = '12px';
     }
 
-    // Update grade badges with colors
-    const totalGrade = clientGrade(totalRaw);
-    const cumGrade = clientGrade(finalCum);
-
-    applyGrade(row.querySelector('.grade-badge'), totalGrade);
-    applyGrade(row.querySelector('.cum-grade-badge'), cumGrade);
+    applyGrade(row.querySelector('.grade-badge'), clientGrade(totalRaw));
+    applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(finalCum));
 }
 
-// Save individual score
 function saveIndividualScore(input) {
     const row = input.closest('tr');
     const originalValue = parseFloat(input.dataset.original) || 0;
@@ -1320,31 +1548,29 @@ function saveIndividualScore(input) {
             setTimeout(() => input.classList.remove('is-saved'), 2000);
             input.dataset.original = input.value;
 
-            if (data.data?.total) {
+            if (data.data?.total !== undefined) {
                 const totalBadge = row.querySelector('.total-badge');
                 if (totalBadge) {
                     totalBadge.textContent = parseFloat(data.data.total).toFixed(1);
-                    const totalColor = parseFloat(data.data.total) >= 70 ? 'success' : (parseFloat(data.data.total) >= 50 ? 'info' : (parseFloat(data.data.total) >= 40 ? 'warning' : 'danger'));
-                    totalBadge.className = `badge fw-bold total-badge bg-${totalColor}-subtle text-${totalColor}`;
+                    const tc = parseFloat(data.data.total) >= 70 ? 'success' : (parseFloat(data.data.total) >= 50 ? 'info' : (parseFloat(data.data.total) >= 40 ? 'warning' : 'danger'));
+                    totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
                 }
             }
-            if (data.data?.grade) {
-                applyGrade(row.querySelector('.grade-badge'), data.data.grade);
-            }
-            if (data.data?.cum) {
+            if (data.data?.grade) applyGrade(row.querySelector('.grade-badge'), data.data.grade);
+            if (data.data?.cum !== undefined) {
                 const cumBadge = row.querySelector('.cum-badge');
                 if (cumBadge) {
                     cumBadge.textContent = parseFloat(data.data.cum).toFixed(1);
-                    const cumColor = parseFloat(data.data.cum) >= 70 ? 'success' : (parseFloat(data.data.cum) >= 50 ? 'info' : (parseFloat(data.data.cum) >= 40 ? 'warning' : 'danger'));
-                    cumBadge.className = `badge fw-bold cum-badge bg-${cumColor}-subtle text-${cumColor}`;
+                    const cc = parseFloat(data.data.cum) >= 70 ? 'success' : (parseFloat(data.data.cum) >= 50 ? 'info' : (parseFloat(data.data.cum) >= 40 ? 'warning' : 'danger'));
+                    cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
                 }
                 applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(parseFloat(data.data.cum)));
             }
-            if (data.data?.gpa) {
+            if (data.data?.gpa !== undefined) {
                 const gpaBadge = row.querySelector('.gpa-badge');
                 if (gpaBadge) gpaBadge.textContent = parseFloat(data.data.gpa).toFixed(2);
             }
-            if (data.data?.cgpa) {
+            if (data.data?.cgpa !== undefined) {
                 const cgpaBadge = row.querySelector('.cgpa-badge');
                 if (cgpaBadge) cgpaBadge.textContent = parseFloat(data.data.cgpa).toFixed(2);
             }
@@ -1360,7 +1586,6 @@ function saveIndividualScore(input) {
     });
 }
 
-// Clear ALL scores with SweetAlert
 function clearAllScores() {
     Swal.fire({
         title: 'Clear All Scores?',
@@ -1383,7 +1608,6 @@ function clearAllScores() {
     });
 }
 
-// Clear SELECTED scores with SweetAlert
 function clearSelectedScores() {
     const selectedRows = document.querySelectorAll('.score-checkbox:checked');
     if (selectedRows.length === 0) {
@@ -1393,7 +1617,7 @@ function clearSelectedScores() {
 
     Swal.fire({
         title: `Clear scores for ${selectedRows.length} student(s)?`,
-        text: 'This will reset all scores to 0 for selected students. This action cannot be undone.',
+        text: 'This will reset all scores to 0 for selected students.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
@@ -1419,14 +1643,13 @@ function clearSelectedScores() {
     });
 }
 
-// Apple-style save modal functions
+// Apple-style save modal
 const SS_ARC_CIRC = 157.08;
 let ssCloseTimeout = null;
 
 function ssOpen(total) {
     const overlay = document.getElementById('ssSaveOverlay');
     if (!overlay) return;
-
     document.getElementById('ssIconSave').style.display = '';
     document.getElementById('ssIconCheck').style.display = 'none';
     document.getElementById('ssIconX').style.display = 'none';
@@ -1438,7 +1661,6 @@ function ssOpen(total) {
     document.getElementById('ssSaveTitle').textContent = 'Saving scores';
     document.getElementById('ssSaveSub').textContent = 'Preparing…';
     document.getElementById('ssSaveCountNum').textContent = `0 / ${total}`;
-
     overlay.classList.remove('ss-closing');
     overlay.classList.add('ss-visible');
 }
@@ -1449,7 +1671,6 @@ function ssUpdate(saved, total, pct) {
     if (fill) fill.style.width = pct.toFixed(1) + '%';
     if (arc) arc.style.strokeDashoffset = (SS_ARC_CIRC * (1 - pct / 100)).toFixed(3);
     document.getElementById('ssSaveCountNum').textContent = `${saved} / ${total}`;
-
     if (pct < 25) document.getElementById('ssSaveSub').textContent = 'Uploading data…';
     else if (pct < 55) document.getElementById('ssSaveSub').textContent = 'Processing records…';
     else if (pct < 85) document.getElementById('ssSaveSub').textContent = 'Recalculating grades…';
@@ -1468,7 +1689,6 @@ function ssSuccess(total) {
     document.getElementById('ssSaveTitle').textContent = 'All saved';
     document.getElementById('ssSaveSub').textContent = `${total} score(s) saved successfully`;
     document.getElementById('ssSaveCountNum').textContent = `${total} / ${total}`;
-
     if (ssCloseTimeout) clearTimeout(ssCloseTimeout);
     ssCloseTimeout = setTimeout(ssClose, 1900);
 }
@@ -1481,7 +1701,6 @@ function ssError(msg) {
     document.getElementById('ssIconX').style.display = '';
     document.getElementById('ssSaveTitle').textContent = 'Save failed';
     document.getElementById('ssSaveSub').textContent = msg || 'Something went wrong.';
-
     if (ssCloseTimeout) clearTimeout(ssCloseTimeout);
     ssCloseTimeout = setTimeout(ssClose, 2400);
 }
@@ -1493,7 +1712,6 @@ function ssClose() {
     setTimeout(() => overlay.classList.remove('ss-visible', 'ss-closing'), 260);
 }
 
-// Bulk save with modal
 function bulkSaveScores() {
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
     if (invalid) {
@@ -1558,49 +1776,42 @@ function bulkSaveScores() {
         if (data.data?.broadsheets) {
             data.data.broadsheets.forEach(bs => {
                 const row = document.querySelector(`tr[data-id="${bs.id}"]`);
-                if (row) {
-                    // Update total badge
-                    const totalBadge = row.querySelector('.total-badge');
-                    if (totalBadge) {
-                        totalBadge.textContent = bs.total?.toFixed(1) || '0';
-                        const totalColor = (bs.total || 0) >= 70 ? 'success' : ((bs.total || 0) >= 50 ? 'info' : ((bs.total || 0) >= 40 ? 'warning' : 'danger'));
-                        totalBadge.className = `badge fw-bold total-badge bg-${totalColor}-subtle text-${totalColor}`;
-                    }
+                if (!row) return;
 
-                    // Update grade badge
-                    const gradeBadge = row.querySelector('.grade-badge');
-                    if (gradeBadge) applyGrade(gradeBadge, bs.grade || '-');
-
-                    // Update cum badge
-                    const cumBadge = row.querySelector('.cum-badge');
-                    if (cumBadge && bs.cum !== undefined) {
-                        cumBadge.textContent = parseFloat(bs.cum).toFixed(1);
-                        const cumColor = parseFloat(bs.cum) >= 70 ? 'success' : (parseFloat(bs.cum) >= 50 ? 'info' : (parseFloat(bs.cum) >= 40 ? 'warning' : 'danger'));
-                        cumBadge.className = `badge fw-bold cum-badge bg-${cumColor}-subtle text-${cumColor}`;
-                    }
-
-                    // Update cum grade badge
-                    const cumGradeBadge = row.querySelector('.cum-grade-badge');
-                    if (cumGradeBadge && bs.cum !== undefined) {
-                        applyGrade(cumGradeBadge, clientGrade(parseFloat(bs.cum)));
-                    }
-
-                    // Update GPA/CGPA
-                    const gpaBadge = row.querySelector('.gpa-badge');
-                    const cgpaBadge = row.querySelector('.cgpa-badge');
-                    if (gpaBadge && bs.gpa !== undefined) gpaBadge.textContent = parseFloat(bs.gpa).toFixed(2);
-                    if (cgpaBadge && bs.cgpa !== undefined) cgpaBadge.textContent = parseFloat(bs.cgpa).toFixed(2);
-
-                    row.querySelectorAll('.score-input').forEach(inp => {
-                        const assessmentId = inp.dataset.field;
-                        const newScore = bs.assessment_scores?.find(a => a.assessment_id == assessmentId)?.score;
-                        if (newScore !== undefined) {
-                            inp.dataset.original = newScore;
-                            inp.classList.add('is-saved');
-                            setTimeout(() => inp.classList.remove('is-saved'), 2000);
-                        }
-                    });
+                const totalBadge = row.querySelector('.total-badge');
+                if (totalBadge) {
+                    totalBadge.textContent = (bs.total || 0).toFixed(1);
+                    const tc = (bs.total || 0) >= 70 ? 'success' : ((bs.total || 0) >= 50 ? 'info' : ((bs.total || 0) >= 40 ? 'warning' : 'danger'));
+                    totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
                 }
+
+                const gradeBadge = row.querySelector('.grade-badge');
+                if (gradeBadge) applyGrade(gradeBadge, bs.grade || '-');
+
+                const cumBadge = row.querySelector('.cum-badge');
+                if (cumBadge && bs.cum !== undefined) {
+                    cumBadge.textContent = parseFloat(bs.cum).toFixed(1);
+                    const cc = parseFloat(bs.cum) >= 70 ? 'success' : (parseFloat(bs.cum) >= 50 ? 'info' : (parseFloat(bs.cum) >= 40 ? 'warning' : 'danger'));
+                    cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
+                }
+
+                const cumGradeBadge = row.querySelector('.cum-grade-badge');
+                if (cumGradeBadge && bs.cum !== undefined) applyGrade(cumGradeBadge, clientGrade(parseFloat(bs.cum)));
+
+                const gpaBadge = row.querySelector('.gpa-badge');
+                const cgpaBadge = row.querySelector('.cgpa-badge');
+                if (gpaBadge && bs.gpa !== undefined) gpaBadge.textContent = parseFloat(bs.gpa).toFixed(2);
+                if (cgpaBadge && bs.cgpa !== undefined) cgpaBadge.textContent = parseFloat(bs.cgpa).toFixed(2);
+
+                row.querySelectorAll('.score-input').forEach(inp => {
+                    const assessmentId = inp.dataset.field;
+                    const newScore = bs.assessment_scores?.find(a => a.assessment_id == assessmentId)?.score;
+                    if (newScore !== undefined) {
+                        inp.dataset.original = newScore;
+                        inp.classList.add('is-saved');
+                        setTimeout(() => inp.classList.remove('is-saved'), 2000);
+                    }
+                });
             });
         }
 
@@ -1616,7 +1827,6 @@ function bulkSaveScores() {
     });
 }
 
-// Delete selected scores
 function deleteSelectedScores() {
     const selectedIds = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
     if (selectedIds.length === 0) {
@@ -1659,9 +1869,7 @@ function deleteSelectedScores() {
     });
 }
 
-// Refresh positions
 let positionRefreshTimer = null;
-
 function refreshAllPositions() {
     clearTimeout(positionRefreshTimer);
     positionRefreshTimer = setTimeout(() => {
@@ -1677,10 +1885,7 @@ function refreshAllPositions() {
     }, 500);
 }
 
-// Open Score Entry Modal
 function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studentAvatar, currentScores, assessments, bf) {
-    console.log('Opening modal for:', studentName);
-
     const modal = new bootstrap.Modal(document.getElementById('scoreEntryModal'));
     const modalBody = document.getElementById('modalAssessmentsList');
 
@@ -1688,7 +1893,6 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
     document.getElementById('modalStudentAdmission').textContent = `Admission No: ${studentAdmission}`;
     document.getElementById('modalStudentAvatar').src = studentAvatar;
 
-    // Calculate current total
     let currentTotal = 0;
     const scoresMap = {};
     assessments.forEach(a => {
@@ -1706,7 +1910,6 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
     document.getElementById('modalCurrentCum').textContent = cum.toFixed(1);
     document.getElementById('modalCurrentCumGrade').textContent = cumGrade;
 
-    // Build assessment inputs
     let html = '';
     assessments.forEach(a => {
         const scoreValue = scoresMap[a.id] || 0;
@@ -1727,14 +1930,10 @@ function openScoreEntryModal(broadsheetId, studentName, studentAdmission, studen
         `;
     });
     modalBody.innerHTML = html;
-
-    // Store broadsheet ID for save
     modalBody.dataset.broadsheetId = broadsheetId;
-
     modal.show();
 }
 
-// Save scores from modal
 function saveModalScores() {
     const modalBody = document.getElementById('modalAssessmentsList');
     const broadsheetId = modalBody.dataset.broadsheetId;
@@ -1747,24 +1946,17 @@ function saveModalScores() {
         const assessmentId = input.dataset.assessmentId;
         const maxScore = parseFloat(input.dataset.max);
         let value = parseFloat(input.value) || 0;
-
         if (value > maxScore) {
             Swal.fire({ icon: 'error', title: 'Invalid Score', text: `Score cannot exceed ${maxScore}` });
             hasError = true;
             return;
         }
-
         scores[assessmentId] = value;
     });
 
     if (hasError) return;
 
-    Swal.fire({
-        title: 'Saving Scores...',
-        text: 'Please wait',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+    Swal.fire({ title: 'Saving Scores...', text: 'Please wait', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     const savePromises = [];
     for (const [assessmentId, score] of Object.entries(scores)) {
@@ -1792,21 +1984,14 @@ function saveModalScores() {
             bootstrap.Modal.getInstance(document.getElementById('scoreEntryModal'))?.hide();
             showToast('Scores saved successfully', 'success');
 
-            // Update the row in the table
             const row = document.querySelector(`tr[data-id="${broadsheetId}"]`);
             if (row) {
-                let newTotal = 0;
                 for (const [assessmentId, score] of Object.entries(scores)) {
                     const input = row.querySelector(`.score-input[data-field="${assessmentId}"]`);
-                    if (input) {
-                        input.value = score;
-                        input.dataset.original = score;
-                        newTotal += score;
-                    }
+                    if (input) { input.value = score; input.dataset.original = score; }
                 }
                 updateRowGrades(row);
             }
-
             refreshAllPositions();
         })
         .catch(err => {
@@ -1816,7 +2001,6 @@ function saveModalScores() {
         });
 }
 
-// Lock management functions
 function lockAllScoresheets() {
     Swal.fire({
         title: 'Lock all scoresheets?',
@@ -1825,29 +2009,16 @@ function lockAllScoresheets() {
         inputLabel: 'Reason for locking (optional)',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Yes, lock all',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Yes, lock all'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(routes.lockBatch, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({
-                    subjectclass_ids: [{{ $subjectclassId }}],
-                    term_id: {{ $termId }},
-                    session_id: {{ $sessionId }},
-                    lock_type: 'individual',
-                    reason: result.value
-                })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
+                body: JSON.stringify({ subjectclass_ids: [{{ $subjectclassId }}], term_id: {{ $termId }}, session_id: {{ $sessionId }}, lock_type: 'individual', reason: result.value })
+            }).then(r => r.json()).then(data => {
+                if (data.success) { showToast(data.message, 'success'); location.reload(); }
+                else showToast(data.message, 'danger');
             });
         }
     });
@@ -1861,29 +2032,16 @@ function globalLock() {
         inputLabel: 'Reason for global lock',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Apply Global Lock',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Apply Global Lock'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(routes.lockBatch, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({
-                    subjectclass_ids: [{{ $subjectclassId }}],
-                    term_id: {{ $termId }},
-                    session_id: {{ $sessionId }},
-                    lock_type: 'global',
-                    reason: result.value
-                })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
+                body: JSON.stringify({ subjectclass_ids: [{{ $subjectclassId }}], term_id: {{ $termId }}, session_id: {{ $sessionId }}, lock_type: 'global', reason: result.value })
+            }).then(r => r.json()).then(data => {
+                if (data.success) { showToast(data.message, 'success'); location.reload(); }
+                else showToast(data.message, 'danger');
             });
         }
     });
@@ -1892,32 +2050,19 @@ function globalLock() {
 function unlockAllScoresheets() {
     Swal.fire({
         title: 'Unlock all scoresheets?',
-        text: 'This will unlock all scoresheets in this subject.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#16a34a',
-        confirmButtonText: 'Yes, unlock all',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Yes, unlock all'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(routes.unlockBatch, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({
-                    subjectclass_ids: [{{ $subjectclassId }}],
-                    term_id: {{ $termId }},
-                    session_id: {{ $sessionId }},
-                    unlock_type: 'individual'
-                })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
+                body: JSON.stringify({ subjectclass_ids: [{{ $subjectclassId }}], term_id: {{ $termId }}, session_id: {{ $sessionId }}, unlock_type: 'individual' })
+            }).then(r => r.json()).then(data => {
+                if (data.success) { showToast(data.message, 'success'); location.reload(); }
+                else showToast(data.message, 'danger');
             });
         }
     });
@@ -1926,7 +2071,6 @@ function unlockAllScoresheets() {
 function toggleTeacherEditing() {
     const isEnabled = {{ isset($teacherEditingEnabled) && $teacherEditingEnabled ? 'true' : 'false' }};
     const url = isEnabled ? routes.disableTeacherEditing : routes.enableTeacherEditing;
-    const action = isEnabled ? 'disable' : 'enable';
 
     Swal.fire({
         title: isEnabled ? 'Disable Teacher Editing?' : 'Enable Teacher Editing?',
@@ -1936,33 +2080,36 @@ function toggleTeacherEditing() {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: isEnabled ? '#dc2626' : '#16a34a',
-        confirmButtonText: isEnabled ? 'Disable' : 'Enable',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: isEnabled ? 'Disable' : 'Enable'
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
                 body: JSON.stringify({ subjectclass_ids: [{{ $subjectclassId }}] })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    location.reload();
-                } else {
-                    showToast(data.message, 'error');
-                }
+            }).then(r => r.json()).then(data => {
+                if (data.success) { showToast(data.message, 'success'); location.reload(); }
+                else showToast(data.message, 'danger');
             });
         }
     });
 }
 
-// DOM Ready
+// ─── DOM Ready ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize grade colors on existing rows
-    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
-        updateRowGrades(row);
+
+    // Init grade colors on existing rows
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => updateRowGrades(row));
+
+    // Default: hide audit & lock detail columns (they are opt-in via the Columns modal)
+    const auditLockCols = [
+        'col-submitted-by','col-vetted-by','col-entered-by','col-entered-at',
+        'col-last-modified-by','col-last-modified-at','col-entry-source',
+        'col-is-locked','col-locked-by','col-locked-at','col-lock-reason',
+        'col-scheduled-unlock','col-unlock-scheduled-by'
+    ];
+    auditLockCols.forEach(cls => {
+        document.querySelectorAll(`th.${cls}, td.${cls}`).forEach(el => el.style.display = 'none');
     });
 
     // Image modal
@@ -1971,11 +2118,40 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
     });
 
-    // Column visibility
+    // Column visibility toggles
     document.querySelectorAll('.col-toggle').forEach(cb => {
         cb.addEventListener('change', function() {
             document.querySelectorAll(`th.${this.dataset.col}, td.${this.dataset.col}`)
                 .forEach(el => el.style.display = this.checked ? '' : 'none');
+        });
+    });
+
+    // Quick-toggle: Show All Audit
+    document.getElementById('showAuditCols')?.addEventListener('click', function() {
+        ['col-submitted-by','col-vetted-by','col-entered-by','col-entered-at',
+         'col-last-modified-by','col-last-modified-at','col-entry-source'].forEach(cls => {
+            document.querySelectorAll(`th.${cls}, td.${cls}`).forEach(el => el.style.display = '');
+            const cb = document.querySelector(`.col-toggle[data-col="${cls}"]`);
+            if (cb) cb.checked = true;
+        });
+    });
+
+    // Quick-toggle: Show All Lock Detail
+    document.getElementById('showLockCols')?.addEventListener('click', function() {
+        ['col-is-locked','col-locked-by','col-locked-at','col-lock-reason',
+         'col-scheduled-unlock','col-unlock-scheduled-by'].forEach(cls => {
+            document.querySelectorAll(`th.${cls}, td.${cls}`).forEach(el => el.style.display = '');
+            const cb = document.querySelector(`.col-toggle[data-col="${cls}"]`);
+            if (cb) cb.checked = true;
+        });
+    });
+
+    // Quick-toggle: Hide Audit & Lock
+    document.getElementById('hideAuditLockCols')?.addEventListener('click', function() {
+        auditLockCols.forEach(cls => {
+            document.querySelectorAll(`th.${cls}, td.${cls}`).forEach(el => el.style.display = 'none');
+            const cb = document.querySelector(`.col-toggle[data-col="${cls}"]`);
+            if (cb) cb.checked = false;
         });
     });
 
@@ -1995,11 +2171,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('clearSearch')?.addEventListener('click', function() {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = '';
-            searchInput.dispatchEvent(new Event('input'));
-        }
+        const si = document.getElementById('searchInput');
+        if (si) { si.value = ''; si.dispatchEvent(new Event('input')); }
     });
 
     // Select All
@@ -2013,52 +2186,48 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true);
     });
 
-    // Clear buttons with SweetAlert
+    // Action buttons
     document.getElementById('clearAllScoresBtn')?.addEventListener('click', clearAllScores);
     document.getElementById('clearSelectedScoresBtn')?.addEventListener('click', clearSelectedScores);
     document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', deleteSelectedScores);
     document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSaveScores);
-
-    // Lock management buttons
     document.getElementById('lockAllBtn')?.addEventListener('click', lockAllScoresheets);
     document.getElementById('globalLockBtn')?.addEventListener('click', globalLock);
     document.getElementById('unlockAllBtn')?.addEventListener('click', unlockAllScoresheets);
     document.getElementById('toggleTeacherEditBtn')?.addEventListener('click', toggleTeacherEditing);
 
-    // ASSESSMENTS DATA FOR MODAL
+    // Assessments data for modal
     const assessmentsData = @json($assessments->map(function($a) {
         return ['id' => $a->id, 'name' => $a->name, 'max_score' => $a->max_score];
     }));
 
-    // EDIT BUTTON HANDLER - Using event delegation
+    // Edit button handler (event delegation)
     document.getElementById('scoresheetTableBody')?.addEventListener('click', function(e) {
         const editBtn = e.target.closest('.edit-scores-btn');
         if (!editBtn) return;
-
         e.preventDefault();
         e.stopPropagation();
 
         const broadsheetId = editBtn.dataset.id;
-        const studentName = editBtn.dataset.name;
-        const studentAdmission = editBtn.dataset.admission;
-        const studentAvatar = editBtn.dataset.avatar;
-        const bf = editBtn.dataset.bf;
-
-        // Get current scores from the row
         const row = document.querySelector(`tr[data-id="${broadsheetId}"]`);
         const currentScores = {};
         if (row) {
             row.querySelectorAll('.score-input').forEach(input => {
-                const assessmentId = input.dataset.field;
-                currentScores[assessmentId] = parseFloat(input.value) || 0;
+                currentScores[input.dataset.field] = parseFloat(input.value) || 0;
             });
         }
 
-        // Open modal
-        openScoreEntryModal(broadsheetId, studentName, studentAdmission, studentAvatar, currentScores, assessmentsData, bf);
+        openScoreEntryModal(
+            broadsheetId,
+            editBtn.dataset.name,
+            editBtn.dataset.admission,
+            editBtn.dataset.avatar,
+            currentScores,
+            assessmentsData,
+            editBtn.dataset.bf
+        );
     });
 
-    // Save modal scores button
     document.getElementById('saveModalScores')?.addEventListener('click', saveModalScores);
 
     // Individual score inputs
@@ -2069,26 +2238,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (row) updateRowGrades(row);
         });
         inp.addEventListener('blur', function() {
-            if (!validateInput(this)) {
-                this.value = this.dataset.original || 0;
-                return;
-            }
+            if (!validateInput(this)) { this.value = this.dataset.original || 0; return; }
             saveIndividualScore(this);
         });
         inp.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.blur();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
         });
     });
 
-    // Keyboard shortcut Ctrl+S
+    // Ctrl+S shortcut
     document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            bulkSaveScores();
-        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); bulkSaveScores(); }
     });
 
     // Download buttons
@@ -2117,32 +2277,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (loader) loader.style.display = 'block';
         if (bar) bar.style.width = '10%';
 
-        fetch(routes.import, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF },
-            body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (bar) bar.style.width = '100%';
-            if (data.success) {
-                Swal.fire({ icon: 'success', title: 'Success!', text: data.message, timer: 2000, showConfirmButton: false });
-                setTimeout(() => location.reload(), 2000);
-            } else {
-                Swal.fire({ icon: 'error', title: 'Import Failed', text: data.message });
-            }
-        })
-        .catch(err => Swal.fire({ icon: 'error', title: 'Error', text: 'Network error' }))
-        .finally(() => {
-            setTimeout(() => {
-                if (loader) loader.style.display = 'none';
-                if (bar) bar.style.width = '0%';
-            }, 1000);
-            if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
-        });
+        fetch(routes.import, { method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF }, body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (bar) bar.style.width = '100%';
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Success!', text: data.message, timer: 2000, showConfirmButton: false });
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Import Failed', text: data.message });
+                }
+            })
+            .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'Network error' }))
+            .finally(() => {
+                setTimeout(() => { if (loader) loader.style.display = 'none'; if (bar) bar.style.width = '0%'; }, 1000);
+                if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+            });
     });
 
-    // Update arm positions
+    // Recalculate positions
     document.getElementById('updateArmPositionsBtn')?.addEventListener('click', function() {
         const btn = this;
         const origHtml = btn.innerHTML;
@@ -2152,11 +2305,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(routes.updateArmPositions, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({
-                schoolclass_id: {{ $schoolclass->id ?? 0 }},
-                term_id: {{ $termId }},
-                session_id: {{ $sessionId }}
-            })
+            body: JSON.stringify({ schoolclass_id: {{ $schoolclass->id ?? 0 }}, term_id: {{ $termId }}, session_id: {{ $sessionId }} })
         })
         .then(r => r.json())
         .then(data => {
@@ -2169,7 +2318,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.innerHTML = origHtml;
             }
         })
-        .catch(err => {
+        .catch(() => {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Network error' });
             btn.disabled = false;
             btn.innerHTML = origHtml;
@@ -2177,12 +2326,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Staggered row entrance
-    const rows = document.querySelectorAll('#scoresheetTableBody tr[data-id]');
-    rows.forEach((row, index) => {
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach((row, index) => {
         setTimeout(() => row.classList.add('row-visible'), index * 30);
     });
 
-    // Tooltip functionality
+    // ─── Score Input Tooltip ──────────────────────────────────────────────────
     let tipInput = null;
     let tipHideTimer = null;
     const tip = document.getElementById('scoreTooltip');
@@ -2242,7 +2390,6 @@ document.addEventListener('DOMContentLoaded', function() {
         tipInput = null;
     }
 
-    // Attach tooltip to score inputs
     document.querySelectorAll('.score-input').forEach(inp => {
         inp.addEventListener('focus', function() { tipShow(this); });
         inp.addEventListener('blur', function() { setTimeout(() => { if (tipInput === this) tipHide(); }, 80); });
