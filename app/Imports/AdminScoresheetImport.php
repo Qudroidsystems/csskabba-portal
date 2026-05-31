@@ -22,17 +22,19 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
     use Importable, SkipsFailures;
 
     protected array $importData;
-    protected int   $successCount  = 0;
-    // Custom failures array (different name to avoid conflict with trait)
+    protected int   $successCount   = 0;
     protected array $importFailures = [];
     protected       $assessments;
-    protected       $schoolclass   = null;
-    protected       $subjectId     = null;
+    protected       $schoolclass    = null;
+    protected       $subjectId      = null;
+
+    // The canonical staff_id that belongs to this subjectclass (from subjectteacher)
+    protected ?int  $canonicalStaffId = null;
 
     // Column mapping discovered from the header row
-    protected int   $admissionColumnIndex  = -1;
-    protected array $assessmentColumnMap   = [];
-    protected int   $headerRowIndex        = -1;
+    protected int   $admissionColumnIndex = -1;
+    protected array $assessmentColumnMap  = [];
+    protected int   $headerRowIndex       = -1;
 
     public function __construct(array $importData)
     {
@@ -45,7 +47,7 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                     ->find($importData['schoolclass_id']);
 
                 if ($this->schoolclass && $this->schoolclass->classcategories->isNotEmpty()) {
-                    $categoryIds      = $this->schoolclass->classcategories->pluck('id');
+                    $categoryIds       = $this->schoolclass->classcategories->pluck('id');
                     $this->assessments = Assessment::whereIn('classcategory_id', $categoryIds)
                         ->orderBy('id')
                         ->get();
@@ -64,6 +66,20 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                 $subjectClass    = Subjectclass::find($importData['subjectclass_id']);
                 $this->subjectId = $subjectClass ? $subjectClass->subjectid : null;
             }
+
+            // Resolve the canonical staff_id from subjectteacher — this is the
+            // teacher who owns the subjectclass, regardless of who is importing.
+            // We use this when CREATING a new broadsheet row so it is consistent
+            // with rows the teacher themselves would have created.
+            if (!empty($importData['subjectclass_id'])) {
+                $this->canonicalStaffId = (int) DB::table('subjectclass')
+                    ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                    ->where('subjectclass.id', $importData['subjectclass_id'])
+                    ->value('subjectteacher.staffid');
+
+                Log::info("[AdminImport] Canonical staff_id resolved: {$this->canonicalStaffId}");
+            }
+
         } catch (\Exception $e) {
             Log::error('[AdminImport] Constructor error: ' . $e->getMessage());
             throw $e;
@@ -83,7 +99,6 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
 
         Log::info('[AdminImport] Total rows in file: ' . $rows->count());
 
-        // Find the header row
         $this->findHeaderRow($rows);
 
         if ($this->headerRowIndex === -1) {
@@ -105,14 +120,12 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
 
         try {
             foreach ($rows as $index => $row) {
-                // Skip header and everything above it
                 if ($index <= $this->headerRowIndex) {
                     continue;
                 }
 
                 $rowValues = array_values(is_array($row) ? $row : $row->toArray());
 
-                // Skip entirely empty rows
                 $hasData = false;
                 foreach ($rowValues as $v) {
                     if ($v !== null && $v !== '') {
@@ -124,7 +137,6 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                     continue;
                 }
 
-                // Skip rows without an admission number
                 $admVal = $rowValues[$this->admissionColumnIndex] ?? null;
                 if ($admVal === null || trim((string) $admVal) === '') {
                     Log::debug("[AdminImport] Skipping row " . ($index + 1) . " — no admission no.");
@@ -182,8 +194,8 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                     || str_contains($lower, 'adm no')
                     || str_contains($lower, 'student id')
                 ) {
-                    $this->headerRowIndex        = $index;
-                    $this->admissionColumnIndex  = $colIndex;
+                    $this->headerRowIndex       = $index;
+                    $this->admissionColumnIndex = $colIndex;
                     $this->buildAssessmentColumnMap($rowValues);
                     return;
                 }
@@ -201,7 +213,6 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                 continue;
             }
 
-            // Strip "(max)" annotations added by the exporter
             $clean = trim(preg_replace('/\s*\([^)]*\)/', '', $headerText));
 
             foreach ($this->assessments as $assessment) {
@@ -244,13 +255,44 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
             'session_id'     => $this->importData['session_id'],
         ]);
 
-        // Find or create Broadsheet
-        $broadsheet = Broadsheets::firstOrNew([
-            'broadSheet_record_id' => $broadsheetRecord->id,
-            'subjectclass_id'      => $this->importData['subjectclass_id'],
-            'staff_id'             => $this->importData['staff_id'],
-            'term_id'              => $this->importData['term_id'],
-        ]);
+        // -----------------------------------------------------------------
+        // KEY FIX: Look up the existing broadsheet WITHOUT staff_id.
+        //
+        // Previously firstOrNew() included staff_id as a lookup key, which
+        // meant an admin importing with a different staff_id than the teacher
+        // would create a DUPLICATE broadsheet row instead of updating the
+        // existing one, so scores were written to an orphaned record.
+        //
+        // We now find the row by its natural unique keys (record + subjectclass
+        // + term), then only fall back to creating a new row if none exists.
+        // When creating, we use canonicalStaffId (the teacher who owns the
+        // subjectclass) so the row is consistent with teacher-entered records.
+        // -----------------------------------------------------------------
+        $broadsheet = Broadsheets::where('broadSheet_record_id', $broadsheetRecord->id)
+            ->where('subjectclass_id', $this->importData['subjectclass_id'])
+            ->where('term_id', $this->importData['term_id'])
+            ->first();
+
+        $isNew = false;
+
+        if (!$broadsheet) {
+            $isNew      = true;
+            $broadsheet = new Broadsheets();
+            $broadsheet->broadSheet_record_id = $broadsheetRecord->id;
+            $broadsheet->subjectclass_id      = $this->importData['subjectclass_id'];
+            $broadsheet->term_id              = $this->importData['term_id'];
+            // Use the canonical teacher staff_id, not the admin's user id
+            $broadsheet->staff_id             = $this->canonicalStaffId ?? $this->importData['staff_id'];
+            $broadsheet->entered_by           = auth()->id();
+            $broadsheet->entered_at           = now();
+            $broadsheet->entry_source         = 'admin_import';
+            $broadsheet->save();
+
+            Log::info("[AdminImport] Created new broadsheet id={$broadsheet->id} for {$admissionNo}");
+        } else {
+            Log::info("[AdminImport] Found existing broadsheet id={$broadsheet->id} for {$admissionNo} "
+                . "(staff_id on record: {$broadsheet->staff_id})");
+        }
 
         // --- Save assessment scores ---
         $totalScore = 0.0;
@@ -271,14 +313,6 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                 );
             }
 
-            // We need the broadsheet saved first to get its ID for the pivot
-            if (!$broadsheet->exists) {
-                $broadsheet->entered_by   = auth()->id();
-                $broadsheet->entered_at   = now();
-                $broadsheet->entry_source = 'admin_import';
-                $broadsheet->save();
-            }
-
             BroadsheetAssessmentScore::updateOrCreate(
                 [
                     'broadsheet_id' => $broadsheet->id,
@@ -288,14 +322,6 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
             );
 
             $totalScore += $score;
-        }
-
-        // Ensure broadsheet is persisted before calculating derived values
-        if (!$broadsheet->exists) {
-            $broadsheet->entered_by   = auth()->id();
-            $broadsheet->entered_at   = now();
-            $broadsheet->entry_source = 'admin_import';
-            $broadsheet->save();
         }
 
         // Derived values
@@ -318,13 +344,19 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
         $broadsheet->remark           = $remark;
         $broadsheet->last_modified_by = auth()->id();
         $broadsheet->last_modified_at = now();
-        $broadsheet->entry_source     = $broadsheet->entry_source ?? 'admin_import';
         $broadsheet->vettedstatus     = 0;
+
+        // Preserve original entry metadata if the row already existed
+        if ($isNew) {
+            $broadsheet->entry_source = 'admin_import';
+        } else {
+            $broadsheet->entry_source = $broadsheet->entry_source ?? 'admin_import';
+        }
+
         $broadsheet->save();
 
         $this->successCount++;
 
-        // Periodic session progress update
         if ($this->successCount % 10 === 0) {
             session(['import_progress' => min(60 + ($this->successCount / 100) * 30, 95)]);
         }
@@ -367,7 +399,6 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
                 return 'F9';
             }
 
-            // Junior / default
             if ($score >= 70) return 'A';
             if ($score >= 60) return 'B';
             if ($score >= 50) return 'C';
@@ -375,7 +406,6 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
             return 'F';
         }
 
-        // Fallback (no category)
         if ($score >= 70) return 'A';
         if ($score >= 60) return 'B';
         if ($score >= 50) return 'C';
@@ -386,11 +416,11 @@ class AdminScoresheetImport implements ToCollection, SkipsOnFailure
     protected function getRemark(string $grade): string
     {
         return match ($grade) {
-            'A', 'A1'           => 'Excellent',
-            'B', 'B2', 'B3'     => 'Very Good',
-            'C', 'C4', 'C5', 'C6' => 'Good',
-            'D', 'D7', 'E8'     => 'Pass',
-            default             => 'Fail',
+            'A', 'A1'              => 'Excellent',
+            'B', 'B2', 'B3'        => 'Very Good',
+            'C', 'C4', 'C5', 'C6'  => 'Good',
+            'D', 'D7', 'E8'        => 'Pass',
+            default                => 'Fail',
         };
     }
 
