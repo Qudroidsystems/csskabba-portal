@@ -171,6 +171,38 @@
     margin-bottom: 6px;
 }
 
+/* Section Cards */
+.section-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r);
+    box-shadow: var(--sh);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+.section-card-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #f8fafc;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.section-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--c-text);
+}
+.section-card-sub {
+    font-size: 11.5px;
+    color: var(--c-muted);
+    margin-top: 2px;
+}
+.section-card-body {
+    padding: 16px 20px 20px;
+}
+
 /* Tables */
 .data-table {
     width: 100%;
@@ -394,15 +426,36 @@
 }
 .search-input:focus { outline: none; border-color: var(--c-indigo); box-shadow: 0 0 0 3px rgba(79,95,255,0.1); }
 
+/* Live dot */
+.live-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--c-muted);
+    font-weight: 500;
+}
+.live-dot::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse2 2s infinite;
+    flex-shrink: 0;
+}
+@keyframes pulse2 { 0%,100%{opacity:1} 50%{opacity:.5} }
+
 /* Responsive */
 @media (max-width: 768px) {
     .teachers-grid { grid-template-columns: 1fr; }
     .sc-value { font-size: 20px; }
     .hero-section { padding: 20px; }
+    .data-table thead th, .data-table td { padding: 6px 8px; font-size: 10px; }
 }
 </style>
 
-<div class="main-content cmd">
+<div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
@@ -411,7 +464,7 @@
         <div class="col-12">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div>
-                    <h4 class="mb-0 fw-bold cmd-heading" style="color:var(--c-text);font-size:21px; font-family:'Syne',sans-serif;">Admin Score Entry</h4>
+                    <h4 class="mb-0 fw-bold" style="color:var(--c-text);font-size:21px; font-family:'Syne',sans-serif;">Admin Score Entry</h4>
                     <span class="live-dot mt-1 d-inline-block">Manage teacher scoresheets</span>
                 </div>
                 <ol class="breadcrumb m-0 bg-transparent" style="font-size:12px;">
@@ -474,7 +527,6 @@
         </form>
     </div>
 
-    {{-- Dashboard Stats Cards --}}
     @if($teacherSubjects->isNotEmpty())
     @php
         $totalTeachers    = $teacherSubjects->groupBy('teacher_id')->count();
@@ -485,8 +537,12 @@
         $entryCompletion  = $totalSubjects > 0 ? round($teacherSubjects->avg('entry_percentage')) : 0;
         $totalClasses     = $teacherSubjects->groupBy('schoolclass_id')->count();
         $editingDisabled  = $teacherSubjects->where('teacher_editing_enabled', false)->count();
+        $pendingEntry     = $totalSubjects - $totalWithScores;
+        $totalExpectedEntries = $dashboardStats['total_expected_entries'] ?? 0;
+        $totalActualEntries   = $dashboardStats['total_actual_entries'] ?? 0;
     @endphp
 
+    {{-- Dashboard Stats Cards --}}
     <div class="row g-3 mb-4">
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #4f5fff;">
@@ -537,7 +593,7 @@
                     <div>
                         <p class="sc-label mb-0">Entry Completion</p>
                         <div class="sc-value">{{ $entryCompletion }}%</div>
-                        <div class="sc-sub mt-1"><i class="ri-database-2-line"></i> {{ number_format($dashboardStats['total_actual_entries'] ?? 0) }} / {{ number_format($dashboardStats['total_expected_entries'] ?? 0) }} entries</div>
+                        <div class="sc-sub mt-1"><i class="ri-database-2-line"></i> {{ number_format($totalActualEntries) }} / {{ number_format($totalExpectedEntries) }} entries</div>
                     </div>
                     <div class="sc-icon bg-amber fg-amber"><i class="ri-database-2-line"></i></div>
                 </div>
@@ -591,15 +647,150 @@
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Pending Entry</p>
-                        <div class="sc-value">{{ $totalSubjects - $totalWithScores }}</div>
+                        <div class="sc-value">{{ $pendingEntry }}</div>
                         <div class="sc-sub mt-1"><i class="ri-time-line"></i> Subjects need attention</div>
                     </div>
                     <div class="sc-icon bg-rose fg-rose"><i class="ri-time-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round((($totalSubjects - $totalWithScores) / $totalSubjects) * 100) : 0 }}%; background: #dc2626;"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($pendingEntry / $totalSubjects) * 100) : 0 }}%; background: #dc2626;"></div></div>
             </div>
         </div>
     </div>
+
+    {{-- Teacher Performance Table --}}
+    @if(!empty($dashboardStats['teacher_stats']))
+    <div class="section-card">
+        <div class="section-card-header">
+            <div>
+                <div class="section-card-title"><i class="ri-user-star-line me-2 text-primary"></i>Teacher Performance Overview</div>
+                <div class="section-card-sub">Scoresheet completion and entry progress by teacher</div>
+            </div>
+        </div>
+        <div class="section-card-body p-0">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Teacher</th>
+                            <th>Classes</th>
+                            <th>Subjects</th>
+                            <th>Terminal</th>
+                            <th>Mock</th>
+                            <th>Entry Progress</th>
+                            <th>Completion</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($dashboardStats['teacher_stats'] as $index => $teacher)
+                        @php
+                            $entryPercent = $teacher['expected_entries'] > 0 ? round(($teacher['actual_entries'] / $teacher['expected_entries']) * 100) : 0;
+                            $statusClass = $teacher['completion_rate'] == 100 ? 'complete' : ($teacher['completion_rate'] >= 75 ? 'good' : ($teacher['completion_rate'] >= 50 ? 'partial' : 'low'));
+                            $statusText = $teacher['completion_rate'] == 100 ? 'Complete' : ($teacher['completion_rate'] >= 75 ? 'Good Progress' : ($teacher['completion_rate'] >= 50 ? 'Partial' : 'Low Progress'));
+                        @endphp
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td><strong>{{ $teacher['teacher_name'] }}</strong><br><small class="text-muted">ID: {{ $teacher['teacher_id'] }}</small></td>
+                            <td>
+                                @foreach(array_slice($teacher['classes'], 0, 2) as $class)
+                                    <span class="badge bg-light text-dark me-1">{{ $class }}</span>
+                                @endforeach
+                                @if(count($teacher['classes']) > 2)
+                                    <span class="badge bg-light text-dark">+{{ count($teacher['classes']) - 2 }}</span>
+                                @endif
+                            </td>
+                            <td>{{ $teacher['subjects_count'] }}</td>
+                            <td class="text-success">{{ $teacher['completed_terminal'] }} / {{ $teacher['subjects_count'] }}</td>
+                            <td class="text-warning">{{ $teacher['completed_mock'] }} / {{ $teacher['subjects_count'] }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-bar-custom flex-grow-1" style="width: 100px;">
+                                        <div class="progress-fill {{ $entryPercent >= 75 ? 'high' : ($entryPercent >= 50 ? 'medium' : 'low') }}" style="width: {{ $entryPercent }}%;"></div>
+                                    </div>
+                                    <small>{{ number_format($teacher['actual_entries']) }}/{{ number_format($teacher['expected_entries']) }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-bar-custom flex-grow-1" style="width: 80px;">
+                                        <div class="progress-fill {{ $teacher['completion_rate'] >= 75 ? 'high' : ($teacher['completion_rate'] >= 50 ? 'medium' : 'low') }}" style="width: {{ $teacher['completion_rate'] }}%;"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ $teacher['completion_rate'] }}%</span>
+                                </div>
+                            </td>
+                            <td><span class="status-badge {{ $statusClass }}">{{ $statusText }}</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Class Performance Table --}}
+    @if(!empty($dashboardStats['class_stats']))
+    <div class="section-card">
+        <div class="section-card-header">
+            <div>
+                <div class="section-card-title"><i class="ri-group-line me-2 text-primary"></i>Class Performance Overview</div>
+                <div class="section-card-sub">Scoresheet completion by class</div>
+            </div>
+        </div>
+        <div class="section-card-body p-0">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Class</th>
+                            <th>Students</th>
+                            <th>Subjects</th>
+                            <th>Completed</th>
+                            <th>Pending</th>
+                            <th>Completion Rate</th>
+                            <th>Entry Rate</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($dashboardStats['class_stats'] as $index => $class)
+                        @php
+                            $statusClass = $class['completion_rate'] == 100 ? 'complete' : ($class['completion_rate'] >= 75 ? 'good' : ($class['completion_rate'] >= 50 ? 'partial' : 'low'));
+                        @endphp
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td><strong>{{ $class['class_name'] }}</strong></td>
+                            <td>{{ number_format($class['student_count']) }}</td>
+                            <td>{{ $class['total_subjects'] }}</td>
+                            <td class="text-success">{{ $class['completed_subjects'] }}</td>
+                            <td class="text-warning">{{ $class['pending_subjects'] }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-bar-custom flex-grow-1" style="width: 100px;">
+                                        <div class="progress-fill {{ $class['completion_rate'] >= 75 ? 'high' : ($class['completion_rate'] >= 50 ? 'medium' : 'low') }}" style="width: {{ $class['completion_rate'] }}%;"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ $class['completion_rate'] }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress-bar-custom flex-grow-1" style="width: 80px;">
+                                        <div class="progress-fill {{ ($class['entry_completion_rate'] ?? 0) >= 75 ? 'high' : (($class['entry_completion_rate'] ?? 0) >= 50 ? 'medium' : 'low') }}" style="width: {{ $class['entry_completion_rate'] ?? 0 }}%;"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ $class['entry_completion_rate'] ?? 0 }}%</span>
+                                </div>
+                            </td>
+                            <td><span class="status-badge {{ $statusClass }}">{{ $class['completion_rate'] == 100 ? 'Complete' : ($class['completion_rate'] >= 75 ? 'Good' : ($class['completion_rate'] >= 50 ? 'Partial' : 'Poor')) }}</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- Bulk Export Toolbar --}}
     <div id="bulkExportToolbar">
@@ -610,6 +801,7 @@
         <button type="button" class="btn-toolbar" onclick="adminBulkExport.deselectAll()"><i class="ri-close-line"></i> Clear</button>
         <button type="button" class="btn-toolbar" onclick="adminBulkExport.selectOnlyWithScores()"><i class="ri-filter-line"></i> With scores only</button>
         <button type="button" class="btn-toolbar green" id="btnBulkExport" onclick="adminBulkExport.export()"><i class="ri-download-2-line"></i> Export ZIP</button>
+        <button type="button" class="btn-toolbar" onclick="adminBulkExport.exportAllWithScores()" style="background:#2563eb;"><i class="ri-download-cloud-line"></i> Export All With Scores</button>
     </div>
 
     {{-- Search and Filters --}}
@@ -625,6 +817,7 @@
                 <option value="high">High Progress (75-99%)</option>
                 <option value="partial">Partial (50-74%)</option>
                 <option value="low">Low (Below 50%)</option>
+                <option value="no_scores">No Scores Entered</option>
             </select>
             <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white rounded border">
                 <input type="checkbox" id="selectAllCheckbox" onchange="adminBulkExport.toggleAll(this.checked)">
@@ -691,6 +884,14 @@
                                         <span class="badge-mock"><i class="ri-flask-line"></i> Mock ({{ $subject->mock_entries_count }}/{{ $subject->student_count }})</span>
                                     @endif
                                 </div>
+                                @if(!$subject->has_terminal_scores && $subject->student_count > 0)
+                                <div class="mt-2">
+                                    <div class="progress-bar-custom" style="width: 100%;">
+                                        <div class="progress-fill low" style="width: {{ $subject->entry_percentage }}%;"></div>
+                                    </div>
+                                    <small class="text-muted">{{ $subject->entry_percentage }}% entry completion</small>
+                                </div>
+                                @endif
                                 <div class="btn-score-group" onclick="event.stopPropagation()">
                                     <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}" class="btn-score btn-terminal-score">
                                         <i class="ri-file-edit-line"></i> Terminal
@@ -760,6 +961,14 @@ const adminBulkExport = (() => {
     function toggleAll(checked) { visibleCheckboxes().forEach(cb => { cb.checked = checked; cb.closest('.subject-item').classList.toggle('is-selected', checked); }); updateToolbar(); }
     function deselectAll() { allCheckboxes().forEach(cb => { cb.checked = false; cb.closest('.subject-item').classList.remove('is-selected'); }); updateToolbar(); }
     function selectOnlyWithScores() { allCheckboxes().forEach(cb => { const row = cb.closest('.subject-item'); if (row && row.dataset.hasScores !== '1') { cb.checked = false; row.classList.remove('is-selected'); } }); updateToolbar(); }
+    function exportAllWithScores() {
+        const visible = visibleCheckboxes();
+        const withScores = visible.filter(cb => { const row = cb.closest('.subject-item'); return row && row.dataset.hasScores === '1'; });
+        if (withScores.length === 0) { Swal.fire({ icon: 'info', title: 'No Scoresheets', text: 'No scoresheets with scores found to export.', confirmButtonColor: '#2563eb' }); return; }
+        withScores.forEach(cb => { cb.checked = true; cb.closest('.subject-item').classList.add('is-selected'); });
+        updateToolbar();
+        export_();
+    }
 
     function export_() {
         const selected = checkedBoxes();
@@ -775,7 +984,7 @@ const adminBulkExport = (() => {
         setTimeout(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ri-download-2-line"></i> Export ZIP'; } document.body.removeChild(form); }, 4000);
     }
 
-    return { toggleRow, onCheckboxClick, toggleAll, deselectAll, selectOnlyWithScores, export: export_ };
+    return { toggleRow, onCheckboxClick, toggleAll, deselectAll, selectOnlyWithScores, exportAllWithScores, export: export_ };
 })();
 
 /* ===================================================
@@ -792,7 +1001,12 @@ const adminBulkExport = (() => {
         document.querySelectorAll('.teacher-card').forEach(card => {
             const text = (card.innerText.toLowerCase());
             const matchesSearch = !searchTerm || text.includes(searchTerm);
-            const matchesStatus = statusValue === 'all' || card.dataset.status === statusValue;
+            let matchesStatus = statusValue === 'all';
+            if (!matchesStatus && statusValue === 'no_scores') {
+                matchesStatus = card.dataset.status === 'low' && parseInt(card.querySelector('.teacher-stats span:nth-child(2)')?.textContent?.match(/\d+/) || 0) === 0;
+            } else if (!matchesStatus) {
+                matchesStatus = card.dataset.status === statusValue;
+            }
             const show = matchesSearch && matchesStatus;
             card.style.display = show ? '' : 'none';
             if (show) visible++;
@@ -800,6 +1014,14 @@ const adminBulkExport = (() => {
         const total = document.querySelectorAll('.teacher-card').length;
         const countSpan = document.getElementById('totalSubjectCount');
         if (countSpan) countSpan.textContent = (searchTerm || statusValue !== 'all') ? `${visible} of ${total} visible` : '{{ $teacherSubjects->count() }} scoresheets';
+        const selAll = document.getElementById('selectAllCheckbox');
+        if (selAll) {
+            const vis = [...document.querySelectorAll('.teacher-card')].filter(c => c.style.display !== 'none');
+            const visCbs = vis.flatMap(c => [...c.querySelectorAll('.bulk-export-check')]);
+            const checked = visCbs.filter(cb => cb.checked).length;
+            selAll.checked = visCbs.length > 0 && checked === visCbs.length;
+            selAll.indeterminate = checked > 0 && checked < visCbs.length;
+        }
     }
     input.addEventListener('input', filterCards);
     if (statusFilter) statusFilter.addEventListener('change', filterCards);
