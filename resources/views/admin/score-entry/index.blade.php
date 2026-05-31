@@ -34,8 +34,6 @@
 
 .admin-score-container {
     font-family: 'Outfit', sans-serif;
-    background: var(--c-bg);
-    min-height: 100vh;
 }
 
 /* Hero Section */
@@ -173,38 +171,6 @@
     margin-bottom: 6px;
 }
 
-/* Section Cards */
-.section-card {
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    border-radius: var(--r);
-    box-shadow: var(--sh);
-    overflow: hidden;
-    margin-bottom: 24px;
-}
-.section-card-header {
-    padding: 16px 20px 12px;
-    border-bottom: 1px solid #f8fafc;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-}
-.section-card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 14.5px;
-    font-weight: 700;
-    color: var(--c-text);
-}
-.section-card-sub {
-    font-size: 11.5px;
-    color: var(--c-muted);
-    margin-top: 2px;
-}
-.section-card-body {
-    padding: 16px 20px 20px;
-}
-
 /* Tables */
 .data-table {
     width: 100%;
@@ -245,7 +211,6 @@
 .status-badge.good { background: #dbeafe; color: #1d4ed8; }
 .status-badge.partial { background: #fef3c7; color: #b45309; }
 .status-badge.low { background: #fee2e2; color: #dc2626; }
-.status-badge.pending { background: #f1f5f9; color: #64748b; }
 
 /* Progress Bar */
 .progress-bar-custom {
@@ -437,17 +402,32 @@
 }
 </style>
 
-<div class="admin-score-container">
+<div class="main-content cmd">
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- ===================================================
-         HERO SECTION
-         =================================================== --}}
+    {{-- Header with breadcrumb --}}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <h4 class="mb-0 fw-bold cmd-heading" style="color:var(--c-text);font-size:21px; font-family:'Syne',sans-serif;">Admin Score Entry</h4>
+                    <span class="live-dot mt-1 d-inline-block">Manage teacher scoresheets</span>
+                </div>
+                <ol class="breadcrumb m-0 bg-transparent" style="font-size:12px;">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" style="color:var(--c-muted);">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Score Entry</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    {{-- Hero Section --}}
     <div class="hero-section">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <h1 class="hero-title"><i class="ri-admin-line me-2"></i>Admin Score Entry</h1>
+                <p class="mb-1 opacity-75">Admin Panel</p>
+                <h1 class="hero-title"><i class="ri-admin-line me-2"></i>Score Entry Management</h1>
                 <p class="hero-subtitle">View all subject teachers and their assigned classes. Enter or edit scores on behalf of teachers.</p>
                 <div class="hero-actions">
                     <a href="{{ route('admin.score-entry.student-result-manager') }}" class="btn-hero btn-hero-success">
@@ -461,9 +441,7 @@
         </div>
     </div>
 
-    {{-- ===================================================
-         FILTER FORM
-         =================================================== --}}
+    {{-- Filter Form --}}
     <div class="filter-card">
         <form method="GET" action="{{ route('admin.score-entry.index') }}" class="row g-3 align-items-end">
             <div class="col-md-5">
@@ -496,9 +474,7 @@
         </form>
     </div>
 
-    {{-- ===================================================
-         DASHBOARD STATS CARDS (Matching main dashboard style)
-         =================================================== --}}
+    {{-- Dashboard Stats Cards --}}
     @if($teacherSubjects->isNotEmpty())
     @php
         $totalTeachers    = $teacherSubjects->groupBy('teacher_id')->count();
@@ -508,10 +484,10 @@
         $completionRate   = $totalSubjects > 0 ? round(($totalWithScores / $totalSubjects) * 100) : 0;
         $entryCompletion  = $totalSubjects > 0 ? round($teacherSubjects->avg('entry_percentage')) : 0;
         $totalClasses     = $teacherSubjects->groupBy('schoolclass_id')->count();
+        $editingDisabled  = $teacherSubjects->where('teacher_editing_enabled', false)->count();
     @endphp
 
     <div class="row g-3 mb-4">
-        {{-- Overall Completion Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #4f5fff;">
                 <div class="d-flex align-items-start justify-content-between">
@@ -529,165 +505,114 @@
                 </div>
             </div>
         </div>
-
-        {{-- Teachers Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #059669;">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Teachers</p>
                         <div class="sc-value">{{ $totalTeachers }}</div>
-                        <div class="sc-sub mt-1">
-                            <i class="ri-user-line"></i> Active this term
-                        </div>
+                        <div class="sc-sub mt-1"><i class="ri-user-line"></i> Active this term</div>
                     </div>
                     <div class="sc-icon bg-emerald fg-emerald"><i class="ri-user-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: 100%; background: #059669;"></div>
-                </div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; background: #059669;"></div></div>
             </div>
         </div>
-
-        {{-- Subjects Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #0ea5e9;">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Subjects</p>
                         <div class="sc-value">{{ $totalSubjects }}</div>
-                        <div class="sc-sub mt-1">
-                            <i class="ri-book-open-line"></i> Across {{ $totalClasses }} classes
-                        </div>
+                        <div class="sc-sub mt-1"><i class="ri-book-open-line"></i> Across {{ $totalClasses }} classes</div>
                     </div>
                     <div class="sc-icon bg-sky fg-sky"><i class="ri-book-open-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: 100%; background: #0ea5e9;"></div>
-                </div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; background: #0ea5e9;"></div></div>
             </div>
         </div>
-
-        {{-- Entry Completion Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #d97706;">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Entry Completion</p>
                         <div class="sc-value">{{ $entryCompletion }}%</div>
-                        <div class="sc-sub mt-1">
-                            <i class="ri-database-2-line"></i> {{ number_format($dashboardStats['total_actual_entries'] ?? 0) }} / {{ number_format($dashboardStats['total_expected_entries'] ?? 0) }} entries
-                        </div>
+                        <div class="sc-sub mt-1"><i class="ri-database-2-line"></i> {{ number_format($dashboardStats['total_actual_entries'] ?? 0) }} / {{ number_format($dashboardStats['total_expected_entries'] ?? 0) }} entries</div>
                     </div>
                     <div class="sc-icon bg-amber fg-amber"><i class="ri-database-2-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: {{ $entryCompletion }}%; background: linear-gradient(90deg, #d97706, #ef4444);"></div>
-                </div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $entryCompletion }}%; background: linear-gradient(90deg, #d97706, #ef4444);"></div></div>
             </div>
         </div>
     </div>
 
     <div class="row g-3 mb-4">
-        {{-- Mock Progress Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #7c3aed;">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Mock Scoresheets</p>
                         <div class="sc-value">{{ $totalMockScores }}</div>
-                        <div class="sc-sub mt-1">
-                            <i class="ri-flask-line"></i> {{ $totalSubjects - $totalMockScores }} pending
-                        </div>
+                        <div class="sc-sub mt-1"><i class="ri-flask-line"></i> {{ $totalSubjects - $totalMockScores }} pending</div>
                     </div>
                     <div class="sc-icon bg-violet fg-violet"><i class="ri-flask-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($totalMockScores / $totalSubjects) * 100) : 0 }}%; background: linear-gradient(90deg, #7c3aed, #c026d3);"></div>
-                </div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($totalMockScores / $totalSubjects) * 100) : 0 }}%; background: linear-gradient(90deg, #7c3aed, #c026d3);"></div></div>
             </div>
         </div>
-
-        {{-- Locked Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #f43f5e;">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Editing Disabled</p>
-                        <div class="sc-value">{{ $teacherSubjects->where('teacher_editing_enabled', false)->count() }}</div>
-                        <div class="sc-sub mt-1">
-                            <i class="ri-lock-line"></i> Subjects locked
-                        </div>
+                        <div class="sc-value">{{ $editingDisabled }}</div>
+                        <div class="sc-sub mt-1"><i class="ri-lock-line"></i> Subjects locked</div>
                     </div>
                     <div class="sc-icon bg-rose fg-rose"><i class="ri-lock-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($teacherSubjects->where('teacher_editing_enabled', false)->count() / $totalSubjects) * 100) : 0 }}%; background: #f43f5e;"></div>
-                </div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($editingDisabled / $totalSubjects) * 100) : 0 }}%; background: #f43f5e;"></div></div>
             </div>
         </div>
-
-        {{-- Classes Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #0d9488;">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Active Classes</p>
                         <div class="sc-value">{{ $totalClasses }}</div>
-                        <div class="sc-sub mt-1">
-                            <i class="ri-group-line"></i> With subject assignments
-                        </div>
+                        <div class="sc-sub mt-1"><i class="ri-group-line"></i> With subject assignments</div>
                     </div>
                     <div class="sc-icon bg-teal fg-teal"><i class="ri-group-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: 100%; background: #0d9488;"></div>
-                </div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; background: #0d9488;"></div></div>
             </div>
         </div>
-
-        {{-- Pending Card --}}
         <div class="col-xl-3 col-md-6">
             <div class="sc" style="--sc-color: #dc2626;">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <p class="sc-label mb-0">Pending Entry</p>
                         <div class="sc-value">{{ $totalSubjects - $totalWithScores }}</div>
-                        <div class="sc-sub mt-1">
-                            <i class="ri-time-line"></i> Subjects need attention
-                        </div>
+                        <div class="sc-sub mt-1"><i class="ri-time-line"></i> Subjects need attention</div>
                     </div>
                     <div class="sc-icon bg-rose fg-rose"><i class="ri-time-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round((($totalSubjects - $totalWithScores) / $totalSubjects) * 100) : 0 }}%; background: #dc2626;"></div>
-                </div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round((($totalSubjects - $totalWithScores) / $totalSubjects) * 100) : 0 }}%; background: #dc2626;"></div></div>
             </div>
         </div>
     </div>
 
-    {{-- ===================================================
-         BULK EXPORT TOOLBAR
-         =================================================== --}}
+    {{-- Bulk Export Toolbar --}}
     <div id="bulkExportToolbar">
         <div class="d-flex align-items-center gap-3 flex-grow-1">
             <i class="ri-checkbox-circle-line fs-5"></i>
             <span class="fw-semibold"><span id="toolbarSelectedCount">0</span> scoresheets selected</span>
         </div>
-        <button type="button" class="btn-toolbar" onclick="adminBulkExport.deselectAll()">
-            <i class="ri-close-line"></i> Clear
-        </button>
-        <button type="button" class="btn-toolbar" onclick="adminBulkExport.selectOnlyWithScores()">
-            <i class="ri-filter-line"></i> With scores only
-        </button>
-        <button type="button" class="btn-toolbar green" onclick="adminBulkExport.export()">
-            <i class="ri-download-2-line"></i> Export ZIP
-        </button>
+        <button type="button" class="btn-toolbar" onclick="adminBulkExport.deselectAll()"><i class="ri-close-line"></i> Clear</button>
+        <button type="button" class="btn-toolbar" onclick="adminBulkExport.selectOnlyWithScores()"><i class="ri-filter-line"></i> With scores only</button>
+        <button type="button" class="btn-toolbar green" id="btnBulkExport" onclick="adminBulkExport.export()"><i class="ri-download-2-line"></i> Export ZIP</button>
     </div>
 
-    {{-- ===================================================
-         SEARCH AND FILTERS
-         =================================================== --}}
+    {{-- Search and Filters --}}
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div class="search-input-wrapper">
             <i class="ri-search-line" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--c-muted);"></i>
@@ -700,7 +625,6 @@
                 <option value="high">High Progress (75-99%)</option>
                 <option value="partial">Partial (50-74%)</option>
                 <option value="low">Low (Below 50%)</option>
-                <option value="no_scores">No Scores Entered</option>
             </select>
             <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white rounded border">
                 <input type="checkbox" id="selectAllCheckbox" onchange="adminBulkExport.toggleAll(this.checked)">
@@ -710,9 +634,7 @@
         </div>
     </div>
 
-    {{-- ===================================================
-         TEACHERS GRID
-         =================================================== --}}
+    {{-- Teachers Grid --}}
     <div class="teachers-grid" id="teachersGrid">
         @foreach($teacherSubjects->groupBy('teacher_id') as $teacherId => $subjects)
             @php
@@ -769,14 +691,6 @@
                                         <span class="badge-mock"><i class="ri-flask-line"></i> Mock ({{ $subject->mock_entries_count }}/{{ $subject->student_count }})</span>
                                     @endif
                                 </div>
-                                @if(!$subject->has_terminal_scores && $subject->student_count > 0)
-                                <div class="mt-2">
-                                    <div class="progress-bar-custom" style="width: 100%;">
-                                        <div class="progress-fill low" style="width: {{ $subject->entry_percentage }}%;"></div>
-                                    </div>
-                                    <small class="text-muted">{{ $subject->entry_percentage }}% entry completion</small>
-                                </div>
-                                @endif
                                 <div class="btn-score-group" onclick="event.stopPropagation()">
                                     <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}" class="btn-score btn-terminal-score">
                                         <i class="ri-file-edit-line"></i> Terminal
@@ -821,18 +735,10 @@ const adminBulkExport = (() => {
     const EXPORT_URL = '{{ route("admin.score-entry.bulk-export") }}';
     const CSRF = '{{ csrf_token() }}';
 
-    function allCheckboxes() {
-        return [...document.querySelectorAll('.bulk-export-check')];
-    }
-    function visibleCheckboxes() {
-        return allCheckboxes().filter(cb => {
-            const card = cb.closest('.teacher-card');
-            return card && card.style.display !== 'none';
-        });
-    }
-    function checkedBoxes() {
-        return allCheckboxes().filter(cb => cb.checked);
-    }
+    function allCheckboxes() { return [...document.querySelectorAll('.bulk-export-check')]; }
+    function visibleCheckboxes() { return allCheckboxes().filter(cb => { const card = cb.closest('.teacher-card'); return card && card.style.display !== 'none'; }); }
+    function checkedBoxes() { return allCheckboxes().filter(cb => cb.checked); }
+
     function updateToolbar() {
         const checked = checkedBoxes();
         const n = checked.length;
@@ -848,38 +754,19 @@ const adminBulkExport = (() => {
             selAll.indeterminate = visChecked > 0 && visChecked < visible.length;
         }
     }
-    function toggleRow(row) {
-        const cb = row.querySelector('.bulk-export-check');
-        if (cb) { cb.checked = !cb.checked; row.classList.toggle('is-selected', cb.checked); updateToolbar(); }
-    }
-    function onCheckboxClick(cb) {
-        cb.closest('.subject-item').classList.toggle('is-selected', cb.checked);
-        updateToolbar();
-    }
-    function toggleAll(checked) {
-        visibleCheckboxes().forEach(cb => { cb.checked = checked; cb.closest('.subject-item').classList.toggle('is-selected', checked); });
-        updateToolbar();
-    }
-    function deselectAll() {
-        allCheckboxes().forEach(cb => { cb.checked = false; cb.closest('.subject-item').classList.remove('is-selected'); });
-        updateToolbar();
-    }
-    function selectOnlyWithScores() {
-        allCheckboxes().forEach(cb => {
-            const row = cb.closest('.subject-item');
-            if (row && row.dataset.hasScores !== '1') { cb.checked = false; row.classList.remove('is-selected'); }
-        });
-        updateToolbar();
-    }
+
+    function toggleRow(row) { const cb = row.querySelector('.bulk-export-check'); if (cb) { cb.checked = !cb.checked; row.classList.toggle('is-selected', cb.checked); updateToolbar(); } }
+    function onCheckboxClick(cb) { cb.closest('.subject-item').classList.toggle('is-selected', cb.checked); updateToolbar(); }
+    function toggleAll(checked) { visibleCheckboxes().forEach(cb => { cb.checked = checked; cb.closest('.subject-item').classList.toggle('is-selected', checked); }); updateToolbar(); }
+    function deselectAll() { allCheckboxes().forEach(cb => { cb.checked = false; cb.closest('.subject-item').classList.remove('is-selected'); }); updateToolbar(); }
+    function selectOnlyWithScores() { allCheckboxes().forEach(cb => { const row = cb.closest('.subject-item'); if (row && row.dataset.hasScores !== '1') { cb.checked = false; row.classList.remove('is-selected'); } }); updateToolbar(); }
+
     function export_() {
         const selected = checkedBoxes();
         if (selected.length === 0) { Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Please select at least one scoresheet to export.', confirmButtonColor: '#2563eb' }); return; }
         const btn = document.getElementById('btnBulkExport');
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Preparing…'; }
-        const subjects = selected.map(cb => {
-            const row = cb.closest('.subject-item');
-            return { subjectclass_id: row.dataset.subjectclassId, teacher_id: row.dataset.teacherId, schoolclass_id: row.dataset.schoolclassId, term_id: row.dataset.termId, session_id: row.dataset.sessionId };
-        });
+        const subjects = selected.map(cb => { const row = cb.closest('.subject-item'); return { subjectclass_id: row.dataset.subjectclassId, teacher_id: row.dataset.teacherId, schoolclass_id: row.dataset.schoolclassId, term_id: row.dataset.termId, session_id: row.dataset.sessionId }; });
         const form = document.createElement('form'); form.method = 'POST'; form.action = EXPORT_URL; form.style.display = 'none';
         const addInput = (name, value) => { const el = document.createElement('input'); el.type = 'hidden'; el.name = name; el.value = value; form.appendChild(el); };
         addInput('_token', CSRF);
@@ -887,6 +774,7 @@ const adminBulkExport = (() => {
         document.body.appendChild(form); form.submit();
         setTimeout(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ri-download-2-line"></i> Export ZIP'; } document.body.removeChild(form); }, 4000);
     }
+
     return { toggleRow, onCheckboxClick, toggleAll, deselectAll, selectOnlyWithScores, export: export_ };
 })();
 
@@ -911,15 +799,7 @@ const adminBulkExport = (() => {
         });
         const total = document.querySelectorAll('.teacher-card').length;
         const countSpan = document.getElementById('totalSubjectCount');
-        if (countSpan) countSpan.textContent = (searchTerm || statusValue !== 'all') ? `${visible} of ${total} visible` : `{{ $teacherSubjects->count() }} scoresheets`;
-        const selAll = document.getElementById('selectAllCheckbox');
-        if (selAll) {
-            const vis = [...document.querySelectorAll('.teacher-card')].filter(c => c.style.display !== 'none');
-            const visCbs = vis.flatMap(c => [...c.querySelectorAll('.bulk-export-check')]);
-            const checked = visCbs.filter(cb => cb.checked).length;
-            selAll.checked = visCbs.length > 0 && checked === visCbs.length;
-            selAll.indeterminate = checked > 0 && checked < visCbs.length;
-        }
+        if (countSpan) countSpan.textContent = (searchTerm || statusValue !== 'all') ? `${visible} of ${total} visible` : '{{ $teacherSubjects->count() }} scoresheets';
     }
     input.addEventListener('input', filterCards);
     if (statusFilter) statusFilter.addEventListener('change', filterCards);
