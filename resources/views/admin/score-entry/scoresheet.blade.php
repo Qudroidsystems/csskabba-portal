@@ -58,26 +58,38 @@
 .col-group     { border: 1px solid var(--ss-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
 .col-group h6  { color: var(--ss-primary); font-weight: 600; margin-bottom: 8px; }
 
+/* Grade badges */
 .grade-badge, .cum-grade-badge {
-    display: inline-block; transition: all .25s ease;
+    display: inline-block;
+    transition: all .25s ease;
     font-weight: 700; font-size: 13px; min-width: 28px; text-align: center;
 }
 .grade-badge.updating, .cum-grade-badge.updating { opacity: 0.5; transform: scale(0.9); }
 .grade-badge.updated,  .cum-grade-badge.updated  { animation: gradeFlash .4s ease; }
-@keyframes gradeFlash { 0% { transform: scale(1.15); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes gradeFlash {
+    0%   { transform: scale(1.15); }
+    50%  { transform: scale(1.2);  }
+    100% { transform: scale(1);    }
+}
 .grade-loading {
     display: inline-block; width: 12px; height: 12px;
     border: 2px solid #e2e8f0; border-top-color: var(--ss-accent);
     border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle;
 }
 
+/* Position badges */
 .position-badge, .position-total-badge, .arm-position-badge, .arm-position-cum-badge {
     transition: transform .22s cubic-bezier(0.34,1.4,0.64,1), opacity .15s ease;
 }
 .pos-flash { animation: posFlash .5s cubic-bezier(0.34,1.4,0.64,1); }
-@keyframes posFlash { 0%{transform:scale(1);opacity:1;} 30%{transform:scale(1.25);opacity:.7;} 60%{transform:scale(0.95);opacity:1;} 100%{transform:scale(1);opacity:1;} }
+@keyframes posFlash {
+    0%   { transform: scale(1);    opacity: 1; }
+    30%  { transform: scale(1.25); opacity: .7; }
+    60%  { transform: scale(0.95); opacity: 1; }
+    100% { transform: scale(1);    opacity: 1; }
+}
 
-/* ROW ENTRANCE */
+/* ROW ENTRANCE & HOVER */
 #scoresheetTableBody tr[data-id] {
     opacity: 0; transform: translateY(14px);
     transition: opacity .38s cubic-bezier(.25,.46,.45,.94), transform .38s cubic-bezier(.25,.46,.45,.94), background .18s ease;
@@ -85,10 +97,68 @@
 }
 #scoresheetTableBody tr[data-id].row-visible { opacity: 1; transform: translateY(0); }
 #scoresheetTableBody tr[data-id]:hover {
-    background: #f0f6ff !important; box-shadow: inset 3px 0 0 #2563eb;
-    transform: translateY(-1px) !important; position: relative; z-index: 1;
+    background: #f0f6ff !important;
+    box-shadow: inset 3px 0 0 #2563eb;
+    transform: translateY(-1px) !important;
+    transition: background .14s ease, box-shadow .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1);
+    position: relative; z-index: 1;
+}
+#scoresheetTableBody tr.row-vetted:hover     { background: #e6faf0 !important; }
+#scoresheetTableBody tr.row-not-vetted:hover { background: #fff0f0 !important; }
+#scoresheetTableBody tr.row-pending:hover    { background: #fff8e6 !important; }
+#scoresheetTableBody tr.row-locked:hover     { background: #fef2f2 !important; }
+#scoresheetTableBody tr[data-id]:hover .student-image {
+    transform: scale(1.12);
+    transition: transform .22s cubic-bezier(.34,1.4,.64,1);
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
 .student-image { transition: transform .18s ease, box-shadow .18s ease; }
+#scoresheetTableBody tr[data-id]:hover .score-input {
+    border-color: #93c5fd; box-shadow: 0 1px 6px rgba(37,99,235,.10);
+}
+#scoresheetTableBody tr[data-id]:hover .badge {
+    transition: transform .18s cubic-bezier(.34,1.4,.64,1);
+    transform: scale(1.06);
+}
+#scoresheetTableBody tr[data-id] .score-checkbox {
+    opacity: .35; transform: scale(.85);
+    transition: opacity .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1);
+}
+#scoresheetTableBody tr[data-id]:hover .score-checkbox,
+#scoresheetTableBody tr[data-id] .score-checkbox:checked { opacity: 1; transform: scale(1); }
+
+/* Lock Badge Styles */
+.lock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.lock-badge.global { background: #fee2e2; color: #dc2626; }
+.lock-badge.individual { background: #fef3c7; color: #d97706; }
+.lock-badge.disabled { background: #e5e7eb; color: #6b7280; }
+
+/* Lock Status Banner */
+.lock-alert {
+    border-left: 4px solid #d97706;
+    background: #fffbeb;
+}
+.lock-alert.global { border-left-color: #dc2626; background: #fef2f2; }
+.lock-alert.disabled { border-left-color: #6b7280; background: #f3f4f6; }
+
+/* GPA/CGPA Badges */
+.gpa-badge, .cgpa-badge {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #scoresheetTableBody tr[data-id],
+    #scoresheetTableBody tr[data-id]:hover { transition: background .15s ease !important; transform: none !important; opacity: 1 !important; }
+}
 
 /* SCORE INPUT TOOLTIP */
 #scoreTooltip {
@@ -101,11 +171,11 @@
 #scoreTooltip.tip-above { transform: translateY(-100%); }
 #scoreTooltip.tip-below { transform: translateY(0); }
 .tip-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 0.5px solid #e8ecf0; }
-.tip-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid #e2e8f0; }
-.tip-name   { font-size: 12px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tip-adm    { font-size: 10px; color: #64748b; margin-top: 1px; }
-.tip-grid   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
-.tip-stat   { text-align: center; }
+.tip-avatar   { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid #e2e8f0; }
+.tip-name     { font-size: 12px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tip-adm      { font-size: 10px; color: #64748b; margin-top: 1px; }
+.tip-grid     { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.tip-stat     { text-align: center; }
 .tip-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; font-weight: 600; margin-bottom: 2px; }
 .tip-stat-val   { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
 .tip-divider    { height: 0.5px; background: #e8ecf0; margin-bottom: 8px; }
@@ -130,6 +200,8 @@
 }
 #ssSaveOverlay.ss-visible  #ssSaveModal { transform: scale(1) translateY(0); opacity: 1; }
 #ssSaveOverlay.ss-closing  #ssSaveModal { transform: scale(.88) translateY(10px); opacity: 0; }
+#ssSaveOverlay.ss-closing  { animation: ssOverlayOut .22s ease forwards; }
+@keyframes ssOverlayOut { from { opacity:1; } to { opacity:0; } }
 
 /* Score Entry Modal */
 .score-entry-modal .modal-content {
@@ -182,36 +254,11 @@
     padding: 16px 24px;
 }
 
-.admin-banner {
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-    border-left: 4px solid #0284c7;
-    border-radius: var(--ss-radius);
-    padding: 14px 20px;
-    margin-bottom: 20px;
-    animation: slideIn 0.4s ease;
-}
-@keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-.lock-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-.lock-badge.global { background: #fee2e2; color: #dc2626; }
-.lock-badge.individual { background: #fef3c7; color: #d97706; }
-.lock-badge.disabled { background: #e5e7eb; color: #6b7280; }
-
-.lock-alert {
-    border-left: 4px solid #d97706;
-    background: #fffbeb;
-}
-.lock-alert.global { border-left-color: #dc2626; background: #fef2f2; }
-.lock-alert.disabled { border-left-color: #6b7280; background: #f3f4f6; }
-
 @media (max-width: 768px) {
-    .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
-    .stat-card   { padding: 10px 12px; }
+    .score-input  { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
+    .stat-card    { padding: 10px 12px; }
     .stat-card .stat-value { font-size: 18px; }
-    #ssSaveModal { width: 280px; padding: 26px 24px 22px; }
+    #ssSaveModal  { width: 280px; padding: 26px 24px 22px; }
     #scoreTooltip { width: calc(100vw - 24px); }
     .score-entry-modal .score-input-large { width: 80px; font-size: 14px; }
 }
@@ -362,7 +409,7 @@
 <div class="container-fluid">
 
     {{-- Admin Banner --}}
-    <div class="admin-banner">
+    <div class="admin-banner" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-left: 4px solid #0284c7; border-radius: var(--ss-radius); padding: 14px 20px; margin-bottom: 20px; animation: slideIn 0.4s ease;">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div class="d-flex align-items-center gap-3">
                 <i class="ri-shield-user-line fs-2" style="color: #0284c7;"></i>
@@ -763,6 +810,10 @@
                         </th>
                         <th class="col-avg text-center" title="Subject class average">Class Avg</th>
 
+                        {{-- GPA/CGPA Columns --}}
+                        <th class="col-gpa text-center">GPA</th>
+                        <th class="col-cgpa text-center">CGPA</th>
+
                         {{-- POSITION COLUMNS --}}
                         <th class="col-position text-center" title="All arms of this class combined, ranked by cumulative average">
                             Class Pos<br><small class="fw-normal opacity-75">(Cum)</small>
@@ -796,6 +847,15 @@
                             $cum = $broadsheet->cum ?? 0;
                             $totalGrade = $broadsheet->grade ?? '-';
                             $cumGrade = $broadsheet->grade ?? '-';
+
+                            // Get grade colors
+                            $totalGradeColor = $gradeColors[$totalGrade] ?? '#6b7280';
+                            $cumGradeColor = $gradeColors[$cumGrade] ?? '#6b7280';
+
+                            // Get color classes for totals and cum
+                            $totalColor = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
+                            $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
+
                             $isGloballyLocked = isset($globalLock) && $globalLock;
                             $isTeacherEditingDisabled = isset($teacherEditingEnabled) && !$teacherEditingEnabled;
                             $isLocked = $broadsheet->is_locked || $isGloballyLocked || $isTeacherEditingDisabled;
@@ -867,12 +927,12 @@
                             @endforelse
 
                             <td class="col-total text-center">
-                                <span class="badge bg-secondary-subtle text-secondary fw-bold total-badge">
+                                <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
                                     {{ number_format($rowTotal, 1) }}
                                 </span>
                             </td>
                             <td class="col-total-grade text-center">
-                                <span class="grade-badge">{{ $totalGrade }}</span>
+                                <span class="grade-badge" style="color: {{ $totalGradeColor }};">{{ $totalGrade }}</span>
                             </td>
                             <td class="col-bf text-center">
                                 <span class="badge bg-secondary-subtle text-secondary bf-badge">
@@ -880,16 +940,28 @@
                                 </span>
                             </td>
                             <td class="col-cum text-center">
-                                <span class="badge bg-secondary-subtle text-secondary fw-bold cum-badge">
+                                <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">
                                     {{ number_format($cum, 1) }}
                                 </span>
                             </td>
                             <td class="col-cum-grade text-center">
-                                <span class="cum-grade-badge">{{ $cumGrade }}</span>
+                                <span class="cum-grade-badge" style="color: {{ $cumGradeColor }};">{{ $cumGrade }}</span>
                             </td>
                             <td class="col-avg text-center">
                                 <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">
                                     {{ number_format($broadsheet->avg ?? 0, 1) }}
+                                </span>
+                            </td>
+
+                            {{-- GPA/CGPA Cells --}}
+                            <td class="col-gpa text-center">
+                                <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">
+                                    {{ number_format($broadsheet->gpa ?? 0, 2) }}
+                                </span>
+                            </td>
+                            <td class="col-cgpa text-center">
+                                <span class="badge bg-dark-subtle text-dark cgpa-badge">
+                                    {{ number_format($broadsheet->cgpa ?? 0, 2) }}
                                 </span>
                             </td>
 
@@ -1027,6 +1099,8 @@
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum" checked><label>Cum</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum-grade" checked><label>Cum Grade</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-avg" checked><label>Class Avg</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-gpa" checked><label>GPA</label></div>
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cgpa" checked><label>CGPA</label></div>
                         </div></div>
                         <div class="col-md-3"><div class="col-group">
                             <h6>Rankings &amp; Status</h6>
@@ -1126,6 +1200,40 @@ const routes = {
     enableTeacherEditing: '{{ route("admin.score-entry.enable-teacher-editing") }}',
 };
 
+// Grade colors mapping
+const GRADE_COLORS = {
+    'A': '#16a34a', 'A1': '#16a34a',
+    'B': '#2563eb', 'B2': '#2563eb', 'B3': '#3b82f6',
+    'C': '#7c3aed', 'C4': '#7c3aed', 'C5': '#8b5cf6', 'C6': '#a78bfa',
+    'D': '#d97706', 'D7': '#d97706', 'E8': '#f59e0b',
+    'F': '#dc2626', 'F9': '#dc2626',
+};
+
+// Helper function to get grade color
+function getGradeColor(grade) {
+    return GRADE_COLORS[grade] || '#6b7280';
+}
+
+// Apply grade with color
+function applyGrade(badge, grade) {
+    if (!badge) return;
+    badge.textContent = grade || '-';
+    badge.style.color = getGradeColor(grade);
+    badge.classList.remove('updating');
+    badge.classList.add('updated');
+    setTimeout(() => badge.classList.remove('updated'), 500);
+}
+
+// Client-side grade calculation (for preview)
+function clientGrade(score) {
+    score = parseFloat(score) || 0;
+    if (score >= 70) return 'A';
+    if (score >= 60) return 'B';
+    if (score >= 50) return 'C';
+    if (score >= 40) return 'D';
+    return 'F';
+}
+
 // Toast notification
 function showToast(msg, type = 'info') {
     const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
@@ -1146,18 +1254,40 @@ function validateInput(inp) {
     return val <= max;
 }
 
-// Update row totals
+// Update row grades with colors
 function updateRowGrades(row) {
     let totalRaw = 0;
     row.querySelectorAll('.score-input').forEach(inp => {
         totalRaw += parseFloat(inp.value) || 0;
     });
-    const totalBadge = row.querySelector('.total-badge');
-    if (totalBadge) totalBadge.textContent = totalRaw.toFixed(1);
 
-    const grade = totalRaw >= 70 ? 'A' : (totalRaw >= 60 ? 'B' : (totalRaw >= 50 ? 'C' : (totalRaw >= 40 ? 'D' : 'F')));
-    const gradeBadge = row.querySelector('.grade-badge');
-    if (gradeBadge) gradeBadge.textContent = grade;
+    const cum = parseFloat(row.dataset.bf) || 0;
+    const finalCum = cum > 0 ? (totalRaw + cum) / 2 : totalRaw;
+
+    // Update total badge with color
+    const totalBadge = row.querySelector('.total-badge');
+    if (totalBadge) {
+        totalBadge.textContent = totalRaw.toFixed(1);
+        const totalColor = totalRaw >= 70 ? 'success' : (totalRaw >= 50 ? 'info' : (totalRaw >= 40 ? 'warning' : 'danger'));
+        totalBadge.className = `badge fw-bold total-badge bg-${totalColor}-subtle text-${totalColor}`;
+        totalBadge.style.fontSize = '12px';
+    }
+
+    // Update cum badge with color
+    const cumBadge = row.querySelector('.cum-badge');
+    if (cumBadge) {
+        cumBadge.textContent = finalCum.toFixed(1);
+        const cumColor = finalCum >= 70 ? 'success' : (finalCum >= 50 ? 'info' : (finalCum >= 40 ? 'warning' : 'danger'));
+        cumBadge.className = `badge fw-bold cum-badge bg-${cumColor}-subtle text-${cumColor}`;
+        cumBadge.style.fontSize = '12px';
+    }
+
+    // Update grade badges with colors
+    const totalGrade = clientGrade(totalRaw);
+    const cumGrade = clientGrade(finalCum);
+
+    applyGrade(row.querySelector('.grade-badge'), totalGrade);
+    applyGrade(row.querySelector('.cum-grade-badge'), cumGrade);
 }
 
 // Save individual score
@@ -1192,11 +1322,31 @@ function saveIndividualScore(input) {
 
             if (data.data?.total) {
                 const totalBadge = row.querySelector('.total-badge');
-                if (totalBadge) totalBadge.textContent = parseFloat(data.data.total).toFixed(1);
+                if (totalBadge) {
+                    totalBadge.textContent = parseFloat(data.data.total).toFixed(1);
+                    const totalColor = parseFloat(data.data.total) >= 70 ? 'success' : (parseFloat(data.data.total) >= 50 ? 'info' : (parseFloat(data.data.total) >= 40 ? 'warning' : 'danger'));
+                    totalBadge.className = `badge fw-bold total-badge bg-${totalColor}-subtle text-${totalColor}`;
+                }
             }
             if (data.data?.grade) {
-                const gradeBadge = row.querySelector('.grade-badge');
-                if (gradeBadge) gradeBadge.textContent = data.data.grade;
+                applyGrade(row.querySelector('.grade-badge'), data.data.grade);
+            }
+            if (data.data?.cum) {
+                const cumBadge = row.querySelector('.cum-badge');
+                if (cumBadge) {
+                    cumBadge.textContent = parseFloat(data.data.cum).toFixed(1);
+                    const cumColor = parseFloat(data.data.cum) >= 70 ? 'success' : (parseFloat(data.data.cum) >= 50 ? 'info' : (parseFloat(data.data.cum) >= 40 ? 'warning' : 'danger'));
+                    cumBadge.className = `badge fw-bold cum-badge bg-${cumColor}-subtle text-${cumColor}`;
+                }
+                applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(parseFloat(data.data.cum)));
+            }
+            if (data.data?.gpa) {
+                const gpaBadge = row.querySelector('.gpa-badge');
+                if (gpaBadge) gpaBadge.textContent = parseFloat(data.data.gpa).toFixed(2);
+            }
+            if (data.data?.cgpa) {
+                const cgpaBadge = row.querySelector('.cgpa-badge');
+                if (cgpaBadge) cgpaBadge.textContent = parseFloat(data.data.cgpa).toFixed(2);
             }
         } else {
             showToast(data.message || 'Error saving score', 'danger');
@@ -1409,10 +1559,37 @@ function bulkSaveScores() {
             data.data.broadsheets.forEach(bs => {
                 const row = document.querySelector(`tr[data-id="${bs.id}"]`);
                 if (row) {
+                    // Update total badge
                     const totalBadge = row.querySelector('.total-badge');
-                    if (totalBadge) totalBadge.textContent = bs.total?.toFixed(1) || '0';
+                    if (totalBadge) {
+                        totalBadge.textContent = bs.total?.toFixed(1) || '0';
+                        const totalColor = (bs.total || 0) >= 70 ? 'success' : ((bs.total || 0) >= 50 ? 'info' : ((bs.total || 0) >= 40 ? 'warning' : 'danger'));
+                        totalBadge.className = `badge fw-bold total-badge bg-${totalColor}-subtle text-${totalColor}`;
+                    }
+
+                    // Update grade badge
                     const gradeBadge = row.querySelector('.grade-badge');
-                    if (gradeBadge) gradeBadge.textContent = bs.grade || '-';
+                    if (gradeBadge) applyGrade(gradeBadge, bs.grade || '-');
+
+                    // Update cum badge
+                    const cumBadge = row.querySelector('.cum-badge');
+                    if (cumBadge && bs.cum !== undefined) {
+                        cumBadge.textContent = parseFloat(bs.cum).toFixed(1);
+                        const cumColor = parseFloat(bs.cum) >= 70 ? 'success' : (parseFloat(bs.cum) >= 50 ? 'info' : (parseFloat(bs.cum) >= 40 ? 'warning' : 'danger'));
+                        cumBadge.className = `badge fw-bold cum-badge bg-${cumColor}-subtle text-${cumColor}`;
+                    }
+
+                    // Update cum grade badge
+                    const cumGradeBadge = row.querySelector('.cum-grade-badge');
+                    if (cumGradeBadge && bs.cum !== undefined) {
+                        applyGrade(cumGradeBadge, clientGrade(parseFloat(bs.cum)));
+                    }
+
+                    // Update GPA/CGPA
+                    const gpaBadge = row.querySelector('.gpa-badge');
+                    const cgpaBadge = row.querySelector('.cgpa-badge');
+                    if (gpaBadge && bs.gpa !== undefined) gpaBadge.textContent = parseFloat(bs.gpa).toFixed(2);
+                    if (cgpaBadge && bs.cgpa !== undefined) cgpaBadge.textContent = parseFloat(bs.cgpa).toFixed(2);
 
                     row.querySelectorAll('.score-input').forEach(inp => {
                         const assessmentId = inp.dataset.field;
@@ -1627,12 +1804,7 @@ function saveModalScores() {
                         newTotal += score;
                     }
                 }
-                const totalBadge = row.querySelector('.total-badge');
-                if (totalBadge) totalBadge.textContent = newTotal.toFixed(1);
-
-                const grade = newTotal >= 70 ? 'A' : (newTotal >= 60 ? 'B' : (newTotal >= 50 ? 'C' : (newTotal >= 40 ? 'D' : 'F')));
-                const gradeBadge = row.querySelector('.grade-badge');
-                if (gradeBadge) gradeBadge.textContent = grade;
+                updateRowGrades(row);
             }
 
             refreshAllPositions();
@@ -1788,8 +1960,10 @@ function toggleTeacherEditing() {
 
 // DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
-
-    console.log('DOM loaded - initializing scoresheet');
+    // Initialize grade colors on existing rows
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
+        updateRowGrades(row);
+    });
 
     // Image modal
     document.getElementById('imageViewModal')?.addEventListener('show.bs.modal', function(e) {
@@ -1856,9 +2030,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return ['id' => $a->id, 'name' => $a->name, 'max_score' => $a->max_score];
     }));
 
-    console.log('Assessments Data:', assessmentsData);
-    console.log('Edit buttons found:', document.querySelectorAll('.edit-scores-btn').length);
-
     // EDIT BUTTON HANDLER - Using event delegation
     document.getElementById('scoresheetTableBody')?.addEventListener('click', function(e) {
         const editBtn = e.target.closest('.edit-scores-btn');
@@ -1867,15 +2038,11 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('Edit button clicked!');
-
         const broadsheetId = editBtn.dataset.id;
         const studentName = editBtn.dataset.name;
         const studentAdmission = editBtn.dataset.admission;
         const studentAvatar = editBtn.dataset.avatar;
         const bf = editBtn.dataset.bf;
-
-        console.log('Modal data:', { broadsheetId, studentName, studentAdmission, bf });
 
         // Get current scores from the row
         const row = document.querySelector(`tr[data-id="${broadsheetId}"]`);
@@ -2042,19 +2209,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const asmtName = inp.dataset.assessmentName || 'Score';
         let total = 0, totalMax = 0;
         row.querySelectorAll('.score-input').forEach(i => { total += parseFloat(i.value)||0; totalMax += parseFloat(i.dataset.max)||0; });
-        const grade = total >= 70 ? 'A' : (total >= 60 ? 'B' : (total >= 50 ? 'C' : (total >= 40 ? 'D' : 'F')));
+        const grade = clientGrade(total);
         const pct   = totalMax > 0 ? Math.min(total / totalMax * 100, 100) : 0;
+        const col   = getGradeColor(grade);
 
         document.getElementById('stAvatar').src = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
         document.getElementById('stName').textContent = row.dataset.name || '—';
         document.getElementById('stMeta').textContent = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
         document.getElementById('stVal').textContent = val % 1 === 0 ? String(val) : val.toFixed(1);
         document.getElementById('stTotal').textContent = total.toFixed(1);
-        const gEl = document.getElementById('stGrade'); gEl.textContent = grade;
+        const gEl = document.getElementById('stGrade'); gEl.textContent = grade; gEl.style.color = col;
         document.getElementById('stProgLabel').textContent = total.toFixed(1) + ' / ' + totalMax + ' marks';
         document.getElementById('stProgPct').textContent = Math.round(pct) + '%';
         const fill = document.getElementById('stProgFill');
         fill.style.width = pct.toFixed(1) + '%';
+        fill.style.background = pct >= 70 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 40 ? '#d97706' : '#dc2626';
         tipPosition(inp);
     }
 
@@ -2079,7 +2248,6 @@ document.addEventListener('DOMContentLoaded', function() {
         inp.addEventListener('blur', function() { setTimeout(() => { if (tipInput === this) tipHide(); }, 80); });
         inp.addEventListener('input', function() { if (tipInput === this) tipRefresh(this); });
     });
-
 });
 </script>
 @endsection
