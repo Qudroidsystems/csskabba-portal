@@ -34,6 +34,32 @@
 
 .admin-score-container {
     font-family: 'Outfit', sans-serif;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse2 {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes barIn {
+    from { width: 0; }
+    to { width: var(--bw); }
 }
 
 /* Hero Section */
@@ -43,6 +69,7 @@
     padding: 28px 32px;
     margin-bottom: 24px;
     color: white;
+    animation: scaleIn 0.5s ease;
 }
 .hero-title {
     font-family: 'Syne', sans-serif;
@@ -81,7 +108,7 @@
 .btn-hero-success { background: #10b981; border-color: #10b981; color: white; }
 .btn-hero-success:hover { background: #059669; color: white; }
 
-/* Stat Cards - Matching dashboard style */
+/* Stat Cards */
 .sc {
     background: var(--c-surface);
     border: 1px solid var(--c-border);
@@ -92,7 +119,16 @@
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    animation: slideIn 0.4s ease both;
 }
+.sc:nth-child(1) { animation-delay: 0s; }
+.sc:nth-child(2) { animation-delay: 0.05s; }
+.sc:nth-child(3) { animation-delay: 0.1s; }
+.sc:nth-child(4) { animation-delay: 0.15s; }
+.sc:nth-child(5) { animation-delay: 0.2s; }
+.sc:nth-child(6) { animation-delay: 0.25s; }
+.sc:nth-child(7) { animation-delay: 0.3s; }
+.sc:nth-child(8) { animation-delay: 0.35s; }
 .sc::after {
     content: '';
     position: absolute;
@@ -151,7 +187,6 @@
     border-radius: 3px;
     animation: barIn 0.9s ease both;
 }
-@keyframes barIn { from { width: 0; } to { width: var(--bw); } }
 
 /* Filter Card */
 .filter-card {
@@ -161,6 +196,7 @@
     padding: 20px 24px;
     margin-bottom: 24px;
     box-shadow: var(--sh);
+    animation: fadeIn 0.5s ease 0.1s both;
 }
 .filter-label-custom {
     font-size: 11px;
@@ -179,6 +215,7 @@
     box-shadow: var(--sh);
     overflow: hidden;
     margin-bottom: 24px;
+    animation: fadeIn 0.5s ease both;
 }
 .section-card-header {
     padding: 16px 20px 12px;
@@ -219,15 +256,27 @@
     border-bottom: 1px solid var(--c-border);
     background: #fafbfe;
 }
-.data-table tbody tr { transition: background var(--tr); }
-.data-table tbody tr:hover { background: #f8fafc; }
+.data-table tbody tr {
+    transition: all var(--tr);
+    animation: slideIn 0.3s ease both;
+}
+.data-table tbody tr:hover { background: #f8fafc; transform: translateX(4px); }
 .data-table td {
     padding: 10px 12px;
     border-bottom: 1px solid #f8fafc;
     color: var(--c-sub);
     vertical-align: middle;
 }
-.data-table tbody tr:last-child td { border-bottom: none; }
+
+/* Clickable row */
+.clickable-row {
+    cursor: pointer;
+    transition: all var(--tr);
+}
+.clickable-row:hover {
+    background: #f8fafc !important;
+    transform: translateX(4px);
+}
 
 /* Status Badges */
 .status-badge {
@@ -254,7 +303,7 @@
 .progress-fill {
     height: 100%;
     border-radius: 3px;
-    transition: width 0.3s ease;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .progress-fill.high { background: #10b981; }
 .progress-fill.medium { background: #f59e0b; }
@@ -272,6 +321,7 @@
     border-radius: var(--r);
     overflow: hidden;
     transition: all var(--tr);
+    animation: fadeIn 0.5s ease both;
 }
 .teacher-card:hover { transform: translateY(-4px); box-shadow: var(--sh-hover); }
 .teacher-card-header {
@@ -316,10 +366,10 @@
     padding: 14px 0;
     border-bottom: 1px solid var(--c-border);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: all var(--tr);
 }
 .subject-item:last-child { border-bottom: none; }
-.subject-item:hover { background: #f8fafc; margin: 0 -20px; padding: 14px 20px; }
+.subject-item:hover { background: #f8fafc; margin: 0 -20px; padding: 14px 20px; transform: translateX(4px); }
 .subject-item.is-selected { background: #eff6ff !important; margin: 0 -20px; padding: 14px 20px; }
 .subject-name {
     font-weight: 600;
@@ -368,16 +418,16 @@
     font-weight: 600;
     text-decoration: none;
     text-align: center;
-    transition: all 0.2s;
+    transition: all var(--tr);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
 }
 .btn-terminal-score { background: #10b981; color: #fff; }
-.btn-terminal-score:hover { background: #059669; transform: translateY(-1px); }
+.btn-terminal-score:hover { background: #059669; transform: translateY(-2px); }
 .btn-mock-score { background: #fef3c7; color: #b45309; }
-.btn-mock-score:hover { background: #fde68a; transform: translateY(-1px); }
+.btn-mock-score:hover { background: #fde68a; transform: translateY(-2px); }
 
 /* Bulk Export Toolbar */
 #bulkExportToolbar {
@@ -394,6 +444,7 @@
     flex-wrap: wrap;
     margin-bottom: 20px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    animation: slideIn 0.3s ease;
 }
 #bulkExportToolbar.visible { display: flex; }
 .btn-toolbar {
@@ -405,9 +456,9 @@
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all var(--tr);
 }
-.btn-toolbar:hover { background: rgba(255,255,255,0.15); color: white; }
+.btn-toolbar:hover { background: rgba(255,255,255,0.15); color: white; transform: translateY(-2px); }
 .btn-toolbar.green { background: #10b981; border-color: #10b981; }
 .btn-toolbar.green:hover { background: #059669; }
 
@@ -423,8 +474,9 @@
     height: 44px;
     width: 100%;
     font-family: 'Outfit', sans-serif;
+    transition: all var(--tr);
 }
-.search-input:focus { outline: none; border-color: var(--c-indigo); box-shadow: 0 0 0 3px rgba(79,95,255,0.1); }
+.search-input:focus { outline: none; border-color: var(--c-indigo); box-shadow: 0 0 0 3px rgba(79,95,255,0.1); transform: scale(1.01); }
 
 /* Live dot */
 .live-dot {
@@ -444,7 +496,6 @@
     animation: pulse2 2s infinite;
     flex-shrink: 0;
 }
-@keyframes pulse2 { 0%,100%{opacity:1} 50%{opacity:.5} }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -531,7 +582,9 @@
     @php
         $totalTeachers    = $teacherSubjects->groupBy('teacher_id')->count();
         $totalSubjects    = $teacherSubjects->count();
-        $totalWithScores  = $teacherSubjects->where('has_terminal_scores', true)->count();
+        // Calculate actual completion based on entry percentage
+        $totalWithScores  = $teacherSubjects->filter(function($s) { return $s->entry_percentage >= 100; })->count();
+        $totalPartialScores = $teacherSubjects->filter(function($s) { return $s->entry_percentage > 0 && $s->entry_percentage < 100; })->count();
         $totalMockScores  = $teacherSubjects->where('has_mock_scores', true)->count();
         $completionRate   = $totalSubjects > 0 ? round(($totalWithScores / $totalSubjects) * 100) : 0;
         $entryCompletion  = $totalSubjects > 0 ? round($teacherSubjects->avg('entry_percentage')) : 0;
@@ -551,13 +604,13 @@
                         <p class="sc-label mb-0">Overall Completion</p>
                         <div class="sc-value">{{ $completionRate }}%</div>
                         <div class="sc-sub mt-1">
-                            <span class="badge-up"><i class="ri-check-line"></i> {{ $totalWithScores }} / {{ $totalSubjects }} subjects</span>
+                            <span class="badge-up"><i class="ri-check-line"></i> {{ $totalWithScores }} fully completed / {{ $totalSubjects }} subjects</span>
                         </div>
                     </div>
                     <div class="sc-icon bg-indigo fg-indigo"><i class="ri-bar-chart-2-line"></i></div>
                 </div>
                 <div class="sc-bar mt-3">
-                    <div class="sc-bar-fill" style="width: {{ $completionRate }}%; background: linear-gradient(90deg, #4f5fff, #7c3aed);"></div>
+                    <div class="sc-bar-fill" style="width: {{ $completionRate }}%; --bw:{{ $completionRate }}%; background: linear-gradient(90deg, #4f5fff, #7c3aed);"></div>
                 </div>
             </div>
         </div>
@@ -571,7 +624,7 @@
                     </div>
                     <div class="sc-icon bg-emerald fg-emerald"><i class="ri-user-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; background: #059669;"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; --bw:100%; background: #059669;"></div></div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
@@ -584,7 +637,7 @@
                     </div>
                     <div class="sc-icon bg-sky fg-sky"><i class="ri-book-open-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; background: #0ea5e9;"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; --bw:100%; background: #0ea5e9;"></div></div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
@@ -597,7 +650,7 @@
                     </div>
                     <div class="sc-icon bg-amber fg-amber"><i class="ri-database-2-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $entryCompletion }}%; background: linear-gradient(90deg, #d97706, #ef4444);"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $entryCompletion }}%; --bw:{{ $entryCompletion }}%; background: linear-gradient(90deg, #d97706, #ef4444);"></div></div>
             </div>
         </div>
     </div>
@@ -613,7 +666,7 @@
                     </div>
                     <div class="sc-icon bg-violet fg-violet"><i class="ri-flask-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($totalMockScores / $totalSubjects) * 100) : 0 }}%; background: linear-gradient(90deg, #7c3aed, #c026d3);"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($totalMockScores / $totalSubjects) * 100) : 0 }}%; --bw:{{ $totalSubjects > 0 ? round(($totalMockScores / $totalSubjects) * 100) : 0 }}%; background: linear-gradient(90deg, #7c3aed, #c026d3);"></div></div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
@@ -626,7 +679,7 @@
                     </div>
                     <div class="sc-icon bg-rose fg-rose"><i class="ri-lock-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($editingDisabled / $totalSubjects) * 100) : 0 }}%; background: #f43f5e;"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($editingDisabled / $totalSubjects) * 100) : 0 }}%; --bw:{{ $totalSubjects > 0 ? round(($editingDisabled / $totalSubjects) * 100) : 0 }}%; background: #f43f5e;"></div></div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
@@ -639,7 +692,7 @@
                     </div>
                     <div class="sc-icon bg-teal fg-teal"><i class="ri-group-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; background: #0d9488;"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: 100%; --bw:100%; background: #0d9488;"></div></div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6">
@@ -652,7 +705,7 @@
                     </div>
                     <div class="sc-icon bg-rose fg-rose"><i class="ri-time-line"></i></div>
                 </div>
-                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($pendingEntry / $totalSubjects) * 100) : 0 }}%; background: #dc2626;"></div></div>
+                <div class="sc-bar mt-3"><div class="sc-bar-fill" style="width: {{ $totalSubjects > 0 ? round(($pendingEntry / $totalSubjects) * 100) : 0 }}%; --bw:{{ $totalSubjects > 0 ? round(($pendingEntry / $totalSubjects) * 100) : 0 }}%; background: #dc2626;"></div></div>
             </div>
         </div>
     </div>
@@ -663,7 +716,7 @@
         <div class="section-card-header">
             <div>
                 <div class="section-card-title"><i class="ri-user-star-line me-2 text-primary"></i>Teacher Performance Overview</div>
-                <div class="section-card-sub">Scoresheet completion and entry progress by teacher</div>
+                <div class="section-card-sub">Scoresheet completion and entry progress by teacher - Click any row to view scoresheets</div>
             </div>
         </div>
         <div class="section-card-body p-0">
@@ -675,8 +728,8 @@
                             <th>Teacher</th>
                             <th>Classes</th>
                             <th>Subjects</th>
-                            <th>Terminal</th>
-                            <th>Mock</th>
+                            <th>Terminal Status</th>
+                            <th>Mock Status</th>
                             <th>Entry Progress</th>
                             <th>Completion</th>
                             <th>Status</th>
@@ -685,13 +738,19 @@
                     <tbody>
                         @foreach($dashboardStats['teacher_stats'] as $index => $teacher)
                         @php
+                            // Calculate REAL completion based on entry percentage
                             $entryPercent = $teacher['expected_entries'] > 0 ? round(($teacher['actual_entries'] / $teacher['expected_entries']) * 100) : 0;
-                            $statusClass = $teacher['completion_rate'] == 100 ? 'complete' : ($teacher['completion_rate'] >= 75 ? 'good' : ($teacher['completion_rate'] >= 50 ? 'partial' : 'low'));
-                            $statusText = $teacher['completion_rate'] == 100 ? 'Complete' : ($teacher['completion_rate'] >= 75 ? 'Good Progress' : ($teacher['completion_rate'] >= 50 ? 'Partial' : 'Low Progress'));
+                            // Completion rate based on actual entry progress, not just whether a scoresheet exists
+                            $realCompletionRate = $entryPercent;
+                            $statusClass = $realCompletionRate == 100 ? 'complete' : ($realCompletionRate >= 75 ? 'good' : ($realCompletionRate >= 50 ? 'partial' : 'low'));
+                            $statusText = $realCompletionRate == 100 ? 'Complete' : ($realCompletionRate >= 75 ? 'Good Progress' : ($realCompletionRate >= 50 ? 'Partial' : 'Low Progress'));
                         @endphp
-                        <tr>
+                        <tr class="clickable-row" onclick="window.location.href='{{ route('admin.score-entry.scoresheet', [$teacher['subjects_details'][0]['subjectclass_id'] ?? 0, $teacher['teacher_id'], $selectedTermId, $selectedSessionId, 'terminal']) }}'">
                             <td>{{ $index + 1 }}</td>
-                            <td><strong>{{ $teacher['teacher_name'] }}</strong><br><small class="text-muted">ID: {{ $teacher['teacher_id'] }}</small></td>
+                            <td>
+                                <strong>{{ $teacher['teacher_name'] }}</strong>
+                                <br><small class="text-muted">ID: {{ $teacher['teacher_id'] }}</small>
+                            </td>
                             <td>
                                 @foreach(array_slice($teacher['classes'], 0, 2) as $class)
                                     <span class="badge bg-light text-dark me-1">{{ $class }}</span>
@@ -699,24 +758,40 @@
                                 @if(count($teacher['classes']) > 2)
                                     <span class="badge bg-light text-dark">+{{ count($teacher['classes']) - 2 }}</span>
                                 @endif
-                            </td>
+                             </td>
                             <td>{{ $teacher['subjects_count'] }}</td>
-                            <td class="text-success">{{ $teacher['completed_terminal'] }} / {{ $teacher['subjects_count'] }}</td>
-                            <td class="text-warning">{{ $teacher['completed_mock'] }} / {{ $teacher['subjects_count'] }}</td>
+                            <td>
+                                @if($entryPercent >= 100)
+                                    <span class="badge-terminal"><i class="ri-check-line"></i> Complete</span>
+                                @elseif($entryPercent > 0)
+                                    <span class="badge-open"><i class="ri-time-line"></i> In Progress</span>
+                                @else
+                                    <span class="badge-open"><i class="ri-add-line"></i> Not Started</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($teacher['completed_mock'] == $teacher['subjects_count'])
+                                    <span class="badge-terminal">Complete</span>
+                                @elseif($teacher['completed_mock'] > 0)
+                                    <span class="badge-open">Partial</span>
+                                @else
+                                    <span class="badge-open">Not Started</span>
+                                @endif
+                            </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress-bar-custom flex-grow-1" style="width: 100px;">
                                         <div class="progress-fill {{ $entryPercent >= 75 ? 'high' : ($entryPercent >= 50 ? 'medium' : 'low') }}" style="width: {{ $entryPercent }}%;"></div>
                                     </div>
-                                    <small>{{ number_format($teacher['actual_entries']) }}/{{ number_format($teacher['expected_entries']) }}</small>
+                                    <small>{{ number_format($teacher['actual_entries']) }}/{{ number_format($teacher['expected_entries']) }} ({{ $entryPercent }}%)</small>
                                 </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress-bar-custom flex-grow-1" style="width: 80px;">
-                                        <div class="progress-fill {{ $teacher['completion_rate'] >= 75 ? 'high' : ($teacher['completion_rate'] >= 50 ? 'medium' : 'low') }}" style="width: {{ $teacher['completion_rate'] }}%;"></div>
+                                        <div class="progress-fill {{ $realCompletionRate >= 75 ? 'high' : ($realCompletionRate >= 50 ? 'medium' : 'low') }}" style="width: {{ $realCompletionRate }}%;"></div>
                                     </div>
-                                    <span class="fw-bold">{{ $teacher['completion_rate'] }}%</span>
+                                    <span class="fw-bold">{{ $realCompletionRate }}%</span>
                                 </div>
                             </td>
                             <td><span class="status-badge {{ $statusClass }}">{{ $statusText }}</span></td>
@@ -735,7 +810,7 @@
         <div class="section-card-header">
             <div>
                 <div class="section-card-title"><i class="ri-group-line me-2 text-primary"></i>Class Performance Overview</div>
-                <div class="section-card-sub">Scoresheet completion by class</div>
+                <div class="section-card-sub">Scoresheet completion by class - Click any row to view class details</div>
             </div>
         </div>
         <div class="section-card-body p-0">
@@ -757,21 +832,23 @@
                     <tbody>
                         @foreach($dashboardStats['class_stats'] as $index => $class)
                         @php
-                            $statusClass = $class['completion_rate'] == 100 ? 'complete' : ($class['completion_rate'] >= 75 ? 'good' : ($class['completion_rate'] >= 50 ? 'partial' : 'low'));
+                            // Calculate REAL completion based on entry progress
+                            $realCompletionRate = $class['entry_completion_rate'] ?? 0;
+                            $statusClass = $realCompletionRate == 100 ? 'complete' : ($realCompletionRate >= 75 ? 'good' : ($realCompletionRate >= 50 ? 'partial' : 'low'));
                         @endphp
-                        <tr>
+                        <tr class="clickable-row" onclick="showClassDetails({{ $class['class_id'] }}, {{ json_encode($class) }})">
                             <td>{{ $index + 1 }}</td>
                             <td><strong>{{ $class['class_name'] }}</strong></td>
                             <td>{{ number_format($class['student_count']) }}</td>
                             <td>{{ $class['total_subjects'] }}</td>
-                            <td class="text-success">{{ $class['completed_subjects'] }}</td>
-                            <td class="text-warning">{{ $class['pending_subjects'] }}</td>
+                            <td class="text-success">{{ $class['completed_subjects'] }} fully completed</td>
+                            <td class="text-warning">{{ $class['pending_subjects'] }} need attention</td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress-bar-custom flex-grow-1" style="width: 100px;">
-                                        <div class="progress-fill {{ $class['completion_rate'] >= 75 ? 'high' : ($class['completion_rate'] >= 50 ? 'medium' : 'low') }}" style="width: {{ $class['completion_rate'] }}%;"></div>
+                                        <div class="progress-fill {{ $realCompletionRate >= 75 ? 'high' : ($realCompletionRate >= 50 ? 'medium' : 'low') }}" style="width: {{ $realCompletionRate }}%;"></div>
                                     </div>
-                                    <span class="fw-bold">{{ $class['completion_rate'] }}%</span>
+                                    <span class="fw-bold">{{ $realCompletionRate }}%</span>
                                 </div>
                             </td>
                             <td>
@@ -782,7 +859,7 @@
                                     <span class="fw-bold">{{ $class['entry_completion_rate'] ?? 0 }}%</span>
                                 </div>
                             </td>
-                            <td><span class="status-badge {{ $statusClass }}">{{ $class['completion_rate'] == 100 ? 'Complete' : ($class['completion_rate'] >= 75 ? 'Good' : ($class['completion_rate'] >= 50 ? 'Partial' : 'Poor')) }}</span></td>
+                            <td><span class="status-badge {{ $statusClass }}">{{ $realCompletionRate == 100 ? 'Complete' : ($realCompletionRate >= 75 ? 'Good' : ($realCompletionRate >= 50 ? 'Partial' : 'Poor')) }}</span></td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -814,10 +891,10 @@
             <select id="statusFilter" class="form-select" style="width: auto;">
                 <option value="all">All Status</option>
                 <option value="complete">Complete (100%)</option>
-                <option value="high">High Progress (75-99%)</option>
+                <option value="good">Good Progress (75-99%)</option>
                 <option value="partial">Partial (50-74%)</option>
                 <option value="low">Low (Below 50%)</option>
-                <option value="no_scores">No Scores Entered</option>
+                <option value="no_scores">No Scores Entered (0%)</option>
             </select>
             <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white rounded border">
                 <input type="checkbox" id="selectAllCheckbox" onchange="adminBulkExport.toggleAll(this.checked)">
@@ -833,28 +910,32 @@
             @php
                 $teacherName      = $subjects->first()->teacher_name;
                 $initials         = strtoupper(substr($teacherName, 0, 2));
-                $teacherCompleted = $subjects->where('has_terminal_scores', true)->count();
+                $teacherCompleted = $subjects->filter(function($s) { return $s->entry_percentage >= 100; })->count();
                 $teacherTotal     = $subjects->count();
                 $teacherPercent   = $teacherTotal > 0 ? round(($teacherCompleted / $teacherTotal) * 100) : 0;
                 $teacherEntryAvg  = round($subjects->avg('entry_percentage'));
             @endphp
-            <div class="teacher-card" data-status="{{ $teacherPercent == 100 ? 'complete' : ($teacherPercent >= 75 ? 'high' : ($teacherPercent >= 50 ? 'partial' : 'low')) }}">
+            <div class="teacher-card" data-status="{{ $teacherPercent == 100 ? 'complete' : ($teacherPercent >= 75 ? 'good' : ($teacherPercent >= 50 ? 'partial' : 'low')) }}">
                 <div class="teacher-card-header">
                     <div class="teacher-avatar">{{ $initials }}</div>
                     <div>
                         <div class="teacher-name">{{ $teacherName }}</div>
                         <div class="teacher-stats">
                             <span><i class="ri-book-line"></i> {{ $teacherTotal }} subjects</span>
-                            <span><i class="ri-check-line"></i> {{ $teacherCompleted }} entered ({{ $teacherPercent }}%)</span>
+                            <span><i class="ri-check-line"></i> {{ $teacherCompleted }} fully completed ({{ $teacherPercent }}%)</span>
                             <span><i class="ri-database-line"></i> {{ $teacherEntryAvg }}% entries</span>
                         </div>
                         <div class="progress-bar-custom mt-2" style="width: 150px;">
-                            <div class="progress-fill {{ $teacherPercent >= 75 ? 'high' : ($teacherPercent >= 50 ? 'medium' : 'low') }}" style="width: {{ $teacherPercent }}%;"></div>
+                            <div class="progress-fill {{ $teacherEntryAvg >= 75 ? 'high' : ($teacherEntryAvg >= 50 ? 'medium' : 'low') }}" style="width: {{ $teacherEntryAvg }}%;"></div>
                         </div>
                     </div>
                 </div>
                 <div class="teacher-card-body">
                     @foreach($subjects as $subject)
+                    @php
+                        $subjectEntryPercent = $subject->entry_percentage;
+                        $subjectStatusClass = $subjectEntryPercent >= 100 ? 'complete' : ($subjectEntryPercent >= 75 ? 'good' : ($subjectEntryPercent >= 50 ? 'partial' : 'low'));
+                    @endphp
                     <div class="subject-item"
                          data-subjectclass-id="{{ $subject->subjectclass_id }}"
                          data-teacher-id="{{ $subject->teacher_id }}"
@@ -869,35 +950,36 @@
                                 <div class="subject-name">
                                     {{ $subject->subject_name }}
                                     <span class="subject-code">{{ $subject->subject_code }}</span>
+                                    <span class="status-badge {{ $subjectStatusClass }}">{{ $subjectEntryPercent }}% Complete</span>
                                 </div>
                                 <div class="subject-class">
                                     <i class="ri-group-line"></i> {{ $subject->class_name }}
                                     · {{ $subject->student_count }} students
                                 </div>
                                 <div class="d-flex gap-2 mt-2 flex-wrap">
-                                    @if($subject->has_terminal_scores)
-                                        <span class="badge-terminal"><i class="ri-check-line"></i> Terminal ({{ $subject->terminal_entries_count }}/{{ $subject->student_count }})</span>
+                                    @if($subjectEntryPercent >= 100)
+                                        <span class="badge-terminal"><i class="ri-check-line"></i> Fully Entered ({{ $subject->terminal_entries_count }}/{{ $subject->student_count }})</span>
+                                    @elseif($subjectEntryPercent > 0)
+                                        <span class="badge-open"><i class="ri-time-line"></i> Partial Entry ({{ $subject->terminal_entries_count }}/{{ $subject->student_count }})</span>
                                     @else
-                                        <span class="badge-open"><i class="ri-add-line"></i> No Terminal Scores</span>
+                                        <span class="badge-open"><i class="ri-add-line"></i> No Scores Entered</span>
                                     @endif
                                     @if($subject->has_mock_scores)
                                         <span class="badge-mock"><i class="ri-flask-line"></i> Mock ({{ $subject->mock_entries_count }}/{{ $subject->student_count }})</span>
                                     @endif
                                 </div>
-                                @if(!$subject->has_terminal_scores && $subject->student_count > 0)
                                 <div class="mt-2">
                                     <div class="progress-bar-custom" style="width: 100%;">
-                                        <div class="progress-fill low" style="width: {{ $subject->entry_percentage }}%;"></div>
+                                        <div class="progress-fill {{ $subjectEntryPercent >= 75 ? 'high' : ($subjectEntryPercent >= 50 ? 'medium' : 'low') }}" style="width: {{ $subjectEntryPercent }}%;"></div>
                                     </div>
-                                    <small class="text-muted">{{ $subject->entry_percentage }}% entry completion</small>
+                                    <small class="text-muted">Entry completion: {{ $subject->terminal_entries_count }}/{{ $subject->student_count }} students ({{ $subjectEntryPercent }}%)</small>
                                 </div>
-                                @endif
                                 <div class="btn-score-group" onclick="event.stopPropagation()">
                                     <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}" class="btn-score btn-terminal-score">
-                                        <i class="ri-file-edit-line"></i> Terminal
+                                        <i class="ri-file-edit-line"></i> Terminal Scoresheet
                                     </a>
                                     <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'mock']) }}" class="btn-score btn-mock-score">
-                                        <i class="ri-flask-line"></i> Mock
+                                        <i class="ri-flask-line"></i> Mock Scoresheet
                                     </a>
                                 </div>
                             </div>
@@ -961,6 +1043,7 @@ const adminBulkExport = (() => {
     function toggleAll(checked) { visibleCheckboxes().forEach(cb => { cb.checked = checked; cb.closest('.subject-item').classList.toggle('is-selected', checked); }); updateToolbar(); }
     function deselectAll() { allCheckboxes().forEach(cb => { cb.checked = false; cb.closest('.subject-item').classList.remove('is-selected'); }); updateToolbar(); }
     function selectOnlyWithScores() { allCheckboxes().forEach(cb => { const row = cb.closest('.subject-item'); if (row && row.dataset.hasScores !== '1') { cb.checked = false; row.classList.remove('is-selected'); } }); updateToolbar(); }
+
     function exportAllWithScores() {
         const visible = visibleCheckboxes();
         const withScores = visible.filter(cb => { const row = cb.closest('.subject-item'); return row && row.dataset.hasScores === '1'; });
@@ -994,26 +1077,36 @@ const adminBulkExport = (() => {
     const input = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     if (!input) return;
+
     function filterCards() {
         const searchTerm = input.value.toLowerCase().trim();
         const statusValue = statusFilter ? statusFilter.value : 'all';
         let visible = 0;
+
         document.querySelectorAll('.teacher-card').forEach(card => {
             const text = (card.innerText.toLowerCase());
             const matchesSearch = !searchTerm || text.includes(searchTerm);
+
             let matchesStatus = statusValue === 'all';
-            if (!matchesStatus && statusValue === 'no_scores') {
-                matchesStatus = card.dataset.status === 'low' && parseInt(card.querySelector('.teacher-stats span:nth-child(2)')?.textContent?.match(/\d+/) || 0) === 0;
-            } else if (!matchesStatus) {
-                matchesStatus = card.dataset.status === statusValue;
+            const cardStatus = card.dataset.status;
+
+            if (!matchesStatus) {
+                if (statusValue === 'no_scores') {
+                    matchesStatus = cardStatus === 'low' && (card.innerText.match(/0% entries/) !== null);
+                } else {
+                    matchesStatus = cardStatus === statusValue;
+                }
             }
+
             const show = matchesSearch && matchesStatus;
             card.style.display = show ? '' : 'none';
             if (show) visible++;
         });
+
         const total = document.querySelectorAll('.teacher-card').length;
         const countSpan = document.getElementById('totalSubjectCount');
         if (countSpan) countSpan.textContent = (searchTerm || statusValue !== 'all') ? `${visible} of ${total} visible` : '{{ $teacherSubjects->count() }} scoresheets';
+
         const selAll = document.getElementById('selectAllCheckbox');
         if (selAll) {
             const vis = [...document.querySelectorAll('.teacher-card')].filter(c => c.style.display !== 'none');
@@ -1023,8 +1116,94 @@ const adminBulkExport = (() => {
             selAll.indeterminate = checked > 0 && checked < visCbs.length;
         }
     }
+
     input.addEventListener('input', filterCards);
     if (statusFilter) statusFilter.addEventListener('change', filterCards);
 })();
+
+/* ===================================================
+   SHOW CLASS DETAILS MODAL
+   =================================================== */
+function showClassDetails(classId, classData) {
+    let subjectList = '';
+    if (classData.subjects && classData.subjects.length > 0) {
+        subjectList = '<ul class="list-group mt-2" style="max-height: 300px; overflow-y: auto;">';
+        classData.subjects.forEach(sub => {
+            subjectList += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>${sub}</span>
+                                <span class="badge bg-primary rounded-pill">Subject</span>
+                            </li>`;
+        });
+        subjectList += '</ul>';
+    } else {
+        subjectList = '<p class="text-muted">No subjects available</p>';
+    }
+
+    Swal.fire({
+        title: `${classData.class_name} - Class Details`,
+        html: `
+            <div class="text-start">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center">
+                            <div class="small text-muted">Students</div>
+                            <div class="h5 mb-0">${Number(classData.student_count).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center">
+                            <div class="small text-muted">Subjects</div>
+                            <div class="h5 mb-0">${classData.total_subjects}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center">
+                            <div class="small text-muted">Completed</div>
+                            <div class="h5 mb-0 text-success">${classData.completed_subjects}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center">
+                            <div class="small text-muted">Pending</div>
+                            <div class="h5 mb-0 text-warning">${classData.pending_subjects}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Completion Rate</span>
+                        <span class="fw-bold">${classData.completion_rate}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-${classData.completion_rate >= 75 ? 'success' : (classData.completion_rate >= 50 ? 'warning' : 'danger')}"
+                             style="width: ${classData.completion_rate}%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Entry Completion Rate</span>
+                        <span class="fw-bold">${classData.entry_completion_rate || 0}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-info" style="width: ${classData.entry_completion_rate || 0}%"></div>
+                    </div>
+                </div>
+                <hr>
+                <h6>Subjects Offered:</h6>
+                ${subjectList}
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#2563eb',
+        width: '600px',
+        showClass: {
+            timer: 3000,
+            timerProgressBar: true
+        }
+    });
+}
 </script>
 @endsection
