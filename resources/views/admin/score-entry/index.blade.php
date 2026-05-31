@@ -5,7 +5,6 @@
 <style>
 /* ============================================================
    ADMIN SCORE ENTRY - DASHBOARD STYLE
-   Matching the School Command Centre aesthetic
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap');
 
@@ -60,6 +59,11 @@
 @keyframes barIn {
     from { width: 0; }
     to { width: var(--bw); }
+}
+
+@keyframes expandRow {
+    from { opacity: 0; transform: scaleY(0); }
+    to { opacity: 1; transform: scaleY(1); }
 }
 
 /* Hero Section */
@@ -240,7 +244,7 @@
     padding: 16px 20px 20px;
 }
 
-/* Tables */
+/* Expandable Tables */
 .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -256,28 +260,80 @@
     border-bottom: 1px solid var(--c-border);
     background: #fafbfe;
 }
-.data-table tbody tr {
+.data-table tbody tr.parent-row {
+    cursor: pointer;
     transition: all var(--tr);
-    animation: slideIn 0.3s ease both;
 }
-.data-table tbody tr:hover { background: #f8fafc; transform: translateX(4px); }
+.data-table tbody tr.parent-row:hover {
+    background: #f8fafc;
+}
+.data-table tbody tr.parent-row.expanded {
+    background: #eff6ff;
+}
 .data-table td {
     padding: 10px 12px;
     border-bottom: 1px solid #f8fafc;
     color: var(--c-sub);
     vertical-align: middle;
 }
-
-/* Clickable row */
-.clickable-row {
-    cursor: pointer;
-    transition: all var(--tr);
+.expand-icon {
+    font-size: 14px;
+    transition: transform 0.2s ease;
+    display: inline-block;
 }
-.clickable-row:hover {
-    background: #f8fafc !important;
+.expand-icon.rotated {
+    transform: rotate(90deg);
+}
+.child-row {
+    display: none;
+    background: #fafbfe;
+}
+.child-row.show {
+    display: table-row;
+}
+.child-row td {
+    padding: 0;
+}
+.child-table {
+    width: 100%;
+    background: #fff;
+    margin: 0;
+    border-radius: 8px;
+}
+.child-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f2f5;
+}
+.child-table tr:last-child td {
+    border-bottom: none;
+}
+.subject-link {
+    text-decoration: none;
+    color: var(--c-text);
+    transition: all var(--tr);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.subject-link:hover {
+    color: var(--c-indigo);
     transform: translateX(4px);
 }
-
+.subject-link:hover .view-btn {
+    background: var(--c-indigo);
+    color: white;
+}
+.view-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: var(--c-sub);
+    font-size: 11px;
+    font-weight: 500;
+    transition: all var(--tr);
+}
 /* Status Badges */
 .status-badge {
     display: inline-flex;
@@ -503,6 +559,7 @@
     .sc-value { font-size: 20px; }
     .hero-section { padding: 20px; }
     .data-table thead th, .data-table td { padding: 6px 8px; font-size: 10px; }
+    .subject-link { flex-direction: column; align-items: flex-start; }
 }
 </style>
 
@@ -582,7 +639,6 @@
     @php
         $totalTeachers    = $teacherSubjects->groupBy('teacher_id')->count();
         $totalSubjects    = $teacherSubjects->count();
-        // Calculate actual completion based on entry percentage
         $totalWithScores  = $teacherSubjects->filter(function($s) { return $s->entry_percentage >= 100; })->count();
         $totalPartialScores = $teacherSubjects->filter(function($s) { return $s->entry_percentage > 0 && $s->entry_percentage < 100; })->count();
         $totalMockScores  = $teacherSubjects->where('has_mock_scores', true)->count();
@@ -593,6 +649,8 @@
         $pendingEntry     = $totalSubjects - $totalWithScores;
         $totalExpectedEntries = $dashboardStats['total_expected_entries'] ?? 0;
         $totalActualEntries   = $dashboardStats['total_actual_entries'] ?? 0;
+        // Group subjects by teacher for expandable rows
+        $groupedByTeacher = $teacherSubjects->groupBy('teacher_id');
     @endphp
 
     {{-- Dashboard Stats Cards --}}
@@ -710,20 +768,20 @@
         </div>
     </div>
 
-    {{-- Teacher Performance Table --}}
-    @if(!empty($dashboardStats['teacher_stats']))
+    {{-- Teacher Performance Table with Expandable Rows --}}
     <div class="section-card">
         <div class="section-card-header">
             <div>
                 <div class="section-card-title"><i class="ri-user-star-line me-2 text-primary"></i>Teacher Performance Overview</div>
-                <div class="section-card-sub">Scoresheet completion and entry progress by teacher - Click any row to view scoresheets</div>
+                <div class="section-card-sub">Click on any teacher row to expand and view subjects. Click on any subject to access the scoresheet.</div>
             </div>
         </div>
         <div class="section-card-body p-0">
             <div class="table-responsive">
-                <table class="data-table">
+                <table class="data-table" id="teacherPerformanceTable">
                     <thead>
                         <tr>
+                            <th style="width: 30px;"></th>
                             <th>#</th>
                             <th>Teacher</th>
                             <th>Classes</th>
@@ -736,30 +794,40 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($dashboardStats['teacher_stats'] as $index => $teacher)
+                        @foreach($groupedByTeacher as $index => $subjects)
                         @php
-                            // Calculate REAL completion based on entry percentage
-                            $entryPercent = $teacher['expected_entries'] > 0 ? round(($teacher['actual_entries'] / $teacher['expected_entries']) * 100) : 0;
-                            // Completion rate based on actual entry progress, not just whether a scoresheet exists
-                            $realCompletionRate = $entryPercent;
-                            $statusClass = $realCompletionRate == 100 ? 'complete' : ($realCompletionRate >= 75 ? 'good' : ($realCompletionRate >= 50 ? 'partial' : 'low'));
-                            $statusText = $realCompletionRate == 100 ? 'Complete' : ($realCompletionRate >= 75 ? 'Good Progress' : ($realCompletionRate >= 50 ? 'Partial' : 'Low Progress'));
+                            $teacherId = $subjects->first()->teacher_id;
+                            $teacherName = $subjects->first()->teacher_name;
+                            $teacherTotal = $subjects->count();
+                            $teacherCompleted = $subjects->filter(function($s) { return $s->entry_percentage >= 100; })->count();
+                            $teacherPercent = $teacherTotal > 0 ? round(($teacherCompleted / $teacherTotal) * 100) : 0;
+                            $teacherEntryAvg = round($subjects->avg('entry_percentage'));
+                            $teacherMockCompleted = $subjects->where('has_mock_scores', true)->count();
+                            $totalExpected = $subjects->sum('student_count');
+                            $totalActual = $subjects->sum('terminal_entries_count');
+                            $entryPercent = $totalExpected > 0 ? round(($totalActual / $totalExpected) * 100) : 0;
+                            $statusClass = $entryPercent == 100 ? 'complete' : ($entryPercent >= 75 ? 'good' : ($entryPercent >= 50 ? 'partial' : 'low'));
+                            $statusText = $entryPercent == 100 ? 'Complete' : ($entryPercent >= 75 ? 'Good Progress' : ($entryPercent >= 50 ? 'Partial' : 'Low Progress'));
+                            $uniqueClasses = $subjects->pluck('class_name')->unique()->values()->toArray();
                         @endphp
-                        <tr class="clickable-row" onclick="window.location.href='{{ route('admin.score-entry.scoresheet', [$teacher['subjects_details'][0]['subjectclass_id'] ?? 0, $teacher['teacher_id'], $selectedTermId, $selectedSessionId, 'terminal']) }}'">
+                        <tr class="parent-row" data-teacher-id="{{ $teacherId }}" data-expanded="false">
+                            <td class="text-center">
+                                <i class="ri-arrow-right-s-line expand-icon"></i>
+                            </td>
                             <td>{{ $index + 1 }}</td>
                             <td>
-                                <strong>{{ $teacher['teacher_name'] }}</strong>
-                                <br><small class="text-muted">ID: {{ $teacher['teacher_id'] }}</small>
+                                <strong>{{ $teacherName }}</strong>
+                                <br><small class="text-muted">ID: {{ $teacherId }}</small>
                             </td>
                             <td>
-                                @foreach(array_slice($teacher['classes'], 0, 2) as $class)
+                                @foreach(array_slice($uniqueClasses, 0, 2) as $class)
                                     <span class="badge bg-light text-dark me-1">{{ $class }}</span>
                                 @endforeach
-                                @if(count($teacher['classes']) > 2)
-                                    <span class="badge bg-light text-dark">+{{ count($teacher['classes']) - 2 }}</span>
+                                @if(count($uniqueClasses) > 2)
+                                    <span class="badge bg-light text-dark">+{{ count($uniqueClasses) - 2 }}</span>
                                 @endif
-                             </td>
-                            <td>{{ $teacher['subjects_count'] }}</td>
+                            </td>
+                            <td>{{ $teacherTotal }}</td>
                             <td>
                                 @if($entryPercent >= 100)
                                     <span class="badge-terminal"><i class="ri-check-line"></i> Complete</span>
@@ -770,9 +838,9 @@
                                 @endif
                             </td>
                             <td>
-                                @if($teacher['completed_mock'] == $teacher['subjects_count'])
+                                @if($teacherMockCompleted == $teacherTotal)
                                     <span class="badge-terminal">Complete</span>
-                                @elseif($teacher['completed_mock'] > 0)
+                                @elseif($teacherMockCompleted > 0)
                                     <span class="badge-open">Partial</span>
                                 @else
                                     <span class="badge-open">Not Started</span>
@@ -783,18 +851,82 @@
                                     <div class="progress-bar-custom flex-grow-1" style="width: 100px;">
                                         <div class="progress-fill {{ $entryPercent >= 75 ? 'high' : ($entryPercent >= 50 ? 'medium' : 'low') }}" style="width: {{ $entryPercent }}%;"></div>
                                     </div>
-                                    <small>{{ number_format($teacher['actual_entries']) }}/{{ number_format($teacher['expected_entries']) }} ({{ $entryPercent }}%)</small>
+                                    <small>{{ number_format($totalActual) }}/{{ number_format($totalExpected) }} ({{ $entryPercent }}%)</small>
                                 </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress-bar-custom flex-grow-1" style="width: 80px;">
-                                        <div class="progress-fill {{ $realCompletionRate >= 75 ? 'high' : ($realCompletionRate >= 50 ? 'medium' : 'low') }}" style="width: {{ $realCompletionRate }}%;"></div>
+                                        <div class="progress-fill {{ $entryPercent >= 75 ? 'high' : ($entryPercent >= 50 ? 'medium' : 'low') }}" style="width: {{ $entryPercent }}%;"></div>
                                     </div>
-                                    <span class="fw-bold">{{ $realCompletionRate }}%</span>
+                                    <span class="fw-bold">{{ $entryPercent }}%</span>
                                 </div>
                             </td>
                             <td><span class="status-badge {{ $statusClass }}">{{ $statusText }}</span></td>
+                        </tr>
+                        {{-- Child row for subjects --}}
+                        <tr class="child-row" data-parent="{{ $teacherId }}">
+                            <td colspan="10" class="p-0">
+                                <div class="p-3" style="background: #fafbfe;">
+                                    <table class="child-table" style="width: 100%;">
+                                        <thead>
+                                            <tr style="background: #f1f5f9;">
+                                                <th style="padding: 10px 12px; font-size: 11px;">Subject</th>
+                                                <th style="padding: 10px 12px; font-size: 11px;">Class/Arm</th>
+                                                <th style="padding: 10px 12px; font-size: 11px;">Students</th>
+                                                <th style="padding: 10px 12px; font-size: 11px;">Entries</th>
+                                                <th style="padding: 10px 12px; font-size: 11px;">Progress</th>
+                                                <th style="padding: 10px 12px; font-size: 11px;">Mock</th>
+                                                <th style="padding: 10px 12px; font-size: 11px;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($subjects as $subject)
+                                            @php
+                                                $subjEntryPercent = $subject->entry_percentage;
+                                                $subjStatusClass = $subjEntryPercent >= 100 ? 'complete' : ($subjEntryPercent >= 75 ? 'good' : ($subjEntryPercent >= 50 ? 'partial' : 'low'));
+                                            @endphp
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ $subject->subject_name }}</strong>
+                                                    <br><small class="text-muted">{{ $subject->subject_code }}</small>
+                                                </td>
+                                                <td>{{ $subject->class_name }}</td>
+                                                <td>{{ $subject->student_count }}</td>
+                                                <td>{{ $subject->terminal_entries_count }}/{{ $subject->student_count }}</td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="progress-bar-custom" style="width: 80px;">
+                                                            <div class="progress-fill {{ $subjEntryPercent >= 75 ? 'high' : ($subjEntryPercent >= 50 ? 'medium' : 'low') }}" style="width: {{ $subjEntryPercent }}%;"></div>
+                                                        </div>
+                                                        <span class="small">{{ $subjEntryPercent }}%</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @if($subject->has_mock_scores)
+                                                        <span class="badge-mock"><i class="ri-check-line"></i> Entered</span>
+                                                    @else
+                                                        <span class="badge-open"><i class="ri-add-line"></i> Pending</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2">
+                                                        <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}"
+                                                           class="btn-score btn-terminal-score" style="padding: 4px 12px; font-size: 11px;">
+                                                            <i class="ri-file-edit-line"></i> Terminal
+                                                        </a>
+                                                        <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'mock']) }}"
+                                                           class="btn-score btn-mock-score" style="padding: 4px 12px; font-size: 11px;">
+                                                            <i class="ri-flask-line"></i> Mock
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -802,7 +934,6 @@
             </div>
         </div>
     </div>
-    @endif
 
     {{-- Class Performance Table --}}
     @if(!empty($dashboardStats['class_stats']))
@@ -832,11 +963,10 @@
                     <tbody>
                         @foreach($dashboardStats['class_stats'] as $index => $class)
                         @php
-                            // Calculate REAL completion based on entry progress
                             $realCompletionRate = $class['entry_completion_rate'] ?? 0;
                             $statusClass = $realCompletionRate == 100 ? 'complete' : ($realCompletionRate >= 75 ? 'good' : ($realCompletionRate >= 50 ? 'partial' : 'low'));
                         @endphp
-                        <tr class="clickable-row" onclick="showClassDetails({{ $class['class_id'] }}, {{ json_encode($class) }})">
+                        <tr class="clickable-row" onclick="showClassDetails({{ $class['class_id'] }}, {{ json_encode($class) }})" style="cursor: pointer;">
                             <td>{{ $index + 1 }}</td>
                             <td><strong>{{ $class['class_name'] }}</strong></td>
                             <td>{{ number_format($class['student_count']) }}</td>
@@ -904,7 +1034,7 @@
         </div>
     </div>
 
-    {{-- Teachers Grid --}}
+    {{-- Teachers Grid (Alternative view) --}}
     <div class="teachers-grid" id="teachersGrid">
         @foreach($teacherSubjects->groupBy('teacher_id') as $teacherId => $subjects)
             @php
@@ -1011,6 +1141,35 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+/* ===================================================
+   EXPANDABLE ROWS FUNCTIONALITY
+   =================================================== */
+document.querySelectorAll('.parent-row').forEach(parentRow => {
+    parentRow.addEventListener('click', function(e) {
+        // Don't expand if clicking on a link or button inside the row
+        if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a') || e.target.closest('button')) {
+            return;
+        }
+
+        const teacherId = this.dataset.teacherId;
+        const childRow = document.querySelector(`.child-row[data-parent="${teacherId}"]`);
+        const expandIcon = this.querySelector('.expand-icon');
+        const isExpanded = this.dataset.expanded === 'true';
+
+        if (isExpanded) {
+            childRow.classList.remove('show');
+            expandIcon.classList.remove('rotated');
+            this.dataset.expanded = 'false';
+            this.classList.remove('expanded');
+        } else {
+            childRow.classList.add('show');
+            expandIcon.classList.add('rotated');
+            this.dataset.expanded = 'true';
+            this.classList.add('expanded');
+        }
+    });
+});
+
 /* ===================================================
    BULK EXPORT MODULE
    =================================================== */
@@ -1198,11 +1357,7 @@ function showClassDetails(classId, classData) {
         icon: 'info',
         confirmButtonText: 'Close',
         confirmButtonColor: '#2563eb',
-        width: '600px',
-        showClass: {
-            timer: 3000,
-            timerProgressBar: true
-        }
+        width: '600px'
     });
 }
 </script>
