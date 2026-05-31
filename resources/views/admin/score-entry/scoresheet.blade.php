@@ -155,6 +155,15 @@
     font-weight: 600;
 }
 
+/* Audit Trail Badges */
+.audit-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
 @media (prefers-reduced-motion: reduce) {
     #scoresheetTableBody tr[data-id],
     #scoresheetTableBody tr[data-id]:hover { transition: background .15s ease !important; transform: none !important; opacity: 1 !important; }
@@ -833,6 +842,26 @@
                             <i class="ri-lock-line"></i><br>
                             <small>Lock Status</small>
                         </th>
+
+                        {{-- AUDIT TRAIL COLUMNS --}}
+                        <th class="col-entry-source text-center" title="How the score was entered">
+                            Source<br><small class="fw-normal opacity-75">Entry Source</small>
+                        </th>
+                        <th class="col-entered-by text-center" title="Who entered the score">
+                            Entered By<br><small class="fw-normal opacity-75">Entered At</small>
+                        </th>
+                        <th class="col-last-modified text-center" title="Last modification details">
+                            Last Modified<br><small class="fw-normal opacity-75">By / At</small>
+                        </th>
+                        <th class="col-submitted-by text-center" title="Submitted by teacher">
+                            Submitted By
+                        </th>
+                        <th class="col-vetted-by text-center" title="Vetted by">
+                            Vetted By
+                        </th>
+                        <th class="col-lock-details text-center" title="Lock details">
+                            Lock Details<br><small class="fw-normal opacity-75">By / Reason / Unlock</small>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="scoresheetTableBody">
@@ -868,6 +897,29 @@
                             $avatarUrl = $broadsheet->picture
                                 ? asset('storage/student_avatars/'.basename($broadsheet->picture))
                                 : asset('storage/student_avatars/unnamed.jpg');
+
+                            // Format audit trail data
+                            $entrySource = $broadsheet->entry_source ?? '-';
+                            $entrySourceBadge = $entrySource === 'admin'
+                                ? '<span class="badge bg-danger-subtle text-danger"><i class="ri-shield-user-line me-1"></i>Admin</span>'
+                                : ($entrySource === 'teacher'
+                                    ? '<span class="badge bg-primary-subtle text-primary"><i class="ri-user-line me-1"></i>Teacher</span>'
+                                    : '<span class="badge bg-secondary-subtle text-secondary">-</span>');
+
+                            $enteredByName = $broadsheet->enteredBy?->name ?? '-';
+                            $enteredAt = $broadsheet->entered_at ? $broadsheet->entered_at->format('Y-m-d H:i:s') : '-';
+
+                            $lastModifiedByName = $broadsheet->lastModifiedBy?->name ?? '-';
+                            $lastModifiedAt = $broadsheet->last_modified_at ? $broadsheet->last_modified_at->format('Y-m-d H:i:s') : '-';
+
+                            $submittedBy = $broadsheet->submiitedby ?? '-';
+                            $vettedBy = $broadsheet->vettedby ?? '-';
+
+                            $lockedByName = $broadsheet->lockedBy?->name ?? '-';
+                            $lockedAt = $broadsheet->locked_at ? $broadsheet->locked_at->format('Y-m-d H:i:s') : '-';
+                            $lockReason = $broadsheet->lock_reason ?? '-';
+                            $scheduledUnlock = $broadsheet->scheduled_unlock_at ? $broadsheet->scheduled_unlock_at->format('Y-m-d H:i:s') : '-';
+                            $unlockScheduledBy = $broadsheet->unlockScheduledBy?->name ?? '-';
                         @endphp
                         <tr class="{{ $vClass }}"
                             data-id="{{ $broadsheet->id }}"
@@ -921,10 +973,7 @@
                                            value="{{ $scoreValue }}"
                                            min="0" max="{{ $assessment->max_score }}" step="0.1"
                                            {{ $isLocked ? 'disabled' : '' }}>
-                                </td>
-                            @empty
-                                <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
-                            @endforelse
+                                                                 @endforelse
 
                             <td class="col-total text-center">
                                 <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
@@ -1004,6 +1053,9 @@
                                 @elseif($broadsheet->is_locked)
                                     <span class="lock-badge individual" title="{{ $broadsheet->lock_reason ?? 'Locked by admin' }}">
                                         <i class="ri-lock-line me-1"></i>Locked
+                                        @if($broadsheet->scheduled_unlock_at)
+                                            <br><small class="text-muted" style="font-size: 9px;">Unlocks: {{ \Carbon\Carbon::parse($broadsheet->scheduled_unlock_at)->format('d/m H:i') }}</small>
+                                        @endif
                                     </span>
                                 @elseif($isTeacherEditingDisabled)
                                     <span class="lock-badge disabled" title="Teacher editing disabled">
@@ -1021,10 +1073,50 @@
                                     </button>
                                 @endif
                             </td>
+
+                            {{-- AUDIT TRAIL CELLS --}}
+                            <td class="col-entry-source text-center">
+                                {!! $entrySourceBadge !!}
+                            </td>
+                            <td class="col-entered-by text-center">
+                                <div class="d-flex flex-column">
+                                    <span class="fw-semibold small">{{ $enteredByName }}</span>
+                                    <small class="text-muted" style="font-size: 10px;">{{ $enteredAt }}</small>
+                                </div>
+                            </td>
+                            <td class="col-last-modified text-center">
+                                <div class="d-flex flex-column">
+                                    <span class="fw-semibold small">{{ $lastModifiedByName }}</span>
+                                    <small class="text-muted" style="font-size: 10px;">{{ $lastModifiedAt }}</small>
+                                </div>
+                            </td>
+                            <td class="col-submitted-by text-center">
+                                <span class="audit-badge">{{ $submittedBy }}</span>
+                            </td>
+                            <td class="col-vetted-by text-center">
+                                <span class="audit-badge">{{ $vettedBy }}</span>
+                            </td>
+                            <td class="col-lock-details text-center">
+                                @if($broadsheet->is_locked || $isGloballyLocked)
+                                    <div class="d-flex flex-column">
+                                        <small class="fw-semibold">{{ $lockedByName }}</small>
+                                        <small class="text-muted" style="font-size: 9px;">{{ $lockedAt }}</small>
+                                        @if($lockReason != '-')
+                                            <small class="text-warning" style="font-size: 9px;">{{ \Str::limit($lockReason, 30) }}</small>
+                                        @endif
+                                        @if($scheduledUnlock != '-')
+                                            <small class="text-info" style="font-size: 9px;">Unlock: {{ $scheduledUnlock }}</small>
+                                            <small class="text-muted" style="font-size: 8px;">By: {{ $unlockScheduledBy }}</small>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 20 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 26 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -1110,6 +1202,29 @@
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position-cum" checked><label>Arm Pos (Cum)</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted" checked><label>Status</label></div>
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-status" checked><label>Lock</label></div>
+                        </div></div>
+                        <div class="col-md-12 mt-2"><div class="col-group">
+                            <h6>Audit Trail</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entry-source" checked><label>Entry Source</label></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entered-by" checked><label>Entered By / At</label></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-last-modified" checked><label>Last Modified</label></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-submitted-by" checked><label>Submitted By</label></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted-by" checked><label>Vetted By</label></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-details" checked><label>Lock Details</label></div>
+                                </div>
+                            </div>
                         </div></div>
                     </div>
                 </div>
