@@ -96,6 +96,7 @@ class DashboardController extends Controller
 
             $students_by_class = Studentclass::with(['schoolclass', 'schoolclass.armRelation'])
                 ->where('sessionid', $selectedSession->id)
+                ->where('termid', $selectedTerm->id)
                 ->select('schoolclassid', DB::raw('count(*) as total'))
                 ->groupBy('schoolclassid')
                 ->get()
@@ -251,7 +252,7 @@ class DashboardController extends Controller
                 ])
                 ->toArray();
 
-            // Subject performance with teacher info
+            // Subject performance with teacher info - FIXED: Convert teachers to arrays
             $subject_performance = Broadsheets::where('broadsheets.term_id', $selectedTerm->id)
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->where('broadsheet_records.session_id', $selectedSession->id)
@@ -268,7 +269,7 @@ class DashboardController extends Controller
                 ->groupBy('broadsheet_records.subject_id', 'subject.subject')
                 ->get()
                 ->map(function ($item) use ($selectedSession, $selectedTerm) {
-                    // Get teacher(s) for this subject
+                    // Get teacher(s) for this subject - convert to array explicitly
                     $teachers = DB::table('subjectteacher as st')
                         ->join('subjectclass as sc', 'sc.subjectteacherid', '=', 'st.id')
                         ->join('users', 'users.id', '=', 'st.staffid')
@@ -277,7 +278,15 @@ class DashboardController extends Controller
                         ->distinct()
                         ->limit(3)
                         ->get()
-                        ->toArray();
+                        ->map(function($teacher) {
+                            // Convert each teacher to an array
+                            return [
+                                'id' => $teacher->id,
+                                'name' => $teacher->name,
+                                'avatar' => $teacher->avatar
+                            ];
+                        })
+                        ->toArray(); // Convert the collection to an array
 
                     $passRate = $item->total_entries > 0
                         ? round(($item->passed / $item->total_entries) * 100, 1) : 0;
@@ -290,7 +299,7 @@ class DashboardController extends Controller
                         'min_score'    => round($item->min_score, 1),
                         'pass_rate'    => $passRate,
                         'total_entries'=> $item->total_entries,
-                        'teachers'     => $teachers,
+                        'teachers'     => $teachers, // Now this is an array, not stdClass objects
                     ];
                 })
                 ->sortByDesc('avg_score')
@@ -555,7 +564,7 @@ class DashboardController extends Controller
             ->get();
 
         return $rows->map(function ($row) use ($term, $session) {
-            // Get subjects this teacher handles
+            // Get subjects this teacher handles - convert to array
             $subjects = DB::table('subjectteacher')
                 ->where('staffid', $row->teacher_id)
                 ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
@@ -563,9 +572,9 @@ class DashboardController extends Controller
                 ->distinct()
                 ->limit(4)
                 ->pluck('subject')
-                ->toArray();
+                ->toArray(); // Ensure this is an array
 
-            // Subjects taught in this term
+            // Subjects taught in this term - convert to array
             $termSubjects = DB::table('broadsheet_records')
                 ->where('broadsheet_records.session_id', $session->id)
                 ->join('subjectteacher', 'subjectteacher.subjectid', '=', 'broadsheet_records.subject_id')
@@ -577,7 +586,7 @@ class DashboardController extends Controller
                 ->distinct()
                 ->limit(4)
                 ->pluck('subject')
-                ->toArray();
+                ->toArray(); // Ensure this is an array
 
             $passRate = $row->total_entries > 0
                 ? round(($row->passed / $row->total_entries) * 100, 1) : 0;
