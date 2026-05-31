@@ -68,7 +68,20 @@ class User extends Authenticatable
         return $this->hasOne(Student::class, 'id', 'student_id');
     }
 
-   
+    // ADD THIS RELATIONSHIP - Subject teachings for teachers
+    public function subjectTeachings(): HasMany
+    {
+        return $this->hasMany(SubjectTeacher::class, 'staffid', 'id');
+    }
+
+    // Alternative relationship if you need to get subjects directly
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'subjectteacher', 'staffid', 'subjectid')
+                    ->withPivot('termid', 'sessionid')
+                    ->withTimestamps();
+    }
+
     // Check if user has Staff role
     public function isStaff(): bool
     {
