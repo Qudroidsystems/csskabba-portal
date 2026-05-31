@@ -973,7 +973,7 @@
                                            value="{{ $scoreValue }}"
                                            min="0" max="{{ $assessment->max_score }}" step="0.1"
                                            {{ $isLocked ? 'disabled' : '' }}>
-                                                                 @endforelse
+                            @endforelse
 
                             <td class="col-total text-center">
                                 <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
