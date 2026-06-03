@@ -232,7 +232,7 @@
         }
 
         /* =====================================================
-           MOBILE SIDEBAR — ANIMATED
+           SIDEBAR BEHAVIOR
            ===================================================== */
         .vertical-overlay {
             position: fixed;
@@ -242,18 +242,8 @@
             display: none;
             transition: background 0.3s ease;
         }
-        body.vertical-sidebar-enable .vertical-overlay {
-            display: block;
-            background: rgba(0,0,0,.65);
-            backdrop-filter: blur(2px);
-            animation: overlayFadeIn 0.3s ease;
-        }
-        @keyframes overlayFadeIn {
-            from { background: rgba(0,0,0,0); backdrop-filter: blur(0); }
-            to { background: rgba(0,0,0,.65); backdrop-filter: blur(2px); }
-        }
 
-        /* Mobile: sidebar slides in/out with smooth animation */
+        /* Mobile: sidebar slides in/out with transform + overlay */
         @media (max-width: 1024.98px) {
             .app-menu {
                 transform: translateX(-100%);
@@ -263,19 +253,61 @@
             body.vertical-sidebar-enable .app-menu {
                 transform: translateX(0);
                 box-shadow: 4px 0 24px rgba(0,0,0,.35);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body.vertical-sidebar-enable .vertical-overlay {
+                display: block;
+                background: rgba(0,0,0,.65);
+                backdrop-filter: blur(2px);
             }
         }
 
-        /* Desktop: normal behavior */
+        /* Desktop: sidebar collapse (size change) NOT overlay */
         @media (min-width: 1025px) {
-            body.vertical-sidebar-enable .app-menu {
-                transform: none;
+            body.sidebar-collapsed .app-menu {
+                width: 70px !important;
+                transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
+                display: none !important;
+            }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm {
+                display: block !important;
+            }
+            body.sidebar-collapsed #navbar-nav .menu-title {
+                display: none;
+            }
+            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-footer-user-info,
+            body.sidebar-collapsed .sidebar-logout-btn span {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-logout-btn {
+                justify-content: center;
+                padding: 9px;
+            }
+            body.sidebar-collapsed .sidebar-footer-user {
+                justify-content: center;
+            }
+            body.sidebar-collapsed .app-menu .nav-link {
+                justify-content: center;
+                padding: 0.625rem 0;
+            }
+            body.sidebar-collapsed .app-menu .nav-link i {
+                margin-right: 0 !important;
+                font-size: 1.35rem;
+            }
+            body.sidebar-collapsed .app-menu .has-arrow:after {
+                display: none;
+            }
+            .vertical-overlay {
+                display: none !important;
             }
         }
 
         /* =====================================================
-           SEARCH BUTTON - VISIBLE ON MOBILE
+           SEARCH BUTTON - VISIBLE ON ALL DEVICES, STYLED APPROPRIATELY
            ===================================================== */
         .mobile-search-btn {
             display: none;
@@ -458,7 +490,7 @@
             <a href="{{ url('/') }}" class="logo logo-dark">
                 <span class="logo-sm">
                     <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
-                         style="height:80px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(39,38,38);">
+                         style="height:45px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(39,38,38);">
                 </span>
                 <span class="logo-lg">
                     <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
@@ -581,7 +613,7 @@
                         <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
                     </div>
 
-                    <!-- Mobile Search Button (Icon only) -->
+                    <!-- Mobile Search Button (Icon only - ONLY shows on mobile) -->
                     <button type="button" id="spotlight-trigger-mobile" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle mobile-search-btn" style="width:38px;height:38px;margin-left:8px;">
                         <i class="mdi mdi-magnify fs-3xl"></i>
                     </button>
@@ -729,32 +761,65 @@
     'use strict';
 
     // =====================================================
-    // SIDEBAR TOGGLE (Mobile & Desktop with Animation)
+    // SIDEBAR TOGGLE - DIFFERENT BEHAVIOR FOR MOBILE VS DESKTOP
     // =====================================================
     const ham = document.getElementById('topnav-hamburger-icon');
     const overlay = document.getElementById('vertical-overlay');
     const body = document.body;
 
-    function closeSidebar() {
-        body.classList.remove('vertical-sidebar-enable');
+    function isMobile() {
+        return window.innerWidth <= 1024;
     }
-    function openSidebar() {
-        body.classList.add('vertical-sidebar-enable');
-    }
+
     function toggleSidebar(e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
-        body.classList.contains('vertical-sidebar-enable') ? closeSidebar() : openSidebar();
+
+        if (isMobile()) {
+            // Mobile: toggle sidebar visibility with overlay
+            body.classList.toggle('vertical-sidebar-enable');
+        } else {
+            // Desktop: toggle sidebar collapse (size change)
+            body.classList.toggle('sidebar-collapsed');
+        }
+    }
+
+    function closeSidebarMobile() {
+        if (isMobile()) {
+            body.classList.remove('vertical-sidebar-enable');
+        }
     }
 
     if (ham) {
+        // Remove existing listeners and add fresh one
         const newHam = ham.cloneNode(true);
         ham.parentNode.replaceChild(newHam, ham);
         const freshHam = document.getElementById('topnav-hamburger-icon');
         if (freshHam) freshHam.addEventListener('click', toggleSidebar);
     }
-    if (overlay) overlay.addEventListener('click', closeSidebar);
+
+    // Close mobile sidebar when clicking overlay
+    if (overlay) overlay.addEventListener('click', closeSidebarMobile);
+
+    // Close mobile sidebar with ESC key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && body.classList.contains('vertical-sidebar-enable')) closeSidebar();
+        if (e.key === 'Escape' && isMobile() && body.classList.contains('vertical-sidebar-enable')) {
+            closeSidebarMobile();
+        }
+    });
+
+    // Handle window resize - reset states appropriately
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            if (!isMobile()) {
+                // On desktop, ensure no mobile overlay classes remain
+                body.classList.remove('vertical-sidebar-enable');
+            } else {
+                // On mobile, ensure no desktop collapse class remains
+                body.classList.remove('sidebar-collapsed');
+            }
+        }, 250);
     });
 
     // =====================================================
