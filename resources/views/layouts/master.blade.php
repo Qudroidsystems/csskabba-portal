@@ -232,7 +232,7 @@
         }
 
         /* =====================================================
-           MOBILE SIDEBAR — FIXED: uses transform for smooth slide
+           MOBILE SIDEBAR — FIXED: smooth slide animation
            ===================================================== */
         .vertical-overlay {
             position: fixed;
@@ -241,18 +241,13 @@
             background: rgba(0,0,0,.45);
             display: none;
             backdrop-filter: blur(2px);
-            transition: all 0.3s ease;
+            animation: fadeIn 0.3s ease;
         }
         body.vertical-sidebar-enable .vertical-overlay {
             display: block;
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
-        /* Mobile: sidebar slides in/out with transform */
+        /* Mobile: sidebar slides in/out with smooth animation */
         @media (max-width: 1024.98px) {
             .app-menu {
                 transform: translateX(-100%);
@@ -268,6 +263,39 @@
         @media (min-width: 1025px) {
             body.vertical-sidebar-enable .app-menu {
                 transform: none;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* =====================================================
+           SEARCH TRIGGER - ALWAYS VISIBLE ON MOBILE
+           ===================================================== */
+        .search-trigger-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        #spotlight-trigger-mobile {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 10px;
+            padding: 7px 12px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        @media (max-width: 767.98px) {
+            .desktop-search-only {
+                display: none !important;
+            }
+            #spotlight-trigger-mobile {
+                display: flex !important;
             }
         }
 
@@ -354,71 +382,6 @@
         @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 40%{opacity:.8;transform:translateY(8px) scale(1.02)} 70%{opacity:.95;transform:translateY(-3px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
         @keyframes spotlightModalFadeOut   { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-20px) scale(.95)} }
     </style>
-
-    <!-- Route-specific CSS includes -->
-    @if (Route::is('dashboard'))              @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('users.*'))                @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student-id-cards.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student.payments.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('profile.*'))              @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('roles.*'))                @include('layouts.pages-assets.css.roles-list-css') @endif
-    @if (Route::is('permissions.*'))          @include('layouts.pages-assets.css.permission-list-css') @endif
-    @if (Route::is('session.*'))              @include('layouts.pages-assets.css.session-list-css') @endif
-    @if (Route::is('school-information.*'))   @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('admin.school-info.*'))    @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('term.*'))                 @include('layouts.pages-assets.css.term-list-css') @endif
-    @if (Route::is('schoolhouse.*'))          @include('layouts.pages-assets.css.schoolhouse-list-css') @endif
-    @if (Route::is('schoolarm.*'))            @include('layouts.pages-assets.css.arm-list-css') @endif
-    @if (Route::is('classcategories.*'))      @include('layouts.pages-assets.css.classcategory-list-css') @endif
-    @if (Route::is('schoolclass.*'))          @include('layouts.pages-assets.css.schoolclass-list-css') @endif
-    @if (Route::is('classteacher.*'))         @include('layouts.pages-assets.css.classteacher-list-css') @endif
-    @if (Route::is('subject.*'))              @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjects.*'))             @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjectteacher.*'))       @include('layouts.pages-assets.css.subjectteacher-list-css') @endif
-    @if (Route::is('subjectclass.*'))         @include('layouts.pages-assets.css.subjectclass-list-css') @endif
-    @if (Route::is('schoolbill.*'))           @include('layouts.pages-assets.css.schoolbill-list-css') @endif
-    @if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.css.schoolbilltermsession-list-css') @endif
-    @if (Route::is('student.*'))              @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('studentbatchindex'))      @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('myclass.*'))              @include('layouts.pages-assets.css.myclass-list-css') @endif
-    @if (Route::is('mysubject.*'))            @include('layouts.pages-assets.css.mysubject-list-css') @endif
-    @if (Route::is('viewstudent'))            @include('layouts.pages-assets.css.viewstudent-list-css') @endif
-    @if (Route::is('studentreports.*'))       @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('studentmockreports.*'))   @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('broadsheet*'))            @include('layouts.pages-assets.css.broadsheet-list-css') @endif
-    @if (Route::is('subjectoperation.*'))     @include('layouts.pages-assets.css.subjectoperation-list-css') @endif
-    @if (Route::is('subjects.subjectinfo'))   @include('layouts.pages-assets.css.subjectinfo-list-css') @endif
-    @if (Route::is('myresultroom.*'))         @include('layouts.pages-assets.css.myresultroom-list-css') @endif
-    @if (Route::is('subjectscoresheet'))      @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('subassessment.*'))        @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessment.*'))           @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessments'))            @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.css.subjectscoresheet-mock-list-css') @endif
-    @if (Route::is('studentresults*'))        @include('layouts.pages-assets.css.studentresults-list-css') @endif
-    @if (Route::is('schoolpayment*'))         @include('layouts.pages-assets.css.schoolpayment-list-css') @endif
-    @if (Route::is('analysis*'))              @include('layouts.pages-assets.css.analysis-list-css') @endif
-    @if (Route::is('exams*'))                 @include('layouts.pages-assets.css.exams-list-css') @endif
-    @if (Route::is('questions*'))             @include('layouts.pages-assets.css.questions-list-css') @endif
-    @if (Route::is('cbt*'))                   @include('layouts.pages-assets.css.cbt-list-css') @endif
-    @if (Route::is('classbroadsheet.*'))      @include('layouts.pages-assets.css.classbroadsheet-list-css') @endif
-    @if (Route::is('principalscomment.*'))    @include('layouts.pages-assets.css.principalscomment-list-css') @endif
-    @if (Route::is('myprincipalscomment.*'))  @include('layouts.pages-assets.css.myprincipalscomment-list-css') @endif
-    @if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.css.compulsorysubjectclass-list-css') @endif
-    @if (Route::is('subjectvetting.*'))       @include('layouts.pages-assets.css.subjectvettings-list-css') @endif
-    @if (Route::is('mocksubjectvetting.*'))   @include('layouts.pages-assets.css.mocksubjectvettings-list-css') @endif
-    @if (Route::is('mysubjectvettings.*'))    @include('layouts.pages-assets.css.mysubjectvettings-list-css') @endif
-    @if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.css.mymocksubjectvettings-list-css') @endif
-    @if (Route::is('timetable.*'))            @include('layouts.pages-assets.css.timetable-list-css') @endif
-    @if (Route::is('rooms.*'))                @include('layouts.pages-assets.css.rooms-list-css') @endif
-    @if (Route::is('promotions.*'))           @include('layouts.pages-assets.css.promotions-list-css') @endif
-    @if (Route::is('attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('transcript.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
-    @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
-        Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
-        Route::is('payroll.*') || Route::is('staff.payments.*'))
-        @include('layouts.pages-assets.css.finance-list-css')
-    @endif
 </head>
 
 <body>
@@ -426,49 +389,31 @@
 
     <!-- ========== SIDEBAR ========== -->
     <div class="app-menu navbar-menu">
-
-        <!-- LOGO -->
         <div class="navbar-brand-box">
             @php
                 use App\Models\SchoolInformation;
                 $schoolInfo = SchoolInformation::getActiveSchool();
                 $schoolName = $schoolInfo?->school_name ?? config('app.name', 'School System');
-                $defaultLogo      = asset('theme/layouts/assets/images/logo-dark.png');
+                $defaultLogo = asset('theme/layouts/assets/images/logo-dark.png');
                 $defaultLogoLight = asset('theme/layouts/assets/images/logo-light.png');
             @endphp
-
             <a href="{{ url('/') }}" class="logo logo-dark">
-                <span class="logo-sm">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
-                         style="height:80px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(39,38,38);">
-                </span>
-                <span class="logo-lg">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
-                         style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);">
-                </span>
+                <span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}" style="height:80px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(39,38,38);"></span>
+                <span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}" style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);"></span>
             </a>
             <a href="{{ url('/') }}" class="logo logo-light">
-                <span class="logo-sm">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}"
-                         style="height:45px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(40,39,39);">
-                </span>
-                <span class="logo-lg">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}"
-                         style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);">
-                </span>
+                <span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}" style="height:45px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(40,39,39);"></span>
+                <span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}" style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);"></span>
             </a>
-
             <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover">
                 <i class="ri-record-circle-line"></i>
             </button>
         </div>
 
-        <!-- NAV (scrollable) -->
         <div id="scrollbar">
             <div class="container-fluid">
                 <div id="two-column-menu"></div>
                 <ul class="navbar-nav" id="navbar-nav">
-                    <!-- Nav items - keeping only essential ones for brevity, full version exists -->
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
@@ -484,7 +429,6 @@
             </div>
         </div>
 
-        <!-- SIDEBAR LOGOUT FOOTER -->
         @auth
         <div class="sidebar-footer">
             @php
@@ -507,7 +451,6 @@
                 }
                 $sidebarInitials = collect(explode(' ', $sidebarUser->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('');
             @endphp
-
             <div class="sidebar-footer-user">
                 @if($sidebarSrc)
                     <img src="{{ $sidebarSrc }}" alt="{{ $sidebarUser->name }}">
@@ -519,7 +462,6 @@
                     <div class="sidebar-footer-user-role">{{ $sidebarUser->roles->first()->name ?? 'User' }}</div>
                 </div>
             </div>
-
             <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form">
                 @csrf
                 <button type="submit" class="sidebar-logout-btn">
@@ -529,7 +471,6 @@
             </form>
         </div>
         @endauth
-
         <div class="sidebar-background"></div>
     </div>
 
@@ -553,7 +494,9 @@
                     <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon">
                         <span class="hamburger-icon"><span></span><span></span><span></span></span>
                     </button>
-                    <div class="d-none d-md-inline-flex align-items-center" style="position:relative;">
+
+                    <!-- Desktop Search -->
+                    <div class="d-none d-md-flex align-items-center search-trigger-wrapper" style="position:relative;">
                         <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
                             <i class="mdi mdi-magnify" style="font-size:16px;opacity:.6;"></i>
                             <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
@@ -561,7 +504,15 @@
                         </button>
                         <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
                     </div>
+
+                    <!-- Mobile Search Button -->
+                    <div class="d-md-none search-trigger-wrapper">
+                        <button type="button" id="spotlight-trigger-mobile" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;cursor:pointer;">
+                            <i class="mdi mdi-magnify" style="font-size:18px;opacity:.7;"></i>
+                        </button>
+                    </div>
                 </div>
+
                 <div class="d-flex align-items-center gap-1">
                     <div class="position-relative" id="theme-toggle-wrapper">
                         <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;"><i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i></button>
@@ -572,7 +523,6 @@
                         </div>
                     </div>
 
-                    <!-- USER DROPDOWN -->
                     @php
                         use App\Models\User as UserModel;
                         use App\Models\Student;
@@ -586,7 +536,7 @@
                         $srcPath   = null;
 
                         if ($isStudent) {
-                            $student        = Student::where('id', $userdata->student_id)->first();
+                            $student = Student::where('id', $userdata->student_id)->first();
                             $studentPicture = $student?->picture;
                             if ($studentPicture) {
                                 $basename = basename($studentPicture);
@@ -618,7 +568,6 @@
                                 <span class="d-none d-xl-flex flex-column align-items-start ms-1"><span class="fw-medium" style="font-size:13px;">{{ $userdata->name }}</span></span>
                             </span>
                         </button>
-
                         <div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:var(--vz-dropdown-bg,#fff);border-radius:12px;z-index:9999;">
                             <div class="dropdown-header"><h6 class="mb-0">Welcome back!</h6><small class="text-muted">{{ $userdata->name }}</small></div>
                             <div class="dropdown-divider"></div>
@@ -654,14 +603,6 @@
                 </div>
             </div>
             <div id="spotlight-results" style="max-height:520px;overflow-y:auto;padding:12px 0;">
-                <div id="spotlight-history-section" style="display:none;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 24px 8px;">
-                        <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);">Recent Searches</span>
-                        <button id="spotlight-clear-history-btn" style="background:transparent;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;">Clear All</button>
-                    </div>
-                    <div id="spotlight-history-list"></div>
-                    <div style="height:1px;background:rgba(255,255,255,.06);margin:12px 20px;"></div>
-                </div>
                 <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,.35);">
                     <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4;"></i>
                     <span style="font-size:15px;">Start typing to search…</span>
@@ -704,26 +645,29 @@
     'use strict';
 
     // =====================================================
-    // SIDEBAR TOGGLE (Mobile & Desktop)
+    // SIDEBAR TOGGLE with smooth animation
     // =====================================================
     const ham = document.getElementById('topnav-hamburger-icon');
     const overlay = document.getElementById('vertical-overlay');
     const body = document.body;
 
-    function closeSidebar() { body.classList.remove('vertical-sidebar-enable'); }
-    function openSidebar() { body.classList.add('vertical-sidebar-enable'); }
+    function closeSidebar() {
+        body.classList.remove('vertical-sidebar-enable');
+    }
+    function openSidebar() {
+        body.classList.add('vertical-sidebar-enable');
+    }
     function toggleSidebar(e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         body.classList.contains('vertical-sidebar-enable') ? closeSidebar() : openSidebar();
     }
 
     if (ham) {
-        const newHam = ham.cloneNode(true);
-        ham.parentNode.replaceChild(newHam, ham);
-        const freshHam = document.getElementById('topnav-hamburger-icon');
-        if (freshHam) freshHam.addEventListener('click', toggleSidebar);
+        ham.addEventListener('click', toggleSidebar);
     }
-    if (overlay) overlay.addEventListener('click', closeSidebar);
+    if (overlay) {
+        overlay.addEventListener('click', closeSidebar);
+    }
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && body.classList.contains('vertical-sidebar-enable')) closeSidebar();
     });
@@ -739,41 +683,25 @@
         {title:'My Profile', url:'{{ route("users.overview", ["id" => Auth::id()]) }}', icon:'mdi-account-circle', category:'My Account'},
         {title:'Account Settings', url:'{{ route("profile.settings", ["id" => Auth::id()]) }}', icon:'mdi-cog', category:'My Account'},
         {title:'School Information', url:'{{ route("school-information.index") }}', icon:'mdi-domain', category:'School Settings'},
-        {title:'School Session', url:'{{ route("session.index") }}', icon:'mdi-calendar-range', category:'School Settings'},
-        {title:'School Term', url:'{{ route("term.index") }}', icon:'mdi-calendar', category:'School Settings'},
         {title:'Subjects', url:'{{ route("subject.index") }}', icon:'mdi-book-open-variant', category:'Subjects'},
-        {title:'My Class', url:'{{ route("myclass.index") }}', icon:'mdi-google-classroom', category:'Classes & Records'},
-        {title:'Terminal Records', url:'{{ route("myresultroom.index") }}', icon:'mdi-file-chart', category:'Records & Results'},
         {title:'Student Bill', url:'{{ route("schoolpayment.index") }}', icon:'mdi-receipt', category:'Finance'},
-        {title:'Payment Portal', url:'{{ route("payment.index") }}', icon:'mdi-wallet', category:'Finance'},
         {title:'All Examinations', url:'{{ route("exams.index") }}', icon:'mdi-clipboard-text', category:'Exams & CBT'},
-        {title:'CBT Exercise', url:'{{ route("cbt.index") }}', icon:'mdi-monitor', category:'Exams & CBT'},
         {title:'Admin Timetable', url:'{{ route("timetable.index") }}', icon:'mdi-table-clock', category:'Timetable'},
-        {title:'Mark Attendance', url:'{{ route("attendance.my-classes") }}', icon:'mdi-clipboard-check', category:'Attendance'},
-        {title:'Balance Sheet', url:'{{ route("reports.financial.balance-sheet") }}', icon:'mdi-scale-balance', category:'Accounting'},
-        {title:'Generate Transcript', url:'{{ route("transcript.index") }}', icon:'mdi-file-account', category:'Transcripts'},
     ];
 
     const CAT_COLORS = {
         'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
-        'School Settings':'#6a0572','Subjects':'#e9c46a','Classes & Records':'#0a9396','Records & Results':'#457b9d',
-        'Finance':'#10b981','Exams & CBT':'#f4a261','Timetable':'#4f8ef7','Attendance':'#e9c46a','Accounting':'#10b981','Transcripts':'#457b9d'
+        'School Settings':'#6a0572','Subjects':'#e9c46a','Finance':'#10b981','Exams & CBT':'#f4a261','Timetable':'#4f8ef7'
     };
-
-    const HISTORY_KEY = 'spotlight_search_history';
-    function getHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
-    function saveHistory(h) { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0,10))); }
 
     const overlaySpot = document.getElementById('spotlight-overlay');
     const input = document.getElementById('spotlight-input');
     const emptyEl = document.getElementById('spotlight-empty');
     const loadEl = document.getElementById('spotlight-loading');
     const list = document.getElementById('spotlight-list');
-    const trigger = document.getElementById('spotlight-trigger');
+    const triggerDesktop = document.getElementById('spotlight-trigger');
+    const triggerMobile = document.getElementById('spotlight-trigger-mobile');
     const escBtn = document.getElementById('spotlight-esc');
-    const histSec = document.getElementById('spotlight-history-section');
-    const histList = document.getElementById('spotlight-history-list');
-    const clearBtn = document.getElementById('spotlight-clear-history-btn');
     const clearMain = document.getElementById('spotlight-clear-history');
 
     let timer = null, activeIndex = -1, currentResults = [];
@@ -782,8 +710,7 @@
         if (!overlaySpot) return;
         overlaySpot.style.display = 'flex';
         if (input) setTimeout(() => input.focus(), 100);
-        renderHistory();
-        if (clearMain) clearMain.style.display = getHistory().length > 0 ? 'block' : 'none';
+        if (clearMain) clearMain.style.display = 'block';
     }
 
     function closeSpotlight() {
@@ -792,110 +719,53 @@
             setTimeout(() => { overlaySpot.style.display = 'none'; overlaySpot.style.animation = ''; }, 200);
         }
         if (input) input.value = '';
-        showEmpty();
-    }
-
-    function showEmpty() {
         if (emptyEl) emptyEl.style.display = 'block';
         if (loadEl) loadEl.style.display = 'none';
         if (list) { list.style.display = 'none'; list.innerHTML = ''; }
-        renderHistory();
         currentResults = [];
         activeIndex = -1;
     }
 
-    function showLoading() {
-        if (emptyEl) emptyEl.style.display = 'none';
-        if (loadEl) loadEl.style.display = 'block';
-        if (list) list.style.display = 'none';
-        if (histSec) histSec.style.display = 'none';
-    }
-
-    function renderHistory() {
-        const h = getHistory();
-        if (h.length > 0 && (!input || !input.value.trim())) {
-            if (histSec) histSec.style.display = 'block';
-            if (histList) histList.innerHTML = '';
-            if (clearMain) clearMain.style.display = 'block';
-            h.forEach((item, idx) => {
-                const div = document.createElement('div');
-                div.className = 'spotlight-history-item';
-                div.style.cssText = 'display:flex;align-items:center;gap:14px;padding:10px 24px;cursor:pointer;transition:background .15s;border-radius:10px;margin:0 16px;';
-                const c = CAT_COLORS[item.category] || '#4f8ef7';
-                div.innerHTML = `<span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${item.icon || 'mdi-history'} mdi" style="font-size:16px;color:${c};"></i></span>
-                    <span style="flex:1;min-width:0;"><span style="display:block;font-size:14px;font-weight:500;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;">${item.query}</span></span>
-                    <button class="hist-remove" style="background:transparent;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:13px;padding:6px 10px;border-radius:6px;">✕</button>`;
-                div.querySelector('.hist-remove').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const his = getHistory();
-                    his.splice(idx, 1);
-                    saveHistory(his);
-                    renderHistory();
-                    if (!input || !input.value.trim()) showEmpty();
-                });
-                div.addEventListener('click', () => { if (input) { input.value = item.query; performSearch(item.query); } });
-                if (histList) histList.appendChild(div);
-            });
-        } else {
-            if (histSec) histSec.style.display = 'none';
-            if (clearMain) clearMain.style.display = 'none';
-        }
-    }
-
     function performSearch(query) {
-        if (!query || !query.trim()) { showEmpty(); return; }
-        showLoading();
-        const results = STATIC_PAGES.filter(p => p.title.toLowerCase().includes(query.toLowerCase()) || p.category.toLowerCase().includes(query.toLowerCase())).slice(0,15);
-        renderResults(results);
-    }
-
-    function renderResults(results) {
-        if (loadEl) loadEl.style.display = 'none';
+        if (!query || !query.trim()) {
+            if (emptyEl) emptyEl.style.display = 'block';
+            return;
+        }
+        if (loadEl) loadEl.style.display = 'block';
         if (emptyEl) emptyEl.style.display = 'none';
-        if (list) { list.innerHTML = ''; list.style.display = 'block'; }
-        if (histSec) histSec.style.display = 'none';
-        activeIndex = -1;
-        currentResults = results;
+        if (list) list.style.display = 'none';
 
-        if (!results.length) {
-            if (emptyEl) { emptyEl.innerHTML = '<i class="mdi mdi-magnify-close" style="font-size:42px;display:block;margin-bottom:16px;opacity:.4;"></i><span style="font-size:15px;">No results for "' + (input ? input.value : '') + '"</span>'; emptyEl.style.display = 'block'; }
-            if (list) list.style.display = 'none';
+        const results = STATIC_PAGES.filter(p =>
+            p.title.toLowerCase().includes(query.toLowerCase()) ||
+            p.category.toLowerCase().includes(query.toLowerCase())
+        ).slice(0,15);
+
+        if (loadEl) loadEl.style.display = 'none';
+        if (list) { list.innerHTML = ''; list.style.display = 'block'; }
+
+        if (results.length === 0) {
+            if (emptyEl) { emptyEl.innerHTML = '<i class="mdi mdi-magnify-close" style="font-size:42px;display:block;margin-bottom:16px;opacity:.4;"></i><span style="font-size:15px;">No results for "' + query + '"</span>'; emptyEl.style.display = 'block'; }
             return;
         }
 
-        const grouped = {};
-        results.forEach(r => { if (!grouped[r.category]) grouped[r.category] = []; grouped[r.category].push(r); });
-
-        let idx = 0;
-        Object.keys(grouped).forEach(cat => {
-            const header = document.createElement('li');
-            header.style.cssText = 'padding:12px 24px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);';
-            header.textContent = cat;
-            list.appendChild(header);
-
-            grouped[cat].forEach((r, gi) => {
-                const li = document.createElement('li');
-                const isTop = (idx === 0 && gi === 0);
-                li.className = 'spotlight-result-item' + (isTop ? ' top-match' : '');
-                li.setAttribute('data-idx', idx);
-                li.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
-                const c = CAT_COLORS[r.category] || '#4f8ef7';
-                li.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${r.icon || 'mdi-chevron-right'} mdi" style="font-size:18px;color:${c};"></i></span>
-                    <span style="flex:1;min-width:0;"><span class="result-title" style="display:block;font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">${r.subtitle || r.category}</span></span>
-                    <i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);flex-shrink:0;transition:transform .2s;"></i>`;
-                li.addEventListener('mouseenter', () => { li.style.background = 'rgba(79,142,247,.12)'; activeIndex = idx; });
-                li.addEventListener('mouseleave', () => { li.style.background = activeIndex === idx ? 'rgba(79,142,247,.18)' : ''; });
-                li.addEventListener('click', () => { window.location.href = r.url; });
-                list.appendChild(li);
-                idx++;
-            });
+        currentResults = results;
+        results.forEach((r, idx) => {
+            const li = document.createElement('li');
+            li.className = 'spotlight-result-item';
+            li.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
+            const c = CAT_COLORS[r.category] || '#4f8ef7';
+            li.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${r.icon || 'mdi-chevron-right'} mdi" style="font-size:18px;color:${c};"></i></span>
+                <span style="flex:1;min-width:0;"><span style="display:block;font-size:15px;font-weight:500;color:#fff;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">${r.category}</span></span>
+                <i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);flex-shrink:0;"></i>`;
+            li.addEventListener('click', () => { window.location.href = r.url; });
+            list.appendChild(li);
         });
     }
 
-    if (trigger) trigger.addEventListener('click', openSpotlight);
+    if (triggerDesktop) triggerDesktop.addEventListener('click', openSpotlight);
+    if (triggerMobile) triggerMobile.addEventListener('click', openSpotlight);
     if (escBtn) escBtn.addEventListener('click', closeSpotlight);
-    if (clearBtn) clearBtn.addEventListener('click', () => { localStorage.removeItem(HISTORY_KEY); renderHistory(); showEmpty(); });
-    if (clearMain) clearMain.addEventListener('click', () => { localStorage.removeItem(HISTORY_KEY); renderHistory(); showEmpty(); });
+    if (clearMain) clearMain.addEventListener('click', closeSpotlight);
     if (overlaySpot) overlaySpot.addEventListener('click', (e) => { if (e.target === overlaySpot) closeSpotlight(); });
 
     document.addEventListener('keydown', (e) => {
@@ -907,11 +777,7 @@
     });
 
     if (input) {
-        input.addEventListener('input', () => {
-            const q = input.value.trim();
-            if (!q) { showEmpty(); return; }
-            performSearch(q);
-        });
+        input.addEventListener('input', () => { performSearch(input.value.trim()); });
     }
 
     // =====================================================
@@ -950,32 +816,7 @@
         window.addEventListener('scroll', () => backBtn.classList.toggle('show', window.scrollY > 300));
         backBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
-
-    // Active sidebar highlight
-    const curPath = window.location.pathname;
-    document.querySelectorAll('#navbar-nav .nav-sm a.nav-link').forEach(link => {
-        try {
-            if (new URL(link.href, window.location.origin).pathname === curPath) {
-                link.classList.add('nav-active-child');
-                const col = link.closest('.collapse');
-                if (col) {
-                    col.classList.add('show');
-                    const tog = document.querySelector('[data-bs-target="#' + col.id + '"]');
-                    if (tog) {
-                        tog.setAttribute('aria-expanded', 'true');
-                        tog.classList.remove('collapsed');
-                        tog.classList.add('nav-active-parent');
-                    }
-                }
-            }
-        } catch(e) {}
-    });
 })();
 </script>
-
-<!-- Route-specific JS includes -->
-@if (Route::is('dashboard')) @include('layouts.pages-assets.js.dashboard-list-js') @endif
-@if (Route::is('users.*')) @include('layouts.pages-assets.js.users-list-js') @endif
-@if (Route::is('student-id-cards.*')) @include('layouts.pages-assets.js.idcard-list-js') @endif
 </body>
 </html>
