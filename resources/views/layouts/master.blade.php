@@ -169,35 +169,13 @@
         .pagination-wrap .disabled .page-link { pointer-events: none; opacity: .5; }
 
         /* =====================================================
-           Z-INDEX MASTER STACK
-           -- This is the single source of truth for layering.
-           -- Bootstrap modals MUST sit above our custom UI.
-           ===================================================== */
-
-        /* Our custom dropdowns (theme, user menu) */
-        #theme-dropdown,
-        #user-dropdown { z-index: 1035 !important; }
-
-        /* Bootstrap modal backdrop & dialog */
-        .modal-backdrop { z-index: 1040 !important; }
-        .modal          { z-index: 1045 !important; }
-
-        /* Sidebar sits below modals */
-        .app-menu { z-index: 1000 !important; }
-
-        /* Topbar sits below modals */
-        #page-topbar { z-index: 1005 !important; }
-
-        /* Spotlight sits above modals so search still works */
-        #spotlight-overlay { z-index: 1055 !important; }
-
-        /* =====================================================
            SIDEBAR STRUCTURE
            ===================================================== */
         .app-menu {
             position: fixed;
             top: 0; left: 0; bottom: 0;
             width: var(--sidebar-width);
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             transition: width var(--transition-smooth), transform var(--transition-smooth), box-shadow var(--transition-smooth);
@@ -1230,7 +1208,7 @@
                         <div id="theme-dropdown"
                              style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:165px;
                                     background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);
-                                    border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);overflow:hidden;padding:5px;">
+                                    border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:9999;overflow:hidden;padding:5px;">
                             <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light" style="font-size:13px;color:inherit;transition:background .15s;">
                                 <i class="bi bi-sun"></i> <span>Light</span>
                             </a>
@@ -1301,7 +1279,7 @@
                         <div id="user-dropdown" class="dropdown-menu dropdown-menu-end"
                              style="display:none;position:absolute;top:calc(100% + 10px);right:0;min-width:220px;
                                     background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);
-                                    border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.16);overflow:hidden;">
+                                    border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.16);z-index:9999;overflow:hidden;">
                             <!-- Gradient header -->
                             <div style="background:linear-gradient(135deg,#405189 0%,#4f8ef7 100%);padding:14px 16px;display:flex;align-items:center;gap:10px;">
                                 @if($srcPath)
@@ -1359,7 +1337,7 @@
 
     <!-- ========== SPOTLIGHT ========== -->
     <div id="spotlight-overlay"
-         style="display:none;position:fixed;inset:0;align-items:flex-start;justify-content:center;padding-top:6vh;">
+         style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;">
         <div id="spotlight-box"
              style="width:100%;max-width:840px;margin:0 20px;background:rgba(18,20,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:24px;box-shadow:0 40px 100px rgba(0,0,0,.7);overflow:hidden;">
             <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.07);">
@@ -1427,7 +1405,7 @@
     </div>
 </div>
 
-<!-- Theme Offcanvas -->
+<!-- Theme Offcanvas — full markup so app.js never hits null -->
 <div class="offcanvas offcanvas-end border-0" tabindex="-1" id="theme-settings-offcanvas">
     <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
         <div class="me-2"><h5 class="mb-1 text-white">Theme Customizer</h5><p class="text-white text-opacity-75 mb-0">Customize your experience</p></div>
@@ -1488,6 +1466,7 @@
             <h6 class="fw-semibold fs-base">Preloader</h6>
             <div class="row"><div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-preloader" id="preloader-view-none" value="disable"><label class="form-check-label p-0 avatar-md w-100" for="preloader-view-none"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Disable</h5></div></div>
         </div>
+        <!-- Stubs needed by app.js -->
         <div style="display:none;">
             <input type="radio" id="topbar-color-light" name="data-topbar" value="light">
             <input type="radio" id="topbar-color-dark"  name="data-topbar" value="dark">
@@ -1499,7 +1478,7 @@
 </div>
 
 <!-- =====================================================
-     SCRIPTS — Bootstrap FIRST, then our code
+     SCRIPTS
      ===================================================== -->
 <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
@@ -1512,12 +1491,10 @@
     'use strict';
 
     /* ── helpers ─────────────────────────────────────────── */
-    const $  = (s, c) => (c || document).querySelector(s);
+    const $ = (s, c) => (c || document).querySelector(s);
     const $$ = (s, c) => (c || document).querySelectorAll(s);
 
-    /* ─────────────────────────────────────────────────────────
-       SIDEBAR TOGGLE
-       ───────────────────────────────────────────────────────── */
+    /* ── SIDEBAR TOGGLE ──────────────────────────────────── */
     const ham     = document.getElementById('topnav-hamburger-icon');
     const overlay = document.getElementById('vertical-overlay');
     const body    = document.body;
@@ -1547,84 +1524,60 @@
         }, 200);
     });
 
-    /* ─────────────────────────────────────────────────────────
-       MANUAL DROPDOWN (theme + user menu)
-       IMPORTANT: close these dropdowns when a Bootstrap modal
-       is about to open, so they never sit on top.
-       ───────────────────────────────────────────────────────── */
-    const openDropdowns = new Set();
-
+    /* ── MANUAL DROPDOWN (animated) ─────────────────────── */
     function makeDropdown(btnId, panelId) {
         const btn   = document.getElementById(btnId);
         const panel = document.getElementById(panelId);
         if (!btn || !panel) return;
 
-        Object.assign(panel.style, {
-            display: 'none', opacity: '0',
-            transform: 'translateY(-10px) scale(0.95)',
-            transformOrigin: 'top right',
-            transition: 'opacity .22s ease, transform .22s cubic-bezier(0.4,0,0.2,1)'
-        });
+        // Initial hidden state
+        Object.assign(panel.style, { display:'none', opacity:'0', transform:'translateY(-10px) scale(0.95)', transformOrigin:'top right',
+            transition:'opacity .22s ease, transform .22s cubic-bezier(0.4,0,0.2,1)' });
 
         const isOpen = () => panel.style.display === 'block';
 
         const open = () => {
             panel.style.display = 'block';
-            panel.getBoundingClientRect();
-            panel.style.opacity   = '1';
+            panel.getBoundingClientRect(); // force reflow
+            panel.style.opacity = '1';
             panel.style.transform = 'translateY(0) scale(1)';
-            btn.setAttribute('aria-expanded', 'true');
-            openDropdowns.add(panelId);
+            btn.setAttribute('aria-expanded','true');
         };
-
         const close = () => {
-            panel.style.opacity   = '0';
+            panel.style.opacity = '0';
             panel.style.transform = 'translateY(-8px) scale(0.95)';
-            btn.setAttribute('aria-expanded', 'false');
-            openDropdowns.delete(panelId);
-            setTimeout(() => {
-                if (panel.style.opacity === '0') panel.style.display = 'none';
-            }, 220);
+            btn.setAttribute('aria-expanded','false');
+            setTimeout(() => { if (!isOpen() || panel.style.opacity==='0') panel.style.display='none'; }, 220);
         };
 
-        btn.addEventListener('click',        e => { e.stopPropagation(); isOpen() ? close() : open(); });
-        document.addEventListener('click',   e => { if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+        btn.addEventListener('click',       e => { e.stopPropagation(); isOpen() ? close() : open(); });
+        document.addEventListener('click',  e => { if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
+        document.addEventListener('keydown',e => { if (e.key==='Escape') close(); });
 
-        // Close when any Bootstrap modal starts showing
-        document.addEventListener('show.bs.modal', () => close());
-
+        // Hover highlight on items
         $$('a', panel).forEach(a => {
             a.addEventListener('mouseenter', () => a.style.background = 'rgba(64,81,137,.08)');
             a.addEventListener('mouseleave', () => a.style.background = '');
         });
     }
 
-    /* ─────────────────────────────────────────────────────────
-       THEME
-       ───────────────────────────────────────────────────────── */
+    /* ── THEME ───────────────────────────────────────────── */
     function initTheme() {
         const html   = document.documentElement;
         const iconEl = document.getElementById('theme-icon');
-        const ICONS  = {
-            light: 'bi bi-sun align-middle fs-3xl',
-            dark:  'bi bi-moon align-middle fs-3xl',
-            auto:  'bi bi-moon-stars align-middle fs-3xl'
-        };
+        const ICONS  = { light:'bi bi-sun align-middle fs-3xl', dark:'bi bi-moon align-middle fs-3xl', auto:'bi bi-moon-stars align-middle fs-3xl' };
 
-        const scheme = m => m === 'auto'
-            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-            : m;
-
-        const apply = mode => {
+        const scheme  = m => m === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : m;
+        const apply   = mode => {
             const s = scheme(mode);
             html.setAttribute('data-bs-theme', s);
             html.setAttribute('data-topbar', s === 'dark' ? 'dark' : 'light');
             if (iconEl) {
-                iconEl.style.transform  = 'rotate(90deg) scale(0)';
+                // Animate icon swap
+                iconEl.style.transform = 'rotate(90deg) scale(0)';
                 iconEl.style.transition = 'transform .2s ease';
                 setTimeout(() => {
-                    iconEl.className  = ICONS[mode] || ICONS.light;
+                    iconEl.className = ICONS[mode] || ICONS.light;
                     iconEl.style.transform = 'rotate(0deg) scale(1)';
                 }, 180);
             }
@@ -1636,51 +1589,32 @@
                 a.style.color      = a.dataset.mode === mode ? 'var(--vz-primary,#405189)' : '';
             });
             const panel = document.getElementById('theme-dropdown');
-            if (panel) { panel.style.opacity = '0'; setTimeout(() => panel.style.display = 'none', 220); }
+            if (panel) { panel.style.opacity='0'; setTimeout(()=>panel.style.display='none',220); }
         };
 
         apply(localStorage.getItem('app-theme') || 'light');
         $$('.theme-mode-item').forEach(a => a.addEventListener('click', e => { e.preventDefault(); apply(a.dataset.mode); }));
         $$('[name="data-bs-theme"]').forEach(r => r.addEventListener('change', () => apply(r.value)));
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            if (localStorage.getItem('app-theme') === 'auto') apply('auto');
+            if (localStorage.getItem('app-theme')==='auto') apply('auto');
         });
     }
 
-    /* ─────────────────────────────────────────────────────────
-       NPROGRESS
-       Skip links that are Bootstrap modal / collapse / offcanvas
-       triggers so we never navigate away on modal open clicks.
-       ───────────────────────────────────────────────────────── */
+    /* ── NPROGRESS ───────────────────────────────────────── */
     function initNProgress() {
         if (typeof NProgress === 'undefined') return;
-        NProgress.configure({ showSpinner: false, speed: 380, minimum: 0.08 });
-
+        NProgress.configure({ showSpinner:false, speed:380, minimum:0.08 });
         $$('a[href]').forEach(a => {
-            const h = a.getAttribute('href') || '';
-            // Skip: non-navigating links
-            if (!h
-                || h === '#'
-                || h.startsWith('javascript')
-                || h.startsWith('mailto')
-                || h.startsWith('tel')
-                || h.startsWith('#')          // anchor-only hrefs
-                || a.hasAttribute('data-bs-toggle')   // modal / collapse / offcanvas triggers
-                || a.hasAttribute('data-bs-dismiss')
-                || a.hasAttribute('data-bs-target')
-                || a.getAttribute('target') === '_blank'
-            ) return;
-
-            a.addEventListener('click', () => NProgress.start());
+            const h = a.getAttribute('href')||'';
+            if (h && h!=='#' && !h.startsWith('javascript') && !h.startsWith('mailto') && !h.startsWith('tel')
+                && !a.hasAttribute('data-bs-toggle') && !a.hasAttribute('data-bs-dismiss') && a.getAttribute('target')!=='_blank')
+                a.addEventListener('click', () => NProgress.start());
         });
-
         window.addEventListener('pageshow', () => NProgress.done());
         window.addEventListener('load',     () => NProgress.done());
     }
 
-    /* ─────────────────────────────────────────────────────────
-       ACTIVE SIDEBAR LINK
-       ───────────────────────────────────────────────────────── */
+    /* ── ACTIVE SIDEBAR LINK ─────────────────────────────── */
     function initActiveSidebar() {
         const cur = window.location.pathname;
         $$('#navbar-nav .nav-sm a.nav-link').forEach(link => {
@@ -1692,59 +1626,44 @@
                 if (!col) return;
                 col.classList.add('show');
                 const tog = $(`[data-bs-target="#${col.id}"],[href="#${col.id}"]`);
-                if (tog) {
-                    tog.setAttribute('aria-expanded', 'true');
-                    tog.classList.remove('collapsed');
-                    tog.classList.add('nav-active-parent');
-                }
-                setTimeout(() => link.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 400);
-            } catch (e) {}
+                if (tog) { tog.setAttribute('aria-expanded','true'); tog.classList.remove('collapsed'); tog.classList.add('nav-active-parent'); }
+                setTimeout(() => link.scrollIntoView({ behavior:'smooth', block:'nearest' }), 400);
+            } catch(e){}
         });
     }
 
-    /* ─────────────────────────────────────────────────────────
-       RIPPLE
-       ───────────────────────────────────────────────────────── */
+    /* ── RIPPLE ──────────────────────────────────────────── */
     function initRipple() {
         $$('#navbar-nav .nav-link').forEach(link => {
             link.addEventListener('click', e => {
                 if (link.hasAttribute('data-bs-toggle')) return;
-                const r    = document.createElement('span');
+                const r = document.createElement('span');
                 r.className = 'nav-ripple';
                 const rect = link.getBoundingClientRect(), s = Math.max(rect.width, rect.height);
-                r.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - rect.left - s / 2}px;top:${e.clientY - rect.top - s / 2}px;`;
+                r.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX-rect.left-s/2}px;top:${e.clientY-rect.top-s/2}px;`;
                 link.appendChild(r);
                 setTimeout(() => r.parentNode?.removeChild(r), 650);
             });
         });
     }
 
-    /* ─────────────────────────────────────────────────────────
-       BACK TO TOP
-       ───────────────────────────────────────────────────────── */
+    /* ── BACK TO TOP ─────────────────────────────────────── */
     function initBackToTop() {
         const btn = document.getElementById('back-to-top');
         if (!btn) return;
-        window.addEventListener('scroll', () => btn.classList.toggle('show', window.scrollY > 300), { passive: true });
-        btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', () => btn.classList.toggle('show', window.scrollY > 300), { passive:true });
+        btn.addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
     }
 
-    /* ─────────────────────────────────────────────────────────
-       KILL BS DROPDOWN — only on the user button, never on
-       elements that Bootstrap needs for modal/collapse triggers.
-       ───────────────────────────────────────────────────────── */
+    /* ── KILL BOOTSTRAP DROPDOWN INSTANCE on user btn ────── */
     function killBsDropdown() {
         const btn = document.getElementById('user-menu-btn');
-        if (!btn || typeof bootstrap === 'undefined' || !bootstrap.Dropdown) return;
-        try {
-            const inst = bootstrap.Dropdown.getInstance(btn);
-            if (inst) inst.dispose();
-        } catch (e) {}
+        if (!btn || typeof bootstrap==='undefined' || !bootstrap.Dropdown) return;
+        const inst = bootstrap.Dropdown.getInstance(btn);
+        if (inst) inst.dispose();
     }
 
-    /* ─────────────────────────────────────────────────────────
-       IMAGE MODAL
-       ───────────────────────────────────────────────────────── */
+    /* ── IMAGE MODAL ─────────────────────────────────────── */
     function initImageModal() {
         const m = document.getElementById('imageViewModal');
         if (!m) return;
@@ -1755,45 +1674,31 @@
         });
     }
 
-    /* ─────────────────────────────────────────────────────────
-       SEARCH TOOLTIP
-       ───────────────────────────────────────────────────────── */
+    /* ── SEARCH TOOLTIP ──────────────────────────────────── */
     function initSearchTooltip() {
         const btn = document.getElementById('spotlight-trigger');
         const tip = $('.search-tooltip');
         if (!btn || !tip) return;
-        btn.addEventListener('mouseenter', () => tip.style.opacity = '1');
-        btn.addEventListener('mouseleave', () => tip.style.opacity = '0');
+        btn.addEventListener('mouseenter', () => tip.style.opacity='1');
+        btn.addEventListener('mouseleave', () => tip.style.opacity='0');
     }
 
-    /* ─────────────────────────────────────────────────────────
-       FORM NPROGRESS
-       Skip logout / CSRF-only forms and forms with modals.
-       ───────────────────────────────────────────────────────── */
+    /* ── FORM NPROGRESS ──────────────────────────────────── */
     function initFormProgress() {
-        if (typeof NProgress === 'undefined') return;
+        if (typeof NProgress==='undefined') return;
         $$('form').forEach(f => {
-            if (f.id === 'sidebar-logout-form' || f.id === 'topbar-logout-form') return;
             if (f.getAttribute('action') && !f.dataset.noProgress)
                 f.addEventListener('submit', () => NProgress.start());
         });
     }
 
-    /* ─────────────────────────────────────────────────────────
-       RESET LAYOUT
-       ───────────────────────────────────────────────────────── */
+    /* ── RESET LAYOUT ────────────────────────────────────── */
     function initReset() {
         const btn = document.getElementById('reset-layout');
-        if (btn) btn.addEventListener('click', () => {
-            sessionStorage.clear();
-            localStorage.removeItem('app-theme');
-            location.reload();
-        });
+        if (btn) btn.addEventListener('click', () => { sessionStorage.clear(); localStorage.removeItem('app-theme'); location.reload(); });
     }
 
-    /* ─────────────────────────────────────────────────────────
-       INIT
-       ───────────────────────────────────────────────────────── */
+    /* ── INIT ────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
         initTheme();
         makeDropdown('theme-toggle-btn', 'theme-dropdown');
@@ -1857,13 +1762,13 @@
         'Timetable':'#4f8ef7','Attendance':'#e9c46a','Accounting':'#10b981','Transcripts':'#457b9d','Admin Tools':'#ef4444'
     };
 
-    const HKEY     = 'spotlight_history_v2';
-    const getHist  = () => { try { return JSON.parse(localStorage.getItem(HKEY) || '[]'); } catch(e) { return []; } };
-    const saveHist = h  => localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 8)));
-    const addHist  = (q, r) => {
+    const HKEY = 'spotlight_history_v2';
+    const getHist  = () => { try{ return JSON.parse(localStorage.getItem(HKEY)||'[]'); }catch(e){ return []; } };
+    const saveHist = h  => localStorage.setItem(HKEY, JSON.stringify(h.slice(0,8)));
+    const addHist  = (q,r) => {
         if (!q || q.trim().length < 2) return;
-        const h = getHist().filter(x => !(x.query === q && x.url === r.url));
-        h.unshift({ query: q, url: r.url, title: r.title, icon: r.icon, category: r.category, ts: Date.now() });
+        const h = getHist().filter(x => !(x.query===q && x.url===r.url));
+        h.unshift({query:q, url:r.url, title:r.title, icon:r.icon, category:r.category, ts:Date.now()});
         saveHist(h); renderHistory();
     };
 
@@ -1885,142 +1790,129 @@
 
     function open() {
         if (!overlay) return;
-        overlay.style.display   = 'flex';
+        overlay.style.display = 'flex';
         overlay.style.animation = 'spotlightOverlayFadeIn .28s ease forwards';
         if (box) box.style.animation = 'spotlightModalBounceIn .4s cubic-bezier(.34,1.3,.64,1) forwards';
         setTimeout(() => input?.focus(), 120);
         renderHistory();
     }
-
     function close() {
         if (box)     box.style.animation     = 'spotlightModalFadeOut .2s ease forwards';
         if (overlay) overlay.style.animation = 'spotlightOverlayFadeOut .2s ease forwards';
         setTimeout(() => {
-            if (overlay) overlay.style.display = 'none';
-            overlay.style.animation = '';
-            if (input) input.value = '';
+            if (overlay) overlay.style.display='none';
+            overlay.style.animation='';
+            if (input) input.value='';
             showEmpty();
         }, 200);
     }
-
     function showEmpty() {
-        if (emptyEl) {
-            emptyEl.innerHTML = '<i class="mdi mdi-lightning-bolt" style="font-size:44px;display:block;margin-bottom:14px;opacity:.38;"></i><span style="font-size:14px;">Start typing to search…</span><div style="margin-top:12px;font-size:11px;opacity:.38;">Try: Students, Classes, Payments, Reports</div>';
-            emptyEl.style.display = 'block';
-        }
-        if (loadEl) loadEl.style.display = 'none';
-        if (list)   { list.style.display = 'none'; list.innerHTML = ''; }
-        if (clearTop) clearTop.style.display = getHist().length > 0 ? 'block' : 'none';
+        if (emptyEl) { emptyEl.innerHTML='<i class="mdi mdi-lightning-bolt" style="font-size:44px;display:block;margin-bottom:14px;opacity:.38;"></i><span style="font-size:14px;">Start typing to search…</span><div style="margin-top:12px;font-size:11px;opacity:.38;">Try: Students, Classes, Payments, Reports</div>'; emptyEl.style.display='block'; }
+        if (loadEl) loadEl.style.display='none';
+        if (list)   { list.style.display='none'; list.innerHTML=''; }
+        if (clearTop) clearTop.style.display = getHist().length>0?'block':'none';
         renderHistory();
-        results = []; activeIdx = -1;
+        results=[]; activeIdx=-1;
     }
-
     function showLoading() {
-        if (emptyEl) emptyEl.style.display = 'none';
-        if (loadEl)  loadEl.style.display  = 'block';
-        if (list)    list.style.display    = 'none';
-        if (histSec) histSec.style.display = 'none';
+        if (emptyEl) emptyEl.style.display='none';
+        if (loadEl)  loadEl.style.display='block';
+        if (list)    list.style.display='none';
+        if (histSec) histSec.style.display='none';
     }
 
     function renderHistory() {
         const h = getHist();
-        if (h.length > 0 && (!input || !input.value.trim())) {
-            if (histSec)  histSec.style.display  = 'block';
-            if (histList) histList.innerHTML = '';
-            if (clearTop) clearTop.style.display = 'block';
+        if (h.length>0 && (!input||!input.value.trim())) {
+            if (histSec) histSec.style.display='block';
+            if (histList) histList.innerHTML='';
+            if (clearTop) clearTop.style.display='block';
             h.forEach((item, idx) => {
                 const div = document.createElement('div');
-                const c   = COLORS[item.category] || '#4f8ef7';
-                div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:9px 22px;cursor:pointer;transition:background .15s;border-radius:8px;margin:0 12px;';
-                div.innerHTML = `<span style="width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}20;"><i class="${item.icon||'mdi-history'} mdi" style="font-size:15px;color:${c};"></i></span>
+                const c   = COLORS[item.category]||'#4f8ef7';
+                div.style.cssText='display:flex;align-items:center;gap:12px;padding:9px 22px;cursor:pointer;transition:background .15s;border-radius:8px;margin:0 12px;';
+                div.innerHTML=`<span style="width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}20;"><i class="${item.icon||'mdi-history'} mdi" style="font-size:15px;color:${c};"></i></span>
                     <span style="flex:1;min-width:0;"><span style="display:block;font-size:13px;font-weight:500;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.38);">${item.query}</span></span>
                     <button class="rm-hist" style="background:transparent;border:none;color:rgba(255,255,255,.3);cursor:pointer;padding:4px 8px;border-radius:5px;font-size:12px;transition:color .15s;">✕</button>`;
                 div.querySelector('.rm-hist').addEventListener('click', e => {
                     e.stopPropagation();
-                    const hh = getHist(); hh.splice(idx, 1); saveHist(hh); renderHistory();
+                    const hh=getHist(); hh.splice(idx,1); saveHist(hh); renderHistory();
                 });
-                div.addEventListener('click', () => { if (input) { input.value = item.query; performSearch(item.query); } });
-                div.addEventListener('mouseenter', () => div.style.background = 'rgba(255,255,255,.05)');
-                div.addEventListener('mouseleave', () => div.style.background = '');
+                div.addEventListener('click', () => { if(input){ input.value=item.query; performSearch(item.query); } });
+                div.addEventListener('mouseenter', () => div.style.background='rgba(255,255,255,.05)');
+                div.addEventListener('mouseleave', () => div.style.background='');
                 histList?.appendChild(div);
             });
         } else {
-            if (histSec)  histSec.style.display  = 'none';
-            if (clearTop) clearTop.style.display = 'none';
+            if (histSec) histSec.style.display='none';
+            if (clearTop) clearTop.style.display='none';
         }
     }
 
     function performSearch(q) {
-        if (!q || !q.trim()) { showEmpty(); return; }
+        if (!q||!q.trim()) { showEmpty(); return; }
         showLoading();
-        const sr = PAGES.filter(p =>
-            p.title.toLowerCase().includes(q.toLowerCase()) ||
-            p.category.toLowerCase().includes(q.toLowerCase())
-        ).slice(0, 14);
+        const sr = PAGES.filter(p => p.title.toLowerCase().includes(q.toLowerCase())||p.category.toLowerCase().includes(q.toLowerCase())).slice(0,14);
         renderResults(sr);
         clearTimeout(timer);
         timer = setTimeout(() => {
-            if (q.length < 2) return;
-            fetch('{{ url("/api/search") }}?q=' + encodeURIComponent(q) + '&_token={{ csrf_token() }}',
-                { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
-            .then(r => r.ok ? r.json() : { results: [] })
-            .then(d => {
-                if (!input || input.value.trim() !== q) return;
-                const merged = sr.concat(d.results || []), seen = {};
-                renderResults(merged.filter(r => { if (seen[r.url]) return false; seen[r.url] = true; return true; }));
-            }).catch(() => {});
+            if (q.length<2) return;
+            fetch('{{ url("/api/search") }}?q='+encodeURIComponent(q)+'&_token={{ csrf_token() }}',
+                {headers:{'Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'}})
+            .then(r=>r.ok?r.json():{results:[]})
+            .then(d=>{
+                if (!input||input.value.trim()!==q) return;
+                const merged=sr.concat(d.results||[]), seen={};
+                renderResults(merged.filter(r=>{ if(seen[r.url]) return false; seen[r.url]=true; return true; }));
+            }).catch(()=>{});
         }, 300);
     }
 
     function renderResults(rs) {
-        if (loadEl)  loadEl.style.display  = 'none';
-        if (emptyEl) emptyEl.style.display = 'none';
-        if (list)    { list.innerHTML = ''; list.style.display = 'block'; }
-        if (histSec) histSec.style.display = 'none';
-        activeIdx = -1; results = rs;
+        if (loadEl) loadEl.style.display='none';
+        if (emptyEl) emptyEl.style.display='none';
+        if (list) { list.innerHTML=''; list.style.display='block'; }
+        if (histSec) histSec.style.display='none';
+        activeIdx=-1; results=rs;
 
         if (!rs.length) {
-            if (emptyEl) {
-                emptyEl.innerHTML = `<i class="mdi mdi-magnify-close" style="font-size:40px;display:block;margin-bottom:14px;opacity:.38;"></i><span style="font-size:14px;">No results for "${input ? input.value : ''}"</span>`;
-                emptyEl.style.display = 'block';
-            }
-            if (list) list.style.display = 'none';
+            if (emptyEl) { emptyEl.innerHTML=`<i class="mdi mdi-magnify-close" style="font-size:40px;display:block;margin-bottom:14px;opacity:.38;"></i><span style="font-size:14px;">No results for "${input?input.value:''}"</span>`; emptyEl.style.display='block'; }
+            if (list) list.style.display='none';
             return;
         }
 
-        const grouped = {};
-        rs.forEach(r => { if (!grouped[r.category]) grouped[r.category] = []; grouped[r.category].push(r); });
-        let idx = 0;
-        Object.keys(grouped).forEach(cat => {
-            const h = document.createElement('li');
-            h.style.cssText = 'padding:10px 22px 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.32);';
-            h.textContent = cat; list.appendChild(h);
-            grouped[cat].forEach((r) => {
-                const li = document.createElement('li');
-                li.className = 'spotlight-result-item';
-                li.setAttribute('data-idx', idx);
-                li.style.cssText = 'display:flex;align-items:center;gap:12px;padding:10px 22px;cursor:pointer;transition:all .18s;border-radius:8px;margin:2px 10px;';
-                const c = COLORS[r.category] || '#4f8ef7';
-                li.innerHTML = `<span style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}20;"><i class="${r.icon||'mdi-chevron-right'} mdi" style="font-size:17px;color:${c};"></i></span>
+        const grouped={};
+        rs.forEach(r=>{ if(!grouped[r.category]) grouped[r.category]=[]; grouped[r.category].push(r); });
+        let idx=0;
+        Object.keys(grouped).forEach(cat=>{
+            const h=document.createElement('li');
+            h.style.cssText='padding:10px 22px 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.32);';
+            h.textContent=cat; list.appendChild(h);
+            grouped[cat].forEach((r,gi)=>{
+                const li=document.createElement('li');
+                li.className='spotlight-result-item';
+                li.setAttribute('data-idx',idx);
+                li.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 22px;cursor:pointer;transition:all .18s;border-radius:8px;margin:2px 10px;';
+                const c=COLORS[r.category]||'#4f8ef7';
+                li.innerHTML=`<span style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}20;"><i class="${r.icon||'mdi-chevron-right'} mdi" style="font-size:17px;color:${c};"></i></span>
                     <span style="flex:1;min-width:0;"><span class="result-title" style="display:block;font-size:14px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.38);margin-top:1px;">${r.subtitle||r.category}</span></span>
                     <i class="mdi mdi-arrow-right" style="font-size:15px;color:rgba(255,255,255,.22);flex-shrink:0;transition:transform .18s;"></i>`;
-                li.addEventListener('mouseenter', () => { li.style.background = `${c}14`; activeIdx = idx; });
-                li.addEventListener('mouseleave', () => { li.style.background = activeIdx === idx ? `${c}20` : ''; });
-                li.addEventListener('click', () => { addHist(input ? input.value : '', r); window.location.href = r.url; });
+                li.addEventListener('mouseenter',()=>{ li.style.background=`${c}14`; activeIdx=idx; });
+                li.addEventListener('mouseleave',()=>{ li.style.background=activeIdx===idx?`${c}20`:''; });
+                li.addEventListener('click',()=>{ addHist(input?input.value:'',r); window.location.href=r.url; });
                 list.appendChild(li); idx++;
             });
         });
     }
 
     function highlightItem(items) {
-        items.forEach((li, i) => {
-            const active = (i === activeIdx);
+        items.forEach((li,i)=>{
+            const active=(i===activeIdx);
             li.style.background = active ? 'rgba(79,142,247,.15)' : '';
-            const t   = li.querySelector('.result-title');
-            const arr = li.querySelector('.mdi-arrow-right');
-            if (t)   t.style.color           = active ? '#7eb8fb' : '#fff';
-            if (arr) arr.style.transform     = active ? 'translateX(5px)' : 'translateX(0)';
-            if (active) li.scrollIntoView({ block: 'nearest' });
+            const t=li.querySelector('.result-title'), arr=li.querySelector('.mdi-arrow-right');
+            if(t) t.style.color = active ? '#7eb8fb' : '#fff';
+            if(arr) arr.style.transform = active ? 'translateX(5px)' : 'translateX(0)';
+            if(active) li.scrollIntoView({block:'nearest'});
         });
     }
 
@@ -2029,30 +1921,24 @@
     if (escBtn)   escBtn.addEventListener('click', close);
     if (clearBtn) clearBtn.addEventListener('click', () => { localStorage.removeItem(HKEY); renderHistory(); showEmpty(); });
     if (clearTop) clearTop.addEventListener('click', () => { localStorage.removeItem(HKEY); renderHistory(); showEmpty(); });
-    if (overlay)  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    if (overlay)  overlay.addEventListener('click', e => { if(e.target===overlay) close(); });
 
     document.addEventListener('keydown', e => {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-            e.preventDefault();
-            overlay && overlay.style.display === 'flex' ? close() : open();
-        }
-        if (e.key === 'Escape' && overlay && overlay.style.display === 'flex') close();
+        if ((e.metaKey||e.ctrlKey) && e.key==='k') { e.preventDefault(); overlay&&overlay.style.display==='flex'?close():open(); }
+        if (e.key==='Escape' && overlay&&overlay.style.display==='flex') close();
     });
 
     if (input) {
         input.addEventListener('keydown', e => {
             const items = list.querySelectorAll('li[data-idx]');
-            if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); highlightItem(items); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); highlightItem(items); }
-            else if (e.key === 'Enter' && activeIdx >= 0 && results[activeIdx]) {
-                addHist(input.value, results[activeIdx]);
-                window.location.href = results[activeIdx].url;
-            }
+            if (e.key==='ArrowDown') { e.preventDefault(); activeIdx=Math.min(activeIdx+1,items.length-1); highlightItem(items); }
+            else if (e.key==='ArrowUp') { e.preventDefault(); activeIdx=Math.max(activeIdx-1,0); highlightItem(items); }
+            else if (e.key==='Enter'&&activeIdx>=0&&results[activeIdx]) { addHist(input.value,results[activeIdx]); window.location.href=results[activeIdx].url; }
         });
         input.addEventListener('input', () => {
-            const q = input.value.trim();
+            const q=input.value.trim();
             if (!q) { showEmpty(); renderHistory(); return; }
-            if (clearTop) clearTop.style.display = 'none';
+            if (clearTop) clearTop.style.display='none';
             performSearch(q);
         });
     }
@@ -2128,4 +2014,3 @@
 
 </body>
 </html>
-Done
