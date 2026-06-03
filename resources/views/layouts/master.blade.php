@@ -78,7 +78,7 @@
         .modal.show  .modal-dialog { transform: translate(0,0); }
 
         /* =====================================================
-           SIDEBAR LAYOUT — flex column so footer pins to bottom
+           SIDEBAR LAYOUT
            ===================================================== */
         .app-menu {
             position: fixed;
@@ -88,6 +88,26 @@
             display: flex;
             flex-direction: column;
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Adjust main content wrapper for desktop */
+        @media (min-width: 1025px) {
+            #layout-wrapper {
+                margin-left: 250px;
+                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body.sidebar-collapsed .app-menu {
+                width: 70px !important;
+            }
+            body.sidebar-collapsed #layout-wrapper {
+                margin-left: 70px !important;
+            }
+        }
+
+        @media (max-width: 1024.98px) {
+            #layout-wrapper {
+                margin-left: 0 !important;
+            }
         }
 
         #scrollbar {
@@ -165,6 +185,45 @@
         }
         .sidebar-logout-btn i { font-size: 17px; flex-shrink: 0; }
 
+        /* Desktop collapsed sidebar - hide text */
+        @media (min-width: 1025px) {
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
+                display: none !important;
+            }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm {
+                display: block !important;
+            }
+            body.sidebar-collapsed #navbar-nav .menu-title {
+                display: none;
+            }
+            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-footer-user-info,
+            body.sidebar-collapsed .sidebar-logout-btn span {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-logout-btn {
+                justify-content: center;
+                padding: 9px;
+            }
+            body.sidebar-collapsed .sidebar-footer-user {
+                justify-content: center;
+            }
+            body.sidebar-collapsed .app-menu .nav-link {
+                justify-content: center;
+                padding: 0.625rem 0;
+                text-align: center;
+            }
+            body.sidebar-collapsed .app-menu .nav-link i {
+                margin-right: 0 !important;
+                font-size: 1.35rem;
+            }
+            body.sidebar-collapsed .app-menu .has-arrow:after {
+                display: none;
+            }
+        }
+
         /* =====================================================
            SIDEBAR NAV ACTIVE STATES
            ===================================================== */
@@ -234,7 +293,7 @@
         }
 
         /* =====================================================
-           SIDEBAR BEHAVIOR - MOBILE SLIDE + DESKTOP COLLAPSE
+           SIDEBAR BEHAVIOR - MOBILE SLIDE
            ===================================================== */
         .vertical-overlay {
             position: fixed;
@@ -261,66 +320,17 @@
                 display: block;
                 background: rgba(0,0,0,.65);
                 backdrop-filter: blur(2px);
+                animation: fadeIn 0.3s ease;
             }
-            /* Reset desktop collapse class on mobile */
+            /* Reset any desktop collapse on mobile */
             body.sidebar-collapsed .app-menu {
                 width: 280px !important;
-                transform: translateX(-100%);
-            }
-            body.sidebar-collapsed.vertical-sidebar-enable .app-menu {
-                transform: translateX(0);
             }
         }
 
-        /* DESKTOP: sidebar collapses to smaller width */
-        @media (min-width: 1025px) {
-            body.sidebar-collapsed .app-menu {
-                width: 70px !important;
-            }
-            /* Hide text elements when collapsed */
-            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
-                display: none !important;
-            }
-            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm {
-                display: block !important;
-            }
-            body.sidebar-collapsed #navbar-nav .menu-title {
-                display: none;
-            }
-            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) {
-                display: none;
-            }
-            body.sidebar-collapsed .sidebar-footer-user-info,
-            body.sidebar-collapsed .sidebar-logout-btn span {
-                display: none;
-            }
-            body.sidebar-collapsed .sidebar-logout-btn {
-                justify-content: center;
-                padding: 9px;
-            }
-            body.sidebar-collapsed .sidebar-footer-user {
-                justify-content: center;
-            }
-            body.sidebar-collapsed .app-menu .nav-link {
-                justify-content: center;
-                padding: 0.625rem 0;
-                text-align: center;
-            }
-            body.sidebar-collapsed .app-menu .nav-link i {
-                margin-right: 0 !important;
-                font-size: 1.35rem;
-            }
-            body.sidebar-collapsed .app-menu .has-arrow:after {
-                display: none;
-            }
-            /* No overlay on desktop */
-            .vertical-overlay {
-                display: none !important;
-            }
-            /* Reset mobile classes on desktop */
-            body.vertical-sidebar-enable .app-menu {
-                transform: none;
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         /* =====================================================
@@ -528,6 +538,7 @@
                             </ul>
                         </div>
                     </li>
+                    <!-- Add more menu items as needed -->
                 </ul>
             </div>
         </div>
@@ -695,8 +706,8 @@
     </header>
 
     <!-- SPOTLIGHT SEARCH MODAL -->
-    <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);animation:spotlightOverlayFadeIn .25s ease forwards;">
-        <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;animation:spotlightModalBounceIn .35s cubic-bezier(.34,1.3,.64,1) forwards;">
+    <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);">
+        <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;transform:translateY(-40px) scale(0.9);opacity:0;transition:all 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);">
             <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
                 <i class="mdi mdi-magnify" style="font-size:26px;color:#4f8ef7;flex-shrink:0;"></i>
                 <input id="spotlight-input" type="text" placeholder="Search for pages, students, staff, classes…" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:18px;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
@@ -765,7 +776,7 @@
             // Mobile: toggle sidebar slide with overlay
             body.classList.toggle('vertical-sidebar-enable');
         } else {
-            // Desktop: toggle sidebar collapse (width change)
+            // Desktop: toggle sidebar collapse
             body.classList.toggle('sidebar-collapsed');
         }
     }
@@ -777,11 +788,7 @@
     }
 
     if (ham) {
-        // Remove existing listeners and add fresh one
-        const newHam = ham.cloneNode(true);
-        ham.parentNode.replaceChild(newHam, ham);
-        const freshHam = document.getElementById('topnav-hamburger-icon');
-        if (freshHam) freshHam.addEventListener('click', toggleSidebar);
+        ham.addEventListener('click', toggleSidebar);
     }
 
     if (overlay) {
@@ -800,10 +807,8 @@
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
             if (!isMobile()) {
-                // On desktop, ensure no mobile overlay classes remain
                 body.classList.remove('vertical-sidebar-enable');
             } else {
-                // On mobile, ensure no desktop collapse class remains
                 body.classList.remove('sidebar-collapsed');
             }
         }, 250);
@@ -832,6 +837,7 @@
     };
 
     const overlaySpot = document.getElementById('spotlight-overlay');
+    const spotlightBox = document.getElementById('spotlight-box');
     const input = document.getElementById('spotlight-input');
     const emptyEl = document.getElementById('spotlight-empty');
     const loadEl = document.getElementById('spotlight-loading');
@@ -844,14 +850,21 @@
     function openSpotlight() {
         if (!overlaySpot) return;
         overlaySpot.style.display = 'flex';
+        if (spotlightBox) {
+            spotlightBox.style.transform = 'translateY(0) scale(1)';
+            spotlightBox.style.opacity = '1';
+        }
         if (input) setTimeout(() => input.focus(), 100);
     }
 
     function closeSpotlight() {
-        if (overlaySpot) {
-            overlaySpot.style.animation = 'spotlightOverlayFadeOut .2s ease forwards';
-            setTimeout(() => { overlaySpot.style.display = 'none'; overlaySpot.style.animation = ''; }, 200);
+        if (spotlightBox) {
+            spotlightBox.style.transform = 'translateY(-40px) scale(0.9)';
+            spotlightBox.style.opacity = '0';
         }
+        setTimeout(() => {
+            if (overlaySpot) overlaySpot.style.display = 'none';
+        }, 200);
         if (input) input.value = '';
         if (emptyEl) emptyEl.style.display = 'block';
         if (loadEl) loadEl.style.display = 'none';
