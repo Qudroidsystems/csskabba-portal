@@ -78,7 +78,7 @@
         .modal.show  .modal-dialog { transform: translate(0,0); }
 
         /* =====================================================
-           SIDEBAR LAYOUT
+           SIDEBAR LAYOUT — flex column so footer pins to bottom
            ===================================================== */
         .app-menu {
             position: fixed;
@@ -88,26 +88,6 @@
             display: flex;
             flex-direction: column;
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Adjust main content wrapper for desktop */
-        @media (min-width: 1025px) {
-            #layout-wrapper {
-                margin-left: 250px;
-                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            body.sidebar-collapsed .app-menu {
-                width: 70px !important;
-            }
-            body.sidebar-collapsed #layout-wrapper {
-                margin-left: 70px !important;
-            }
-        }
-
-        @media (max-width: 1024.98px) {
-            #layout-wrapper {
-                margin-left: 0 !important;
-            }
         }
 
         #scrollbar {
@@ -185,45 +165,6 @@
         }
         .sidebar-logout-btn i { font-size: 17px; flex-shrink: 0; }
 
-        /* Desktop collapsed sidebar - hide text */
-        @media (min-width: 1025px) {
-            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
-                display: none !important;
-            }
-            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm {
-                display: block !important;
-            }
-            body.sidebar-collapsed #navbar-nav .menu-title {
-                display: none;
-            }
-            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) {
-                display: none;
-            }
-            body.sidebar-collapsed .sidebar-footer-user-info,
-            body.sidebar-collapsed .sidebar-logout-btn span {
-                display: none;
-            }
-            body.sidebar-collapsed .sidebar-logout-btn {
-                justify-content: center;
-                padding: 9px;
-            }
-            body.sidebar-collapsed .sidebar-footer-user {
-                justify-content: center;
-            }
-            body.sidebar-collapsed .app-menu .nav-link {
-                justify-content: center;
-                padding: 0.625rem 0;
-                text-align: center;
-            }
-            body.sidebar-collapsed .app-menu .nav-link i {
-                margin-right: 0 !important;
-                font-size: 1.35rem;
-            }
-            body.sidebar-collapsed .app-menu .has-arrow:after {
-                display: none;
-            }
-        }
-
         /* =====================================================
            SIDEBAR NAV ACTIVE STATES
            ===================================================== */
@@ -293,7 +234,7 @@
         }
 
         /* =====================================================
-           SIDEBAR BEHAVIOR - MOBILE SLIDE
+           SIDEBAR BEHAVIOR - MOBILE SLIDE + DESKTOP COLLAPSE
            ===================================================== */
         .vertical-overlay {
             position: fixed;
@@ -320,17 +261,51 @@
                 display: block;
                 background: rgba(0,0,0,.65);
                 backdrop-filter: blur(2px);
-                animation: fadeIn 0.3s ease;
-            }
-            /* Reset any desktop collapse on mobile */
-            body.sidebar-collapsed .app-menu {
-                width: 280px !important;
             }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* DESKTOP: sidebar collapses to smaller width */
+        @media (min-width: 1025px) {
+            body.sidebar-collapsed .app-menu {
+                width: 70px !important;
+            }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
+                display: none !important;
+            }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm {
+                display: block !important;
+            }
+            body.sidebar-collapsed #navbar-nav .menu-title {
+                display: none;
+            }
+            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-footer-user-info,
+            body.sidebar-collapsed .sidebar-logout-btn span {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-logout-btn {
+                justify-content: center;
+                padding: 9px;
+            }
+            body.sidebar-collapsed .sidebar-footer-user {
+                justify-content: center;
+            }
+            body.sidebar-collapsed .app-menu .nav-link {
+                justify-content: center;
+                padding: 0.625rem 0;
+            }
+            body.sidebar-collapsed .app-menu .nav-link i {
+                margin-right: 0 !important;
+                font-size: 1.35rem;
+            }
+            body.sidebar-collapsed .app-menu .has-arrow:after {
+                display: none;
+            }
+            .vertical-overlay {
+                display: none !important;
+            }
         }
 
         /* =====================================================
@@ -527,18 +502,489 @@
             <div class="container-fluid">
                 <div id="two-column-menu"></div>
                 <ul class="navbar-nav" id="navbar-nav">
+                    <!-- ========== FULL SIDEBAR MENU - RESTORED ========== -->
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+
+                    <!-- Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
                             <i class="ph-gauge"></i> <span data-key="t-dashboards">Dashboards</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarDashboards">
                             <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link">Administration Analytics</a></li>
+                                <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a></li>
+                                @can('finance dashboard')
+                                <li class="nav-item"><a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a></li>
+                                @endcan
+                                @can('academics dashboard')
+                                <li class="nav-item"><a href="index.html" class="nav-link" data-key="t-ecommerce">Academics Analytics</a></li>
+                                @endcan
                             </ul>
                         </div>
                     </li>
-                    <!-- Add more menu items as needed -->
+
+                    <!-- USERS & PRIVILEGES -->
+                    @if(auth()->user()->can('View user') || auth()->user()->can('View role') || auth()->user()->can('View user-account'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">USERS & PRIVILEDGES</span></li>
+                    @endif
+
+                    @can('View user')
+                    <li class="nav-item">
+                        <a class="nav-link menu-link collapsed" href="#sidebarusers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarusers">
+                            <i class="ph-user-circle"></i> <span data-key="t-authentication">User Managements</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarusers">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('users.index') }}" class="nav-link" data-key="t-signin">Users</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    <!-- My Account -->
+                    <li class="nav-item">
+                        <a class="nav-link menu-link collapsed" href="#sidebaraccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebaraccount">
+                            <i class="ph-address-book"></i> <span data-key="t-pages">My Account</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebaraccount">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('users.overview', ['id' => Auth::id()]) }}" class="nav-link"><i class="ri-profile-line me-2"></i> My Profile</a></li>
+                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}" class="nav-link"><i class="ri-settings-3-line me-2"></i> Account Settings</a></li>
+                                @if(Auth::user()->isStaff())
+                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#employmentInfo" class="nav-link ps-4"><i class="ri-building-line me-2"></i> Employment Details</a></li>
+                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#qualifications" class="nav-link ps-4"><i class="ri-graduation-cap-line me-2"></i> Academic Qualifications</a></li>
+                                @endif
+                                @if(Auth::user()->isStudent())
+                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#studentInfo" class="nav-link ps-4"><i class="ri-user-line me-2"></i> Student Details</a></li>
+                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#parentInfo" class="nav-link ps-4"><i class="ri-parent-line me-2"></i> Parent Information</a></li>
+                                @endif
+                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#security" class="nav-link ps-4"><i class="ri-lock-password-line me-2"></i> Change Password</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    @can('View role')
+                    <li class="nav-item">
+                        <a class="nav-link menu-link collapsed" href="#sidebarroles" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarroles">
+                            <i class="ph-address-book"></i> <span data-key="t-pages">Roles And Permissions</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarroles">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View role')<li class="nav-item"><a href="{{ route('roles.index') }}" class="nav-link">Roles</a></li>@endcan
+                                @can('View permission')<li class="nav-item"><a href="{{ route('permissions.index') }}" class="nav-link">Permissions</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    <!-- STUDENT & PARENTS -->
+                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
+                    @endif
+
+                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload'))
+                    <li class="nav-item">
+                        <a href="#sidebarStudentmanagement" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentmanagement">
+                            <i class="ph-storefront"></i> <span>Student Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarStudentmanagement">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View student')<li class="nav-item"><a href="{{ route('student.index') }}" class="nav-link">All Students</a></li>@endcan
+                                @can('Create student-bulk-upload')<li class="nav-item"><a href="{{ route('studentbatchindex') }}" class="nav-link">Batch Student Registration</a></li>@endcan
+                                @can('View id card')<li class="nav-item"><a href="{{ route('student-id-cards.index') }}" class="nav-link">ID Card Generator</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    @if(auth()->user()->can('View parent'))
+                    <li class="nav-item">
+                        <a href="#sidebarParent" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarParent">
+                            <i class="ph-storefront"></i> <span>Parent Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarParent">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('parent.index') }}" class="nav-link">All Parents</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    <!-- SUBJECT REGISTRATION -->
+                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
+                        <li class="menu-title"><i class="ph-folder-open"></i> <span>SUBJECT REGISTRATION</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarsubjectoperaton" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarsubjectoperaton">
+                                <i class="ph-folder-open"></i> <span>Subject Registration</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarsubjectoperaton">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View my-class')<li class="nav-item"><a href="{{ route('subjectoperation.index') }}" class="nav-link">Student Subject Registration</a></li>@endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <!-- EXAMS AND CBT -->
+                    @if(auth()->user()->can('View exam') || auth()->user()->can('View cbt-exam'))
+                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>EXAMS AND CBT</span></li>
+                    @endif
+
+                    @can('View exam')
+                    <li class="nav-item">
+                        <a href="#sidebarExams" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
+                            <i class="ph-graduation-cap"></i> <span>Exams Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarExams">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('exams.index') }}" class="nav-link">All Examinations</a></li>
+                                @can('View question')<li class="nav-item"><a href="{{ route('questions.all') }}" class="nav-link">Questions Management</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View cbt-exam')
+                    <li class="nav-item">
+                        <a href="#sidebarCBT" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCBT">
+                            <i class="ph-graduation-cap"></i> <span>CBT Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarCBT">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('cbt.index') }}" class="nav-link">CBT Exercise</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    <!-- TIMETABLE -->
+                    @if(auth()->user()->can('View timetable') || auth()->user()->can('View my timetable'))
+                    <li class="nav-item">
+                        <a href="#sidebartimetable" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartimetable">
+                            <i class="ph-calendar"></i> <span>Timetable Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebartimetable">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View timetable')<li class="nav-item"><a href="{{ route('timetable.index') }}" class="nav-link">Admin Timetable</a></li>@endcan
+                                @can('View my timetable')<li class="nav-item"><a href="{{ route('timetable.teacher') }}" class="nav-link">My Timetable</a></li>@endcan
+                                @can('View rooms')<li class="nav-item"><a href="{{ route('rooms.index') }}" class="nav-link">Room Management</a></li>@endcan
+                                @can('View exam timetable')<li class="nav-item"><a href="{{ route('exam-timetable.index') }}" class="nav-link">Exam Timetable</a></li>@endcan
+                                @can('View holidays')<li class="nav-item"><a href="{{ route('holidays.index') }}" class="nav-link">Holidays</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    <!-- CLASSES & RECORDS -->
+                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View my-principals-comment'))
+                        <li class="menu-title"><i class="ph-folder-open"></i> <span>CLASSES & RECORDS</span></li>
+                    @endif
+
+                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View my-principals-comment'))
+                    <li class="nav-item">
+                        <a href="#sidebarClasses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClasses">
+                            <i class="ph-folder-open"></i> <span>Classes & Subjects</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarClasses">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View my-class')<li class="nav-item"><a href="{{ route('myclass.index') }}" class="nav-link">My Class</a></li>@endcan
+                                @can('View my-subject')<li class="nav-item"><a href="{{ route('mysubject.index') }}" class="nav-link">My Subject</a></li>@endcan
+                                @can('View my-subject-vettings')<li class="nav-item"><a href="{{ route('mysubjectvettings.index') }}" class="nav-link">Subjects to Vet</a></li>@endcan
+                                @can('View my-mock-subject-vettings')<li class="nav-item"><a href="{{ route('mymocksubjectvettings.index') }}" class="nav-link">Mock Subjects to Vet</a></li>@endcan
+                                @can('View my-principals-comment')<li class="nav-item"><a href="{{ route('myprincipalscomment.index') }}" class="nav-link">Principal's Comment</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    <!-- ATTENDANCE -->
+                    @if(auth()->user()->can('View attendance-register') || auth()->user()->can('View attendance-class-summary') || auth()->user()->can('View attendance-student-report'))
+                    <li class="nav-item">
+                        <a href="#sidebarAttendance" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendance">
+                            <i class="ph-calendar-check"></i> <span>Attendance</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarAttendance">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View attendance-register')<li class="nav-item"><a href="{{ route('attendance.my-classes') }}" class="nav-link">Mark Attendance</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    <!-- RECORDS AND RESULTS -->
+                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View admin-score-entry'))
+                    <li class="nav-item">
+                        <a href="#sidebarRecords" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
+                            <i class="ph-folder-open"></i> <span>Records and Results</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarRecords">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View myresult-room')<li class="nav-item"><a href="{{ route('myresultroom.index') }}" class="nav-link">Terminal Records</a></li>@endcan
+                                @can('View student-report')<li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>@endcan
+                                @can('View student-report')<li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>@endcan
+                                @can('View student-mock-report')<li class="nav-item"><a href="{{ route('studentmockreports.index') }}" class="nav-link">Mock Result Reports</a></li>@endcan
+                                @can('View admin-score-entry')<li class="nav-item"><a href="{{ route('admin.score-entry.index') }}" class="nav-link">Admin Score Entry</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    <!-- TRANSCRIPTS -->
+                    @if(auth()->user()->can('View student-transcript') || auth()->user()->can('Preview student-transcript') || auth()->user()->can('Download student-transcript'))
+                        <li class="menu-title"><i class="ph-folder-open"></i> <span>TRANSCRIPTS</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarTranscript" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarTranscript">
+                                <i class="ri-file-text-line"></i> <span>Transcript</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarTranscript">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View student-transcript')<li class="nav-item"><a href="{{ route('transcript.index') }}" class="nav-link">Generate Transcript</a></li>@endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <!-- PROMOTION MANAGEMENT -->
+                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>PROMOTION MANAGEMENT</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarPromotions" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPromotions">
+                                <i class="ph-folder-open"></i> <span>Promotion Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPromotions">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View myresult-room')<li class="nav-item"><a href="{{ route('promotions.index') }}" class="nav-link">Student Promotion</a></li>@endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <!-- BURSARY & FINANCE -->
+                    @if(auth()->user()->can('View school-payment') || auth()->user()->can('View analysis') || auth()->user()->can('View scholarship') || auth()->user()->can('View discount') || auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') || auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>BURSARY & FINANCE</span></li>
+                    @endif
+
+                    @can('View school-payment')
+                    <li class="nav-item">
+                        <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
+                            <i class="ph-storefront"></i> <span>Student Payments</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarStudentpayments">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link">Student Bill</a></li>
+                                <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link">Payment Portal</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View analysis')
+                    <li class="nav-item">
+                        <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
+                            <i class="ph-storefront"></i> <span>Payment Analysis</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarAnalysis">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('analysis.index') }}" class="nav-link">School Payment Analysis</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View scholarship')
+                    <li class="nav-item">
+                        <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
+                            <i class="ph-graduation-cap"></i> <span>Scholarship Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarScholarship">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('admin.scholarship.index') }}" class="nav-link">All Scholarships</a></li>
+                                @can('Create scholarship')<li class="nav-item"><a href="{{ route('admin.scholarship.create') }}" class="nav-link">Create Scholarship</a></li>@endcan
+                                <li class="nav-item"><a href="{{ route('admin.scholarship.assignments') }}" class="nav-link">Scholarship Assignments</a></li>
+                                <li class="nav-item"><a href="{{ route('admin.scholarship.applications') }}" class="nav-link">Applications</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View discount')
+                    <li class="nav-item">
+                        <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
+                            <i class="ph-tag"></i> <span>Discount Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarDiscount">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('admin.discount.index') }}" class="nav-link">All Discounts</a></li>
+                                @can('Create discount')<li class="nav-item"><a href="{{ route('admin.discount.create') }}" class="nav-link">Create Discount</a></li>@endcan
+                                <li class="nav-item"><a href="{{ route('admin.discount.assignments') }}" class="nav-link">Discount Assignments</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View sibling groups')
+                    <li class="nav-item">
+                        <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
+                            <i class="ph-users"></i> <span>Sibling Groups</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarSibling">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('sibling.index') }}" class="nav-link">All Family Groups</a></li>
+                                <li class="nav-item"><a href="{{ route('sibling.create') }}" class="nav-link">Create Family Group</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('Manage payment gateways')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
+                            <i class="ph-credit-card"></i> <span>Payment Gateways</span>
+                        </a>
+                    </li>
+                    @endcan
+
+                    @can('View financial reports')
+                    <li class="nav-item">
+                        <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
+                            <i class="ph-chart-line"></i> <span>Accounting & Reports</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarAccounting">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link">Balance Sheet</a></li>
+                                <li class="nav-item"><a href="{{ route('reports.financial.income-statement') }}" class="nav-link">Income Statement</a></li>
+                                <li class="nav-item"><a href="{{ route('reports.financial.trial-balance') }}" class="nav-link">Trial Balance</a></li>
+                                <li class="nav-item"><a href="{{ route('reports.financial.cash-flow') }}" class="nav-link">Cash Flow</a></li>
+                                <li class="nav-item"><a href="{{ route('reports.financial.debtors') }}" class="nav-link">Student Debtors List</a></li>
+                                <li class="nav-item"><a href="{{ route('reports.financial.collection-summary') }}" class="nav-link">Collection Summary</a></li>
+                                <li class="nav-item"><a href="{{ route('reports.analysis.index') }}" class="nav-link">Class Analysis</a></li>
+                                <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link">School-Wide Analysis</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View payroll')
+                    <li class="nav-item">
+                        <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
+                            <i class="ph-money"></i> <span>Payroll Management</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarPayroll">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('payroll.periods') }}" class="nav-link">Payroll Periods</a></li>
+                                <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
+                                <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
+                                <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View staff payments')
+                    <li class="nav-item">
+                        <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
+                            <i class="ph-wallet"></i> <span>Staff Payments</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarStaffPayments">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('staff.payments.index') }}" class="nav-link">All Payments</a></li>
+                                <li class="nav-item"><a href="{{ route('staff.payments.dashboard') }}" class="nav-link">My Payments</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    <!-- SCHOOL BASIC SETTINGS -->
+                    @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>SCHOOL BASIC SETTINGS</span></li>
+                    @endif
+
+                    @can('View schoolinformation')
+                    <li class="nav-item">
+                        <a href="#sidebarSchoolInfo" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSchoolInfo">
+                            <i class="ph-file-text"></i> <span>School Information</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarSchoolInfo">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('school-information.index') }}" class="nav-link">School Information</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @if(auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse'))
+                    <li class="nav-item">
+                        <a href="#sidebarSession" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSession">
+                            <i class="ph-file-text"></i> <span>Session Term & House</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarSession">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View session')<li class="nav-item"><a href="{{ route('session.index') }}" class="nav-link">School Session</a></li>@endcan
+                                @can('View term')<li class="nav-item"><a href="{{ route('term.index') }}" class="nav-link">School Term</a></li>@endcan
+                                @can('View schoolhouse')<li class="nav-item"><a href="{{ route('schoolhouse.index') }}" class="nav-link">School House</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    @if(auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher'))
+                    <li class="nav-item">
+                        <a href="#sidebarClassessettings" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClassessettings">
+                            <i class="ph-file-text"></i> <span>Classes</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarClassessettings">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View school-arm')<li class="nav-item"><a href="{{ route('schoolarm.index') }}" class="nav-link">Class Arm</a></li>@endcan
+                                @can('View class-category')<li class="nav-item"><a href="{{ route('classcategories.index') }}" class="nav-link">Class Category</a></li>@endcan
+                                @can('View school-class')<li class="nav-item"><a href="{{ route('schoolclass.index') }}" class="nav-link">Class Name</a></li>@endcan
+                                @can('View class-teacher')<li class="nav-item"><a href="{{ route('classteacher.index') }}" class="nav-link">Class Teacher</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    @if(auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject'))
+                    <li class="nav-item">
+                        <a href="#sidebarSub" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
+                            <i class="ph-file-text"></i> <span>Subject</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarSub">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View subjects')<li class="nav-item"><a href="{{ route('subject.index') }}" class="nav-link">Subject</a></li>@endcan
+                                @can('View subject-teacher')<li class="nav-item"><a href="{{ route('subjectteacher.index') }}" class="nav-link">Assign Subject Teacher</a></li>@endcan
+                                @can('View subject-class')<li class="nav-item"><a href="{{ route('subjectclass.index') }}" class="nav-link">Assign Class Subject</a></li>@endcan
+                                @can('View compulsory-subject')<li class="nav-item"><a href="{{ route('compulsorysubjectclass.index') }}" class="nav-link">Assign Compulsory Subject to classes</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endif
+
+                    @can('View principals-comment')
+                    <li class="nav-item">
+                        <a href="#sidebarPrincipal" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPrincipal">
+                            <i class="ph-file-text"></i> <span>Principal's Comments</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarPrincipal">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('principalscomment.index') }}" class="nav-link">Assign Staff</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @can('View school-bills')
+                    <li class="nav-item">
+                        <a href="#sidebarBills" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarBills">
+                            <i class="ph-file-text"></i> <span>School Bills</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarBills">
+                            <ul class="nav nav-sm flex-column">
+                                @can('View school-bills')<li class="nav-item"><a href="{{ route('schoolbill.index') }}" class="nav-link">Bills</a></li>@endcan
+                                @can('View school-bill-for-term-session')<li class="nav-item"><a href="{{ route('schoolbilltermsession.index') }}" class="nav-link">Apply Bills</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
                 </ul>
             </div>
         </div>
@@ -706,8 +1152,8 @@
     </header>
 
     <!-- SPOTLIGHT SEARCH MODAL -->
-    <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);">
-        <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;transform:translateY(-40px) scale(0.9);opacity:0;transition:all 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);">
+    <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);animation:spotlightOverlayFadeIn .25s ease forwards;">
+        <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;animation:spotlightModalBounceIn .35s cubic-bezier(.34,1.3,.64,1) forwards;">
             <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
                 <i class="mdi mdi-magnify" style="font-size:26px;color:#4f8ef7;flex-shrink:0;"></i>
                 <input id="spotlight-input" type="text" placeholder="Search for pages, students, staff, classes…" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:18px;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
@@ -776,7 +1222,7 @@
             // Mobile: toggle sidebar slide with overlay
             body.classList.toggle('vertical-sidebar-enable');
         } else {
-            // Desktop: toggle sidebar collapse
+            // Desktop: toggle sidebar collapse (width change)
             body.classList.toggle('sidebar-collapsed');
         }
     }
@@ -790,7 +1236,6 @@
     if (ham) {
         ham.addEventListener('click', toggleSidebar);
     }
-
     if (overlay) {
         overlay.addEventListener('click', closeSidebarMobile);
     }
@@ -829,15 +1274,19 @@
         {title:'Student Bill', url:'{{ route("schoolpayment.index") }}', icon:'mdi-receipt', category:'Finance'},
         {title:'All Examinations', url:'{{ route("exams.index") }}', icon:'mdi-clipboard-text', category:'Exams & CBT'},
         {title:'Admin Timetable', url:'{{ route("timetable.index") }}', icon:'mdi-table-clock', category:'Timetable'},
+        {title:'School Session', url:'{{ route("session.index") }}', icon:'mdi-calendar-range', category:'School Settings'},
+        {title:'School Term', url:'{{ route("term.index") }}', icon:'mdi-calendar', category:'School Settings'},
+        {title:'My Class', url:'{{ route("myclass.index") }}', icon:'mdi-google-classroom', category:'Classes & Records'},
+        {title:'Terminal Records', url:'{{ route("myresultroom.index") }}', icon:'mdi-file-chart', category:'Records & Results'},
     ];
 
     const CAT_COLORS = {
         'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
-        'School Settings':'#6a0572','Subjects':'#e9c46a','Finance':'#10b981','Exams & CBT':'#f4a261','Timetable':'#4f8ef7'
+        'School Settings':'#6a0572','Subjects':'#e9c46a','Finance':'#10b981','Exams & CBT':'#f4a261',
+        'Timetable':'#4f8ef7','Classes & Records':'#0a9396','Records & Results':'#457b9d'
     };
 
     const overlaySpot = document.getElementById('spotlight-overlay');
-    const spotlightBox = document.getElementById('spotlight-box');
     const input = document.getElementById('spotlight-input');
     const emptyEl = document.getElementById('spotlight-empty');
     const loadEl = document.getElementById('spotlight-loading');
@@ -850,21 +1299,14 @@
     function openSpotlight() {
         if (!overlaySpot) return;
         overlaySpot.style.display = 'flex';
-        if (spotlightBox) {
-            spotlightBox.style.transform = 'translateY(0) scale(1)';
-            spotlightBox.style.opacity = '1';
-        }
         if (input) setTimeout(() => input.focus(), 100);
     }
 
     function closeSpotlight() {
-        if (spotlightBox) {
-            spotlightBox.style.transform = 'translateY(-40px) scale(0.9)';
-            spotlightBox.style.opacity = '0';
+        if (overlaySpot) {
+            overlaySpot.style.animation = 'spotlightOverlayFadeOut .2s ease forwards';
+            setTimeout(() => { overlaySpot.style.display = 'none'; overlaySpot.style.animation = ''; }, 200);
         }
-        setTimeout(() => {
-            if (overlaySpot) overlaySpot.style.display = 'none';
-        }, 200);
         if (input) input.value = '';
         if (emptyEl) emptyEl.style.display = 'block';
         if (loadEl) loadEl.style.display = 'none';
