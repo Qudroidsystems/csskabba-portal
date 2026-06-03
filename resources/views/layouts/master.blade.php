@@ -265,11 +265,31 @@
             }
         }
 
-        /* DESKTOP: sidebar collapses to smaller width */
+        /* DESKTOP: sidebar collapses to smaller width + content expands */
         @media (min-width: 1025px) {
+
+            /* Main content & topbar shift with sidebar — smooth transition */
+            .main-content {
+                margin-left: 250px;
+                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            #page-topbar {
+                left: 250px;
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* When collapsed: shrink sidebar, push content to fill the gap */
             body.sidebar-collapsed .app-menu {
                 width: 70px !important;
             }
+            body.sidebar-collapsed .main-content {
+                margin-left: 70px;
+            }
+            body.sidebar-collapsed #page-topbar {
+                left: 70px;
+            }
+
+            /* Hide text/labels in collapsed state */
             body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
                 display: none !important;
             }
