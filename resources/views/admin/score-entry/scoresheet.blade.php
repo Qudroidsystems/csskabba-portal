@@ -222,6 +222,23 @@
 #ssSaveOverlay.ss-closing  { animation: ssOverlayOut .22s ease forwards; }
 @keyframes ssOverlayOut { from { opacity:1; } to { opacity:0; } }
 
+.ss-icon-ring { position: relative; width: 56px; height: 56px; margin: 0 auto 16px; }
+.ss-arc-svg   { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ss-icon-center {
+    position: absolute; inset: 6px; border-radius: 50%;
+    background: rgba(30,58,95,0.09);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .3s ease;
+}
+.ss-modal-title { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.ss-modal-sub   { font-size: 12.5px; color: #64748b; margin-bottom: 14px; min-height: 18px; }
+.ss-progress-track { height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+.ss-progress-fill  { height: 100%; background: #1e3a5f; border-radius: 2px; width: 0%; transition: width .38s cubic-bezier(.4,0,.2,1), background .3s ease; }
+.ss-count-row  { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #94a3b8; }
+.ss-count-num  { font-variant-numeric: tabular-nums; font-weight: 600; color: #1e3a5f; }
+.ss-check-path { stroke-dasharray: 18; stroke-dashoffset: 18; transition: stroke-dashoffset .35s cubic-bezier(.4,0,.2,1) .05s; }
+.ss-check-path.drawn { stroke-dashoffset: 0; }
+
 /* Score Entry Modal */
 .score-entry-modal .modal-content {
     border-radius: 20px;
@@ -283,7 +300,7 @@
 }
 </style>
 
-{{-- ══ APPLE-STYLE SAVE MODAL ══════════════════════════════════════ --}}
+{{-- ══ APPLE-STYLE SAVE MODAL (outside main content) ══════════════ --}}
 <div id="ssSaveOverlay">
     <div id="ssSaveModal">
         <div class="ss-icon-ring" id="ssIconRing">
@@ -356,73 +373,7 @@
     </div>
 </div>
 
-{{-- ══ SCORE ENTRY MODAL ═══════════════════════════════════════════ --}}
-<div class="modal fade score-entry-modal" id="scoreEntryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="d-flex align-items-center gap-3">
-                    <img id="modalStudentAvatar" src="" alt="Student" class="student-avatar-large"
-                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-                    <div>
-                        <h5 class="modal-title" id="modalStudentName">Student Name</h5>
-                        <p class="mb-0 text-white-50" id="modalStudentAdmission">Admission No: -</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0">
-                            <div class="card-body text-center">
-                                <h6 class="text-muted mb-2">Current Scores</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="fw-bold fs-3" id="modalCurrentTotal">0.0</div>
-                                        <small class="text-muted">Total</small>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="fw-bold fs-3" id="modalCurrentGrade">-</div>
-                                        <small class="text-muted">Grade</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card bg-light border-0">
-                            <div class="card-body text-center">
-                                <h6 class="text-muted mb-2">Cumulative</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="fw-bold fs-3" id="modalCurrentCum">0.0</div>
-                                        <small class="text-muted">Cumulative</small>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="fw-bold fs-3" id="modalCurrentCumGrade">-</div>
-                                        <small class="text-muted">Grade</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <h6 class="fw-semibold mb-3"><i class="ri-edit-line me-2"></i>Assessment Scores</h6>
-                <div id="modalAssessmentsList" class="border rounded-3 overflow-hidden">
-                    <!-- Dynamic assessment inputs will appear here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveModalScores">
-                    <i class="ri-save-line me-1"></i>Save Changes
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
+{{-- ══ MAIN CONTENT ════════════════════════════════════════════════ --}}
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
@@ -909,11 +860,9 @@
                             $totalGrade = $broadsheet->grade ?? '-';
                             $cumGrade = $broadsheet->grade ?? '-';
 
-                            // Get grade colors
                             $totalGradeColor = $gradeColors[$totalGrade] ?? '#6b7280';
                             $cumGradeColor = $gradeColors[$cumGrade] ?? '#6b7280';
 
-                            // Get color classes for totals and cum
                             $totalColor = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
                             $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
 
@@ -930,7 +879,6 @@
                                 ? asset('storage/student_avatars/'.basename($broadsheet->picture))
                                 : asset('storage/student_avatars/unnamed.jpg');
 
-                            // Audit helpers
                             $enteredByName      = optional($broadsheet->enteredBy)->name ?? '-';
                             $lastModifiedByName  = optional($broadsheet->lastModifiedBy)->name ?? '-';
                             $lockedByName        = optional($broadsheet->lockedBy)->name ?? '-';
@@ -1070,23 +1018,15 @@
                             </td>
 
                             {{-- ══ AUDIT & LOCK DETAIL CELLS ══ --}}
-
-                            {{-- Submitted By --}}
                             <td class="col-submitted-by text-center audit-cell">
                                 <small>{{ $broadsheet->submiitedby ?? '-' }}</small>
                             </td>
-
-                            {{-- Vetted By --}}
                             <td class="col-vetted-by text-center audit-cell">
                                 <small>{{ $broadsheet->vettedby ?? '-' }}</small>
                             </td>
-
-                            {{-- Entered By --}}
                             <td class="col-entered-by text-center audit-cell">
                                 <small>{{ $enteredByName }}</small>
                             </td>
-
-                            {{-- Entered At --}}
                             <td class="col-entered-at text-center audit-cell">
                                 @if($broadsheet->entered_at)
                                     <small class="d-block">{{ \Carbon\Carbon::parse($broadsheet->entered_at)->format('d/m/y') }}</small>
@@ -1095,13 +1035,9 @@
                                     <small class="text-muted">-</small>
                                 @endif
                             </td>
-
-                            {{-- Last Modified By --}}
                             <td class="col-last-modified-by text-center audit-cell">
                                 <small>{{ $lastModifiedByName }}</small>
                             </td>
-
-                            {{-- Last Modified At --}}
                             <td class="col-last-modified-at text-center audit-cell">
                                 @if($broadsheet->last_modified_at)
                                     <small class="d-block">{{ \Carbon\Carbon::parse($broadsheet->last_modified_at)->format('d/m/y') }}</small>
@@ -1110,8 +1046,6 @@
                                     <small class="text-muted">-</small>
                                 @endif
                             </td>
-
-                            {{-- Entry Source --}}
                             <td class="col-entry-source text-center">
                                 @php
                                     $src = $broadsheet->entry_source ?? '';
@@ -1136,8 +1070,6 @@
                                     <small class="text-muted">-</small>
                                 @endif
                             </td>
-
-                            {{-- Is Locked --}}
                             <td class="col-is-locked text-center">
                                 @if($broadsheet->is_locked)
                                     <span class="badge bg-danger-subtle text-danger" style="font-size:10px;">
@@ -1149,13 +1081,9 @@
                                     </span>
                                 @endif
                             </td>
-
-                            {{-- Locked By --}}
                             <td class="col-locked-by text-center audit-cell">
                                 <small>{{ $broadsheet->is_locked ? $lockedByName : '-' }}</small>
                             </td>
-
-                            {{-- Locked At --}}
                             <td class="col-locked-at text-center audit-cell">
                                 @if($broadsheet->is_locked && $broadsheet->locked_at)
                                     <small class="d-block">{{ \Carbon\Carbon::parse($broadsheet->locked_at)->format('d/m/y') }}</small>
@@ -1164,8 +1092,6 @@
                                     <small class="text-muted">-</small>
                                 @endif
                             </td>
-
-                            {{-- Lock Reason --}}
                             <td class="col-lock-reason text-center audit-cell" style="max-width:150px;">
                                 @if($broadsheet->lock_reason)
                                     <small class="d-block text-truncate" style="max-width:140px;" title="{{ $broadsheet->lock_reason }}">
@@ -1175,8 +1101,6 @@
                                     <small class="text-muted">-</small>
                                 @endif
                             </td>
-
-                            {{-- Scheduled Unlock At --}}
                             <td class="col-scheduled-unlock text-center audit-cell">
                                 @if($broadsheet->scheduled_unlock_at)
                                     <small class="d-block" style="color:#d97706;">
@@ -1187,8 +1111,6 @@
                                     <small class="text-muted">-</small>
                                 @endif
                             </td>
-
-                            {{-- Unlock Scheduled By --}}
                             <td class="col-unlock-scheduled-by text-center audit-cell">
                                 <small>{{ $broadsheet->scheduled_unlock_at ? $unlockSchedByName : '-' }}</small>
                             </td>
@@ -1260,165 +1182,245 @@
         </div>
     </div></div></div>
 
-    {{-- ══ MODALS ══════════════════════════════════════════════════════ --}}
-    @if($broadsheets->isNotEmpty())
-    <div class="modal fade" id="columnVisibilityModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white"><i class="ri-eye-line me-2"></i>Column Visibility</h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        {{-- Student Info --}}
-                        <div class="col-md-3"><div class="col-group">
-                            <h6>Student Info</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-checkbox" checked><label class="form-check-label">Select</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-sn" checked><label class="form-check-label">SN</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-admissionno" checked><label class="form-check-label">Adm. No</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-name" checked><label class="form-check-label">Name</label></div>
-                        </div></div>
+</div>{{-- /.container-fluid --}}
+</div>{{-- /.page-content --}}
+</div>{{-- /.main-content --}}
 
-                        {{-- Assessments --}}
-                        @if($assessments->isNotEmpty())
-                        <div class="col-md-3"><div class="col-group">
-                            <h6>Assessments</h6>
-                            @foreach($assessments as $a)
-                            <div class="form-check">
-                                <input class="form-check-input col-toggle" type="checkbox" data-col="col-assessment-{{ $a->id }}" checked>
-                                <label class="form-check-label">{{ $a->name }}</label>
-                            </div>
-                            @endforeach
-                        </div></div>
-                        @endif
+{{-- ══════════════════════════════════════════════════════════════════
+     MODALS — placed outside .main-content to avoid stacking context
+     issues caused by transforms/filters on ancestor elements.
+     Bootstrap requires modals to be direct children of <body> (or at
+     least outside any transformed/filtered ancestor) so the backdrop
+     and positioning work correctly.
+═══════════════════════════════════════════════════════════════════════ --}}
 
-                        {{-- Scores & Metrics --}}
-                        <div class="col-md-3"><div class="col-group">
-                            <h6>Scores &amp; Metrics</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total" checked><label class="form-check-label">Total</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total-grade" checked><label class="form-check-label">Total Grade</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-bf" checked><label class="form-check-label">BF</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum" checked><label class="form-check-label">Cum</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum-grade" checked><label class="form-check-label">Cum Grade</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-avg" checked><label class="form-check-label">Class Avg</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-gpa" checked><label class="form-check-label">GPA</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cgpa" checked><label class="form-check-label">CGPA</label></div>
-                        </div></div>
-
-                        {{-- Rankings & Status --}}
-                        <div class="col-md-3"><div class="col-group">
-                            <h6>Rankings &amp; Status</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position" checked><label class="form-check-label">Class Pos (Cum)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position-total" checked><label class="form-check-label">Class Pos (Total)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position" checked><label class="form-check-label">Arm Pos (Total)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position-cum" checked><label class="form-check-label">Arm Pos (Cum)</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted" checked><label class="form-check-label">Status</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-status" checked><label class="form-check-label">Action</label></div>
-                        </div></div>
-
-                        {{-- Audit Trail --}}
-                        <div class="col-md-3"><div class="col-group">
-                            <h6><i class="ri-shield-user-line me-1 text-primary"></i>Audit Trail</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-submitted-by"><label class="form-check-label">Submitted By</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted-by"><label class="form-check-label">Vetted By</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entered-by"><label class="form-check-label">Entered By</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entered-at"><label class="form-check-label">Entered At</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-last-modified-by"><label class="form-check-label">Modified By</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-last-modified-at"><label class="form-check-label">Modified At</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entry-source"><label class="form-check-label">Entry Source</label></div>
-                        </div></div>
-
-                        {{-- Lock Detail --}}
-                        <div class="col-md-3"><div class="col-group">
-                            <h6><i class="ri-lock-line me-1 text-danger"></i>Lock Detail</h6>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-is-locked"><label class="form-check-label">Locked?</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-locked-by"><label class="form-check-label">Locked By</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-locked-at"><label class="form-check-label">Locked At</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-reason"><label class="form-check-label">Lock Reason</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-scheduled-unlock"><label class="form-check-label">Sched. Unlock At</label></div>
-                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-unlock-scheduled-by"><label class="form-check-label">Unlock Sched. By</label></div>
-                        </div></div>
-                    </div>
-
-                    {{-- Quick toggle buttons --}}
-                    <div class="d-flex gap-2 mt-3 pt-2 border-top">
-                        <button class="btn btn-sm btn-outline-primary" id="showAuditCols">
-                            <i class="ri-shield-user-line me-1"></i>Show All Audit
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" id="showLockCols">
-                            <i class="ri-lock-line me-1"></i>Show All Lock Detail
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" id="hideAuditLockCols">
-                            <i class="ri-eye-off-line me-1"></i>Hide Audit &amp; Lock
-                        </button>
+{{-- ══ SCORE ENTRY MODAL ══════════════════════════════════════════ --}}
+<div class="modal fade score-entry-modal" id="scoreEntryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <img id="modalStudentAvatar" src="" alt="Student" class="student-avatar-large"
+                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+                    <div>
+                        <h5 class="modal-title" id="modalStudentName">Student Name</h5>
+                        <p class="mb-0 text-white-50" id="modalStudentAdmission">Admission No: -</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-        </div>
-    </div>
-    @endif
-
-    <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white"><i class="ri-upload-line me-2"></i>Import Scores</h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.</div>
-                    <form method="POST" enctype="multipart/form-data" id="importForm">
-                        @csrf
-                        <input type="hidden" name="schoolclass_id" value="{{ $schoolclass->id }}">
-                        <input type="hidden" name="subjectclass_id" value="{{ $subjectclassId }}">
-                        <input type="hidden" name="staff_id" value="{{ $teacherId }}">
-                        <input type="hidden" name="term_id" value="{{ $termId }}">
-                        <input type="hidden" name="session_id" value="{{ $sessionId }}">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Excel File (.xlsx)</label>
-                            <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
-                            <small class="text-muted">Only upload files exported from this system</small>
-                        </div>
-                        <div id="importLoader" style="display:none;" class="mb-3">
-                            <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
-                                <div class="spinner-border spinner-border-sm text-success"></div>
-                                <div class="flex-grow-1">
-                                    <div style="font-size:12px;margin-bottom:3px;">Uploading...</div>
-                                    <div class="progress" style="height:5px;">
-                                        <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Current Scores</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="fw-bold fs-3" id="modalCurrentTotal">0.0</div>
+                                        <small class="text-muted">Total</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="fw-bold fs-3" id="modalCurrentGrade">-</div>
+                                        <small class="text-muted">Grade</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="importSubmit">
-                                <i class="ri-upload-line me-1"></i>Upload
-                            </button>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Cumulative</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="fw-bold fs-3" id="modalCurrentCum">0.0</div>
+                                        <small class="text-muted">Cumulative</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="fw-bold fs-3" id="modalCurrentCumGrade">-</div>
+                                        <small class="text-muted">Grade</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
+                <h6 class="fw-semibold mb-3"><i class="ri-edit-line me-2"></i>Assessment Scores</h6>
+                <div id="modalAssessmentsList" class="border rounded-3 overflow-hidden">
+                    <!-- Dynamic assessment inputs will appear here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveModalScores">
+                    <i class="ri-save-line me-1"></i>Save Changes
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header"><h5 class="modal-title">Student Photo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body text-center p-4">
-                    <img id="enlargedImage" src="" alt="Student" class="img-fluid rounded-3" style="max-height:400px;">
+{{-- ══ COLUMN VISIBILITY MODAL ════════════════════════════════════ --}}
+@if($broadsheets->isNotEmpty())
+<div class="modal fade" id="columnVisibilityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header" style="background:var(--ss-primary);">
+                <h5 class="modal-title text-white"><i class="ri-eye-line me-2"></i>Column Visibility</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    {{-- Student Info --}}
+                    <div class="col-md-3"><div class="col-group">
+                        <h6>Student Info</h6>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-checkbox" checked><label class="form-check-label">Select</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-sn" checked><label class="form-check-label">SN</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-admissionno" checked><label class="form-check-label">Adm. No</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-name" checked><label class="form-check-label">Name</label></div>
+                    </div></div>
+
+                    {{-- Assessments --}}
+                    @if($assessments->isNotEmpty())
+                    <div class="col-md-3"><div class="col-group">
+                        <h6>Assessments</h6>
+                        @foreach($assessments as $a)
+                        <div class="form-check">
+                            <input class="form-check-input col-toggle" type="checkbox" data-col="col-assessment-{{ $a->id }}" checked>
+                            <label class="form-check-label">{{ $a->name }}</label>
+                        </div>
+                        @endforeach
+                    </div></div>
+                    @endif
+
+                    {{-- Scores & Metrics --}}
+                    <div class="col-md-3"><div class="col-group">
+                        <h6>Scores &amp; Metrics</h6>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total" checked><label class="form-check-label">Total</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-total-grade" checked><label class="form-check-label">Total Grade</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-bf" checked><label class="form-check-label">BF</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum" checked><label class="form-check-label">Cum</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cum-grade" checked><label class="form-check-label">Cum Grade</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-avg" checked><label class="form-check-label">Class Avg</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-gpa" checked><label class="form-check-label">GPA</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-cgpa" checked><label class="form-check-label">CGPA</label></div>
+                    </div></div>
+
+                    {{-- Rankings & Status --}}
+                    <div class="col-md-3"><div class="col-group">
+                        <h6>Rankings &amp; Status</h6>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position" checked><label class="form-check-label">Class Pos (Cum)</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-position-total" checked><label class="form-check-label">Class Pos (Total)</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position" checked><label class="form-check-label">Arm Pos (Total)</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-arm-position-cum" checked><label class="form-check-label">Arm Pos (Cum)</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted" checked><label class="form-check-label">Status</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-status" checked><label class="form-check-label">Action</label></div>
+                    </div></div>
+
+                    {{-- Audit Trail --}}
+                    <div class="col-md-3"><div class="col-group">
+                        <h6><i class="ri-shield-user-line me-1 text-primary"></i>Audit Trail</h6>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-submitted-by"><label class="form-check-label">Submitted By</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-vetted-by"><label class="form-check-label">Vetted By</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entered-by"><label class="form-check-label">Entered By</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entered-at"><label class="form-check-label">Entered At</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-last-modified-by"><label class="form-check-label">Modified By</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-last-modified-at"><label class="form-check-label">Modified At</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-entry-source"><label class="form-check-label">Entry Source</label></div>
+                    </div></div>
+
+                    {{-- Lock Detail --}}
+                    <div class="col-md-3"><div class="col-group">
+                        <h6><i class="ri-lock-line me-1 text-danger"></i>Lock Detail</h6>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-is-locked"><label class="form-check-label">Locked?</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-locked-by"><label class="form-check-label">Locked By</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-locked-at"><label class="form-check-label">Locked At</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-lock-reason"><label class="form-check-label">Lock Reason</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-scheduled-unlock"><label class="form-check-label">Sched. Unlock At</label></div>
+                        <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" data-col="col-unlock-scheduled-by"><label class="form-check-label">Unlock Sched. By</label></div>
+                    </div></div>
                 </div>
+
+                {{-- Quick toggle buttons --}}
+                <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                    <button class="btn btn-sm btn-outline-primary" id="showAuditCols">
+                        <i class="ri-shield-user-line me-1"></i>Show All Audit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="showLockCols">
+                        <i class="ri-lock-line me-1"></i>Show All Lock Detail
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="hideAuditLockCols">
+                        <i class="ri-eye-off-line me-1"></i>Hide Audit &amp; Lock
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
+</div>
+@endif
 
-</div></div></div>
+{{-- ══ IMPORT MODAL ════════════════════════════════════════════════ --}}
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header" style="background:var(--ss-primary);">
+                <h5 class="modal-title text-white"><i class="ri-upload-line me-2"></i>Import Scores</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info"><i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.</div>
+                <form method="POST" enctype="multipart/form-data" id="importForm">
+                    @csrf
+                    <input type="hidden" name="schoolclass_id" value="{{ $schoolclass->id }}">
+                    <input type="hidden" name="subjectclass_id" value="{{ $subjectclassId }}">
+                    <input type="hidden" name="staff_id" value="{{ $teacherId }}">
+                    <input type="hidden" name="term_id" value="{{ $termId }}">
+                    <input type="hidden" name="session_id" value="{{ $sessionId }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Excel File (.xlsx)</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                        <small class="text-muted">Only upload files exported from this system</small>
+                    </div>
+                    <div id="importLoader" style="display:none;" class="mb-3">
+                        <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
+                            <div class="spinner-border spinner-border-sm text-success"></div>
+                            <div class="flex-grow-1">
+                                <div style="font-size:12px;margin-bottom:3px;">Uploading...</div>
+                                <div class="progress" style="height:5px;">
+                                    <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="importSubmit">
+                            <i class="ri-upload-line me-1"></i>Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
+{{-- ══ IMAGE VIEW MODAL ════════════════════════════════════════════ --}}
+<div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header"><h5 class="modal-title">Student Photo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body text-center p-4">
+                <img id="enlargedImage" src="" alt="Student" class="img-fluid rounded-3" style="max-height:400px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ══ JAVASCRIPT ══════════════════════════════════════════════════ --}}
 <script>
 // CSRF Token
 const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
@@ -2101,7 +2103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Init grade colors on existing rows
     document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => updateRowGrades(row));
 
-    // Default: hide audit & lock detail columns (they are opt-in via the Columns modal)
+    // Default: hide audit & lock detail columns (opt-in via Columns modal)
     const auditLockCols = [
         'col-submitted-by','col-vetted-by','col-entered-by','col-entered-at',
         'col-last-modified-by','col-last-modified-at','col-entry-source',
@@ -2378,7 +2380,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function tipShow(inp) {
         clearTimeout(tipHideTimer);
         tipInput = inp;
-        tip.style.position = 'absolute';
+        tip.style.position = 'fixed';
         tip.style.display = 'block';
         tipRefresh(inp);
         requestAnimationFrame(() => { tip.style.opacity = '1'; });
