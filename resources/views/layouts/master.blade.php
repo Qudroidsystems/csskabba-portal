@@ -254,11 +254,12 @@
                 width: 280px;
             }
             body.vertical-sidebar-enable .app-menu {
-                transform: translateX(0);
+                transform: translateX(0) !important;
                 box-shadow: 4px 0 24px rgba(0,0,0,.35);
             }
+            /* FIX: overlay must respond to body class */
             body.vertical-sidebar-enable .vertical-overlay {
-                display: block;
+                display: block !important;
                 background: rgba(0,0,0,.65);
                 backdrop-filter: blur(2px);
             }
@@ -502,7 +503,7 @@
             <div class="container-fluid">
                 <div id="two-column-menu"></div>
                 <ul class="navbar-nav" id="navbar-nav">
-                    <!-- ========== FULL SIDEBAR MENU - RESTORED ========== -->
+                    <!-- ========== FULL SIDEBAR MENU ========== -->
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
                     <!-- Dashboard -->
@@ -608,7 +609,7 @@
                             </ul>
                         </div>
                     </li>
-                    @endcan
+                    @endif
 
                     <!-- SUBJECT REGISTRATION -->
                     @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
@@ -793,7 +794,7 @@
 
                     @can('View scholarship')
                     <li class="nav-item">
-                        <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
+                        <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-controls="sidebarScholarship">
                             <i class="ph-graduation-cap"></i> <span>Scholarship Management</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarScholarship">
@@ -1212,29 +1213,31 @@
     const body = document.body;
 
     function isMobile() {
-        return window.innerWidth <= 1024;
+        // Matches CSS breakpoint: @media (max-width: 1024.98px)
+        return window.innerWidth < 1025;
     }
 
     function toggleSidebar(e) {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation(); // prevents layout.js/app.js from double-handling
+        }
 
         if (isMobile()) {
-            // Mobile: toggle sidebar slide with overlay
             body.classList.toggle('vertical-sidebar-enable');
         } else {
-            // Desktop: toggle sidebar collapse (width change)
             body.classList.toggle('sidebar-collapsed');
         }
     }
 
     function closeSidebarMobile() {
-        if (isMobile()) {
-            body.classList.remove('vertical-sidebar-enable');
-        }
+        body.classList.remove('vertical-sidebar-enable');
     }
 
     if (ham) {
-        ham.addEventListener('click', toggleSidebar);
+        // Use capture phase (true) so our handler fires BEFORE layout.js bubble-phase listeners
+        ham.addEventListener('click', toggleSidebar, true);
     }
     if (overlay) {
         overlay.addEventListener('click', closeSidebarMobile);
@@ -1246,7 +1249,6 @@
         }
     });
 
-    // Handle window resize - reset states appropriately
     let resizeTimer;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimer);
