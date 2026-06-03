@@ -25,13 +25,13 @@
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css">
     <link href="{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.woff2') }}?v=6.5.95" rel="stylesheet" type="font/woff2">
 
-    <!-- Layout CSS -->
+    <!-- Layout CSS — load BEFORE layout.js -->
     <link href="{{ asset('theme/layouts/assets/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/icons.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/app.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/custom.min.css') }}" rel="stylesheet">
 
-    <!-- layout.js -->
+    <!-- layout.js must run AFTER the CSS above -->
     <script src="{{ asset('theme/layouts/assets/js/layout.js') }}"></script>
 
     <!-- NProgress -->
@@ -41,7 +41,7 @@
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    <!-- jQuery -->
+    <!-- jQuery (needed by Select2 and some page scripts) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -78,7 +78,7 @@
         .modal.show  .modal-dialog { transform: translate(0,0); }
 
         /* =====================================================
-           SIDEBAR LAYOUT
+           SIDEBAR LAYOUT — flex column so footer pins to bottom
            ===================================================== */
         .app-menu {
             position: fixed;
@@ -107,7 +107,9 @@
         .navbar-menu .container-fluid { padding: 0; }
         #navbar-nav { padding-bottom: 8px; }
 
-        /* SIDEBAR FOOTER */
+        /* =====================================================
+           SIDEBAR LOGOUT FOOTER
+           ===================================================== */
         .sidebar-footer {
             flex-shrink: 0;
             border-top: 1px solid rgba(255,255,255,.1);
@@ -163,7 +165,9 @@
         }
         .sidebar-logout-btn i { font-size: 17px; flex-shrink: 0; }
 
-        /* SIDEBAR NAV ACTIVE STATES */
+        /* =====================================================
+           SIDEBAR NAV ACTIVE STATES
+           ===================================================== */
         #navbar-nav .menu-dropdown { overflow: hidden; }
         #navbar-nav .nav-link.menu-link .ri-arrow-down-s-line { transition: transform .25s ease; display: inline-block; }
         #navbar-nav .nav-link.menu-link[aria-expanded="true"] .ri-arrow-down-s-line { transform: rotate(180deg); }
@@ -187,7 +191,9 @@
         }
         @keyframes dotPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
 
-        /* HOVER + RIPPLE */
+        /* =====================================================
+           SIDEBAR HOVER TRANSITIONS + RIPPLE
+           ===================================================== */
         #navbar-nav .nav-link { position: relative; overflow: hidden; transition: color .18s, background-color .18s, padding-left .18s; }
         .nav-ripple {
             position: absolute; border-radius: 50%;
@@ -197,20 +203,27 @@
         }
         @keyframes ripple-anim { to{transform:scale(5);opacity:0} }
 
-        /* BACK TO TOP */
+        /* =====================================================
+           BACK TO TOP
+           ===================================================== */
         #back-to-top { opacity:0; visibility:hidden; transform:translateY(12px); transition:opacity .3s,transform .3s,visibility .3s; }
         #back-to-top.show { opacity:1; visibility:visible; transform:translateY(0); }
         #back-to-top:hover { transform:translateY(-3px) !important; }
 
-        /* PAGE FADE-IN */
+        /* =====================================================
+           PAGE FADE-IN
+           ===================================================== */
         .page-content { animation: pageFadeIn .35s ease; }
         @keyframes pageFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 
-        /* TOPBAR */
+        /* =====================================================
+           TOPBAR
+           ===================================================== */
         #page-topbar .header-item { transition: color .2s ease, background-color .2s ease; }
         .header-profile-user-enhanced { transition: transform .25s ease, box-shadow .25s ease; }
         .header-profile-user-enhanced:hover { transform: scale(1.07); box-shadow: 0 0 0 3px rgba(79,142,247,.35) !important; }
 
+        /* TOPBAR USER DROPDOWN */
         .topbar-user .dropdown-menu {
             min-width: 220px;
             z-index: 9999 !important;
@@ -220,7 +233,9 @@
             box-shadow: 0 8px 32px rgba(0,0,0,.18);
         }
 
-        /* MOBILE + DESKTOP SIDEBAR BEHAVIOR */
+        /* =====================================================
+           SIDEBAR BEHAVIOR - MOBILE SLIDE + DESKTOP COLLAPSE
+           ===================================================== */
         .vertical-overlay {
             position: fixed;
             inset: 0;
@@ -230,6 +245,7 @@
             transition: background 0.3s ease;
         }
 
+        /* MOBILE: sidebar slides in/out with transform */
         @media (max-width: 1024.98px) {
             .app-menu {
                 transform: translateX(-100%);
@@ -248,6 +264,7 @@
             }
         }
 
+        /* DESKTOP: sidebar collapses to smaller width */
         @media (min-width: 1025px) {
             body.sidebar-collapsed .app-menu {
                 width: 70px !important;
@@ -291,38 +308,105 @@
             }
         }
 
+        /* =====================================================
+           SEARCH TRIGGER - RESPONSIVE
+           ===================================================== */
         @media (max-width: 767.98px) {
-            .desktop-search-only { display: none !important; }
+            .desktop-search-only {
+                display: none !important;
+            }
         }
         @media (min-width: 768px) {
-            .mobile-search-only { display: none !important; }
+            .mobile-search-only {
+                display: none !important;
+            }
         }
 
-        /* SPOTLIGHT */
+        /* =====================================================
+           SPOTLIGHT SEARCH STYLES
+           ===================================================== */
         .typing-dot {
             display: inline-block;
             animation: typingDot 1.4s infinite ease-in-out;
         }
         .typing-dot:nth-child(2) { animation-delay: .2s; }
         .typing-dot:nth-child(3) { animation-delay: .4s; }
+
         @keyframes typingDot {
             0%, 60%, 100% { transform: translateY(0); opacity: .5; }
             30% { transform: translateY(-4px); opacity: 1; }
         }
-        @keyframes loadingSpin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+
+        @keyframes loadingSpin {
+            0% { transform: rotate(0); }
+            100% { transform: rotate(360deg); }
+        }
 
         .spotlight-result-item {
             animation: resultBounceIn 0.35s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
             opacity: 0;
         }
+
         @keyframes resultBounceIn {
             0% { opacity: 0; transform: translateX(-20px) scale(0.95); }
             60% { opacity: 0.8; transform: translateX(4px) scale(1.02); }
             100% { opacity: 1; transform: translateX(0) scale(1); }
         }
+
+        .search-tooltip {
+            position: absolute;
+            bottom: -35px;
+            left: 0;
+            background: rgba(0,0,0,.85);
+            color: #fff;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity .2s;
+            pointer-events: none;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Finance module cards */
+        .finance-stat-card { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius: 12px; padding: 20px; color: white; transition: transform .3s,box-shadow .3s; }
+        .finance-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(102,126,234,.35); }
+        .payment-progress { height: 8px; border-radius: 4px; background: #e2e8f0; }
+        .payment-progress-bar { height: 100%; border-radius: 4px; transition: width .4s ease; }
+        .scholarship-card { border-left: 4px solid #10b981; transition: transform .2s,box-shadow .2s; }
+        .scholarship-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+        .payroll-table th { background: #1e293b; color: white; }
+        .card { transition: box-shadow .25s, transform .25s; }
+        .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+        .btn  { transition: transform .15s, box-shadow .15s; }
+        .btn:active { transform: scale(.97); }
+        #navbar-nav > li { animation: navItemFadeIn .4s ease both; }
+        #navbar-nav > li:nth-child(1)  { animation-delay:.02s }
+        #navbar-nav > li:nth-child(2)  { animation-delay:.04s }
+        #navbar-nav > li:nth-child(3)  { animation-delay:.06s }
+        #navbar-nav > li:nth-child(4)  { animation-delay:.08s }
+        #navbar-nav > li:nth-child(5)  { animation-delay:.10s }
+        #navbar-nav > li:nth-child(6)  { animation-delay:.12s }
+        #navbar-nav > li:nth-child(7)  { animation-delay:.14s }
+        #navbar-nav > li:nth-child(8)  { animation-delay:.16s }
+        #navbar-nav > li:nth-child(9)  { animation-delay:.18s }
+        #navbar-nav > li:nth-child(10) { animation-delay:.20s }
+        #navbar-nav > li:nth-child(11) { animation-delay:.22s }
+        #navbar-nav > li:nth-child(12) { animation-delay:.24s }
+        #navbar-nav > li:nth-child(n+13) { animation-delay:.26s }
+        @keyframes navItemFadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+        .dropdown-menu { animation: dropdownFadeIn .25s cubic-bezier(.4,0,.2,1); transform-origin: top right; }
+        @keyframes dropdownFadeIn { from{opacity:0;transform:translateY(-10px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @media print { .no-print{display:none!important} body{padding:0;margin:0} }
+        @keyframes spotlightOverlayFadeIn  { from{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} to{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} }
+        @keyframes spotlightOverlayFadeOut { from{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} to{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} }
+        @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 40%{opacity:.8;transform:translateY(8px) scale(1.02)} 70%{opacity:.95;transform:translateY(-3px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes spotlightModalFadeOut   { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-20px) scale(.95)} }
     </style>
 
-    <!-- Route-specific CSS -->
+    <!-- Route-specific CSS includes -->
     @if (Route::is('dashboard'))              @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('users.*'))                @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('student-id-cards.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
@@ -391,7 +475,7 @@
 <body>
 <div id="layout-wrapper">
 
-    <!-- SIDEBAR -->
+    <!-- ========== SIDEBAR ========== -->
     <div class="app-menu navbar-menu">
         <div class="navbar-brand-box">
             @php
@@ -418,6 +502,7 @@
             <div class="container-fluid">
                 <div id="two-column-menu"></div>
                 <ul class="navbar-nav" id="navbar-nav">
+                    <!-- ========== FULL SIDEBAR MENU - RESTORED ========== -->
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
                     <!-- Dashboard -->
@@ -428,6 +513,12 @@
                         <div class="collapse menu-dropdown" id="sidebarDashboards">
                             <ul class="nav nav-sm flex-column">
                                 <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a></li>
+                                @can('finance dashboard')
+                                <li class="nav-item"><a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a></li>
+                                @endcan
+                                @can('academics dashboard')
+                                <li class="nav-item"><a href="index.html" class="nav-link" data-key="t-ecommerce">Academics Analytics</a></li>
+                                @endcan
                             </ul>
                         </div>
                     </li>
@@ -484,7 +575,7 @@
                             </ul>
                         </div>
                     </li>
-                    @endcan>
+                    @endcan
 
                     <!-- STUDENT & PARENTS -->
                     @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
@@ -517,7 +608,7 @@
                             </ul>
                         </div>
                     </li>
-                    @endcan>
+                    @endcan
 
                     <!-- SUBJECT REGISTRATION -->
                     @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
@@ -945,7 +1036,7 @@
 
     <div class="vertical-overlay" id="vertical-overlay"></div>
 
-    <!-- TOPBAR -->
+    <!-- ========== TOPBAR ========== -->
     <header id="page-topbar">
         <div class="layout-width">
             <div class="navbar-header">
@@ -971,9 +1062,10 @@
                             <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
                             <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">K</kbd></div>
                         </button>
+                        <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
                     </div>
 
-                    <!-- Mobile Search -->
+                    <!-- Mobile Search Button -->
                     <div class="d-md-none search-trigger-wrapper mobile-search-only">
                         <button type="button" id="spotlight-trigger-mobile" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;cursor:pointer;">
                             <i class="mdi mdi-magnify" style="font-size:18px;opacity:.7;"></i>
@@ -982,12 +1074,21 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-1">
-                    <!-- Theme Toggle & User Dropdown (kept as original) -->
                     <div class="position-relative" id="theme-toggle-wrapper">
                         <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;"><i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i></button>
+                        <div id="theme-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:170px;background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;overflow:hidden;padding:6px;">
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light"><i class="bi bi-sun"></i> Light</a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark"><i class="bi bi-moon"></i> Dark</a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto"><i class="bi bi-moon-stars"></i> Auto</a>
+                        </div>
                     </div>
 
                     @php
+                        use App\Models\User as UserModel;
+                        use App\Models\Student;
+                        use Illuminate\Support\Facades\Storage;
+                        use Illuminate\Support\Facades\Auth;
+
                         $userdata  = Auth::user();
                         $isStudent = $userdata->hasRole('student');
                         $fullName  = $userdata->name ?? 'User';
@@ -995,7 +1096,7 @@
                         $srcPath   = null;
 
                         if ($isStudent) {
-                            $student = \App\Models\Student::where('id', $userdata->student_id)->first();
+                            $student = Student::where('id', $userdata->student_id)->first();
                             $studentPicture = $student?->picture;
                             if ($studentPicture) {
                                 $basename = basename($studentPicture);
@@ -1009,6 +1110,7 @@
                                     $srcPath = asset('storage/staff_avatars/' . $basename);
                             }
                         }
+
                         $userRoles = $userdata->roles->pluck('name');
                     @endphp
 
@@ -1026,6 +1128,23 @@
                                 <span class="d-none d-xl-flex flex-column align-items-start ms-1"><span class="fw-medium" style="font-size:13px;">{{ $userdata->name }}</span></span>
                             </span>
                         </button>
+                        <div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:var(--vz-dropdown-bg,#fff);border-radius:12px;z-index:9999;">
+                            <div class="dropdown-header"><h6 class="mb-0">Welcome back!</h6><small class="text-muted">{{ $userdata->name }}</small></div>
+                            <div class="dropdown-divider"></div>
+                            <div class="px-3 py-2">
+                                <div class="small text-muted mb-2 text-uppercase" style="font-size:10px;">Your Roles</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($userRoles as $roleName)
+                                        <span style="display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#405189;">{{ $roleName }}</span>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            @if(!$isStudent)<a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>@endif
+                            <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog me-2"></i>Account Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf<a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"><i class="mdi mdi-logout me-2"></i>Logout</a></form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1034,7 +1153,33 @@
 
     <!-- SPOTLIGHT SEARCH MODAL -->
     <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);animation:spotlightOverlayFadeIn .25s ease forwards;">
-        <!-- ... (spotlight content remains as in your original file) ... -->
+        <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;animation:spotlightModalBounceIn .35s cubic-bezier(.34,1.3,.64,1) forwards;">
+            <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
+                <i class="mdi mdi-magnify" style="font-size:26px;color:#4f8ef7;flex-shrink:0;"></i>
+                <input id="spotlight-input" type="text" placeholder="Search for pages, students, staff, classes…" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:18px;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
+                <div style="display:flex;gap:8px;">
+                    <button id="spotlight-clear-history" style="background:rgba(255,255,255,.08);border:none;border-radius:10px;padding:6px 12px;color:rgba(255,255,255,.6);font-size:12px;font-weight:500;cursor:pointer;">Clear History</button>
+                    <kbd id="spotlight-esc" style="font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);cursor:pointer;">ESC</kbd>
+                </div>
+            </div>
+            <div id="spotlight-results" style="max-height:520px;overflow-y:auto;padding:12px 0;">
+                <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,.35);">
+                    <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4;"></i>
+                    <span style="font-size:15px;">Start typing to search…</span>
+                </div>
+                <ul id="spotlight-list" style="list-style:none;margin:0;padding:0;display:none;"></ul>
+                <div id="spotlight-loading" style="display:none;padding:48px;text-align:center;">
+                    <div style="display:inline-block;width:32px;height:32px;border:2px solid rgba(255,255,255,.15);border-top-color:#4f8ef7;border-radius:50%;animation:loadingSpin .7s linear infinite;"></div>
+                    <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,.45);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
+                </div>
+            </div>
+            <div style="padding:14px 24px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:24px;font-size:12px;color:rgba(255,255,255,.35);flex-wrap:wrap;">
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">⌘K</kbd> / <kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">Ctrl+K</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↑↓</kbd> navigate</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↵</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">ESC</kbd> close</span>
+            </div>
+        </div>
     </div>
 
     @yield('content')
@@ -1055,12 +1200,14 @@
 <script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<!-- FIXED MOBILE SIDEBAR SCRIPT -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function() {
     'use strict';
 
-    const hamburger = document.getElementById('topnav-hamburger-icon');
+    // =====================================================
+    // SIDEBAR TOGGLE - Mobile (slide) + Desktop (collapse)
+    // =====================================================
+    const ham = document.getElementById('topnav-hamburger-icon');
     const overlay = document.getElementById('vertical-overlay');
     const body = document.body;
 
@@ -1068,57 +1215,194 @@ document.addEventListener('DOMContentLoaded', function () {
         return window.innerWidth <= 1024;
     }
 
-    function toggleSidebar() {
+    function toggleSidebar(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+
         if (isMobile()) {
+            // Mobile: toggle sidebar slide with overlay
             body.classList.toggle('vertical-sidebar-enable');
         } else {
+            // Desktop: toggle sidebar collapse (width change)
             body.classList.toggle('sidebar-collapsed');
         }
     }
 
-    function closeMobileSidebar() {
+    function closeSidebarMobile() {
         if (isMobile()) {
             body.classList.remove('vertical-sidebar-enable');
         }
     }
 
-    if (hamburger) {
-        hamburger.addEventListener('click', function (e) {
-            e.stopImmediatePropagation();
-            toggleSidebar();
-        });
+    if (ham) {
+        ham.addEventListener('click', toggleSidebar);
     }
-
     if (overlay) {
-        overlay.addEventListener('click', closeMobileSidebar);
+        overlay.addEventListener('click', closeSidebarMobile);
     }
 
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && body.classList.contains('vertical-sidebar-enable')) {
-            closeMobileSidebar();
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isMobile() && body.classList.contains('vertical-sidebar-enable')) {
+            closeSidebarMobile();
         }
     });
 
+    // Handle window resize - reset states appropriately
     let resizeTimer;
-    window.addEventListener('resize', function () {
+    window.addEventListener('resize', function() {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
+        resizeTimer = setTimeout(function() {
             if (!isMobile()) {
                 body.classList.remove('vertical-sidebar-enable');
             } else {
                 body.classList.remove('sidebar-collapsed');
             }
-        }, 200);
+        }, 250);
     });
 
-    document.querySelectorAll('#navbar-nav .nav-link').forEach(link => {
-        link.addEventListener('click', function () {
-            if (isMobile()) {
-                setTimeout(closeMobileSidebar, 250);
-            }
+    // =====================================================
+    // SPOTLIGHT SEARCH
+    // =====================================================
+    const STATIC_PAGES = [
+        {title:'Administration Dashboard', url:'{{ route("dashboard") }}', icon:'mdi-gauge', category:'Dashboards'},
+        {title:'User Management', url:'{{ route("users.index") }}', icon:'mdi-account-group', category:'Users & Privileges'},
+        {title:'Roles & Permissions', url:'{{ route("roles.index") }}', icon:'mdi-shield-account', category:'Users & Privileges'},
+        {title:'All Students', url:'{{ route("student.index") }}', icon:'mdi-school', category:'Students'},
+        {title:'My Profile', url:'{{ route("users.overview", ["id" => Auth::id()]) }}', icon:'mdi-account-circle', category:'My Account'},
+        {title:'Account Settings', url:'{{ route("profile.settings", ["id" => Auth::id()]) }}', icon:'mdi-cog', category:'My Account'},
+        {title:'School Information', url:'{{ route("school-information.index") }}', icon:'mdi-domain', category:'School Settings'},
+        {title:'Subjects', url:'{{ route("subject.index") }}', icon:'mdi-book-open-variant', category:'Subjects'},
+        {title:'Student Bill', url:'{{ route("schoolpayment.index") }}', icon:'mdi-receipt', category:'Finance'},
+        {title:'All Examinations', url:'{{ route("exams.index") }}', icon:'mdi-clipboard-text', category:'Exams & CBT'},
+        {title:'Admin Timetable', url:'{{ route("timetable.index") }}', icon:'mdi-table-clock', category:'Timetable'},
+        {title:'School Session', url:'{{ route("session.index") }}', icon:'mdi-calendar-range', category:'School Settings'},
+        {title:'School Term', url:'{{ route("term.index") }}', icon:'mdi-calendar', category:'School Settings'},
+        {title:'My Class', url:'{{ route("myclass.index") }}', icon:'mdi-google-classroom', category:'Classes & Records'},
+        {title:'Terminal Records', url:'{{ route("myresultroom.index") }}', icon:'mdi-file-chart', category:'Records & Results'},
+    ];
+
+    const CAT_COLORS = {
+        'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
+        'School Settings':'#6a0572','Subjects':'#e9c46a','Finance':'#10b981','Exams & CBT':'#f4a261',
+        'Timetable':'#4f8ef7','Classes & Records':'#0a9396','Records & Results':'#457b9d'
+    };
+
+    const overlaySpot = document.getElementById('spotlight-overlay');
+    const input = document.getElementById('spotlight-input');
+    const emptyEl = document.getElementById('spotlight-empty');
+    const loadEl = document.getElementById('spotlight-loading');
+    const list = document.getElementById('spotlight-list');
+    const triggerDesktop = document.getElementById('spotlight-trigger');
+    const triggerMobile = document.getElementById('spotlight-trigger-mobile');
+    const escBtn = document.getElementById('spotlight-esc');
+    const clearMain = document.getElementById('spotlight-clear-history');
+
+    function openSpotlight() {
+        if (!overlaySpot) return;
+        overlaySpot.style.display = 'flex';
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeSpotlight() {
+        if (overlaySpot) {
+            overlaySpot.style.animation = 'spotlightOverlayFadeOut .2s ease forwards';
+            setTimeout(() => { overlaySpot.style.display = 'none'; overlaySpot.style.animation = ''; }, 200);
+        }
+        if (input) input.value = '';
+        if (emptyEl) emptyEl.style.display = 'block';
+        if (loadEl) loadEl.style.display = 'none';
+        if (list) { list.style.display = 'none'; list.innerHTML = ''; }
+    }
+
+    function performSearch(query) {
+        if (!query || !query.trim()) {
+            if (emptyEl) emptyEl.style.display = 'block';
+            return;
+        }
+        if (loadEl) loadEl.style.display = 'block';
+        if (emptyEl) emptyEl.style.display = 'none';
+        if (list) list.style.display = 'none';
+
+        const results = STATIC_PAGES.filter(p =>
+            p.title.toLowerCase().includes(query.toLowerCase()) ||
+            p.category.toLowerCase().includes(query.toLowerCase())
+        ).slice(0,15);
+
+        if (loadEl) loadEl.style.display = 'none';
+        if (list) { list.innerHTML = ''; list.style.display = 'block'; }
+
+        if (results.length === 0) {
+            if (emptyEl) { emptyEl.innerHTML = '<i class="mdi mdi-magnify-close" style="font-size:42px;display:block;margin-bottom:16px;opacity:.4;"></i><span style="font-size:15px;">No results for "' + query + '"</span>'; emptyEl.style.display = 'block'; }
+            return;
+        }
+
+        results.forEach((r) => {
+            const li = document.createElement('li');
+            li.className = 'spotlight-result-item';
+            li.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
+            const c = CAT_COLORS[r.category] || '#4f8ef7';
+            li.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${r.icon || 'mdi-chevron-right'} mdi" style="font-size:18px;color:${c};"></i></span>
+                <span style="flex:1;min-width:0;"><span style="display:block;font-size:15px;font-weight:500;color:#fff;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">${r.category}</span></span>
+                <i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);flex-shrink:0;"></i>`;
+            li.addEventListener('click', () => { window.location.href = r.url; });
+            list.appendChild(li);
         });
+    }
+
+    if (triggerDesktop) triggerDesktop.addEventListener('click', openSpotlight);
+    if (triggerMobile) triggerMobile.addEventListener('click', openSpotlight);
+    if (escBtn) escBtn.addEventListener('click', closeSpotlight);
+    if (clearMain) clearMain.addEventListener('click', closeSpotlight);
+    if (overlaySpot) overlaySpot.addEventListener('click', (e) => { if (e.target === overlaySpot) closeSpotlight(); });
+
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            overlaySpot && overlaySpot.style.display === 'flex' ? closeSpotlight() : openSpotlight();
+        }
+        if (e.key === 'Escape' && overlaySpot && overlaySpot.style.display === 'flex') closeSpotlight();
     });
-});
+
+    if (input) {
+        input.addEventListener('input', () => { performSearch(input.value.trim()); });
+    }
+
+    // =====================================================
+    // MANUAL DROPDOWNS & THEME
+    // =====================================================
+    function makeDropdown(btnId, panelId) {
+        const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+        if (!btn || !panel) return;
+        const open = () => { panel.style.display = 'block'; btn.setAttribute('aria-expanded', 'true'); };
+        const close = () => { panel.style.display = 'none'; btn.setAttribute('aria-expanded', 'false'); };
+        btn.addEventListener('click', (e) => { e.stopPropagation(); panel.style.display === 'none' ? open() : close(); });
+        document.addEventListener('click', (e) => { if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    }
+    makeDropdown('theme-toggle-btn', 'theme-dropdown');
+    makeDropdown('user-menu-btn', 'user-dropdown');
+
+    function initTheme() {
+        const html = document.documentElement;
+        const iconEl = document.getElementById('theme-icon');
+        const applyMode = (mode) => {
+            const scheme = mode === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode;
+            html.setAttribute('data-bs-theme', scheme);
+            html.setAttribute('data-topbar', scheme === 'dark' ? 'dark' : 'light');
+            if (iconEl) iconEl.className = mode === 'light' ? 'bi bi-sun align-middle fs-3xl' : (mode === 'dark' ? 'bi bi-moon align-middle fs-3xl' : 'bi bi-moon-stars align-middle fs-3xl');
+            localStorage.setItem('app-theme', mode);
+        };
+        applyMode(localStorage.getItem('app-theme') || 'light');
+        document.querySelectorAll('.theme-mode-item').forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); applyMode(a.getAttribute('data-mode')); }));
+    }
+    initTheme();
+
+    // Back to top
+    const backBtn = document.getElementById('back-to-top');
+    if (backBtn) {
+        window.addEventListener('scroll', () => backBtn.classList.toggle('show', window.scrollY > 300));
+        backBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+})();
 </script>
 </body>
 </html>
