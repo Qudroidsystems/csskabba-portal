@@ -87,11 +87,14 @@
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            /* ensure sidebar is off-screen on mobile by default (theme handles transform) */
         }
         #scrollbar {
             flex: 1;
             overflow-y: auto;
             scrollbar-width: thin;
+            /* push scrollbar down so footer has room */
+            padding-bottom: 8px;
         }
         #scrollbar::-webkit-scrollbar { width: 4px; }
         #scrollbar::-webkit-scrollbar-track  { background: rgba(255,255,255,.05); border-radius: 4px; }
@@ -105,19 +108,20 @@
         #navbar-nav { padding-bottom: 8px; }
 
         /* =====================================================
-           SIDEBAR LOGOUT FOOTER
+           SIDEBAR LOGOUT FOOTER — pushed down with margin-top auto
            ===================================================== */
         .sidebar-footer {
             flex-shrink: 0;
             border-top: 1px solid rgba(255,255,255,.1);
-            padding: 14px 16px;
+            padding: 16px 16px 20px;   /* extra bottom padding */
+            margin-top: auto;          /* <-- this pushes footer to the very bottom */
             background: inherit;
         }
         .sidebar-footer-user {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .sidebar-footer-user img {
             width: 36px; height: 36px;
@@ -305,6 +309,32 @@
 
         /* Search tooltip */
         .search-tooltip { position:absolute; bottom:-35px; left:0; background:rgba(0,0,0,.85); color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; opacity:0; transition:opacity .2s; pointer-events:none; z-index:100; backdrop-filter:blur(4px); }
+
+        /* =====================================================
+           MOBILE SIDEBAR OVERLAY FIX
+           ===================================================== */
+        /* Ensure the vertical-overlay covers the full screen on mobile */
+        .vertical-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(0,0,0,.45);
+            display: none;
+        }
+        body.vertical-sidebar-enable .vertical-overlay {
+            display: block;
+        }
+        /* On mobile, sidebar slides in */
+        @media (max-width: 1024.98px) {
+            .app-menu {
+                margin-left: -250px;
+                transition: margin-left .3s ease, box-shadow .3s ease;
+            }
+            body.vertical-sidebar-enable .app-menu {
+                margin-left: 0;
+                box-shadow: 4px 0 24px rgba(0,0,0,.35);
+            }
+        }
     </style>
 
     <!-- Route-specific CSS includes -->
@@ -1117,7 +1147,7 @@
         <div class="sidebar-background"></div>
     </div><!-- /app-menu -->
 
-    <div class="vertical-overlay"></div>
+    <div class="vertical-overlay" id="vertical-overlay"></div>
 
     <!-- ========== TOPBAR ========== -->
     <header id="page-topbar">
@@ -1768,20 +1798,63 @@
         btn.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
     }
 
-    /* ── hamburger ───────────────────────────────────────── */
+    /* ── hamburger — FIXED version ───────────────────────── */
     function initHamburger() {
         var ham = document.getElementById('topnav-hamburger-icon');
         if (!ham) return;
-        ham.addEventListener('click', function(){
-            document.body.classList.toggle('vertical-sidebar-enable');
+
+        function openSidebar() {
+            document.body.classList.add('vertical-sidebar-enable');
             if (window.innerWidth >= 1025) {
-                document.body.classList.toggle('sidebar-enable');
+                document.body.classList.add('sidebar-enable');
                 var html = document.documentElement;
-                html.setAttribute('data-sidebar-size', html.getAttribute('data-sidebar-size') === 'sm' ? 'lg' : 'sm');
+                // Toggle between collapsed (sm) and expanded (lg) on desktop
+                var currentSize = html.getAttribute('data-sidebar-size');
+                html.setAttribute('data-sidebar-size', currentSize === 'sm' ? 'lg' : 'sm');
+            }
+        }
+
+        function closeSidebar() {
+            document.body.classList.remove('vertical-sidebar-enable');
+            document.body.classList.remove('sidebar-enable');
+        }
+
+        function toggleSidebar() {
+            if (document.body.classList.contains('vertical-sidebar-enable')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        }
+
+        ham.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSidebar();
+        });
+
+        // Close sidebar when clicking the overlay
+        var overlay = document.getElementById('vertical-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                closeSidebar();
+            });
+        }
+
+        // Also wire up the theme's .vertical-overlay class selector (fallback)
+        var overlayByClass = document.querySelector('.vertical-overlay');
+        if (overlayByClass && overlayByClass !== overlay) {
+            overlayByClass.addEventListener('click', function() {
+                closeSidebar();
+            });
+        }
+
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.body.classList.contains('vertical-sidebar-enable')) {
+                closeSidebar();
             }
         });
-        var ov = qs('.vertical-overlay');
-        if (ov) ov.addEventListener('click', function(){ document.body.classList.remove('vertical-sidebar-enable'); });
     }
 
     /* ── destroy Bootstrap dropdown instance on user btn ─── */
