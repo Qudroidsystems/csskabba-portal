@@ -78,29 +78,26 @@
         .modal.show  .modal-dialog { transform: translate(0,0); }
 
         /* =====================================================
-           SIDEBAR LAYOUT — flex column so footer pins to bottom
+           SIDEBAR LAYOUT
            ===================================================== */
         .app-menu {
             position: fixed;
-            top: 0; left: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            bottom: 0;
             width: 250px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            background: inherit;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Main content wrapper - adjust based on sidebar state */
+        /* Main content wrapper that shifts with sidebar */
         #layout-wrapper {
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Page content area - shifts when sidebar collapses */
-        .main-content {
             margin-left: 250px;
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            flex: 1;
         }
 
         #scrollbar {
@@ -247,7 +244,7 @@
         }
 
         /* =====================================================
-           SIDEBAR BEHAVIOR
+           SIDEBAR BEHAVIOR - MOBILE VS DESKTOP
            ===================================================== */
         .vertical-overlay {
             position: fixed;
@@ -258,14 +255,14 @@
             transition: background 0.3s ease;
         }
 
-        /* Mobile: sidebar slides in/out with transform + overlay */
+        /* MOBILE: sidebar slides in/out with transform */
         @media (max-width: 1024.98px) {
             .app-menu {
                 transform: translateX(-100%);
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                box-shadow: none;
+                width: 280px;
             }
-            .main-content {
+            #layout-wrapper {
                 margin-left: 0 !important;
             }
             body.vertical-sidebar-enable .app-menu {
@@ -279,16 +276,15 @@
             }
         }
 
-        /* Desktop: sidebar collapse (size change) AND main content expands */
+        /* DESKTOP: sidebar collapses to smaller width */
         @media (min-width: 1025px) {
             body.sidebar-collapsed .app-menu {
                 width: 70px !important;
-                transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-            body.sidebar-collapsed .main-content {
+            body.sidebar-collapsed #layout-wrapper {
                 margin-left: 70px !important;
-                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
+            /* Hide text elements when collapsed */
             body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
                 display: none !important;
             }
@@ -315,6 +311,7 @@
             body.sidebar-collapsed .app-menu .nav-link {
                 justify-content: center;
                 padding: 0.625rem 0;
+                text-align: center;
             }
             body.sidebar-collapsed .app-menu .nav-link i {
                 margin-right: 0 !important;
@@ -329,7 +326,7 @@
         }
 
         /* =====================================================
-           SEARCH BUTTON - VISIBLE ON ALL DEVICES, STYLED APPROPRIATELY
+           SEARCH BUTTON - RESPONSIVE
            ===================================================== */
         .mobile-search-btn {
             display: none;
@@ -606,170 +603,167 @@
 
     <div class="vertical-overlay" id="vertical-overlay"></div>
 
-    <!-- ========== MAIN CONTENT WRAPPER ========== -->
-    <div class="main-content">
-        <!-- ========== TOPBAR ========== -->
-        <header id="page-topbar">
-            <div class="layout-width">
-                <div class="navbar-header">
-                    <div class="d-flex">
-                        <div class="navbar-brand-box horizontal-logo">
-                            <a href="index.html" class="logo logo-dark">
-                                <span class="logo-sm"><img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22"></span>
-                                <span class="logo-lg"><img src="{{ asset('theme/layouts/assets/images/logo-dark.png')}}" alt="" height="22"></span>
-                            </a>
-                            <a href="index.html" class="logo logo-light">
-                                <span class="logo-sm"><img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22"></span>
-                                <span class="logo-lg"><img src="{{ asset('theme/layouts/assets/images/logo-light.png')}}" alt="" height="22"></span>
-                            </a>
-                        </div>
-                        <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon">
-                            <span class="hamburger-icon"><span></span><span></span><span></span></span>
-                        </button>
+    <!-- ========== TOPBAR ========== -->
+    <header id="page-topbar">
+        <div class="layout-width">
+            <div class="navbar-header">
+                <div class="d-flex">
+                    <div class="navbar-brand-box horizontal-logo">
+                        <a href="index.html" class="logo logo-dark">
+                            <span class="logo-sm"><img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22"></span>
+                            <span class="logo-lg"><img src="{{ asset('theme/layouts/assets/images/logo-dark.png')}}" alt="" height="22"></span>
+                        </a>
+                        <a href="index.html" class="logo logo-light">
+                            <span class="logo-sm"><img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22"></span>
+                            <span class="logo-lg"><img src="{{ asset('theme/layouts/assets/images/logo-light.png')}}" alt="" height="22"></span>
+                        </a>
+                    </div>
+                    <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon">
+                        <span class="hamburger-icon"><span></span><span></span><span></span></span>
+                    </button>
 
-                        <!-- Desktop Search Button -->
-                        <div class="d-none d-md-inline-flex align-items-center position-relative desktop-search-btn">
-                            <button type="button" id="spotlight-trigger-desktop" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
-                                <i class="mdi mdi-magnify" style="font-size:16px;opacity:.6;"></i>
-                                <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
-                                <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">K</kbd></div>
-                            </button>
-                            <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
-                        </div>
-
-                        <!-- Mobile Search Button (Icon only - ONLY shows on mobile) -->
-                        <button type="button" id="spotlight-trigger-mobile" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle mobile-search-btn" style="width:38px;height:38px;margin-left:8px;">
-                            <i class="mdi mdi-magnify fs-3xl"></i>
+                    <!-- Desktop Search Button -->
+                    <div class="d-none d-md-inline-flex align-items-center position-relative desktop-search-btn">
+                        <button type="button" id="spotlight-trigger-desktop" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
+                            <i class="mdi mdi-magnify" style="font-size:16px;opacity:.6;"></i>
+                            <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
+                            <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">K</kbd></div>
                         </button>
+                        <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
                     </div>
 
-                    <div class="d-flex align-items-center gap-1">
-                        <div class="position-relative" id="theme-toggle-wrapper">
-                            <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;"><i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i></button>
-                            <div id="theme-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:170px;background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;overflow:hidden;padding:6px;">
-                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light"><i class="bi bi-sun"></i> Light</a>
-                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark"><i class="bi bi-moon"></i> Dark</a>
-                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto"><i class="bi bi-moon-stars"></i> Auto</a>
-                            </div>
+                    <!-- Mobile Search Button -->
+                    <button type="button" id="spotlight-trigger-mobile" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle mobile-search-btn" style="width:38px;height:38px;margin-left:8px;">
+                        <i class="mdi mdi-magnify fs-3xl"></i>
+                    </button>
+                </div>
+
+                <div class="d-flex align-items-center gap-1">
+                    <div class="position-relative" id="theme-toggle-wrapper">
+                        <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;"><i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i></button>
+                        <div id="theme-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:170px;background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;overflow:hidden;padding:6px;">
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light"><i class="bi bi-sun"></i> Light</a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark"><i class="bi bi-moon"></i> Dark</a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto"><i class="bi bi-moon-stars"></i> Auto</a>
                         </div>
+                    </div>
 
-                        <!-- USER DROPDOWN -->
-                        @php
-                            use App\Models\User as UserModel;
-                            use App\Models\Student;
-                            use Illuminate\Support\Facades\Storage;
-                            use Illuminate\Support\Facades\Auth;
+                    <!-- USER DROPDOWN -->
+                    @php
+                        use App\Models\User as UserModel;
+                        use App\Models\Student;
+                        use Illuminate\Support\Facades\Storage;
+                        use Illuminate\Support\Facades\Auth;
 
-                            $userdata  = Auth::user();
-                            $isStudent = $userdata->hasRole('student');
-                            $fullName  = $userdata->name ?? 'User';
-                            $initials  = collect(explode(' ', $fullName))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->implode('');
-                            $srcPath   = null;
+                        $userdata  = Auth::user();
+                        $isStudent = $userdata->hasRole('student');
+                        $fullName  = $userdata->name ?? 'User';
+                        $initials  = collect(explode(' ', $fullName))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->implode('');
+                        $srcPath   = null;
 
-                            if ($isStudent) {
-                                $student        = Student::where('id', $userdata->student_id)->first();
-                                $studentPicture = $student?->picture;
-                                if ($studentPicture) {
-                                    $basename = basename($studentPicture);
-                                    if (Storage::disk('public')->exists('student_avatars/' . $basename))
-                                        $srcPath = asset('storage/student_avatars/' . $basename);
-                                }
-                            } else {
-                                if ($userdata->avatar) {
-                                    $basename = basename($userdata->avatar);
-                                    if (Storage::disk('public')->exists('staff_avatars/' . $basename))
-                                        $srcPath = asset('storage/staff_avatars/' . $basename);
-                                }
+                        if ($isStudent) {
+                            $student        = Student::where('id', $userdata->student_id)->first();
+                            $studentPicture = $student?->picture;
+                            if ($studentPicture) {
+                                $basename = basename($studentPicture);
+                                if (Storage::disk('public')->exists('student_avatars/' . $basename))
+                                    $srcPath = asset('storage/student_avatars/' . $basename);
                             }
+                        } else {
+                            if ($userdata->avatar) {
+                                $basename = basename($userdata->avatar);
+                                if (Storage::disk('public')->exists('staff_avatars/' . $basename))
+                                    $srcPath = asset('storage/staff_avatars/' . $basename);
+                            }
+                        }
 
-                            $userRoles = $userdata->roles->pluck('name');
-                        @endphp
+                        $userRoles = $userdata->roles->pluck('name');
+                    @endphp
 
-                        <div class="dropdown position-relative ms-sm-3 header-item topbar-user" id="user-dropdown-wrapper">
-                            <button type="button" id="user-menu-btn" class="btn shadow-none p-0" style="background:transparent;border:none;">
-                                <span class="d-flex align-items-center gap-2">
-                                    <span style="display:inline-block;width:42px;height:42px;flex-shrink:0;position:relative;">
-                                        @if($srcPath)
-                                            <img id="topbar-avatar-img" src="{{ $srcPath }}" alt="{{ $fullName }}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none';document.getElementById('topbar-avatar-fallback').style.display='flex';">
-                                            <span id="topbar-avatar-fallback" style="display:none;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
-                                        @else
-                                            <span style="display:flex;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
-                                        @endif
-                                    </span>
-                                    <span class="d-none d-xl-flex flex-column align-items-start ms-1"><span class="fw-medium" style="font-size:13px;">{{ $userdata->name }}</span></span>
+                    <div class="dropdown position-relative ms-sm-3 header-item topbar-user" id="user-dropdown-wrapper">
+                        <button type="button" id="user-menu-btn" class="btn shadow-none p-0" style="background:transparent;border:none;">
+                            <span class="d-flex align-items-center gap-2">
+                                <span style="display:inline-block;width:42px;height:42px;flex-shrink:0;position:relative;">
+                                    @if($srcPath)
+                                        <img id="topbar-avatar-img" src="{{ $srcPath }}" alt="{{ $fullName }}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none';document.getElementById('topbar-avatar-fallback').style.display='flex';">
+                                        <span id="topbar-avatar-fallback" style="display:none;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
+                                    @else
+                                        <span style="display:flex;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
+                                    @endif
                                 </span>
-                            </button>
+                                <span class="d-none d-xl-flex flex-column align-items-start ms-1"><span class="fw-medium" style="font-size:13px;">{{ $userdata->name }}</span></span>
+                            </span>
+                        </button>
 
-                            <div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:var(--vz-dropdown-bg,#fff);border-radius:12px;z-index:9999;">
-                                <div class="dropdown-header"><h6 class="mb-0">Welcome back!</h6><small class="text-muted">{{ $userdata->name }}</small></div>
-                                <div class="dropdown-divider"></div>
-                                <div class="px-3 py-2">
-                                    <div class="small text-muted mb-2 text-uppercase" style="font-size:10px;">Your Roles</div>
-                                    <div class="d-flex flex-wrap gap-1">
-                                        @foreach($userRoles as $roleName)
-                                            <span style="display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#405189;">{{ $roleName }}</span>
-                                        @endforeach
-                                    </div>
+                        <div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:var(--vz-dropdown-bg,#fff);border-radius:12px;z-index:9999;">
+                            <div class="dropdown-header"><h6 class="mb-0">Welcome back!</h6><small class="text-muted">{{ $userdata->name }}</small></div>
+                            <div class="dropdown-divider"></div>
+                            <div class="px-3 py-2">
+                                <div class="small text-muted mb-2 text-uppercase" style="font-size:10px;">Your Roles</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($userRoles as $roleName)
+                                        <span style="display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#405189;">{{ $roleName }}</span>
+                                    @endforeach
                                 </div>
-                                <div class="dropdown-divider"></div>
-                                @if(!$isStudent)<a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>@endif
-                                <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog me-2"></i>Account Settings</a>
-                                <div class="dropdown-divider"></div>
-                                <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf<a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"><i class="mdi mdi-logout me-2"></i>Logout</a></form>
                             </div>
+                            <div class="dropdown-divider"></div>
+                            @if(!$isStudent)<a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>@endif
+                            <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog me-2"></i>Account Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf<a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"><i class="mdi mdi-logout me-2"></i>Logout</a></form>
                         </div>
                     </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- SPOTLIGHT SEARCH MODAL -->
-        <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,0);backdrop-filter:blur(0);">
-            <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;transform:translateY(-40px) scale(0.9);opacity:0;transition:all 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);">
-                <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
-                    <i class="mdi mdi-magnify" style="font-size:26px;color:#4f8ef7;flex-shrink:0;"></i>
-                    <input id="spotlight-input" type="text" placeholder="Search for pages, students, staff, classes…" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:18px;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
-                    <div style="display:flex;gap:8px;">
-                        <button id="spotlight-clear-history" style="background:rgba(255,255,255,.08);border:none;border-radius:10px;padding:6px 12px;color:rgba(255,255,255,.6);font-size:12px;font-weight:500;cursor:pointer;">Clear History</button>
-                        <kbd id="spotlight-esc" style="font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);cursor:pointer;">ESC</kbd>
-                    </div>
-                </div>
-                <div id="spotlight-results" style="max-height:520px;overflow-y:auto;padding:12px 0;">
-                    <div id="spotlight-history-section" style="display:none;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 24px 8px;">
-                            <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);">Recent Searches</span>
-                            <button id="spotlight-clear-history-btn" style="background:transparent;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;">Clear All</button>
-                        </div>
-                        <div id="spotlight-history-list"></div>
-                        <div style="height:1px;background:rgba(255,255,255,.06);margin:12px 20px;"></div>
-                    </div>
-                    <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,.35);">
-                        <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4;"></i>
-                        <span style="font-size:15px;">Start typing to search…</span>
-                    </div>
-                    <ul id="spotlight-list" style="list-style:none;margin:0;padding:0;display:none;"></ul>
-                    <div id="spotlight-loading" style="display:none;padding:48px;text-align:center;">
-                        <div style="display:inline-block;width:32px;height:32px;border:2px solid rgba(255,255,255,.15);border-top-color:#4f8ef7;border-radius:50%;animation:loadingSpin .7s linear infinite;"></div>
-                        <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,.45);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
-                    </div>
-                </div>
-                <div style="padding:14px 24px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:24px;font-size:12px;color:rgba(255,255,255,.35);flex-wrap:wrap;">
-                    <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">⌘K</kbd> / <kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">Ctrl+K</kbd> open</span>
-                    <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↑↓</kbd> navigate</span>
-                    <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↵</kbd> open</span>
-                    <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">ESC</kbd> close</span>
                 </div>
             </div>
         </div>
+    </header>
 
-        @yield('content')
-
-        <footer class="footer">
-            <div class="container-fluid">
-                <div class="row"><div class="col-sm-6"><script>document.write(new Date().getFullYear())</script> © {{ $school->school_name ?? 'Vite-ESchool' }}</div><div class="col-sm-6"><div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div></div></div>
+    <!-- SPOTLIGHT SEARCH MODAL -->
+    <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,0);backdrop-filter:blur(0);">
+        <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;transform:translateY(-40px) scale(0.9);opacity:0;transition:all 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);">
+            <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
+                <i class="mdi mdi-magnify" style="font-size:26px;color:#4f8ef7;flex-shrink:0;"></i>
+                <input id="spotlight-input" type="text" placeholder="Search for pages, students, staff, classes…" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:18px;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
+                <div style="display:flex;gap:8px;">
+                    <button id="spotlight-clear-history" style="background:rgba(255,255,255,.08);border:none;border-radius:10px;padding:6px 12px;color:rgba(255,255,255,.6);font-size:12px;font-weight:500;cursor:pointer;">Clear History</button>
+                    <kbd id="spotlight-esc" style="font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);cursor:pointer;">ESC</kbd>
+                </div>
             </div>
-        </footer>
-    </div><!-- /.main-content -->
+            <div id="spotlight-results" style="max-height:520px;overflow-y:auto;padding:12px 0;">
+                <div id="spotlight-history-section" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 24px 8px;">
+                        <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);">Recent Searches</span>
+                        <button id="spotlight-clear-history-btn" style="background:transparent;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;">Clear All</button>
+                    </div>
+                    <div id="spotlight-history-list"></div>
+                    <div style="height:1px;background:rgba(255,255,255,.06);margin:12px 20px;"></div>
+                </div>
+                <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,.35);">
+                    <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4;"></i>
+                    <span style="font-size:15px;">Start typing to search…</span>
+                </div>
+                <ul id="spotlight-list" style="list-style:none;margin:0;padding:0;display:none;"></ul>
+                <div id="spotlight-loading" style="display:none;padding:48px;text-align:center;">
+                    <div style="display:inline-block;width:32px;height:32px;border:2px solid rgba(255,255,255,.15);border-top-color:#4f8ef7;border-radius:50%;animation:loadingSpin .7s linear infinite;"></div>
+                    <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,.45);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
+                </div>
+            </div>
+            <div style="padding:14px 24px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:24px;font-size:12px;color:rgba(255,255,255,.35);flex-wrap:wrap;">
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">⌘K</kbd> / <kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">Ctrl+K</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↑↓</kbd> navigate</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↵</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">ESC</kbd> close</span>
+            </div>
+        </div>
+    </div>
+
+    @yield('content')
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row"><div class="col-sm-6"><script>document.write(new Date().getFullYear())</script> © {{ $school->school_name ?? 'Vite-ESchool' }}</div><div class="col-sm-6"><div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div></div></div>
+        </div>
+    </footer>
 </div>
 
 <button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up fs-3xl"></i></button>
@@ -815,40 +809,34 @@
     }
 
     if (ham) {
-        // Remove existing listeners and add fresh one
         const newHam = ham.cloneNode(true);
         ham.parentNode.replaceChild(newHam, ham);
         const freshHam = document.getElementById('topnav-hamburger-icon');
         if (freshHam) freshHam.addEventListener('click', toggleSidebar);
     }
 
-    // Close mobile sidebar when clicking overlay
     if (overlay) overlay.addEventListener('click', closeSidebarMobile);
 
-    // Close mobile sidebar with ESC key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && isMobile() && body.classList.contains('vertical-sidebar-enable')) {
             closeSidebarMobile();
         }
     });
 
-    // Handle window resize - reset states appropriately
     let resizeTimer;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
             if (!isMobile()) {
-                // On desktop, ensure no mobile overlay classes remain
                 body.classList.remove('vertical-sidebar-enable');
             } else {
-                // On mobile, ensure no desktop collapse class remains
                 body.classList.remove('sidebar-collapsed');
             }
         }, 250);
     });
 
     // =====================================================
-    // SPOTLIGHT SEARCH - Full Functionality
+    // SPOTLIGHT SEARCH
     // =====================================================
     const STATIC_PAGES = [
         {title:'Administration Dashboard', url:'{{ route("dashboard") }}', icon:'mdi-gauge', category:'Dashboards'},
@@ -897,7 +885,7 @@
     const clearBtn = document.getElementById('spotlight-clear-history-btn');
     const clearMain = document.getElementById('spotlight-clear-history');
 
-    let timer = null, activeIndex = -1, currentResults = [];
+    let activeIndex = -1, currentResults = [];
 
     function openSpotlight() {
         if (!overlaySpot) return;
@@ -951,12 +939,11 @@
             if (clearMain) clearMain.style.display = 'block';
             h.forEach((item, idx) => {
                 const div = document.createElement('div');
-                div.className = 'spotlight-history-item';
                 div.style.cssText = 'display:flex;align-items:center;gap:14px;padding:10px 24px;cursor:pointer;transition:background .15s;border-radius:10px;margin:0 16px;';
                 const c = CAT_COLORS[item.category] || '#4f8ef7';
                 div.innerHTML = `<span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${item.icon || 'mdi-history'} mdi" style="font-size:16px;color:${c};"></i></span>
-                    <span style="flex:1;min-width:0;"><span style="display:block;font-size:14px;font-weight:500;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;">${item.query}</span></span>
-                    <button class="hist-remove" style="background:transparent;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:13px;padding:6px 10px;border-radius:6px;">✕</button>`;
+                    <span style="flex:1;min-width:0;"><span style="display:block;font-size:14px;font-weight:500;color:rgba(255,255,255,.9);">${item.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.4);">${item.query}</span></span>
+                    <button class="hist-remove" style="background:transparent;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:13px;padding:6px 10px;">✕</button>`;
                 div.querySelector('.hist-remove').addEventListener('click', (e) => {
                     e.stopPropagation();
                     const his = getHistory();
@@ -1005,18 +992,12 @@
             header.textContent = cat;
             list.appendChild(header);
 
-            grouped[cat].forEach((r, gi) => {
+            grouped[cat].forEach((r) => {
                 const li = document.createElement('li');
-                const isTop = (idx === 0 && gi === 0);
-                li.className = 'spotlight-result-item' + (isTop ? ' top-match' : '');
-                li.setAttribute('data-idx', idx);
                 li.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
                 const c = CAT_COLORS[r.category] || '#4f8ef7';
                 li.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${r.icon || 'mdi-chevron-right'} mdi" style="font-size:18px;color:${c};"></i></span>
-                    <span style="flex:1;min-width:0;"><span class="result-title" style="display:block;font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">${r.subtitle || r.category}</span></span>
-                    <i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);flex-shrink:0;transition:transform .2s;"></i>`;
-                li.addEventListener('mouseenter', () => { li.style.background = 'rgba(79,142,247,.12)'; activeIndex = idx; });
-                li.addEventListener('mouseleave', () => { li.style.background = activeIndex === idx ? 'rgba(79,142,247,.18)' : ''; });
+                    <span style="flex:1;"><span style="display:block;font-size:15px;font-weight:500;color:#fff;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);">${r.category}</span></span>`;
                 li.addEventListener('click', () => { window.location.href = r.url; });
                 list.appendChild(li);
                 idx++;
@@ -1077,32 +1058,11 @@
     }
     initTheme();
 
-    // Back to top
     const backBtn = document.getElementById('back-to-top');
     if (backBtn) {
         window.addEventListener('scroll', () => backBtn.classList.toggle('show', window.scrollY > 300));
         backBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
-
-    // Active sidebar highlight
-    const curPath = window.location.pathname;
-    document.querySelectorAll('#navbar-nav .nav-sm a.nav-link').forEach(link => {
-        try {
-            if (new URL(link.href, window.location.origin).pathname === curPath) {
-                link.classList.add('nav-active-child');
-                const col = link.closest('.collapse');
-                if (col) {
-                    col.classList.add('show');
-                    const tog = document.querySelector('[data-bs-target="#' + col.id + '"]');
-                    if (tog) {
-                        tog.setAttribute('aria-expanded', 'true');
-                        tog.classList.remove('collapsed');
-                        tog.classList.add('nav-active-parent');
-                    }
-                }
-            }
-        } catch(e) {}
-    });
 })();
 </script>
 
