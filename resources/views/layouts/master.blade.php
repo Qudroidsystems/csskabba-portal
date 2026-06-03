@@ -92,7 +92,6 @@
             flex: 1;
             overflow-y: auto;
             scrollbar-width: thin;
-            padding-bottom: 8px;
         }
         #scrollbar::-webkit-scrollbar { width: 4px; }
         #scrollbar::-webkit-scrollbar-track  { background: rgba(255,255,255,.05); border-radius: 4px; }
@@ -106,20 +105,19 @@
         #navbar-nav { padding-bottom: 8px; }
 
         /* =====================================================
-           SIDEBAR LOGOUT FOOTER — pushed down with margin-top auto + extra spacing
+           SIDEBAR LOGOUT FOOTER
            ===================================================== */
         .sidebar-footer {
             flex-shrink: 0;
             border-top: 1px solid rgba(255,255,255,.1);
-            padding: 20px 16px 24px;
-            margin-top: auto;
+            padding: 14px 16px;
             background: inherit;
         }
         .sidebar-footer-user {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
         .sidebar-footer-user img {
             width: 36px; height: 36px;
@@ -232,39 +230,8 @@
         }
 
         /* =====================================================
-           MOBILE SIDEBAR OVERLAY FIX — enhanced toggle
+           FINANCE MODULE
            ===================================================== */
-        .vertical-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 999;
-            background: rgba(0,0,0,.45);
-            display: none;
-        }
-        body.vertical-sidebar-enable .vertical-overlay {
-            display: block;
-        }
-        /* On mobile, sidebar slides in/out with transform */
-        @media (max-width: 1024.98px) {
-            .app-menu {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-                box-shadow: none;
-            }
-            body.vertical-sidebar-enable .app-menu {
-                transform: translateX(0);
-                box-shadow: 4px 0 24px rgba(0,0,0,.35);
-            }
-        }
-        /* Desktop hover/size styles remain but we ensure overlay works */
-        @media (min-width: 1025px) {
-            body.vertical-sidebar-enable .app-menu {
-                margin-left: 0;
-                transform: none;
-            }
-        }
-
-        /* Finance module cards (keep as in original) */
         .finance-stat-card { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius: 12px; padding: 20px; color: white; transition: transform .3s,box-shadow .3s; }
         .finance-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(102,126,234,.35); }
         .payment-progress { height: 8px; border-radius: 4px; background: #e2e8f0; }
@@ -272,10 +239,18 @@
         .scholarship-card { border-left: 4px solid #10b981; transition: transform .2s,box-shadow .2s; }
         .scholarship-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
         .payroll-table th { background: #1e293b; color: white; }
+
+        /* =====================================================
+           CARD / BUTTON MICRO-INTERACTIONS
+           ===================================================== */
         .card { transition: box-shadow .25s, transform .25s; }
         .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); }
         .btn  { transition: transform .15s, box-shadow .15s; }
         .btn:active { transform: scale(.97); }
+
+        /* =====================================================
+           SIDEBAR STAGGER
+           ===================================================== */
         #navbar-nav > li { animation: navItemFadeIn .4s ease both; }
         #navbar-nav > li:nth-child(1)  { animation-delay:.02s }
         #navbar-nav > li:nth-child(2)  { animation-delay:.04s }
@@ -291,9 +266,21 @@
         #navbar-nav > li:nth-child(12) { animation-delay:.24s }
         #navbar-nav > li:nth-child(n+13) { animation-delay:.26s }
         @keyframes navItemFadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+
+        /* =====================================================
+           DROPDOWN ANIMATIONS
+           ===================================================== */
         .dropdown-menu { animation: dropdownFadeIn .25s cubic-bezier(.4,0,.2,1); transform-origin: top right; }
         @keyframes dropdownFadeIn { from{opacity:0;transform:translateY(-10px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+        /* =====================================================
+           PRINT
+           ===================================================== */
         @media print { .no-print{display:none!important} body{padding:0;margin:0} }
+
+        /* =====================================================
+           SPOTLIGHT
+           ===================================================== */
         @keyframes spotlightOverlayFadeIn  { from{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} to{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} }
         @keyframes spotlightOverlayFadeOut { from{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} to{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} }
         @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 40%{opacity:.8;transform:translateY(8px) scale(1.02)} 70%{opacity:.95;transform:translateY(-3px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
@@ -309,6 +296,14 @@
         .spotlight-result-item:nth-child(3){animation-delay:.06s}
         .spotlight-result-item.top-match { animation:resultBounceIn .4s cubic-bezier(.34,1.3,.64,1) forwards,resultGlowPulse .6s ease .3s; border-left:3px solid #4f8ef7; background:linear-gradient(90deg,rgba(79,142,247,.08) 0%,transparent 100%); }
         .spotlight-history-item { animation:historySlideIn .25s ease forwards; opacity:0; animation-fill-mode:forwards; }
+        .spotlight-history-item:nth-child(1){animation-delay:.00s}
+        .spotlight-history-item:nth-child(2){animation-delay:.04s}
+        .spotlight-history-item:nth-child(3){animation-delay:.08s}
+        .typing-dot { display:inline-block; animation:typingDot 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(2){animation-delay:.2s}
+        .typing-dot:nth-child(3){animation-delay:.4s}
+
+        /* Search tooltip */
         .search-tooltip { position:absolute; bottom:-35px; left:0; background:rgba(0,0,0,.85); color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; opacity:0; transition:opacity .2s; pointer-events:none; z-index:100; backdrop-filter:blur(4px); }
     </style>
 
@@ -425,25 +420,648 @@
             <div class="container-fluid">
                 <div id="two-column-menu"></div>
                 <ul class="navbar-nav" id="navbar-nav">
-                    <!-- Nav items (truncated for brevity, but full sidebar menu exists in original) -->
+
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+
+                    {{-- Dashboard --}}
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
                             <i class="ph-gauge"></i> <span data-key="t-dashboards">Dashboards</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarDashboards">
                             <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a></li>
+                                <li class="nav-item">
+                                    <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a>
+                                </li>
                                 @can('finance dashboard')
-                                <li class="nav-item"><a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a></li>
+                                <li class="nav-item">
+                                    <a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a>
+                                </li>
                                 @endcan
                                 @can('academics dashboard')
-                                <li class="nav-item"><a href="index.html" class="nav-link" data-key="t-ecommerce">Academics Analytics</a></li>
+                                <li class="nav-item">
+                                    <a href="index.html" class="nav-link" data-key="t-ecommerce">Academics Analytics</a>
+                                </li>
                                 @endcan
                             </ul>
                         </div>
                     </li>
-                    <!-- Remaining sidebar items are present in the original file -->
+
+                    {{-- USERS & PRIVILEGES --}}
+                    @if(auth()->user()->can('View user') || auth()->user()->can('View role') || auth()->user()->can('View user-account'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">USERS & PRIVILEDGES</span></li>
+                    @endif
+
+                    @can('View user')
+                        <li class="nav-item">
+                            <a class="nav-link menu-link collapsed" href="#sidebarusers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarusers">
+                                <i class="ph-user-circle"></i> <span data-key="t-authentication">User Managements</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarusers">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('users.index') }}" class="nav-link" data-key="t-signin">Users</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    {{-- My Account --}}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link collapsed" href="#sidebaraccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebaraccount">
+                            <i class="ph-address-book"></i> <span data-key="t-pages">My Account</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebaraccount">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item">
+                                    <a href="{{ route('users.overview', ['id' => Auth::id()]) }}" class="nav-link">
+                                        <i class="ri-profile-line me-2"></i> My Profile
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}" class="nav-link">
+                                        <i class="ri-settings-3-line me-2"></i> Account Settings
+                                    </a>
+                                </li>
+                                @if(Auth::user()->isStaff())
+                                <li class="nav-item">
+                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#employmentInfo" class="nav-link ps-4">
+                                        <i class="ri-building-line me-2"></i> Employment Details
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#qualifications" class="nav-link ps-4">
+                                        <i class="ri-graduation-cap-line me-2"></i> Academic Qualifications
+                                    </a>
+                                </li>
+                                @endif
+                                @if(Auth::user()->isStudent())
+                                <li class="nav-item">
+                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#studentInfo" class="nav-link ps-4">
+                                        <i class="ri-user-line me-2"></i> Student Details
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#parentInfo" class="nav-link ps-4">
+                                        <i class="ri-parent-line me-2"></i> Parent Information
+                                    </a>
+                                </li>
+                                @endif
+                                <li class="nav-item">
+                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#security" class="nav-link ps-4">
+                                        <i class="ri-lock-password-line me-2"></i> Change Password
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    @can('View role')
+                        <li class="nav-item">
+                            <a class="nav-link menu-link collapsed" href="#sidebarroles" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarroles">
+                                <i class="ph-address-book"></i> <span data-key="t-pages">Roles And Permissions</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarroles">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View role')
+                                        <li class="nav-item"><a href="{{ route('roles.index') }}" class="nav-link">Roles</a></li>
+                                    @endcan
+                                    @can('View permission')
+                                        <li class="nav-item"><a href="{{ route('permissions.index') }}" class="nav-link">Permissions</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    {{-- STUDENT & PARENTS --}}
+                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
+                    @endif
+
+                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload'))
+                        <li class="nav-item">
+                            <a href="#sidebarStudentmanagement" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentmanagement">
+                                <i class="ph-storefront"></i> <span>Student Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarStudentmanagement">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View student')
+                                        <li class="nav-item"><a href="{{ route('student.index') }}" class="nav-link">All Students</a></li>
+                                    @endcan
+                                    @can('Create student-bulk-upload')
+                                        <li class="nav-item"><a href="{{ route('studentbatchindex') }}" class="nav-link">Batch Student Registration</a></li>
+                                    @endcan
+                                    @can('View id card')
+                                        <li class="nav-item"><a href="{{ route('student-id-cards.index') }}" class="nav-link">ID Card Generator</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    @if(auth()->user()->can('View student assessments') || auth()->user()->can('View student payments'))
+                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>STUDENT PORTAL</span></li>
+                    @endif
+
+                    @can('View student assessments')
+                        <li class="nav-item">
+                            <a href="#sidebarAssessments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAssessments">
+                                <i class="ph-graduation-cap"></i> <span>Assessments</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAssessments">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('assessments') }}" class="nav-link">My Assessments</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    <li class="nav-item">
+                        <a href="#sidebarPayment" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayment">
+                            <i class="ph-graduation-cap"></i> <span>Payments</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarPayment">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('student.payments') }}" class="nav-link">My Payments</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    @can('View parent')
+                        <li class="nav-item">
+                            <a href="#sidebarParent" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarParent">
+                                <i class="ph-storefront"></i> <span>Parent Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarParent">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('parent.index') }}" class="nav-link">All Parents</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    {{-- SUBJECT REGISTRATION --}}
+                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
+                        <li class="menu-title"><i class="ph-folder-open"></i> <span>SUBJECT REGISTRATION</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarsubjectoperaton" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarsubjectoperaton">
+                                <i class="ph-folder-open"></i> <span>Subject Registration</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarsubjectoperaton">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View my-class')
+                                        <li class="nav-item"><a href="{{ route('subjectoperation.index') }}" class="nav-link">Student Subject Registration</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- EXAMS AND CBT --}}
+                    @if(auth()->user()->can('View exam') || auth()->user()->can('View cbt-exam'))
+                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>EXAMS AND CBT</span></li>
+                    @endif
+
+                    @can('View exam')
+                        <li class="nav-item">
+                            <a href="#sidebarExams" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
+                                <i class="ph-graduation-cap"></i> <span>Exams Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarExams">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('exams.index') }}" class="nav-link">All Examinations</a></li>
+                                    @can('View question')
+                                        <li class="nav-item"><a href="{{ route('questions.all') }}" class="nav-link">Questions Management</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View cbt-exam')
+                        <li class="nav-item">
+                            <a href="#sidebarCBT" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCBT">
+                                <i class="ph-graduation-cap"></i> <span>CBT Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarCBT">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('cbt.index') }}" class="nav-link">CBT Exercise</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    {{-- TIMETABLE --}}
+                    @if(auth()->user()->can('View timetable') || auth()->user()->can('View my timetable'))
+                        <li class="nav-item">
+                            <a href="#sidebartimetable" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartimetable">
+                                <i class="ph-calendar"></i> <span>Timetable Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebartimetable">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View timetable')
+                                        <li class="nav-item"><a href="{{ route('timetable.index') }}" class="nav-link">Admin Timetable</a></li>
+                                    @endcan
+                                    @can('View my timetable')
+                                        <li class="nav-item"><a href="{{ route('timetable.teacher') }}" class="nav-link">My Timetable</a></li>
+                                    @endcan
+                                    @can('View rooms')
+                                        <li class="nav-item"><a href="{{ route('rooms.index') }}" class="nav-link">Room Management</a></li>
+                                    @endcan
+                                    @can('View exam timetable')
+                                        <li class="nav-item"><a href="{{ route('exam-timetable.index') }}" class="nav-link">Exam Timetable</a></li>
+                                    @endcan
+                                    @can('View holidays')
+                                        <li class="nav-item"><a href="{{ route('holidays.index') }}" class="nav-link">Holidays</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- CLASSES & RECORDS --}}
+                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View my-principals-comment'))
+                        <li class="menu-title"><i class="ph-folder-open"></i> <span>CLASSES & RECORDS</span></li>
+                    @endif
+
+                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View my-principals-comment'))
+                        <li class="nav-item">
+                            <a href="#sidebarClasses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClasses">
+                                <i class="ph-folder-open"></i> <span>Classes & Subjects</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarClasses">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View my-class')
+                                        <li class="nav-item"><a href="{{ route('myclass.index') }}" class="nav-link">My Class</a></li>
+                                    @endcan
+                                    @can('View my-subject')
+                                        <li class="nav-item"><a href="{{ route('mysubject.index') }}" class="nav-link">My Subject</a></li>
+                                    @endcan
+                                    @can('View my-subject-vettings')
+                                        <li class="nav-item"><a href="{{ route('mysubjectvettings.index') }}" class="nav-link">Subjects to Vet</a></li>
+                                    @endcan
+                                    @can('View my-mock-subject-vettings')
+                                        <li class="nav-item"><a href="{{ route('mymocksubjectvettings.index') }}" class="nav-link">Mock Subjects to Vet</a></li>
+                                    @endcan
+                                    @can('View my-principals-comment')
+                                        <li class="nav-item"><a href="{{ route('myprincipalscomment.index') }}" class="nav-link">Principal's Comment</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- ATTENDANCE --}}
+                    @if(auth()->user()->can('View attendance-register') || auth()->user()->can('View attendance-class-summary') || auth()->user()->can('View attendance-student-report'))
+                        <li class="nav-item">
+                            <a href="#sidebarAttendance" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendance">
+                                <i class="ph-calendar-check"></i> <span>Attendance</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAttendance">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View attendance-register')
+                                        <li class="nav-item"><a href="{{ route('attendance.my-classes') }}" class="nav-link">Mark Attendance</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- RECORDS AND RESULTS --}}
+                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View admin-score-entry'))
+                        <li class="nav-item">
+                            <a href="#sidebarRecords" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
+                                <i class="ph-folder-open"></i> <span>Records and Results</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarRecords">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View myresult-room')
+                                        <li class="nav-item"><a href="{{ route('myresultroom.index') }}" class="nav-link">Terminal Records</a></li>
+                                    @endcan
+                                    @can('View student-report')
+                                        <li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>
+                                        <li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>
+                                    @endcan
+                                    @can('View student-mock-report')
+                                        <li class="nav-item"><a href="{{ route('studentmockreports.index') }}" class="nav-link">Mock Result Reports</a></li>
+                                    @endcan
+                                    @can('View admin-score-entry')
+                                        <li class="nav-item"><a href="{{ route('admin.score-entry.index') }}" class="nav-link">Admin Score Entry</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- TRANSCRIPTS --}}
+                    @if(auth()->user()->can('View student-transcript') || auth()->user()->can('Preview student-transcript') || auth()->user()->can('Download student-transcript'))
+                        <li class="menu-title"><i class="ph-folder-open"></i> <span>TRANSCRIPTS</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarTranscript" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarTranscript">
+                                <i class="ri-file-text-line"></i> <span>Transcript</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarTranscript">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View student-transcript')
+                                        <li class="nav-item"><a href="{{ route('transcript.index') }}" class="nav-link">Generate Transcript</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- PROMOTION MANAGEMENT --}}
+                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>PROMOTION MANAGEMENT</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarPromotions" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPromotions">
+                                <i class="ph-folder-open"></i> <span>Promotion Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPromotions">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View myresult-room')
+                                        <li class="nav-item"><a href="{{ route('promotions.index') }}" class="nav-link">Student Promotion</a></li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- BURSARY & FINANCE --}}
+                    @if(auth()->user()->can('View school-payment') || auth()->user()->can('View analysis') ||
+                        auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
+                        auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
+                        auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>BURSARY & FINANCE</span></li>
+                    @endif
+
+                    @can('View school-payment')
+                        <li class="nav-item">
+                            <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
+                                <i class="ph-storefront"></i> <span>Student Payments</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarStudentpayments">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link">Student Bill</a></li>
+                                    <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link">Payment Portal</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View analysis')
+                        <li class="nav-item">
+                            <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
+                                <i class="ph-storefront"></i> <span>Payment Analysis</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAnalysis">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('analysis.index') }}" class="nav-link">School Payment Analysis</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View scholarship')
+                        <li class="nav-item">
+                            <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
+                                <i class="ph-graduation-cap"></i> <span>Scholarship Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarScholarship">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('admin.scholarship.index') }}" class="nav-link">All Scholarships</a></li>
+                                    @can('Create scholarship')
+                                        <li class="nav-item"><a href="{{ route('admin.scholarship.create') }}" class="nav-link">Create Scholarship</a></li>
+                                    @endcan
+                                    <li class="nav-item"><a href="{{ route('admin.scholarship.assignments') }}" class="nav-link">Scholarship Assignments</a></li>
+                                    <li class="nav-item"><a href="{{ route('admin.scholarship.applications') }}" class="nav-link">Applications</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View discount')
+                        <li class="nav-item">
+                            <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
+                                <i class="ph-tag"></i> <span>Discount Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarDiscount">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('admin.discount.index') }}" class="nav-link">All Discounts</a></li>
+                                    @can('Create discount')
+                                        <li class="nav-item"><a href="{{ route('admin.discount.create') }}" class="nav-link">Create Discount</a></li>
+                                    @endcan
+                                    <li class="nav-item"><a href="{{ route('admin.discount.assignments') }}" class="nav-link">Discount Assignments</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View sibling groups')
+                        <li class="nav-item">
+                            <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
+                                <i class="ph-users"></i> <span>Sibling Groups</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSibling">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('sibling.index') }}" class="nav-link">All Family Groups</a></li>
+                                    <li class="nav-item"><a href="{{ route('sibling.create') }}" class="nav-link">Create Family Group</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('Manage payment gateways')
+                        <li class="nav-item">
+                            <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
+                                <i class="ph-credit-card"></i> <span>Payment Gateways</span>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @can('View financial reports')
+                        <li class="nav-item">
+                            <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
+                                <i class="ph-chart-line"></i> <span>Accounting & Reports</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAccounting">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link">Balance Sheet</a></li>
+                                    <li class="nav-item"><a href="{{ route('reports.financial.income-statement') }}" class="nav-link">Income Statement</a></li>
+                                    <li class="nav-item"><a href="{{ route('reports.financial.trial-balance') }}" class="nav-link">Trial Balance</a></li>
+                                    <li class="nav-item"><a href="{{ route('reports.financial.cash-flow') }}" class="nav-link">Cash Flow</a></li>
+                                    <li class="nav-item"><a href="{{ route('reports.financial.debtors') }}" class="nav-link">Student Debtors List</a></li>
+                                    <li class="nav-item"><a href="{{ route('reports.financial.collection-summary') }}" class="nav-link">Collection Summary</a></li>
+                                    <li class="nav-item"><a href="{{ route('reports.analysis.index') }}" class="nav-link">Class Analysis</a></li>
+                                    <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link">School-Wide Analysis</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View payroll')
+                        <li class="nav-item">
+                            <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
+                                <i class="ph-money"></i> <span>Payroll Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPayroll">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('payroll.periods') }}" class="nav-link">Payroll Periods</a></li>
+                                    <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
+                                    <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
+                                    <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View staff payments')
+                        <li class="nav-item">
+                            <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
+                                <i class="ph-wallet"></i> <span>Staff Payments</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarStaffPayments">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('staff.payments.index') }}" class="nav-link">All Payments</a></li>
+                                    <li class="nav-item"><a href="{{ route('staff.payments.dashboard') }}" class="nav-link">My Payments</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    {{-- SCHOOL BASIC SETTINGS --}}
+                    @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>SCHOOL BASIC SETTINGS</span></li>
+                    @endif
+
+                    @can('View schoolinformation')
+                        <li class="nav-item">
+                            <a href="#sidebarSchoolInfo" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSchoolInfo">
+                                <i class="ph-file-text"></i> <span>School Information</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSchoolInfo">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('school-information.index') }}" class="nav-link">School Information</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @if(auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse'))
+                        <li class="nav-item">
+                            <a href="#sidebarSession" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSession">
+                                <i class="ph-file-text"></i> <span>Session Term & House</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSession">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View session')  <li class="nav-item"><a href="{{ route('session.index') }}"    class="nav-link">School Session</a></li> @endcan
+                                    @can('View term')     <li class="nav-item"><a href="{{ route('term.index') }}"       class="nav-link">School Term</a></li>    @endcan
+                                    @can('View schoolhouse') <li class="nav-item"><a href="{{ route('schoolhouse.index') }}" class="nav-link">School House</a></li> @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    @if(auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher'))
+                        <li class="nav-item">
+                            <a href="#sidebarClassessettings" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClassessettings">
+                                <i class="ph-file-text"></i> <span>Classes</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarClassessettings">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View school-arm')     <li class="nav-item"><a href="{{ route('schoolarm.index') }}"        class="nav-link">Class Arm</a></li>      @endcan
+                                    @can('View class-category') <li class="nav-item"><a href="{{ route('classcategories.index') }}"  class="nav-link">Class Category</a></li> @endcan
+                                    @can('View school-class')   <li class="nav-item"><a href="{{ route('schoolclass.index') }}"      class="nav-link">Class Name</a></li>     @endcan
+                                    @can('View class-teacher')  <li class="nav-item"><a href="{{ route('classteacher.index') }}"     class="nav-link">Class Teacher</a></li>  @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    @if(auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject'))
+                        <li class="nav-item">
+                            <a href="#sidebarSub" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
+                                <i class="ph-file-text"></i> <span>Subject</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSub">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View subjects')           <li class="nav-item"><a href="{{ route('subject.index') }}"               class="nav-link">Subject</a></li>                          @endcan
+                                    @can('View subject-teacher')    <li class="nav-item"><a href="{{ route('subjectteacher.index') }}"         class="nav-link">Assign Subject Teacher</a></li>           @endcan
+                                    @can('View subject-class')      <li class="nav-item"><a href="{{ route('subjectclass.index') }}"           class="nav-link">Assign Class Subject</a></li>             @endcan
+                                    @can('View compulsory-subject') <li class="nav-item"><a href="{{ route('compulsorysubjectclass.index') }}" class="nav-link">Assign Compulsory Subject to classes</a></li> @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- ATTENDANCE ADMIN --}}
+                    @if(auth()->user()->can('View attendance-settings') || auth()->user()->can('View attendance-holidays') || auth()->user()->can('View attendance-school-report'))
+                        <li class="nav-item">
+                            <a href="#sidebarAttendanceAdmin" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendanceAdmin">
+                                <i class="ph-calendar-check"></i> <span>Attendance Admin</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAttendanceAdmin">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View attendance-settings')      <li class="nav-item"><a href="{{ route('attendance.settings') }}"      class="nav-link">Term Settings</a></li>    @endcan
+                                    @can('View attendance-holidays')      <li class="nav-item"><a href="{{ route('attendance.holidays') }}"      class="nav-link">Holidays & Breaks</a></li> @endcan
+                                    @can('View attendance-school-report') <li class="nav-item"><a href="{{ route('attendance.school-report') }}" class="nav-link">School Report</a></li>     @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    @can('View principals-comment')
+                        <li class="nav-item">
+                            <a href="#sidebarPrincipal" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPrincipal">
+                                <i class="ph-file-text"></i> <span>Principal's Comments</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPrincipal">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('principalscomment.index') }}" class="nav-link">Assign Staff</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View subjects')
+                        <li class="nav-item">
+                            <a href="#sidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSubjectvetting">
+                                <i class="ph-file-text"></i> <span>Terminal Subject Vettings</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSubjectvetting">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('subjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#mocksidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mocksidebarSubjectvetting">
+                                <i class="ph-file-text"></i> <span>Mock Subject Vettings</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="mocksidebarSubjectvetting">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('mocksubjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @if(auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
+                        <li class="nav-item">
+                            <a href="#sidebarBills" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarBills">
+                                <i class="ph-file-text"></i> <span>School Bills</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarBills">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View school-bills')                <li class="nav-item"><a href="{{ route('schoolbill.index') }}"            class="nav-link">Bills</a></li>        @endcan
+                                    @can('View school-bill-for-term-session') <li class="nav-item"><a href="{{ route('schoolbilltermsession.index') }}" class="nav-link">Apply Bills</a></li>  @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
                 </ul>
             </div>
         </div><!-- /scrollbar -->
@@ -499,12 +1117,13 @@
         <div class="sidebar-background"></div>
     </div><!-- /app-menu -->
 
-    <div class="vertical-overlay" id="vertical-overlay"></div>
+    <div class="vertical-overlay"></div>
 
     <!-- ========== TOPBAR ========== -->
     <header id="page-topbar">
         <div class="layout-width">
             <div class="navbar-header">
+
                 <div class="d-flex">
                     <div class="navbar-brand-box horizontal-logo">
                         <a href="index.html" class="logo logo-dark">
@@ -516,29 +1135,60 @@
                             <span class="logo-lg"><img src="{{ asset('theme/layouts/assets/images/logo-light.png')}}" alt="" height="22"></span>
                         </a>
                     </div>
+
                     <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon">
                         <span class="hamburger-icon"><span></span><span></span><span></span></span>
                     </button>
+
+                    <!-- Spotlight trigger -->
                     <div class="d-none d-md-inline-flex align-items-center" style="position:relative;">
-                        <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
+                        <button type="button" id="spotlight-trigger"
+                                style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
                             <i class="mdi mdi-magnify" style="font-size:16px;opacity:.6;"></i>
                             <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
-                            <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">K</kbd></div>
+                            <div style="display:flex;gap:4px;">
+                                <kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);opacity:.7;">⌘</kbd>
+                                <kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);opacity:.7;">K</kbd>
+                            </div>
                         </button>
-                        <div class="search-tooltip">Press <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;">Ctrl+K</kbd> to search</div>
+                        <div class="search-tooltip">
+                            Press <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;margin:0 2px;">⌘K</kbd> or
+                            <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;margin:0 2px;">Ctrl+K</kbd> to search
+                        </div>
                     </div>
                 </div>
+
                 <div class="d-flex align-items-center gap-1">
+
+                    <!-- ===== THEME TOGGLE ===== -->
                     <div class="position-relative" id="theme-toggle-wrapper">
-                        <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;"><i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i></button>
-                        <div id="theme-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:170px;background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;overflow:hidden;padding:6px;">
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light"><i class="bi bi-sun"></i> Light</a>
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark"><i class="bi bi-moon"></i> Dark</a>
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto"><i class="bi bi-moon-stars"></i> Auto</a>
+                        <button type="button"
+                                id="theme-toggle-btn"
+                                class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle"
+                                title="Switch theme"
+                                style="width:38px;height:38px;">
+                            <i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i>
+                        </button>
+                        <div id="theme-dropdown"
+                             style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:170px;
+                                    background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);
+                                    border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;overflow:hidden;padding:6px;">
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light"
+                               style="font-size:13px;color:inherit;transition:background .15s;">
+                                <i class="bi bi-sun"></i> <span>Light</span>
+                            </a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark"
+                               style="font-size:13px;color:inherit;transition:background .15s;">
+                                <i class="bi bi-moon"></i> <span>Dark</span>
+                            </a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto"
+                               style="font-size:13px;color:inherit;transition:background .15s;">
+                                <i class="bi bi-moon-stars"></i> <span>Auto (system)</span>
+                            </a>
                         </div>
                     </div>
 
-                    <!-- ===== USER DROPDOWN with all variables properly defined ===== -->
+                    <!-- ===== USER DROPDOWN ===== -->
                     @php
                         use App\Models\User as UserModel;
                         use App\Models\Student;
@@ -570,134 +1220,949 @@
                         $userRoles = $userdata->roles->pluck('name');
                     @endphp
 
+                    {{-- Wrapper: keep `dropdown` class so app.js finds .dropdown > .dropdown-menu --}}
                     <div class="dropdown position-relative ms-sm-3 header-item topbar-user" id="user-dropdown-wrapper">
-                        <button type="button" id="user-menu-btn" class="btn shadow-none p-0" style="background:transparent;border:none;">
+
+                        <button type="button"
+                                id="user-menu-btn"
+                                class="btn shadow-none p-0"
+                                style="background:transparent;border:none;line-height:1;box-shadow:none !important;"
+                                title="Account menu">
                             <span class="d-flex align-items-center gap-2">
                                 <span style="display:inline-block;width:42px;height:42px;flex-shrink:0;position:relative;">
                                     @if($srcPath)
-                                        <img id="topbar-avatar-img" src="{{ $srcPath }}" alt="{{ $fullName }}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none';document.getElementById('topbar-avatar-fallback').style.display='flex';">
-                                        <span id="topbar-avatar-fallback" style="display:none;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
+                                        <img id="topbar-avatar-img"
+                                             src="{{ $srcPath }}"
+                                             alt="{{ $fullName }}"
+                                             class="header-profile-user-enhanced"
+                                             style="width:42px;height:42px;border-radius:10px;object-fit:cover;object-position:center top;display:block;border:2px solid rgba(255,255,255,.25);"
+                                             onerror="this.style.display='none';document.getElementById('topbar-avatar-fallback').style.display='flex';">
+                                        <span id="topbar-avatar-fallback"
+                                              style="display:none;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;font-size:14px;font-weight:600;align-items:center;justify-content:center;position:absolute;top:0;left:0;">
+                                            {{ $initials }}
+                                        </span>
                                     @else
-                                        <span style="display:flex;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
+                                        <span id="topbar-avatar-fallback"
+                                              style="display:flex;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;font-size:14px;font-weight:600;align-items:center;justify-content:center;">
+                                            {{ $initials }}
+                                        </span>
                                     @endif
                                 </span>
-                                <span class="d-none d-xl-flex flex-column align-items-start ms-1"><span class="fw-medium" style="font-size:13px;">{{ $userdata->name }}</span></span>
+                                <span class="d-none d-xl-flex flex-column align-items-start ms-1" style="line-height:1.2;">
+                                    <span class="fw-medium" style="font-size:13px;color:inherit;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;">
+                                        {{ $userdata->name }}
+                                    </span>
+                                </span>
                             </span>
                         </button>
 
-                        <div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:var(--vz-dropdown-bg,#fff);border-radius:12px;z-index:9999;">
-                            <div class="dropdown-header"><h6 class="mb-0">Welcome back!</h6><small class="text-muted">{{ $userdata->name }}</small></div>
+                        {{-- Keep dropdown-menu class so app.js DOM scan doesn't throw --}}
+                        <div id="user-dropdown"
+                             class="dropdown-menu dropdown-menu-end"
+                             style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;
+                                    background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);
+                                    border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.14);z-index:9999;overflow:hidden;">
+
+                            <div class="dropdown-header">
+                                <h6 class="mb-0">Welcome back!</h6>
+                                <small class="text-muted">{{ $userdata->name }}</small>
+                            </div>
                             <div class="dropdown-divider"></div>
+
+                            {{-- Role badges --}}
                             <div class="px-3 py-2">
-                                <div class="small text-muted mb-2 text-uppercase" style="font-size:10px;">Your Roles</div>
+                                <div class="small text-muted mb-2 text-uppercase" style="font-size:10px;letter-spacing:.5px;">Your Roles</div>
                                 <div class="d-flex flex-wrap gap-1">
                                     @foreach($userRoles as $roleName)
-                                        <span style="display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#405189;">{{ $roleName }}</span>
+                                        @php
+                                            $roleColors = [
+                                                'admin'     => ['bg'=>'#405189','light'=>'#eef2ff'],
+                                                'teacher'   => ['bg'=>'#0a9396','light'=>'#e0f2fe'],
+                                                'student'   => ['bg'=>'#e76f51','light'=>'#fff0ed'],
+                                                'bursar'    => ['bg'=>'#2a9d8f','light'=>'#e6f7f5'],
+                                                'principal' => ['bg'=>'#6a0572','light'=>'#f3e8ff'],
+                                                'parent'    => ['bg'=>'#e9c46a','light'=>'#fefce8'],
+                                                'staff'     => ['bg'=>'#457b9d','light'=>'#e8f0fe'],
+                                            ];
+                                            $rk    = strtolower($roleName);
+                                            $color = $roleColors[$rk]['bg']    ?? '#6c757d';
+                                            $bg    = $roleColors[$rk]['light'] ?? '#f8fafc';
+                                        @endphp
+                                        <span style="display:inline-block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 10px;border-radius:20px;background:{{ $bg }};color:{{ $color }};border:1px solid {{ $color }}22;">
+                                            {{ $roleName }}
+                                        </span>
                                     @endforeach
                                 </div>
                             </div>
+
                             <div class="dropdown-divider"></div>
-                            @if(!$isStudent)<a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>@endif
-                            <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog me-2"></i>Account Settings</a>
+
+                            @if(!$isStudent)
+                                <a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}">
+                                    <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-2"></i>
+                                    <span class="align-middle">My Profile</span>
+                                </a>
+                            @endif
+                            <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}">
+                                <i class="mdi mdi-cog text-muted fs-lg align-middle me-2"></i>
+                                <span class="align-middle">Account Settings</span>
+                            </a>
+
                             <div class="dropdown-divider"></div>
-                            <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf<a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"><i class="mdi mdi-logout me-2"></i>Logout</a></form>
+
+                            <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">
+                                @csrf
+                                <a class="dropdown-item text-danger" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();">
+                                    <i class="mdi mdi-logout text-muted fs-lg align-middle me-2"></i>
+                                    <span class="align-middle">Logout</span>
+                                </a>
+                            </form>
                         </div>
-                    </div>
-                </div>
+                    </div><!-- /user-dropdown-wrapper -->
+
+                </div><!-- /d-flex align-items-center gap-1 -->
             </div>
         </div>
     </header>
 
+    <!-- Image View Modal -->
+    <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header">
+                    <h5 class="modal-title">Profile Photo</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <img id="enlargedImage" src="" alt="Profile" class="img-fluid rounded-3" style="max-height:400px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SPOTLIGHT MODAL ========== -->
+    <div id="spotlight-overlay"
+         style="display:none;position:fixed;inset:0;z-index:9999;align-items:flex-start;justify-content:center;padding-top:6vh;">
+        <div id="spotlight-box"
+             style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
+                <i class="mdi mdi-magnify" style="font-size:26px;color:#4f8ef7;flex-shrink:0;"></i>
+                <input id="spotlight-input" type="text" placeholder="Search for pages, students, staff, classes…" autocomplete="off"
+                       style="flex:1;background:transparent;border:none;outline:none;font-size:18px;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
+                <div style="display:flex;gap:8px;">
+                    <button id="spotlight-clear-history" style="display:none;background:rgba(255,255,255,.08);border:none;border-radius:10px;padding:6px 12px;color:rgba(255,255,255,.6);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;">Clear History</button>
+                    <kbd id="spotlight-esc" style="font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);cursor:pointer;flex-shrink:0;">ESC</kbd>
+                </div>
+            </div>
+            <div id="spotlight-results" style="max-height:520px;overflow-y:auto;padding:12px 0;">
+                <div id="spotlight-history-section" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 24px 8px;">
+                        <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);">Recent Searches</span>
+                        <button id="spotlight-clear-history-btn" style="background:transparent;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;">Clear All</button>
+                    </div>
+                    <div id="spotlight-history-list"></div>
+                    <div style="height:1px;background:rgba(255,255,255,.06);margin:12px 20px;"></div>
+                </div>
+                <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,.35);">
+                    <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4;"></i>
+                    <span style="font-size:15px;">Start typing to search…</span>
+                    <div style="margin-top:16px;font-size:12px;opacity:.4;">Popular: Students, Classes, Payments, Exams</div>
+                </div>
+                <ul id="spotlight-list" style="list-style:none;margin:0;padding:0;display:none;"></ul>
+                <div id="spotlight-loading" style="display:none;padding:48px;text-align:center;">
+                    <div style="display:inline-block;width:32px;height:32px;border:2px solid rgba(255,255,255,.15);border-top-color:#4f8ef7;border-radius:50%;animation:loadingSpin .7s linear infinite;"></div>
+                    <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,.45);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
+                </div>
+            </div>
+            <div style="padding:14px 24px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:24px;font-size:12px;color:rgba(255,255,255,.35);flex-wrap:wrap;">
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">⌘K</kbd> / <kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">Ctrl+K</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↑↓</kbd> navigate</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↵</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">ESC</kbd> close</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MAIN CONTENT ========== -->
     @yield('content')
 
+    <!-- ========== FOOTER ========== -->
     <footer class="footer">
         <div class="container-fluid">
-            <div class="row"><div class="col-sm-6"><script>document.write(new Date().getFullYear())</script> © {{ $school->school_name ?? 'Vite-ESchool' }}</div><div class="col-sm-6"><div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div></div></div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script>
+                    @php $school = App\Models\SchoolInformation::where('is_active', true)->first(); @endphp
+                    &copy; {{ $school->school_name ?? 'Vite-ESchool' }}
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div>
+                </div>
+            </div>
         </div>
     </footer>
+
+</div><!-- /layout-wrapper -->
+
+<!-- Back to top -->
+<button class="btn btn-dark btn-icon" id="back-to-top" title="Back to top">
+    <i class="bi bi-caret-up fs-3xl"></i>
+</button>
+
+<!-- Preloader -->
+<div id="preloader">
+    <div id="status">
+        <div class="spinner-border text-primary avatar-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
 </div>
 
-<button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up fs-3xl"></i></button>
-<div id="preloader"><div id="status"><div class="spinner-border text-primary avatar-sm" role="status"><span class="visually-hidden">Loading...</span></div></div></div>
+<!-- Customizer trigger -->
+<div class="customizer-setting d-none d-md-block">
+    <div class="btn btn-info p-2 text-uppercase rounded-end-0 shadow-lg"
+         data-bs-toggle="offcanvas" data-bs-target="#theme-settings-offcanvas"
+         aria-controls="theme-settings-offcanvas">
+        <i class="bi bi-gear mb-1"></i> Customizer
+    </div>
+</div>
 
+<!-- Theme Settings Offcanvas — full markup so app.js never hits null -->
+<div class="offcanvas offcanvas-end border-0" tabindex="-1" id="theme-settings-offcanvas">
+    <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
+        <div class="me-2">
+            <h5 class="mb-1 text-white">Theme Customizer</h5>
+            <p class="text-white text-opacity-75 mb-0">Customize your experience</p>
+        </div>
+        <button type="button" class="btn-close btn-close-white ms-auto" id="customizerclose-btn"
+                data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <div data-simplebar class="h-100">
+            <div class="p-4">
+
+                <h6 class="fs-md mb-1">Color Scheme</h6>
+                <p class="text-muted fs-sm">Choose Light or Dark Scheme.</p>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="form-check card-radio">
+                            <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-mode-light" value="light">
+                            <label class="form-check-label p-0 bg-transparent" for="layout-mode-light">
+                                <img src="{{ asset('theme/layouts/assets/images/custom-theme/light-mode.png') }}" alt="" class="img-fluid">
+                            </label>
+                        </div>
+                        <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check card-radio dark">
+                            <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-mode-dark" value="dark">
+                            <label class="form-check-label p-0 bg-transparent" for="layout-mode-dark">
+                                <img src="{{ asset('theme/layouts/assets/images/custom-theme/dark-mode.png') }}" alt="" class="img-fluid">
+                            </label>
+                        </div>
+                        <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
+                    </div>
+                </div>
+
+                <div id="sidebar-color">
+                    <h6 class="mt-4 fs-md mb-1">Sidebar Color</h6>
+                    <p class="text-muted fs-sm">Choose a color of Sidebar.</p>
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-light" value="light">
+                                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-light">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-white border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-dark" value="dark">
+                                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-dark">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-primary d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-soft-light rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sidebar-size">
+                    <h6 class="mt-4 fw-semibold fs-base">Sidebar Size</h6>
+                    <p class="text-muted fs-sm">Choose a size of Sidebar.</p>
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-default" value="lg">
+                                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-default">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light border-end d-flex h-100 flex-column gap-1 p-1" style="width:36px"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Default</h5>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small-hover" value="sm-hover">
+                                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-small-hover">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Hover</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sidebar-view">
+                    <h6 class="mt-4 fw-semibold fs-base">Layout</h6>
+                    <p class="text-muted fs-sm">Choose a layout.</p>
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-layout" id="customizer-layout01" value="vertical">
+                                <label class="form-check-label p-0 avatar-md w-100" for="customizer-layout01">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Vertical</h5>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-layout" id="customizer-layout03" value="twocolumn">
+                                <label class="form-check-label p-0 avatar-md w-100" for="customizer-layout03">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span></span></span><span class="flex-shrink-0"><span class="bg-light border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Two Column</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="layout-width">
+                    <h6 class="mt-4 fw-semibold fs-base">Layout Width</h6>
+                    <p class="text-muted fs-sm">Choose fluid or boxed layout.</p>
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-layout-width" id="layout-width-fluid" value="fluid">
+                                <label class="form-check-label p-0 avatar-md w-100" for="layout-width-fluid">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Fluid</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="layout-position">
+                    <h6 class="mt-4 fw-semibold fs-base">Layout Position</h6>
+                    <p class="text-muted fs-sm">Choose Fixed or Scrollable Layout Position.</p>
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-layout-position" id="layout-position-fixed" value="fixed">
+                                <label class="form-check-label p-0 avatar-md w-100" for="layout-position-fixed">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Fixed</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="preloader-menu">
+                    <h6 class="mt-4 fw-semibold fs-base">Preloader</h6>
+                    <p class="text-muted fs-sm">Choose a preloader.</p>
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-check sidebar-setting card-radio">
+                                <input class="form-check-input" type="radio" name="data-preloader" id="preloader-view-none" value="disable">
+                                <label class="form-check-label p-0 avatar-md w-100" for="preloader-view-none">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span>
+                                </label>
+                            </div>
+                            <h5 class="fs-sm text-center fw-medium mt-2">Disable</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- topbar color stubs needed by app.js data-bs-theme handler -->
+                <div style="display:none;">
+                    <input type="radio" id="topbar-color-light" name="data-topbar" value="light">
+                    <input type="radio" id="topbar-color-dark"  name="data-topbar" value="dark">
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="offcanvas-footer border-top p-3 text-center">
+        <div class="row">
+            <div class="col-6">
+                <button type="button" class="btn btn-light w-100" id="reset-layout">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     SCRIPTS
+     ===================================================== -->
 <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+<!-- =====================================================
+     MANUAL DROPDOWNS + THEME + CORE UI
+     ===================================================== -->
 <script>
 (function () {
-    // Fix hamburger + mobile sidebar toggling
-    const ham = document.getElementById('topnav-hamburger-icon');
-    const overlay = document.getElementById('vertical-overlay');
-    const body = document.body;
+    'use strict';
 
-    function closeSidebar() {
-        body.classList.remove('vertical-sidebar-enable');
-    }
+    /* ── helpers ─────────────────────────────────────────── */
+    function qs(sel, ctx)  { return (ctx || document).querySelector(sel); }
+    function qsa(sel, ctx) { return (ctx || document).querySelectorAll(sel); }
 
-    function openSidebar() {
-        body.classList.add('vertical-sidebar-enable');
-    }
-
-    function toggleSidebar(e) {
-        if (e) e.preventDefault();
-        if (body.classList.contains('vertical-sidebar-enable')) {
-            closeSidebar();
-        } else {
-            openSidebar();
-        }
-    }
-
-    if (ham) {
-        ham.addEventListener('click', toggleSidebar);
-    }
-    if (overlay) {
-        overlay.addEventListener('click', closeSidebar);
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && body.classList.contains('vertical-sidebar-enable')) {
-            closeSidebar();
-        }
-    });
-
-    // Manual dropdown helpers
+    /* ── manual dropdown factory ─────────────────────────── */
     function makeDropdown(btnId, panelId) {
-        var btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+        var btn   = document.getElementById(btnId);
+        var panel = document.getElementById(panelId);
         if (!btn || !panel) return;
-        function open() { panel.style.display = 'block'; btn.setAttribute('aria-expanded','true'); }
-        function close() { panel.style.display = 'none'; btn.setAttribute('aria-expanded','false'); }
-        btn.addEventListener('click', function(e){ e.stopPropagation(); panel.style.display === 'none' ? open() : close(); });
-        document.addEventListener('click', function(e){ if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
-        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
-    }
-    makeDropdown('theme-toggle-btn', 'theme-dropdown');
-    makeDropdown('user-menu-btn', 'user-dropdown');
 
-    // Theme initialization
+        function open()  { panel.style.display = 'block'; btn.setAttribute('aria-expanded','true'); }
+        function close() { panel.style.display = 'none';  btn.setAttribute('aria-expanded','false'); }
+        function toggle(){ panel.style.display === 'none' ? open() : close(); }
+
+        btn.addEventListener('click', function(e){ e.stopPropagation(); toggle(); });
+        document.addEventListener('click', function(e){
+            if (!btn.contains(e.target) && !panel.contains(e.target)) close();
+        });
+        document.addEventListener('keydown', function(e){
+            if (e.key === 'Escape') close();
+        });
+        qsa('a', panel).forEach(function(a){
+            a.addEventListener('mouseenter', function(){ a.style.background='rgba(64,81,137,.08)'; });
+            a.addEventListener('mouseleave', function(){ a.style.background=''; });
+        });
+    }
+
+    /* ── theme ───────────────────────────────────────────── */
     function initTheme() {
-        var html = document.documentElement;
+        var html   = document.documentElement;
         var iconEl = document.getElementById('theme-icon');
-        var applyMode = function(mode) {
-            var scheme = mode === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode;
-            html.setAttribute('data-bs-theme', scheme);
-            html.setAttribute('data-topbar', scheme === 'dark' ? 'dark' : 'light');
-            if (iconEl) iconEl.className = mode === 'light' ? 'bi bi-sun align-middle fs-3xl' : (mode === 'dark' ? 'bi bi-moon align-middle fs-3xl' : 'bi bi-moon-stars align-middle fs-3xl');
-            localStorage.setItem('app-theme', mode);
-        };
-        applyMode(localStorage.getItem('app-theme') || 'light');
-        document.querySelectorAll('.theme-mode-item').forEach(a => a.addEventListener('click', e => { e.preventDefault(); applyMode(a.getAttribute('data-mode')); }));
-    }
-    initTheme();
 
-    // Active sidebar highlight
-    var curPath = window.location.pathname;
-    document.querySelectorAll('#navbar-nav .nav-sm a.nav-link').forEach(link => {
-        try { if (new URL(link.href, window.location.origin).pathname === curPath) link.classList.add('nav-active-child'); } catch(e) {}
+        var ICON = {
+            light: 'bi bi-sun align-middle fs-3xl',
+            dark:  'bi bi-moon align-middle fs-3xl',
+            auto:  'bi bi-moon-stars align-middle fs-3xl'
+        };
+
+        function resolvedScheme(mode) {
+            if (mode === 'auto') return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            return mode;
+        }
+
+        function applyMode(mode) {
+            var scheme = resolvedScheme(mode);
+            html.setAttribute('data-bs-theme', scheme);
+            html.setAttribute('data-topbar',   scheme === 'dark' ? 'dark' : 'light');
+            if (iconEl) iconEl.className = ICON[mode] || ICON.light;
+            localStorage.setItem('app-theme', mode);
+
+            /* sync customizer radios */
+            var r = document.getElementById(scheme === 'dark' ? 'layout-mode-dark' : 'layout-mode-light');
+            if (r) r.checked = true;
+
+            /* highlight active item */
+            qsa('.theme-mode-item').forEach(function(a){
+                a.style.fontWeight = a.getAttribute('data-mode') === mode ? '600' : '';
+                a.style.color      = a.getAttribute('data-mode') === mode ? 'var(--vz-primary,#405189)' : '';
+            });
+
+            /* close panel */
+            var panel = document.getElementById('theme-dropdown');
+            if (panel) panel.style.display = 'none';
+        }
+
+        applyMode(localStorage.getItem('app-theme') || 'light');
+
+        qsa('.theme-mode-item').forEach(function(a){
+            a.addEventListener('click', function(e){
+                e.preventDefault();
+                applyMode(a.getAttribute('data-mode'));
+            });
+        });
+
+        qsa('[name="data-bs-theme"]').forEach(function(r){
+            r.addEventListener('change', function(){ applyMode(r.value); });
+        });
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){
+            if (localStorage.getItem('app-theme') === 'auto') applyMode('auto');
+        });
+    }
+
+    /* ── NProgress ───────────────────────────────────────── */
+    function initNProgress() {
+        if (typeof NProgress === 'undefined') return;
+        NProgress.configure({ showSpinner: false, speed: 400, minimum: 0.1 });
+        qsa('a[href]').forEach(function(a){
+            var h = a.getAttribute('href') || '';
+            if (h && h !== '#' && !h.startsWith('javascript') && !h.startsWith('mailto')
+                && !h.startsWith('tel') && !a.hasAttribute('data-bs-toggle')
+                && !a.hasAttribute('data-bs-dismiss') && a.getAttribute('target') !== '_blank') {
+                a.addEventListener('click', function(){ NProgress.start(); });
+            }
+        });
+        window.addEventListener('pageshow', function(){ NProgress.done(); });
+        window.addEventListener('load',     function(){ NProgress.done(); });
+    }
+
+    /* ── active sidebar ──────────────────────────────────── */
+    function initActiveSidebar() {
+        var cur = window.location.pathname;
+        qsa('#navbar-nav .nav-sm a.nav-link').forEach(function(link){
+            try {
+                var lp = new URL(link.href, window.location.origin).pathname;
+                if (lp !== cur && !(lp.length > 1 && cur.startsWith(lp))) return;
+                link.classList.add('nav-active-child');
+                var col = link.closest('.collapse');
+                if (!col) return;
+                col.classList.add('show');
+                var id  = col.id;
+                var tog = qs('[data-bs-target="#'+id+'"],[href="#'+id+'"]');
+                if (tog) {
+                    tog.setAttribute('aria-expanded','true');
+                    tog.classList.remove('collapsed');
+                    tog.classList.add('nav-active-parent');
+                }
+                setTimeout(function(){ link.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 350);
+            } catch(e){}
+        });
+    }
+
+    /* ── ripple ──────────────────────────────────────────── */
+    function initRipple() {
+        qsa('#navbar-nav .nav-link').forEach(function(link){
+            link.addEventListener('click', function(e){
+                if (link.hasAttribute('data-bs-toggle')) return;
+                var r = document.createElement('span');
+                var rect = link.getBoundingClientRect();
+                var s = Math.max(rect.width, rect.height);
+                r.className = 'nav-ripple';
+                r.style.cssText = 'width:'+s+'px;height:'+s+'px;left:'+(e.clientX-rect.left-s/2)+'px;top:'+(e.clientY-rect.top-s/2)+'px;';
+                link.appendChild(r);
+                setTimeout(function(){ r.parentNode && r.parentNode.removeChild(r); }, 650);
+            });
+        });
+    }
+
+    /* ── back to top ─────────────────────────────────────── */
+    function initBackToTop() {
+        var btn = document.getElementById('back-to-top');
+        if (!btn) return;
+        window.addEventListener('scroll', function(){ btn.classList.toggle('show', window.scrollY > 300); }, {passive:true});
+        btn.addEventListener('click', function(){ window.scrollTo({top:0,behavior:'smooth'}); });
+    }
+
+    /* ── hamburger ───────────────────────────────────────── */
+    function initHamburger() {
+        var ham = document.getElementById('topnav-hamburger-icon');
+        if (!ham) return;
+        ham.addEventListener('click', function(){
+            document.body.classList.toggle('vertical-sidebar-enable');
+            if (window.innerWidth >= 1025) {
+                document.body.classList.toggle('sidebar-enable');
+                var html = document.documentElement;
+                html.setAttribute('data-sidebar-size', html.getAttribute('data-sidebar-size') === 'sm' ? 'lg' : 'sm');
+            }
+        });
+        var ov = qs('.vertical-overlay');
+        if (ov) ov.addEventListener('click', function(){ document.body.classList.remove('vertical-sidebar-enable'); });
+    }
+
+    /* ── destroy Bootstrap dropdown instance on user btn ─── */
+    function killBsDropdown() {
+        var btn = document.getElementById('user-menu-btn');
+        if (!btn || typeof bootstrap === 'undefined' || !bootstrap.Dropdown) return;
+        var inst = bootstrap.Dropdown.getInstance(btn);
+        if (inst) inst.dispose();
+    }
+
+    /* ── image modal ─────────────────────────────────────── */
+    function initImageModal() {
+        var modal = document.getElementById('imageViewModal');
+        if (!modal) return;
+        modal.addEventListener('show.bs.modal', function(e){
+            var img = document.getElementById('enlargedImage');
+            var src = e.relatedTarget ? e.relatedTarget.getAttribute('data-image') : null;
+            if (img && src) img.src = src;
+        });
+    }
+
+    /* ── search tooltip ──────────────────────────────────── */
+    function initSearchTooltip() {
+        var btn = document.getElementById('spotlight-trigger');
+        var tip = document.querySelector('.search-tooltip');
+        if (!btn || !tip) return;
+        btn.addEventListener('mouseenter', function(){ tip.style.opacity='1'; });
+        btn.addEventListener('mouseleave', function(){ tip.style.opacity='0'; });
+    }
+
+    /* ── form progress ───────────────────────────────────── */
+    function initFormProgress() {
+        if (typeof NProgress === 'undefined') return;
+        qsa('form').forEach(function(f){
+            if (f.getAttribute('action') && !f.dataset.noProgress)
+                f.addEventListener('submit', function(){ NProgress.start(); });
+        });
+    }
+
+    /* ── reset layout ────────────────────────────────────── */
+    function initReset() {
+        var btn = document.getElementById('reset-layout');
+        if (btn) btn.addEventListener('click', function(){ sessionStorage.clear(); localStorage.removeItem('app-theme'); location.reload(); });
+    }
+
+    /* ── INIT ────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function(){
+        initTheme();
+        makeDropdown('theme-toggle-btn', 'theme-dropdown');
+        makeDropdown('user-menu-btn',    'user-dropdown');
+        killBsDropdown();
+        initActiveSidebar();
+        initRipple();
+        initBackToTop();
+        initHamburger();
+        initImageModal();
+        initSearchTooltip();
+        initReset();
+        initNProgress();
+        initFormProgress();
     });
+
 })();
 </script>
+
+<!-- =====================================================
+     SPOTLIGHT SEARCH
+     ===================================================== -->
+<script>
+(function(){
+    var STATIC_PAGES = [
+        {title:'Administration Dashboard',    url:'{{ route("dashboard") }}',                               icon:'mdi-gauge',              category:'Dashboards'},
+        {title:'User Management',             url:'{{ route("users.index") }}',                             icon:'mdi-account-group',      category:'Users & Privileges'},
+        {title:'Roles & Permissions',         url:'{{ route("roles.index") }}',                             icon:'mdi-shield-account',     category:'Users & Privileges'},
+        {title:'All Students',                url:'{{ route("student.index") }}',                           icon:'mdi-school',             category:'Students'},
+        {title:'Batch Student Registration',  url:'{{ route("studentbatchindex") }}',                       icon:'mdi-account-multiple-plus',category:'Students'},
+        {title:'ID Card Generator',           url:'{{ route("student-id-cards.index") }}',                  icon:'mdi-card-account-details',category:'Students'},
+        {title:'My Profile',                  url:'{{ route("users.overview", ["id" => Auth::id()]) }}',    icon:'mdi-account-circle',     category:'My Account'},
+        {title:'Account Settings',            url:'{{ route("profile.settings", ["id" => Auth::id()]) }}',  icon:'mdi-cog',                category:'My Account'},
+        {title:'School Information',          url:'{{ route("school-information.index") }}',                icon:'mdi-domain',             category:'School Settings'},
+        {title:'School Session',              url:'{{ route("session.index") }}',                           icon:'mdi-calendar-range',     category:'School Settings'},
+        {title:'School Term',                 url:'{{ route("term.index") }}',                              icon:'mdi-calendar',           category:'School Settings'},
+        {title:'School House',                url:'{{ route("schoolhouse.index") }}',                       icon:'mdi-home-group',         category:'School Settings'},
+        {title:'Class Arm',                   url:'{{ route("schoolarm.index") }}',                         icon:'mdi-table-chair',        category:'School Settings'},
+        {title:'Class Category',              url:'{{ route("classcategories.index") }}',                   icon:'mdi-format-list-bulleted',category:'School Settings'},
+        {title:'Class Name',                  url:'{{ route("schoolclass.index") }}',                       icon:'mdi-google-classroom',   category:'School Settings'},
+        {title:'Class Teacher',               url:'{{ route("classteacher.index") }}',                      icon:'mdi-human-male-board',   category:'School Settings'},
+        {title:'Subjects',                    url:'{{ route("subject.index") }}',                           icon:'mdi-book-open-variant',  category:'Subjects'},
+        {title:'Assign Subject Teacher',      url:'{{ route("subjectteacher.index") }}',                    icon:'mdi-account-tie',        category:'Subjects'},
+        {title:'Assign Class Subject',        url:'{{ route("subjectclass.index") }}',                      icon:'mdi-book-plus',          category:'Subjects'},
+        {title:'My Class',                    url:'{{ route("myclass.index") }}',                           icon:'mdi-google-classroom',   category:'Classes & Records'},
+        {title:'My Subject',                  url:'{{ route("mysubject.index") }}',                         icon:'mdi-book-open',          category:'Classes & Records'},
+        {title:'Terminal Records',            url:'{{ route("myresultroom.index") }}',                      icon:'mdi-file-chart',         category:'Records & Results'},
+        {title:'Terminal Result Reports',     url:'{{ route("studentreports.index") }}',                    icon:'mdi-file-document',      category:'Records & Results'},
+        {title:'Terminal Result Broadsheet',  url:'{{ route("broadsheet.index") }}',                        icon:'mdi-table-large',        category:'Records & Results'},
+        {title:'Student Promotions',          url:'{{ route("promotions.index") }}',                        icon:'mdi-arrow-up-circle',    category:'Promotions'},
+        {title:'Student Bill',                url:'{{ route("schoolpayment.index") }}',                     icon:'mdi-receipt',            category:'Finance'},
+        {title:'Payment Portal',              url:'{{ route("payment.index") }}',                           icon:'mdi-wallet',             category:'Finance'},
+        {title:'All Scholarships',            url:'{{ route("admin.scholarship.index") }}',                 icon:'mdi-medal',              category:'Finance'},
+        {title:'All Discounts',               url:'{{ route("admin.discount.index") }}',                    icon:'mdi-tag-multiple',       category:'Finance'},
+        {title:'Payroll Periods',             url:'{{ route("payroll.periods") }}',                         icon:'mdi-calendar-clock',     category:'Payroll'},
+        {title:'Payroll Summary',             url:'{{ route("payroll.summary") }}',                         icon:'mdi-cash-multiple',      category:'Payroll'},
+        {title:'Salary Structures',           url:'{{ route("payroll.salary-structures") }}',               icon:'mdi-bank',               category:'Payroll'},
+        {title:'All Examinations',            url:'{{ route("exams.index") }}',                             icon:'mdi-clipboard-text',     category:'Exams & CBT'},
+        {title:'CBT Exercise',                url:'{{ route("cbt.index") }}',                               icon:'mdi-monitor',            category:'Exams & CBT'},
+        {title:'Admin Timetable',             url:'{{ route("timetable.index") }}',                         icon:'mdi-table-clock',        category:'Timetable'},
+        {title:'My Timetable',                url:'{{ route("timetable.teacher") }}',                       icon:'mdi-calendar-clock',     category:'Timetable'},
+        {title:'Mark Attendance',             url:'{{ route("attendance.my-classes") }}',                   icon:'mdi-clipboard-check',    category:'Attendance'},
+        {title:'Balance Sheet',               url:'{{ route("reports.financial.balance-sheet") }}',         icon:'mdi-scale-balance',      category:'Accounting'},
+        {title:'Income Statement',            url:'{{ route("reports.financial.income-statement") }}',      icon:'mdi-chart-line',         category:'Accounting'},
+        {title:'Student Debtors List',        url:'{{ route("reports.financial.debtors") }}',               icon:'mdi-account-alert',      category:'Accounting'},
+        {title:'Generate Transcript',         url:'{{ route("transcript.index") }}',                        icon:'mdi-file-account',       category:'Transcripts'},
+        {title:'Admin Score Entry',           url:'{{ route("admin.score-entry.index") }}',                 icon:'mdi-clipboard-edit',     category:'Admin Tools'},
+    ];
+
+    var CAT_COLORS = {
+        'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
+        'School Settings':'#6a0572','Subjects':'#e9c46a','Classes & Records':'#0a9396',
+        'Records & Results':'#457b9d','Promotions':'#2a9d8f','Finance':'#10b981','Payroll':'#e76f51',
+        'Exams & CBT':'#f4a261','Timetable':'#4f8ef7','Attendance':'#e9c46a','Accounting':'#10b981',
+        'Transcripts':'#457b9d','Admin Tools':'#ef4444'
+    };
+
+    var HISTORY_KEY = 'spotlight_search_history';
+
+    function getHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }catch(e){ return []; } }
+    function saveHistory(h){ localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0,10))); }
+    function addHistory(query, result){
+        if (!query || query.trim().length < 2) return;
+        var h = getHistory();
+        var item = {query:query, url:result.url, title:result.title, icon:result.icon, category:result.category, ts:Date.now()};
+        var idx = h.findIndex(function(x){ return x.query===query && x.url===result.url; });
+        if (idx !== -1) h.splice(idx,1);
+        h.unshift(item);
+        saveHistory(h);
+        renderHistory();
+    }
+
+    var overlay   = document.getElementById('spotlight-overlay');
+    var box       = document.getElementById('spotlight-box');
+    var input     = document.getElementById('spotlight-input');
+    var emptyEl   = document.getElementById('spotlight-empty');
+    var loadEl    = document.getElementById('spotlight-loading');
+    var list      = document.getElementById('spotlight-list');
+    var trigger   = document.getElementById('spotlight-trigger');
+    var escBtn    = document.getElementById('spotlight-esc');
+    var histSec   = document.getElementById('spotlight-history-section');
+    var histList  = document.getElementById('spotlight-history-list');
+    var clearBtn  = document.getElementById('spotlight-clear-history-btn');
+    var clearMain = document.getElementById('spotlight-clear-history');
+
+    var timer = null, activeIndex = -1, currentResults = [];
+
+    function open(){
+        if(!overlay) return;
+        overlay.style.display='flex';
+        overlay.style.animation='spotlightOverlayFadeIn .25s ease forwards';
+        if(box) box.style.animation='spotlightModalBounceIn .35s cubic-bezier(.34,1.3,.64,1) forwards';
+        setTimeout(function(){ if(input) input.focus(); },100);
+        renderHistory();
+        if(clearMain) clearMain.style.display = getHistory().length>0?'block':'none';
+    }
+    function close(){
+        if(box) box.style.animation='spotlightModalFadeOut .2s ease forwards';
+        if(overlay) overlay.style.animation='spotlightOverlayFadeOut .2s ease forwards';
+        setTimeout(function(){
+            if(overlay) overlay.style.display='none';
+            if(input) input.value='';
+            showEmpty();
+        },200);
+    }
+    function showEmpty(){
+        if(emptyEl){ emptyEl.innerHTML='<i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4;"></i><span style="font-size:15px;">Start typing to search…</span><div style="margin-top:16px;font-size:12px;opacity:.4;">Popular: Students, Classes, Payments, Exams</div>'; emptyEl.style.display='block'; }
+        if(loadEl) loadEl.style.display='none';
+        if(list){ list.style.display='none'; list.innerHTML=''; }
+        if(clearMain) clearMain.style.display = getHistory().length>0?'block':'none';
+        renderHistory();
+        currentResults=[]; activeIndex=-1;
+    }
+    function showLoading(){
+        if(emptyEl) emptyEl.style.display='none';
+        if(loadEl) loadEl.style.display='block';
+        if(list) list.style.display='none';
+        if(histSec) histSec.style.display='none';
+    }
+
+    function renderHistory(){
+        var h = getHistory();
+        if(h.length>0 && (!input||!input.value.trim())){
+            if(histSec) histSec.style.display='block';
+            if(histList) histList.innerHTML='';
+            if(clearMain) clearMain.style.display='block';
+            h.forEach(function(item,idx){
+                var div=document.createElement('div');
+                div.className='spotlight-history-item';
+                div.style.cssText='display:flex;align-items:center;gap:14px;padding:10px 24px;cursor:pointer;transition:background .15s;border-radius:10px;margin:0 16px;';
+                var c=CAT_COLORS[item.category]||'#4f8ef7';
+                div.innerHTML='<span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:'+c+'22;"><i class="'+(item.icon||'mdi-history')+' mdi" style="font-size:16px;color:'+c+';"></i></span>'
+                    +'<span style="flex:1;min-width:0;"><span style="display:block;font-size:14px;font-weight:500;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+item.title+'</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;">'+item.query+'</span></span>'
+                    +'<button class="hist-remove" style="background:transparent;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:13px;padding:6px 10px;border-radius:6px;">✕</button>';
+                div.querySelector('.hist-remove').addEventListener('click',function(e){
+                    e.stopPropagation();
+                    var his=getHistory(); his.splice(idx,1); saveHistory(his); renderHistory();
+                    if(!input||!input.value.trim()) showEmpty();
+                });
+                div.addEventListener('click',function(){ if(input){ input.value=item.query; performSearch(item.query); } });
+                if(histList) histList.appendChild(div);
+            });
+        } else {
+            if(histSec) histSec.style.display='none';
+            if(clearMain) clearMain.style.display='none';
+        }
+    }
+
+    function performSearch(query){
+        if(!query||!query.trim()){ showEmpty(); return; }
+        showLoading();
+        var sr = searchStatic(query);
+        renderResults(sr);
+        clearTimeout(timer);
+        timer = setTimeout(function(){
+            if(query.length<2) return;
+            fetch('{{ url("/api/search") }}?q='+encodeURIComponent(query)+'&_token={{ csrf_token() }}',{headers:{'Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'}})
+                .then(function(r){ return r.ok?r.json():{results:[]}; })
+                .then(function(d){
+                    if(!input||input.value.trim()!==query) return;
+                    var merged=sr.concat(d.results||[]),seen={};
+                    renderResults(merged.filter(function(r){ if(seen[r.url]) return false; seen[r.url]=true; return true; }));
+                }).catch(function(){});
+        },280);
+    }
+
+    function searchStatic(q){
+        var lq=q.toLowerCase().trim();
+        return STATIC_PAGES.filter(function(p){ return p.title.toLowerCase().includes(lq)||p.category.toLowerCase().includes(lq); }).slice(0,15);
+    }
+
+    function renderResults(results){
+        if(loadEl) loadEl.style.display='none';
+        if(emptyEl) emptyEl.style.display='none';
+        if(list){ list.innerHTML=''; list.style.display='block'; }
+        if(histSec) histSec.style.display='none';
+        activeIndex=-1; currentResults=results;
+
+        if(!results.length){
+            if(emptyEl){ emptyEl.innerHTML='<i class="mdi mdi-magnify-close" style="font-size:42px;display:block;margin-bottom:16px;opacity:.4;"></i><span style="font-size:15px;">No results for "'+(input?input.value:'')+'"</span>'; emptyEl.style.display='block'; }
+            if(list) list.style.display='none';
+            return;
+        }
+        var g={};
+        results.forEach(function(r){ if(!g[r.category]) g[r.category]=[]; g[r.category].push(r); });
+        var idx=0;
+        Object.keys(g).forEach(function(cat){
+            var h=document.createElement('li');
+            h.style.cssText='padding:12px 24px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);';
+            h.textContent=cat; list.appendChild(h);
+            g[cat].forEach(function(r,gi){
+                var li=document.createElement('li');
+                var isTop=(idx===0&&gi===0);
+                li.className='spotlight-result-item'+(isTop?' top-match':'');
+                li.setAttribute('data-idx',idx);
+                li.style.cssText='display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
+                var c=CAT_COLORS[r.category]||'#4f8ef7';
+                li.innerHTML='<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:'+c+'22;"><i class="'+(r.icon||'mdi-chevron-right')+' mdi" style="font-size:18px;color:'+c+';"></i></span>'
+                    +'<span style="flex:1;min-width:0;"><span class="result-title" style="display:block;font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+r.title+'</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">'+(r.subtitle||r.category)+'</span></span>'
+                    +'<i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);flex-shrink:0;transition:transform .2s;"></i>';
+                li.addEventListener('mouseenter',function(){ li.style.background='rgba(79,142,247,.12)'; activeIndex=idx; });
+                li.addEventListener('mouseleave',function(){ li.style.background=activeIndex===idx?'rgba(79,142,247,.18)':''; });
+                li.addEventListener('click',function(){ addHistory(input?input.value:'',r); window.location.href=r.url; });
+                list.appendChild(li); idx++;
+            });
+        });
+    }
+
+    /* event listeners */
+    if(trigger) trigger.addEventListener('click',open);
+    if(escBtn)  escBtn.addEventListener('click',close);
+    if(clearBtn)  clearBtn.addEventListener('click',function(){ localStorage.removeItem(HISTORY_KEY); renderHistory(); showEmpty(); });
+    if(clearMain) clearMain.addEventListener('click',function(){ localStorage.removeItem(HISTORY_KEY); renderHistory(); showEmpty(); });
+    if(overlay) overlay.addEventListener('click',function(e){ if(e.target===overlay) close(); });
+
+    document.addEventListener('keydown',function(e){
+        if((e.metaKey||e.ctrlKey)&&e.key==='k'){ e.preventDefault(); overlay&&overlay.style.display==='flex'?close():open(); }
+        if(e.key==='Escape'&&overlay&&overlay.style.display==='flex') close();
+    });
+
+    if(input){
+        input.addEventListener('keydown',function(e){
+            var items=list.querySelectorAll('li[data-idx]');
+            if(e.key==='ArrowDown'){ e.preventDefault(); activeIndex=Math.min(activeIndex+1,items.length-1); highlightItem(items); }
+            else if(e.key==='ArrowUp'){ e.preventDefault(); activeIndex=Math.max(activeIndex-1,0); highlightItem(items); }
+            else if(e.key==='Enter'&&activeIndex>=0&&currentResults[activeIndex]){ addHistory(input.value,currentResults[activeIndex]); window.location.href=currentResults[activeIndex].url; }
+        });
+        input.addEventListener('input',function(){
+            var q=this.value.trim();
+            if(!q){ showEmpty(); renderHistory(); if(clearMain) clearMain.style.display=getHistory().length>0?'block':'none'; return; }
+            if(clearMain) clearMain.style.display='none';
+            performSearch(q);
+        });
+    }
+
+    function highlightItem(items){
+        items.forEach(function(li,i){
+            var active=(i===activeIndex);
+            li.style.background=active?'rgba(79,142,247,.18)':'';
+            var t=li.querySelector('.result-title');
+            if(t) t.style.color=active?'#4f8ef7':'#fff';
+            var arr=li.querySelector('.mdi-arrow-right');
+            if(arr) arr.style.transform=active?'translateX(6px)':'translateX(0)';
+            if(active) li.scrollIntoView({block:'nearest'});
+        });
+    }
+
+    renderHistory();
+})();
+</script>
+
+<!-- Route-specific JS -->
+@if (Route::is('dashboard'))             @include('layouts.pages-assets.js.dashboard-list-js') @endif
+@if (Route::is('users.*'))               @include('layouts.pages-assets.js.users-list-js') @endif
+@if (Route::is('student-id-cards.*'))    @include('layouts.pages-assets.js.idcard-list-js') @endif
+@if (Route::is('student.payments.*'))    @include('layouts.pages-assets.js.studentpayment-list-js') @endif
+@if (Route::is('profile.*'))             @include('layouts.pages-assets.js.users-list-js') @endif
+@if (Route::is('roles.*'))               @include('layouts.pages-assets.js.role-list-js') @endif
+@if (Route::is('permissions.*'))         @include('layouts.pages-assets.js.permissions-list-js') @endif
+@if (Route::is('session.*'))             @include('layouts.pages-assets.js.session-list-js') @endif
+@if (Route::is('term.*'))                @include('layouts.pages-assets.js.term-list-js') @endif
+@if (Route::is('school-information.*'))  @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
+@if (Route::is('admin.school-info.*'))   @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
+@if (Route::is('schoolhouse.*'))         @include('layouts.pages-assets.js.schoolhouse-list-js') @endif
+@if (Route::is('schoolarm.*'))           @include('layouts.pages-assets.js.arm-list-js') @endif
+@if (Route::is('classcategories.*'))     @include('layouts.pages-assets.js.classcategory-list-js') @endif
+@if (Route::is('schoolclass.*'))         @include('layouts.pages-assets.js.schoolclass-list-js') @endif
+@if (Route::is('classteacher.*'))        @include('layouts.pages-assets.js.classteacher-list-js') @endif
+@if (Route::is('subject.*'))             @include('layouts.pages-assets.js.subject-list-js') @endif
+@if (Route::is('subjects.*'))            @include('layouts.pages-assets.js.subject-list-js') @endif
+@if (Route::is('subjectteacher.*'))      @include('layouts.pages-assets.js.subjectteacher-list-js') @endif
+@if (Route::is('subjectclass.*'))        @include('layouts.pages-assets.js.subjectclass-list-js') @endif
+@if (Route::is('schoolbill.*'))          @include('layouts.pages-assets.js.schoolbill-list-js') @endif
+@if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.js.schoolbilltermsession-list-js') @endif
+@if (Route::is('student.*'))             @include('layouts.pages-assets.js.student-list-js') @endif
+@if (Route::is('studentbatchindex'))     @include('layouts.pages-assets.js.studentbatch-list-js') @endif
+@if (Route::is('myclass.*'))             @include('layouts.pages-assets.js.myclass-list-js') @endif
+@if (Route::is('mysubject.*'))           @include('layouts.pages-assets.js.mysubject-list-js') @endif
+@if (Route::is('viewstudent'))           @include('layouts.pages-assets.js.viewstudent-list-js') @endif
+@if (Route::is('studentreports.*'))      @include('layouts.pages-assets.js.studentreport-list-js') @endif
+@if (Route::is('broadsheet.*'))          @include('layouts.pages-assets.js.studentreport-list-js') @endif
+@if (Route::is('studentmockreports.*'))  @include('layouts.pages-assets.js.studentmockreport-list-js') @endif
+@if (Route::is('subjectoperation.*'))    @include('layouts.pages-assets.js.subjectoperation-list-js') @endif
+@if (Route::is('subjects.subjectinfo'))  @include('layouts.pages-assets.js.subjectinfo-list-js') @endif
+@if (Route::is('myresultroom.*'))        @include('layouts.pages-assets.js.myresultroom-list-js') @endif
+@if (Route::is('assessment.*'))          @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
+@if (Route::is('assessments'))           @include('layouts.pages-assets.js.studentassessment-list-js') @endif
+@if (Route::is('subjectscoresheet'))     @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
+@if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.js.subjectscoresheet-mock-list-js') @endif
+@if (Route::is('studentresults*'))       @include('layouts.pages-assets.js.studentresults-list-js') @endif
+@if (Route::is('schoolbill*'))           @include('layouts.pages-assets.js.schoolbill-list-js') @endif
+@if (Route::is('schoolpayment*'))        @include('layouts.pages-assets.js.schoolpayment-list-js') @endif
+@if (Route::is('analysis*'))             @include('layouts.pages-assets.js.analysis-list-js') @endif
+@if (Route::is('exams*'))                @include('layouts.pages-assets.js.exams-list-js') @endif
+@if (Route::is('questions*'))            @include('layouts.pages-assets.js.questions-list-js') @endif
+@if (Route::is('cbt*'))                  @include('layouts.pages-assets.js.cbt-list-js') @endif
+@if (Route::is('classbroadsheet.*'))     @include('layouts.pages-assets.js.classbroadsheet-list-js') @endif
+@if (Route::is('principalscomment.*'))   @include('layouts.pages-assets.js.principalscomment-list-js') @endif
+@if (Route::is('myprincipalscomment.*')) @include('layouts.pages-assets.js.myprincipalscomment-list-js') @endif
+@if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.js.compulsorysubjectclass-list-js') @endif
+@if (Route::is('subjectvetting.*'))      @include('layouts.pages-assets.js.subjectvetting-list-js') @endif
+@if (Route::is('mocksubjectvetting.*'))  @include('layouts.pages-assets.js.mocksubjectvetting-list-js') @endif
+@if (Route::is('mysubjectvettings.*'))   @include('layouts.pages-assets.js.mysubjectvettings-list-js') @endif
+@if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.js.timetable-list-js') @endif
+@if (Route::is('timetable.*'))           @include('layouts.pages-assets.js.timetable-list-js') @endif
+@if (Route::is('rooms.*'))               @include('layouts.pages-assets.js.rooms-list-js') @endif
+@if (Route::is('promotions.*'))          @include('layouts.pages-assets.js.promotions-list-js') @endif
+@if (Route::is('attendance.*'))          @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('transcript.*'))          @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('admin.score-entry.*'))   @include('layouts.pages-assets.js.adminscoreentry-list-js') @endif
+@if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
+    Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
+    Route::is('payroll.*') || Route::is('staff.payments.*'))
+    @include('layouts.pages-assets.js.scholarship-list-js')
+@endif
+
 </body>
 </html>
