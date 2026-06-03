@@ -9,7 +9,6 @@
     <meta content="" name="author">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Dynamic Favicon from School Logo -->
     @php
         $activeSchool = App\Models\SchoolInformation::getActiveSchool();
         $faviconUrl = $activeSchool ? $activeSchool->getLogoWithFallbackAttribute() : asset('theme/layouts/assets/images/favicon.ico');
@@ -17,7 +16,6 @@
     <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
     <link rel="shortcut icon" type="image/png" href="{{ $faviconUrl }}">
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com/">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
     <link id="fontsLink" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,382 +23,432 @@
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css">
     <link href="{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.woff2') }}?v=6.5.95" rel="stylesheet" type="font/woff2">
 
-    <!-- Layout CSS — load BEFORE layout.js -->
     <link href="{{ asset('theme/layouts/assets/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/icons.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/app.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/custom.min.css') }}" rel="stylesheet">
-
-    <!-- layout.js must run AFTER the CSS above -->
     <script src="{{ asset('theme/layouts/assets/js/layout.js') }}"></script>
 
-    <!-- NProgress -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css"/>
     <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
-
-    <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-    <!-- jQuery (needed by Select2 and some page scripts) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
         /* =====================================================
+           CSS CUSTOM PROPERTIES & KEYFRAMES
+           ===================================================== */
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 70px;
+            --topbar-height: 60px;
+            --transition-smooth: 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --transition-snap: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+            --accent: #4f8ef7;
+            --danger-soft: rgba(239,68,68,.12);
+            --danger-border: rgba(239,68,68,.22);
+        }
+
+        /* =====================================================
+           PAGE ENTRANCE ANIMATIONS
+           ===================================================== */
+        @keyframes pageFadeSlideIn {
+            0%  { opacity: 0; transform: translateY(10px); }
+            100%{ opacity: 1; transform: translateY(0); }
+        }
+        @keyframes sidebarSlideRight {
+            0%  { opacity: 0; transform: translateX(-18px); }
+            100%{ opacity: 1; transform: translateX(0); }
+        }
+        @keyframes topbarDropDown {
+            0%  { opacity: 0; transform: translateY(-14px); }
+            100%{ opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeScaleIn {
+            0%  { opacity: 0; transform: scale(0.88); }
+            100%{ opacity: 1; transform: scale(1); }
+        }
+        @keyframes dotPop {
+            0%  { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.3); opacity: 1; }
+            100%{ transform: scale(1);   opacity: 1; }
+        }
+        @keyframes navItemFadeIn {
+            0%  { opacity: 0; transform: translateX(-10px); }
+            100%{ opacity: 1; transform: translateX(0); }
+        }
+        @keyframes rippleAnim {
+            to { transform: scale(5); opacity: 0; }
+        }
+        @keyframes spin {
+            0%   { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes loadingSpin {
+            0%   { transform: rotate(0); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes dropdownSlideIn {
+            0%  { opacity: 0; transform: translateY(-10px) scale(0.96); }
+            100%{ opacity: 1; transform: translateY(0)   scale(1); }
+        }
+        @keyframes dropdownSlideOut {
+            0%  { opacity: 1; transform: translateY(0)   scale(1); }
+            100%{ opacity: 0; transform: translateY(-8px) scale(0.95); }
+        }
+        @keyframes spotlightIn {
+            0%  { opacity: 0; transform: translateY(-40px) scale(0.88); }
+            55% { opacity: 0.9; transform: translateY(6px) scale(1.015); }
+            100%{ opacity: 1; transform: translateY(0)    scale(1); }
+        }
+        @keyframes spotlightOut {
+            0%  { opacity: 1; transform: translateY(0) scale(1); }
+            100%{ opacity: 0; transform: translateY(-22px) scale(0.94); }
+        }
+        @keyframes overlayIn {
+            0%  { background: rgba(0,0,0,0); backdrop-filter: blur(0); }
+            100%{ background: rgba(0,0,0,.65); backdrop-filter: blur(8px); }
+        }
+        @keyframes overlayOut {
+            0%  { background: rgba(0,0,0,.65); backdrop-filter: blur(8px); }
+            100%{ background: rgba(0,0,0,0);   backdrop-filter: blur(0); }
+        }
+        @keyframes resultBounce {
+            0%  { opacity: 0; transform: translateX(-16px) scale(0.95); }
+            65% { opacity: 0.85; transform: translateX(3px) scale(1.01); }
+            100%{ opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes typingDot {
+            0%,60%,100%{ transform: translateY(0);   opacity: .45; }
+            30%         { transform: translateY(-5px); opacity: 1;   }
+        }
+        @keyframes shimmer {
+            0%  { background-position: -200% 0; }
+            100%{ background-position:  200% 0; }
+        }
+        @keyframes footerSlideUp {
+            0%  { opacity: 0; transform: translateY(20px); }
+            100%{ opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseGlow {
+            0%,100%{ box-shadow: 0 0 0 0 rgba(79,142,247,.35); }
+            50%     { box-shadow: 0 0 0 6px rgba(79,142,247,0); }
+        }
+        @keyframes logoEntrance {
+            0%  { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+            65% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+            100%{ opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+
+        /* =====================================================
            NPROGRESS
            ===================================================== */
-        #nprogress .bar  { background: #4f8ef7 !important; height: 3px !important; box-shadow: 0 0 8px rgba(79,142,247,.6) !important; }
-        #nprogress .peg  { box-shadow: none !important; }
-        #nprogress .spinner { display: none !important; }
+        #nprogress .bar    { background: var(--accent) !important; height: 3px !important; box-shadow: 0 0 10px rgba(79,142,247,.7) !important; }
+        #nprogress .peg    { box-shadow: none !important; }
+        #nprogress .spinner{ display: none !important; }
 
         /* =====================================================
-           PAGINATION
-           ===================================================== */
-        .pagination-wrap .page-item { margin: 0 5px; }
-        .pagination-wrap .page-link { padding: 5px 10px; }
-        .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
-        .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
-
-        /* =====================================================
-           SPINNER
-           ===================================================== */
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-
-        /* =====================================================
-           MISC
+           BASE UI
            ===================================================== */
         .form-check-input:checked { background-color: #405189; border-color: #405189; }
         .swal2-toast { font-size: 14px !important; }
         .swal2-container.swal2-top-end { top: 70px !important; }
         .table tbody tr { transition: background-color .15s ease; }
         .table tbody tr:hover { background-color: rgba(67,97,238,.05); }
-        .modal.fade  .modal-dialog { transform: translate(0,-50px); transition: transform .3s ease-out; }
-        .modal.show  .modal-dialog { transform: translate(0,0); }
+        .modal.fade .modal-dialog { transform: translate(0,-50px); transition: transform .3s ease-out; }
+        .modal.show .modal-dialog { transform: translate(0,0); }
+        .spin { animation: spin 1s linear infinite; }
+        .card { transition: box-shadow var(--transition-smooth), transform var(--transition-smooth); }
+        .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.1); transform: translateY(-1px); }
+        .btn  { transition: transform var(--transition-snap), box-shadow var(--transition-snap), background var(--transition-snap); }
+        .btn:active { transform: scale(0.96); }
+        .pagination-wrap .page-item { margin: 0 3px; }
+        .pagination-wrap .page-link { padding: 5px 10px; transition: all var(--transition-snap); }
+        .pagination-wrap .active .page-link { background-color: var(--accent); color: #fff; }
+        .pagination-wrap .disabled .page-link { pointer-events: none; opacity: .5; }
 
         /* =====================================================
-           SIDEBAR LAYOUT — flex column so footer pins to bottom
+           SIDEBAR STRUCTURE
            ===================================================== */
         .app-menu {
             position: fixed;
             top: 0; left: 0; bottom: 0;
-            width: 250px;
+            width: var(--sidebar-width);
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width var(--transition-smooth), transform var(--transition-smooth), box-shadow var(--transition-smooth);
         }
-
+        .navbar-brand-box {
+            flex-shrink: 0;
+            animation: logoEntrance 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
         #scrollbar {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            overflow-x: hidden;
             scrollbar-width: thin;
-            padding-bottom: 8px;
         }
-        #scrollbar::-webkit-scrollbar { width: 4px; }
-        #scrollbar::-webkit-scrollbar-track  { background: rgba(255,255,255,.05); border-radius: 4px; }
-        #scrollbar::-webkit-scrollbar-thumb  { background: rgba(255,255,255,.2);  border-radius: 4px; }
-        #scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.3); }
-        .bg-light::-webkit-scrollbar { width: 6px; }
-        .bg-light::-webkit-scrollbar-track  { background: #f1f1f1; border-radius: 10px; }
-        .bg-light::-webkit-scrollbar-thumb  { background: #888; border-radius: 10px; }
-        .bg-light::-webkit-scrollbar-thumb:hover { background: #555; }
+        #scrollbar::-webkit-scrollbar       { width: 3px; }
+        #scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,.04); border-radius: 4px; }
+        #scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 4px; }
+        #scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.32); }
         .navbar-menu .container-fluid { padding: 0; }
-        #navbar-nav { padding-bottom: 8px; }
+        #navbar-nav { padding-bottom: 4px; }
 
         /* =====================================================
-           SIDEBAR LOGOUT FOOTER
+           SIDEBAR NAV ITEMS — stagger animation
            ===================================================== */
-        .sidebar-footer {
-            flex-shrink: 0;
-            border-top: 1px solid rgba(255,255,255,.1);
-            padding: 32px 16px 28px;
-            margin-top: auto;
-            background: inherit;
-        }
-        .sidebar-footer-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .sidebar-footer-user img {
-            width: 36px; height: 36px;
-            border-radius: 50%; object-fit: cover;
-            border: 2px solid rgba(255,255,255,.18);
-            flex-shrink: 0;
-        }
-        .sidebar-footer-avatar-initials {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: #405189;
-            color: #fff;
-            font-size: 13px; font-weight: 600;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,.18);
-        }
-        .sidebar-footer-user-info { min-width: 0; flex: 1; }
-        .sidebar-footer-user-name {
-            font-size: 13px; font-weight: 600; color: #fff;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .sidebar-footer-user-role {
-            font-size: 11px; color: rgba(255,255,255,.45);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .sidebar-logout-btn {
-            display: flex; align-items: center; gap: 9px;
-            width: 100%; padding: 9px 14px;
-            border-radius: 8px;
-            background: rgba(239,68,68,.12);
-            border: 1px solid rgba(239,68,68,.22);
-            color: #f87171; font-size: 13px; font-weight: 500;
-            cursor: pointer; text-decoration: none;
-            transition: background .2s, border-color .2s, color .2s;
-        }
-        .sidebar-logout-btn:hover {
-            background: rgba(239,68,68,.24);
-            border-color: rgba(239,68,68,.45);
-            color: #fca5a5;
-        }
-        .sidebar-logout-btn i { font-size: 17px; flex-shrink: 0; }
+        #navbar-nav > li { animation: navItemFadeIn 0.38s ease both; }
+        #navbar-nav > li:nth-child(1)  { animation-delay: .03s }
+        #navbar-nav > li:nth-child(2)  { animation-delay: .06s }
+        #navbar-nav > li:nth-child(3)  { animation-delay: .09s }
+        #navbar-nav > li:nth-child(4)  { animation-delay: .12s }
+        #navbar-nav > li:nth-child(5)  { animation-delay: .15s }
+        #navbar-nav > li:nth-child(6)  { animation-delay: .18s }
+        #navbar-nav > li:nth-child(7)  { animation-delay: .21s }
+        #navbar-nav > li:nth-child(8)  { animation-delay: .24s }
+        #navbar-nav > li:nth-child(9)  { animation-delay: .27s }
+        #navbar-nav > li:nth-child(10) { animation-delay: .30s }
+        #navbar-nav > li:nth-child(11) { animation-delay: .33s }
+        #navbar-nav > li:nth-child(12) { animation-delay: .36s }
+        #navbar-nav > li:nth-child(n+13){ animation-delay: .38s }
 
         /* =====================================================
-           SIDEBAR NAV ACTIVE STATES
+           SIDEBAR ACTIVE STATES
            ===================================================== */
         #navbar-nav .menu-dropdown { overflow: hidden; }
-        #navbar-nav .nav-link.menu-link .ri-arrow-down-s-line { transition: transform .25s ease; display: inline-block; }
+        #navbar-nav .nav-link.menu-link .ri-arrow-down-s-line {
+            transition: transform .28s cubic-bezier(0.4,0,0.2,1);
+            display: inline-block;
+        }
         #navbar-nav .nav-link.menu-link[aria-expanded="true"] .ri-arrow-down-s-line { transform: rotate(180deg); }
 
         #navbar-nav .nav-link.menu-link.nav-active-parent {
             color: #fff !important;
-            background: rgba(79,142,247,.18) !important;
-            border-left: 3px solid #4f8ef7;
+            background: rgba(79,142,247,.2) !important;
+            border-left: 3px solid var(--accent);
             padding-left: calc(1.3rem - 3px);
         }
-        #navbar-nav .nav-link.menu-link.nav-active-parent i { color: #4f8ef7 !important; }
+        #navbar-nav .nav-link.menu-link.nav-active-parent i { color: var(--accent) !important; }
 
         #navbar-nav .nav-sm .nav-link.nav-active-child { color: #7eb8fb !important; font-weight: 500; }
         #navbar-nav .nav-sm .nav-link.nav-active-child::before {
             content: ''; display: inline-block;
             width: 5px; height: 5px; border-radius: 50%;
-            background: #4f8ef7; margin-right: 8px;
-            box-shadow: 0 0 0 3px rgba(79,142,247,.25);
+            background: var(--accent); margin-right: 8px;
+            box-shadow: 0 0 0 3px rgba(79,142,247,.28);
             vertical-align: middle; flex-shrink: 0;
-            animation: dotPop .25s ease;
+            animation: dotPop .3s cubic-bezier(0.34,1.56,0.64,1);
         }
-        @keyframes dotPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
 
         /* =====================================================
-           SIDEBAR HOVER TRANSITIONS + RIPPLE
+           RIPPLE
            ===================================================== */
-        #navbar-nav .nav-link { position: relative; overflow: hidden; transition: color .18s, background-color .18s, padding-left .18s; }
+        #navbar-nav .nav-link {
+            position: relative; overflow: hidden;
+            transition: color .18s, background-color .2s, padding-left .2s;
+        }
         .nav-ripple {
             position: absolute; border-radius: 50%;
-            background: rgba(255,255,255,.18);
-            transform: scale(0); animation: ripple-anim .55s linear;
+            background: rgba(255,255,255,.16);
+            transform: scale(0);
+            animation: rippleAnim .6s linear;
             pointer-events: none; z-index: 0;
         }
-        @keyframes ripple-anim { to{transform:scale(5);opacity:0} }
+
+        /* =====================================================
+           SIDEBAR FOOTER — compact, pinned
+           ===================================================== */
+        .sidebar-footer {
+            flex-shrink: 0;
+            border-top: 1px solid rgba(255,255,255,.08);
+            padding: 10px 12px 12px;
+            background: inherit;
+            animation: footerSlideUp 0.5s 0.2s cubic-bezier(0.34,1.3,0.64,1) both;
+        }
+        .sidebar-footer-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .sidebar-footer-user img,
+        .sidebar-footer-avatar-initials {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1.5px solid rgba(255,255,255,.18);
+            transition: transform var(--transition-bounce), box-shadow var(--transition-smooth);
+        }
+        .sidebar-footer-avatar-initials {
+            background: #405189; color: #fff;
+            font-size: 11px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sidebar-footer-user img:hover,
+        .sidebar-footer-avatar-initials:hover {
+            transform: scale(1.12);
+            box-shadow: 0 0 0 3px rgba(79,142,247,.4);
+        }
+        .sidebar-footer-user-info { min-width: 0; flex: 1; line-height: 1.25; }
+        .sidebar-footer-user-name {
+            font-size: 12px; font-weight: 600; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .sidebar-footer-user-role {
+            font-size: 10px; color: rgba(255,255,255,.42);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .sidebar-logout-btn {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            width: 100%; padding: 7px 10px;
+            border-radius: 7px;
+            background: var(--danger-soft);
+            border: 1px solid var(--danger-border);
+            color: #f87171; font-size: 12px; font-weight: 500;
+            cursor: pointer;
+            transition: background .22s, border-color .22s, color .22s, transform var(--transition-snap);
+            position: relative; overflow: hidden;
+        }
+        .sidebar-logout-btn::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+            transform: translateX(-100%);
+            transition: transform .5s ease;
+        }
+        .sidebar-logout-btn:hover { background: rgba(239,68,68,.22); border-color: rgba(239,68,68,.42); color: #fca5a5; transform: translateY(-1px); }
+        .sidebar-logout-btn:hover::after { transform: translateX(100%); }
+        .sidebar-logout-btn:active { transform: scale(0.97); }
+        .sidebar-logout-btn i { font-size: 15px; flex-shrink: 0; }
+
+        /* =====================================================
+           TOPBAR ANIMATIONS
+           ===================================================== */
+        #page-topbar {
+            animation: topbarDropDown 0.4s 0.05s cubic-bezier(0.34,1.3,0.64,1) both;
+        }
+        #page-topbar .header-item { transition: color .2s, background-color .2s; }
+        .header-profile-user-enhanced {
+            transition: transform var(--transition-bounce), box-shadow var(--transition-smooth);
+        }
+        .header-profile-user-enhanced:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 0 3px rgba(79,142,247,.38) !important;
+        }
+
+        /* =====================================================
+           PAGE CONTENT
+           ===================================================== */
+        .page-content { animation: pageFadeSlideIn 0.38s ease both; }
+
+        /* =====================================================
+           DROPDOWN ANIMATIONS
+           ===================================================== */
+        .dropdown-menu {
+            animation: dropdownSlideIn 0.22s cubic-bezier(0.4,0,0.2,1) both;
+            transform-origin: top right;
+        }
+
+        /* =====================================================
+           MOBILE SIDEBAR SLIDE
+           ===================================================== */
+        .vertical-overlay {
+            position: fixed; inset: 0; z-index: 999;
+            background: rgba(0,0,0,0);
+            display: none;
+            transition: background 0.35s ease, backdrop-filter 0.35s ease;
+        }
+
+        @media (max-width: 1024.98px) {
+            .app-menu {
+                transform: translateX(-100%);
+                box-shadow: none;
+                width: 280px;
+            }
+            /* Logo ALWAYS visible in mobile sidebar */
+            .app-menu .navbar-brand-box { display: flex !important; }
+
+            body.vertical-sidebar-enable .app-menu {
+                transform: translateX(0) !important;
+                box-shadow: 8px 0 40px rgba(0,0,0,.5);
+            }
+            .vertical-overlay {
+                display: block !important;
+                opacity: 0; pointer-events: none;
+                backdrop-filter: blur(0);
+            }
+            body.vertical-sidebar-enable .vertical-overlay {
+                opacity: 1 !important; pointer-events: auto;
+                background: rgba(0,0,0,.6);
+                backdrop-filter: blur(3px);
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .main-content { margin-left: var(--sidebar-width); transition: margin-left var(--transition-smooth); }
+            #page-topbar { left: var(--sidebar-width); transition: left var(--transition-smooth); }
+            body.sidebar-collapsed .app-menu { width: var(--sidebar-collapsed-width) !important; }
+            body.sidebar-collapsed .main-content { margin-left: var(--sidebar-collapsed-width); }
+            body.sidebar-collapsed #page-topbar { left: var(--sidebar-collapsed-width); }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg { display: none !important; }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm { display: block !important; }
+            body.sidebar-collapsed #navbar-nav .menu-title { display: none; }
+            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) { display: none; }
+            body.sidebar-collapsed .sidebar-footer-user-info,
+            body.sidebar-collapsed .sidebar-logout-btn span { display: none; }
+            body.sidebar-collapsed .sidebar-logout-btn { padding: 7px; }
+            body.sidebar-collapsed .sidebar-footer-user { justify-content: center; }
+            body.sidebar-collapsed .app-menu .nav-link { justify-content: center; }
+            .vertical-overlay { display: none !important; }
+        }
 
         /* =====================================================
            BACK TO TOP
            ===================================================== */
-        #back-to-top { opacity:0; visibility:hidden; transform:translateY(12px); transition:opacity .3s,transform .3s,visibility .3s; }
-        #back-to-top.show { opacity:1; visibility:visible; transform:translateY(0); }
-        #back-to-top:hover { transform:translateY(-3px) !important; }
+        #back-to-top {
+            opacity: 0; visibility: hidden; transform: translateY(14px);
+            transition: opacity .3s, transform .3s, visibility .3s;
+        }
+        #back-to-top.show { opacity: 1; visibility: visible; transform: translateY(0); animation: pulseGlow 2s ease 0.3s; }
+        #back-to-top:hover { transform: translateY(-4px) !important; }
 
         /* =====================================================
-           PAGE FADE-IN
+           SPOTLIGHT SEARCH
            ===================================================== */
-        .page-content { animation: pageFadeIn .35s ease; }
-        @keyframes pageFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-
-        /* =====================================================
-           TOPBAR
-           ===================================================== */
-        #page-topbar .header-item { transition: color .2s ease, background-color .2s ease; }
-        .header-profile-user-enhanced { transition: transform .25s ease, box-shadow .25s ease; }
-        .header-profile-user-enhanced:hover { transform: scale(1.07); box-shadow: 0 0 0 3px rgba(79,142,247,.35) !important; }
-
-        /* TOPBAR USER DROPDOWN */
-        .topbar-user .dropdown-menu {
-            min-width: 220px;
-            z-index: 9999 !important;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-top: 8px !important;
-            box-shadow: 0 8px 32px rgba(0,0,0,.18);
-        }
-
-        /* =====================================================
-           SIDEBAR BEHAVIOR - MOBILE SLIDE + DESKTOP COLLAPSE
-           ===================================================== */
-        .vertical-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 999;
-            background: rgba(0,0,0,0);
-            display: none;
-            transition: background 0.3s ease;
-        }
-
-        /* MOBILE: sidebar slides in/out with smooth animation */
-        @media (max-width: 1024.98px) {
-            .app-menu {
-                transform: translateX(-100%);
-                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                            box-shadow 0.35s ease;
-                box-shadow: none;
-                width: 280px;
-            }
-            body.vertical-sidebar-enable .app-menu {
-                transform: translateX(0) !important;
-                box-shadow: 6px 0 32px rgba(0,0,0,.45);
-            }
-            /* Overlay fades in/out instead of snapping */
-            .vertical-overlay {
-                display: block !important;
-                opacity: 0;
-                pointer-events: none;
-                background: rgba(0,0,0,.65);
-                transition: opacity 0.35s ease, backdrop-filter 0.35s ease;
-                backdrop-filter: blur(0px);
-            }
-            body.vertical-sidebar-enable .vertical-overlay {
-                opacity: 1 !important;
-                pointer-events: auto;
-                backdrop-filter: blur(2px);
-            }
-        }
-
-        /* DESKTOP: sidebar collapses to smaller width + content expands */
-        @media (min-width: 1025px) {
-
-            /* Main content & topbar shift with sidebar — smooth transition */
-            .main-content {
-                margin-left: 250px;
-                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            #page-topbar {
-                left: 250px;
-                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            /* When collapsed: shrink sidebar, push content to fill the gap */
-            body.sidebar-collapsed .app-menu {
-                width: 70px !important;
-            }
-            body.sidebar-collapsed .main-content {
-                margin-left: 70px;
-            }
-            body.sidebar-collapsed #page-topbar {
-                left: 70px;
-            }
-
-            /* Hide text/labels in collapsed state */
-            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
-                display: none !important;
-            }
-            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm {
-                display: block !important;
-            }
-            body.sidebar-collapsed #navbar-nav .menu-title {
-                display: none;
-            }
-            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) {
-                display: none;
-            }
-            body.sidebar-collapsed .sidebar-footer-user-info,
-            body.sidebar-collapsed .sidebar-logout-btn span {
-                display: none;
-            }
-            body.sidebar-collapsed .sidebar-logout-btn {
-                justify-content: center;
-                padding: 9px;
-            }
-            body.sidebar-collapsed .sidebar-footer-user {
-                justify-content: center;
-            }
-            body.sidebar-collapsed .app-menu .nav-link {
-                justify-content: center;
-                padding: 0.625rem 0;
-            }
-            body.sidebar-collapsed .app-menu .nav-link i {
-                margin-right: 0 !important;
-                font-size: 1.35rem;
-            }
-            body.sidebar-collapsed .app-menu .has-arrow:after {
-                display: none;
-            }
-            .vertical-overlay {
-                display: none !important;
-            }
-        }
-
-        /* =====================================================
-           SEARCH TRIGGER - RESPONSIVE
-           ===================================================== */
-        @media (max-width: 767.98px) {
-            .desktop-search-only {
-                display: none !important;
-            }
-        }
-        @media (min-width: 768px) {
-            .mobile-search-only {
-                display: none !important;
-            }
-        }
-
-        /* =====================================================
-           SPOTLIGHT SEARCH STYLES
-           ===================================================== */
-        .typing-dot {
-            display: inline-block;
-            animation: typingDot 1.4s infinite ease-in-out;
-        }
-        .typing-dot:nth-child(2) { animation-delay: .2s; }
-        .typing-dot:nth-child(3) { animation-delay: .4s; }
-
-        @keyframes typingDot {
-            0%, 60%, 100% { transform: translateY(0); opacity: .5; }
-            30% { transform: translateY(-4px); opacity: 1; }
-        }
-
-        @keyframes loadingSpin {
-            0% { transform: rotate(0); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spotlightOverlayFadeIn  { from{background:rgba(0,0,0,.2);backdrop-filter:blur(0)}  to{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} }
+        @keyframes spotlightOverlayFadeOut { from{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} to{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} }
+        @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 55%{opacity:.9;transform:translateY(6px) scale(1.01)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes spotlightModalFadeOut   { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-20px) scale(.95)} }
 
         .spotlight-result-item {
-            animation: resultBounceIn 0.35s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+            animation: resultBounce 0.32s cubic-bezier(0.34,1.3,0.64,1) forwards;
             opacity: 0;
         }
+        .spotlight-result-item:nth-child(1){ animation-delay:.00s }
+        .spotlight-result-item:nth-child(2){ animation-delay:.04s }
+        .spotlight-result-item:nth-child(3){ animation-delay:.08s }
+        .spotlight-result-item:nth-child(4){ animation-delay:.12s }
 
-        @keyframes resultBounceIn {
-            0% { opacity: 0; transform: translateX(-20px) scale(0.95); }
-            60% { opacity: 0.8; transform: translateX(4px) scale(1.02); }
-            100% { opacity: 1; transform: translateX(0) scale(1); }
-        }
+        .typing-dot { display:inline-block; animation:typingDot 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(2){ animation-delay:.2s }
+        .typing-dot:nth-child(3){ animation-delay:.4s }
 
         .search-tooltip {
-            position: absolute;
-            bottom: -35px;
-            left: 0;
-            background: rgba(0,0,0,.85);
-            color: #fff;
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity .2s;
-            pointer-events: none;
-            z-index: 100;
-            backdrop-filter: blur(4px);
+            position: absolute; bottom: -35px; left: 0;
+            background: rgba(0,0,0,.85); color: #fff; font-size: 11px;
+            padding: 4px 10px; border-radius: 6px; white-space: nowrap;
+            opacity: 0; transition: opacity .2s; pointer-events: none;
+            z-index: 100; backdrop-filter: blur(4px);
         }
 
-        /* Finance module cards */
+        /* =====================================================
+           FINANCE CARDS
+           ===================================================== */
         .finance-stat-card { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius: 12px; padding: 20px; color: white; transition: transform .3s,box-shadow .3s; }
         .finance-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(102,126,234,.35); }
         .payment-progress { height: 8px; border-radius: 4px; background: #e2e8f0; }
@@ -408,93 +456,78 @@
         .scholarship-card { border-left: 4px solid #10b981; transition: transform .2s,box-shadow .2s; }
         .scholarship-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
         .payroll-table th { background: #1e293b; color: white; }
-        .card { transition: box-shadow .25s, transform .25s; }
-        .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); }
-        .btn  { transition: transform .15s, box-shadow .15s; }
-        .btn:active { transform: scale(.97); }
-        #navbar-nav > li { animation: navItemFadeIn .4s ease both; }
-        #navbar-nav > li:nth-child(1)  { animation-delay:.02s }
-        #navbar-nav > li:nth-child(2)  { animation-delay:.04s }
-        #navbar-nav > li:nth-child(3)  { animation-delay:.06s }
-        #navbar-nav > li:nth-child(4)  { animation-delay:.08s }
-        #navbar-nav > li:nth-child(5)  { animation-delay:.10s }
-        #navbar-nav > li:nth-child(6)  { animation-delay:.12s }
-        #navbar-nav > li:nth-child(7)  { animation-delay:.14s }
-        #navbar-nav > li:nth-child(8)  { animation-delay:.16s }
-        #navbar-nav > li:nth-child(9)  { animation-delay:.18s }
-        #navbar-nav > li:nth-child(10) { animation-delay:.20s }
-        #navbar-nav > li:nth-child(11) { animation-delay:.22s }
-        #navbar-nav > li:nth-child(12) { animation-delay:.24s }
-        #navbar-nav > li:nth-child(n+13) { animation-delay:.26s }
-        @keyframes navItemFadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
-        .dropdown-menu { animation: dropdownFadeIn .25s cubic-bezier(.4,0,.2,1); transform-origin: top right; }
-        @keyframes dropdownFadeIn { from{opacity:0;transform:translateY(-10px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+        /* =====================================================
+           PRINT
+           ===================================================== */
         @media print { .no-print{display:none!important} body{padding:0;margin:0} }
-        @keyframes spotlightOverlayFadeIn  { from{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} to{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} }
-        @keyframes spotlightOverlayFadeOut { from{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} to{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} }
-        @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 40%{opacity:.8;transform:translateY(8px) scale(1.02)} 70%{opacity:.95;transform:translateY(-3px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
-        @keyframes spotlightModalFadeOut   { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-20px) scale(.95)} }
+
+        /* =====================================================
+           RESPONSIVE SEARCH
+           ===================================================== */
+        @media (max-width: 767.98px) { .desktop-search-only{ display:none !important; } }
+        @media (min-width: 768px)    { .mobile-search-only { display:none !important; } }
     </style>
 
-    <!-- Route-specific CSS includes -->
-    @if (Route::is('dashboard'))              @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('users.*'))                @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student-id-cards.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student.payments.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('profile.*'))              @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('roles.*'))                @include('layouts.pages-assets.css.roles-list-css') @endif
-    @if (Route::is('permissions.*'))          @include('layouts.pages-assets.css.permission-list-css') @endif
-    @if (Route::is('session.*'))              @include('layouts.pages-assets.css.session-list-css') @endif
-    @if (Route::is('school-information.*'))   @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('admin.school-info.*'))    @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('term.*'))                 @include('layouts.pages-assets.css.term-list-css') @endif
-    @if (Route::is('schoolhouse.*'))          @include('layouts.pages-assets.css.schoolhouse-list-css') @endif
-    @if (Route::is('schoolarm.*'))            @include('layouts.pages-assets.css.arm-list-css') @endif
-    @if (Route::is('classcategories.*'))      @include('layouts.pages-assets.css.classcategory-list-css') @endif
-    @if (Route::is('schoolclass.*'))          @include('layouts.pages-assets.css.schoolclass-list-css') @endif
-    @if (Route::is('classteacher.*'))         @include('layouts.pages-assets.css.classteacher-list-css') @endif
-    @if (Route::is('subject.*'))              @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjects.*'))             @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjectteacher.*'))       @include('layouts.pages-assets.css.subjectteacher-list-css') @endif
-    @if (Route::is('subjectclass.*'))         @include('layouts.pages-assets.css.subjectclass-list-css') @endif
-    @if (Route::is('schoolbill.*'))           @include('layouts.pages-assets.css.schoolbill-list-css') @endif
-    @if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.css.schoolbilltermsession-list-css') @endif
-    @if (Route::is('student.*'))              @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('studentbatchindex'))      @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('myclass.*'))              @include('layouts.pages-assets.css.myclass-list-css') @endif
-    @if (Route::is('mysubject.*'))            @include('layouts.pages-assets.css.mysubject-list-css') @endif
-    @if (Route::is('viewstudent'))            @include('layouts.pages-assets.css.viewstudent-list-css') @endif
-    @if (Route::is('studentreports.*'))       @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('studentmockreports.*'))   @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('broadsheet*'))            @include('layouts.pages-assets.css.broadsheet-list-css') @endif
-    @if (Route::is('subjectoperation.*'))     @include('layouts.pages-assets.css.subjectoperation-list-css') @endif
-    @if (Route::is('subjects.subjectinfo'))   @include('layouts.pages-assets.css.subjectinfo-list-css') @endif
-    @if (Route::is('myresultroom.*'))         @include('layouts.pages-assets.css.myresultroom-list-css') @endif
-    @if (Route::is('subjectscoresheet'))      @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('subassessment.*'))        @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessment.*'))           @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessments'))            @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    <!-- Route-specific CSS -->
+    @if (Route::is('dashboard'))               @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('users.*'))                 @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('student-id-cards.*'))      @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('student.payments.*'))      @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('profile.*'))               @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('roles.*'))                 @include('layouts.pages-assets.css.roles-list-css') @endif
+    @if (Route::is('permissions.*'))           @include('layouts.pages-assets.css.permission-list-css') @endif
+    @if (Route::is('session.*'))               @include('layouts.pages-assets.css.session-list-css') @endif
+    @if (Route::is('school-information.*'))    @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
+    @if (Route::is('admin.school-info.*'))     @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
+    @if (Route::is('term.*'))                  @include('layouts.pages-assets.css.term-list-css') @endif
+    @if (Route::is('schoolhouse.*'))           @include('layouts.pages-assets.css.schoolhouse-list-css') @endif
+    @if (Route::is('schoolarm.*'))             @include('layouts.pages-assets.css.arm-list-css') @endif
+    @if (Route::is('classcategories.*'))       @include('layouts.pages-assets.css.classcategory-list-css') @endif
+    @if (Route::is('schoolclass.*'))           @include('layouts.pages-assets.css.schoolclass-list-css') @endif
+    @if (Route::is('classteacher.*'))          @include('layouts.pages-assets.css.classteacher-list-css') @endif
+    @if (Route::is('subject.*'))               @include('layouts.pages-assets.css.subject-list-css') @endif
+    @if (Route::is('subjects.*'))              @include('layouts.pages-assets.css.subject-list-css') @endif
+    @if (Route::is('subjectteacher.*'))        @include('layouts.pages-assets.css.subjectteacher-list-css') @endif
+    @if (Route::is('subjectclass.*'))          @include('layouts.pages-assets.css.subjectclass-list-css') @endif
+    @if (Route::is('schoolbill.*'))            @include('layouts.pages-assets.css.schoolbill-list-css') @endif
+    @if (Route::is('schoolbilltermsession.*')) @include('layouts.pages-assets.css.schoolbilltermsession-list-css') @endif
+    @if (Route::is('student.*'))               @include('layouts.pages-assets.css.student-list-css') @endif
+    @if (Route::is('studentbatchindex'))       @include('layouts.pages-assets.css.student-list-css') @endif
+    @if (Route::is('myclass.*'))               @include('layouts.pages-assets.css.myclass-list-css') @endif
+    @if (Route::is('mysubject.*'))             @include('layouts.pages-assets.css.mysubject-list-css') @endif
+    @if (Route::is('viewstudent'))             @include('layouts.pages-assets.css.viewstudent-list-css') @endif
+    @if (Route::is('studentreports.*'))        @include('layouts.pages-assets.css.studentreport-list-css') @endif
+    @if (Route::is('studentmockreports.*'))    @include('layouts.pages-assets.css.studentreport-list-css') @endif
+    @if (Route::is('broadsheet*'))             @include('layouts.pages-assets.css.broadsheet-list-css') @endif
+    @if (Route::is('subjectoperation.*'))      @include('layouts.pages-assets.css.subjectoperation-list-css') @endif
+    @if (Route::is('subjects.subjectinfo'))    @include('layouts.pages-assets.css.subjectinfo-list-css') @endif
+    @if (Route::is('myresultroom.*'))          @include('layouts.pages-assets.css.myresultroom-list-css') @endif
+    @if (Route::is('subjectscoresheet'))       @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    @if (Route::is('subassessment.*'))         @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    @if (Route::is('assessment.*'))            @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    @if (Route::is('assessments'))             @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
     @if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.css.subjectscoresheet-mock-list-css') @endif
-    @if (Route::is('studentresults*'))        @include('layouts.pages-assets.css.studentresults-list-css') @endif
-    @if (Route::is('schoolpayment*'))         @include('layouts.pages-assets.css.schoolpayment-list-css') @endif
-    @if (Route::is('analysis*'))              @include('layouts.pages-assets.css.analysis-list-css') @endif
-    @if (Route::is('exams*'))                 @include('layouts.pages-assets.css.exams-list-css') @endif
-    @if (Route::is('questions*'))             @include('layouts.pages-assets.css.questions-list-css') @endif
-    @if (Route::is('cbt*'))                   @include('layouts.pages-assets.css.cbt-list-css') @endif
-    @if (Route::is('classbroadsheet.*'))      @include('layouts.pages-assets.css.classbroadsheet-list-css') @endif
-    @if (Route::is('principalscomment.*'))    @include('layouts.pages-assets.css.principalscomment-list-css') @endif
-    @if (Route::is('myprincipalscomment.*'))  @include('layouts.pages-assets.css.myprincipalscomment-list-css') @endif
+    @if (Route::is('studentresults*'))         @include('layouts.pages-assets.css.studentresults-list-css') @endif
+    @if (Route::is('schoolpayment*'))          @include('layouts.pages-assets.css.schoolpayment-list-css') @endif
+    @if (Route::is('analysis*'))               @include('layouts.pages-assets.css.analysis-list-css') @endif
+    @if (Route::is('exams*'))                  @include('layouts.pages-assets.css.exams-list-css') @endif
+    @if (Route::is('questions*'))              @include('layouts.pages-assets.css.questions-list-css') @endif
+    @if (Route::is('cbt*'))                    @include('layouts.pages-assets.css.cbt-list-css') @endif
+    @if (Route::is('classbroadsheet.*'))       @include('layouts.pages-assets.css.classbroadsheet-list-css') @endif
+    @if (Route::is('principalscomment.*'))     @include('layouts.pages-assets.css.principalscomment-list-css') @endif
+    @if (Route::is('myprincipalscomment.*'))   @include('layouts.pages-assets.css.myprincipalscomment-list-css') @endif
     @if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.css.compulsorysubjectclass-list-css') @endif
-    @if (Route::is('subjectvetting.*'))       @include('layouts.pages-assets.css.subjectvettings-list-css') @endif
-    @if (Route::is('mocksubjectvetting.*'))   @include('layouts.pages-assets.css.mocksubjectvettings-list-css') @endif
-    @if (Route::is('mysubjectvettings.*'))    @include('layouts.pages-assets.css.mysubjectvettings-list-css') @endif
-    @if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.css.mymocksubjectvettings-list-css') @endif
-    @if (Route::is('timetable.*'))            @include('layouts.pages-assets.css.timetable-list-css') @endif
-    @if (Route::is('rooms.*'))                @include('layouts.pages-assets.css.rooms-list-css') @endif
-    @if (Route::is('promotions.*'))           @include('layouts.pages-assets.css.promotions-list-css') @endif
-    @if (Route::is('attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('transcript.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
+    @if (Route::is('subjectvetting.*'))        @include('layouts.pages-assets.css.subjectvettings-list-css') @endif
+    @if (Route::is('mocksubjectvetting.*'))    @include('layouts.pages-assets.css.mocksubjectvettings-list-css') @endif
+    @if (Route::is('mysubjectvettings.*'))     @include('layouts.pages-assets.css.mysubjectvettings-list-css') @endif
+    @if (Route::is('mymocksubjectvettings.*')) @include('layouts.pages-assets.css.mymocksubjectvettings-list-css') @endif
+    @if (Route::is('timetable.*'))             @include('layouts.pages-assets.css.timetable-list-css') @endif
+    @if (Route::is('rooms.*'))                 @include('layouts.pages-assets.css.rooms-list-css') @endif
+    @if (Route::is('promotions.*'))            @include('layouts.pages-assets.css.promotions-list-css') @endif
+    @if (Route::is('attendance.*'))            @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('transcript.*'))            @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('admin.score-entry.*'))     @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
     @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
         Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
         Route::is('payroll.*') || Route::is('staff.payments.*'))
@@ -507,32 +540,35 @@
 
     <!-- ========== SIDEBAR ========== -->
     <div class="app-menu navbar-menu">
+
+        <!-- LOGO — always shown including mobile -->
         <div class="navbar-brand-box">
             @php
                 use App\Models\SchoolInformation;
-                $schoolInfo = SchoolInformation::getActiveSchool();
-                $schoolName = $schoolInfo?->school_name ?? config('app.name', 'School System');
+                $schoolInfo  = SchoolInformation::getActiveSchool();
+                $schoolName  = $schoolInfo?->school_name ?? config('app.name','School System');
                 $defaultLogo = asset('theme/layouts/assets/images/logo-dark.png');
                 $defaultLogoLight = asset('theme/layouts/assets/images/logo-light.png');
             @endphp
             <a href="{{ url('/') }}" class="logo logo-dark">
-                <span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}" style="height:45px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(39,38,38);"></span>
-                <span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}" style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);"></span>
+                <span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}" style="height:38px;width:auto;border-radius:8px;object-fit:contain;padding:2px;background:rgb(39,38,38);"></span>
+                <span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}" style="height:62px;width:auto;border-radius:10px;object-fit:contain;padding:2px;background:rgb(37,36,36);"></span>
             </a>
             <a href="{{ url('/') }}" class="logo logo-light">
-                <span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}" style="height:45px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(40,39,39);"></span>
-                <span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}" style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);"></span>
+                <span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}" style="height:38px;width:auto;border-radius:8px;object-fit:contain;padding:2px;background:rgb(40,39,39);"></span>
+                <span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}" style="height:62px;width:auto;border-radius:10px;object-fit:contain;padding:2px;background:rgb(37,36,36);"></span>
             </a>
             <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover">
                 <i class="ri-record-circle-line"></i>
             </button>
         </div>
 
+        <!-- NAV -->
         <div id="scrollbar">
             <div class="container-fluid">
                 <div id="two-column-menu"></div>
                 <ul class="navbar-nav" id="navbar-nav">
-                    <!-- ========== FULL SIDEBAR MENU ========== -->
+
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
                     <!-- Dashboard -->
@@ -542,30 +578,26 @@
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarDashboards">
                             <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a></li>
-                                @can('finance dashboard')
-                                <li class="nav-item"><a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a></li>
-                                @endcan
-                                @can('academics dashboard')
-                                <li class="nav-item"><a href="index.html" class="nav-link" data-key="t-ecommerce">Academics Analytics</a></li>
-                                @endcan
+                                <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link">Administration Analytics</a></li>
+                                @can('finance dashboard')<li class="nav-item"><a href="dashboard-crm.html" class="nav-link">Finance Analytics</a></li>@endcan
+                                @can('academics dashboard')<li class="nav-item"><a href="index.html" class="nav-link">Academics Analytics</a></li>@endcan
                             </ul>
                         </div>
                     </li>
 
                     <!-- USERS & PRIVILEGES -->
                     @if(auth()->user()->can('View user') || auth()->user()->can('View role') || auth()->user()->can('View user-account'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">USERS & PRIVILEDGES</span></li>
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>USERS & PRIVILEDGES</span></li>
                     @endif
 
                     @can('View user')
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebarusers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarusers">
-                            <i class="ph-user-circle"></i> <span data-key="t-authentication">User Managements</span>
+                            <i class="ph-user-circle"></i> <span>User Managements</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarusers">
                             <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('users.index') }}" class="nav-link" data-key="t-signin">Users</a></li>
+                                <li class="nav-item"><a href="{{ route('users.index') }}" class="nav-link">Users</a></li>
                             </ul>
                         </div>
                     </li>
@@ -574,19 +606,19 @@
                     <!-- My Account -->
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebaraccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebaraccount">
-                            <i class="ph-address-book"></i> <span data-key="t-pages">My Account</span>
+                            <i class="ph-address-book"></i> <span>My Account</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebaraccount">
                             <ul class="nav nav-sm flex-column">
                                 <li class="nav-item"><a href="{{ route('users.overview', ['id' => Auth::id()]) }}" class="nav-link"><i class="ri-profile-line me-2"></i> My Profile</a></li>
                                 <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}" class="nav-link"><i class="ri-settings-3-line me-2"></i> Account Settings</a></li>
                                 @if(Auth::user()->isStaff())
-                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#employmentInfo" class="nav-link ps-4"><i class="ri-building-line me-2"></i> Employment Details</a></li>
-                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#qualifications" class="nav-link ps-4"><i class="ri-graduation-cap-line me-2"></i> Academic Qualifications</a></li>
+                                    <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#employmentInfo" class="nav-link ps-4"><i class="ri-building-line me-2"></i> Employment Details</a></li>
+                                    <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#qualifications" class="nav-link ps-4"><i class="ri-graduation-cap-line me-2"></i> Academic Qualifications</a></li>
                                 @endif
                                 @if(Auth::user()->isStudent())
-                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#studentInfo" class="nav-link ps-4"><i class="ri-user-line me-2"></i> Student Details</a></li>
-                                <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#parentInfo" class="nav-link ps-4"><i class="ri-parent-line me-2"></i> Parent Information</a></li>
+                                    <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#studentInfo" class="nav-link ps-4"><i class="ri-user-line me-2"></i> Student Details</a></li>
+                                    <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#parentInfo" class="nav-link ps-4"><i class="ri-parent-line me-2"></i> Parent Information</a></li>
                                 @endif
                                 <li class="nav-item"><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#security" class="nav-link ps-4"><i class="ri-lock-password-line me-2"></i> Change Password</a></li>
                             </ul>
@@ -596,7 +628,7 @@
                     @can('View role')
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebarroles" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarroles">
-                            <i class="ph-address-book"></i> <span data-key="t-pages">Roles And Permissions</span>
+                            <i class="ph-address-book"></i> <span>Roles And Permissions</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarroles">
                             <ul class="nav nav-sm flex-column">
@@ -609,7 +641,7 @@
 
                     <!-- STUDENT & PARENTS -->
                     @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>STUDENT & PARENTS</span></li>
                     @endif
 
                     @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload'))
@@ -627,7 +659,34 @@
                     </li>
                     @endif
 
-                    @if(auth()->user()->can('View parent'))
+                    @if(auth()->user()->can('View student assessments') || auth()->user()->can('View student payments'))
+                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>STUDENT PORTAL</span></li>
+                    @endif
+                    @can('View student assessments')
+                    <li class="nav-item">
+                        <a href="#sidebarAssessments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAssessments">
+                            <i class="ph-graduation-cap"></i> <span>Assessments</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarAssessments">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('assessments') }}" class="nav-link">My Assessments</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    <li class="nav-item">
+                        <a href="#sidebarStudentPaymentPortal" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentPaymentPortal">
+                            <i class="ph-graduation-cap"></i> <span>Payments</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarStudentPaymentPortal">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('student.payments') }}" class="nav-link">My Payments</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    @can('View parent')
                     <li class="nav-item">
                         <a href="#sidebarParent" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarParent">
                             <i class="ph-storefront"></i> <span>Parent Management</span>
@@ -638,7 +697,7 @@
                             </ul>
                         </div>
                     </li>
-                    @endif
+                    @endcan
 
                     <!-- SUBJECT REGISTRATION -->
                     @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
@@ -659,7 +718,6 @@
                     @if(auth()->user()->can('View exam') || auth()->user()->can('View cbt-exam'))
                         <li class="menu-title"><i class="ph-graduation-cap"></i> <span>EXAMS AND CBT</span></li>
                     @endif
-
                     @can('View exam')
                     <li class="nav-item">
                         <a href="#sidebarExams" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
@@ -673,7 +731,6 @@
                         </div>
                     </li>
                     @endcan
-
                     @can('View cbt-exam')
                     <li class="nav-item">
                         <a href="#sidebarCBT" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCBT">
@@ -750,8 +807,10 @@
                         <div class="collapse menu-dropdown" id="sidebarRecords">
                             <ul class="nav nav-sm flex-column">
                                 @can('View myresult-room')<li class="nav-item"><a href="{{ route('myresultroom.index') }}" class="nav-link">Terminal Records</a></li>@endcan
-                                @can('View student-report')<li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>@endcan
-                                @can('View student-report')<li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>@endcan
+                                @can('View student-report')
+                                    <li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>
+                                    <li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>
+                                @endcan
                                 @can('View student-mock-report')<li class="nav-item"><a href="{{ route('studentmockreports.index') }}" class="nav-link">Mock Result Reports</a></li>@endcan
                                 @can('View admin-score-entry')<li class="nav-item"><a href="{{ route('admin.score-entry.index') }}" class="nav-link">Admin Score Entry</a></li>@endcan
                             </ul>
@@ -774,7 +833,7 @@
                         </li>
                     @endif
 
-                    <!-- PROMOTION MANAGEMENT -->
+                    <!-- PROMOTION -->
                     @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>PROMOTION MANAGEMENT</span></li>
                         <li class="nav-item">
@@ -1002,7 +1061,30 @@
                     </li>
                     @endcan
 
-                    @can('View school-bills')
+                    @can('View subjects')
+                    <li class="nav-item">
+                        <a href="#sidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSubjectvetting">
+                            <i class="ph-file-text"></i> <span>Terminal Subject Vettings</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarSubjectvetting">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('subjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#mocksidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mocksidebarSubjectvetting">
+                            <i class="ph-file-text"></i> <span>Mock Subject Vettings</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="mocksidebarSubjectvetting">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('mocksubjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcan
+
+                    @if(auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
                     <li class="nav-item">
                         <a href="#sidebarBills" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarBills">
                             <i class="ph-file-text"></i> <span>School Bills</span>
@@ -1014,11 +1096,13 @@
                             </ul>
                         </div>
                     </li>
-                    @endcan
+                    @endif
+
                 </ul>
             </div>
-        </div>
+        </div><!-- /scrollbar -->
 
+        <!-- ===== SIDEBAR FOOTER — compact ===== -->
         @auth
         <div class="sidebar-footer">
             @php
@@ -1029,17 +1113,17 @@
                     $stu = \App\Models\Student::find($sidebarUser->student_id);
                     if ($stu?->picture) {
                         $bn = basename($stu->picture);
-                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('student_avatars/' . $bn))
-                            $sidebarSrc = asset('storage/student_avatars/' . $bn);
+                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('student_avatars/'.$bn))
+                            $sidebarSrc = asset('storage/student_avatars/'.$bn);
                     }
                 } else {
                     if ($sidebarUser->avatar) {
                         $bn = basename($sidebarUser->avatar);
-                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('staff_avatars/' . $bn))
-                            $sidebarSrc = asset('storage/staff_avatars/' . $bn);
+                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('staff_avatars/'.$bn))
+                            $sidebarSrc = asset('storage/staff_avatars/'.$bn);
                     }
                 }
-                $sidebarInitials = collect(explode(' ', $sidebarUser->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('');
+                $sidebarInitials = collect(explode(' ', $sidebarUser->name))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->implode('');
             @endphp
             <div class="sidebar-footer-user">
                 @if($sidebarSrc)
@@ -1061,8 +1145,9 @@
             </form>
         </div>
         @endauth
+
         <div class="sidebar-background"></div>
-    </div>
+    </div><!-- /app-menu -->
 
     <div class="vertical-overlay" id="vertical-overlay"></div>
 
@@ -1086,128 +1171,209 @@
                     </button>
 
                     <!-- Desktop Search -->
-                    <div class="d-none d-md-flex align-items-center search-trigger-wrapper desktop-search-only" style="position:relative;">
-                        <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
+                    <div class="d-none d-md-flex align-items-center desktop-search-only" style="position:relative;">
+                        <button type="button" id="spotlight-trigger"
+                                style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .22s;min-width:220px;">
                             <i class="mdi mdi-magnify" style="font-size:16px;opacity:.6;"></i>
                             <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
-                            <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">K</kbd></div>
+                            <div style="display:flex;gap:4px;">
+                                <kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);">⌘</kbd>
+                                <kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);">K</kbd>
+                            </div>
                         </button>
-                        <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
+                        <div class="search-tooltip">Press <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;margin:0 2px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;margin:0 2px;">Ctrl+K</kbd> to search</div>
                     </div>
 
-                    <!-- Mobile Search Button -->
-                    <div class="d-md-none search-trigger-wrapper mobile-search-only">
-                        <button type="button" id="spotlight-trigger-mobile" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;cursor:pointer;">
-                            <i class="mdi mdi-magnify" style="font-size:18px;opacity:.7;"></i>
+                    <!-- Mobile Search -->
+                    <div class="d-flex d-md-none align-items-center ms-2 mobile-search-only">
+                        <button type="button" id="spotlight-trigger-mobile"
+                                style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;cursor:pointer;transition:all .2s;">
+                            <i class="mdi mdi-magnify" style="font-size:18px;opacity:.7;color:#fff;"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="d-flex align-items-center gap-1">
+
+                    <!-- Theme Toggle -->
                     <div class="position-relative" id="theme-toggle-wrapper">
-                        <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;"><i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i></button>
-                        <div id="theme-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:170px;background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;overflow:hidden;padding:6px;">
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light"><i class="bi bi-sun"></i> Light</a>
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark"><i class="bi bi-moon"></i> Dark</a>
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto"><i class="bi bi-moon-stars"></i> Auto</a>
+                        <button type="button" id="theme-toggle-btn"
+                                class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle"
+                                style="width:38px;height:38px;transition:transform var(--transition-bounce);"
+                                onmouseover="this.style.transform='rotate(20deg) scale(1.1)'"
+                                onmouseout="this.style.transform=''"
+                                title="Switch theme">
+                            <i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i>
+                        </button>
+                        <div id="theme-dropdown"
+                             style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:165px;
+                                    background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);
+                                    border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:9999;overflow:hidden;padding:5px;">
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light" style="font-size:13px;color:inherit;transition:background .15s;">
+                                <i class="bi bi-sun"></i> <span>Light</span>
+                            </a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark" style="font-size:13px;color:inherit;transition:background .15s;">
+                                <i class="bi bi-moon"></i> <span>Dark</span>
+                            </a>
+                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto" style="font-size:13px;color:inherit;transition:background .15s;">
+                                <i class="bi bi-moon-stars"></i> <span>Auto</span>
+                            </a>
                         </div>
                     </div>
 
+                    <!-- User Dropdown -->
                     @php
                         use App\Models\User as UserModel;
                         use App\Models\Student;
                         use Illuminate\Support\Facades\Storage;
                         use Illuminate\Support\Facades\Auth;
-
                         $userdata  = Auth::user();
                         $isStudent = $userdata->hasRole('student');
                         $fullName  = $userdata->name ?? 'User';
-                        $initials  = collect(explode(' ', $fullName))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->implode('');
+                        $initials  = collect(explode(' ',$fullName))->map(fn($w)=>strtoupper(substr($w,0,1)))->take(2)->implode('');
                         $srcPath   = null;
-
                         if ($isStudent) {
                             $student = Student::where('id', $userdata->student_id)->first();
-                            $studentPicture = $student?->picture;
-                            if ($studentPicture) {
-                                $basename = basename($studentPicture);
-                                if (Storage::disk('public')->exists('student_avatars/' . $basename))
-                                    $srcPath = asset('storage/student_avatars/' . $basename);
+                            if ($student?->picture) {
+                                $bn = basename($student->picture);
+                                if (Storage::disk('public')->exists('student_avatars/'.$bn))
+                                    $srcPath = asset('storage/student_avatars/'.$bn);
                             }
                         } else {
                             if ($userdata->avatar) {
-                                $basename = basename($userdata->avatar);
-                                if (Storage::disk('public')->exists('staff_avatars/' . $basename))
-                                    $srcPath = asset('storage/staff_avatars/' . $basename);
+                                $bn = basename($userdata->avatar);
+                                if (Storage::disk('public')->exists('staff_avatars/'.$bn))
+                                    $srcPath = asset('storage/staff_avatars/'.$bn);
                             }
                         }
-
                         $userRoles = $userdata->roles->pluck('name');
                     @endphp
 
                     <div class="dropdown position-relative ms-sm-3 header-item topbar-user" id="user-dropdown-wrapper">
-                        <button type="button" id="user-menu-btn" class="btn shadow-none p-0" style="background:transparent;border:none;">
+                        <button type="button" id="user-menu-btn" class="btn shadow-none p-0"
+                                style="background:transparent;border:none;transition:transform var(--transition-bounce);"
+                                onmouseover="this.style.transform='scale(1.04)'"
+                                onmouseout="this.style.transform=''">
                             <span class="d-flex align-items-center gap-2">
-                                <span style="display:inline-block;width:42px;height:42px;flex-shrink:0;position:relative;">
+                                <span style="display:inline-block;width:40px;height:40px;flex-shrink:0;position:relative;">
                                     @if($srcPath)
-                                        <img id="topbar-avatar-img" src="{{ $srcPath }}" alt="{{ $fullName }}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none';document.getElementById('topbar-avatar-fallback').style.display='flex';">
-                                        <span id="topbar-avatar-fallback" style="display:none;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
+                                        <img id="topbar-avatar-img" src="{{ $srcPath }}" alt="{{ $fullName }}"
+                                             style="width:40px;height:40px;border-radius:10px;object-fit:cover;object-position:center top;display:block;border:2px solid rgba(255,255,255,.25);transition:box-shadow .2s;"
+                                             onerror="this.style.display='none';document.getElementById('topbar-avatar-fallback').style.display='flex';">
+                                        <span id="topbar-avatar-fallback"
+                                              style="display:none;width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#405189,#4f8ef7);color:#fff;font-size:13px;font-weight:700;align-items:center;justify-content:center;position:absolute;top:0;left:0;">
+                                            {{ $initials }}
+                                        </span>
                                     @else
-                                        <span style="display:flex;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
+                                        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#405189,#4f8ef7);color:#fff;font-size:13px;font-weight:700;align-items:center;justify-content:center;">
+                                            {{ $initials }}
+                                        </span>
                                     @endif
                                 </span>
-                                <span class="d-none d-xl-flex flex-column align-items-start ms-1"><span class="fw-medium" style="font-size:13px;">{{ $userdata->name }}</span></span>
+                                <span class="d-none d-xl-flex flex-column align-items-start ms-1" style="line-height:1.2;">
+                                    <span class="fw-medium" style="font-size:13px;color:inherit;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;">{{ $userdata->name }}</span>
+                                </span>
                             </span>
                         </button>
-                        <div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:var(--vz-dropdown-bg,#fff);border-radius:12px;z-index:9999;">
-                            <div class="dropdown-header"><h6 class="mb-0">Welcome back!</h6><small class="text-muted">{{ $userdata->name }}</small></div>
-                            <div class="dropdown-divider"></div>
-                            <div class="px-3 py-2">
-                                <div class="small text-muted mb-2 text-uppercase" style="font-size:10px;">Your Roles</div>
-                                <div class="d-flex flex-wrap gap-1">
-                                    @foreach($userRoles as $roleName)
-                                        <span style="display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#405189;">{{ $roleName }}</span>
-                                    @endforeach
+
+                        <div id="user-dropdown" class="dropdown-menu dropdown-menu-end"
+                             style="display:none;position:absolute;top:calc(100% + 10px);right:0;min-width:220px;
+                                    background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);
+                                    border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.16);z-index:9999;overflow:hidden;">
+                            <!-- Gradient header -->
+                            <div style="background:linear-gradient(135deg,#405189 0%,#4f8ef7 100%);padding:14px 16px;display:flex;align-items:center;gap:10px;">
+                                @if($srcPath)
+                                    <img src="{{ $srcPath }}" alt="{{ $fullName }}"
+                                         style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,255,255,.35);flex-shrink:0;">
+                                @else
+                                    <span style="display:flex;width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:700;align-items:center;justify-content:center;flex-shrink:0;">{{ $initials }}</span>
+                                @endif
+                                <div style="min-width:0;">
+                                    <div style="font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">{{ $userdata->name }}</div>
+                                    <div style="font-size:11px;color:rgba(255,255,255,.7);">
+                                        @foreach($userRoles->take(2) as $r)
+                                            <span style="background:rgba(255,255,255,.18);padding:1px 6px;border-radius:10px;margin-right:3px;font-size:10px;">{{ $r }}</span>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
-                            <div class="dropdown-divider"></div>
-                            @if(!$isStudent)<a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>@endif
-                            <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog me-2"></i>Account Settings</a>
-                            <div class="dropdown-divider"></div>
-                            <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf<a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"><i class="mdi mdi-logout me-2"></i>Logout</a></form>
+                            <div style="padding:6px;">
+                                @if(!$isStudent)
+                                <a class="dropdown-item d-flex align-items-center gap-2 rounded-2" href="{{ route('users.overview', $userdata->id) }}"
+                                   style="font-size:13px;padding:9px 12px;transition:background .15s;">
+                                    <i class="mdi mdi-account-circle-outline text-muted"></i> My Profile
+                                </a>
+                                @endif
+                                <a class="dropdown-item d-flex align-items-center gap-2 rounded-2" href="{{ route('profile.settings', ['id'=>$userdata->id]) }}"
+                                   style="font-size:13px;padding:9px 12px;transition:background .15s;">
+                                    <i class="mdi mdi-cog-outline text-muted"></i> Account Settings
+                                </a>
+                                <div style="height:1px;background:var(--vz-border-color,#e9ebec);margin:4px 0;"></div>
+                                <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf
+                                    <a class="dropdown-item d-flex align-items-center gap-2 rounded-2 text-danger" href="{{ route('logout') }}"
+                                       onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"
+                                       style="font-size:13px;padding:9px 12px;transition:background .15s;">
+                                        <i class="mdi mdi-logout"></i> Logout
+                                    </a>
+                                </form>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- SPOTLIGHT SEARCH MODAL -->
-    <div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);animation:spotlightOverlayFadeIn .25s ease forwards;">
-        <div id="spotlight-box" style="width:100%;max-width:860px;margin:0 24px;background:rgba(24,26,32,.96);border:1px solid rgba(255,255,255,.1);border-radius:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);overflow:hidden;animation:spotlightModalBounceIn .35s cubic-bezier(.34,1.3,.64,1) forwards;">
-            <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
-                <i class="mdi mdi-magnify" style="font-size:26px;color:#4f8ef7;flex-shrink:0;"></i>
-                <input id="spotlight-input" type="text" placeholder="Search for pages, students, staff, classes…" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:18px;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header"><h5 class="modal-title">Profile Photo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center p-4"><img id="enlargedImage" src="" alt="Profile" class="img-fluid rounded-3" style="max-height:400px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SPOTLIGHT ========== -->
+    <div id="spotlight-overlay"
+         style="display:none;position:fixed;inset:0;z-index:10000;align-items:flex-start;justify-content:center;padding-top:6vh;">
+        <div id="spotlight-box"
+             style="width:100%;max-width:840px;margin:0 20px;background:rgba(18,20,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:24px;box-shadow:0 40px 100px rgba(0,0,0,.7);overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.07);">
+                <i class="mdi mdi-magnify" style="font-size:24px;color:#4f8ef7;flex-shrink:0;"></i>
+                <input id="spotlight-input" type="text" placeholder="Search pages, students, staff, classes…" autocomplete="off"
+                       style="flex:1;background:transparent;border:none;outline:none;font-size:17px;color:#fff;caret-color:#4f8ef7;padding:6px 0;">
                 <div style="display:flex;gap:8px;">
-                    <button id="spotlight-clear-history" style="background:rgba(255,255,255,.08);border:none;border-radius:10px;padding:6px 12px;color:rgba(255,255,255,.6);font-size:12px;font-weight:500;cursor:pointer;">Clear History</button>
-                    <kbd id="spotlight-esc" style="font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);cursor:pointer;">ESC</kbd>
+                    <button id="spotlight-clear-history" style="display:none;background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:5px 11px;color:rgba(255,255,255,.55);font-size:11px;font-weight:500;cursor:pointer;transition:background .2s;">Clear</button>
+                    <kbd id="spotlight-esc" style="font-size:11px;padding:3px 9px;border-radius:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.55);cursor:pointer;">ESC</kbd>
                 </div>
             </div>
-            <div id="spotlight-results" style="max-height:520px;overflow-y:auto;padding:12px 0;">
-                <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,.35);">
-                    <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4;"></i>
-                    <span style="font-size:15px;">Start typing to search…</span>
+            <div id="spotlight-results" style="max-height:480px;overflow-y:auto;padding:8px 0;">
+                <div id="spotlight-history-section" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 22px 6px;">
+                        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);">Recent</span>
+                        <button id="spotlight-clear-history-btn" style="background:transparent;border:none;color:rgba(255,255,255,.35);font-size:11px;cursor:pointer;transition:color .2s;">Clear All</button>
+                    </div>
+                    <div id="spotlight-history-list"></div>
+                    <div style="height:1px;background:rgba(255,255,255,.05);margin:8px 18px;"></div>
+                </div>
+                <div id="spotlight-empty" style="padding:44px 22px;text-align:center;color:rgba(255,255,255,.32);">
+                    <i class="mdi mdi-lightning-bolt" style="font-size:44px;display:block;margin-bottom:14px;opacity:.38;"></i>
+                    <span style="font-size:14px;">Start typing to search…</span>
+                    <div style="margin-top:12px;font-size:11px;opacity:.38;">Try: Students, Classes, Payments, Reports</div>
                 </div>
                 <ul id="spotlight-list" style="list-style:none;margin:0;padding:0;display:none;"></ul>
-                <div id="spotlight-loading" style="display:none;padding:48px;text-align:center;">
-                    <div style="display:inline-block;width:32px;height:32px;border:2px solid rgba(255,255,255,.15);border-top-color:#4f8ef7;border-radius:50%;animation:loadingSpin .7s linear infinite;"></div>
-                    <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,.45);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
+                <div id="spotlight-loading" style="display:none;padding:44px;text-align:center;">
+                    <div style="display:inline-block;width:28px;height:28px;border:2px solid rgba(255,255,255,.14);border-top-color:#4f8ef7;border-radius:50%;animation:loadingSpin .65s linear infinite;"></div>
+                    <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.4);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
                 </div>
             </div>
-            <div style="padding:14px 24px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:24px;font-size:12px;color:rgba(255,255,255,.35);flex-wrap:wrap;">
-                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">⌘K</kbd> / <kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">Ctrl+K</kbd> open</span>
-                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↑↓</kbd> navigate</span>
-                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">↵</kbd> open</span>
-                <span><kbd style="background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px;">ESC</kbd> close</span>
+            <div style="padding:11px 22px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:20px;font-size:11px;color:rgba(255,255,255,.3);flex-wrap:wrap;">
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:4px;padding:2px 5px;">⌘K</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:4px;padding:2px 5px;">↑↓</kbd> navigate</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:4px;padding:2px 5px;">↵</kbd> open</span>
+                <span><kbd style="background:rgba(255,255,255,.1);border-radius:4px;padding:2px 5px;">ESC</kbd> close</span>
             </div>
         </div>
     </div>
@@ -1216,14 +1382,104 @@
 
     <footer class="footer">
         <div class="container-fluid">
-            <div class="row"><div class="col-sm-6"><script>document.write(new Date().getFullYear())</script> © {{ $school->school_name ?? 'Vite-ESchool' }}</div><div class="col-sm-6"><div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div></div></div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script>
+                    @php $school = App\Models\SchoolInformation::where('is_active', true)->first(); @endphp
+                    &copy; {{ $school->school_name ?? 'Vite-ESchool' }}
+                </div>
+                <div class="col-sm-6"><div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div></div>
+            </div>
         </div>
     </footer>
-</div>
+</div><!-- /layout-wrapper -->
 
-<button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up fs-3xl"></i></button>
+<button class="btn btn-dark btn-icon" id="back-to-top" title="Back to top"><i class="bi bi-caret-up fs-3xl"></i></button>
 <div id="preloader"><div id="status"><div class="spinner-border text-primary avatar-sm" role="status"><span class="visually-hidden">Loading...</span></div></div></div>
 
+<!-- Customizer trigger -->
+<div class="customizer-setting d-none d-md-block">
+    <div class="btn btn-info p-2 text-uppercase rounded-end-0 shadow-lg"
+         data-bs-toggle="offcanvas" data-bs-target="#theme-settings-offcanvas">
+        <i class="bi bi-gear mb-1"></i> Customizer
+    </div>
+</div>
+
+<!-- Theme Offcanvas — full markup so app.js never hits null -->
+<div class="offcanvas offcanvas-end border-0" tabindex="-1" id="theme-settings-offcanvas">
+    <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
+        <div class="me-2"><h5 class="mb-1 text-white">Theme Customizer</h5><p class="text-white text-opacity-75 mb-0">Customize your experience</p></div>
+        <button type="button" class="btn-close btn-close-white ms-auto" id="customizerclose-btn" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0"><div data-simplebar class="h-100"><div class="p-4">
+        <h6 class="fs-md mb-1">Color Scheme</h6>
+        <div class="row g-3">
+            <div class="col-6">
+                <div class="form-check card-radio">
+                    <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-mode-light" value="light">
+                    <label class="form-check-label p-0 bg-transparent" for="layout-mode-light">
+                        <img src="{{ asset('theme/layouts/assets/images/custom-theme/light-mode.png') }}" alt="" class="img-fluid">
+                    </label>
+                </div>
+                <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
+            </div>
+            <div class="col-6">
+                <div class="form-check card-radio dark">
+                    <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-mode-dark" value="dark">
+                    <label class="form-check-label p-0 bg-transparent" for="layout-mode-dark">
+                        <img src="{{ asset('theme/layouts/assets/images/custom-theme/dark-mode.png') }}" alt="" class="img-fluid">
+                    </label>
+                </div>
+                <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
+            </div>
+        </div>
+        <div id="sidebar-color" class="mt-4">
+            <h6 class="fs-md mb-1">Sidebar Color</h6>
+            <div class="row">
+                <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-light" value="light"><label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-light"><span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-white border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span></label></div><h5 class="fs-sm text-center fw-medium mt-2">Light</h5></div>
+                <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-dark" value="dark"><label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-dark"><span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-primary d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-soft-light rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span></span></span></span></label></div><h5 class="fs-sm text-center fw-medium mt-2">Dark</h5></div>
+            </div>
+        </div>
+        <div id="sidebar-size" class="mt-4">
+            <h6 class="fw-semibold fs-base">Sidebar Size</h6>
+            <div class="row">
+                <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-default" value="lg"><label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-default"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Default</h5></div>
+                <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small-hover" value="sm-hover"><label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-small-hover"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Hover</h5></div>
+            </div>
+        </div>
+        <div id="sidebar-view" class="mt-4">
+            <h6 class="fw-semibold fs-base">Layout</h6>
+            <div class="row">
+                <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-layout" id="customizer-layout01" value="vertical"><label class="form-check-label p-0 avatar-md w-100" for="customizer-layout01"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Vertical</h5></div>
+                <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-layout" id="customizer-layout03" value="twocolumn"><label class="form-check-label p-0 avatar-md w-100" for="customizer-layout03"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Two Column</h5></div>
+            </div>
+        </div>
+        <div id="layout-width" class="mt-4">
+            <h6 class="fw-semibold fs-base">Layout Width</h6>
+            <div class="row"><div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-layout-width" id="layout-width-fluid" value="fluid"><label class="form-check-label p-0 avatar-md w-100" for="layout-width-fluid"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Fluid</h5></div></div>
+        </div>
+        <div id="layout-position" class="mt-4">
+            <h6 class="fw-semibold fs-base">Layout Position</h6>
+            <div class="row"><div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-layout-position" id="layout-position-fixed" value="fixed"><label class="form-check-label p-0 avatar-md w-100" for="layout-position-fixed"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Fixed</h5></div></div>
+        </div>
+        <div id="preloader-menu" class="mt-4">
+            <h6 class="fw-semibold fs-base">Preloader</h6>
+            <div class="row"><div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-preloader" id="preloader-view-none" value="disable"><label class="form-check-label p-0 avatar-md w-100" for="preloader-view-none"></label></div><h5 class="fs-sm text-center fw-medium mt-2">Disable</h5></div></div>
+        </div>
+        <!-- Stubs needed by app.js -->
+        <div style="display:none;">
+            <input type="radio" id="topbar-color-light" name="data-topbar" value="light">
+            <input type="radio" id="topbar-color-dark"  name="data-topbar" value="dark">
+        </div>
+    </div></div></div>
+    <div class="offcanvas-footer border-top p-3 text-center">
+        <div class="row"><div class="col-6"><button type="button" class="btn btn-light w-100" id="reset-layout">Reset</button></div></div>
+    </div>
+</div>
+
+<!-- =====================================================
+     SCRIPTS
+     ===================================================== -->
 <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
@@ -1231,235 +1487,530 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-(function() {
+(function () {
     'use strict';
 
-    // =====================================================
-    // SIDEBAR TOGGLE - Mobile (slide) + Desktop (collapse)
-    // =====================================================
-    const ham = document.getElementById('topnav-hamburger-icon');
-    const overlay = document.getElementById('vertical-overlay');
-    const body = document.body;
+    /* ── helpers ─────────────────────────────────────────── */
+    const $ = (s, c) => (c || document).querySelector(s);
+    const $$ = (s, c) => (c || document).querySelectorAll(s);
 
-    function isMobile() {
-        // Matches CSS breakpoint: @media (max-width: 1024.98px)
-        return window.innerWidth < 1025;
-    }
+    /* ── SIDEBAR TOGGLE ──────────────────────────────────── */
+    const ham     = document.getElementById('topnav-hamburger-icon');
+    const overlay = document.getElementById('vertical-overlay');
+    const body    = document.body;
+
+    const isMobile = () => window.innerWidth < 1025;
 
     function toggleSidebar(e) {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation(); // prevents layout.js/app.js from double-handling
-        }
-
-        if (isMobile()) {
-            body.classList.toggle('vertical-sidebar-enable');
-        } else {
-            body.classList.toggle('sidebar-collapsed');
-        }
+        if (e) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
+        isMobile()
+            ? body.classList.toggle('vertical-sidebar-enable')
+            : body.classList.toggle('sidebar-collapsed');
     }
 
-    function closeSidebarMobile() {
-        body.classList.remove('vertical-sidebar-enable');
-    }
-
-    if (ham) {
-        // Use capture phase (true) so our handler fires BEFORE layout.js bubble-phase listeners
-        ham.addEventListener('click', toggleSidebar, true);
-    }
-    if (overlay) {
-        overlay.addEventListener('click', closeSidebarMobile);
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && isMobile() && body.classList.contains('vertical-sidebar-enable')) {
-            closeSidebarMobile();
-        }
+    if (ham)     ham.addEventListener('click', toggleSidebar, true);
+    if (overlay) overlay.addEventListener('click', () => body.classList.remove('vertical-sidebar-enable'));
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && isMobile() && body.classList.contains('vertical-sidebar-enable'))
+            body.classList.remove('vertical-sidebar-enable');
     });
 
-    let resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-            if (!isMobile()) {
-                body.classList.remove('vertical-sidebar-enable');
-            } else {
-                body.classList.remove('sidebar-collapsed');
-            }
-        }, 250);
+    let resizeT;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(() => {
+            if (!isMobile()) body.classList.remove('vertical-sidebar-enable');
+            else             body.classList.remove('sidebar-collapsed');
+        }, 200);
     });
 
-    // =====================================================
-    // SPOTLIGHT SEARCH
-    // =====================================================
-    const STATIC_PAGES = [
-        {title:'Administration Dashboard', url:'{{ route("dashboard") }}', icon:'mdi-gauge', category:'Dashboards'},
-        {title:'User Management', url:'{{ route("users.index") }}', icon:'mdi-account-group', category:'Users & Privileges'},
-        {title:'Roles & Permissions', url:'{{ route("roles.index") }}', icon:'mdi-shield-account', category:'Users & Privileges'},
-        {title:'All Students', url:'{{ route("student.index") }}', icon:'mdi-school', category:'Students'},
-        {title:'My Profile', url:'{{ route("users.overview", ["id" => Auth::id()]) }}', icon:'mdi-account-circle', category:'My Account'},
-        {title:'Account Settings', url:'{{ route("profile.settings", ["id" => Auth::id()]) }}', icon:'mdi-cog', category:'My Account'},
-        {title:'School Information', url:'{{ route("school-information.index") }}', icon:'mdi-domain', category:'School Settings'},
-        {title:'Subjects', url:'{{ route("subject.index") }}', icon:'mdi-book-open-variant', category:'Subjects'},
-        {title:'Student Bill', url:'{{ route("schoolpayment.index") }}', icon:'mdi-receipt', category:'Finance'},
-        {title:'All Examinations', url:'{{ route("exams.index") }}', icon:'mdi-clipboard-text', category:'Exams & CBT'},
-        {title:'Admin Timetable', url:'{{ route("timetable.index") }}', icon:'mdi-table-clock', category:'Timetable'},
-        {title:'School Session', url:'{{ route("session.index") }}', icon:'mdi-calendar-range', category:'School Settings'},
-        {title:'School Term', url:'{{ route("term.index") }}', icon:'mdi-calendar', category:'School Settings'},
-        {title:'My Class', url:'{{ route("myclass.index") }}', icon:'mdi-google-classroom', category:'Classes & Records'},
-        {title:'Terminal Records', url:'{{ route("myresultroom.index") }}', icon:'mdi-file-chart', category:'Records & Results'},
-    ];
-
-    const CAT_COLORS = {
-        'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
-        'School Settings':'#6a0572','Subjects':'#e9c46a','Finance':'#10b981','Exams & CBT':'#f4a261',
-        'Timetable':'#4f8ef7','Classes & Records':'#0a9396','Records & Results':'#457b9d'
-    };
-
-    const overlaySpot = document.getElementById('spotlight-overlay');
-    const input = document.getElementById('spotlight-input');
-    const emptyEl = document.getElementById('spotlight-empty');
-    const loadEl = document.getElementById('spotlight-loading');
-    const list = document.getElementById('spotlight-list');
-    const triggerDesktop = document.getElementById('spotlight-trigger');
-    const triggerMobile = document.getElementById('spotlight-trigger-mobile');
-    const escBtn = document.getElementById('spotlight-esc');
-    const clearMain = document.getElementById('spotlight-clear-history');
-
-    function openSpotlight() {
-        if (!overlaySpot) return;
-        overlaySpot.style.display = 'flex';
-        if (input) setTimeout(() => input.focus(), 100);
-    }
-
-    function closeSpotlight() {
-        if (overlaySpot) {
-            overlaySpot.style.animation = 'spotlightOverlayFadeOut .2s ease forwards';
-            setTimeout(() => { overlaySpot.style.display = 'none'; overlaySpot.style.animation = ''; }, 200);
-        }
-        if (input) input.value = '';
-        if (emptyEl) emptyEl.style.display = 'block';
-        if (loadEl) loadEl.style.display = 'none';
-        if (list) { list.style.display = 'none'; list.innerHTML = ''; }
-    }
-
-    function performSearch(query) {
-        if (!query || !query.trim()) {
-            if (emptyEl) emptyEl.style.display = 'block';
-            return;
-        }
-        if (loadEl) loadEl.style.display = 'block';
-        if (emptyEl) emptyEl.style.display = 'none';
-        if (list) list.style.display = 'none';
-
-        const results = STATIC_PAGES.filter(p =>
-            p.title.toLowerCase().includes(query.toLowerCase()) ||
-            p.category.toLowerCase().includes(query.toLowerCase())
-        ).slice(0,15);
-
-        if (loadEl) loadEl.style.display = 'none';
-        if (list) { list.innerHTML = ''; list.style.display = 'block'; }
-
-        if (results.length === 0) {
-            if (emptyEl) { emptyEl.innerHTML = '<i class="mdi mdi-magnify-close" style="font-size:42px;display:block;margin-bottom:16px;opacity:.4;"></i><span style="font-size:15px;">No results for "' + query + '"</span>'; emptyEl.style.display = 'block'; }
-            return;
-        }
-
-        results.forEach((r) => {
-            const li = document.createElement('li');
-            li.className = 'spotlight-result-item';
-            li.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
-            const c = CAT_COLORS[r.category] || '#4f8ef7';
-            li.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${r.icon || 'mdi-chevron-right'} mdi" style="font-size:18px;color:${c};"></i></span>
-                <span style="flex:1;min-width:0;"><span style="display:block;font-size:15px;font-weight:500;color:#fff;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">${r.category}</span></span>
-                <i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);flex-shrink:0;"></i>`;
-            li.addEventListener('click', () => { window.location.href = r.url; });
-            list.appendChild(li);
-        });
-    }
-
-    if (triggerDesktop) triggerDesktop.addEventListener('click', openSpotlight);
-    if (triggerMobile) triggerMobile.addEventListener('click', openSpotlight);
-    if (escBtn) escBtn.addEventListener('click', closeSpotlight);
-    if (clearMain) clearMain.addEventListener('click', closeSpotlight);
-    if (overlaySpot) overlaySpot.addEventListener('click', (e) => { if (e.target === overlaySpot) closeSpotlight(); });
-
-    document.addEventListener('keydown', (e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-            e.preventDefault();
-            overlaySpot && overlaySpot.style.display === 'flex' ? closeSpotlight() : openSpotlight();
-        }
-        if (e.key === 'Escape' && overlaySpot && overlaySpot.style.display === 'flex') closeSpotlight();
-    });
-
-    if (input) {
-        input.addEventListener('input', () => { performSearch(input.value.trim()); });
-    }
-
-    // =====================================================
-    // MANUAL DROPDOWNS & THEME
-    // =====================================================
+    /* ── MANUAL DROPDOWN (animated) ─────────────────────── */
     function makeDropdown(btnId, panelId) {
-        const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+        const btn   = document.getElementById(btnId);
+        const panel = document.getElementById(panelId);
         if (!btn || !panel) return;
 
-        // Inject animation styles on the panel once
-        panel.style.transformOrigin = 'top right';
-        panel.style.transition = 'opacity 0.22s ease, transform 0.22s cubic-bezier(0.4,0,0.2,1)';
+        // Initial hidden state
+        Object.assign(panel.style, { display:'none', opacity:'0', transform:'translateY(-10px) scale(0.95)', transformOrigin:'top right',
+            transition:'opacity .22s ease, transform .22s cubic-bezier(0.4,0,0.2,1)' });
+
+        const isOpen = () => panel.style.display === 'block';
 
         const open = () => {
             panel.style.display = 'block';
-            // Force reflow so transition fires from the starting state
-            panel.getBoundingClientRect();
+            panel.getBoundingClientRect(); // force reflow
             panel.style.opacity = '1';
             panel.style.transform = 'translateY(0) scale(1)';
-            btn.setAttribute('aria-expanded', 'true');
+            btn.setAttribute('aria-expanded','true');
         };
         const close = () => {
             panel.style.opacity = '0';
-            panel.style.transform = 'translateY(-8px) scale(0.96)';
-            btn.setAttribute('aria-expanded', 'false');
-            setTimeout(() => {
-                if (panel.style.opacity === '0') panel.style.display = 'none';
-            }, 220);
+            panel.style.transform = 'translateY(-8px) scale(0.95)';
+            btn.setAttribute('aria-expanded','false');
+            setTimeout(() => { if (!isOpen() || panel.style.opacity==='0') panel.style.display='none'; }, 220);
         };
-        const isOpen = () => panel.style.display !== 'none' && panel.style.opacity !== '0';
 
-        // Set initial hidden state
-        panel.style.display = 'none';
-        panel.style.opacity = '0';
-        panel.style.transform = 'translateY(-8px) scale(0.96)';
+        btn.addEventListener('click',       e => { e.stopPropagation(); isOpen() ? close() : open(); });
+        document.addEventListener('click',  e => { if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
+        document.addEventListener('keydown',e => { if (e.key==='Escape') close(); });
 
-        btn.addEventListener('click', (e) => { e.stopPropagation(); isOpen() ? close() : open(); });
-        document.addEventListener('click', (e) => { if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+        // Hover highlight on items
+        $$('a', panel).forEach(a => {
+            a.addEventListener('mouseenter', () => a.style.background = 'rgba(64,81,137,.08)');
+            a.addEventListener('mouseleave', () => a.style.background = '');
+        });
     }
-    makeDropdown('theme-toggle-btn', 'theme-dropdown');
-    makeDropdown('user-menu-btn', 'user-dropdown');
 
+    /* ── THEME ───────────────────────────────────────────── */
     function initTheme() {
-        const html = document.documentElement;
+        const html   = document.documentElement;
         const iconEl = document.getElementById('theme-icon');
-        const applyMode = (mode) => {
-            const scheme = mode === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode;
-            html.setAttribute('data-bs-theme', scheme);
-            html.setAttribute('data-topbar', scheme === 'dark' ? 'dark' : 'light');
-            if (iconEl) iconEl.className = mode === 'light' ? 'bi bi-sun align-middle fs-3xl' : (mode === 'dark' ? 'bi bi-moon align-middle fs-3xl' : 'bi bi-moon-stars align-middle fs-3xl');
-            localStorage.setItem('app-theme', mode);
-        };
-        applyMode(localStorage.getItem('app-theme') || 'light');
-        document.querySelectorAll('.theme-mode-item').forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); applyMode(a.getAttribute('data-mode')); }));
-    }
-    initTheme();
+        const ICONS  = { light:'bi bi-sun align-middle fs-3xl', dark:'bi bi-moon align-middle fs-3xl', auto:'bi bi-moon-stars align-middle fs-3xl' };
 
-    // Back to top
-    const backBtn = document.getElementById('back-to-top');
-    if (backBtn) {
-        window.addEventListener('scroll', () => backBtn.classList.toggle('show', window.scrollY > 300));
-        backBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        const scheme  = m => m === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : m;
+        const apply   = mode => {
+            const s = scheme(mode);
+            html.setAttribute('data-bs-theme', s);
+            html.setAttribute('data-topbar', s === 'dark' ? 'dark' : 'light');
+            if (iconEl) {
+                // Animate icon swap
+                iconEl.style.transform = 'rotate(90deg) scale(0)';
+                iconEl.style.transition = 'transform .2s ease';
+                setTimeout(() => {
+                    iconEl.className = ICONS[mode] || ICONS.light;
+                    iconEl.style.transform = 'rotate(0deg) scale(1)';
+                }, 180);
+            }
+            localStorage.setItem('app-theme', mode);
+            const r = document.getElementById(s === 'dark' ? 'layout-mode-dark' : 'layout-mode-light');
+            if (r) r.checked = true;
+            $$('.theme-mode-item').forEach(a => {
+                a.style.fontWeight = a.dataset.mode === mode ? '600' : '';
+                a.style.color      = a.dataset.mode === mode ? 'var(--vz-primary,#405189)' : '';
+            });
+            const panel = document.getElementById('theme-dropdown');
+            if (panel) { panel.style.opacity='0'; setTimeout(()=>panel.style.display='none',220); }
+        };
+
+        apply(localStorage.getItem('app-theme') || 'light');
+        $$('.theme-mode-item').forEach(a => a.addEventListener('click', e => { e.preventDefault(); apply(a.dataset.mode); }));
+        $$('[name="data-bs-theme"]').forEach(r => r.addEventListener('change', () => apply(r.value)));
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (localStorage.getItem('app-theme')==='auto') apply('auto');
+        });
     }
+
+    /* ── NPROGRESS ───────────────────────────────────────── */
+    function initNProgress() {
+        if (typeof NProgress === 'undefined') return;
+        NProgress.configure({ showSpinner:false, speed:380, minimum:0.08 });
+        $$('a[href]').forEach(a => {
+            const h = a.getAttribute('href')||'';
+            if (h && h!=='#' && !h.startsWith('javascript') && !h.startsWith('mailto') && !h.startsWith('tel')
+                && !a.hasAttribute('data-bs-toggle') && !a.hasAttribute('data-bs-dismiss') && a.getAttribute('target')!=='_blank')
+                a.addEventListener('click', () => NProgress.start());
+        });
+        window.addEventListener('pageshow', () => NProgress.done());
+        window.addEventListener('load',     () => NProgress.done());
+    }
+
+    /* ── ACTIVE SIDEBAR LINK ─────────────────────────────── */
+    function initActiveSidebar() {
+        const cur = window.location.pathname;
+        $$('#navbar-nav .nav-sm a.nav-link').forEach(link => {
+            try {
+                const lp = new URL(link.href, location.origin).pathname;
+                if (lp !== cur && !(lp.length > 1 && cur.startsWith(lp))) return;
+                link.classList.add('nav-active-child');
+                const col = link.closest('.collapse');
+                if (!col) return;
+                col.classList.add('show');
+                const tog = $(`[data-bs-target="#${col.id}"],[href="#${col.id}"]`);
+                if (tog) { tog.setAttribute('aria-expanded','true'); tog.classList.remove('collapsed'); tog.classList.add('nav-active-parent'); }
+                setTimeout(() => link.scrollIntoView({ behavior:'smooth', block:'nearest' }), 400);
+            } catch(e){}
+        });
+    }
+
+    /* ── RIPPLE ──────────────────────────────────────────── */
+    function initRipple() {
+        $$('#navbar-nav .nav-link').forEach(link => {
+            link.addEventListener('click', e => {
+                if (link.hasAttribute('data-bs-toggle')) return;
+                const r = document.createElement('span');
+                r.className = 'nav-ripple';
+                const rect = link.getBoundingClientRect(), s = Math.max(rect.width, rect.height);
+                r.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX-rect.left-s/2}px;top:${e.clientY-rect.top-s/2}px;`;
+                link.appendChild(r);
+                setTimeout(() => r.parentNode?.removeChild(r), 650);
+            });
+        });
+    }
+
+    /* ── BACK TO TOP ─────────────────────────────────────── */
+    function initBackToTop() {
+        const btn = document.getElementById('back-to-top');
+        if (!btn) return;
+        window.addEventListener('scroll', () => btn.classList.toggle('show', window.scrollY > 300), { passive:true });
+        btn.addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
+    }
+
+    /* ── KILL BOOTSTRAP DROPDOWN INSTANCE on user btn ────── */
+    function killBsDropdown() {
+        const btn = document.getElementById('user-menu-btn');
+        if (!btn || typeof bootstrap==='undefined' || !bootstrap.Dropdown) return;
+        const inst = bootstrap.Dropdown.getInstance(btn);
+        if (inst) inst.dispose();
+    }
+
+    /* ── IMAGE MODAL ─────────────────────────────────────── */
+    function initImageModal() {
+        const m = document.getElementById('imageViewModal');
+        if (!m) return;
+        m.addEventListener('show.bs.modal', e => {
+            const img = document.getElementById('enlargedImage');
+            const src = e.relatedTarget?.getAttribute('data-image');
+            if (img && src) img.src = src;
+        });
+    }
+
+    /* ── SEARCH TOOLTIP ──────────────────────────────────── */
+    function initSearchTooltip() {
+        const btn = document.getElementById('spotlight-trigger');
+        const tip = $('.search-tooltip');
+        if (!btn || !tip) return;
+        btn.addEventListener('mouseenter', () => tip.style.opacity='1');
+        btn.addEventListener('mouseleave', () => tip.style.opacity='0');
+    }
+
+    /* ── FORM NPROGRESS ──────────────────────────────────── */
+    function initFormProgress() {
+        if (typeof NProgress==='undefined') return;
+        $$('form').forEach(f => {
+            if (f.getAttribute('action') && !f.dataset.noProgress)
+                f.addEventListener('submit', () => NProgress.start());
+        });
+    }
+
+    /* ── RESET LAYOUT ────────────────────────────────────── */
+    function initReset() {
+        const btn = document.getElementById('reset-layout');
+        if (btn) btn.addEventListener('click', () => { sessionStorage.clear(); localStorage.removeItem('app-theme'); location.reload(); });
+    }
+
+    /* ── INIT ────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+        makeDropdown('theme-toggle-btn', 'theme-dropdown');
+        makeDropdown('user-menu-btn',    'user-dropdown');
+        killBsDropdown();
+        initActiveSidebar();
+        initRipple();
+        initBackToTop();
+        initImageModal();
+        initSearchTooltip();
+        initReset();
+        initNProgress();
+        initFormProgress();
+    });
+
 })();
 </script>
+
+<!-- =====================================================
+     SPOTLIGHT SEARCH
+     ===================================================== -->
+<script>
+(function(){
+    const PAGES = [
+        {title:'Administration Dashboard',   url:'{{ route("dashboard") }}',                              icon:'mdi-gauge',              category:'Dashboards'},
+        {title:'User Management',            url:'{{ route("users.index") }}',                            icon:'mdi-account-group',      category:'Users & Privileges'},
+        {title:'Roles & Permissions',        url:'{{ route("roles.index") }}',                            icon:'mdi-shield-account',     category:'Users & Privileges'},
+        {title:'All Students',               url:'{{ route("student.index") }}',                          icon:'mdi-school',             category:'Students'},
+        {title:'Batch Registration',         url:'{{ route("studentbatchindex") }}',                      icon:'mdi-account-multiple-plus',category:'Students'},
+        {title:'ID Card Generator',          url:'{{ route("student-id-cards.index") }}',                 icon:'mdi-card-account-details',category:'Students'},
+        {title:'My Profile',                 url:'{{ route("users.overview", ["id" => Auth::id()]) }}',   icon:'mdi-account-circle',     category:'My Account'},
+        {title:'Account Settings',           url:'{{ route("profile.settings", ["id" => Auth::id()]) }}', icon:'mdi-cog',                category:'My Account'},
+        {title:'School Information',         url:'{{ route("school-information.index") }}',               icon:'mdi-domain',             category:'School Settings'},
+        {title:'School Session',             url:'{{ route("session.index") }}',                          icon:'mdi-calendar-range',     category:'School Settings'},
+        {title:'School Term',                url:'{{ route("term.index") }}',                             icon:'mdi-calendar',           category:'School Settings'},
+        {title:'Classes',                    url:'{{ route("schoolclass.index") }}',                      icon:'mdi-google-classroom',   category:'School Settings'},
+        {title:'Subjects',                   url:'{{ route("subject.index") }}',                          icon:'mdi-book-open-variant',  category:'Subjects'},
+        {title:'My Class',                   url:'{{ route("myclass.index") }}',                          icon:'mdi-google-classroom',   category:'Classes & Records'},
+        {title:'My Subject',                 url:'{{ route("mysubject.index") }}',                        icon:'mdi-book-open',          category:'Classes & Records'},
+        {title:'Terminal Records',           url:'{{ route("myresultroom.index") }}',                     icon:'mdi-file-chart',         category:'Records & Results'},
+        {title:'Terminal Result Reports',    url:'{{ route("studentreports.index") }}',                   icon:'mdi-file-document',      category:'Records & Results'},
+        {title:'Terminal Result Broadsheet', url:'{{ route("broadsheet.index") }}',                       icon:'mdi-table-large',        category:'Records & Results'},
+        {title:'Student Promotions',         url:'{{ route("promotions.index") }}',                       icon:'mdi-arrow-up-circle',    category:'Promotions'},
+        {title:'Student Bill',               url:'{{ route("schoolpayment.index") }}',                    icon:'mdi-receipt',            category:'Finance'},
+        {title:'Payment Portal',             url:'{{ route("payment.index") }}',                          icon:'mdi-wallet',             category:'Finance'},
+        {title:'All Scholarships',           url:'{{ route("admin.scholarship.index") }}',                icon:'mdi-medal',              category:'Finance'},
+        {title:'Payroll Periods',            url:'{{ route("payroll.periods") }}',                        icon:'mdi-calendar-clock',     category:'Payroll'},
+        {title:'All Examinations',           url:'{{ route("exams.index") }}',                            icon:'mdi-clipboard-text',     category:'Exams & CBT'},
+        {title:'CBT Exercise',               url:'{{ route("cbt.index") }}',                              icon:'mdi-monitor',            category:'Exams & CBT'},
+        {title:'Admin Timetable',            url:'{{ route("timetable.index") }}',                        icon:'mdi-table-clock',        category:'Timetable'},
+        {title:'Mark Attendance',            url:'{{ route("attendance.my-classes") }}',                  icon:'mdi-clipboard-check',    category:'Attendance'},
+        {title:'Balance Sheet',              url:'{{ route("reports.financial.balance-sheet") }}',        icon:'mdi-scale-balance',      category:'Accounting'},
+        {title:'Generate Transcript',        url:'{{ route("transcript.index") }}',                       icon:'mdi-file-account',       category:'Transcripts'},
+        {title:'Admin Score Entry',          url:'{{ route("admin.score-entry.index") }}',                icon:'mdi-clipboard-edit',     category:'Admin Tools'},
+    ];
+
+    const COLORS = {
+        'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
+        'School Settings':'#6a0572','Subjects':'#e9c46a','Classes & Records':'#0a9396','Records & Results':'#457b9d',
+        'Promotions':'#2a9d8f','Finance':'#10b981','Payroll':'#e76f51','Exams & CBT':'#f4a261',
+        'Timetable':'#4f8ef7','Attendance':'#e9c46a','Accounting':'#10b981','Transcripts':'#457b9d','Admin Tools':'#ef4444'
+    };
+
+    const HKEY = 'spotlight_history_v2';
+    const getHist  = () => { try{ return JSON.parse(localStorage.getItem(HKEY)||'[]'); }catch(e){ return []; } };
+    const saveHist = h  => localStorage.setItem(HKEY, JSON.stringify(h.slice(0,8)));
+    const addHist  = (q,r) => {
+        if (!q || q.trim().length < 2) return;
+        const h = getHist().filter(x => !(x.query===q && x.url===r.url));
+        h.unshift({query:q, url:r.url, title:r.title, icon:r.icon, category:r.category, ts:Date.now()});
+        saveHist(h); renderHistory();
+    };
+
+    const overlay  = document.getElementById('spotlight-overlay');
+    const box      = document.getElementById('spotlight-box');
+    const input    = document.getElementById('spotlight-input');
+    const emptyEl  = document.getElementById('spotlight-empty');
+    const loadEl   = document.getElementById('spotlight-loading');
+    const list     = document.getElementById('spotlight-list');
+    const histSec  = document.getElementById('spotlight-history-section');
+    const histList = document.getElementById('spotlight-history-list');
+    const clearBtn = document.getElementById('spotlight-clear-history-btn');
+    const clearTop = document.getElementById('spotlight-clear-history');
+    const escBtn   = document.getElementById('spotlight-esc');
+    const triggerD = document.getElementById('spotlight-trigger');
+    const triggerM = document.getElementById('spotlight-trigger-mobile');
+
+    let timer = null, activeIdx = -1, results = [];
+
+    function open() {
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        overlay.style.animation = 'spotlightOverlayFadeIn .28s ease forwards';
+        if (box) box.style.animation = 'spotlightModalBounceIn .4s cubic-bezier(.34,1.3,.64,1) forwards';
+        setTimeout(() => input?.focus(), 120);
+        renderHistory();
+    }
+    function close() {
+        if (box)     box.style.animation     = 'spotlightModalFadeOut .2s ease forwards';
+        if (overlay) overlay.style.animation = 'spotlightOverlayFadeOut .2s ease forwards';
+        setTimeout(() => {
+            if (overlay) overlay.style.display='none';
+            overlay.style.animation='';
+            if (input) input.value='';
+            showEmpty();
+        }, 200);
+    }
+    function showEmpty() {
+        if (emptyEl) { emptyEl.innerHTML='<i class="mdi mdi-lightning-bolt" style="font-size:44px;display:block;margin-bottom:14px;opacity:.38;"></i><span style="font-size:14px;">Start typing to search…</span><div style="margin-top:12px;font-size:11px;opacity:.38;">Try: Students, Classes, Payments, Reports</div>'; emptyEl.style.display='block'; }
+        if (loadEl) loadEl.style.display='none';
+        if (list)   { list.style.display='none'; list.innerHTML=''; }
+        if (clearTop) clearTop.style.display = getHist().length>0?'block':'none';
+        renderHistory();
+        results=[]; activeIdx=-1;
+    }
+    function showLoading() {
+        if (emptyEl) emptyEl.style.display='none';
+        if (loadEl)  loadEl.style.display='block';
+        if (list)    list.style.display='none';
+        if (histSec) histSec.style.display='none';
+    }
+
+    function renderHistory() {
+        const h = getHist();
+        if (h.length>0 && (!input||!input.value.trim())) {
+            if (histSec) histSec.style.display='block';
+            if (histList) histList.innerHTML='';
+            if (clearTop) clearTop.style.display='block';
+            h.forEach((item, idx) => {
+                const div = document.createElement('div');
+                const c   = COLORS[item.category]||'#4f8ef7';
+                div.style.cssText='display:flex;align-items:center;gap:12px;padding:9px 22px;cursor:pointer;transition:background .15s;border-radius:8px;margin:0 12px;';
+                div.innerHTML=`<span style="width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}20;"><i class="${item.icon||'mdi-history'} mdi" style="font-size:15px;color:${c};"></i></span>
+                    <span style="flex:1;min-width:0;"><span style="display:block;font-size:13px;font-weight:500;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.38);">${item.query}</span></span>
+                    <button class="rm-hist" style="background:transparent;border:none;color:rgba(255,255,255,.3);cursor:pointer;padding:4px 8px;border-radius:5px;font-size:12px;transition:color .15s;">✕</button>`;
+                div.querySelector('.rm-hist').addEventListener('click', e => {
+                    e.stopPropagation();
+                    const hh=getHist(); hh.splice(idx,1); saveHist(hh); renderHistory();
+                });
+                div.addEventListener('click', () => { if(input){ input.value=item.query; performSearch(item.query); } });
+                div.addEventListener('mouseenter', () => div.style.background='rgba(255,255,255,.05)');
+                div.addEventListener('mouseleave', () => div.style.background='');
+                histList?.appendChild(div);
+            });
+        } else {
+            if (histSec) histSec.style.display='none';
+            if (clearTop) clearTop.style.display='none';
+        }
+    }
+
+    function performSearch(q) {
+        if (!q||!q.trim()) { showEmpty(); return; }
+        showLoading();
+        const sr = PAGES.filter(p => p.title.toLowerCase().includes(q.toLowerCase())||p.category.toLowerCase().includes(q.toLowerCase())).slice(0,14);
+        renderResults(sr);
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            if (q.length<2) return;
+            fetch('{{ url("/api/search") }}?q='+encodeURIComponent(q)+'&_token={{ csrf_token() }}',
+                {headers:{'Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'}})
+            .then(r=>r.ok?r.json():{results:[]})
+            .then(d=>{
+                if (!input||input.value.trim()!==q) return;
+                const merged=sr.concat(d.results||[]), seen={};
+                renderResults(merged.filter(r=>{ if(seen[r.url]) return false; seen[r.url]=true; return true; }));
+            }).catch(()=>{});
+        }, 300);
+    }
+
+    function renderResults(rs) {
+        if (loadEl) loadEl.style.display='none';
+        if (emptyEl) emptyEl.style.display='none';
+        if (list) { list.innerHTML=''; list.style.display='block'; }
+        if (histSec) histSec.style.display='none';
+        activeIdx=-1; results=rs;
+
+        if (!rs.length) {
+            if (emptyEl) { emptyEl.innerHTML=`<i class="mdi mdi-magnify-close" style="font-size:40px;display:block;margin-bottom:14px;opacity:.38;"></i><span style="font-size:14px;">No results for "${input?input.value:''}"</span>`; emptyEl.style.display='block'; }
+            if (list) list.style.display='none';
+            return;
+        }
+
+        const grouped={};
+        rs.forEach(r=>{ if(!grouped[r.category]) grouped[r.category]=[]; grouped[r.category].push(r); });
+        let idx=0;
+        Object.keys(grouped).forEach(cat=>{
+            const h=document.createElement('li');
+            h.style.cssText='padding:10px 22px 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.32);';
+            h.textContent=cat; list.appendChild(h);
+            grouped[cat].forEach((r,gi)=>{
+                const li=document.createElement('li');
+                li.className='spotlight-result-item';
+                li.setAttribute('data-idx',idx);
+                li.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 22px;cursor:pointer;transition:all .18s;border-radius:8px;margin:2px 10px;';
+                const c=COLORS[r.category]||'#4f8ef7';
+                li.innerHTML=`<span style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}20;"><i class="${r.icon||'mdi-chevron-right'} mdi" style="font-size:17px;color:${c};"></i></span>
+                    <span style="flex:1;min-width:0;"><span class="result-title" style="display:block;font-size:14px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.38);margin-top:1px;">${r.subtitle||r.category}</span></span>
+                    <i class="mdi mdi-arrow-right" style="font-size:15px;color:rgba(255,255,255,.22);flex-shrink:0;transition:transform .18s;"></i>`;
+                li.addEventListener('mouseenter',()=>{ li.style.background=`${c}14`; activeIdx=idx; });
+                li.addEventListener('mouseleave',()=>{ li.style.background=activeIdx===idx?`${c}20`:''; });
+                li.addEventListener('click',()=>{ addHist(input?input.value:'',r); window.location.href=r.url; });
+                list.appendChild(li); idx++;
+            });
+        });
+    }
+
+    function highlightItem(items) {
+        items.forEach((li,i)=>{
+            const active=(i===activeIdx);
+            li.style.background = active ? 'rgba(79,142,247,.15)' : '';
+            const t=li.querySelector('.result-title'), arr=li.querySelector('.mdi-arrow-right');
+            if(t) t.style.color = active ? '#7eb8fb' : '#fff';
+            if(arr) arr.style.transform = active ? 'translateX(5px)' : 'translateX(0)';
+            if(active) li.scrollIntoView({block:'nearest'});
+        });
+    }
+
+    if (triggerD) triggerD.addEventListener('click', open);
+    if (triggerM) triggerM.addEventListener('click', open);
+    if (escBtn)   escBtn.addEventListener('click', close);
+    if (clearBtn) clearBtn.addEventListener('click', () => { localStorage.removeItem(HKEY); renderHistory(); showEmpty(); });
+    if (clearTop) clearTop.addEventListener('click', () => { localStorage.removeItem(HKEY); renderHistory(); showEmpty(); });
+    if (overlay)  overlay.addEventListener('click', e => { if(e.target===overlay) close(); });
+
+    document.addEventListener('keydown', e => {
+        if ((e.metaKey||e.ctrlKey) && e.key==='k') { e.preventDefault(); overlay&&overlay.style.display==='flex'?close():open(); }
+        if (e.key==='Escape' && overlay&&overlay.style.display==='flex') close();
+    });
+
+    if (input) {
+        input.addEventListener('keydown', e => {
+            const items = list.querySelectorAll('li[data-idx]');
+            if (e.key==='ArrowDown') { e.preventDefault(); activeIdx=Math.min(activeIdx+1,items.length-1); highlightItem(items); }
+            else if (e.key==='ArrowUp') { e.preventDefault(); activeIdx=Math.max(activeIdx-1,0); highlightItem(items); }
+            else if (e.key==='Enter'&&activeIdx>=0&&results[activeIdx]) { addHist(input.value,results[activeIdx]); window.location.href=results[activeIdx].url; }
+        });
+        input.addEventListener('input', () => {
+            const q=input.value.trim();
+            if (!q) { showEmpty(); renderHistory(); return; }
+            if (clearTop) clearTop.style.display='none';
+            performSearch(q);
+        });
+    }
+
+    renderHistory();
+})();
+</script>
+
+<!-- Route-specific JS -->
+@if (Route::is('dashboard'))              @include('layouts.pages-assets.js.dashboard-list-js') @endif
+@if (Route::is('users.*'))                @include('layouts.pages-assets.js.users-list-js') @endif
+@if (Route::is('student-id-cards.*'))     @include('layouts.pages-assets.js.idcard-list-js') @endif
+@if (Route::is('student.payments.*'))     @include('layouts.pages-assets.js.studentpayment-list-js') @endif
+@if (Route::is('profile.*'))              @include('layouts.pages-assets.js.users-list-js') @endif
+@if (Route::is('roles.*'))                @include('layouts.pages-assets.js.role-list-js') @endif
+@if (Route::is('permissions.*'))          @include('layouts.pages-assets.js.permissions-list-js') @endif
+@if (Route::is('session.*'))              @include('layouts.pages-assets.js.session-list-js') @endif
+@if (Route::is('term.*'))                 @include('layouts.pages-assets.js.term-list-js') @endif
+@if (Route::is('school-information.*'))   @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
+@if (Route::is('admin.school-info.*'))    @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
+@if (Route::is('schoolhouse.*'))          @include('layouts.pages-assets.js.schoolhouse-list-js') @endif
+@if (Route::is('schoolarm.*'))            @include('layouts.pages-assets.js.arm-list-js') @endif
+@if (Route::is('classcategories.*'))      @include('layouts.pages-assets.js.classcategory-list-js') @endif
+@if (Route::is('schoolclass.*'))          @include('layouts.pages-assets.js.schoolclass-list-js') @endif
+@if (Route::is('classteacher.*'))         @include('layouts.pages-assets.js.classteacher-list-js') @endif
+@if (Route::is('subject.*'))              @include('layouts.pages-assets.js.subject-list-js') @endif
+@if (Route::is('subjects.*'))             @include('layouts.pages-assets.js.subject-list-js') @endif
+@if (Route::is('subjectteacher.*'))       @include('layouts.pages-assets.js.subjectteacher-list-js') @endif
+@if (Route::is('subjectclass.*'))         @include('layouts.pages-assets.js.subjectclass-list-js') @endif
+@if (Route::is('schoolbill.*'))           @include('layouts.pages-assets.js.schoolbill-list-js') @endif
+@if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.js.schoolbilltermsession-list-js') @endif
+@if (Route::is('student.*'))              @include('layouts.pages-assets.js.student-list-js') @endif
+@if (Route::is('studentbatchindex'))      @include('layouts.pages-assets.js.studentbatch-list-js') @endif
+@if (Route::is('myclass.*'))              @include('layouts.pages-assets.js.myclass-list-js') @endif
+@if (Route::is('mysubject.*'))            @include('layouts.pages-assets.js.mysubject-list-js') @endif
+@if (Route::is('viewstudent'))            @include('layouts.pages-assets.js.viewstudent-list-js') @endif
+@if (Route::is('studentreports.*'))       @include('layouts.pages-assets.js.studentreport-list-js') @endif
+@if (Route::is('broadsheet.*'))           @include('layouts.pages-assets.js.studentreport-list-js') @endif
+@if (Route::is('studentmockreports.*'))   @include('layouts.pages-assets.js.studentmockreport-list-js') @endif
+@if (Route::is('subjectoperation.*'))     @include('layouts.pages-assets.js.subjectoperation-list-js') @endif
+@if (Route::is('subjects.subjectinfo'))   @include('layouts.pages-assets.js.subjectinfo-list-js') @endif
+@if (Route::is('myresultroom.*'))         @include('layouts.pages-assets.js.myresultroom-list-js') @endif
+@if (Route::is('assessment.*'))           @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
+@if (Route::is('assessments'))            @include('layouts.pages-assets.js.studentassessment-list-js') @endif
+@if (Route::is('subjectscoresheet'))      @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
+@if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.js.subjectscoresheet-mock-list-js') @endif
+@if (Route::is('studentresults*'))        @include('layouts.pages-assets.js.studentresults-list-js') @endif
+@if (Route::is('schoolbill*'))            @include('layouts.pages-assets.js.schoolbill-list-js') @endif
+@if (Route::is('schoolpayment*'))         @include('layouts.pages-assets.js.schoolpayment-list-js') @endif
+@if (Route::is('analysis*'))              @include('layouts.pages-assets.js.analysis-list-js') @endif
+@if (Route::is('exams*'))                 @include('layouts.pages-assets.js.exams-list-js') @endif
+@if (Route::is('questions*'))             @include('layouts.pages-assets.js.questions-list-js') @endif
+@if (Route::is('cbt*'))                   @include('layouts.pages-assets.js.cbt-list-js') @endif
+@if (Route::is('classbroadsheet.*'))      @include('layouts.pages-assets.js.classbroadsheet-list-js') @endif
+@if (Route::is('principalscomment.*'))    @include('layouts.pages-assets.js.principalscomment-list-js') @endif
+@if (Route::is('myprincipalscomment.*'))  @include('layouts.pages-assets.js.myprincipalscomment-list-js') @endif
+@if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.js.compulsorysubjectclass-list-js') @endif
+@if (Route::is('subjectvetting.*'))       @include('layouts.pages-assets.js.subjectvetting-list-js') @endif
+@if (Route::is('mocksubjectvetting.*'))   @include('layouts.pages-assets.js.mocksubjectvetting-list-js') @endif
+@if (Route::is('mysubjectvettings.*'))    @include('layouts.pages-assets.js.mysubjectvettings-list-js') @endif
+@if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.js.timetable-list-js') @endif
+@if (Route::is('timetable.*'))            @include('layouts.pages-assets.js.timetable-list-js') @endif
+@if (Route::is('rooms.*'))                @include('layouts.pages-assets.js.rooms-list-js') @endif
+@if (Route::is('promotions.*'))           @include('layouts.pages-assets.js.promotions-list-js') @endif
+@if (Route::is('attendance.*'))           @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('transcript.*'))           @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.js.adminscoreentry-list-js') @endif
+@if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
+    Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
+    Route::is('payroll.*') || Route::is('staff.payments.*'))
+    @include('layouts.pages-assets.js.scholarship-list-js')
+@endif
+
 </body>
 </html>
