@@ -113,7 +113,7 @@
         .sidebar-footer {
             flex-shrink: 0;
             border-top: 1px solid rgba(255,255,255,.1);
-            padding: 20px 16px 24px;
+            padding: 32px 16px 28px;
             margin-top: auto;
             background: inherit;
         }
@@ -245,22 +245,31 @@
             transition: background 0.3s ease;
         }
 
-        /* MOBILE: sidebar slides in/out with transform */
+        /* MOBILE: sidebar slides in/out with smooth animation */
         @media (max-width: 1024.98px) {
             .app-menu {
                 transform: translateX(-100%);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                            box-shadow 0.35s ease;
                 box-shadow: none;
                 width: 280px;
             }
             body.vertical-sidebar-enable .app-menu {
                 transform: translateX(0) !important;
-                box-shadow: 4px 0 24px rgba(0,0,0,.35);
+                box-shadow: 6px 0 32px rgba(0,0,0,.45);
             }
-            /* FIX: overlay must respond to body class */
-            body.vertical-sidebar-enable .vertical-overlay {
+            /* Overlay fades in/out instead of snapping */
+            .vertical-overlay {
                 display: block !important;
+                opacity: 0;
+                pointer-events: none;
                 background: rgba(0,0,0,.65);
+                transition: opacity 0.35s ease, backdrop-filter 0.35s ease;
+                backdrop-filter: blur(0px);
+            }
+            body.vertical-sidebar-enable .vertical-overlay {
+                opacity: 1 !important;
+                pointer-events: auto;
                 backdrop-filter: blur(2px);
             }
         }
@@ -1394,9 +1403,35 @@
     function makeDropdown(btnId, panelId) {
         const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
         if (!btn || !panel) return;
-        const open = () => { panel.style.display = 'block'; btn.setAttribute('aria-expanded', 'true'); };
-        const close = () => { panel.style.display = 'none'; btn.setAttribute('aria-expanded', 'false'); };
-        btn.addEventListener('click', (e) => { e.stopPropagation(); panel.style.display === 'none' ? open() : close(); });
+
+        // Inject animation styles on the panel once
+        panel.style.transformOrigin = 'top right';
+        panel.style.transition = 'opacity 0.22s ease, transform 0.22s cubic-bezier(0.4,0,0.2,1)';
+
+        const open = () => {
+            panel.style.display = 'block';
+            // Force reflow so transition fires from the starting state
+            panel.getBoundingClientRect();
+            panel.style.opacity = '1';
+            panel.style.transform = 'translateY(0) scale(1)';
+            btn.setAttribute('aria-expanded', 'true');
+        };
+        const close = () => {
+            panel.style.opacity = '0';
+            panel.style.transform = 'translateY(-8px) scale(0.96)';
+            btn.setAttribute('aria-expanded', 'false');
+            setTimeout(() => {
+                if (panel.style.opacity === '0') panel.style.display = 'none';
+            }, 220);
+        };
+        const isOpen = () => panel.style.display !== 'none' && panel.style.opacity !== '0';
+
+        // Set initial hidden state
+        panel.style.display = 'none';
+        panel.style.opacity = '0';
+        panel.style.transform = 'translateY(-8px) scale(0.96)';
+
+        btn.addEventListener('click', (e) => { e.stopPropagation(); isOpen() ? close() : open(); });
         document.addEventListener('click', (e) => { if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
     }
