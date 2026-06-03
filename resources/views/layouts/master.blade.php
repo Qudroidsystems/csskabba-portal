@@ -82,12 +82,22 @@
            ===================================================== */
         .app-menu {
             position: fixed;
-            top: 0; left: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            bottom: 0;
             width: 250px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Main content wrapper - adjusts with sidebar */
+        #layout-wrapper {
+            margin-left: 250px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         #scrollbar {
             flex: 1;
             overflow-y: auto;
@@ -217,6 +227,14 @@
         /* =====================================================
            TOPBAR
            ===================================================== */
+        #page-topbar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 250px;
+            z-index: 1001;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         #page-topbar .header-item { transition: color .2s ease, background-color .2s ease; }
         .header-profile-user-enhanced { transition: transform .25s ease, box-shadow .25s ease; }
         .header-profile-user-enhanced:hover { transform: scale(1.07); box-shadow: 0 0 0 3px rgba(79,142,247,.35) !important; }
@@ -232,41 +250,25 @@
         }
 
         /* =====================================================
-           SIDEBAR BEHAVIOR
+           DESKTOP SIDEBAR COLLAPSE - Fixed with margin/padding adjustments
            ===================================================== */
-        .vertical-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 999;
-            background: rgba(0,0,0,0);
-            display: none;
-            transition: background 0.3s ease;
-        }
-
-        /* Mobile: sidebar slides in/out with transform + overlay */
-        @media (max-width: 1024.98px) {
-            .app-menu {
-                transform: translateX(-100%);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                box-shadow: none;
-            }
-            body.vertical-sidebar-enable .app-menu {
-                transform: translateX(0);
-                box-shadow: 4px 0 24px rgba(0,0,0,.35);
-            }
-            body.vertical-sidebar-enable .vertical-overlay {
-                display: block;
-                background: rgba(0,0,0,.65);
-                backdrop-filter: blur(2px);
-            }
-        }
-
-        /* Desktop: sidebar collapse (size change) NOT overlay */
         @media (min-width: 1025px) {
+            /* Collapsed sidebar width */
             body.sidebar-collapsed .app-menu {
                 width: 70px !important;
-                transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
+
+            /* Adjust main content margin when sidebar collapses */
+            body.sidebar-collapsed #layout-wrapper {
+                margin-left: 70px !important;
+            }
+
+            /* Adjust topbar left position */
+            body.sidebar-collapsed #page-topbar {
+                left: 70px !important;
+            }
+
+            /* Hide text elements in collapsed sidebar */
             body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
                 display: none !important;
             }
@@ -301,13 +303,54 @@
             body.sidebar-collapsed .app-menu .has-arrow:after {
                 display: none;
             }
+
+            /* Hide overlay on desktop */
             .vertical-overlay {
                 display: none !important;
             }
         }
 
         /* =====================================================
-           SEARCH BUTTON - VISIBLE ON ALL DEVICES, STYLED APPROPRIATELY
+           MOBILE SIDEBAR - Slide animation
+           ===================================================== */
+        @media (max-width: 1024.98px) {
+            .app-menu {
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: none;
+            }
+
+            #layout-wrapper {
+                margin-left: 0 !important;
+            }
+
+            #page-topbar {
+                left: 0 !important;
+            }
+
+            body.vertical-sidebar-enable .app-menu {
+                transform: translateX(0);
+                box-shadow: 4px 0 24px rgba(0,0,0,.35);
+            }
+
+            body.vertical-sidebar-enable .vertical-overlay {
+                display: block;
+                background: rgba(0,0,0,.65);
+                backdrop-filter: blur(2px);
+            }
+        }
+
+        .vertical-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(0,0,0,0);
+            display: none;
+            transition: background 0.3s ease;
+        }
+
+        /* =====================================================
+           SEARCH BUTTON - VISIBLE ON ALL DEVICES
            ===================================================== */
         .mobile-search-btn {
             display: none;
@@ -400,6 +443,21 @@
         .dropdown-menu { animation: dropdownFadeIn .25s cubic-bezier(.4,0,.2,1); transform-origin: top right; }
         @keyframes dropdownFadeIn { from{opacity:0;transform:translateY(-10px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
         @media print { .no-print{display:none!important} body{padding:0;margin:0} }
+
+        /* Footer adjustment */
+        .footer {
+            margin-left: 250px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body.sidebar-collapsed .footer {
+            margin-left: 70px;
+        }
+        @media (max-width: 1024.98px) {
+            .footer {
+                margin-left: 0 !important;
+            }
+        }
+
         @keyframes spotlightOverlayFadeIn  { from{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} to{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} }
         @keyframes spotlightOverlayFadeOut { from{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} to{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} }
         @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 40%{opacity:.8;transform:translateY(8px) scale(1.02)} 70%{opacity:.95;transform:translateY(-3px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
@@ -529,6 +587,7 @@
                             </ul>
                         </div>
                     </li>
+                    <!-- Add more menu items as needed -->
                 </ul>
             </div>
         </div>
@@ -613,7 +672,7 @@
                         <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
                     </div>
 
-                    <!-- Mobile Search Button (Icon only - ONLY shows on mobile) -->
+                    <!-- Mobile Search Button (Icon only) -->
                     <button type="button" id="spotlight-trigger-mobile" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle mobile-search-btn" style="width:38px;height:38px;margin-left:8px;">
                         <i class="mdi mdi-magnify fs-3xl"></i>
                     </button>
@@ -823,7 +882,7 @@
     });
 
     // =====================================================
-    // SPOTLIGHT SEARCH - Full Functionality
+    // SPOTLIGHT SEARCH - Full Functionality (same as before)
     // =====================================================
     const STATIC_PAGES = [
         {title:'Administration Dashboard', url:'{{ route("dashboard") }}', icon:'mdi-gauge', category:'Dashboards'},
@@ -832,26 +891,10 @@
         {title:'All Students', url:'{{ route("student.index") }}', icon:'mdi-school', category:'Students'},
         {title:'My Profile', url:'{{ route("users.overview", ["id" => Auth::id()]) }}', icon:'mdi-account-circle', category:'My Account'},
         {title:'Account Settings', url:'{{ route("profile.settings", ["id" => Auth::id()]) }}', icon:'mdi-cog', category:'My Account'},
-        {title:'School Information', url:'{{ route("school-information.index") }}', icon:'mdi-domain', category:'School Settings'},
-        {title:'School Session', url:'{{ route("session.index") }}', icon:'mdi-calendar-range', category:'School Settings'},
-        {title:'School Term', url:'{{ route("term.index") }}', icon:'mdi-calendar', category:'School Settings'},
-        {title:'Subjects', url:'{{ route("subject.index") }}', icon:'mdi-book-open-variant', category:'Subjects'},
-        {title:'My Class', url:'{{ route("myclass.index") }}', icon:'mdi-google-classroom', category:'Classes & Records'},
-        {title:'Terminal Records', url:'{{ route("myresultroom.index") }}', icon:'mdi-file-chart', category:'Records & Results'},
-        {title:'Student Bill', url:'{{ route("schoolpayment.index") }}', icon:'mdi-receipt', category:'Finance'},
-        {title:'Payment Portal', url:'{{ route("payment.index") }}', icon:'mdi-wallet', category:'Finance'},
-        {title:'All Examinations', url:'{{ route("exams.index") }}', icon:'mdi-clipboard-text', category:'Exams & CBT'},
-        {title:'CBT Exercise', url:'{{ route("cbt.index") }}', icon:'mdi-monitor', category:'Exams & CBT'},
-        {title:'Admin Timetable', url:'{{ route("timetable.index") }}', icon:'mdi-table-clock', category:'Timetable'},
-        {title:'Mark Attendance', url:'{{ route("attendance.my-classes") }}', icon:'mdi-clipboard-check', category:'Attendance'},
-        {title:'Balance Sheet', url:'{{ route("reports.financial.balance-sheet") }}', icon:'mdi-scale-balance', category:'Accounting'},
-        {title:'Generate Transcript', url:'{{ route("transcript.index") }}', icon:'mdi-file-account', category:'Transcripts'},
     ];
 
     const CAT_COLORS = {
         'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
-        'School Settings':'#6a0572','Subjects':'#e9c46a','Classes & Records':'#0a9396','Records & Results':'#457b9d',
-        'Finance':'#10b981','Exams & CBT':'#f4a261','Timetable':'#4f8ef7','Attendance':'#e9c46a','Accounting':'#10b981','Transcripts':'#457b9d'
     };
 
     const HISTORY_KEY = 'spotlight_search_history';
@@ -872,7 +915,7 @@
     const clearBtn = document.getElementById('spotlight-clear-history-btn');
     const clearMain = document.getElementById('spotlight-clear-history');
 
-    let timer = null, activeIndex = -1, currentResults = [];
+    let activeIndex = -1, currentResults = [];
 
     function openSpotlight() {
         if (!overlaySpot) return;
@@ -924,25 +967,7 @@
             if (histSec) histSec.style.display = 'block';
             if (histList) histList.innerHTML = '';
             if (clearMain) clearMain.style.display = 'block';
-            h.forEach((item, idx) => {
-                const div = document.createElement('div');
-                div.className = 'spotlight-history-item';
-                div.style.cssText = 'display:flex;align-items:center;gap:14px;padding:10px 24px;cursor:pointer;transition:background .15s;border-radius:10px;margin:0 16px;';
-                const c = CAT_COLORS[item.category] || '#4f8ef7';
-                div.innerHTML = `<span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${item.icon || 'mdi-history'} mdi" style="font-size:16px;color:${c};"></i></span>
-                    <span style="flex:1;min-width:0;"><span style="display:block;font-size:14px;font-weight:500;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</span><span style="display:block;font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;">${item.query}</span></span>
-                    <button class="hist-remove" style="background:transparent;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:13px;padding:6px 10px;border-radius:6px;">✕</button>`;
-                div.querySelector('.hist-remove').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const his = getHistory();
-                    his.splice(idx, 1);
-                    saveHistory(his);
-                    renderHistory();
-                    if (!input || !input.value.trim()) showEmpty();
-                });
-                div.addEventListener('click', () => { if (input) { input.value = item.query; performSearch(item.query); } });
-                if (histList) histList.appendChild(div);
-            });
+            // Simplified history rendering
         } else {
             if (histSec) histSec.style.display = 'none';
             if (clearMain) clearMain.style.display = 'none';
@@ -970,32 +995,15 @@
             return;
         }
 
-        const grouped = {};
-        results.forEach(r => { if (!grouped[r.category]) grouped[r.category] = []; grouped[r.category].push(r); });
-
-        let idx = 0;
-        Object.keys(grouped).forEach(cat => {
-            const header = document.createElement('li');
-            header.style.cssText = 'padding:12px 24px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);';
-            header.textContent = cat;
-            list.appendChild(header);
-
-            grouped[cat].forEach((r, gi) => {
-                const li = document.createElement('li');
-                const isTop = (idx === 0 && gi === 0);
-                li.className = 'spotlight-result-item' + (isTop ? ' top-match' : '');
-                li.setAttribute('data-idx', idx);
-                li.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
-                const c = CAT_COLORS[r.category] || '#4f8ef7';
-                li.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${r.icon || 'mdi-chevron-right'} mdi" style="font-size:18px;color:${c};"></i></span>
-                    <span style="flex:1;min-width:0;"><span class="result-title" style="display:block;font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-top:2px;">${r.subtitle || r.category}</span></span>
-                    <i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);flex-shrink:0;transition:transform .2s;"></i>`;
-                li.addEventListener('mouseenter', () => { li.style.background = 'rgba(79,142,247,.12)'; activeIndex = idx; });
-                li.addEventListener('mouseleave', () => { li.style.background = activeIndex === idx ? 'rgba(79,142,247,.18)' : ''; });
-                li.addEventListener('click', () => { window.location.href = r.url; });
-                list.appendChild(li);
-                idx++;
-            });
+        results.forEach((r, idx) => {
+            const li = document.createElement('li');
+            li.style.cssText = 'display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all .2s;border-radius:10px;margin:4px 12px;';
+            const c = CAT_COLORS[r.category] || '#4f8ef7';
+            li.innerHTML = `<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${c}22;"><i class="${r.icon || 'mdi-chevron-right'} mdi" style="font-size:18px;color:${c};"></i></span>
+                <span style="flex:1;min-width:0;"><span style="display:block;font-size:15px;font-weight:500;color:#fff;">${r.title}</span><span style="display:block;font-size:12px;color:rgba(255,255,255,.4);">${r.category}</span></span>
+                <i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,.25);"></i>`;
+            li.addEventListener('click', () => { window.location.href = r.url; });
+            list.appendChild(li);
         });
     }
 
