@@ -87,7 +87,18 @@
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Main layout wrapper - add margin-left to accommodate sidebar */
+        #layout-wrapper {
+            margin-left: 250px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         #scrollbar {
             flex: 1;
             overflow-y: auto;
@@ -232,7 +243,7 @@
         }
 
         /* =====================================================
-           MOBILE SIDEBAR — FIXED: smooth slide animation
+           MOBILE SIDEBAR — smooth slide animation
            ===================================================== */
         .vertical-overlay {
             position: fixed;
@@ -247,22 +258,70 @@
             display: block;
         }
 
-        /* Mobile: sidebar slides in/out with smooth animation */
+        /* Mobile: sidebar slides in/out with smooth animation, margin-left resets */
         @media (max-width: 1024.98px) {
             .app-menu {
                 transform: translateX(-100%);
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 box-shadow: none;
+                width: 280px;
+            }
+            #layout-wrapper {
+                margin-left: 0 !important;
             }
             body.vertical-sidebar-enable .app-menu {
                 transform: translateX(0);
                 box-shadow: 4px 0 24px rgba(0,0,0,.35);
             }
         }
-        /* Desktop: normal behavior */
+
+        /* Desktop: sidebar collapse (width change) */
         @media (min-width: 1025px) {
-            body.vertical-sidebar-enable .app-menu {
-                transform: none;
+            body.sidebar-collapsed .app-menu {
+                width: 70px !important;
+            }
+            body.sidebar-collapsed #layout-wrapper {
+                margin-left: 70px !important;
+            }
+            /* Hide text elements when collapsed */
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-lg {
+                display: none !important;
+            }
+            body.sidebar-collapsed .app-menu .navbar-brand-box .logo-sm {
+                display: block !important;
+            }
+            body.sidebar-collapsed #navbar-nav .menu-title {
+                display: none;
+            }
+            body.sidebar-collapsed #navbar-nav .nav-link span:not(.badge) {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-footer-user-info,
+            body.sidebar-collapsed .sidebar-logout-btn span {
+                display: none;
+            }
+            body.sidebar-collapsed .sidebar-logout-btn {
+                justify-content: center;
+                padding: 9px;
+            }
+            body.sidebar-collapsed .sidebar-footer-user {
+                justify-content: center;
+            }
+            body.sidebar-collapsed .app-menu .nav-link {
+                justify-content: center;
+                padding: 0.625rem 0;
+                text-align: center;
+            }
+            body.sidebar-collapsed .app-menu .nav-link i {
+                margin-right: 0 !important;
+                font-size: 1.35rem;
+            }
+            body.sidebar-collapsed .app-menu .has-arrow:after {
+                display: none;
+            }
+            /* No overlay on desktop */
+            .vertical-overlay {
+                display: none !important;
             }
         }
 
@@ -272,30 +331,16 @@
         }
 
         /* =====================================================
-           SEARCH TRIGGER - ALWAYS VISIBLE ON MOBILE
+           SEARCH TRIGGER - RESPONSIVE
            ===================================================== */
-        .search-trigger-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        #spotlight-trigger-mobile {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.15);
-            border-radius: 10px;
-            padding: 7px 12px;
-            cursor: pointer;
-            transition: all .2s;
-        }
         @media (max-width: 767.98px) {
             .desktop-search-only {
                 display: none !important;
             }
-            #spotlight-trigger-mobile {
-                display: flex !important;
+        }
+        @media (min-width: 768px) {
+            .mobile-search-only {
+                display: none !important;
             }
         }
 
@@ -382,6 +427,71 @@
         @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 40%{opacity:.8;transform:translateY(8px) scale(1.02)} 70%{opacity:.95;transform:translateY(-3px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
         @keyframes spotlightModalFadeOut   { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-20px) scale(.95)} }
     </style>
+
+    <!-- Route-specific CSS includes -->
+    @if (Route::is('dashboard'))              @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('users.*'))                @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('student-id-cards.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('student.payments.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('profile.*'))              @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('roles.*'))                @include('layouts.pages-assets.css.roles-list-css') @endif
+    @if (Route::is('permissions.*'))          @include('layouts.pages-assets.css.permission-list-css') @endif
+    @if (Route::is('session.*'))              @include('layouts.pages-assets.css.session-list-css') @endif
+    @if (Route::is('school-information.*'))   @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
+    @if (Route::is('admin.school-info.*'))    @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
+    @if (Route::is('term.*'))                 @include('layouts.pages-assets.css.term-list-css') @endif
+    @if (Route::is('schoolhouse.*'))          @include('layouts.pages-assets.css.schoolhouse-list-css') @endif
+    @if (Route::is('schoolarm.*'))            @include('layouts.pages-assets.css.arm-list-css') @endif
+    @if (Route::is('classcategories.*'))      @include('layouts.pages-assets.css.classcategory-list-css') @endif
+    @if (Route::is('schoolclass.*'))          @include('layouts.pages-assets.css.schoolclass-list-css') @endif
+    @if (Route::is('classteacher.*'))         @include('layouts.pages-assets.css.classteacher-list-css') @endif
+    @if (Route::is('subject.*'))              @include('layouts.pages-assets.css.subject-list-css') @endif
+    @if (Route::is('subjects.*'))             @include('layouts.pages-assets.css.subject-list-css') @endif
+    @if (Route::is('subjectteacher.*'))       @include('layouts.pages-assets.css.subjectteacher-list-css') @endif
+    @if (Route::is('subjectclass.*'))         @include('layouts.pages-assets.css.subjectclass-list-css') @endif
+    @if (Route::is('schoolbill.*'))           @include('layouts.pages-assets.css.schoolbill-list-css') @endif
+    @if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.css.schoolbilltermsession-list-css') @endif
+    @if (Route::is('student.*'))              @include('layouts.pages-assets.css.student-list-css') @endif
+    @if (Route::is('studentbatchindex'))      @include('layouts.pages-assets.css.student-list-css') @endif
+    @if (Route::is('myclass.*'))              @include('layouts.pages-assets.css.myclass-list-css') @endif
+    @if (Route::is('mysubject.*'))            @include('layouts.pages-assets.css.mysubject-list-css') @endif
+    @if (Route::is('viewstudent'))            @include('layouts.pages-assets.css.viewstudent-list-css') @endif
+    @if (Route::is('studentreports.*'))       @include('layouts.pages-assets.css.studentreport-list-css') @endif
+    @if (Route::is('studentmockreports.*'))   @include('layouts.pages-assets.css.studentreport-list-css') @endif
+    @if (Route::is('broadsheet*'))            @include('layouts.pages-assets.css.broadsheet-list-css') @endif
+    @if (Route::is('subjectoperation.*'))     @include('layouts.pages-assets.css.subjectoperation-list-css') @endif
+    @if (Route::is('subjects.subjectinfo'))   @include('layouts.pages-assets.css.subjectinfo-list-css') @endif
+    @if (Route::is('myresultroom.*'))         @include('layouts.pages-assets.css.myresultroom-list-css') @endif
+    @if (Route::is('subjectscoresheet'))      @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    @if (Route::is('subassessment.*'))        @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    @if (Route::is('assessment.*'))           @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    @if (Route::is('assessments'))            @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
+    @if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.css.subjectscoresheet-mock-list-css') @endif
+    @if (Route::is('studentresults*'))        @include('layouts.pages-assets.css.studentresults-list-css') @endif
+    @if (Route::is('schoolpayment*'))         @include('layouts.pages-assets.css.schoolpayment-list-css') @endif
+    @if (Route::is('analysis*'))              @include('layouts.pages-assets.css.analysis-list-css') @endif
+    @if (Route::is('exams*'))                 @include('layouts.pages-assets.css.exams-list-css') @endif
+    @if (Route::is('questions*'))             @include('layouts.pages-assets.css.questions-list-css') @endif
+    @if (Route::is('cbt*'))                   @include('layouts.pages-assets.css.cbt-list-css') @endif
+    @if (Route::is('classbroadsheet.*'))      @include('layouts.pages-assets.css.classbroadsheet-list-css') @endif
+    @if (Route::is('principalscomment.*'))    @include('layouts.pages-assets.css.principalscomment-list-css') @endif
+    @if (Route::is('myprincipalscomment.*'))  @include('layouts.pages-assets.css.myprincipalscomment-list-css') @endif
+    @if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.css.compulsorysubjectclass-list-css') @endif
+    @if (Route::is('subjectvetting.*'))       @include('layouts.pages-assets.css.subjectvettings-list-css') @endif
+    @if (Route::is('mocksubjectvetting.*'))   @include('layouts.pages-assets.css.mocksubjectvettings-list-css') @endif
+    @if (Route::is('mysubjectvettings.*'))    @include('layouts.pages-assets.css.mysubjectvettings-list-css') @endif
+    @if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.css.mymocksubjectvettings-list-css') @endif
+    @if (Route::is('timetable.*'))            @include('layouts.pages-assets.css.timetable-list-css') @endif
+    @if (Route::is('rooms.*'))                @include('layouts.pages-assets.css.rooms-list-css') @endif
+    @if (Route::is('promotions.*'))           @include('layouts.pages-assets.css.promotions-list-css') @endif
+    @if (Route::is('attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('transcript.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
+    @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
+        Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
+        Route::is('payroll.*') || Route::is('staff.payments.*'))
+        @include('layouts.pages-assets.css.finance-list-css')
+    @endif
 </head>
 
 <body>
@@ -645,21 +755,32 @@
     'use strict';
 
     // =====================================================
-    // SIDEBAR TOGGLE with smooth animation
+    // SIDEBAR TOGGLE - Mobile (slide) + Desktop (collapse)
     // =====================================================
     const ham = document.getElementById('topnav-hamburger-icon');
     const overlay = document.getElementById('vertical-overlay');
     const body = document.body;
 
+    function isMobile() {
+        return window.innerWidth <= 1024;
+    }
+
     function closeSidebar() {
-        body.classList.remove('vertical-sidebar-enable');
+        if (isMobile()) {
+            body.classList.remove('vertical-sidebar-enable');
+        }
     }
-    function openSidebar() {
-        body.classList.add('vertical-sidebar-enable');
-    }
+
     function toggleSidebar(e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
-        body.classList.contains('vertical-sidebar-enable') ? closeSidebar() : openSidebar();
+
+        if (isMobile()) {
+            // Mobile: toggle sidebar slide with overlay
+            body.classList.toggle('vertical-sidebar-enable');
+        } else {
+            // Desktop: toggle sidebar collapse (width change)
+            body.classList.toggle('sidebar-collapsed');
+        }
     }
 
     if (ham) {
@@ -668,8 +789,24 @@
     if (overlay) {
         overlay.addEventListener('click', closeSidebar);
     }
+
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && body.classList.contains('vertical-sidebar-enable')) closeSidebar();
+        if (e.key === 'Escape' && isMobile() && body.classList.contains('vertical-sidebar-enable')) {
+            closeSidebar();
+        }
+    });
+
+    // Handle window resize - reset states appropriately
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            if (!isMobile()) {
+                body.classList.remove('vertical-sidebar-enable');
+            } else {
+                body.classList.remove('sidebar-collapsed');
+            }
+        }, 250);
     });
 
     // =====================================================
@@ -704,7 +841,7 @@
     const escBtn = document.getElementById('spotlight-esc');
     const clearMain = document.getElementById('spotlight-clear-history');
 
-    let timer = null, activeIndex = -1, currentResults = [];
+    let activeIndex = -1, currentResults = [];
 
     function openSpotlight() {
         if (!overlaySpot) return;
