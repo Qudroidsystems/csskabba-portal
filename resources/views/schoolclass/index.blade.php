@@ -1,29 +1,550 @@
+{{-- resources/views/schoolclass/index.blade.php --}}
 @extends('layouts.master')
+
 @section('content')
+{{-- Suppress initialization errors from schoolarm.init.js --}}
+<script>
+    // Prevent initialization errors by creating required elements
+    (function() {
+        const requiredElements = [
+            'addIdField', 'addSubmitButton',
+            'editIdField', 'editCategoryField', 'editSubmitButton'
+        ];
+
+        requiredElements.forEach(function(id) {
+            if (!document.getElementById(id)) {
+                var element = document.createElement('input');
+                element.type = 'hidden';
+                element.id = id;
+                element.value = '';
+                document.body.appendChild(element);
+            }
+        });
+
+        if (typeof window.initFormFields === 'function') {
+            window.initFormFields = function() { return true; };
+        }
+        if (typeof window.initializeSchoolArm === 'function') {
+            window.initializeSchoolArm = function() { return true; };
+        }
+    })();
+</script>
+
+<style>
+:root {
+    --pay-primary: #1e3a5f;
+    --pay-accent:  #2563eb;
+    --pay-success: #16a34a;
+    --pay-warning: #d97706;
+    --pay-danger:  #dc2626;
+    --pay-purple:  #7c3aed;
+    --pay-muted:   #6b7280;
+    --pay-border:  #e2e8f0;
+    --pay-bg:      #f8fafc;
+    --pay-radius:  12px;
+    --pay-shadow:  0 2px 8px rgba(0,0,0,.08);
+}
+
+.loading-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 9999;
+    display: none; align-items: center; justify-content: center;
+}
+.loading-overlay.active { display: flex; }
+.loading-spinner {
+    background: white; padding: 24px 32px; border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18); text-align: center;
+}
+.loading-spinner .spinner-border { width: 2.5rem; height: 2.5rem; }
+.loading-spinner p { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--pay-primary); }
+
+.pay-hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--pay-radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.pay-hero::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
+}
+.pay-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
+.pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
+
+.stat-card {
+    background: #fff;
+    border: 1px solid var(--pay-border);
+    border-radius: var(--pay-radius);
+    padding: 18px 20px;
+    transition: transform .15s, box-shadow .15s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--pay-shadow); }
+.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--pay-primary); }
+.stat-card .stat-label { font-size: 12px; color: var(--pay-muted); margin-top: 4px; }
+.stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
+
+.class-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.class-table th {
+    background: var(--pay-primary);
+    color: #fff;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    text-align: left;
+}
+.class-table td {
+    padding: 11px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--pay-border);
+    font-size: 13px;
+}
+.class-table tr:hover td { background: #f0f9ff; }
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all .15s;
+    border: none;
+    cursor: pointer;
+}
+.btn-subtle-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+.btn-subtle-secondary:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+.btn-subtle-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+.btn-subtle-danger:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+    transform: translateY(-1px);
+}
+
+.search-box {
+    position: relative;
+}
+.search-box .form-control {
+    border: 1.5px solid var(--pay-border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    padding-right: 36px;
+    font-size: 13px;
+    width: 100%;
+}
+.search-box .form-control:focus {
+    border-color: var(--pay-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.search-box .search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--pay-muted);
+    pointer-events: none;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+}
+.modal-hero-bar {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    padding: 20px 28px;
+    position: relative;
+}
+.modal-hero-bar h5 {
+    color: #fff;
+    font-weight: 700;
+    margin: 0;
+    font-size: 15px;
+}
+.modal-hero-bar .btn-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    filter: invert(1);
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+.modal-body {
+    padding: 24px;
+}
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    display: block;
+}
+.form-control, .form-select {
+    border: 1.5px solid var(--pay-border);
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 9px 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--pay-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.modal-footer {
+    padding: 16px 24px 24px;
+    border-top: none;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.btn {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all .15s;
+    cursor: pointer;
+    border: none;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color: white;
+}
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37,99,235,.3);
+}
+.btn-light {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+}
+.btn-light:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+.btn-danger {
+    background: #dc2626;
+    color: white;
+}
+.btn-danger:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+}
+
+.checkbox-group {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--pay-border);
+    border-radius: 8px;
+    padding: 12px;
+    background: #f8fafc;
+}
+.checkbox-item {
+    margin-bottom: 8px;
+}
+.checkbox-item:last-child {
+    margin-bottom: 0;
+}
+.checkbox-item label {
+    margin-left: 8px;
+    font-size: 13px;
+}
+.radio-group {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--pay-border);
+    border-radius: 8px;
+    padding: 12px;
+    background: #f8fafc;
+}
+.radio-item {
+    margin-bottom: 8px;
+}
+.radio-item:last-child {
+    margin-bottom: 0;
+}
+.radio-item label {
+    margin-left: 8px;
+    font-size: 13px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 52px 24px;
+    color: var(--pay-muted);
+}
+.empty-state i {
+    font-size: 3rem;
+    opacity: .25;
+    display: block;
+    margin-bottom: 14px;
+}
+
+.alert {
+    border: none;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+.alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border-left: 3px solid #dc2626;
+}
+.alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border-left: 3px solid #16a34a;
+}
+.alert-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border-left: 3px solid #f59e0b;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.pagination .page-item .page-link {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--pay-primary);
+    border: 1px solid var(--pay-border);
+    background: white;
+    text-decoration: none;
+}
+.pagination .page-item.active .page-link {
+    background: var(--pay-accent);
+    border-color: var(--pay-accent);
+    color: white;
+}
+.pagination .page-item.disabled .page-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.d-none {
+    display: none;
+}
+.d-block {
+    display: block;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -8px;
+}
+.col-md-3, .col-md-4, .col-md-6, .col-sm, .col-sm-auto {
+    padding: 8px;
+}
+.col-md-3 { width: 25%; }
+.col-md-4 { width: 33.333%; }
+.col-md-6 { width: 50%; }
+.col-sm { flex: 1; }
+.col-sm-auto { flex: 0 0 auto; }
+
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 16px; }
+.gap-4 { gap: 24px; }
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 16px; }
+.mb-4 { margin-bottom: 24px; }
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 16px; }
+.p-3 { padding: 16px; }
+.py-3 { padding-top: 16px; padding-bottom: 16px; }
+.px-4 { padding-left: 24px; padding-right: 24px; }
+.pb-4 { padding-bottom: 24px; }
+.pt-0 { padding-top: 0; }
+.text-center { text-align: center; }
+.text-start { text-align: left; }
+.text-end { text-align: right; }
+.text-muted { color: var(--pay-muted); }
+.text-success { color: var(--pay-success); }
+.text-warning { color: var(--pay-warning); }
+.text-danger { color: var(--pay-danger); }
+.fw-semibold { font-weight: 600; }
+.fw-bold { font-weight: 700; }
+.small { font-size: 11px; }
+
+.card {
+    background: white;
+    border: 1px solid var(--pay-border);
+    border-radius: var(--pay-radius);
+    box-shadow: var(--pay-shadow);
+}
+.card-header {
+    border-bottom: 1px solid var(--pay-border);
+    background: white;
+}
+.card-body {
+    padding: 20px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.d-flex {
+    display: flex;
+}
+.align-items-center {
+    align-items: center;
+}
+.justify-content-between {
+    justify-content: space-between;
+}
+.justify-content-center {
+    justify-content: center;
+}
+.flex-wrap {
+    flex-wrap: wrap;
+}
+.flex-grow-1 {
+    flex-grow: 1;
+}
+.flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+.badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.bg-primary {
+    background: var(--pay-accent);
+    color: white;
+}
+.bg-success {
+    background: #16a34a;
+    color: white;
+}
+.bg-warning {
+    background: #d97706;
+    color: white;
+}
+</style>
 
 <div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <!-- Start page title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">School Class Management</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">School Class Management</a></li>
-                                <li class="breadcrumb-item active">School Classes</li>
-                            </ol>
-                        </div>
+<div class="page-content">
+<div class="container-fluid">
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading…</span>
+            </div>
+            <p>Processing…</p>
+        </div>
+    </div>
+
+    <div class="pay-hero">
+        <h1><i class="ri-building-line me-2"></i>School Class Management</h1>
+        <p>Manage school classes with their respective arms and categories.</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-group-line"></i></div>
+                <div class="stat-value">{{ $all_classes->total() }}</div>
+                <div class="stat-label">Total Classes</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-bar-chart-line"></i></div>
+                <div class="stat-value text-primary">{{ $all_classes->count() }}</div>
+                <div class="stat-label">Showing Now</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-shield-line"></i></div>
+                <div class="stat-value text-success">{{ $arms->count() }}</div>
+                <div class="stat-label">Total Arms</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-bookmark-line"></i></div>
+                <div class="stat-value text-warning">{{ $classcategories->count() }}</div>
+                <div class="stat-label">Total Categories</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap">
+            <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
+                <i class="ri-list-check me-2"></i>School Classes List
+                <span class="badge bg-primary ms-2">{{ $all_classes->total() }}</span>
+            </h5>
+            <div class="d-flex gap-2">
+                @can('Create school-class')
+                    <button type="button" class="btn btn-primary" onclick="openAddModal()">
+                        <i class="ri-add-line me-1"></i>Create Class
+                    </button>
+                @endcan
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search classes...">
+                        <i class="ri-search-line search-icon"></i>
                     </div>
                 </div>
             </div>
-            <!-- End page title -->
 
             @if ($errors->any())
                 <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                    <ul>
+                    <strong>Whoops!</strong> There were some problems with your input.<br>
+                    <ul class="mb-0 mt-2">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -32,979 +553,599 @@
             @endif
 
             @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="float: right; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
                 </div>
             @endif
             @if (session('danger'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="ri-error-warning-line me-2"></i>{{ session('danger') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="float: right; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
                 </div>
             @endif
 
-            <!-- Debug Panel -->
-            <div class="card mb-3 bg-light">
-                <div class="card-body">
-                    <h6 class="mb-2">Debug Info:</h6>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <small class="text-muted">Total Classes:</small>
-                            <div class="fw-bold">{{ $all_classes->total() }}</div>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Total Arms:</small>
-                            <div class="fw-bold">{{ $arms->count() }}</div>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Total Categories:</small>
-                            <div class="fw-bold">{{ $classcategories->count() }}</div>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">Current Page:</small>
-                            <div class="fw-bold">{{ $all_classes->currentPage() }}</div>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <button type="button" class="btn btn-sm btn-info" onclick="testFormCapture()">
-                            <i class="bi bi-bug me-1"></i> Test Form Capture
-                        </button>
-                        <button type="button" class="btn btn-sm btn-warning" onclick="testSubmission()">
-                            <i class="bi bi-send-check me-1"></i> Test Submission
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="schoolClassList">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-xxl-3">
-                                        <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search school classes" value="{{ request()->query('search') }}">
-                                            <i class="ri-search-line search-icon"></i>
-                                        </div>
+            <div class="table-responsive">
+                <table class="class-table">
+                    <thead>
+                        <tr>
+                            <th width="50">#</th>
+                            <th>School Class</th>
+                            <th>Arm</th>
+                            <th>Category</th>
+                            <th width="120">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        @php $i = ($all_classes->currentPage() - 1) * $all_classes->perPage() + 1; @endphp
+                        @forelse ($all_classes as $class)
+                            <tr>
+                                <td class="sn">{{ $i++ }}</td>
+                                <td>
+                                    <span class="fw-semibold">{{ $class->schoolclass }}</span>
+                                    <small class="text-muted d-block">ID: {{ $class->id }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ $class->arm_name ?? 'N/A' }}</span>
+                                    <small class="text-muted d-block">Arm ID: {{ $class->arm_id ?? 'N/A' }}</small>
+                                </td>
+                                <td>
+                                    @php
+                                        $categoryNames = explode(', ', $class->classcategory ?? '');
+                                        $categoryIds = explode(',', $class->classcategoryids ?? '');
+                                    @endphp
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach($categoryNames as $idx => $catName)
+                                            @if(!empty($catName))
+                                                <span class="badge bg-primary">{{ $catName }}</span>
+                                            @endif
+                                        @endforeach
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">School Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ $all_classes->total() }}</span></h5>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="d-flex flex-wrap align-items-start gap-2">
-                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        @can('Create school-class')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSchoolClassModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create School Class</button>
+                                    <small class="text-muted d-block">Category IDs: {{ $class->classcategoryids ?? 'N/A' }}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        @can('Update school-class')
+                                            <button type="button"
+                                                    class="btn-icon btn-subtle-secondary edit-class-btn"
+                                                    data-id="{{ $class->id }}"
+                                                    data-schoolclass="{{ $class->schoolclass }}"
+                                                    data-arm-id="{{ $class->arm_id }}"
+                                                    data-category-ids="{{ $class->classcategoryids }}">
+                                                <i class="ri-pencil-line"></i>
+                                            </button>
+                                        @endcan
+                                        @can('Delete school-class')
+                                            <button type="button"
+                                                    class="btn-icon btn-subtle-danger delete-class-btn"
+                                                    data-id="{{ $class->id }}"
+                                                    data-name="{{ $class->schoolclass }}">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
                                         @endcan
                                     </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_roles_view_table">
-                                        <thead>
-                                            <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                                <th class="w-10px pe-2">
-                                                    <div class="form-check form-check-sm form-check-solid me-3">
-                                                        <input class="form-check-input" type="checkbox" id="checkAll" />
-                                                    </div>
-                                                </th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolclassid">SN</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolclass">School Class</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="arm">Arm</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="classcategory">Category</th>
-                                                <th class="min-w-100px">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = ($all_classes->currentPage() - 1) * $all_classes->perPage() @endphp
-                                            @forelse ($all_classes as $class)
-                                                <tr>
-                                                    <td class="id" data-id="{{ $class->id }}">
-                                                        <div class="form-check form-check-sm form-check-solid">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child" />
-                                                        </div>
-                                                    </td>
-                                                    <td class="schoolclassid">{{ ++$i }}</td>
-                                                    <td class="schoolclass" data-schoolclass="{{ $class->schoolclass }}">
-                                                        {{ $class->schoolclass }}
-                                                        <small class="text-muted d-block">ID: {{ $class->id }}</small>
-                                                    </td>
-                                                    <td class="arm" data-arm-id="{{ $class->arm_id }}" data-arm="{{ $class->arm_name }}">
-                                                        {{ $class->arm_name }}
-                                                        <small class="text-muted d-block">Arm ID: {{ $class->arm_id }}</small>
-                                                    </td>
-                                                    <td class="classcategory" data-category-ids="{{ $class->classcategoryids }}" data-classcategory="{{ $class->classcategory }}">
-                                                        {{ $class->classcategory }}
-                                                        <small class="text-muted d-block">Category IDs: {{ $class->classcategoryids }}</small>
-                                                    </td>
-                                                    <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('Update school-class')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit">
-                                                                        <i class="ph-pencil"></i>
-                                                                    </a>
-                                                                </li>
-                                                            @endcan
-                                                            @can('Delete school-class')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete">
-                                                                        <i class="ph-trash"></i>
-                                                                    </a>
-                                                                </li>
-                                                            @endcan>
-                                                        </ul>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="6" class="text-center py-4">
-                                                        <div class="alert alert-warning">
-                                                            <i class="ph-warning-circle me-2"></i> No school classes found
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="row mt-3 align-items-center" id="pagination-element">
-                                    <div class="col-sm">
-                                        <div class="text-muted text-center text-sm-start">
-                                            Showing <span class="fw-semibold">{{ $all_classes->count() }}</span> of <span class="fw-semibold">{{ $all_classes->total() }}</span> Results
-                                        </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="ri-inbox-line"></i>
+                                        <p>No school classes found.</p>
+                                        @can('Create school-class')
+                                            <button class="btn btn-primary btn-sm mt-3" onclick="openAddModal()">
+                                                <i class="ri-add-line me-1"></i>Create your first class
+                                            </button>
+                                        @endcan
                                     </div>
-                                    <div class="col-sm-auto mt-3 mt-sm-0">
-                                        {{ $all_classes->links() }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Add School Class Modal -->
-            <div id="addSchoolClassModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="exampleModalLabel" class="modal-title">Add School Class</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-schoolclass-form">
-                            @csrf
-                            <div class="modal-body">
-                                <input type="hidden" id="add-id-field" name="id">
-
-                                <div class="mb-3">
-                                    <label for="add-schoolclass" class="form-label">School Class <span class="text-danger">*</span></label>
-                                    <input type="text" id="add-schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
-                                    <div class="form-text">Enter the class name (e.g., JSS 1, SS 1)</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Select Arm(s) <span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-wrap gap-3" id="add-arm-checkboxes">
-                                        @if($arms->count() > 0)
-                                            @foreach ($arms as $arm)
-                                                <div class="form-check form-check-outline form-check-primary">
-                                                    <input class="form-check-input add-arm-checkbox" type="checkbox"
-                                                           value="{{ $arm->id }}"
-                                                           name="arm_id[]"
-                                                           id="add-arm-{{ $arm->id }}"
-                                                           data-arm="{{ $arm->arm }}">
-                                                    <label class="form-check-label" for="add-arm-{{ $arm->id }}">
-                                                        {{ $arm->arm }}
-                                                        <small class="text-muted">(ID: {{ $arm->id }})</small>
-                                                    </label>
-                                                </div>
-                                            @endforeach
-                                        @else
-                                            <div class="alert alert-danger">
-                                                No arms found! Please add arms first.
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="form-text">Select one or more arms for this class</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Select Category(s) <span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-wrap gap-3" id="add-category-checkboxes">
-                                        @if($classcategories->count() > 0)
-                                            @foreach ($classcategories as $category)
-                                                <div class="form-check form-check-outline form-check-primary">
-                                                    <input class="form-check-input add-category-checkbox" type="checkbox"
-                                                           value="{{ $category->id }}"
-                                                           name="classcategoryid[]"
-                                                           id="add-category-{{ $category->id }}"
-                                                           data-category="{{ $category->category }}">
-                                                    <label class="form-check-label" for="add-category-{{ $category->id }}">
-                                                        {{ $category->category }}
-                                                        <small class="text-muted">(ID: {{ $category->id }})</small>
-                                                    </label>
-                                                </div>
-                                            @endforeach
-                                        @else
-                                            <div class="alert alert-danger">
-                                                No categories found! Please add categories first.
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="form-text">Select one or more categories for this class</div>
-                                </div>
-
-                                <div class="alert alert-warning d-none" id="add-validation-errors">
-                                    <h6 class="alert-heading">Validation Errors:</h6>
-                                    <ul id="add-error-list"></ul>
-                                </div>
-
-                                <div class="alert alert-danger d-none" id="add-alert-error-msg"></div>
-
-                                <!-- Debug Info -->
-                                <div class="alert alert-secondary d-none" id="add-debug-info">
-                                    <h6 class="alert-heading">Debug Information:</h6>
-                                    <pre id="add-debug-content" class="mb-0" style="font-size: 11px;"></pre>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-warning" onclick="debugFormData('add')">Debug Form</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add Class</button>
-                            </div>
-                        </form>
+            <div class="row align-items-center mt-3">
+                <div class="col-sm">
+                    <div class="text-muted text-center text-sm-start">
+                        Showing <span class="fw-semibold">{{ $all_classes->count() }}</span> of <span class="fw-semibold">{{ $all_classes->total() }}</span> classes
                     </div>
+                </div>
+                <div class="col-sm-auto mt-3 mt-sm-0">
+                    {{ $all_classes->links() }}
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Edit School Class Modal -->
-            <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="editModalLabel" class="modal-title">Edit School Class</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-schoolclass-form">
-                            @csrf
-                            @method('PUT')
-                            <div class="modal-body">
-                                <input type="hidden" id="edit-id-field" name="id">
+</div>
+</div>
+</div>
 
-                                <div class="mb-3">
-                                    <label for="edit-schoolclass" class="form-label">School Class <span class="text-danger">*</span></label>
-                                    <input type="text" id="edit-schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Select Arm <span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-wrap gap-3" id="edit-arm-radios">
-                                        @foreach ($arms as $arm)
-                                            <div class="form-check form-check-outline form-check-primary">
-                                                <input class="form-check-input edit-arm-radio" type="radio"
-                                                       value="{{ $arm->id }}"
-                                                       name="arm_id"
-                                                       id="edit-arm-{{ $arm->id }}">
-                                                <label class="form-check-label" for="edit-arm-{{ $arm->id }}">
-                                                    {{ $arm->arm }}
-                                                    <small class="text-muted">(ID: {{ $arm->id }})</small>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Select Category(s) <span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-wrap gap-3" id="edit-category-checkboxes">
-                                        @foreach ($classcategories as $category)
-                                            <div class="form-check form-check-outline form-check-primary">
-                                                <input class="form-check-input edit-category-checkbox" type="checkbox"
-                                                       value="{{ $category->id }}"
-                                                       name="classcategoryid[]"
-                                                       id="edit-category-{{ $category->id }}">
-                                                <label class="form-check-label" for="edit-category-{{ $category->id }}">
-                                                    {{ $category->category }}
-                                                    <small class="text-muted">(ID: {{ $category->id }})</small>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-
-                                <div class="alert alert-warning d-none" id="edit-validation-errors">
-                                    <h6 class="alert-heading">Validation Errors:</h6>
-                                    <ul id="edit-error-list"></ul>
-                                </div>
-
-                                <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                            </div>
-                        </form>
+{{-- ADD CLASS MODAL --}}
+<div id="addClassModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 700px; width: 90%; margin: auto;">
+        <div class="modal-content">
+            <div class="modal-hero-bar">
+                <button type="button" class="btn-close" onclick="closeAddModal()">&times;</button>
+                <h5><i class="ri-add-line me-2"></i>Create New School Class</h5>
+            </div>
+            <form id="addClassForm" onsubmit="submitAddForm(event)">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="schoolclass" class="form-label">School Class <span class="text-danger">*</span></label>
+                        <input type="text" name="schoolclass" id="schoolclass" class="form-control" placeholder="e.g., JSS 1, SSS 1" required>
+                        <div class="form-text">Enter the class name</div>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Arm(s) <span class="text-danger">*</span></label>
+                        <div class="checkbox-group" id="arm-checkboxes">
+                            @forelse($arms as $arm)
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="arm_id[]" id="arm_{{ $arm->id }}" value="{{ $arm->id }}">
+                                    <label for="arm_{{ $arm->id }}">{{ $arm->arm }} <small class="text-muted">(ID: {{ $arm->id }})</small></label>
+                                </div>
+                            @empty
+                                <div class="alert alert-warning mb-0">No arms found. Please add arms first.</div>
+                            @endforelse
+                        </div>
+                        <div class="form-text">Select one or more arms for this class</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Category(s) <span class="text-danger">*</span></label>
+                        <div class="checkbox-group" id="category-checkboxes">
+                            @forelse($classcategories as $category)
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="classcategoryid[]" id="category_{{ $category->id }}" value="{{ $category->id }}">
+                                    <label for="category_{{ $category->id }}">{{ $category->category }} <small class="text-muted">(ID: {{ $category->id }})</small></label>
+                                </div>
+                            @empty
+                                <div class="alert alert-warning mb-0">No categories found. Please add categories first.</div>
+                            @endforelse
+                        </div>
+                        <div class="form-text">Select one or more categories for this class</div>
+                    </div>
+
+                    <div class="alert alert-danger d-none" id="addAlertError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" onclick="closeAddModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="addBtn">
+                        <i class="ri-save-line me-1"></i>Create Class
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- EDIT CLASS MODAL --}}
+<div id="editModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 700px; width: 90%; margin: auto;">
+        <div class="modal-content">
+            <div class="modal-hero-bar">
+                <button type="button" class="btn-close" onclick="closeEditModal()">&times;</button>
+                <h5><i class="ri-edit-line me-2"></i>Edit School Class</h5>
+            </div>
+            <form id="editClassForm" onsubmit="submitEditForm(event)">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="id" id="edit_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_schoolclass" class="form-label">School Class <span class="text-danger">*</span></label>
+                        <input type="text" name="schoolclass" id="edit_schoolclass" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Arm <span class="text-danger">*</span></label>
+                        <div class="radio-group" id="edit-arm-radios">
+                            @forelse($arms as $arm)
+                                <div class="radio-item">
+                                    <input type="radio" name="arm_id" id="edit_arm_{{ $arm->id }}" value="{{ $arm->id }}">
+                                    <label for="edit_arm_{{ $arm->id }}">{{ $arm->arm }} <small class="text-muted">(ID: {{ $arm->id }})</small></label>
+                                </div>
+                            @empty
+                                <div class="alert alert-warning mb-0">No arms found.</div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Category(s) <span class="text-danger">*</span></label>
+                        <div class="checkbox-group" id="edit-category-checkboxes">
+                            @forelse($classcategories as $category)
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="classcategoryid[]" id="edit_category_{{ $category->id }}" value="{{ $category->id }}">
+                                    <label for="edit_category_{{ $category->id }}">{{ $category->category }} <small class="text-muted">(ID: {{ $category->id }})</small></label>
+                                </div>
+                            @empty
+                                <div class="alert alert-warning mb-0">No categories found.</div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="alert alert-danger d-none" id="editAlertError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="updateBtn">
+                        <i class="ri-save-line me-1"></i>Update Class
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- DELETE CONFIRMATION MODAL --}}
+<div id="deleteRecordModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 400px; width: 90%; margin: auto;">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0" style="display: flex; justify-content: flex-end; padding: 16px;">
+                <button type="button" class="btn-close" onclick="closeDeleteModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <div class="mb-3">
+                    <div class="mx-auto mb-3" style="width: 60px; height: 60px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="ri-delete-bin-line" style="font-size: 28px; color: #dc2626;"></i>
+                    </div>
+                    <h5 class="mb-2">Are you sure?</h5>
+                    <p class="text-muted mb-0">You won't be able to revert this action!</p>
+                    <p class="text-muted small mt-2" id="deleteItemName"></p>
                 </div>
             </div>
-
-            <!-- Delete Confirmation Modal -->
-            <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="deleteRecordModalLabel" class="modal-title">Confirm Deletion</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body text-center">
-                            <h4 id="delete-class-name">Are you sure?</h4>
-                            <p id="delete-class-desc">You won't be able to revert this!</p>
-                            <div class="alert alert-info mt-2">
-                                <small>Class ID: <span id="delete-class-id">-</span></small>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
+                <button type="button" class="btn btn-light" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
+                    <i class="ri-delete-bin-line me-1"></i>Yes, Delete
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    .form-check-input {
-        width: 1.5em;
-        height: 1.5em;
-        margin-top: 0.15em;
-    }
-    .form-check-label {
-        font-size: 1.1em;
-        line-height: 1.5em;
-        margin-left: 0.5em;
-    }
-    #deleteRecordModal {
-        z-index: 1055;
-    }
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 // Global variables
-let currentEditId = null;
-let currentDeleteId = null;
-let addModal = null;
-let editModal = null;
-let deleteModal = null;
+let deleteClassId = null;
+let deleteClassName = null;
 
-// Debug functions
-function showDebugInfo(type, data) {
-    const debugDiv = document.getElementById(`${type}-debug-info`);
-    const debugContent = document.getElementById(`${type}-debug-content`);
+// Route URLs
+const storeUrl = '{{ route("schoolclass.store") }}';
+const updateUrlBase = '{{ url("schoolclass") }}';
+const deleteUrlBase = '{{ url("schoolclass") }}';
 
-    debugContent.textContent = JSON.stringify(data, null, 2);
-    debugDiv.classList.remove('d-none');
+function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (show) {
+        overlay.classList.add('active');
+    } else {
+        overlay.classList.remove('active');
+    }
 }
 
-function hideDebugInfo(type) {
-    document.getElementById(`${type}-debug-info`).classList.add('d-none');
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+    });
 }
 
-function debugFormData(type) {
-    const form = document.getElementById(`${type}-schoolclass-form`);
-    const formData = new FormData(form);
-    const data = {};
-
-    console.log(`=== ${type.toUpperCase()} FORM DEBUG ===`);
-    for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-        data[key] = value;
-    }
-
-    // Also log checkbox states
-    if (type === 'add') {
-        const selectedArms = document.querySelectorAll('.add-arm-checkbox:checked');
-        const selectedCategories = document.querySelectorAll('.add-category-checkbox:checked');
-        console.log('Selected Arms:', Array.from(selectedArms).map(cb => ({id: cb.value, name: cb.dataset.arm})));
-        console.log('Selected Categories:', Array.from(selectedCategories).map(cb => ({id: cb.value, name: cb.dataset.category})));
-
-        data.selectedArms = Array.from(selectedArms).map(cb => ({id: cb.value, name: cb.dataset.arm}));
-        data.selectedCategories = Array.from(selectedCategories).map(cb => ({id: cb.value, name: cb.dataset.category}));
-    }
-
-    showDebugInfo(type, data);
-}
-
-// Test function to verify data capture
-function testFormCapture() {
-    console.log('=== TEST FORM CAPTURE ===');
-
-    // Get all form elements
-    const form = document.getElementById('add-schoolclass-form');
-    const elements = form.elements;
-
-    console.log('Total form elements:', elements.length);
-
-    // Check each element
-    console.log('=== FORM ELEMENTS ===');
-    for (let element of elements) {
-        if (element.name) {
-            console.log(`Element: name="${element.name}", type="${element.type}", value="${element.value}", checked="${element.checked}"`);
-        }
-    }
-
-    // Check checkboxes specifically
-    const armCheckboxes = document.querySelectorAll('.add-arm-checkbox');
-    const categoryCheckboxes = document.querySelectorAll('.add-category-checkbox');
-
-    console.log('Arm checkboxes found:', armCheckboxes.length);
-    console.log('Category checkboxes found:', categoryCheckboxes.length);
-
-    // Test what FormData captures
-    const testFormData = new FormData(form);
-    console.log('=== FormData Capture Test ===');
-    const capturedData = {};
-    for (let [key, value] of testFormData.entries()) {
-        console.log(`${key}: ${value}`);
-        if (capturedData[key]) {
-            if (Array.isArray(capturedData[key])) {
-                capturedData[key].push(value);
-            } else {
-                capturedData[key] = [capturedData[key], value];
-            }
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const value = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.indexOf(value) > -1) {
+            row.style.display = '';
         } else {
-            capturedData[key] = value;
+            row.style.display = 'none';
         }
-    }
-    console.log('Captured Data Object:', capturedData);
-
-    // Check which checkboxes are checked
-    console.log('=== CHECKED CHECKBOXES ===');
-    armCheckboxes.forEach((cb, index) => {
-        console.log(`Arm ${index}: ID=${cb.value}, Checked=${cb.checked}, In FormData=${capturedData['arm_id[]'] ? 'YES' : 'NO'}`);
     });
+});
 
-    categoryCheckboxes.forEach((cb, index) => {
-        console.log(`Category ${index}: ID=${cb.value}, Checked=${cb.checked}, In FormData=${capturedData['classcategoryid[]'] ? 'YES' : 'NO'}`);
-    });
-
-    alert('Check browser console for form capture test results');
+// Modal functions
+function openAddModal() {
+    document.getElementById('addClassModal').style.display = 'flex';
+    document.getElementById('schoolclass').value = '';
+    document.getElementById('arm-checkboxes').querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.getElementById('category-checkboxes').querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.getElementById('addAlertError').classList.add('d-none');
 }
 
-// Test submission with hardcoded data
-async function testSubmission() {
-    console.log('=== TEST SUBMISSION ===');
+function closeAddModal() {
+    document.getElementById('addClassModal').style.display = 'none';
+}
 
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+function openEditModal(id, schoolclass, armId, categoryIds) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_schoolclass').value = schoolclass;
 
-    // Create test data
-    const formData = new FormData();
-    formData.append('_token', csrfToken);
-    formData.append('schoolclass', 'TEST CLASS');
-    formData.append('arm_id[]', '1');
-    formData.append('arm_id[]', '2');
-    formData.append('classcategoryid[]', '1');
-    formData.append('classcategoryid[]', '2');
+    // Set arm radio
+    const armRadios = document.getElementById('edit-arm-radios').querySelectorAll('input[type="radio"]');
+    armRadios.forEach(radio => {
+        radio.checked = radio.value == armId;
+    });
 
-    console.log('Test Data to Send:');
-    for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
+    // Set category checkboxes
+    const categoryIdsArray = categoryIds ? categoryIds.split(',').map(id => id.trim()) : [];
+    const categoryCheckboxes = document.getElementById('edit-category-checkboxes').querySelectorAll('input[type="checkbox"]');
+    categoryCheckboxes.forEach(cb => {
+        cb.checked = categoryIdsArray.includes(cb.value);
+    });
+
+    document.getElementById('editAlertError').classList.add('d-none');
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function openDeleteModal(id, name) {
+    deleteClassId = id;
+    deleteClassName = name;
+    document.getElementById('deleteItemName').innerHTML = `<strong>${escapeHtml(name)}</strong> will be permanently deleted.`;
+    document.getElementById('deleteRecordModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteRecordModal').style.display = 'none';
+    deleteClassId = null;
+    deleteClassName = null;
+}
+
+// Add Class Form Submit
+async function submitAddForm(event) {
+    event.preventDefault();
+
+    const schoolclass = document.getElementById('schoolclass').value.trim();
+    const selectedArms = Array.from(document.querySelectorAll('#arm-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
+    const selectedCategories = Array.from(document.querySelectorAll('#category-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
+
+    if (!schoolclass) {
+        Swal.fire('Error', 'Please enter a school class name.', 'error');
+        return;
     }
+
+    if (selectedArms.length === 0) {
+        Swal.fire('Error', 'Please select at least one arm.', 'error');
+        return;
+    }
+
+    if (selectedCategories.length === 0) {
+        Swal.fire('Error', 'Please select at least one category.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    formData.append('schoolclass', schoolclass);
+
+    selectedArms.forEach(arm => {
+        formData.append('arm_id[]', arm);
+    });
+
+    selectedCategories.forEach(cat => {
+        formData.append('classcategoryid[]', cat);
+    });
+
+    showLoading(true);
+    const submitBtn = document.getElementById('addBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
 
     try {
-        const response = await axios.post('{{ route("schoolclass.store") }}', formData, {
+        const response = await fetch(storeUrl, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: formData
         });
 
-        console.log('Test Success:', response.data);
-        Swal.fire('Success!', 'Test submission successful!', 'success');
+        const data = await response.json();
+
+        if (response.ok && data.message) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            let errorMsg = data.message || 'Failed to create class.';
+            if (data.errors) {
+                errorMsg = Object.values(data.errors).flat().join('\n');
+            }
+            Swal.fire('Error', errorMsg, 'error');
+        }
     } catch (error) {
-        console.log('Test Error:', error.response);
-        Swal.fire('Error!', 'Test submission failed. Check console.', 'error');
+        console.error('Add error:', error);
+        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Initialize modals
-    addModal = new bootstrap.Modal(document.getElementById('addSchoolClassModal'));
-    editModal = new bootstrap.Modal(document.getElementById('editModal'));
-    deleteModal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
+// Edit Class Form Submit
+async function submitEditForm(event) {
+    event.preventDefault();
 
-    // Get CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
-    axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    const id = document.getElementById('edit_id').value;
+    const schoolclass = document.getElementById('edit_schoolclass').value.trim();
+    const selectedArm = document.querySelector('#edit-arm-radios input[type="radio"]:checked');
+    const selectedCategories = Array.from(document.querySelectorAll('#edit-category-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
 
-    console.log('=== PAGE LOADED ===');
-    console.log('CSRF Token:', csrfToken);
-    console.log('Route URLs:', {
-        store: '{{ route("schoolclass.store") }}',
-        update: '{{ route("schoolclass.update", ":id") }}',
-        destroy: '{{ route("schoolclass.destroy", ":id") }}'
-    });
-
-    // Handle Add Form Submission - FIXED VERSION
-    const addForm = document.getElementById('add-schoolclass-form');
-    if (addForm) {
-        addForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            console.log('=== ADD FORM SUBMISSION STARTED ===');
-
-            // Validate checkboxes
-            const selectedArms = document.querySelectorAll('.add-arm-checkbox:checked');
-            const selectedCategories = document.querySelectorAll('.add-category-checkbox:checked');
-
-            console.log('Selected Arms Count:', selectedArms.length);
-            console.log('Selected Categories Count:', selectedCategories.length);
-
-            // Log each selected arm
-            selectedArms.forEach((arm, index) => {
-                console.log(`Arm ${index + 1}: ID=${arm.value}, Name=${arm.dataset.arm}`);
-            });
-
-            // Log each selected category
-            selectedCategories.forEach((category, index) => {
-                console.log(`Category ${index + 1}: ID=${category.value}, Name=${category.dataset.category}`);
-            });
-
-            if (selectedArms.length === 0) {
-                Swal.fire('Error!', 'Please select at least one arm.', 'error');
-                return;
-            }
-
-            if (selectedCategories.length === 0) {
-                Swal.fire('Error!', 'Please select at least one category.', 'error');
-                return;
-            }
-
-            // Create form data PROPERLY
-            const properFormData = new FormData();
-
-            // Add CSRF token
-            properFormData.append('_token', csrfToken);
-
-            // Add schoolclass
-            const schoolclassInput = document.getElementById('add-schoolclass');
-            properFormData.append('schoolclass', schoolclassInput.value);
-            console.log('Added schoolclass:', schoolclassInput.value);
-
-            // Add selected arms - CRITICAL: Use the correct format
-            selectedArms.forEach((arm, index) => {
-                properFormData.append('arm_id[]', arm.value);
-                console.log(`Added arm_id[${index}]:`, arm.value);
-            });
-
-            // Add selected categories - CRITICAL: Use the correct format
-            selectedCategories.forEach((category, index) => {
-                properFormData.append('classcategoryid[]', category.value);
-                console.log(`Added classcategoryid[${index}]:`, category.value);
-            });
-
-            // Log the final form data
-            console.log('=== FINAL FORM DATA TO SEND ===');
-            const finalData = {};
-            for (let [key, value] of properFormData.entries()) {
-                console.log(`${key}: ${value}`);
-                if (finalData[key]) {
-                    if (Array.isArray(finalData[key])) {
-                        finalData[key].push(value);
-                    } else {
-                        finalData[key] = [finalData[key], value];
-                    }
-                } else {
-                    finalData[key] = value;
-                }
-            }
-            console.log('Final Data Object:', finalData);
-
-            // Show debug info
-            showDebugInfo('add', {
-                finalData: finalData,
-                selectedArms: Array.from(selectedArms).map(a => ({id: a.value, name: a.dataset.arm})),
-                selectedCategories: Array.from(selectedCategories).map(c => ({id: c.value, name: c.dataset.category}))
-            });
-
-            const submitBtn = document.getElementById('add-btn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
-
-            try {
-                console.log('Sending request to:', '{{ route("schoolclass.store") }}');
-                console.log('Request payload:', finalData);
-
-                // Add debug header
-                properFormData.append('X-Debug-JS', JSON.stringify(finalData));
-
-                const response = await axios.post('{{ route("schoolclass.store") }}', properFormData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-
-                console.log('=== ADD SUCCESS ===');
-                console.log('Response:', response.data);
-
-                Swal.fire({
-                    title: 'Success!',
-                    text: response.data.message,
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        addModal.hide();
-                        addForm.reset();
-                        location.reload();
-                    }
-                });
-
-            } catch (error) {
-                console.log('=== ADD ERROR ===');
-                console.log('Full Error:', error);
-                console.log('Error Response:', error.response);
-
-                if (error.response && error.response.status === 422) {
-                    const errors = error.response.data.errors;
-                    console.log('Validation Errors:', errors);
-
-                    let errorMsg = '';
-                    let errorList = '';
-
-                    for (let key in errors) {
-                        if (errors[key]) {
-                            const fieldErrors = errors[key].join('<br>');
-                            errorMsg += `<strong>${key}:</strong> ${fieldErrors}<br>`;
-                            errorList += `<li><strong>${key}:</strong> ${errors[key].join(', ')}</li>`;
-                        }
-                    }
-
-                    document.getElementById('add-alert-error-msg').innerHTML = errorMsg;
-                    document.getElementById('add-alert-error-msg').classList.remove('d-none');
-
-                    if (errorList) {
-                        document.getElementById('add-error-list').innerHTML = errorList;
-                        document.getElementById('add-validation-errors').classList.remove('d-none');
-                    }
-
-                    document.getElementById('add-alert-error-msg').scrollIntoView({ behavior: 'smooth' });
-
-                } else if (error.response && error.response.status === 500) {
-                    const errorDetails = error.response.data;
-                    console.error('Server Error Details:', errorDetails);
-
-                    Swal.fire({
-                        title: 'Server Error!',
-                        html: `
-                            <div class="text-start">
-                                <p><strong>Error:</strong> ${errorDetails.message || 'Internal Server Error'}</p>
-                                ${errorDetails.error ? `<p><strong>SQL Error:</strong> ${errorDetails.error}</p>` : ''}
-                                <p><strong>Data Sent:</strong></p>
-                                <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 12px;">${JSON.stringify(finalData, null, 2)}</pre>
-                            </div>
-                        `,
-                        icon: 'error',
-                        width: 600
-                    });
-
-                } else {
-                    Swal.fire('Error!', error.response?.data?.message || 'Something went wrong', 'error');
-                }
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        });
+    if (!schoolclass) {
+        Swal.fire('Error', 'Please enter a school class name.', 'error');
+        return;
     }
 
-    // Handle Edit Button Click
-    document.querySelectorAll('.edit-item-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const row = this.closest('tr');
-            currentEditId = row.querySelector('.id').dataset.id;
-            const schoolclass = row.querySelector('.schoolclass').dataset.schoolclass;
-            const armId = row.querySelector('.arm').dataset.armId;
-            const categoryIdsStr = row.querySelector('.classcategory').dataset.categoryIds;
-
-            console.log('Editing Class:', {
-                id: currentEditId,
-                schoolclass: schoolclass,
-                armId: armId,
-                categoryIds: categoryIdsStr
-            });
-
-            document.getElementById('edit-id-field').value = currentEditId;
-            document.getElementById('edit-schoolclass').value = schoolclass;
-
-            // Set arm radio
-            document.querySelectorAll('#edit-arm-radios input[type="radio"]').forEach(radio => {
-                radio.checked = radio.value == armId;
-            });
-
-            // Reset category checkboxes
-            document.querySelectorAll('#edit-category-checkboxes input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-
-            // Check the original categories
-            if (categoryIdsStr) {
-                const categoryIds = categoryIdsStr.split(',');
-                categoryIds.forEach(catId => {
-                    const checkbox = document.querySelector(`#edit-category-${catId.trim()}`);
-                    if (checkbox) {
-                        checkbox.checked = true;
-                    }
-                });
-            }
-
-            // Hide previous errors
-            document.getElementById('edit-alert-error-msg').classList.add('d-none');
-            document.getElementById('edit-validation-errors').classList.add('d-none');
-
-            editModal.show();
-        });
-    });
-
-    // Handle Edit Form Submission
-    const editForm = document.getElementById('edit-schoolclass-form');
-    if (editForm) {
-        editForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            if (!currentEditId) {
-                console.error('No edit ID set!');
-                return;
-            }
-
-            console.log('=== EDIT FORM SUBMISSION STARTED ===');
-            console.log('Editing ID:', currentEditId);
-
-            // Validate checkboxes
-            const selectedCategories = document.querySelectorAll('.edit-category-checkbox:checked');
-            if (selectedCategories.length === 0) {
-                Swal.fire('Error!', 'Please select at least one category.', 'error');
-                return;
-            }
-
-            const formData = new FormData(editForm);
-
-            console.log('Edit Form Data:');
-            const formDataObj = {};
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
-                if (formDataObj[key]) {
-                    if (Array.isArray(formDataObj[key])) {
-                        formDataObj[key].push(value);
-                    } else {
-                        formDataObj[key] = [formDataObj[key], value];
-                    }
-                } else {
-                    formDataObj[key] = value;
-                }
-            }
-            console.log('Form Data Object:', formDataObj);
-
-            const submitBtn = document.getElementById('update-btn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
-
-            try {
-                const updateUrl = '{{ route("schoolclass.update", ":id") }}'.replace(':id', currentEditId);
-                console.log('Update URL:', updateUrl);
-
-                const response = await axios.post(updateUrl, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-
-                console.log('=== EDIT SUCCESS ===');
-                console.log('Response:', response.data);
-
-                Swal.fire({
-                    title: 'Success!',
-                    text: response.data.message,
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        editModal.hide();
-                        editForm.reset();
-                        location.reload();
-                    }
-                });
-
-            } catch (error) {
-                console.log('=== EDIT ERROR ===');
-                console.log('Error:', error);
-                console.log('Error Response:', error.response);
-
-                if (error.response && error.response.status === 422) {
-                    const errors = error.response.data.errors;
-                    let errorMsg = '';
-                    let errorList = '';
-
-                    for (let key in errors) {
-                        if (errors[key]) {
-                            const fieldErrors = errors[key].join('<br>');
-                            errorMsg += `<strong>${key}:</strong> ${fieldErrors}<br>`;
-                            errorList += `<li><strong>${key}:</strong> ${errors[key].join(', ')}</li>`;
-                        }
-                    }
-
-                    document.getElementById('edit-alert-error-msg').innerHTML = errorMsg;
-                    document.getElementById('edit-alert-error-msg').classList.remove('d-none');
-
-                    if (errorList) {
-                        document.getElementById('edit-error-list').innerHTML = errorList;
-                        document.getElementById('edit-validation-errors').classList.remove('d-none');
-                    }
-
-                    document.getElementById('edit-alert-error-msg').scrollIntoView({ behavior: 'smooth' });
-
-                } else if (error.response && error.response.status === 500) {
-                    const errorDetails = error.response.data;
-                    console.error('Server Error Details:', errorDetails);
-
-                    Swal.fire({
-                        title: 'Server Error!',
-                        html: `
-                            <div class="text-start">
-                                <p><strong>Error:</strong> ${errorDetails.message || 'Internal Server Error'}</p>
-                                ${errorDetails.error ? `<p><strong>Details:</strong> ${errorDetails.error}</p>` : ''}
-                            </div>
-                        `,
-                        icon: 'error'
-                    });
-
-                } else {
-                    Swal.fire('Error!', error.response?.data?.message || 'Something went wrong', 'error');
-                }
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        });
+    if (!selectedArm) {
+        Swal.fire('Error', 'Please select an arm.', 'error');
+        return;
     }
 
-    // Handle Delete Button Click
-    document.querySelectorAll('.remove-item-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const row = this.closest('tr');
-            currentDeleteId = row.querySelector('.id').dataset.id;
-            const schoolClassName = row.querySelector('.schoolclass').dataset.schoolclass;
-            const schoolClassText = row.querySelector('.schoolclass').textContent.split('\n')[0].trim();
+    if (selectedCategories.length === 0) {
+        Swal.fire('Error', 'Please select at least one category.', 'error');
+        return;
+    }
 
-            // Update modal text
-            document.getElementById('delete-class-name').textContent = `Delete "${schoolClassText}"?`;
-            document.getElementById('delete-class-desc').textContent = `Are you sure you want to delete class "${schoolClassText}"? This action cannot be undone.`;
-            document.getElementById('delete-class-id').textContent = currentDeleteId;
+    const formData = new FormData();
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    formData.append('_method', 'PUT');
+    formData.append('schoolclass', schoolclass);
+    formData.append('arm_id', selectedArm.value);
 
-            deleteModal.show();
-        });
+    selectedCategories.forEach(cat => {
+        formData.append('classcategoryid[]', cat);
     });
 
-    // Handle Delete Confirmation
-    document.getElementById('delete-record').addEventListener('click', async function () {
-        if (!currentDeleteId) {
-            console.error('No delete ID set!');
-            return;
-        }
+    showLoading(true);
+    const submitBtn = document.getElementById('updateBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
 
-        console.log('=== DELETE CONFIRMED ===');
-        console.log('Deleting ID:', currentDeleteId);
+    try {
+        const response = await fetch(updateUrlBase + '/' + id, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
 
-        const submitBtn = this;
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+        const data = await response.json();
 
-        try {
-            const destroyUrl = '{{ route("schoolclass.destroy", ":id") }}'.replace(':id', currentDeleteId);
-            console.log('Delete URL:', destroyUrl);
-
-            const response = await axios.delete(destroyUrl);
-
-            console.log('=== DELETE SUCCESS ===');
-            console.log('Response:', response.data);
-
+        if (response.ok && data.message) {
             Swal.fire({
-                title: 'Deleted!',
-                text: response.data.message,
                 icon: 'success',
-                confirmButtonText: 'OK'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    deleteModal.hide();
-                    location.reload();
-                }
+                title: 'Updated!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
             });
+        } else {
+            let errorMsg = data.message || 'Failed to update class.';
+            if (data.errors) {
+                errorMsg = Object.values(data.errors).flat().join('\n');
+            }
+            Swal.fire('Error', errorMsg, 'error');
+        }
+    } catch (error) {
+        console.error('Edit error:', error);
+        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
 
-        } catch (error) {
-            console.log('=== DELETE ERROR ===');
-            console.log('Error:', error);
-            console.log('Error Response:', error.response);
+// Edit button click handlers
+document.querySelectorAll('.edit-class-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const schoolclass = this.dataset.schoolclass;
+        const armId = this.dataset.armId;
+        const categoryIds = this.dataset.categoryIds;
+        openEditModal(id, schoolclass, armId, categoryIds);
+    });
+});
 
+// Delete button click handlers
+document.querySelectorAll('.delete-class-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const name = this.dataset.name;
+        openDeleteModal(id, name);
+    });
+});
+
+// Confirm Delete
+async function confirmDelete() {
+    if (!deleteClassId) return;
+
+    showLoading(true);
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+
+    try {
+        const response = await fetch(deleteUrlBase + '/' + deleteClassId, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.message) {
             Swal.fire({
-                title: 'Error!',
-                text: error.response?.data?.message || 'Something went wrong while deleting',
-                icon: 'error'
+                icon: 'success',
+                title: 'Deleted!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
             });
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+        } else {
+            Swal.fire('Error', data.message || 'Failed to delete class.', 'error');
+            closeDeleteModal();
         }
-    });
+    } catch (error) {
+        console.error('Delete error:', error);
+        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+        closeDeleteModal();
+    } finally {
+        showLoading(false);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        deleteClassId = null;
+    }
+}
 
-    // Handle Add Modal Close - Reset form
-    document.getElementById('addSchoolClassModal').addEventListener('hidden.bs.modal', function () {
-        if (addForm) {
-            addForm.reset();
-            document.getElementById('add-alert-error-msg').classList.add('d-none');
-            document.getElementById('add-alert-error-msg').innerHTML = '';
-            document.getElementById('add-validation-errors').classList.add('d-none');
-            document.getElementById('add-error-list').innerHTML = '';
-            hideDebugInfo('add');
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const addModal = document.getElementById('addClassModal');
+        const editModal = document.getElementById('editModal');
+        const deleteModal = document.getElementById('deleteRecordModal');
+
+        if (event.target === addModal) {
+            closeAddModal();
         }
-    });
-
-    // Handle Edit Modal Close - Reset form
-    document.getElementById('editModal').addEventListener('hidden.bs.modal', function () {
-        if (editForm) {
-            editForm.reset();
-            document.getElementById('edit-alert-error-msg').classList.add('d-none');
-            document.getElementById('edit-alert-error-msg').innerHTML = '';
-            document.getElementById('edit-validation-errors').classList.add('d-none');
-            document.getElementById('edit-error-list').innerHTML = '';
-            currentEditId = null;
+        if (event.target === editModal) {
+            closeEditModal();
         }
-    });
-
-    // Handle Delete Modal Close
-    document.getElementById('deleteRecordModal').addEventListener('hidden.bs.modal', function () {
-        currentDeleteId = null;
-    });
+        if (event.target === deleteModal) {
+            closeDeleteModal();
+        }
+    };
 });
 </script>
 @endsection
