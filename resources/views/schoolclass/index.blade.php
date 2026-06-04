@@ -4,7 +4,6 @@
 @section('content')
 {{-- Suppress initialization errors from schoolarm.init.js --}}
 <script>
-    // Prevent initialization errors by creating required elements
     (function() {
         const requiredElements = [
             'addIdField', 'addSubmitButton',
@@ -173,26 +172,23 @@
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0,0,0,.15);
 }
-.modal-hero-bar {
+.modal-header {
     background: linear-gradient(135deg, #1e3a5f, #2563eb);
     padding: 20px 28px;
-    position: relative;
+    border-bottom: none;
 }
-.modal-hero-bar h5 {
+.modal-header .modal-title {
     color: #fff;
     font-weight: 700;
-    margin: 0;
     font-size: 15px;
 }
-.modal-hero-bar .btn-close {
-    position: absolute;
-    top: 16px;
-    right: 20px;
+.modal-header .btn-close {
     filter: invert(1);
     background: transparent;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
+    opacity: 0.8;
+}
+.modal-header .btn-close:hover {
+    opacity: 1;
 }
 .modal-body {
     padding: 24px;
@@ -220,9 +216,6 @@
 .modal-footer {
     padding: 16px 24px 24px;
     border-top: none;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
 }
 .btn {
     padding: 8px 20px;
@@ -259,41 +252,27 @@
     transform: translateY(-1px);
 }
 
-.checkbox-group {
-    max-height: 200px;
+.checkbox-group, .radio-group {
+    max-height: 250px;
     overflow-y: auto;
     border: 1px solid var(--pay-border);
     border-radius: 8px;
     padding: 12px;
     background: #f8fafc;
 }
-.checkbox-item {
+.checkbox-item, .radio-item {
     margin-bottom: 8px;
 }
-.checkbox-item:last-child {
+.checkbox-item:last-child, .radio-item:last-child {
     margin-bottom: 0;
 }
-.checkbox-item label {
+.checkbox-item label, .radio-item label {
     margin-left: 8px;
     font-size: 13px;
+    cursor: pointer;
 }
-.radio-group {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid var(--pay-border);
-    border-radius: 8px;
-    padding: 12px;
-    background: #f8fafc;
-}
-.radio-item {
-    margin-bottom: 8px;
-}
-.radio-item:last-child {
-    margin-bottom: 0;
-}
-.radio-item label {
-    margin-left: 8px;
-    font-size: 13px;
+.checkbox-item input, .radio-item input {
+    cursor: pointer;
 }
 
 .empty-state {
@@ -361,9 +340,6 @@
 .d-none {
     display: none;
 }
-.d-block {
-    display: block;
-}
 
 .row {
     display: flex;
@@ -381,7 +357,6 @@
 
 .gap-2 { gap: 8px; }
 .gap-3 { gap: 16px; }
-.gap-4 { gap: 24px; }
 .mb-0 { margin-bottom: 0; }
 .mb-1 { margin-bottom: 4px; }
 .mb-2 { margin-bottom: 8px; }
@@ -392,12 +367,8 @@
 .mt-3 { margin-top: 16px; }
 .p-3 { padding: 16px; }
 .py-3 { padding-top: 16px; padding-bottom: 16px; }
-.px-4 { padding-left: 24px; padding-right: 24px; }
-.pb-4 { padding-bottom: 24px; }
-.pt-0 { padding-top: 0; }
 .text-center { text-align: center; }
 .text-start { text-align: left; }
-.text-end { text-align: right; }
 .text-muted { color: var(--pay-muted); }
 .text-success { color: var(--pay-success); }
 .text-warning { color: var(--pay-warning); }
@@ -462,10 +433,6 @@
     background: #16a34a;
     color: white;
 }
-.bg-warning {
-    background: #d97706;
-    color: white;
-}
 </style>
 
 <div class="main-content">
@@ -525,7 +492,7 @@
             </h5>
             <div class="d-flex gap-2">
                 @can('Create school-class')
-                    <button type="button" class="btn btn-primary" onclick="openAddModal()">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClassModal">
                         <i class="ri-add-line me-1"></i>Create Class
                     </button>
                 @endcan
@@ -555,13 +522,13 @@
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show">
                     <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="float: right; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
             @if (session('danger'))
                 <div class="alert alert-danger alert-dismissible fade show">
                     <i class="ri-error-warning-line me-2"></i>{{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="float: right; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
@@ -592,10 +559,9 @@
                                 <td>
                                     @php
                                         $categoryNames = explode(', ', $class->classcategory ?? '');
-                                        $categoryIds = explode(',', $class->classcategoryids ?? '');
                                     @endphp
                                     <div class="d-flex flex-wrap gap-1">
-                                        @foreach($categoryNames as $idx => $catName)
+                                        @foreach($categoryNames as $catName)
                                             @if(!empty($catName))
                                                 <span class="badge bg-primary">{{ $catName }}</span>
                                             @endif
@@ -608,6 +574,8 @@
                                         @can('Update school-class')
                                             <button type="button"
                                                     class="btn-icon btn-subtle-secondary edit-class-btn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editModal"
                                                     data-id="{{ $class->id }}"
                                                     data-schoolclass="{{ $class->schoolclass }}"
                                                     data-arm-id="{{ $class->arm_id }}"
@@ -618,6 +586,8 @@
                                         @can('Delete school-class')
                                             <button type="button"
                                                     class="btn-icon btn-subtle-danger delete-class-btn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteRecordModal"
                                                     data-id="{{ $class->id }}"
                                                     data-name="{{ $class->schoolclass }}">
                                                 <i class="ri-delete-bin-line"></i>
@@ -633,7 +603,7 @@
                                         <i class="ri-inbox-line"></i>
                                         <p>No school classes found.</p>
                                         @can('Create school-class')
-                                            <button class="btn btn-primary btn-sm mt-3" onclick="openAddModal()">
+                                            <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#addClassModal">
                                                 <i class="ri-add-line me-1"></i>Create your first class
                                             </button>
                                         @endcan
@@ -663,14 +633,16 @@
 </div>
 
 {{-- ADD CLASS MODAL --}}
-<div id="addClassModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
-    <div class="modal-dialog" style="max-width: 700px; width: 90%; margin: auto;">
+<div class="modal fade" id="addClassModal" tabindex="-1" aria-labelledby="addClassModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-hero-bar">
-                <button type="button" class="btn-close" onclick="closeAddModal()">&times;</button>
-                <h5><i class="ri-add-line me-2"></i>Create New School Class</h5>
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClassModalLabel">
+                    <i class="ri-add-line me-2"></i>Create New School Class
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addClassForm" onsubmit="submitAddForm(event)">
+            <form id="addClassForm">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
@@ -691,7 +663,6 @@
                                 <div class="alert alert-warning mb-0">No arms found. Please add arms first.</div>
                             @endforelse
                         </div>
-                        <div class="form-text">Select one or more arms for this class</div>
                     </div>
 
                     <div class="mb-3">
@@ -706,13 +677,12 @@
                                 <div class="alert alert-warning mb-0">No categories found. Please add categories first.</div>
                             @endforelse
                         </div>
-                        <div class="form-text">Select one or more categories for this class</div>
                     </div>
 
                     <div class="alert alert-danger d-none" id="addAlertError"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="addBtn">
                         <i class="ri-save-line me-1"></i>Create Class
                     </button>
@@ -723,14 +693,16 @@
 </div>
 
 {{-- EDIT CLASS MODAL --}}
-<div id="editModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
-    <div class="modal-dialog" style="max-width: 700px; width: 90%; margin: auto;">
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-hero-bar">
-                <button type="button" class="btn-close" onclick="closeEditModal()">&times;</button>
-                <h5><i class="ri-edit-line me-2"></i>Edit School Class</h5>
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">
+                    <i class="ri-edit-line me-2"></i>Edit School Class
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editClassForm" onsubmit="submitEditForm(event)">
+            <form id="editClassForm">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_id">
@@ -771,7 +743,7 @@
                     <div class="alert alert-danger d-none" id="editAlertError"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="updateBtn">
                         <i class="ri-save-line me-1"></i>Update Class
                     </button>
@@ -782,13 +754,16 @@
 </div>
 
 {{-- DELETE CONFIRMATION MODAL --}}
-<div id="deleteRecordModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
-    <div class="modal-dialog" style="max-width: 400px; width: 90%; margin: auto;">
+<div class="modal fade" id="deleteRecordModal" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header border-0 pb-0" style="display: flex; justify-content: flex-end; padding: 16px;">
-                <button type="button" class="btn-close" onclick="closeDeleteModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteRecordModalLabel">
+                    <i class="ri-delete-bin-line me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center pt-0">
+            <div class="modal-body text-center">
                 <div class="mb-3">
                     <div class="mx-auto mb-3" style="width: 60px; height: 60px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                         <i class="ri-delete-bin-line" style="font-size: 28px; color: #dc2626;"></i>
@@ -798,9 +773,9 @@
                     <p class="text-muted small mt-2" id="deleteItemName"></p>
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
-                <button type="button" class="btn btn-light" onclick="closeDeleteModal()">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     <i class="ri-delete-bin-line me-1"></i>Yes, Delete
                 </button>
             </div>
@@ -812,340 +787,263 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-// Global variables
-let deleteClassId = null;
-let deleteClassName = null;
+$(document).ready(function() {
+    let deleteClassId = null;
 
-// Route URLs
-const storeUrl = '{{ route("schoolclass.store") }}';
-const updateUrlBase = '{{ url("schoolclass") }}';
-const deleteUrlBase = '{{ url("schoolclass") }}';
+    // Route URLs
+    const storeUrl = '{{ route("schoolclass.store") }}';
+    const updateUrlBase = '{{ url("schoolclass") }}';
+    const deleteUrlBase = '{{ url("schoolclass") }}';
 
-function showLoading(show) {
-    const overlay = document.getElementById('loadingOverlay');
-    if (show) {
-        overlay.classList.add('active');
-    } else {
-        overlay.classList.remove('active');
-    }
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>]/g, function(m) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
-    });
-}
-
-// Search functionality
-document.getElementById('searchInput').addEventListener('keyup', function() {
-    const value = this.value.toLowerCase();
-    const rows = document.querySelectorAll('#tableBody tr');
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.indexOf(value) > -1) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
-
-// Modal functions
-function openAddModal() {
-    document.getElementById('addClassModal').style.display = 'flex';
-    document.getElementById('schoolclass').value = '';
-    document.getElementById('arm-checkboxes').querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    document.getElementById('category-checkboxes').querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    document.getElementById('addAlertError').classList.add('d-none');
-}
-
-function closeAddModal() {
-    document.getElementById('addClassModal').style.display = 'none';
-}
-
-function openEditModal(id, schoolclass, armId, categoryIds) {
-    document.getElementById('edit_id').value = id;
-    document.getElementById('edit_schoolclass').value = schoolclass;
-
-    // Set arm radio
-    const armRadios = document.getElementById('edit-arm-radios').querySelectorAll('input[type="radio"]');
-    armRadios.forEach(radio => {
-        radio.checked = radio.value == armId;
-    });
-
-    // Set category checkboxes
-    const categoryIdsArray = categoryIds ? categoryIds.split(',').map(id => id.trim()) : [];
-    const categoryCheckboxes = document.getElementById('edit-category-checkboxes').querySelectorAll('input[type="checkbox"]');
-    categoryCheckboxes.forEach(cb => {
-        cb.checked = categoryIdsArray.includes(cb.value);
-    });
-
-    document.getElementById('editAlertError').classList.add('d-none');
-    document.getElementById('editModal').style.display = 'flex';
-}
-
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-
-function openDeleteModal(id, name) {
-    deleteClassId = id;
-    deleteClassName = name;
-    document.getElementById('deleteItemName').innerHTML = `<strong>${escapeHtml(name)}</strong> will be permanently deleted.`;
-    document.getElementById('deleteRecordModal').style.display = 'flex';
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteRecordModal').style.display = 'none';
-    deleteClassId = null;
-    deleteClassName = null;
-}
-
-// Add Class Form Submit
-async function submitAddForm(event) {
-    event.preventDefault();
-
-    const schoolclass = document.getElementById('schoolclass').value.trim();
-    const selectedArms = Array.from(document.querySelectorAll('#arm-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
-    const selectedCategories = Array.from(document.querySelectorAll('#category-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
-
-    if (!schoolclass) {
-        Swal.fire('Error', 'Please enter a school class name.', 'error');
-        return;
+    function showLoading(show) {
+        $('#loadingOverlay').toggleClass('active', show);
     }
 
-    if (selectedArms.length === 0) {
-        Swal.fire('Error', 'Please select at least one arm.', 'error');
-        return;
-    }
-
-    if (selectedCategories.length === 0) {
-        Swal.fire('Error', 'Please select at least one category.', 'error');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-    formData.append('schoolclass', schoolclass);
-
-    selectedArms.forEach(arm => {
-        formData.append('arm_id[]', arm);
+    // Search functionality
+    $('#searchInput').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#tableBody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
     });
 
-    selectedCategories.forEach(cat => {
-        formData.append('classcategoryid[]', cat);
-    });
+    // Edit button click - populate edit form
+    $('.edit-class-btn').on('click', function() {
+        const id = $(this).data('id');
+        const schoolclass = $(this).data('schoolclass');
+        const armId = $(this).data('arm-id');
+        const categoryIds = $(this).data('category-ids');
 
-    showLoading(true);
-    const submitBtn = document.getElementById('addBtn');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+        $('#edit_id').val(id);
+        $('#edit_schoolclass').val(schoolclass);
 
-    try {
-        const response = await fetch(storeUrl, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            },
-            body: formData
+        // Set arm radio
+        $('input[name="arm_id"]').prop('checked', false);
+        $(`input[name="arm_id"][value="${armId}"]`).prop('checked', true);
+
+        // Set category checkboxes
+        const categoryIdsArray = categoryIds ? categoryIds.split(',').map(id => id.trim()) : [];
+        $('input[name="classcategoryid[]"]').prop('checked', false);
+        categoryIdsArray.forEach(catId => {
+            $(`#edit_category_${catId}`).prop('checked', true);
         });
 
-        const data = await response.json();
-
-        if (response.ok && data.message) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: data.message,
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            let errorMsg = data.message || 'Failed to create class.';
-            if (data.errors) {
-                errorMsg = Object.values(data.errors).flat().join('\n');
-            }
-            Swal.fire('Error', errorMsg, 'error');
-        }
-    } catch (error) {
-        console.error('Add error:', error);
-        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
-    } finally {
-        showLoading(false);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    }
-}
-
-// Edit Class Form Submit
-async function submitEditForm(event) {
-    event.preventDefault();
-
-    const id = document.getElementById('edit_id').value;
-    const schoolclass = document.getElementById('edit_schoolclass').value.trim();
-    const selectedArm = document.querySelector('#edit-arm-radios input[type="radio"]:checked');
-    const selectedCategories = Array.from(document.querySelectorAll('#edit-category-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
-
-    if (!schoolclass) {
-        Swal.fire('Error', 'Please enter a school class name.', 'error');
-        return;
-    }
-
-    if (!selectedArm) {
-        Swal.fire('Error', 'Please select an arm.', 'error');
-        return;
-    }
-
-    if (selectedCategories.length === 0) {
-        Swal.fire('Error', 'Please select at least one category.', 'error');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-    formData.append('_method', 'PUT');
-    formData.append('schoolclass', schoolclass);
-    formData.append('arm_id', selectedArm.value);
-
-    selectedCategories.forEach(cat => {
-        formData.append('classcategoryid[]', cat);
+        $('#editAlertError').addClass('d-none');
     });
 
-    showLoading(true);
-    const submitBtn = document.getElementById('updateBtn');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
+    // Delete button click
+    $('.delete-class-btn').on('click', function() {
+        deleteClassId = $(this).data('id');
+        const className = $(this).data('name');
+        $('#deleteItemName').html(`<strong>${escapeHtml(className)}</strong> will be permanently deleted.`);
+    });
 
-    try {
-        const response = await fetch(updateUrlBase + '/' + id, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            },
-            body: formData
+    // Add Class Form Submit
+    $('#addClassForm').on('submit', async function(e) {
+        e.preventDefault();
+
+        const schoolclass = $('#schoolclass').val().trim();
+        const selectedArms = $('input[name="arm_id[]"]:checked').map(function() { return $(this).val(); }).get();
+        const selectedCategories = $('input[name="classcategoryid[]"]:checked').map(function() { return $(this).val(); }).get();
+
+        if (!schoolclass) {
+            Swal.fire('Error', 'Please enter a school class name.', 'error');
+            return;
+        }
+
+        if (selectedArms.length === 0) {
+            Swal.fire('Error', 'Please select at least one arm.', 'error');
+            return;
+        }
+
+        if (selectedCategories.length === 0) {
+            Swal.fire('Error', 'Please select at least one category.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+        formData.append('schoolclass', schoolclass);
+
+        selectedArms.forEach(arm => {
+            formData.append('arm_id[]', arm);
         });
 
-        const data = await response.json();
-
-        if (response.ok && data.message) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Updated!',
-                text: data.message,
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            let errorMsg = data.message || 'Failed to update class.';
-            if (data.errors) {
-                errorMsg = Object.values(data.errors).flat().join('\n');
-            }
-            Swal.fire('Error', errorMsg, 'error');
-        }
-    } catch (error) {
-        console.error('Edit error:', error);
-        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
-    } finally {
-        showLoading(false);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    }
-}
-
-// Edit button click handlers
-document.querySelectorAll('.edit-class-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const id = this.dataset.id;
-        const schoolclass = this.dataset.schoolclass;
-        const armId = this.dataset.armId;
-        const categoryIds = this.dataset.categoryIds;
-        openEditModal(id, schoolclass, armId, categoryIds);
-    });
-});
-
-// Delete button click handlers
-document.querySelectorAll('.delete-class-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const id = this.dataset.id;
-        const name = this.dataset.name;
-        openDeleteModal(id, name);
-    });
-});
-
-// Confirm Delete
-async function confirmDelete() {
-    if (!deleteClassId) return;
-
-    showLoading(true);
-    const btn = document.getElementById('confirmDeleteBtn');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
-
-    try {
-        const response = await fetch(deleteUrlBase + '/' + deleteClassId, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            }
+        selectedCategories.forEach(cat => {
+            formData.append('classcategoryid[]', cat);
         });
 
-        const data = await response.json();
+        showLoading(true);
+        const submitBtn = $('#addBtn');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creating...');
 
-        if (response.ok && data.message) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Deleted!',
-                text: data.message,
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                location.reload();
+        try {
+            const response = await fetch(storeUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
             });
-        } else {
-            Swal.fire('Error', data.message || 'Failed to delete class.', 'error');
-            closeDeleteModal();
+
+            const data = await response.json();
+
+            if (response.ok && data.message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                let errorMsg = data.message || 'Failed to create class.';
+                if (data.errors) {
+                    errorMsg = Object.values(data.errors).flat().join('\n');
+                }
+                Swal.fire('Error', errorMsg, 'error');
+            }
+        } catch (error) {
+            console.error('Add error:', error);
+            Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+        } finally {
+            showLoading(false);
+            submitBtn.prop('disabled', false).html(originalText);
         }
-    } catch (error) {
-        console.error('Delete error:', error);
-        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
-        closeDeleteModal();
-    } finally {
-        showLoading(false);
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        deleteClassId = null;
+    });
+
+    // Edit Class Form Submit
+    $('#editClassForm').on('submit', async function(e) {
+        e.preventDefault();
+
+        const id = $('#edit_id').val();
+        const schoolclass = $('#edit_schoolclass').val().trim();
+        const selectedArm = $('input[name="arm_id"]:checked').val();
+        const selectedCategories = $('input[name="classcategoryid[]"]:checked').map(function() { return $(this).val(); }).get();
+
+        if (!schoolclass) {
+            Swal.fire('Error', 'Please enter a school class name.', 'error');
+            return;
+        }
+
+        if (!selectedArm) {
+            Swal.fire('Error', 'Please select an arm.', 'error');
+            return;
+        }
+
+        if (selectedCategories.length === 0) {
+            Swal.fire('Error', 'Please select at least one category.', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+        formData.append('_method', 'PUT');
+        formData.append('schoolclass', schoolclass);
+        formData.append('arm_id', selectedArm);
+
+        selectedCategories.forEach(cat => {
+            formData.append('classcategoryid[]', cat);
+        });
+
+        showLoading(true);
+        const submitBtn = $('#updateBtn');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Updating...');
+
+        try {
+            const response = await fetch(updateUrlBase + '/' + id, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Updated!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                let errorMsg = data.message || 'Failed to update class.';
+                if (data.errors) {
+                    errorMsg = Object.values(data.errors).flat().join('\n');
+                }
+                Swal.fire('Error', errorMsg, 'error');
+            }
+        } catch (error) {
+            console.error('Edit error:', error);
+            Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+        } finally {
+            showLoading(false);
+            submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
+
+    // Confirm Delete
+    $('#confirmDeleteBtn').on('click', async function() {
+        if (!deleteClassId) return;
+
+        showLoading(true);
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
+
+        try {
+            const response = await fetch(deleteUrlBase + '/' + deleteClassId, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', data.message || 'Failed to delete class.', 'error');
+                $('#deleteRecordModal').modal('hide');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+            $('#deleteRecordModal').modal('hide');
+        } finally {
+            showLoading(false);
+            btn.prop('disabled', false).html(originalText);
+            deleteClassId = null;
+        }
+    });
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+        });
     }
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    // Close modals when clicking outside
-    window.onclick = function(event) {
-        const addModal = document.getElementById('addClassModal');
-        const editModal = document.getElementById('editModal');
-        const deleteModal = document.getElementById('deleteRecordModal');
-
-        if (event.target === addModal) {
-            closeAddModal();
-        }
-        if (event.target === editModal) {
-            closeEditModal();
-        }
-        if (event.target === deleteModal) {
-            closeDeleteModal();
-        }
-    };
 });
 </script>
 @endsection
