@@ -261,11 +261,19 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('term/deleteterm', [SchooltermController::class, 'deleteterm'])->name('term.deleteterm');
     Route::post('term/updateterm', [SchooltermController::class, 'updateterm'])->name('term.updateterm');
 
+   // School Arm Routes
     Route::resource('schoolarm', SchoolArmController::class);
     Route::post('schoolarm/deletearm', [SchoolArmController::class, 'deletearm'])->name('schoolarm.deletearm');
     Route::post('schoolarm/updatearm', [SchoolArmController::class, 'updatearm'])->name('schoolarm.updatearm');
-    Route::post('/schoolclass/deletes-schoolclass', [SchoolClassController::class, 'deleteschoolclass'])->name('schoolclass.deleteschoolclass');
-    Route::get('/schoolclasses/{getArms}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getArms');
+
+    // School Class Routes
+    Route::prefix('schoolclass')->group(function () {
+        Route::get('/', [SchoolClassController::class, 'index'])->name('schoolclass.index');
+        Route::post('/store', [SchoolClassController::class, 'store'])->name('schoolclass.store');
+        Route::post('/update/{id}', [SchoolClassController::class, 'update'])->name('schoolclass.update');
+        Route::post('/deletes-schoolclass', [SchoolClassController::class, 'deleteschoolclass'])->name('schoolclass.deleteschoolclass');
+        Route::get('/{schoolclass}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getArms');
+    });
 
     Route::get('schoolclass', [SchoolClassController::class, 'index'])->name('schoolclass.index');
     Route::post('schoolclass', [SchoolClassController::class, 'store'])->name('schoolclass.store');
