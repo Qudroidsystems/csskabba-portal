@@ -63,7 +63,7 @@
 }
 .pay-table tr:hover td { background: #f0f9ff; }
 
-/* Clickable Avatar Styles */
+/* Clickable Avatar */
 .avatar-clickable {
     cursor: pointer;
     transition: transform 0.2s ease, opacity 0.2s ease;
@@ -72,33 +72,27 @@
     transform: scale(1.1);
     opacity: 0.9;
 }
-
 .student-avatar {
-    width: 45px;
-    height: 45px;
+    width: 45px; height: 45px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--pay-border);
     background: #f0f0f0;
 }
 .avatar-placeholder {
-    width: 45px;
-    height: 45px;
+    width: 45px; height: 45px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 16px; font-weight: 700;
     color: white;
     border: 2px solid var(--pay-border);
     cursor: pointer;
     transition: transform 0.2s ease;
 }
-.avatar-placeholder:hover {
-    transform: scale(1.1);
-}
+.avatar-placeholder:hover { transform: scale(1.1); }
 
 .badge-class {
     display: inline-flex; align-items: center; gap: 4px;
@@ -164,15 +158,13 @@
     margin-bottom: 22px;
 }
 .ts-chip-avatar {
-    width: 50px;
-    height: 50px;
+    width: 50px; height: 50px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 18px; font-weight: 700;
     color: white;
     flex-shrink: 0;
     border: 2px solid #bae6fd;
@@ -180,14 +172,8 @@
     cursor: pointer;
     transition: transform 0.2s ease;
 }
-.ts-chip-avatar:hover {
-    transform: scale(1.05);
-}
-.ts-chip-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+.ts-chip-avatar:hover { transform: scale(1.05); }
+.ts-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .ts-chip-name { font-size: 14px; font-weight: 700; color: var(--pay-primary); line-height: 1.3; }
 .ts-chip-meta { font-size: 11px; color: var(--pay-muted); margin-top: 2px; }
 
@@ -268,8 +254,7 @@
 }
 .image-zoom-modal .btn-close {
     position: absolute;
-    top: 20px;
-    right: 30px;
+    top: 20px; right: 30px;
     background-color: rgba(0,0,0,0.7);
     border-radius: 50%;
     padding: 12px;
@@ -284,8 +269,7 @@
 .zoomed-image-name {
     color: white;
     margin-top: 20px;
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 18px; font-weight: 600;
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     background: rgba(0,0,0,0.5);
     padding: 8px 20px;
@@ -393,18 +377,14 @@
                                     <img src="{{ $avatarUrl }}"
                                          alt="{{ $fullNameWithOther }}"
                                          class="student-avatar avatar-clickable"
-                                         data-bs-toggle="modal"
-                                         data-bs-target="#imageZoomModal"
                                          data-image="{{ $avatarUrl }}"
                                          data-name="{{ $fullNameWithOther }}"
                                          data-admission="{{ $s->admissionNo ?? 'N/A' }}"
                                          data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
                                          data-gender="{{ $s->gender ?? 'N/A' }}"
-                                         style="cursor: pointer;">
+                                         style="cursor:pointer">
                                 @else
                                     <div class="avatar-placeholder avatar-clickable"
-                                         data-bs-toggle="modal"
-                                         data-bs-target="#imageZoomModal"
                                          data-name="{{ $fullNameWithOther }}"
                                          data-admission="{{ $s->admissionNo ?? 'N/A' }}"
                                          data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
@@ -444,6 +424,11 @@
                                 </div>
                             </td>
                             <td>
+                                {{--
+                                    FIX #2: data-bs-toggle / data-bs-target removed from the button.
+                                    The modal is opened via delegated JS click (see below) so it
+                                    works correctly after DataTable redraws.
+                                --}}
                                 <button type="button"
                                         class="btn btn-sm btn-primary open-pay-modal"
                                         data-id="{{ $s->id }}"
@@ -467,6 +452,7 @@
                     </tbody>
                 </table>
             </div>
+
         </div>
     </div>
 
@@ -487,7 +473,7 @@
                 <div class="ts-student-chip">
                     <div class="ts-chip-avatar" id="tsAvatarContainer">
                         <span id="tsInitials">—</span>
-                        <img id="tsAvatarImg" src="" alt="Student Avatar" style="display: none;">
+                        <img id="tsAvatarImg" src="" alt="Student Avatar" style="display:none">
                     </div>
                     <div>
                         <div class="ts-chip-name" id="tsName">—</div>
@@ -538,7 +524,7 @@
     </div>
 </div>
 
-{{-- IMAGE ZOOM MODAL — no data-bs-backdrop="static" so clicking outside dismisses it --}}
+{{-- IMAGE ZOOM MODAL --}}
 <div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content bg-transparent border-0">
@@ -552,13 +538,20 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{{--
+    FIX #1: jQuery is loaded here ONLY if the master layout does NOT already load it.
+    If your layouts/master.blade.php includes jQuery, remove the line below.
+    DataTables + Bootstrap5 JS are loaded after to guarantee correct init order.
+--}}
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function () {
-    // Initialize DataTable
+$(function () {
+
+    // ── DataTable ─────────────────────────────────────────────────────────
     $('#studentsTable').DataTable({
         pageLength: 25,
         order: [[2, 'asc']],
@@ -573,20 +566,20 @@ $(document).ready(function () {
         columnDefs: [{ orderable: false, targets: [1, 6, 7] }],
     });
 
-    // ── Image Zoom ────────────────────────────────────────────────────────
+    // ── Image zoom helpers ────────────────────────────────────────────────
 
     function buildInitialsDataUrl(initials) {
-        const canvas = document.createElement('canvas');
-        canvas.width = 400; canvas.height = 400;
-        const ctx = canvas.getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 400, 400);
-        gradient.addColorStop(0, '#667eea');
-        gradient.addColorStop(1, '#764ba2');
-        ctx.fillStyle = gradient;
+        var canvas  = document.createElement('canvas');
+        canvas.width = canvas.height = 400;
+        var ctx = canvas.getContext('2d');
+        var g   = ctx.createLinearGradient(0, 0, 400, 400);
+        g.addColorStop(0, '#667eea');
+        g.addColorStop(1, '#764ba2');
+        ctx.fillStyle = g;
         ctx.fillRect(0, 0, 400, 400);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
-        ctx.textAlign = 'center';
+        ctx.fillStyle    = '#ffffff';
+        ctx.font         = 'bold 160px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((initials || 'ST').substring(0, 2), 200, 200);
         return canvas.toDataURL();
@@ -594,106 +587,101 @@ $(document).ready(function () {
 
     function openZoomModal(imageUrl, name, admission, studentClass, gender, initials) {
         $('#zoomedImageName').text(name || 'Student Photo');
-        const genderIcon = (gender || '').toLowerCase() === 'male' ? 'mars' : 'venus';
+        var genderIcon = (gender || '').toLowerCase() === 'male' ? 'mars' : 'venus';
         $('#zoomedImageDetails').html(
-            `<i class="fas fa-id-card me-1"></i> ${admission || 'N/A'} &nbsp;|&nbsp;` +
-            `<i class="fas fa-school me-1"></i> ${studentClass || 'N/A'} &nbsp;|&nbsp;` +
-            `<i class="fas fa-${genderIcon} me-1"></i> ${gender || 'N/A'}`
+            '<i class="fas fa-id-card me-1"></i> ' + (admission || 'N/A') + ' &nbsp;|&nbsp;' +
+            '<i class="fas fa-school me-1"></i> ' + (studentClass || 'N/A') + ' &nbsp;|&nbsp;' +
+            '<i class="fas fa-' + genderIcon + ' me-1"></i> ' + (gender || 'N/A')
         );
-        const src = (imageUrl && imageUrl !== '' && imageUrl !== 'null')
+        var src = (imageUrl && imageUrl !== '' && imageUrl !== 'null')
             ? imageUrl
             : buildInitialsDataUrl(initials);
         $('#zoomedImage').attr('src', src).show();
-        $('#imageZoomModal').modal('show');
+        var zoomModal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+        zoomModal.show();
     }
 
-    function setupImageZoom() {
-        $('.avatar-clickable').off('click.zoom').on('click.zoom', function (e) {
-            e.stopPropagation();
-            openZoomModal(
-                $(this).data('image')    || '',
-                $(this).data('name')     || '',
-                $(this).data('admission')|| '',
-                $(this).data('class')    || '',
-                $(this).data('gender')   || '',
-                $(this).data('initials') || ''
-            );
-        });
-    }
+    // ── FIX #2: Use delegated events so handlers survive DataTable redraws ──
 
-    setupImageZoom();
-
-    // Close zoom by clicking the image itself
-    $(document).on('click', '.zoomed-image', function () {
-        $('#imageZoomModal').modal('hide');
+    // Avatar zoom — works on every page after draw
+    $(document).on('click', '.avatar-clickable', function (e) {
+        e.stopPropagation();
+        openZoomModal(
+            $(this).data('image')    || '',
+            $(this).data('name')     || '',
+            $(this).data('admission')|| '',
+            $(this).data('class')    || '',
+            $(this).data('gender')   || '',
+            $(this).data('initials') || ''
+        );
     });
 
-    // ── Open Payment Modal ────────────────────────────────────────────────
+    // Close zoom by clicking the enlarged image
+    $(document).on('click', '.zoomed-image', function () {
+        bootstrap.Modal.getInstance(document.getElementById('imageZoomModal'))?.hide();
+    });
 
-    document.querySelectorAll('.open-pay-modal').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const studentId       = this.dataset.id;
-            const studentName     = this.dataset.name;
-            const studentClass    = this.dataset.class;
-            const studentAdmission= this.dataset.admission;
-            const studentInitials = this.dataset.initials;
-            const studentAvatar   = this.dataset.avatar;
+    // Pay button — delegated so pagination/search redraws don't break it
+    $(document).on('click', '.open-pay-modal', function () {
+        var studentId        = $(this).data('id');
+        var studentName      = $(this).data('name');
+        var studentClass     = $(this).data('class');
+        var studentAdmission = $(this).data('admission');
+        var studentInitials  = $(this).data('initials');
+        var studentAvatar    = $(this).data('avatar');
 
-            document.getElementById('tsStudentId').value    = studentId;
-            document.getElementById('tsName').textContent   = studentName;
-            document.getElementById('tsClass').textContent  = studentClass;
-            document.getElementById('tsAdmission').textContent = studentAdmission;
+        $('#tsStudentId').val(studentId);
+        $('#tsName').text(studentName);
+        $('#tsClass').text(studentClass);
+        $('#tsAdmission').text(studentAdmission);
 
-            // Avatar in modal chip
-            const avatarContainer = document.getElementById('tsAvatarContainer');
-            const initialsSpan    = document.getElementById('tsInitials');
-            const avatarImg       = document.getElementById('tsAvatarImg');
+        // Avatar chip in modal
+        var $container   = $('#tsAvatarContainer');
+        var $initialsSpan = $('#tsInitials');
+        var $avatarImg    = $('#tsAvatarImg');
 
-            avatarContainer.setAttribute('data-name',      studentName);
-            avatarContainer.setAttribute('data-initials',  studentInitials);
-            avatarContainer.setAttribute('data-admission', studentAdmission);
-            avatarContainer.setAttribute('data-class',     studentClass);
+        $container
+            .data('name',      studentName)
+            .data('initials',  studentInitials)
+            .data('admission', studentAdmission)
+            .data('class',     studentClass);
 
-            avatarContainer.onclick = function (e) {
-                e.stopPropagation();
-                const hasImage = avatarImg.style.display === 'block'
-                              && avatarImg.src && avatarImg.src !== '';
-                openZoomModal(
-                    hasImage ? avatarImg.src : '',
-                    studentName, studentAdmission, studentClass, '', studentInitials
-                );
-            };
-
-            if (studentAvatar && studentAvatar !== '' && studentAvatar !== 'null') {
-                avatarImg.src = studentAvatar;
-                avatarImg.style.display = 'block';
-                initialsSpan.style.display = 'none';
-                avatarImg.onerror = function () {
-                    this.style.display = 'none';
-                    initialsSpan.style.display = 'flex';
-                    initialsSpan.textContent = studentInitials;
-                };
-            } else {
-                avatarImg.style.display = 'none';
-                initialsSpan.style.display = 'flex';
-                initialsSpan.textContent = studentInitials;
-            }
-
-            document.getElementById('tsTermId').value    = '';
-            document.getElementById('tsSessionId').value = '';
-            const proceedBtn = document.getElementById('tsProceedBtn');
-            proceedBtn.disabled = false;
-            proceedBtn.innerHTML = '<i class="ri-search-eye-line"></i> View Payment Details';
-
-            new bootstrap.Modal(document.getElementById('termSessionModal')).show();
+        // Clicking the chip avatar opens the zoom modal
+        $container.off('click.chipzoom').on('click.chipzoom', function (e) {
+            e.stopPropagation();
+            var hasImage = $avatarImg.is(':visible') && $avatarImg.attr('src') !== '';
+            openZoomModal(
+                hasImage ? $avatarImg.attr('src') : '',
+                studentName, studentAdmission, studentClass, '', studentInitials
+            );
         });
+
+        if (studentAvatar && studentAvatar !== '' && studentAvatar !== 'null') {
+            $avatarImg.attr('src', studentAvatar).show();
+            $initialsSpan.hide();
+            $avatarImg.off('error.avatar').on('error.avatar', function () {
+                $(this).hide().off('error.avatar');
+                $initialsSpan.text(studentInitials).show();
+            });
+        } else {
+            $avatarImg.hide();
+            $initialsSpan.text(studentInitials).show();
+        }
+
+        // Reset selects and button
+        $('#tsTermId, #tsSessionId').val('');
+        var $btn = $('#tsProceedBtn');
+        $btn.prop('disabled', false)
+            .html('<i class="ri-search-eye-line"></i> View Payment Details');
+
+        new bootstrap.Modal(document.getElementById('termSessionModal')).show();
     });
 
     // ── Term/Session form validation ──────────────────────────────────────
 
-    document.getElementById('tsForm').addEventListener('submit', function (e) {
-        const termid    = document.getElementById('tsTermId').value;
-        const sessionid = document.getElementById('tsSessionId').value;
+    $('#tsForm').on('submit', function (e) {
+        var termid    = $('#tsTermId').val();
+        var sessionid = $('#tsSessionId').val();
 
         if (!termid || !sessionid) {
             e.preventDefault();
@@ -707,15 +695,12 @@ $(document).ready(function () {
             return;
         }
 
-        const btn = document.getElementById('tsProceedBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+        var $btn = $('#tsProceedBtn');
+        $btn.prop('disabled', true)
+            .html('<span class="spinner-border spinner-border-sm me-2"></span>Loading...');
     });
 
-    // Re-attach zoom after DataTable redraws
-    $('#studentsTable').on('draw.dt', function () {
-        setupImageZoom();
-    });
 });
 </script>
+@endpush
 @endsection
