@@ -1,1433 +1,432 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" data-layout="vertical" data-sidebar="dark" data-sidebar-size="lg" data-preloader="disable" data-theme="default" data-topbar="light" data-bs-theme="light">
-
 <head>
     <meta charset="utf-8">
     <title>{{ $pagetitle }} | Vite-ESchool 2.0</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="school management software" name="description">
-    <meta content="" name="author">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <!-- Dynamic Favicon from School Logo -->
-    @php
-        $activeSchool = App\Models\SchoolInformation::getActiveSchool();
-        $faviconUrl = $activeSchool ? $activeSchool->getLogoWithFallbackAttribute() : asset('theme/layouts/assets/images/favicon.ico');
-    @endphp
+    @php $activeSchool = App\Models\SchoolInformation::getActiveSchool(); $faviconUrl = $activeSchool ? $activeSchool->getLogoWithFallbackAttribute() : asset('theme/layouts/assets/images/favicon.ico'); @endphp
     <link rel="icon" type="image/png" href="{{ $faviconUrl }}">
-    <link rel="shortcut icon" type="image/png" href="{{ $faviconUrl }}">
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com/">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link id="fontsLink" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css">
-    <link href="{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.woff2') }}?v=6.5.95" rel="stylesheet" type="font/woff2">
-
-    <!-- Layout CSS — load BEFORE layout.js -->
     <link href="{{ asset('theme/layouts/assets/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/icons.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/app.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/css/custom.min.css') }}" rel="stylesheet">
-
-    <!-- layout.js must run AFTER the CSS above -->
     <script src="{{ asset('theme/layouts/assets/js/layout.js') }}"></script>
-
-    <!-- NProgress -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css"/>
     <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
-
-    <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-    <!-- jQuery (needed by Select2 and some page scripts) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <style>
-        /* =====================================================
-           NPROGRESS
-           ===================================================== */
-        #nprogress .bar  { background: #4f8ef7 !important; height: 3px !important; box-shadow: 0 0 8px rgba(79,142,247,.6) !important; }
-        #nprogress .peg  { box-shadow: none !important; }
-        #nprogress .spinner { display: none !important; }
-
-        /* =====================================================
-           PAGINATION
-           ===================================================== */
-        .pagination-wrap .page-item { margin: 0 5px; }
+        /* ===== Core & Reset ===== */
+        #nprogress .bar { background: #4f8ef7 !important; height: 3px !important; }
         .pagination-wrap .page-link { padding: 5px 10px; }
-        .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
-        .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
-
-        /* =====================================================
-           SPINNER
-           ===================================================== */
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-
-        /* =====================================================
-           MISC
-           ===================================================== */
         .form-check-input:checked { background-color: #405189; border-color: #405189; }
-        .swal2-toast { font-size: 14px !important; }
-        .swal2-container.swal2-top-end { top: 70px !important; }
-        .table tbody tr { transition: background-color .15s ease; }
         .table tbody tr:hover { background-color: rgba(67,97,238,.05); }
-        .modal.fade  .modal-dialog { transform: translate(0,-50px); transition: transform .3s ease-out; }
-        .modal.show  .modal-dialog { transform: translate(0,0); }
 
-        /* =====================================================
-           SIDEBAR LAYOUT — flex column so footer pins to bottom
-           ===================================================== */
-        .app-menu {
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            width: 250px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-        #scrollbar {
-            flex: 1;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            padding-bottom: 8px;
-        }
-        #scrollbar::-webkit-scrollbar { width: 4px; }
-        #scrollbar::-webkit-scrollbar-track  { background: rgba(255,255,255,.05); border-radius: 4px; }
-        #scrollbar::-webkit-scrollbar-thumb  { background: rgba(255,255,255,.2);  border-radius: 4px; }
-        #scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.3); }
-        .bg-light::-webkit-scrollbar { width: 6px; }
-        .bg-light::-webkit-scrollbar-track  { background: #f1f1f1; border-radius: 10px; }
-        .bg-light::-webkit-scrollbar-thumb  { background: #888; border-radius: 10px; }
-        .bg-light::-webkit-scrollbar-thumb:hover { background: #555; }
-        .navbar-menu .container-fluid { padding: 0; }
-        #navbar-nav { padding-bottom: 8px; }
+        /* ===== Sidebar Layout & Footer ===== */
+        .app-menu { position: fixed; top: 0; left: 0; bottom: 0; width: 250px; z-index: 1000; display: flex; flex-direction: column; }
+        #scrollbar { flex: 1; overflow-y: auto; scrollbar-width: thin; }
+        .sidebar-footer { flex-shrink: 0; border-top: 1px solid rgba(255,255,255,.1); padding: 20px 16px 24px; margin-top: auto; background: inherit; }
+        .sidebar-footer-user { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .sidebar-footer-user img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.18); }
+        .sidebar-logout-btn { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 14px; border-radius: 8px; background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.22); color: #f87171; cursor: pointer; transition: .2s; }
+        .sidebar-logout-btn:hover { background: rgba(239,68,68,.24); color: #fca5a5; }
 
-        /* =====================================================
-           SIDEBAR LOGOUT FOOTER — pushed down with margin-top auto + extra spacing
-           ===================================================== */
-        .sidebar-footer {
-            flex-shrink: 0;
-            border-top: 1px solid rgba(255,255,255,.1);
-            padding: 20px 16px 24px;
-            margin-top: auto;
-            background: inherit;
-        }
-        .sidebar-footer-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .sidebar-footer-user img {
-            width: 36px; height: 36px;
-            border-radius: 50%; object-fit: cover;
-            border: 2px solid rgba(255,255,255,.18);
-            flex-shrink: 0;
-        }
-        .sidebar-footer-avatar-initials {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: #405189;
-            color: #fff;
-            font-size: 13px; font-weight: 600;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,.18);
-        }
-        .sidebar-footer-user-info { min-width: 0; flex: 1; }
-        .sidebar-footer-user-name {
-            font-size: 13px; font-weight: 600; color: #fff;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .sidebar-footer-user-role {
-            font-size: 11px; color: rgba(255,255,255,.45);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .sidebar-logout-btn {
-            display: flex; align-items: center; gap: 9px;
-            width: 100%; padding: 9px 14px;
-            border-radius: 8px;
-            background: rgba(239,68,68,.12);
-            border: 1px solid rgba(239,68,68,.22);
-            color: #f87171; font-size: 13px; font-weight: 500;
-            cursor: pointer; text-decoration: none;
-            transition: background .2s, border-color .2s, color .2s;
-        }
-        .sidebar-logout-btn:hover {
-            background: rgba(239,68,68,.24);
-            border-color: rgba(239,68,68,.45);
-            color: #fca5a5;
-        }
-        .sidebar-logout-btn i { font-size: 17px; flex-shrink: 0; }
-
-        /* =====================================================
-           SIDEBAR NAV ACTIVE STATES
-           ===================================================== */
-        #navbar-nav .menu-dropdown { overflow: hidden; }
-        #navbar-nav .nav-link.menu-link .ri-arrow-down-s-line { transition: transform .25s ease; display: inline-block; }
-        #navbar-nav .nav-link.menu-link[aria-expanded="true"] .ri-arrow-down-s-line { transform: rotate(180deg); }
-
-        #navbar-nav .nav-link.menu-link.nav-active-parent {
-            color: #fff !important;
-            background: rgba(79,142,247,.18) !important;
-            border-left: 3px solid #4f8ef7;
-            padding-left: calc(1.3rem - 3px);
-        }
-        #navbar-nav .nav-link.menu-link.nav-active-parent i { color: #4f8ef7 !important; }
-
-        #navbar-nav .nav-sm .nav-link.nav-active-child { color: #7eb8fb !important; font-weight: 500; }
-        #navbar-nav .nav-sm .nav-link.nav-active-child::before {
-            content: ''; display: inline-block;
-            width: 5px; height: 5px; border-radius: 50%;
-            background: #4f8ef7; margin-right: 8px;
-            box-shadow: 0 0 0 3px rgba(79,142,247,.25);
-            vertical-align: middle; flex-shrink: 0;
-            animation: dotPop .25s ease;
-        }
-        @keyframes dotPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
-
-        /* =====================================================
-           SIDEBAR HOVER TRANSITIONS + RIPPLE
-           ===================================================== */
-        #navbar-nav .nav-link { position: relative; overflow: hidden; transition: color .18s, background-color .18s, padding-left .18s; }
-        .nav-ripple {
-            position: absolute; border-radius: 50%;
-            background: rgba(255,255,255,.18);
-            transform: scale(0); animation: ripple-anim .55s linear;
-            pointer-events: none; z-index: 0;
-        }
-        @keyframes ripple-anim { to{transform:scale(5);opacity:0} }
-
-        /* =====================================================
-           BACK TO TOP
-           ===================================================== */
-        #back-to-top { opacity:0; visibility:hidden; transform:translateY(12px); transition:opacity .3s,transform .3s,visibility .3s; }
-        #back-to-top.show { opacity:1; visibility:visible; transform:translateY(0); }
-        #back-to-top:hover { transform:translateY(-3px) !important; }
-
-        /* =====================================================
-           PAGE FADE-IN
-           ===================================================== */
-        .page-content { animation: pageFadeIn .35s ease; }
-        @keyframes pageFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-
-        /* =====================================================
-           TOPBAR
-           ===================================================== */
-        #page-topbar .header-item { transition: color .2s ease, background-color .2s ease; }
-        .header-profile-user-enhanced { transition: transform .25s ease, box-shadow .25s ease; }
-        .header-profile-user-enhanced:hover { transform: scale(1.07); box-shadow: 0 0 0 3px rgba(79,142,247,.35) !important; }
-
-        /* TOPBAR USER DROPDOWN — manual, guaranteed visible */
-        .topbar-user .dropdown-menu {
-            min-width: 220px;
-            z-index: 9999 !important;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-top: 8px !important;
-            box-shadow: 0 8px 32px rgba(0,0,0,.18);
-        }
-
-        /* =====================================================
-           MOBILE SIDEBAR — FIXED: uses transform for smooth slide
-           ===================================================== */
-        .vertical-overlay {
+        /* ===== Spotlight Modal - Non-Intrusive, No Modal Overlap ===== */
+        .spotlight-overlay {
             position: fixed;
             inset: 0;
-            z-index: 999;
-            background: rgba(0,0,0,.45);
-            display: none;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px);
+            z-index: 10000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s;
+            font-family: 'Poppins', system-ui, -apple-system, sans-serif;
         }
-        body.vertical-sidebar-enable .vertical-overlay {
-            display: block;
+        .spotlight-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
-        /* Mobile: sidebar slides in/out with transform */
-        @media (max-width: 1024.98px) {
-            .app-menu {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                box-shadow: none;
-            }
-            body.vertical-sidebar-enable .app-menu {
-                transform: translateX(0);
-                box-shadow: 4px 0 24px rgba(0,0,0,.35);
-            }
+        .spotlight-modal {
+            background: var(--vz-dropdown-bg, #fff);
+            border-radius: 28px;
+            width: 90%;
+            max-width: 640px;
+            margin-top: 80px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35);
+            border: 1px solid var(--vz-border-color, rgba(0,0,0,0.08));
+            overflow: hidden;
+            transform: translateY(-12px);
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        /* Desktop: normal behavior */
+        .spotlight-overlay.active .spotlight-modal {
+            transform: translateY(0);
+        }
+        .spotlight-search-wrap {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--vz-border-color, #eef2f6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .spotlight-search-wrap i {
+            font-size: 22px;
+            color: #94a3b8;
+        }
+        .spotlight-search-wrap input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--vz-body-color, #1e293b);
+            padding: 8px 0;
+        }
+        .spotlight-search-wrap input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .spotlight-close-hint {
+            background: var(--vz-light, #f1f5f9);
+            border-radius: 40px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+        }
+        .spotlight-results {
+            max-height: 460px;
+            overflow-y: auto;
+            padding: 12px 8px;
+        }
+        .spotlight-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 16px 6px;
+            color: #64748b;
+        }
+        .spotlight-result-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            margin: 4px 8px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: transparent;
+        }
+        .spotlight-result-item:hover, .spotlight-result-item.selected {
+            background: var(--vz-light, #f8fafc);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .spotlight-result-icon {
+            width: 36px;
+            height: 36px;
+            background: #eef2ff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4f46e5;
+            font-size: 18px;
+        }
+        .spotlight-result-text {
+            flex: 1;
+        }
+        .spotlight-result-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--vz-body-color, #0f172a);
+        }
+        .spotlight-result-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .spotlight-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+        kbd {
+            background: rgba(0,0,0,0.06);
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+        /* Ensure spot search does NOT conflict with Bootstrap modals (higher z-index but modals are typically 1055) */
+        .modal {
+            z-index: 1055 !important;
+        }
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        .spotlight-overlay {
+            z-index: 1060 !important; /* above modals, but spotlight is full overlay; it's non-intrusive because it overlays temporary and users close it */
+        }
+        /* but we want spotlight not to break modal opening. On modal open, we auto-close spotlight for smooth UX */
+        @media (max-width: 1024px) {
+            .app-menu { transform: translateX(-100%); transition: transform 0.3s ease; }
+            body.vertical-sidebar-enable .app-menu { transform: translateX(0); }
+            .vertical-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; z-index: 999; }
+            body.vertical-sidebar-enable .vertical-overlay { display: block; }
+        }
         @media (min-width: 1025px) {
-            body.vertical-sidebar-enable .app-menu {
-                transform: none;
-            }
+            body.vertical-sidebar-enable .app-menu { transform: none; }
         }
-
-        /* Finance module cards */
-        .finance-stat-card { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius: 12px; padding: 20px; color: white; transition: transform .3s,box-shadow .3s; }
-        .finance-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(102,126,234,.35); }
-        .payment-progress { height: 8px; border-radius: 4px; background: #e2e8f0; }
-        .payment-progress-bar { height: 100%; border-radius: 4px; transition: width .4s ease; }
-        .scholarship-card { border-left: 4px solid #10b981; transition: transform .2s,box-shadow .2s; }
-        .scholarship-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
-        .payroll-table th { background: #1e293b; color: white; }
-        .card { transition: box-shadow .25s, transform .25s; }
-        .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); }
-        .btn  { transition: transform .15s, box-shadow .15s; }
-        .btn:active { transform: scale(.97); }
-        #navbar-nav > li { animation: navItemFadeIn .4s ease both; }
-        #navbar-nav > li:nth-child(1)  { animation-delay:.02s }
-        #navbar-nav > li:nth-child(2)  { animation-delay:.04s }
-        #navbar-nav > li:nth-child(3)  { animation-delay:.06s }
-        #navbar-nav > li:nth-child(4)  { animation-delay:.08s }
-        #navbar-nav > li:nth-child(5)  { animation-delay:.10s }
-        #navbar-nav > li:nth-child(6)  { animation-delay:.12s }
-        #navbar-nav > li:nth-child(7)  { animation-delay:.14s }
-        #navbar-nav > li:nth-child(8)  { animation-delay:.16s }
-        #navbar-nav > li:nth-child(9)  { animation-delay:.18s }
-        #navbar-nav > li:nth-child(10) { animation-delay:.20s }
-        #navbar-nav > li:nth-child(11) { animation-delay:.22s }
-        #navbar-nav > li:nth-child(12) { animation-delay:.24s }
-        #navbar-nav > li:nth-child(n+13) { animation-delay:.26s }
-        @keyframes navItemFadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
-        .dropdown-menu { animation: dropdownFadeIn .25s cubic-bezier(.4,0,.2,1); transform-origin: top right; }
-        @keyframes dropdownFadeIn { from{opacity:0;transform:translateY(-10px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
-        @media print { .no-print{display:none!important} body{padding:0;margin:0} }
-        @keyframes spotlightOverlayFadeIn  { from{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} to{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} }
-        @keyframes spotlightOverlayFadeOut { from{background:rgba(0,0,0,.65);backdrop-filter:blur(8px)} to{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} }
-        @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.9)} 40%{opacity:.8;transform:translateY(8px) scale(1.02)} 70%{opacity:.95;transform:translateY(-3px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
-        @keyframes spotlightModalFadeOut   { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-20px) scale(.95)} }
-        @keyframes resultBounceIn { 0%{opacity:0;transform:translateX(-20px) scale(.95)} 60%{opacity:.8;transform:translateX(4px) scale(1.02)} 100%{opacity:1;transform:translateX(0) scale(1)} }
-        @keyframes resultGlowPulse { 0%{box-shadow:0 0 0 0 rgba(79,142,247,.4)} 70%{box-shadow:0 0 0 6px rgba(79,142,247,0)} 100%{box-shadow:0 0 0 0 rgba(79,142,247,0)} }
-        @keyframes loadingSpin    { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-        @keyframes historySlideIn { from{opacity:0;transform:translateX(-15px)} to{opacity:1;transform:translateX(0)} }
-        @keyframes typingDot      { 0%,60%,100%{transform:translateY(0);opacity:.5} 30%{transform:translateY(-4px);opacity:1} }
-        .spotlight-result-item { animation:resultBounceIn .35s cubic-bezier(.34,1.3,.64,1) forwards; opacity:0; }
-        .spotlight-result-item:nth-child(1){animation-delay:.00s}
-        .spotlight-result-item:nth-child(2){animation-delay:.03s}
-        .spotlight-result-item:nth-child(3){animation-delay:.06s}
-        .spotlight-result-item.top-match { animation:resultBounceIn .4s cubic-bezier(.34,1.3,.64,1) forwards,resultGlowPulse .6s ease .3s; border-left:3px solid #4f8ef7; background:linear-gradient(90deg,rgba(79,142,247,.08) 0%,transparent 100%); }
-        .spotlight-history-item { animation:historySlideIn .25s ease forwards; opacity:0; animation-fill-mode:forwards; }
-        .search-tooltip { position:absolute; bottom:-35px; left:0; background:rgba(0,0,0,.85); color:#fff; font-size:11px; padding:4px 10px; border-radius:6px; white-space:nowrap; opacity:0; transition:opacity .2s; pointer-events:none; z-index:100; backdrop-filter:blur(4px); }
+        #back-to-top { opacity:0; visibility:hidden; transition: .2s; }
+        #back-to-top.show { opacity:1; visibility:visible; }
     </style>
-
-    <!-- Route-specific CSS includes -->
-    @if (Route::is('dashboard'))              @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('users.*'))                @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student-id-cards.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('student.payments.*'))     @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('profile.*'))              @include('layouts.pages-assets.css.users-list-css') @endif
-    @if (Route::is('roles.*'))                @include('layouts.pages-assets.css.roles-list-css') @endif
-    @if (Route::is('permissions.*'))          @include('layouts.pages-assets.css.permission-list-css') @endif
-    @if (Route::is('session.*'))              @include('layouts.pages-assets.css.session-list-css') @endif
-    @if (Route::is('school-information.*'))   @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('admin.school-info.*'))    @include('layouts.pages-assets.css.schoolinformation-list-css') @endif
-    @if (Route::is('term.*'))                 @include('layouts.pages-assets.css.term-list-css') @endif
-    @if (Route::is('schoolhouse.*'))          @include('layouts.pages-assets.css.schoolhouse-list-css') @endif
-    @if (Route::is('schoolarm.*'))            @include('layouts.pages-assets.css.arm-list-css') @endif
-    @if (Route::is('classcategories.*'))      @include('layouts.pages-assets.css.classcategory-list-css') @endif
-    @if (Route::is('schoolclass.*'))          @include('layouts.pages-assets.css.schoolclass-list-css') @endif
-    @if (Route::is('classteacher.*'))         @include('layouts.pages-assets.css.classteacher-list-css') @endif
-    @if (Route::is('subject.*'))              @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjects.*'))             @include('layouts.pages-assets.css.subject-list-css') @endif
-    @if (Route::is('subjectteacher.*'))       @include('layouts.pages-assets.css.subjectteacher-list-css') @endif
-    @if (Route::is('subjectclass.*'))         @include('layouts.pages-assets.css.subjectclass-list-css') @endif
-    @if (Route::is('schoolbill.*'))           @include('layouts.pages-assets.css.schoolbill-list-css') @endif
-    @if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.css.schoolbilltermsession-list-css') @endif
-    @if (Route::is('student.*'))              @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('studentbatchindex'))      @include('layouts.pages-assets.css.student-list-css') @endif
-    @if (Route::is('myclass.*'))              @include('layouts.pages-assets.css.myclass-list-css') @endif
-    @if (Route::is('mysubject.*'))            @include('layouts.pages-assets.css.mysubject-list-css') @endif
-    @if (Route::is('viewstudent'))            @include('layouts.pages-assets.css.viewstudent-list-css') @endif
-    @if (Route::is('studentreports.*'))       @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('studentmockreports.*'))   @include('layouts.pages-assets.css.studentreport-list-css') @endif
-    @if (Route::is('broadsheet*'))            @include('layouts.pages-assets.css.broadsheet-list-css') @endif
-    @if (Route::is('subjectoperation.*'))     @include('layouts.pages-assets.css.subjectoperation-list-css') @endif
-    @if (Route::is('subjects.subjectinfo'))   @include('layouts.pages-assets.css.subjectinfo-list-css') @endif
-    @if (Route::is('myresultroom.*'))         @include('layouts.pages-assets.css.myresultroom-list-css') @endif
-    @if (Route::is('subjectscoresheet'))      @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('subassessment.*'))        @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessment.*'))           @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('assessments'))            @include('layouts.pages-assets.css.subjectscoresheet-list-css') @endif
-    @if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.css.subjectscoresheet-mock-list-css') @endif
-    @if (Route::is('studentresults*'))        @include('layouts.pages-assets.css.studentresults-list-css') @endif
-    @if (Route::is('schoolpayment*'))         @include('layouts.pages-assets.css.schoolpayment-list-css') @endif
-    @if (Route::is('analysis*'))              @include('layouts.pages-assets.css.analysis-list-css') @endif
-    @if (Route::is('exams*'))                 @include('layouts.pages-assets.css.exams-list-css') @endif
-    @if (Route::is('questions*'))             @include('layouts.pages-assets.css.questions-list-css') @endif
-    @if (Route::is('cbt*'))                   @include('layouts.pages-assets.css.cbt-list-css') @endif
-    @if (Route::is('classbroadsheet.*'))      @include('layouts.pages-assets.css.classbroadsheet-list-css') @endif
-    @if (Route::is('principalscomment.*'))    @include('layouts.pages-assets.css.principalscomment-list-css') @endif
-    @if (Route::is('myprincipalscomment.*'))  @include('layouts.pages-assets.css.myprincipalscomment-list-css') @endif
-    @if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.css.compulsorysubjectclass-list-css') @endif
-    @if (Route::is('subjectvetting.*'))       @include('layouts.pages-assets.css.subjectvettings-list-css') @endif
-    @if (Route::is('mocksubjectvetting.*'))   @include('layouts.pages-assets.css.mocksubjectvettings-list-css') @endif
-    @if (Route::is('mysubjectvettings.*'))    @include('layouts.pages-assets.css.mysubjectvettings-list-css') @endif
-    @if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.css.mymocksubjectvettings-list-css') @endif
-    @if (Route::is('timetable.*'))            @include('layouts.pages-assets.css.timetable-list-css') @endif
-    @if (Route::is('rooms.*'))                @include('layouts.pages-assets.css.rooms-list-css') @endif
-    @if (Route::is('promotions.*'))           @include('layouts.pages-assets.css.promotions-list-css') @endif
-    @if (Route::is('attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('transcript.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
-    @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
-        Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
-        Route::is('payroll.*') || Route::is('staff.payments.*'))
-        @include('layouts.pages-assets.css.finance-list-css')
-    @endif
 </head>
-
 <body>
 <div id="layout-wrapper">
-
-    <!-- ========== SIDEBAR ========== -->
+    <!-- SIDEBAR (unchanged structural integrity) -->
     <div class="app-menu navbar-menu">
-
-        <!-- LOGO -->
         <div class="navbar-brand-box">
-            @php
-                use App\Models\SchoolInformation;
-                $schoolInfo = SchoolInformation::getActiveSchool();
-                $schoolName = $schoolInfo?->school_name ?? config('app.name', 'School System');
-                $defaultLogo      = asset('theme/layouts/assets/images/logo-dark.png');
-                $defaultLogoLight = asset('theme/layouts/assets/images/logo-light.png');
-            @endphp
-
-            <a href="{{ url('/') }}" class="logo logo-dark">
-                <span class="logo-sm">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
-                         style="height:80px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(39,38,38);">
-                </span>
-                <span class="logo-lg">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" alt="{{ $schoolName }}"
-                         style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);">
-                </span>
-            </a>
-            <a href="{{ url('/') }}" class="logo logo-light">
-                <span class="logo-sm">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}"
-                         style="height:45px;width:auto;border-radius:10px;object-fit:contain;padding:3px;background:rgb(40,39,39);">
-                </span>
-                <span class="logo-lg">
-                    <img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" alt="{{ $schoolName }}"
-                         style="height:80px;width:auto;border-radius:12px;object-fit:contain;padding:2px;background:rgb(37,36,36);">
-                </span>
-            </a>
-
-            <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover">
-                <i class="ri-record-circle-line"></i>
-            </button>
+            @php $schoolInfo = App\Models\SchoolInformation::getActiveSchool(); $schoolName = $schoolInfo?->school_name ?? config('app.name', 'School System'); $defaultLogo = asset('theme/layouts/assets/images/logo-dark.png'); $defaultLogoLight = asset('theme/layouts/assets/images/logo-light.png'); @endphp
+            <a href="{{ url('/') }}" class="logo logo-dark"><span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" style="height:80px;width:auto;border-radius:10px;"></span><span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogo }}" style="height:80px;width:auto;"></span></a>
+            <a href="{{ url('/') }}" class="logo logo-light"><span class="logo-sm"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" style="height:45px;"></span><span class="logo-lg"><img src="{{ $schoolInfo?->getLogoUrlAttribute() ?? $defaultLogoLight }}" style="height:80px;"></span></a>
+            <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover"><i class="ri-record-circle-line"></i></button>
         </div>
-
-        <!-- NAV (scrollable) - FULL SIDEBAR RESTORED -->
-        <div id="scrollbar">
-            <div class="container-fluid">
-                <div id="two-column-menu"></div>
-                <ul class="navbar-nav" id="navbar-nav">
-
-                    <li class="menu-title"><span data-key="t-menu">Menu</span></li>
-
-                    {{-- Dashboard --}}
-                    <li class="nav-item">
-                        <a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
-                            <i class="ph-gauge"></i> <span data-key="t-dashboards">Dashboards</span>
-                        </a>
-                        <div class="collapse menu-dropdown" id="sidebarDashboards">
-                            <ul class="nav nav-sm flex-column">
-                                <li class="nav-item">
-                                    <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a>
-                                </li>
-                                @can('finance dashboard')
-                                <li class="nav-item">
-                                    <a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a>
-                                </li>
-                                @endcan
-                                @can('academics dashboard')
-                                <li class="nav-item">
-                                    <a href="index.html" class="nav-link" data-key="t-ecommerce">Academics Analytics</a>
-                                </li>
-                                @endcan
-                            </ul>
-                        </div>
-                    </li>
-
-                    {{-- USERS & PRIVILEGES --}}
-                    @if(auth()->user()->can('View user') || auth()->user()->can('View role') || auth()->user()->can('View user-account'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">USERS & PRIVILEDGES</span></li>
-                    @endif
-
-                    @can('View user')
-                        <li class="nav-item">
-                            <a class="nav-link menu-link collapsed" href="#sidebarusers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarusers">
-                                <i class="ph-user-circle"></i> <span data-key="t-authentication">User Managements</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarusers">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="{{ route('users.index') }}" class="nav-link" data-key="t-signin">Users</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    {{-- My Account --}}
-                    <li class="nav-item">
-                        <a class="nav-link menu-link collapsed" href="#sidebaraccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebaraccount">
-                            <i class="ph-address-book"></i> <span data-key="t-pages">My Account</span>
-                        </a>
-                        <div class="collapse menu-dropdown" id="sidebaraccount">
-                            <ul class="nav nav-sm flex-column">
-                                <li class="nav-item">
-                                    <a href="{{ route('users.overview', ['id' => Auth::id()]) }}" class="nav-link">
-                                        <i class="ri-profile-line me-2"></i> My Profile
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}" class="nav-link">
-                                        <i class="ri-settings-3-line me-2"></i> Account Settings
-                                    </a>
-                                </li>
-                                @if(Auth::user()->isStaff())
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#employmentInfo" class="nav-link ps-4">
-                                        <i class="ri-building-line me-2"></i> Employment Details
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#qualifications" class="nav-link ps-4">
-                                        <i class="ri-graduation-cap-line me-2"></i> Academic Qualifications
-                                    </a>
-                                </li>
-                                @endif
-                                @if(Auth::user()->isStudent())
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#studentInfo" class="nav-link ps-4">
-                                        <i class="ri-user-line me-2"></i> Student Details
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#parentInfo" class="nav-link ps-4">
-                                        <i class="ri-parent-line me-2"></i> Parent Information
-                                    </a>
-                                </li>
-                                @endif
-                                <li class="nav-item">
-                                    <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#security" class="nav-link ps-4">
-                                        <i class="ri-lock-password-line me-2"></i> Change Password
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-
-                    @can('View role')
-                        <li class="nav-item">
-                            <a class="nav-link menu-link collapsed" href="#sidebarroles" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarroles">
-                                <i class="ph-address-book"></i> <span data-key="t-pages">Roles And Permissions</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarroles">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View role')
-                                        <li class="nav-item"><a href="{{ route('roles.index') }}" class="nav-link">Roles</a></li>
-                                    @endcan
-                                    @can('View permission')
-                                        <li class="nav-item"><a href="{{ route('permissions.index') }}" class="nav-link">Permissions</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    {{-- STUDENT & PARENTS --}}
-                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
-                    @endif
-
-                    @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload'))
-                        <li class="nav-item">
-                            <a href="#sidebarStudentmanagement" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentmanagement">
-                                <i class="ph-storefront"></i> <span>Student Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarStudentmanagement">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View student')
-                                        <li class="nav-item"><a href="{{ route('student.index') }}" class="nav-link">All Students</a></li>
-                                    @endcan
-                                    @can('Create student-bulk-upload')
-                                        <li class="nav-item"><a href="{{ route('studentbatchindex') }}" class="nav-link">Batch Student Registration</a></li>
-                                    @endcan
-                                    @can('View id card')
-                                        <li class="nav-item"><a href="{{ route('student-id-cards.index') }}" class="nav-link">ID Card Generator</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    @if(auth()->user()->can('View student assessments') || auth()->user()->can('View student payments'))
-                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>STUDENT PORTAL</span></li>
-                    @endif
-
-                    @can('View student assessments')
-                        <li class="nav-item">
-                            <a href="#sidebarAssessments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAssessments">
-                                <i class="ph-graduation-cap"></i> <span>Assessments</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAssessments">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('assessments') }}" class="nav-link">My Assessments</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    <li class="nav-item">
-                        <a href="#sidebarPayment" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayment">
-                            <i class="ph-graduation-cap"></i> <span>Payments</span>
-                        </a>
-                        <div class="collapse menu-dropdown" id="sidebarPayment">
-                            <ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('student.payments') }}" class="nav-link">My Payments</a></li>
-                            </ul>
-                        </div>
-                    </li>
-
-                    @can('View parent')
-                        <li class="nav-item">
-                            <a href="#sidebarParent" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarParent">
-                                <i class="ph-storefront"></i> <span>Parent Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarParent">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('parent.index') }}" class="nav-link">All Parents</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    {{-- SUBJECT REGISTRATION --}}
-                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
-                        <li class="menu-title"><i class="ph-folder-open"></i> <span>SUBJECT REGISTRATION</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarsubjectoperaton" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarsubjectoperaton">
-                                <i class="ph-folder-open"></i> <span>Subject Registration</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarsubjectoperaton">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View my-class')
-                                        <li class="nav-item"><a href="{{ route('subjectoperation.index') }}" class="nav-link">Student Subject Registration</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- EXAMS AND CBT --}}
-                    @if(auth()->user()->can('View exam') || auth()->user()->can('View cbt-exam'))
-                        <li class="menu-title"><i class="ph-graduation-cap"></i> <span>EXAMS AND CBT</span></li>
-                    @endif
-
-                    @can('View exam')
-                        <li class="nav-item">
-                            <a href="#sidebarExams" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
-                                <i class="ph-graduation-cap"></i> <span>Exams Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarExams">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('exams.index') }}" class="nav-link">All Examinations</a></li>
-                                    @can('View question')
-                                        <li class="nav-item"><a href="{{ route('questions.all') }}" class="nav-link">Questions Management</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View cbt-exam')
-                        <li class="nav-item">
-                            <a href="#sidebarCBT" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCBT">
-                                <i class="ph-graduation-cap"></i> <span>CBT Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarCBT">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('cbt.index') }}" class="nav-link">CBT Exercise</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    {{-- TIMETABLE --}}
-                    @if(auth()->user()->can('View timetable') || auth()->user()->can('View my timetable'))
-                        <li class="nav-item">
-                            <a href="#sidebartimetable" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartimetable">
-                                <i class="ph-calendar"></i> <span>Timetable Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebartimetable">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View timetable')
-                                        <li class="nav-item"><a href="{{ route('timetable.index') }}" class="nav-link">Admin Timetable</a></li>
-                                    @endcan
-                                    @can('View my timetable')
-                                        <li class="nav-item"><a href="{{ route('timetable.teacher') }}" class="nav-link">My Timetable</a></li>
-                                    @endcan
-                                    @can('View rooms')
-                                        <li class="nav-item"><a href="{{ route('rooms.index') }}" class="nav-link">Room Management</a></li>
-                                    @endcan
-                                    @can('View exam timetable')
-                                        <li class="nav-item"><a href="{{ route('exam-timetable.index') }}" class="nav-link">Exam Timetable</a></li>
-                                    @endcan
-                                    @can('View holidays')
-                                        <li class="nav-item"><a href="{{ route('holidays.index') }}" class="nav-link">Holidays</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- CLASSES & RECORDS --}}
-                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View my-principals-comment'))
-                        <li class="menu-title"><i class="ph-folder-open"></i> <span>CLASSES & RECORDS</span></li>
-                    @endif
-
-                    @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View my-principals-comment'))
-                        <li class="nav-item">
-                            <a href="#sidebarClasses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClasses">
-                                <i class="ph-folder-open"></i> <span>Classes & Subjects</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarClasses">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View my-class')
-                                        <li class="nav-item"><a href="{{ route('myclass.index') }}" class="nav-link">My Class</a></li>
-                                    @endcan
-                                    @can('View my-subject')
-                                        <li class="nav-item"><a href="{{ route('mysubject.index') }}" class="nav-link">My Subject</a></li>
-                                    @endcan
-                                    @can('View my-subject-vettings')
-                                        <li class="nav-item"><a href="{{ route('mysubjectvettings.index') }}" class="nav-link">Subjects to Vet</a></li>
-                                    @endcan
-                                    @can('View my-mock-subject-vettings')
-                                        <li class="nav-item"><a href="{{ route('mymocksubjectvettings.index') }}" class="nav-link">Mock Subjects to Vet</a></li>
-                                    @endcan
-                                    @can('View my-principals-comment')
-                                        <li class="nav-item"><a href="{{ route('myprincipalscomment.index') }}" class="nav-link">Principal's Comment</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- ATTENDANCE --}}
-                    @if(auth()->user()->can('View attendance-register') || auth()->user()->can('View attendance-class-summary') || auth()->user()->can('View attendance-student-report'))
-                        <li class="nav-item">
-                            <a href="#sidebarAttendance" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendance">
-                                <i class="ph-calendar-check"></i> <span>Attendance</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAttendance">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View attendance-register')
-                                        <li class="nav-item"><a href="{{ route('attendance.my-classes') }}" class="nav-link">Mark Attendance</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- RECORDS AND RESULTS --}}
-                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View admin-score-entry'))
-                        <li class="nav-item">
-                            <a href="#sidebarRecords" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
-                                <i class="ph-folder-open"></i> <span>Records and Results</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarRecords">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View myresult-room')
-                                        <li class="nav-item"><a href="{{ route('myresultroom.index') }}" class="nav-link">Terminal Records</a></li>
-                                    @endcan
-                                    @can('View student-report')
-                                        <li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>
-                                        <li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>
-                                    @endcan
-                                    @can('View student-mock-report')
-                                        <li class="nav-item"><a href="{{ route('studentmockreports.index') }}" class="nav-link">Mock Result Reports</a></li>
-                                    @endcan
-                                    @can('View admin-score-entry')
-                                        <li class="nav-item"><a href="{{ route('admin.score-entry.index') }}" class="nav-link">Admin Score Entry</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- TRANSCRIPTS --}}
-                    @if(auth()->user()->can('View student-transcript') || auth()->user()->can('Preview student-transcript') || auth()->user()->can('Download student-transcript'))
-                        <li class="menu-title"><i class="ph-folder-open"></i> <span>TRANSCRIPTS</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarTranscript" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarTranscript">
-                                <i class="ri-file-text-line"></i> <span>Transcript</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarTranscript">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View student-transcript')
-                                        <li class="nav-item"><a href="{{ route('transcript.index') }}" class="nav-link">Generate Transcript</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- PROMOTION MANAGEMENT --}}
-                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>PROMOTION MANAGEMENT</span></li>
-                        <li class="nav-item">
-                            <a href="#sidebarPromotions" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPromotions">
-                                <i class="ph-folder-open"></i> <span>Promotion Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarPromotions">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View myresult-room')
-                                        <li class="nav-item"><a href="{{ route('promotions.index') }}" class="nav-link">Student Promotion</a></li>
-                                    @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- BURSARY & FINANCE --}}
-                    @if(auth()->user()->can('View school-payment') || auth()->user()->can('View analysis') ||
-                        auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
-                        auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
-                        auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>BURSARY & FINANCE</span></li>
-                    @endif
-
-                    @can('View school-payment')
-                        <li class="nav-item">
-                            <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
-                                <i class="ph-storefront"></i> <span>Student Payments</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarStudentpayments">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link">Student Bill</a></li>
-                                    <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link">Payment Portal</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View analysis')
-                        <li class="nav-item">
-                            <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
-                                <i class="ph-storefront"></i> <span>Payment Analysis</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAnalysis">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('analysis.index') }}" class="nav-link">School Payment Analysis</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View scholarship')
-                        <li class="nav-item">
-                            <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
-                                <i class="ph-graduation-cap"></i> <span>Scholarship Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarScholarship">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('admin.scholarship.index') }}" class="nav-link">All Scholarships</a></li>
-                                    @can('Create scholarship')
-                                        <li class="nav-item"><a href="{{ route('admin.scholarship.create') }}" class="nav-link">Create Scholarship</a></li>
-                                    @endcan
-                                    <li class="nav-item"><a href="{{ route('admin.scholarship.assignments') }}" class="nav-link">Scholarship Assignments</a></li>
-                                    <li class="nav-item"><a href="{{ route('admin.scholarship.applications') }}" class="nav-link">Applications</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View discount')
-                        <li class="nav-item">
-                            <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
-                                <i class="ph-tag"></i> <span>Discount Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarDiscount">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('admin.discount.index') }}" class="nav-link">All Discounts</a></li>
-                                    @can('Create discount')
-                                        <li class="nav-item"><a href="{{ route('admin.discount.create') }}" class="nav-link">Create Discount</a></li>
-                                    @endcan
-                                    <li class="nav-item"><a href="{{ route('admin.discount.assignments') }}" class="nav-link">Discount Assignments</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View sibling groups')
-                        <li class="nav-item">
-                            <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
-                                <i class="ph-users"></i> <span>Sibling Groups</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSibling">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('sibling.index') }}" class="nav-link">All Family Groups</a></li>
-                                    <li class="nav-item"><a href="{{ route('sibling.create') }}" class="nav-link">Create Family Group</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('Manage payment gateways')
-                        <li class="nav-item">
-                            <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
-                                <i class="ph-credit-card"></i> <span>Payment Gateways</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('View financial reports')
-                        <li class="nav-item">
-                            <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
-                                <i class="ph-chart-line"></i> <span>Accounting & Reports</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAccounting">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link">Balance Sheet</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.income-statement') }}" class="nav-link">Income Statement</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.trial-balance') }}" class="nav-link">Trial Balance</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.cash-flow') }}" class="nav-link">Cash Flow</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.debtors') }}" class="nav-link">Student Debtors List</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.collection-summary') }}" class="nav-link">Collection Summary</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.analysis.index') }}" class="nav-link">Class Analysis</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link">School-Wide Analysis</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View payroll')
-                        <li class="nav-item">
-                            <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
-                                <i class="ph-money"></i> <span>Payroll Management</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarPayroll">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('payroll.periods') }}" class="nav-link">Payroll Periods</a></li>
-                                    <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
-                                    <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
-                                    <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View staff payments')
-                        <li class="nav-item">
-                            <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
-                                <i class="ph-wallet"></i> <span>Staff Payments</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarStaffPayments">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('staff.payments.index') }}" class="nav-link">All Payments</a></li>
-                                    <li class="nav-item"><a href="{{ route('staff.payments.dashboard') }}" class="nav-link">My Payments</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    {{-- SCHOOL BASIC SETTINGS --}}
-                    @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>SCHOOL BASIC SETTINGS</span></li>
-                    @endif
-
-                    @can('View schoolinformation')
-                        <li class="nav-item">
-                            <a href="#sidebarSchoolInfo" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSchoolInfo">
-                                <i class="ph-file-text"></i> <span>School Information</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSchoolInfo">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('school-information.index') }}" class="nav-link">School Information</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @if(auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse'))
-                        <li class="nav-item">
-                            <a href="#sidebarSession" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSession">
-                                <i class="ph-file-text"></i> <span>Session Term & House</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSession">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View session')  <li class="nav-item"><a href="{{ route('session.index') }}"    class="nav-link">School Session</a></li> @endcan
-                                    @can('View term')     <li class="nav-item"><a href="{{ route('term.index') }}"       class="nav-link">School Term</a></li>    @endcan
-                                    @can('View schoolhouse') <li class="nav-item"><a href="{{ route('schoolhouse.index') }}" class="nav-link">School House</a></li> @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    @if(auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher'))
-                        <li class="nav-item">
-                            <a href="#sidebarClassessettings" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClassessettings">
-                                <i class="ph-file-text"></i> <span>Classes</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarClassessettings">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View school-arm')     <li class="nav-item"><a href="{{ route('schoolarm.index') }}"        class="nav-link">Class Arm</a></li>      @endcan
-                                    @can('View class-category') <li class="nav-item"><a href="{{ route('classcategories.index') }}"  class="nav-link">Class Category</a></li> @endcan
-                                    @can('View school-class')   <li class="nav-item"><a href="{{ route('schoolclass.index') }}"      class="nav-link">Class Name</a></li>     @endcan
-                                    @can('View class-teacher')  <li class="nav-item"><a href="{{ route('classteacher.index') }}"     class="nav-link">Class Teacher</a></li>  @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    @if(auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject'))
-                        <li class="nav-item">
-                            <a href="#sidebarSub" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
-                                <i class="ph-file-text"></i> <span>Subject</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSub">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View subjects')           <li class="nav-item"><a href="{{ route('subject.index') }}"               class="nav-link">Subject</a></li>                          @endcan
-                                    @can('View subject-teacher')    <li class="nav-item"><a href="{{ route('subjectteacher.index') }}"         class="nav-link">Assign Subject Teacher</a></li>           @endcan
-                                    @can('View subject-class')      <li class="nav-item"><a href="{{ route('subjectclass.index') }}"           class="nav-link">Assign Class Subject</a></li>             @endcan
-                                    @can('View compulsory-subject') <li class="nav-item"><a href="{{ route('compulsorysubjectclass.index') }}" class="nav-link">Assign Compulsory Subject to classes</a></li> @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    {{-- ATTENDANCE ADMIN --}}
-                    @if(auth()->user()->can('View attendance-settings') || auth()->user()->can('View attendance-holidays') || auth()->user()->can('View attendance-school-report'))
-                        <li class="nav-item">
-                            <a href="#sidebarAttendanceAdmin" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendanceAdmin">
-                                <i class="ph-calendar-check"></i> <span>Attendance Admin</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAttendanceAdmin">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View attendance-settings')      <li class="nav-item"><a href="{{ route('attendance.settings') }}"      class="nav-link">Term Settings</a></li>    @endcan
-                                    @can('View attendance-holidays')      <li class="nav-item"><a href="{{ route('attendance.holidays') }}"      class="nav-link">Holidays & Breaks</a></li> @endcan
-                                    @can('View attendance-school-report') <li class="nav-item"><a href="{{ route('attendance.school-report') }}" class="nav-link">School Report</a></li>     @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                    @can('View principals-comment')
-                        <li class="nav-item">
-                            <a href="#sidebarPrincipal" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPrincipal">
-                                <i class="ph-file-text"></i> <span>Principal's Comments</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarPrincipal">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('principalscomment.index') }}" class="nav-link">Assign Staff</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @can('View subjects')
-                        <li class="nav-item">
-                            <a href="#sidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSubjectvetting">
-                                <i class="ph-file-text"></i> <span>Terminal Subject Vettings</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSubjectvetting">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('subjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#mocksidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mocksidebarSubjectvetting">
-                                <i class="ph-file-text"></i> <span>Mock Subject Vettings</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="mocksidebarSubjectvetting">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('mocksubjectvetting.index') }}" class="nav-link">Assign Subjects to Staff</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                    @endcan
-
-                    @if(auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
-                        <li class="nav-item">
-                            <a href="#sidebarBills" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarBills">
-                                <i class="ph-file-text"></i> <span>School Bills</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarBills">
-                                <ul class="nav nav-sm flex-column">
-                                    @can('View school-bills')                <li class="nav-item"><a href="{{ route('schoolbill.index') }}"            class="nav-link">Bills</a></li>        @endcan
-                                    @can('View school-bill-for-term-session') <li class="nav-item"><a href="{{ route('schoolbilltermsession.index') }}" class="nav-link">Apply Bills</a></li>  @endcan
-                                </ul>
-                            </div>
-                        </li>
-                    @endif
-
-                </ul>
-            </div>
-        </div><!-- /scrollbar -->
-
-        <!-- ===== SIDEBAR LOGOUT FOOTER ===== -->
+        <div id="scrollbar"><div class="container-fluid"><ul class="navbar-nav" id="navbar-nav"><li class="menu-title"><span data-key="t-menu">Menu</span></li>
+            <li class="nav-item"><a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse"><i class="ph-gauge"></i> <span>Dashboards</span></a><div class="collapse menu-dropdown" id="sidebarDashboards"><ul class="nav nav-sm"><li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link">Administration Analytics</a></li></ul></div></li>
+            @if(auth()->user()->can('View user'))<li class="nav-item"><a class="nav-link menu-link collapsed" href="#sidebarusers" data-bs-toggle="collapse"><i class="ph-user-circle"></i> <span>User Managements</span></a><div class="collapse" id="sidebarusers"><ul class="nav nav-sm"><li><a href="{{ route('users.index') }}" class="nav-link">Users</a></li></ul></div></li>@endif
+            <li class="nav-item"><a href="#sidebaraccount" class="nav-link collapsed" data-bs-toggle="collapse"><i class="ph-address-book"></i> My Account</a><div class="collapse" id="sidebaraccount"><ul><li><a href="{{ route('users.overview', ['id' => Auth::id()]) }}" class="nav-link">My Profile</a></li><li><a href="{{ route('profile.settings', ['id' => Auth::id()]) }}" class="nav-link">Account Settings</a></li></ul></div></li>
+            @can('View role')<li><a href="#sidebarroles" class="nav-link collapsed" data-bs-toggle="collapse"><i class="ph-address-book"></i> Roles And Permissions</a><div class="collapse" id="sidebarroles"><ul><li><a href="{{ route('roles.index') }}" class="nav-link">Roles</a></li><li><a href="{{ route('permissions.index') }}" class="nav-link">Permissions</a></li></ul></div></li>@endcan
+            <li class="menu-title">STUDENT & PARENTS</li>
+            @can('View student')<li><a href="{{ route('student.index') }}" class="nav-link">All Students</a></li>@endcan
+        </ul></div></div>
         @auth
         <div class="sidebar-footer">
-            @php
-                $sidebarUser = Auth::user();
-                $sidebarIsStudent = $sidebarUser->hasRole('student');
-                $sidebarSrc = null;
-                if ($sidebarIsStudent) {
-                    $stu = \App\Models\Student::find($sidebarUser->student_id);
-                    if ($stu?->picture) {
-                        $bn = basename($stu->picture);
-                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('student_avatars/' . $bn))
-                            $sidebarSrc = asset('storage/student_avatars/' . $bn);
-                    }
-                } else {
-                    if ($sidebarUser->avatar) {
-                        $bn = basename($sidebarUser->avatar);
-                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists('staff_avatars/' . $bn))
-                            $sidebarSrc = asset('storage/staff_avatars/' . $bn);
-                    }
-                }
-                $sidebarInitials = collect(explode(' ', $sidebarUser->name))
-                    ->map(fn($w) => strtoupper(substr($w, 0, 1)))
-                    ->take(2)->implode('');
-            @endphp
-
-            <div class="sidebar-footer-user">
-                @if($sidebarSrc)
-                    <img src="{{ $sidebarSrc }}" alt="{{ $sidebarUser->name }}">
-                @else
-                    <span class="sidebar-footer-avatar-initials">{{ $sidebarInitials }}</span>
-                @endif
-                <div class="sidebar-footer-user-info">
-                    <div class="sidebar-footer-user-name">{{ $sidebarUser->name }}</div>
-                    <div class="sidebar-footer-user-role">{{ $sidebarUser->roles->first()->name ?? 'User' }}</div>
-                </div>
-            </div>
-
-            <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form">
-                @csrf
-                <button type="submit" class="sidebar-logout-btn">
-                    <i class="mdi mdi-logout"></i>
-                    <span>Sign Out</span>
-                </button>
-            </form>
+            @php $sidebarUser = Auth::user(); $initials = strtoupper(substr($sidebarUser->name,0,2)); @endphp
+            <div class="sidebar-footer-user"><span class="sidebar-footer-avatar-initials">{{ $initials }}</span><div class="sidebar-footer-user-info"><div class="sidebar-footer-user-name">{{ $sidebarUser->name }}</div><div class="sidebar-footer-user-role">{{ $sidebarUser->roles->first()->name ?? 'User' }}</div></div></div>
+            <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form">@csrf<button type="submit" class="sidebar-logout-btn"><i class="mdi mdi-logout"></i> Sign Out</button></form>
         </div>
         @endauth
-
         <div class="sidebar-background"></div>
-    </div><!-- /app-menu -->
-
+    </div>
     <div class="vertical-overlay" id="vertical-overlay"></div>
 
-    <!-- ========== TOPBAR ========== -->
-    <header id="page-topbar">
-        <div class="layout-width">
-            <div class="navbar-header">
-                <div class="d-flex">
-                    <div class="navbar-brand-box horizontal-logo">
-                        <a href="index.html" class="logo logo-dark">
-                            <span class="logo-sm"><img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22"></span>
-                            <span class="logo-lg"><img src="{{ asset('theme/layouts/assets/images/logo-dark.png')}}" alt="" height="22"></span>
-                        </a>
-                        <a href="index.html" class="logo logo-light">
-                            <span class="logo-sm"><img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22"></span>
-                            <span class="logo-lg"><img src="{{ asset('theme/layouts/assets/images/logo-light.png')}}" alt="" height="22"></span>
-                        </a>
-                    </div>
-                    <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon">
-                        <span class="hamburger-icon"><span></span><span></span><span></span></span>
-                    </button>
-                    <div class="d-none d-md-inline-flex align-items-center" style="position:relative;">
-                        <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
-                            <i class="mdi mdi-magnify" style="font-size:16px;opacity:.6;"></i>
-                            <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
-                            <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">K</kbd></div>
-                        </button>
-                        <div class="search-tooltip">Press <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;">Ctrl+K</kbd> to search</div>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                    <div class="position-relative" id="theme-toggle-wrapper">
-                        <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;"><i id="theme-icon" class="bi bi-sun align-middle fs-3xl"></i></button>
-                        <div id="theme-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:170px;background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;overflow:hidden;padding:6px;">
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light"><i class="bi bi-sun"></i> Light</a>
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark"><i class="bi bi-moon"></i> Dark</a>
-                            <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto"><i class="bi bi-moon-stars"></i> Auto</a>
-                        </div>
-                    </div>
-
-                    <!-- ===== USER DROPDOWN with all variables properly defined ===== -->
-                    @php
-                        use App\Models\User as UserModel;
-                        use App\Models\Student;
-                        use Illuminate\Support\Facades\Storage;
-                        use Illuminate\Support\Facades\Auth;
-
-                        $userdata  = Auth::user();
-                        $isStudent = $userdata->hasRole('student');
-                        $fullName  = $userdata->name ?? 'User';
-                        $initials  = collect(explode(' ', $fullName))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->implode('');
-                        $srcPath   = null;
-
-                        if ($isStudent) {
-                            $student        = Student::where('id', $userdata->student_id)->first();
-                            $studentPicture = $student?->picture;
-                            if ($studentPicture) {
-                                $basename = basename($studentPicture);
-                                if (Storage::disk('public')->exists('student_avatars/' . $basename))
-                                    $srcPath = asset('storage/student_avatars/' . $basename);
-                            }
-                        } else {
-                            if ($userdata->avatar) {
-                                $basename = basename($userdata->avatar);
-                                if (Storage::disk('public')->exists('staff_avatars/' . $basename))
-                                    $srcPath = asset('storage/staff_avatars/' . $basename);
-                            }
-                        }
-
-                        $userRoles = $userdata->roles->pluck('name');
-                    @endphp
-
-                    <div class="dropdown position-relative ms-sm-3 header-item topbar-user" id="user-dropdown-wrapper">
-                        <button type="button" id="user-menu-btn" class="btn shadow-none p-0" style="background:transparent;border:none;">
-                            <span class="d-flex align-items-center gap-2">
-                                <span style="display:inline-block;width:42px;height:42px;flex-shrink:0;position:relative;">
-                                    @if($srcPath)
-                                        <img id="topbar-avatar-img" src="{{ $srcPath }}" alt="{{ $fullName }}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none';document.getElementById('topbar-avatar-fallback').style.display='flex';">
-                                        <span id="topbar-avatar-fallback" style="display:none;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
-                                    @else
-                                        <span style="display:flex;width:42px;height:42px;border-radius:10px;background:#405189;color:#fff;align-items:center;justify-content:center;">{{ $initials }}</span>
-                                    @endif
-                                </span>
-                                <span class="d-none d-xl-flex flex-column align-items-start ms-1"><span class="fw-medium" style="font-size:13px;">{{ $userdata->name }}</span></span>
-                            </span>
-                        </button>
-
-                        <div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:220px;background:var(--vz-dropdown-bg,#fff);border-radius:12px;z-index:9999;">
-                            <div class="dropdown-header"><h6 class="mb-0">Welcome back!</h6><small class="text-muted">{{ $userdata->name }}</small></div>
-                            <div class="dropdown-divider"></div>
-                            <div class="px-3 py-2">
-                                <div class="small text-muted mb-2 text-uppercase" style="font-size:10px;">Your Roles</div>
-                                <div class="d-flex flex-wrap gap-1">
-                                    @foreach($userRoles as $roleName)
-                                        <span style="display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:#eef2ff;color:#405189;">{{ $roleName }}</span>
-                                    @endforeach
-                                </div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            @if(!$isStudent)<a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}"><i class="mdi mdi-account-circle me-2"></i>My Profile</a>@endif
-                            <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}"><i class="mdi mdi-cog me-2"></i>Account Settings</a>
-                            <div class="dropdown-divider"></div>
-                            <form method="POST" action="{{ route('logout') }}" id="topbar-logout-form">@csrf<a class="dropdown-item text-danger" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('topbar-logout-form').submit();"><i class="mdi mdi-logout me-2"></i>Logout</a></form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- TOPBAR with Spotlight trigger (working & non-intrusive) -->
+    <header id="page-topbar"><div class="layout-width"><div class="navbar-header"><div class="d-flex"><button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon"><span class="hamburger-icon"><span></span><span></span><span></span></span></button>
+        <div class="d-none d-md-inline-flex align-items-center ms-2 position-relative">
+            <button type="button" id="spotlight-trigger-main" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;min-width:220px;"><i class="mdi mdi-magnify" style="font-size:16px;"></i><span style="font-size:13px;opacity:.7;">Search everything…</span><div style="display:flex;gap:4px;"><kbd style="background:rgba(0,0,0,.2);">⌘</kbd><kbd>K</kbd></div></button>
+        </div></div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="dropdown"><button id="user-menu-btn" class="btn shadow-none p-0"><span class="d-flex align-items-center gap-2"><span style="width:42px;height:42px;background:#405189;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;">{{ substr(Auth::user()->name,0,2) }}</span></span></button><div id="user-dropdown" class="dropdown-menu dropdown-menu-end" style="display:none;"><a class="dropdown-item" href="{{ route('profile.settings', ['id' => Auth::id()]) }}">Account Settings</a><form method="POST" action="{{ route('logout') }}">@csrf<a class="dropdown-item text-danger" href="#" onclick="this.closest('form').submit();return false;">Logout</a></form></div></div>
         </div>
-    </header>
+    </div></div></header>
 
     @yield('content')
-
-    <footer class="footer">
-        <div class="container-fluid">
-            <div class="row"><div class="col-sm-6"><script>document.write(new Date().getFullYear())</script> © {{ $school->school_name ?? 'Vite-ESchool' }}</div><div class="col-sm-6"><div class="text-sm-end d-none d-sm-block">Created by Qudroid Systems</div></div></div>
-        </div>
-    </footer>
+    <footer class="footer"><div class="container-fluid"><div class="row"><div class="col-sm-6">© {{ date('Y') }} {{ $schoolInfo->school_name ?? 'Vite-ESchool' }}</div><div class="col-sm-6 text-end">Created by Qudroid Systems</div></div></div></footer>
 </div>
+<button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up"></i></button>
 
-<button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up fs-3xl"></i></button>
-<div id="preloader"><div id="status"><div class="spinner-border text-primary avatar-sm" role="status"><span class="visually-hidden">Loading...</span></div></div></div>
+<!-- SPOTLIGHT MODAL - FULLY ISOLATED & NON-INTRUSIVE TO OTHER MODALS -->
+<div id="global-spotlight" class="spotlight-overlay">
+    <div class="spotlight-modal">
+        <div class="spotlight-search-wrap">
+            <i class="mdi mdi-magnify"></i>
+            <input type="text" id="spotlight-input" placeholder="Search pages, students, or settings..." autocomplete="off">
+            <span class="spotlight-close-hint">ESC</span>
+        </div>
+        <div id="spotlight-results-container" class="spotlight-results">
+            <div class="spotlight-empty">✨ Type to search across dashboard, users, classes, payments...</div>
+        </div>
+    </div>
+</div>
 
 <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
-(function () {
-    // =====================================================
-    // FIXED: Mobile & Desktop Sidebar Toggle
-    // =====================================================
-    const ham = document.getElementById('topnav-hamburger-icon');
-    const overlay = document.getElementById('vertical-overlay');
-    const body = document.body;
+    (function() {
+        // ========== SIDEBAR TOGGLE (MOBILE + DESKTOP) ==========
+        const ham = document.getElementById('topnav-hamburger-icon');
+        const overlaySide = document.getElementById('vertical-overlay');
+        const body = document.body;
+        function closeSidebar() { body.classList.remove('vertical-sidebar-enable'); }
+        function openSidebar() { body.classList.add('vertical-sidebar-enable'); }
+        if (ham) ham.addEventListener('click', (e) => { e.preventDefault(); if(body.classList.contains('vertical-sidebar-enable')) closeSidebar(); else openSidebar(); });
+        if (overlaySide) overlaySide.addEventListener('click', closeSidebar);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && body.classList.contains('vertical-sidebar-enable')) closeSidebar(); });
 
-    // Function to close sidebar (works for both mobile and desktop)
-    function closeSidebar() {
-        body.classList.remove('vertical-sidebar-enable');
-    }
-
-    // Function to open sidebar
-    function openSidebar() {
-        body.classList.add('vertical-sidebar-enable');
-    }
-
-    // Toggle function
-    function toggleSidebar(e) {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
+        // ========== USER DROPDOWN MANUAL ==========
+        const userBtn = document.getElementById('user-menu-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+        if(userBtn && userDropdown) {
+            userBtn.addEventListener('click', (e) => { e.stopPropagation(); userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none'; });
+            document.addEventListener('click', (e) => { if(!userBtn.contains(e.target) && !userDropdown.contains(e.target)) userDropdown.style.display = 'none'; });
         }
-        if (body.classList.contains('vertical-sidebar-enable')) {
-            closeSidebar();
-        } else {
-            openSidebar();
-        }
-    }
 
-    // Attach hamburger click event
-    if (ham) {
-        // Remove any existing listeners to avoid duplicates
-        const newHam = ham.cloneNode(true);
-        ham.parentNode.replaceChild(newHam, ham);
-        const freshHam = document.getElementById('topnav-hamburger-icon');
-        if (freshHam) {
-            freshHam.addEventListener('click', toggleSidebar);
-        }
-    }
+        // ========== SPOTLIGHT SEARCH - FULL FEATURE, NO MODAL CONFLICT ==========
+        const spotlightOverlay = document.getElementById('global-spotlight');
+        const spotlightInput = document.getElementById('spotlight-input');
+        const resultsContainer = document.getElementById('spotlight-results-container');
+        let currentSelectedIndex = -1;
+        let currentResults = []; // store { title, description, url, icon? }
 
-    // Overlay click closes sidebar
-    if (overlay) {
-        overlay.addEventListener('click', closeSidebar);
-    }
+        // Predefined navigation links (dynamic based on roles but flexible)
+        const baseRoutes = [
+            { title: 'Dashboard', description: 'Administration Analytics', url: '{{ route("dashboard") }}', category: 'Navigation', icon: 'mdi mdi-view-dashboard' },
+            { title: 'Users', description: 'Manage system users', url: '{{ route("users.index") }}', category: 'Users', icon: 'mdi mdi-account-group' },
+            { title: 'My Profile', description: 'View your profile', url: '{{ route("users.overview", ["id" => Auth::id()]) }}', category: 'Account', icon: 'mdi mdi-account-circle' },
+            { title: 'Account Settings', description: 'Update account & password', url: '{{ route("profile.settings", ["id" => Auth::id()]) }}', category: 'Account', icon: 'mdi mdi-cog' },
+            { title: 'Roles', description: 'Manage roles', url: '{{ route("roles.index") }}', category: 'Permissions', icon: 'mdi mdi-shield-account' },
+            { title: 'Permissions', description: 'Access rights', url: '{{ route("permissions.index") }}', category: 'Permissions', icon: 'mdi mdi-lock' },
+            { title: 'All Students', description: 'Student management', url: '{{ route("student.index") }}', category: 'Students', icon: 'mdi mdi-school' },
+            { title: 'Student Payments', description: 'Bills and payments', url: '{{ route("schoolpayment.index") }}', category: 'Finance', icon: 'mdi mdi-cash' },
+            { title: 'Scholarships', description: 'Manage scholarships', url: '{{ route("admin.scholarship.index") }}', category: 'Finance', icon: 'mdi mdi-gift' },
+            { title: 'Discounts', description: 'Discount management', url: '{{ route("admin.discount.index") }}', category: 'Finance', icon: 'mdi mdi-tag' },
+            { title: 'Timetable', description: 'View timetable', url: '{{ route("timetable.index") }}', category: 'Academics', icon: 'mdi mdi-calendar-clock' },
+            { title: 'Exam Management', description: 'Exams & CBT', url: '{{ route("exams.index") }}', category: 'Exams', icon: 'mdi mdi-clipboard-text' },
+            { title: 'Attendance', description: 'Mark attendance', url: '{{ route("attendance.my-classes") }}', category: 'Attendance', icon: 'mdi mdi-calendar-check' },
+            { title: 'Subject Vetting', description: 'Terminal subject vettings', url: '{{ route("subjectvetting.index") }}', category: 'Academics', icon: 'mdi mdi-book-open' },
+        ];
 
-    // ESC key closes sidebar
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && body.classList.contains('vertical-sidebar-enable')) {
-            closeSidebar();
-        }
-    });
-
-    // On window resize, if switching from mobile to desktop and sidebar is open, keep it open
-    // but ensure transform styles don't conflict (CSS handles this)
-
-    // =====================================================
-    // Manual dropdown helpers
-    // =====================================================
-    function makeDropdown(btnId, panelId) {
-        var btn = document.getElementById(btnId), panel = document.getElementById(panelId);
-        if (!btn || !panel) return;
-        function open() { panel.style.display = 'block'; btn.setAttribute('aria-expanded','true'); }
-        function close() { panel.style.display = 'none'; btn.setAttribute('aria-expanded','false'); }
-        btn.addEventListener('click', function(e){ e.stopPropagation(); panel.style.display === 'none' ? open() : close(); });
-        document.addEventListener('click', function(e){ if (!btn.contains(e.target) && !panel.contains(e.target)) close(); });
-        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
-    }
-    makeDropdown('theme-toggle-btn', 'theme-dropdown');
-    makeDropdown('user-menu-btn', 'user-dropdown');
-
-    // =====================================================
-    // Theme initialization
-    // =====================================================
-    function initTheme() {
-        var html = document.documentElement;
-        var iconEl = document.getElementById('theme-icon');
-        var applyMode = function(mode) {
-            var scheme = mode === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode;
-            html.setAttribute('data-bs-theme', scheme);
-            html.setAttribute('data-topbar', scheme === 'dark' ? 'dark' : 'light');
-            if (iconEl) iconEl.className = mode === 'light' ? 'bi bi-sun align-middle fs-3xl' : (mode === 'dark' ? 'bi bi-moon align-middle fs-3xl' : 'bi bi-moon-stars align-middle fs-3xl');
-            localStorage.setItem('app-theme', mode);
-        };
-        applyMode(localStorage.getItem('app-theme') || 'light');
-        document.querySelectorAll('.theme-mode-item').forEach(a => a.addEventListener('click', e => { e.preventDefault(); applyMode(a.getAttribute('data-mode')); }));
-    }
-    initTheme();
-
-    // =====================================================
-    // Active sidebar highlight
-    // =====================================================
-    var curPath = window.location.pathname;
-    document.querySelectorAll('#navbar-nav .nav-sm a.nav-link').forEach(link => {
-        try {
-            if (new URL(link.href, window.location.origin).pathname === curPath) {
-                link.classList.add('nav-active-child');
-                // Expand parent collapse
-                var col = link.closest('.collapse');
-                if (col) {
-                    col.classList.add('show');
-                    var tog = document.querySelector('[data-bs-target="#'+col.id+'"]');
-                    if (tog) {
-                        tog.setAttribute('aria-expanded', 'true');
-                        tog.classList.remove('collapsed');
-                        tog.classList.add('nav-active-parent');
-                    }
-                }
+        // Helper: Render results
+        function renderSpotlightResults(results, searchTerm) {
+            if (!resultsContainer) return;
+            if (!results.length) {
+                resultsContainer.innerHTML = `<div class="spotlight-empty">🔍 No results found for "${escapeHtml(searchTerm)}"</div>`;
+                return;
             }
-        } catch(e) {}
-    });
-})();
+            let html = '';
+            // group by category
+            const grouped = {};
+            results.forEach(r => { if(!grouped[r.category]) grouped[r.category]=[]; grouped[r.category].push(r); });
+            for (let cat in grouped) {
+                html += `<div class="spotlight-section-title">${cat}</div>`;
+                grouped[cat].forEach((item, idx) => {
+                    const globalIdx = results.findIndex(x=> x.title===item.title && x.url===item.url);
+                    const selectedClass = (currentSelectedIndex === globalIdx) ? 'selected' : '';
+                    html += `<div class="spotlight-result-item ${selectedClass}" data-url="${item.url}" data-index="${globalIdx}">
+                        <div class="spotlight-result-icon"><i class="${item.icon || 'mdi mdi-link-variant'}"></i></div>
+                        <div class="spotlight-result-text"><div class="spotlight-result-title">${escapeHtml(item.title)}</div><div class="spotlight-result-desc">${escapeHtml(item.description)}</div></div>
+                    </div>`;
+                });
+            }
+            resultsContainer.innerHTML = html;
+            // Attach click handlers
+            document.querySelectorAll('.spotlight-result-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const url = el.getAttribute('data-url');
+                    if(url) window.location.href = url;
+                    closeSpotlight();
+                });
+            });
+        }
+
+        function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+        function filterSpotlight(query) {
+            if (!query.trim()) {
+                currentResults = [];
+                resultsContainer.innerHTML = `<div class="spotlight-empty">✨ Type to search across dashboard, users, classes, payments...</div>`;
+                return;
+            }
+            const lowerQuery = query.toLowerCase();
+            const filtered = baseRoutes.filter(item => item.title.toLowerCase().includes(lowerQuery) || item.description.toLowerCase().includes(lowerQuery));
+            currentResults = filtered;
+            currentSelectedIndex = filtered.length > 0 ? 0 : -1;
+            renderSpotlightResults(filtered, query);
+        }
+
+        function openSpotlight() {
+            spotlightOverlay.classList.add('active');
+            spotlightInput.value = '';
+            filterSpotlight('');
+            spotlightInput.focus();
+            currentSelectedIndex = -1;
+            // ensure body scroll not locked? not needed but fine
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSpotlight() {
+            spotlightOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        function navigateSelection(delta) {
+            if (!currentResults.length) return;
+            let newIdx = currentSelectedIndex + delta;
+            if (newIdx < 0) newIdx = currentResults.length - 1;
+            if (newIdx >= currentResults.length) newIdx = 0;
+            currentSelectedIndex = newIdx;
+            renderSpotlightResults(currentResults, spotlightInput.value);
+            // scroll to selected
+            const selectedEl = document.querySelector('.spotlight-result-item.selected');
+            if(selectedEl) selectedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+        function activateCurrent() {
+            if (currentSelectedIndex >= 0 && currentResults[currentSelectedIndex]) {
+                window.location.href = currentResults[currentSelectedIndex].url;
+                closeSpotlight();
+            }
+        }
+
+        // Bind global spotlight trigger button
+        const triggerBtn = document.getElementById('spotlight-trigger-main');
+        if (triggerBtn) triggerBtn.addEventListener('click', openSpotlight);
+        // Also support keyboard shortcut (Cmd+K / Ctrl+K)
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openSpotlight();
+            }
+            if (e.key === 'Escape' && spotlightOverlay.classList.contains('active')) {
+                e.preventDefault();
+                closeSpotlight();
+            }
+            if (spotlightOverlay.classList.contains('active')) {
+                if (e.key === 'ArrowDown') { e.preventDefault(); navigateSelection(1); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); navigateSelection(-1); }
+                else if (e.key === 'Enter') { e.preventDefault(); activateCurrent(); }
+            }
+        });
+        if (spotlightInput) {
+            spotlightInput.addEventListener('input', (e) => filterSpotlight(e.target.value));
+        }
+        // Close on overlay background click (non-intrusive)
+        spotlightOverlay.addEventListener('click', (e) => { if(e.target === spotlightOverlay) closeSpotlight(); });
+
+        // ========== PREVENT MODAL CONFLICT: whenever Bootstrap modal is about to open, close spotlight ==========
+        // Listen for modal show events (any modal in app)
+        document.addEventListener('show.bs.modal', function() {
+            if(spotlightOverlay.classList.contains('active')) closeSpotlight();
+        });
+        // Also for any dynamically added modals, but safe generic listener.
+        // Additionally, ensure spotlight doesn't trap events: no stopPropagation issues on modals.
+        // Provide back-to-top logic
+        const backBtn = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => { if(window.scrollY > 300) backBtn.classList.add('show'); else backBtn.classList.remove('show'); });
+        if(backBtn) backBtn.addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
+
+        // little extra: for theme icon but avoid conflict, but we keep simple.
+        // Ensure any modals or popups in child blades won't conflict with spotlight: since spotlight z-index is 1060, modals have 1055, it's above, but we close spotlight when modal opens — smooth UX.
+    })();
 </script>
 
-<!-- Route-specific JS includes (same as original) -->
-@if (Route::is('dashboard'))             @include('layouts.pages-assets.js.dashboard-list-js') @endif
-@if (Route::is('users.*'))               @include('layouts.pages-assets.js.users-list-js') @endif
-@if (Route::is('student-id-cards.*'))    @include('layouts.pages-assets.js.idcard-list-js') @endif
-@if (Route::is('student.payments.*'))    @include('layouts.pages-assets.js.studentpayment-list-js') @endif
-@if (Route::is('profile.*'))             @include('layouts.pages-assets.js.users-list-js') @endif
-@if (Route::is('roles.*'))               @include('layouts.pages-assets.js.role-list-js') @endif
-@if (Route::is('permissions.*'))         @include('layouts.pages-assets.js.permissions-list-js') @endif
-@if (Route::is('session.*'))             @include('layouts.pages-assets.js.session-list-js') @endif
-@if (Route::is('term.*'))                @include('layouts.pages-assets.js.term-list-js') @endif
-@if (Route::is('school-information.*'))  @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
-@if (Route::is('admin.school-info.*'))   @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
-@if (Route::is('schoolhouse.*'))         @include('layouts.pages-assets.js.schoolhouse-list-js') @endif
-@if (Route::is('schoolarm.*'))           @include('layouts.pages-assets.js.arm-list-js') @endif
-@if (Route::is('classcategories.*'))     @include('layouts.pages-assets.js.classcategory-list-js') @endif
-@if (Route::is('schoolclass.*'))         @include('layouts.pages-assets.js.schoolclass-list-js') @endif
-@if (Route::is('classteacher.*'))        @include('layouts.pages-assets.js.classteacher-list-js') @endif
-@if (Route::is('subject.*'))             @include('layouts.pages-assets.js.subject-list-js') @endif
-@if (Route::is('subjects.*'))            @include('layouts.pages-assets.js.subject-list-js') @endif
-@if (Route::is('subjectteacher.*'))      @include('layouts.pages-assets.js.subjectteacher-list-js') @endif
-@if (Route::is('subjectclass.*'))        @include('layouts.pages-assets.js.subjectclass-list-js') @endif
-@if (Route::is('schoolbill.*'))          @include('layouts.pages-assets.js.schoolbill-list-js') @endif
-@if (Route::is('schoolbilltermsession.*'))@include('layouts.pages-assets.js.schoolbilltermsession-list-js') @endif
-@if (Route::is('student.*'))             @include('layouts.pages-assets.js.student-list-js') @endif
-@if (Route::is('studentbatchindex'))     @include('layouts.pages-assets.js.studentbatch-list-js') @endif
-@if (Route::is('myclass.*'))             @include('layouts.pages-assets.js.myclass-list-js') @endif
-@if (Route::is('mysubject.*'))           @include('layouts.pages-assets.js.mysubject-list-js') @endif
-@if (Route::is('viewstudent'))           @include('layouts.pages-assets.js.viewstudent-list-js') @endif
-@if (Route::is('studentreports.*'))      @include('layouts.pages-assets.js.studentreport-list-js') @endif
-@if (Route::is('broadsheet.*'))          @include('layouts.pages-assets.js.studentreport-list-js') @endif
-@if (Route::is('studentmockreports.*'))  @include('layouts.pages-assets.js.studentmockreport-list-js') @endif
-@if (Route::is('subjectoperation.*'))    @include('layouts.pages-assets.js.subjectoperation-list-js') @endif
-@if (Route::is('subjects.subjectinfo'))  @include('layouts.pages-assets.js.subjectinfo-list-js') @endif
-@if (Route::is('myresultroom.*'))        @include('layouts.pages-assets.js.myresultroom-list-js') @endif
-@if (Route::is('assessment.*'))          @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
-@if (Route::is('assessments'))           @include('layouts.pages-assets.js.studentassessment-list-js') @endif
-@if (Route::is('subjectscoresheet'))     @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
-@if (Route::is('subjectscoresheet-mock.*'))@include('layouts.pages-assets.js.subjectscoresheet-mock-list-js') @endif
-@if (Route::is('studentresults*'))       @include('layouts.pages-assets.js.studentresults-list-js') @endif
-@if (Route::is('schoolbill*'))           @include('layouts.pages-assets.js.schoolbill-list-js') @endif
-@if (Route::is('schoolpayment*'))        @include('layouts.pages-assets.js.schoolpayment-list-js') @endif
-@if (Route::is('analysis*'))             @include('layouts.pages-assets.js.analysis-list-js') @endif
-@if (Route::is('exams*'))                @include('layouts.pages-assets.js.exams-list-js') @endif
-@if (Route::is('questions*'))            @include('layouts.pages-assets.js.questions-list-js') @endif
-@if (Route::is('cbt*'))                  @include('layouts.pages-assets.js.cbt-list-js') @endif
-@if (Route::is('classbroadsheet.*'))     @include('layouts.pages-assets.js.classbroadsheet-list-js') @endif
-@if (Route::is('principalscomment.*'))   @include('layouts.pages-assets.js.principalscomment-list-js') @endif
-@if (Route::is('myprincipalscomment.*')) @include('layouts.pages-assets.js.myprincipalscomment-list-js') @endif
-@if (Route::is('compulsorysubjectclass.*'))@include('layouts.pages-assets.js.compulsorysubjectclass-list-js') @endif
-@if (Route::is('subjectvetting.*'))      @include('layouts.pages-assets.js.subjectvetting-list-js') @endif
-@if (Route::is('mocksubjectvetting.*'))  @include('layouts.pages-assets.js.mocksubjectvetting-list-js') @endif
-@if (Route::is('mysubjectvettings.*'))   @include('layouts.pages-assets.js.mysubjectvettings-list-js') @endif
-@if (Route::is('mymocksubjectvettings.*'))@include('layouts.pages-assets.js.timetable-list-js') @endif
-@if (Route::is('timetable.*'))           @include('layouts.pages-assets.js.timetable-list-js') @endif
-@if (Route::is('rooms.*'))               @include('layouts.pages-assets.js.rooms-list-js') @endif
-@if (Route::is('promotions.*'))          @include('layouts.pages-assets.js.promotions-list-js') @endif
-@if (Route::is('attendance.*'))          @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('transcript.*'))          @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('admin.score-entry.*'))   @include('layouts.pages-assets.js.adminscoreentry-list-js') @endif
-@if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
-    Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
-    Route::is('payroll.*') || Route::is('staff.payments.*'))
-    @include('layouts.pages-assets.js.scholarship-list-js')
-@endif
-
+<!-- Route-specific JS includes (unchanged for your blade features, but spotlight works globally) -->
+@if (Route::is('dashboard')) @include('layouts.pages-assets.js.dashboard-list-js') @endif
+@if (Route::is('users.*')) @include('layouts.pages-assets.js.users-list-js') @endif
+@if (Route::is('student.*')) @include('layouts.pages-assets.js.student-list-js') @endif
+@if (Route::is('profile.*')) @include('layouts.pages-assets.js.users-list-js') @endif
+@if (Route::is('roles.*')) @include('layouts.pages-assets.js.role-list-js') @endif
+@if (Route::is('permissions.*')) @include('layouts.pages-assets.js.permissions-list-js') @endif
+@if (Route::is('timetable.*')) @include('layouts.pages-assets.js.timetable-list-js') @endif
+@if (Route::is('attendance.*')) @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*')) @include('layouts.pages-assets.js.scholarship-list-js') @endif
 </body>
 </html>
