@@ -454,15 +454,16 @@ document.addEventListener('DOMContentLoaded', function () {
     let billsDataGlobal  = [];
     let currentDeleteUrl = '';
 
-    // Helpers
+    // ── Helpers ───────────────────────────────────────────────────────────
+
     function fmt(n) {
         return Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 0 });
     }
 
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
-        return String(str).replace(/[&<>"']/g, function(m) {
-            return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m];
+        return String(str).replace(/[&<>"']/g, function (m) {
+            return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m];
         });
     }
 
@@ -470,15 +471,13 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('loadingOverlay').classList.toggle('active', show);
     }
 
-    // Build storage URL for student avatar - USING CORRECT PATH (matches working StudentController)
     function getAvatarUrl(picture) {
         if (!picture || picture === 'unnamed.jpg' || picture === '') return null;
-        // Remove any leading slash and return storage URL
-        // IMPORTANT: Must match the path in your working StudentController
         return '/storage/images/student_avatars/' + picture.replace(/^\/+/, '');
     }
 
-    // Load data
+    // ── Load data ─────────────────────────────────────────────────────────
+
     function loadPaymentData() {
         if (!studentId || !termid || !sessionid) {
             document.getElementById('paymentContent').innerHTML = `
@@ -507,27 +506,28 @@ document.addEventListener('DOMContentLoaded', function () {
                   + '&sessionid=' + sessionid;
 
         fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
-        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(result => {
-            if (result.success) {
-                renderPaymentContent(result.data);
-            } else {
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(result => {
+                if (result.success) {
+                    renderPaymentContent(result.data);
+                } else {
+                    content.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="ri-error-warning-line me-2"></i>${escapeHtml(result.message || 'Failed to load data')}
+                        </div>`;
+                }
+            })
+            .catch(err => {
+                console.error('Load error:', err);
                 content.innerHTML = `
                     <div class="alert alert-danger">
-                        <i class="ri-error-warning-line me-2"></i>${escapeHtml(result.message || 'Failed to load data')}
+                        <i class="ri-error-warning-line me-2"></i>An error occurred. Please refresh and try again.
                     </div>`;
-            }
-        })
-        .catch(err => {
-            console.error('Load error:', err);
-            content.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="ri-error-warning-line me-2"></i>An error occurred. Please refresh and try again.
-                </div>`;
-        });
+            });
     }
 
-    // Render
+    // ── Render ────────────────────────────────────────────────────────────
+
     function renderPaymentContent(data) {
         const student        = data.student;
         const bills          = data.bills;
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         billsDataGlobal = bills;
 
-        // Rebuild selectedBillsMap
+        // Rebuild selectedBillsMap keeping only still-valid selections
         const newMap = {};
         Object.keys(selectedBillsMap).forEach(id => {
             const refreshed = bills.find(b => String(b.id) === String(id));
@@ -547,11 +547,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         selectedBillsMap = newMap;
 
-        // Avatar - USING CORRECT PATH (matches working StudentController)
-        const initials = (student.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+        // Avatar
+        const initials = (student.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
         let avatarHtml;
-
-        // Check if avatar exists and is not the default
         if (student.avatar && student.avatar !== 'unnamed.jpg' && student.avatar !== '') {
             const avatarUrl = getAvatarUrl(student.avatar);
             avatarHtml = `
@@ -559,21 +557,19 @@ document.addEventListener('DOMContentLoaded', function () {
                      alt="${escapeHtml(student.name)}"
                      class="student-avatar-lg"
                      onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
-                <div class="avatar-placeholder-lg" style="display:none">${escapeHtml(initials)}</div>
-            `;
+                <div class="avatar-placeholder-lg" style="display:none">${escapeHtml(initials)}</div>`;
         } else {
             avatarHtml = `<div class="avatar-placeholder-lg">${escapeHtml(initials)}</div>`;
         }
 
-        // Bill cards
+        // ── Bill cards ────────────────────────────────────────────────────
         const billsHtml = bills.map(bill => {
             const billKey    = String(bill.id);
             const isSelected = !!selectedBillsMap[billKey];
-
-            const cardClass = bill.is_paid ? 'paid'
-                : bill.is_partial ? 'partial'
-                : bill.total_savings > 0 ? 'savings'
-                : 'unpaid';
+            const cardClass  = bill.is_paid    ? 'paid'
+                             : bill.is_partial  ? 'partial'
+                             : bill.total_savings > 0 ? 'savings'
+                             : 'unpaid';
 
             return `
             <div class="col-xl-4 col-lg-6">
@@ -597,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${bill.total_savings > 0 ? `
                     <div class="d-flex flex-wrap gap-1 mb-2">
                         ${bill.scholarship_deduction > 0 ? `<span class="schol-pill"><i class="ri-award-line"></i> -₦${fmt(bill.scholarship_deduction)} Scholarship</span>` : ''}
-                        ${bill.discount_deduction > 0    ? `<span class="disc-pill"><i class="ri-price-tag-3-line"></i> -₦${fmt(bill.discount_deduction)} Discount</span>` : ''}
+                        ${bill.discount_deduction    > 0 ? `<span class="disc-pill"><i class="ri-price-tag-3-line"></i> -₦${fmt(bill.discount_deduction)} Discount</span>` : ''}
                     </div>` : ''}
                     <div class="text-center mb-2">
                         ${bill.total_savings > 0 ? `<div class="text-muted text-decoration-line-through" style="font-size:12px">₦${fmt(bill.original_amount)}</div>` : ''}
@@ -643,73 +639,93 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>`;
         }).join('');
 
-        // Payment Records table
+        // ── Payment Records table ─────────────────────────────────────────
         const paymentRecordsHtml = paymentRecords.length > 0
             ? `<div class="table-responsive">
                 <table class="table rec-table w-100 mb-0">
                     <thead>
                         <tr>
-                            <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
-                            <th>Balance</th><th>Method</th><th>Received By</th>
-                            <th>Date</th><th>Status</th><th>Action</th>
-                         </div>
+                            <th>#</th>
+                            <th>Bill</th>
+                            <th>Bill Amt</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Method</th>
+                            <th>Received By</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
                     </thead>
                     <tbody>
                     ${paymentRecords.map((sp, i) => `
                         <tr>
-                            <td>${i+1} </div>
-                            <td><div class="fw-semibold">${escapeHtml(sp.title)}</div>
-                                ${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}</div> </div>
-                            <td>₦${fmt(sp.billAmount)}</div> </div>
-                            <td class="text-success fw-semibold">₦${fmt(sp.totalAmountPaid)}</div> </div>
-                            <td class="${sp.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(sp.balance)}</div> </div>
-                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(sp.paymentMethod||'—')}</span></div> </div>
-                            <td class="text-muted small">${escapeHtml(sp.receivedBy||'—')}</div> </div>
-                            <td class="text-muted small">${sp.receivedDate ? new Date(sp.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</div> </div>
-                            <td><span class="badge ${sp.paymentStatus==='Completed'?'bg-success':'bg-warning text-dark'}">${escapeHtml(sp.paymentStatus||'Pending')}</span></div> </div>
+                            <td>${i + 1}</td>
+                            <td>
+                                <div class="fw-semibold">${escapeHtml(sp.title)}</div>
+                                ${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}
+                            </td>
+                            <td>₦${fmt(sp.billAmount)}</td>
+                            <td class="text-success fw-semibold">₦${fmt(sp.totalAmountPaid)}</td>
+                            <td class="${sp.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(sp.balance)}</td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(sp.paymentMethod || '—')}</span></td>
+                            <td class="text-muted small">${escapeHtml(sp.receivedBy || '—')}</td>
+                            <td class="text-muted small">${sp.receivedDate ? new Date(sp.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</td>
+                            <td><span class="badge ${sp.paymentStatus === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${escapeHtml(sp.paymentStatus || 'Pending')}</span></td>
                             <td>${sp.recordId
                                 ? `<button class="btn btn-sm btn-danger delete-payment" data-record-id="${sp.recordId}">
-                                       <i class="ri-delete-bin-line"></i></button>`
-                                : '<span class="text-muted small">—</span>'} </div>
+                                       <i class="ri-delete-bin-line"></i>
+                                   </button>`
+                                : '<span class="text-muted small">—</span>'}
+                            </td>
                         </tr>`).join('')}
                     </tbody>
-                 </div>
+                </table>
                </div>`
             : '<div class="empty-state"><i class="ri-receipt-line"></i><p>No pending payment records.</p></div>';
 
-        // Payment History table
+        // ── Payment History table ─────────────────────────────────────────
         const historyHtml = paymentHistory.length > 0
             ? `<div class="table-responsive">
                 <table class="table rec-table w-100 mb-0">
                     <thead>
                         <tr>
-                            <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
-                            <th>Balance</th><th>Method</th><th>Received By</th>
-                            <th>Date</th><th>Status</th><th>Invoice</th>
-                         </div>
+                            <th>#</th>
+                            <th>Bill</th>
+                            <th>Bill Amt</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Method</th>
+                            <th>Received By</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Invoice</th>
+                        </tr>
                     </thead>
                     <tbody>
                     ${paymentHistory.map((ph, i) => `
                         <tr>
-                            <td>${i+1} </div>
-                            <td><div class="fw-semibold">${escapeHtml(ph.title)}</div>
-                                ${ph.description ? `<div class="text-muted small">${escapeHtml(ph.description)}</div>` : ''}</div> </div>
-                            <td>₦${fmt(ph.billAmount)}</div> </div>
-                            <td class="text-success fw-semibold">₦${fmt(ph.totalAmountPaid)}</div> </div>
-                            <td class="${ph.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(ph.balance)}</div> </div>
-                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(ph.paymentMethod||'—')}</span></div> </div>
-                            <td class="text-muted small">${escapeHtml(ph.receivedBy||'—')}</div> </div>
-                            <td class="text-muted small">${ph.receivedDate ? new Date(ph.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</div> </div>
-                            <td><span class="badge ${(ph.paymentStatus==='Completed'||ph.completePayment)?'bg-success':'bg-warning text-dark'}">${(ph.paymentStatus==='Completed'||ph.completePayment)?'Completed':'Partial'}</span></div> </div>
+                            <td>${i + 1}</td>
+                            <td>
+                                <div class="fw-semibold">${escapeHtml(ph.title)}</div>
+                                ${ph.description ? `<div class="text-muted small">${escapeHtml(ph.description)}</div>` : ''}
+                            </td>
+                            <td>₦${fmt(ph.billAmount)}</td>
+                            <td class="text-success fw-semibold">₦${fmt(ph.totalAmountPaid)}</td>
+                            <td class="${ph.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(ph.balance)}</td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(ph.paymentMethod || '—')}</span></td>
+                            <td class="text-muted small">${escapeHtml(ph.receivedBy || '—')}</td>
+                            <td class="text-muted small">${ph.receivedDate ? new Date(ph.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</td>
+                            <td><span class="badge ${(ph.paymentStatus === 'Completed' || ph.completePayment) ? 'bg-success' : 'bg-warning text-dark'}">${(ph.paymentStatus === 'Completed' || ph.completePayment) ? 'Completed' : 'Partial'}</span></td>
                             <td>
                                 <a href="{{ url('schoolpayment/invoice') }}/${studentId}/${ph.classId || student.schoolclassId || ''}/${ph.termId || termid}/${ph.sessionId || sessionid}"
                                    class="btn btn-sm btn-outline-primary" title="View Invoice">
                                     <i class="ri-file-download-line"></i>
                                 </a>
-                             </div>
+                            </td>
                         </tr>`).join('')}
                     </tbody>
-                 </div>
+                </table>
                </div>`
             : '<div class="empty-state"><i class="ri-history-line"></i><p>No payment history found.</p></div>';
 
@@ -724,18 +740,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                             <h5 class="mb-0 fw-bold" style="color:var(--pay-primary)">${escapeHtml(student.name)}</h5>
-                            <span class="badge ${student.student_status==='Active'?'bg-success-subtle text-success':'bg-danger-subtle text-danger'} px-2 py-1" style="font-size:11px">
-                                ${escapeHtml(student.student_status||'Unknown')}
+                            <span class="badge ${student.student_status === 'Active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'} px-2 py-1" style="font-size:11px">
+                                ${escapeHtml(student.student_status || 'Unknown')}
                             </span>
-                            <span class="badge ${student.statusId==1?'bg-info-subtle text-info':'bg-warning-subtle text-warning'} px-2 py-1" style="font-size:11px">
-                                ${student.statusId==1?'Returning Student':'New Student'}
+                            <span class="badge ${student.statusId == 1 ? 'bg-info-subtle text-info' : 'bg-warning-subtle text-warning'} px-2 py-1" style="font-size:11px">
+                                ${student.statusId == 1 ? 'Returning Student' : 'New Student'}
                             </span>
                         </div>
                         <div class="text-muted small font-monospace mb-3">${escapeHtml(student.admissionNo)}</div>
                         <div class="d-flex flex-wrap gap-2">
                             <div class="info-chip"><i class="ri-building-line text-success"></i>${escapeHtml(student.schoolclass)} ${escapeHtml(student.arm)}</div>
-                            <div class="info-chip"><i class="ri-calendar-line text-primary"></i>${escapeHtml(data.term||'')}</div>
-                            <div class="info-chip"><i class="ri-time-line text-warning"></i>${escapeHtml(data.session||'')}</div>
+                            <div class="info-chip"><i class="ri-calendar-line text-primary"></i>${escapeHtml(data.term || '')}</div>
+                            <div class="info-chip"><i class="ri-time-line text-warning"></i>${escapeHtml(data.session || '')}</div>
                             <div class="info-chip"><i class="ri-money-dollar-circle-line text-danger"></i>Total: ₦${fmt(totals.adjusted)}</div>
                             <div class="info-chip"><i class="ri-check-line text-success"></i>Paid: ₦${fmt(totals.paid)}</div>
                             ${totalOutstanding > 0
@@ -748,18 +764,18 @@ document.addEventListener('DOMContentLoaded', function () {
                             <i class="ri-arrow-left-line me-1"></i>Back
                         </a>
                         ${paymentRecords.length > 0
-                            ? `<a href="{{ url('schoolpayment/invoice') }}/${studentId}/${student.schoolclassId||''}/${termid}/${sessionid}"
+                            ? `<a href="{{ url('schoolpayment/invoice') }}/${studentId}/${student.schoolclassId || ''}/${termid}/${sessionid}"
                                    class="btn btn-primary btn-sm">
                                    <i class="ri-file-download-line me-1"></i>Generate Invoice
                                </a>`
                             : `<button class="btn btn-primary btn-sm" disabled title="Make a payment first">
                                    <i class="ri-file-download-line me-1"></i>Generate Invoice
                                </button>`}
-                        <a href="{{ url('schoolpayment/statement') }}/${studentId}/${student.schoolclassId||''}/${termid}/${sessionid}"
+                        <a href="{{ url('schoolpayment/statement') }}/${studentId}/${student.schoolclassId || ''}/${termid}/${sessionid}"
                            class="btn btn-outline-primary btn-sm">
                             <i class="ri-file-list-line me-1"></i>Statement
                         </a>
-                        <button class="btn btn-success btn-sm" id="bulkPaymentBtn" ${!hasBulkableBills?'disabled':''}>
+                        <button class="btn btn-success btn-sm" id="bulkPaymentBtn" ${!hasBulkableBills ? 'disabled' : ''}>
                             <i class="ri-wallet-3-line me-1"></i>Bulk Payment
                             <span class="badge bg-white text-success ms-1" id="selectedCount">${selectedCount}</span>
                         </button>
@@ -773,8 +789,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div>
                     <div class="fw-semibold mb-1">Scholarship Active: ${escapeHtml(scholarship.title)}</div>
                     <div class="small">
-                        ${scholarship.value_type==='percentage'?`${scholarship.value}% deduction.`:`₦${fmt(scholarship.value)} fixed deduction per bill.`}
-                        ${scholarship.effective_to?` Valid until ${new Date(scholarship.effective_to).toLocaleDateString('en-GB')}.`:''}
+                        ${scholarship.value_type === 'percentage' ? `${scholarship.value}% deduction.` : `₦${fmt(scholarship.value)} fixed deduction per bill.`}
+                        ${scholarship.effective_to ? ` Valid until ${new Date(scholarship.effective_to).toLocaleDateString('en-GB')}.` : ''}
                         <strong class="ms-2">Total Savings: ₦${fmt(totals.savings)}</strong>
                     </div>
                 </div>
@@ -786,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div>
                     <div class="fw-semibold mb-1">Discount(s) Active</div>
                     <div class="small">
-                        ${discounts.map(d=>`<span class="me-3"><strong>${escapeHtml(d.title)}:</strong> ${d.value_type==='percentage'?`${d.value}% off`:`₦${fmt(d.value)} off`}</span>`).join('')}
+                        ${discounts.map(d => `<span class="me-3"><strong>${escapeHtml(d.title)}:</strong> ${d.value_type === 'percentage' ? `${d.value}% off` : `₦${fmt(d.value)} off`}</span>`).join('')}
                     </div>
                 </div>
             </div>` : ''}
@@ -803,13 +819,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="tab" href="#tab-records">
                                 <i class="ri-receipt-line me-1"></i>Payment Records
-                                ${paymentRecords.length?`<span class="badge bg-success-subtle text-success ms-1">${paymentRecords.length}</span>`:''}
+                                ${paymentRecords.length ? `<span class="badge bg-success-subtle text-success ms-1">${paymentRecords.length}</span>` : ''}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="tab" href="#tab-history">
                                 <i class="ri-history-line me-1"></i>History
-                                ${paymentHistory.length?`<span class="badge bg-info-subtle text-info ms-1">${paymentHistory.length}</span>`:''}
+                                ${paymentHistory.length ? `<span class="badge bg-info-subtle text-info ms-1">${paymentHistory.length}</span>` : ''}
                             </a>
                         </li>
                     </ul>
@@ -841,29 +857,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('paymentContent').innerHTML = contentHtml;
 
-        // Attach event listeners
         attachBillSelectionEvents(bills);
         attachPaymentButtons(bills);
         attachDeleteHandlers();
 
         const bulkBtn = document.getElementById('bulkPaymentBtn');
         if (bulkBtn) bulkBtn.addEventListener('click', () => openBulkPaymentModal());
-
-        // Initialize tooltips
-        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        }
     }
 
-    // Bill checkbox selection
+    // ── Bill checkbox selection ───────────────────────────────────────────
+
     function attachBillSelectionEvents(bills) {
         document.querySelectorAll('.bill-select-checkbox').forEach(cb => {
             cb.addEventListener('change', function () {
-                const billId  = String(this.dataset.billId);
-                const bill    = bills.find(b => String(b.id) === billId);
+                const billId = String(this.dataset.billId);
+                const bill   = bills.find(b => String(b.id) === billId);
 
                 if (this.checked && bill) {
                     selectedBillsMap[billId] = bill;
@@ -880,7 +888,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Individual payment modal
+    // ── Individual payment modal ──────────────────────────────────────────
+
     function attachPaymentButtons(bills) {
         document.querySelectorAll('.make-payment-btn').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -889,32 +898,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (bill) {
                     openPaymentModal(bill);
                 } else {
-                    Swal.fire({ icon:'error', title:'Error', text:'Could not find bill data. Please refresh.' });
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Could not find bill data. Please refresh.' });
                 }
             });
         });
     }
 
     function openPaymentModal(bill) {
-        document.getElementById('modal-bill-title').textContent       = bill.title;
-        document.getElementById('student_id').value                   = studentId;
-        document.getElementById('class_id').value                     = bill.class_id || '';
-        document.getElementById('term_id').value                      = termid;
-        document.getElementById('session_id').value                   = sessionid;
-        document.getElementById('school_bill_id').value               = bill.id;
-        document.getElementById('actual_amount').value                = bill.original_amount;
-        document.getElementById('adjusted_amount').value              = bill.adjusted_amount;
-        document.getElementById('balance2').value                     = bill.balance;
-        document.getElementById('last_amount_paid').value             = bill.amount_paid;
-        document.getElementById('scholarship_deduction').value        = bill.scholarship_deduction || 0;
-        document.getElementById('discount_deduction').value           = bill.discount_deduction || 0;
-        document.getElementById('amount_d').value                     = '₦' + fmt(bill.adjusted_amount);
-        document.getElementById('amount_paid_d').value                = '₦' + fmt(bill.amount_paid);
-        document.getElementById('balance_d').value                    = '₦' + fmt(bill.balance);
-        document.getElementById('payment_amount').value               = '';
-        document.getElementById('payment_amount2').value              = '';
-        document.getElementById('payment_method2').value              = '';
-        document.getElementById('amountError').textContent            = '';
+        document.getElementById('modal-bill-title').textContent        = bill.title;
+        document.getElementById('student_id').value                    = studentId;
+        document.getElementById('class_id').value                      = bill.class_id || '';
+        document.getElementById('term_id').value                       = termid;
+        document.getElementById('session_id').value                    = sessionid;
+        document.getElementById('school_bill_id').value                = bill.id;
+        document.getElementById('actual_amount').value                 = bill.original_amount;
+        document.getElementById('adjusted_amount').value               = bill.adjusted_amount;
+        document.getElementById('balance2').value                      = bill.balance;
+        document.getElementById('last_amount_paid').value              = bill.amount_paid;
+        document.getElementById('scholarship_deduction').value         = bill.scholarship_deduction || 0;
+        document.getElementById('discount_deduction').value            = bill.discount_deduction || 0;
+        document.getElementById('amount_d').value                      = '₦' + fmt(bill.adjusted_amount);
+        document.getElementById('amount_paid_d').value                 = '₦' + fmt(bill.amount_paid);
+        document.getElementById('balance_d').value                     = '₦' + fmt(bill.balance);
+        document.getElementById('payment_amount').value                = '';
+        document.getElementById('payment_amount2').value               = '';
+        document.getElementById('payment_method2').value               = '';
+        document.getElementById('amountError').textContent             = '';
 
         const savBox = document.getElementById('savingsBreakdown');
         if (bill.total_savings > 0) {
@@ -932,12 +941,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('discAmt').textContent   = '-₦' + fmt(bill.discount_deduction);
             } else { discRow.classList.add('d-none'); }
             document.getElementById('totalSavingsAmt').textContent = '-₦' + fmt(bill.total_savings);
-        } else { savBox.classList.add('d-none'); }
+        } else {
+            savBox.classList.add('d-none');
+        }
 
         new bootstrap.Modal(document.getElementById('paymentModal')).show();
     }
 
-    // Bulk payment modal
+    // ── Bulk payment modal ────────────────────────────────────────────────
+
     function openBulkPaymentModal() {
         const selectedBills = Object.values(selectedBillsMap);
 
@@ -978,14 +990,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const bulkModal = new bootstrap.Modal(document.getElementById('bulkPaymentModal'));
         bulkModal.show();
 
-        // Live distribution preview
-        const amountInput = document.getElementById('bulk_payment_amount');
-        const newAmountInput = amountInput.cloneNode(true);
-        amountInput.parentNode.replaceChild(newAmountInput, amountInput);
+        // Live distribution preview — clone input to remove stale listeners
+        const oldInput = document.getElementById('bulk_payment_amount');
+        const newInput = oldInput.cloneNode(true);
+        oldInput.parentNode.replaceChild(newInput, oldInput);
 
-        newAmountInput.addEventListener('input', function () {
+        newInput.addEventListener('input', function () {
             let remaining = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
-            let dist = [];
+            const dist = [];
             for (const bill of selectedBills) {
                 if (remaining <= 0) break;
                 const bal = parseFloat(bill.balance || 0);
@@ -1010,25 +1022,27 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        const oldSubmitBtn = document.getElementById('submitBulkPayment');
-        const newSubmitBtn = oldSubmitBtn.cloneNode(true);
-        oldSubmitBtn.parentNode.replaceChild(newSubmitBtn, oldSubmitBtn);
-        newSubmitBtn.addEventListener('click', () => submitBulkPayment(selectedBills));
+        // Clone submit button to remove stale listeners
+        const oldBtn = document.getElementById('submitBulkPayment');
+        const newBtn = oldBtn.cloneNode(true);
+        oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+        newBtn.addEventListener('click', () => submitBulkPayment(selectedBills));
     }
 
-    // Submit bulk payment
+    // ── Submit bulk payment ───────────────────────────────────────────────
+
     function submitBulkPayment(selectedBills) {
-        const paymentAmountInput = document.getElementById('bulk_payment_amount');
-        const paymentAmount = parseFloat((paymentAmountInput ? paymentAmountInput.value : '').replace(/[^0-9.]/g, '')) || 0;
+        const amountInput   = document.getElementById('bulk_payment_amount');
+        const paymentAmount = parseFloat((amountInput ? amountInput.value : '').replace(/[^0-9.]/g, '')) || 0;
         const paymentMethod = document.getElementById('bulk_payment_method').value;
         const totalPayable  = selectedBills.reduce((s, b) => s + parseFloat(b.balance || 0), 0);
 
         if (paymentAmount <= 0)
-            return Swal.fire({ icon:'warning', title:'Invalid Amount', text:'Please enter a valid payment amount.', confirmButtonColor:'#2563eb' });
+            return Swal.fire({ icon: 'warning', title: 'Invalid Amount', text: 'Please enter a valid payment amount.', confirmButtonColor: '#2563eb' });
         if (paymentAmount > totalPayable + 0.01)
-            return Swal.fire({ icon:'warning', title:'Exceeds Balance', text:`Total outstanding is ₦${fmt(totalPayable)}.`, confirmButtonColor:'#2563eb' });
+            return Swal.fire({ icon: 'warning', title: 'Exceeds Balance', text: `Total outstanding is ₦${fmt(totalPayable)}.`, confirmButtonColor: '#2563eb' });
         if (!paymentMethod)
-            return Swal.fire({ icon:'warning', title:'No Method', text:'Please select a payment method.', confirmButtonColor:'#2563eb' });
+            return Swal.fire({ icon: 'warning', title: 'No Method', text: 'Please select a payment method.', confirmButtonColor: '#2563eb' });
 
         showLoading(true);
 
@@ -1061,7 +1075,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(result => {
             if (result.success) {
-                Swal.fire({ icon:'success', title:'Success!', text:result.message, timer:2000, showConfirmButton:false })
+                Swal.fire({ icon: 'success', title: 'Success!', text: result.message, timer: 2000, showConfirmButton: false })
                     .then(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal'));
                         if (modal) modal.hide();
@@ -1069,14 +1083,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         loadPaymentData();
                     });
             } else {
-                Swal.fire({ icon:'error', title:'Error', text:result.message });
+                Swal.fire({ icon: 'error', title: 'Error', text: result.message });
             }
         })
-        .catch(() => Swal.fire({ icon:'error', title:'Error', text:'An error occurred while processing the payment.' }))
+        .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while processing the payment.' }))
         .finally(() => showLoading(false));
     }
 
-    // Delete handlers
+    // ── Delete handlers ───────────────────────────────────────────────────
+
     function attachDeleteHandlers() {
         document.querySelectorAll('.delete-payment').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -1089,17 +1104,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Individual payment form
+    // ── Individual payment form ───────────────────────────────────────────
+
     document.getElementById('paymentForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const amount  = parseFloat(document.getElementById('payment_amount').value.replace(/[^0-9.]/g,'')) || 0;
+        const amount  = parseFloat(document.getElementById('payment_amount').value.replace(/[^0-9.]/g, '')) || 0;
         const balance = parseFloat(document.getElementById('balance2').value) || 0;
         const method  = document.getElementById('payment_method2').value;
 
-        if (amount <= 0)       return Swal.fire({ icon:'warning', title:'Invalid Amount', text:'Enter a valid amount.', confirmButtonColor:'#2563eb' });
-        if (amount > balance + 0.01)  return Swal.fire({ icon:'warning', title:'Exceeds Balance', text:`Balance is ₦${fmt(balance)}`, confirmButtonColor:'#2563eb' });
-        if (!method)           return Swal.fire({ icon:'warning', title:'No Method', text:'Select a payment method.', confirmButtonColor:'#2563eb' });
+        if (amount <= 0)
+            return Swal.fire({ icon: 'warning', title: 'Invalid Amount', text: 'Enter a valid amount.', confirmButtonColor: '#2563eb' });
+        if (amount > balance + 0.01)
+            return Swal.fire({ icon: 'warning', title: 'Exceeds Balance', text: `Balance is ₦${fmt(balance)}`, confirmButtonColor: '#2563eb' });
+        if (!method)
+            return Swal.fire({ icon: 'warning', title: 'No Method', text: 'Select a payment method.', confirmButtonColor: '#2563eb' });
 
         document.getElementById('payment_amount2').value = amount.toFixed(2);
 
@@ -1120,20 +1139,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
                 if (modal) modal.hide();
-                Swal.fire({ icon:'success', title:'Recorded!', text:data.message, timer:2000, showConfirmButton:false })
+                Swal.fire({ icon: 'success', title: 'Recorded!', text: data.message, timer: 2000, showConfirmButton: false })
                     .then(() => loadPaymentData());
             } else {
-                Swal.fire({ icon:'error', title:'Error', text:data.message||'Payment failed.' });
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Payment failed.' });
             }
         })
-        .catch(() => Swal.fire({ icon:'error', title:'Error', text:'An error occurred.' }))
+        .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred.' }))
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="ri-wallet-line me-1"></i>Record Payment';
         });
     });
 
-    // Delete confirm
+    // ── Delete confirm ────────────────────────────────────────────────────
+
     document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
         const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
         if (modal) modal.hide();
@@ -1154,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({ icon:'success', title:'Deleted!', text:data.message, timer:1500, showConfirmButton:false })
+                Swal.fire({ icon: 'success', title: 'Deleted!', text: data.message, timer: 1500, showConfirmButton: false })
                     .then(() => loadPaymentData());
             } else {
                 Swal.fire('Error', data.message, 'error');
@@ -1168,7 +1188,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Boot
+    // ── Boot ──────────────────────────────────────────────────────────────
     loadPaymentData();
 });
 </script>

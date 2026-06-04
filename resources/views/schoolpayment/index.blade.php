@@ -263,14 +263,8 @@
     object-fit: contain;
 }
 @keyframes zoomIn {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1); }
 }
 .image-zoom-modal .btn-close {
     position: absolute;
@@ -381,21 +375,19 @@
                     <tbody>
                         @forelse($student as $i => $s)
                         @php
-                            // Use the EXACT SAME path as working StudentController
                             $avatarUrl = null;
                             if(isset($s->picture) && $s->picture && $s->picture != 'unnamed.jpg' && $s->picture != '') {
                                 $avatarUrl = asset('storage/images/student_avatars/' . $s->picture);
                             }
-                            $firstName = $s->firstname ?? '';
-                            $lastName = $s->lastname ?? '';
-                            $otherName = $s->othername ?? '';
-                            $fullName = trim($firstName . ' ' . $lastName);
+                            $firstName  = $s->firstname  ?? '';
+                            $lastName   = $s->lastname   ?? '';
+                            $otherName  = $s->othername  ?? '';
                             $fullNameWithOther = trim($firstName . ' ' . $lastName . ($otherName ? ' (' . $otherName . ')' : ''));
-                            $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+                            $initials   = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
                             if(empty($initials)) $initials = 'ST';
                         @endphp
                         <tr>
-                            <td>{{ $i + 1 }}</div>
+                            <td>{{ $i + 1 }}</td>
                             <td class="text-center">
                                 @if($avatarUrl)
                                     <img src="{{ $avatarUrl }}"
@@ -421,23 +413,23 @@
                                         {{ $initials }}
                                     </div>
                                 @endif
-                             </div>
+                            </td>
                             <td>
                                 <div class="fw-semibold">{{ $fullNameWithOther }}</div>
                                 <div class="text-muted small">{{ $s->term ?? '' }} · {{ $s->session ?? '' }}</div>
-                             </div>
+                            </td>
                             <td>
                                 <span class="text-muted font-monospace small">{{ $s->admissionNo ?? 'N/A' }}</span>
-                             </div>
+                            </td>
                             <td>
                                 <span class="badge-class">
                                     <i class="ri-building-line"></i>
                                     {{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}
                                 </span>
-                             </div>
+                            </td>
                             <td>
                                 <span class="text-muted small">{{ $s->gender ?? '—' }}</span>
-                             </div>
+                            </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
                                     @if($s->has_scholarship ?? false)
@@ -450,7 +442,7 @@
                                         <span class="text-muted small">—</span>
                                     @endif
                                 </div>
-                             </div>
+                            </td>
                             <td>
                                 <button type="button"
                                         class="btn btn-sm btn-primary open-pay-modal"
@@ -462,14 +454,14 @@
                                         data-avatar="{{ $avatarUrl ?? '' }}">
                                     <i class="ri-wallet-line me-1"></i>Pay
                                 </button>
-                             </div>
+                            </td>
                         </tr>
                         @empty
                         <tr>
                             <td colspan="8" class="text-center text-muted py-5">
                                 <i class="ri-inbox-line d-block mb-2" style="font-size:2rem;opacity:.4"></i>
                                 No students found in the current session.
-                            </div>
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -546,8 +538,8 @@
     </div>
 </div>
 
-{{-- IMAGE ZOOM MODAL --}}
-<div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="static">
+{{-- IMAGE ZOOM MODAL — no data-bs-backdrop="static" so clicking outside dismisses it --}}
+<div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content bg-transparent border-0">
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -581,154 +573,124 @@ $(document).ready(function () {
         columnDefs: [{ orderable: false, targets: [1, 6, 7] }],
     });
 
-    // Image Zoom Functionality
+    // ── Image Zoom ────────────────────────────────────────────────────────
+
+    function buildInitialsDataUrl(initials) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 400; canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 400, 400);
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 400, 400);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText((initials || 'ST').substring(0, 2), 200, 200);
+        return canvas.toDataURL();
+    }
+
+    function openZoomModal(imageUrl, name, admission, studentClass, gender, initials) {
+        $('#zoomedImageName').text(name || 'Student Photo');
+        const genderIcon = (gender || '').toLowerCase() === 'male' ? 'mars' : 'venus';
+        $('#zoomedImageDetails').html(
+            `<i class="fas fa-id-card me-1"></i> ${admission || 'N/A'} &nbsp;|&nbsp;` +
+            `<i class="fas fa-school me-1"></i> ${studentClass || 'N/A'} &nbsp;|&nbsp;` +
+            `<i class="fas fa-${genderIcon} me-1"></i> ${gender || 'N/A'}`
+        );
+        const src = (imageUrl && imageUrl !== '' && imageUrl !== 'null')
+            ? imageUrl
+            : buildInitialsDataUrl(initials);
+        $('#zoomedImage').attr('src', src).show();
+        $('#imageZoomModal').modal('show');
+    }
+
     function setupImageZoom() {
-        // For images in table
-        $('.avatar-clickable').off('click').on('click', function(e) {
+        $('.avatar-clickable').off('click.zoom').on('click.zoom', function (e) {
             e.stopPropagation();
-            const imageUrl = $(this).data('image');
-            const studentName = $(this).data('name');
-            const admissionNo = $(this).data('admission') || 'N/A';
-            const studentClass = $(this).data('class') || 'N/A';
-            const gender = $(this).data('gender') || 'N/A';
-            const initials = $(this).data('initials');
-
-            // Set the zoomed image name with full details
-            $('#zoomedImageName').text(studentName || 'Student Photo');
-            $('#zoomedImageDetails').html(`
-                <i class="fas fa-id-card me-1"></i> ${admissionNo} &nbsp;|&nbsp;
-                <i class="fas fa-school me-1"></i> ${studentClass} &nbsp;|&nbsp;
-                <i class="fas fa-${gender === 'Male' ? 'mars' : 'venus'} me-1"></i> ${gender}
-            `);
-
-            if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
-                $('#zoomedImage').attr('src', imageUrl).show();
-            } else {
-                // If no image, create a canvas with initials
-                const canvas = document.createElement('canvas');
-                canvas.width = 400;
-                canvas.height = 400;
-                const ctx = canvas.getContext('2d');
-
-                // Draw gradient background
-                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-                gradient.addColorStop(0, '#667eea');
-                gradient.addColorStop(1, '#764ba2');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Draw circle background
-                ctx.beginPath();
-                ctx.arc(canvas.width/2, canvas.height/2, canvas.width/2, 0, 2 * Math.PI);
-                ctx.fill();
-
-                // Draw text
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const displayInitials = (initials && initials !== 'null') ? initials.substring(0, 2) : 'ST';
-                ctx.fillText(displayInitials, canvas.width/2, canvas.height/2);
-
-                $('#zoomedImage').attr('src', canvas.toDataURL()).show();
-            }
+            openZoomModal(
+                $(this).data('image')    || '',
+                $(this).data('name')     || '',
+                $(this).data('admission')|| '',
+                $(this).data('class')    || '',
+                $(this).data('gender')   || '',
+                $(this).data('initials') || ''
+            );
         });
     }
 
     setupImageZoom();
 
-    // Open Payment Modal
+    // Close zoom by clicking the image itself
+    $(document).on('click', '.zoomed-image', function () {
+        $('#imageZoomModal').modal('hide');
+    });
+
+    // ── Open Payment Modal ────────────────────────────────────────────────
+
     document.querySelectorAll('.open-pay-modal').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            const studentId = this.dataset.id;
-            const studentName = this.dataset.name;
-            const studentClass = this.dataset.class;
-            const studentAdmission = this.dataset.admission;
+            const studentId       = this.dataset.id;
+            const studentName     = this.dataset.name;
+            const studentClass    = this.dataset.class;
+            const studentAdmission= this.dataset.admission;
             const studentInitials = this.dataset.initials;
-            const studentAvatar = this.dataset.avatar;
+            const studentAvatar   = this.dataset.avatar;
 
-            document.getElementById('tsStudentId').value = studentId;
-            document.getElementById('tsName').textContent = studentName;
-            document.getElementById('tsClass').textContent = studentClass;
+            document.getElementById('tsStudentId').value    = studentId;
+            document.getElementById('tsName').textContent   = studentName;
+            document.getElementById('tsClass').textContent  = studentClass;
             document.getElementById('tsAdmission').textContent = studentAdmission;
 
-            // Handle avatar display in modal
+            // Avatar in modal chip
             const avatarContainer = document.getElementById('tsAvatarContainer');
-            const initialsSpan = document.getElementById('tsInitials');
-            const avatarImg = document.getElementById('tsAvatarImg');
+            const initialsSpan    = document.getElementById('tsInitials');
+            const avatarImg       = document.getElementById('tsAvatarImg');
 
-            // Set up zoom for modal avatar
-            avatarContainer.setAttribute('data-name', studentName);
-            avatarContainer.setAttribute('data-initials', studentInitials);
+            avatarContainer.setAttribute('data-name',      studentName);
+            avatarContainer.setAttribute('data-initials',  studentInitials);
             avatarContainer.setAttribute('data-admission', studentAdmission);
-            avatarContainer.setAttribute('data-class', studentClass);
+            avatarContainer.setAttribute('data-class',     studentClass);
 
-            // Remove existing click handler and add new one
-            avatarContainer.onclick = function(e) {
+            avatarContainer.onclick = function (e) {
                 e.stopPropagation();
-                const imgSrc = avatarImg.src;
-                const hasImage = avatarImg.style.display === 'block' && imgSrc && imgSrc !== '';
-
-                $('#zoomedImageName').text(studentName);
-                $('#zoomedImageDetails').html(`
-                    <i class="fas fa-id-card me-1"></i> ${studentAdmission} &nbsp;|&nbsp;
-                    <i class="fas fa-school me-1"></i> ${studentClass}
-                `);
-
-                if (hasImage) {
-                    $('#zoomedImage').attr('src', imgSrc).show();
-                } else {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 400;
-                    canvas.height = 400;
-                    const ctx = canvas.getContext('2d');
-                    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-                    gradient.addColorStop(0, '#667eea');
-                    gradient.addColorStop(1, '#764ba2');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(studentInitials || 'ST', canvas.width/2, canvas.height/2);
-                    $('#zoomedImage').attr('src', canvas.toDataURL()).show();
-                }
-                $('#imageZoomModal').modal('show');
+                const hasImage = avatarImg.style.display === 'block'
+                              && avatarImg.src && avatarImg.src !== '';
+                openZoomModal(
+                    hasImage ? avatarImg.src : '',
+                    studentName, studentAdmission, studentClass, '', studentInitials
+                );
             };
 
             if (studentAvatar && studentAvatar !== '' && studentAvatar !== 'null') {
-                // Show image, hide initials
                 avatarImg.src = studentAvatar;
                 avatarImg.style.display = 'block';
                 initialsSpan.style.display = 'none';
-                avatarContainer.setAttribute('data-image', studentAvatar);
-                // Add error handling for broken images
-                avatarImg.onerror = function() {
+                avatarImg.onerror = function () {
                     this.style.display = 'none';
                     initialsSpan.style.display = 'flex';
                     initialsSpan.textContent = studentInitials;
-                    avatarContainer.setAttribute('data-image', '');
                 };
             } else {
-                // Show initials, hide image
                 avatarImg.style.display = 'none';
                 initialsSpan.style.display = 'flex';
                 initialsSpan.textContent = studentInitials;
-                avatarContainer.setAttribute('data-image', '');
             }
 
-            document.getElementById('tsTermId').value = '';
+            document.getElementById('tsTermId').value    = '';
             document.getElementById('tsSessionId').value = '';
-            document.getElementById('tsProceedBtn').disabled = false;
-            document.getElementById('tsProceedBtn').innerHTML =
-                '<i class="ri-search-eye-line"></i> View Payment Details';
+            const proceedBtn = document.getElementById('tsProceedBtn');
+            proceedBtn.disabled = false;
+            proceedBtn.innerHTML = '<i class="ri-search-eye-line"></i> View Payment Details';
 
             new bootstrap.Modal(document.getElementById('termSessionModal')).show();
         });
     });
 
-    // Form validation before submit
+    // ── Term/Session form validation ──────────────────────────────────────
+
     document.getElementById('tsForm').addEventListener('submit', function (e) {
         const termid    = document.getElementById('tsTermId').value;
         const sessionid = document.getElementById('tsSessionId').value;
@@ -740,7 +702,7 @@ $(document).ready(function () {
                 title: 'Incomplete Selection',
                 text: 'Please select both a term and a session to continue.',
                 confirmButtonColor: '#2563eb',
-                confirmButtonText: 'OK'
+                confirmButtonText: 'OK',
             });
             return;
         }
@@ -750,21 +712,9 @@ $(document).ready(function () {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
     });
 
-    // Re-attach image zoom after DataTable redraw
-    $('#studentsTable').on('draw.dt', function() {
+    // Re-attach zoom after DataTable redraws
+    $('#studentsTable').on('draw.dt', function () {
         setupImageZoom();
-    });
-
-    // Also handle clicks on zoomed image to close
-    $(document).on('click', '.zoomed-image', function() {
-        $('#imageZoomModal').modal('hide');
-    });
-
-    // Close zoom modal on escape key
-    $(document).on('keydown', function(e) {
-        if (e.key === 'Escape') {
-            $('#imageZoomModal').modal('hide');
-        }
     });
 });
 </script>
