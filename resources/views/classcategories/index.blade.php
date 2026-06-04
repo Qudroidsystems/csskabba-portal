@@ -2,7 +2,6 @@
 @extends('layouts.master')
 
 @section('content')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
 :root {
     --pay-primary: #1e3a5f;
@@ -61,6 +60,10 @@
 .stat-card .stat-label { font-size: 12px; color: var(--pay-muted); margin-top: 4px; }
 .stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
 
+.category-table {
+    width: 100%;
+    border-collapse: collapse;
+}
 .category-table th {
     background: var(--pay-primary);
     color: #fff;
@@ -68,6 +71,7 @@
     font-weight: 600;
     font-size: 13px;
     white-space: nowrap;
+    text-align: left;
 }
 .category-table td {
     padding: 11px 16px;
@@ -86,6 +90,8 @@
     justify-content: center;
     border-radius: 8px;
     transition: all .15s;
+    border: none;
+    cursor: pointer;
 }
 .btn-subtle-secondary {
     background: #f1f5f9;
@@ -108,32 +114,21 @@
     transform: translateY(-1px);
 }
 
-.form-check-input {
-    cursor: pointer;
-    width: 18px;
-    height: 18px;
-    margin-top: 0;
+.search-box {
+    position: relative;
 }
-.form-check-input:checked {
-    background-color: var(--pay-accent);
-    border-color: var(--pay-accent);
-}
-
-.dataTables_wrapper .dataTables_filter input,
 .search-box .form-control {
     border: 1.5px solid var(--pay-border);
     border-radius: 8px;
-    padding: 7px 14px;
+    padding: 9px 14px;
+    padding-right: 36px;
     font-size: 13px;
+    width: 100%;
 }
-.dataTables_wrapper .dataTables_filter input:focus,
 .search-box .form-control:focus {
     border-color: var(--pay-accent);
     outline: none;
     box-shadow: 0 0 0 3px rgba(37,99,235,.1);
-}
-.search-box {
-    position: relative;
 }
 .search-box .search-icon {
     position: absolute;
@@ -142,9 +137,6 @@
     transform: translateY(-50%);
     color: var(--pay-muted);
     pointer-events: none;
-}
-.search-box .form-control {
-    padding-right: 36px;
 }
 
 .modal-content {
@@ -157,21 +149,12 @@
     background: linear-gradient(135deg, #1e3a5f, #2563eb);
     padding: 20px 28px;
     position: relative;
-    overflow: hidden;
-}
-.modal-hero-bar::before {
-    content: '';
-    position: absolute; top: -25px; right: -25px;
-    width: 100px; height: 100px;
-    background: rgba(255,255,255,.07);
-    border-radius: 50%;
 }
 .modal-hero-bar h5 {
     color: #fff;
     font-weight: 700;
     margin: 0;
     font-size: 15px;
-    position: relative;
 }
 .modal-hero-bar .btn-close {
     position: absolute;
@@ -193,7 +176,7 @@
     border-radius: 8px;
     font-size: 13px;
     padding: 9px 14px;
-    transition: border .15s;
+    width: 100%;
 }
 .form-control:focus, .form-select:focus {
     border-color: var(--pay-accent);
@@ -214,10 +197,12 @@ textarea.form-control {
     font-weight: 500;
     border-radius: 8px;
     transition: all .15s;
+    cursor: pointer;
 }
 .btn-primary {
     background: linear-gradient(135deg, #2563eb, #4f46e5);
     border: none;
+    color: white;
 }
 .btn-primary:hover {
     transform: translateY(-1px);
@@ -234,11 +219,12 @@ textarea.form-control {
 }
 .btn-outline-primary {
     border: 1.5px solid var(--pay-accent);
+    background: transparent;
     color: var(--pay-accent);
 }
 .btn-outline-primary:hover {
     background: var(--pay-accent);
-    border-color: var(--pay-accent);
+    color: white;
 }
 
 .sub-assessment-row {
@@ -253,11 +239,19 @@ textarea.form-control {
     background: #f0fdf4;
     color: #16a34a;
     border: 1px solid #bbf7d0;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
 }
 .badge-junior {
     background: #eff6ff;
     color: #2563eb;
     border: 1px solid #bfdbfe;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .empty-state {
@@ -290,19 +284,40 @@ textarea.form-control {
 }
 
 .pagination {
+    display: flex;
     gap: 5px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
-.pagination .page-link {
+.pagination .page-item .page-link {
     border-radius: 8px;
     padding: 6px 12px;
     font-size: 13px;
     color: var(--pay-primary);
     border: 1px solid var(--pay-border);
+    background: white;
+    text-decoration: none;
 }
 .pagination .page-item.active .page-link {
     background: var(--pay-accent);
     border-color: var(--pay-accent);
     color: white;
+}
+.pagination .page-item.disabled .page-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
 }
 </style>
 
@@ -367,26 +382,24 @@ textarea.form-control {
             </h5>
             <div class="d-flex gap-2">
                 @can('Create class-category')
-                    <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                         <i class="ri-add-line me-1"></i>Create Category
                     </button>
                 @endcan
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="p-3 border-bottom">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="search-box">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search categories or assessments...">
-                            <i class="ri-search-line search-icon"></i>
-                        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search categories or assessments...">
+                        <i class="ri-search-line search-icon"></i>
                     </div>
                 </div>
             </div>
 
             @if ($errors->any())
-                <div class="alert alert-danger m-3">
+                <div class="alert alert-danger">
                     <strong>Whoops!</strong> There were some problems with your input.<br>
                     <ul class="mb-0 mt-2">
                         @foreach ($errors->all() as $error)
@@ -397,14 +410,14 @@ textarea.form-control {
             @endif
 
             @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                <div class="alert alert-success alert-dismissible fade show">
                     <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
             <div class="table-responsive">
-                <table class="table category-table w-100 mb-0" id="categoriesTable">
+                <table class="category-table" id="categoriesTable">
                     <thead>
                         <tr>
                             <th width="50">#</th>
@@ -415,14 +428,14 @@ textarea.form-control {
                             <th width="100">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tableBody">
                         @php $i = ($classcategories->currentPage() - 1) * $classcategories->perPage() + 1; @endphp
                         @forelse ($classcategories as $sc)
                             @php
                                 $assessment = $sc->assessments->first();
                                 $subAssessments = $assessment ? $assessment->subAssessments : collect();
                             @endphp
-                            <tr>
+                            <tr data-id="{{ $sc->id }}">
                                 <td class="sn">{{ $i++ }}</td>
                                 <td>
                                     <span class="fw-semibold">{{ $sc->category }}</span>
@@ -444,7 +457,7 @@ textarea.form-control {
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge {{ $sc->is_senior ? 'badge-senior' : 'badge-junior' }}">
+                                    <span class="{{ $sc->is_senior ? 'badge-senior' : 'badge-junior' }}">
                                         {{ $sc->is_senior ? 'Senior' : 'Junior' }}
                                     </span>
                                 </td>
@@ -455,7 +468,7 @@ textarea.form-control {
                                     <div class="d-flex gap-2">
                                         @can('Update class-category')
                                             <button type="button"
-                                                    class="btn btn-subtle-secondary btn-icon edit-category-btn"
+                                                    class="btn-icon btn-subtle-secondary edit-category-btn"
                                                     data-id="{{ $sc->id }}"
                                                     data-category="{{ $sc->category }}"
                                                     data-is_senior="{{ $sc->is_senior ? 1 : 0 }}"
@@ -466,7 +479,7 @@ textarea.form-control {
                                         @endcan
                                         @can('Delete class-category')
                                             <button type="button"
-                                                    class="btn btn-subtle-danger btn-icon delete-category-btn"
+                                                    class="btn-icon btn-subtle-danger delete-category-btn"
                                                     data-id="{{ $sc->id }}"
                                                     data-name="{{ $sc->category }}">
                                                 <i class="ri-delete-bin-line"></i>
@@ -474,7 +487,7 @@ textarea.form-control {
                                         @endcan
                                     </div>
                                 </td>
-                            </table>
+                            </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="text-center">
@@ -494,16 +507,14 @@ textarea.form-control {
                 </table>
             </div>
 
-            <div class="p-3 border-top">
-                <div class="row align-items-center">
-                    <div class="col-sm">
-                        <div class="text-muted text-center text-sm-start">
-                            Showing <span class="fw-semibold">{{ $classcategories->count() }}</span> of <span class="fw-semibold">{{ $classcategories->total() }}</span> categories
-                        </div>
+            <div class="row align-items-center mt-3">
+                <div class="col-sm">
+                    <div class="text-muted text-center text-sm-start">
+                        Showing <span class="fw-semibold">{{ $classcategories->count() }}</span> of <span class="fw-semibold">{{ $classcategories->total() }}</span> categories
                     </div>
-                    <div class="col-sm-auto mt-3 mt-sm-0">
-                        {{ $classcategories->links() }}
-                    </div>
+                </div>
+                <div class="col-sm-auto mt-3 mt-sm-0">
+                    {{ $classcategories->links() }}
                 </div>
             </div>
         </div>
@@ -535,15 +546,13 @@ textarea.form-control {
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="is_senior" id="junior" value="0" checked>
                                 <label class="form-check-label" for="junior">
-                                    <span class="badge badge-junior">Junior</span>
-                                    <small class="text-muted d-block">(A, B, C, D, F)</small>
+                                    <span class="badge-junior">Junior (A, B, C, D, F)</span>
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="is_senior" id="senior" value="1">
                                 <label class="form-check-label" for="senior">
-                                    <span class="badge badge-senior">Senior</span>
-                                    <small class="text-muted d-block">(A1, B2, B3, C4, C5, C6, D7, E8, F9)</small>
+                                    <span class="badge-senior">Senior (A1, B2, B3, C4, C5, C6, D7, E8, F9)</span>
                                 </label>
                             </div>
                         </div>
@@ -599,13 +608,13 @@ textarea.form-control {
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="is_senior" id="edit_junior" value="0">
                                 <label class="form-check-label" for="edit_junior">
-                                    <span class="badge badge-junior">Junior</span>
+                                    <span class="badge-junior">Junior</span>
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="is_senior" id="edit_senior" value="1">
                                 <label class="form-check-label" for="edit_senior">
-                                    <span class="badge badge-senior">Senior</span>
+                                    <span class="badge-senior">Senior</span>
                                 </label>
                             </div>
                         </div>
@@ -665,35 +674,10 @@ textarea.form-control {
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
-    var table = $('#categoriesTable').DataTable({
-        pageLength: 10,
-        order: [[0, 'asc']],
-        language: {
-            search: '',
-            searchPlaceholder: 'Search categories...',
-            lengthMenu: 'Show _MENU_ entries',
-            info: 'Showing _START_–_END_ of _TOTAL_ categories',
-            infoEmpty: 'No categories found',
-            zeroRecords: 'No matching categories',
-        },
-        columnDefs: [
-            { orderable: false, targets: [5] },
-            { orderable: true, targets: [0, 1, 2, 3, 4] }
-        ],
-        dom: 'rtip',
-    });
-
-    $('#searchInput').on('keyup', function() {
-        table.search(this.value).draw();
-    });
-
     let addSubIndex = 0;
     let editSubIndex = 0;
     let deleteCategoryId = null;
@@ -750,6 +734,14 @@ $(document).ready(function() {
 
     $('#edit-sub-btn').click(function() {
         addSubAssessment('edit-sub-container', null, true);
+    });
+
+    // Search functionality
+    $('#searchInput').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('#tableBody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
     });
 
     // ========== ADD CATEGORY ==========
@@ -829,9 +821,6 @@ $(document).ready(function() {
                 let errorMsg = 'Failed to create category.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMsg = xhr.responseJSON.message;
-                }
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
                 }
                 Swal.fire('Error', errorMsg, 'error');
             },
@@ -944,9 +933,6 @@ $(document).ready(function() {
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMsg = xhr.responseJSON.message;
                 }
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
-                }
                 Swal.fire('Error', errorMsg, 'error');
             },
             complete: function() {
@@ -971,7 +957,6 @@ $(document).ready(function() {
         const btn = $(this);
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
 
-        // FIXED: Use proper URL construction with DELETE method
         $.ajax({
             url: deleteUrlBase + '/' + deleteCategoryId,
             method: 'DELETE',
