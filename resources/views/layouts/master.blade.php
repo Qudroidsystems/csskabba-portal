@@ -370,7 +370,6 @@
                 box-shadow: none;
                 width: 280px;
             }
-            /* Logo ALWAYS visible in mobile sidebar */
             .app-menu .navbar-brand-box { display: flex !important; }
 
             body.vertical-sidebar-enable .app-menu {
@@ -541,7 +540,7 @@
     <!-- ========== SIDEBAR ========== -->
     <div class="app-menu navbar-menu">
 
-        <!-- LOGO — always shown including mobile -->
+        <!-- LOGO -->
         <div class="navbar-brand-box">
             @php
                 use App\Models\SchoolInformation;
@@ -1102,7 +1101,7 @@
             </div>
         </div><!-- /scrollbar -->
 
-        <!-- ===== SIDEBAR FOOTER — compact ===== -->
+        <!-- ===== SIDEBAR FOOTER ===== -->
         @auth
         <div class="sidebar-footer">
             @php
@@ -1280,7 +1279,6 @@
                              style="display:none;position:absolute;top:calc(100% + 10px);right:0;min-width:220px;
                                     background:var(--vz-dropdown-bg,#fff);border:1px solid var(--vz-border-color,#e9ebec);
                                     border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.16);z-index:9999;overflow:hidden;">
-                            <!-- Gradient header -->
                             <div style="background:linear-gradient(135deg,#405189 0%,#4f8ef7 100%);padding:14px 16px;display:flex;align-items:center;gap:10px;">
                                 @if($srcPath)
                                     <img src="{{ $srcPath }}" alt="{{ $fullName }}"
@@ -1489,7 +1487,6 @@
 (function () {
     'use strict';
 
-    /* ── helpers ─────────────────────────────────────────── */
     const $ = (s, c) => (c || document).querySelector(s);
     const $$ = (s, c) => (c || document).querySelectorAll(s);
 
@@ -1524,65 +1521,56 @@
     });
 
     /* ── MANUAL DROPDOWN (animated) ─────────────────────── */
-function makeDropdown(btnId, panelId) {
-    const btn   = document.getElementById(btnId);
-    const panel = document.getElementById(panelId);
-    if (!btn || !panel) return;
+    function makeDropdown(btnId, panelId) {
+        const btn   = document.getElementById(btnId);
+        const panel = document.getElementById(panelId);
+        if (!btn || !panel) return;
 
-    Object.assign(panel.style, {
-        display: 'none', opacity: '0',
-        transform: 'translateY(-10px) scale(0.95)',
-        transformOrigin: 'top right',
-        transition: 'opacity .22s ease, transform .22s cubic-bezier(0.4,0,0.2,1)'
-    });
+        Object.assign(panel.style, {
+            display: 'none', opacity: '0',
+            transform: 'translateY(-10px) scale(0.95)',
+            transformOrigin: 'top right',
+            transition: 'opacity .22s ease, transform .22s cubic-bezier(0.4,0,0.2,1)'
+        });
 
-    const isOpen = () => panel.style.display === 'block';
+        const isOpen = () => panel.style.display === 'block';
 
-    const open = () => {
-        panel.style.display = 'block';
-        panel.getBoundingClientRect();
-        panel.style.opacity = '1';
-        panel.style.transform = 'translateY(0) scale(1)';
-        btn.setAttribute('aria-expanded', 'true');
-    };
-    const close = () => {
-        panel.style.opacity = '0';
-        panel.style.transform = 'translateY(-8px) scale(0.95)';
-        btn.setAttribute('aria-expanded', 'false');
-        setTimeout(() => {
-            if (panel.style.opacity === '0') panel.style.display = 'none';
-        }, 220);
-    };
+        const open = () => {
+            panel.style.display = 'block';
+            panel.getBoundingClientRect();
+            panel.style.opacity = '1';
+            panel.style.transform = 'translateY(0) scale(1)';
+            btn.setAttribute('aria-expanded', 'true');
+        };
+        const close = () => {
+            panel.style.opacity = '0';
+            panel.style.transform = 'translateY(-8px) scale(0.95)';
+            btn.setAttribute('aria-expanded', 'false');
+            setTimeout(() => {
+                if (panel.style.opacity === '0') panel.style.display = 'none';
+            }, 220);
+        };
 
-    btn.addEventListener('click', e => { e.stopPropagation(); isOpen() ? close() : open(); });
+        btn.addEventListener('click', e => { e.stopPropagation(); isOpen() ? close() : open(); });
 
-    // Use CAPTURE phase so our guard runs before Bootstrap's bubble-phase handlers.
-    document.addEventListener('click', e => {
-        const t = e.target;
+        /*
+         * FIX: Use bubble phase (no third argument / false).
+         * Capture phase was intercepting Bootstrap modal trigger clicks
+         * before Bootstrap's own handlers could run, breaking all modals
+         * in child blade views. Bubble phase closes the dropdown just as
+         * effectively without touching any other component's event chain.
+         */
+        document.addEventListener('click', e => {
+            if (!btn.contains(e.target) && !panel.contains(e.target)) close();
+        });
 
-        // Never interfere with Bootstrap-controlled elements
-        if (
-            t.closest('[data-bs-toggle]')    ||
-            t.closest('[data-bs-dismiss]')   ||
-            t.closest('[data-bs-target]')    ||
-            t.closest('[data-bs-slide]')     ||
-            t.closest('[data-bs-slide-to]')  ||
-            t.closest('[data-bs-parent]')    ||
-            t.closest('.modal')              ||
-            t.closest('.modal-backdrop')     ||
-            t.closest('.offcanvas')
-        ) return;
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
-        if (!btn.contains(t) && !panel.contains(t)) close();
-    }, true); // <-- capture phase
-
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-
-    $$('a', panel).forEach(a => {
-        a.addEventListener('mouseenter', () => a.style.background = 'rgba(64,81,137,.08)');
-        a.addEventListener('mouseleave', () => a.style.background = '');
-    });
-}
+        $$('a', panel).forEach(a => {
+            a.addEventListener('mouseenter', () => a.style.background = 'rgba(64,81,137,.08)');
+            a.addEventListener('mouseleave', () => a.style.background = '');
+        });
+    }
 
     /* ── THEME ───────────────────────────────────────────── */
     function initTheme() {
@@ -1629,33 +1617,24 @@ function makeDropdown(btnId, panelId) {
         });
     }
 
-    /* ── FIX 1: NPROGRESS — exclude ALL Bootstrap-controlled links ── */
+    /* ── NPROGRESS ───────────────────────────────────────── */
     function initNProgress() {
         if (typeof NProgress === 'undefined') return;
         NProgress.configure({ showSpinner: false, speed: 380, minimum: 0.08 });
 
         $$('a[href]').forEach(a => {
             const h = a.getAttribute('href') || '';
-
-            // Skip: empty, hash-only, hash-prefixed, JS, mailto, tel
             if (!h || h === '#' || h.startsWith('#') ||
                 h.startsWith('javascript') ||
                 h.startsWith('mailto') ||
                 h.startsWith('tel')) return;
-
-            // Skip: Bootstrap-controlled attributes
             if (a.hasAttribute('data-bs-toggle')  ||
                 a.hasAttribute('data-bs-target')   ||
                 a.hasAttribute('data-bs-dismiss')  ||
                 a.hasAttribute('data-bs-slide')    ||
                 a.hasAttribute('data-bs-slide-to')) return;
-
-            // Skip: new-tab links
             if (a.getAttribute('target') === '_blank') return;
-
-            // Skip: links inside modals (they may close/navigate internally)
             if (a.closest('.modal')) return;
-
             a.addEventListener('click', () => NProgress.start());
         });
 
@@ -1709,12 +1688,6 @@ function makeDropdown(btnId, panelId) {
         btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    /* ── FIX 4: killBsDropdown() REMOVED ────────────────────
-       Disposing Bootstrap's internal Dropdown instance corrupts
-       Bootstrap's ability to manage modals and other components.
-       Our custom makeDropdown() handles the user-menu entirely,
-       so Bootstrap's instance is never needed.               ── */
-
     /* ── IMAGE MODAL ─────────────────────────────────────── */
     function initImageModal() {
         const m = document.getElementById('imageViewModal');
@@ -1735,11 +1708,10 @@ function makeDropdown(btnId, panelId) {
         btn.addEventListener('mouseleave', () => tip.style.opacity = '0');
     }
 
-    /* ── FIX 5: FORM NPROGRESS — skip forms inside modals ── */
+    /* ── FORM NPROGRESS ──────────────────────────────────── */
     function initFormProgress() {
         if (typeof NProgress === 'undefined') return;
         $$('form').forEach(f => {
-            // Skip forms inside modals — they submit via AJAX or navigate internally
             if (f.closest('.modal')) return;
             if (f.getAttribute('action') && !f.dataset.noProgress)
                 f.addEventListener('submit', () => NProgress.start());
@@ -1761,7 +1733,6 @@ function makeDropdown(btnId, panelId) {
         initTheme();
         makeDropdown('theme-toggle-btn', 'theme-dropdown');
         makeDropdown('user-menu-btn',    'user-dropdown');
-        /* killBsDropdown() intentionally removed — see FIX 4 above */
         initActiveSidebar();
         initRipple();
         initBackToTop();
@@ -1850,26 +1821,26 @@ function makeDropdown(btnId, panelId) {
         if (!overlay) return;
         overlay.style.display   = 'flex';
         overlay.style.animation = 'spotlightOverlayFadeIn .28s ease forwards';
-        /* FIX 3: restore pointer-events when opening */
-        overlay.style.pointerEvents = '';
         if (box) box.style.animation = 'spotlightModalBounceIn .4s cubic-bezier(.34,1.3,.64,1) forwards';
         setTimeout(() => input?.focus(), 120);
         renderHistory();
     }
 
     function close() {
+        /*
+         * FIX: Removed pointer-events manipulation entirely.
+         * Setting pointerEvents='none' on the overlay during the 200ms
+         * fade-out was blocking clicks on Bootstrap modal trigger buttons
+         * (data-bs-toggle="modal") that appeared underneath the overlay,
+         * preventing those modals from opening after the spotlight closed.
+         * The overlay hides via display:none after 200ms which is sufficient.
+         */
         if (box)     box.style.animation     = 'spotlightModalFadeOut .2s ease forwards';
-        if (overlay) {
-            overlay.style.animation    = 'spotlightOverlayFadeOut .2s ease forwards';
-            /* FIX 3: immediately block pointer events so the 200ms fade-out
-               window cannot intercept Bootstrap modal trigger clicks          */
-            overlay.style.pointerEvents = 'none';
-        }
+        if (overlay) overlay.style.animation = 'spotlightOverlayFadeOut .2s ease forwards';
         setTimeout(() => {
             if (overlay) {
-                overlay.style.display       = 'none';
-                overlay.style.animation     = '';
-                overlay.style.pointerEvents = ''; /* restore for next open */
+                overlay.style.display   = 'none';
+                overlay.style.animation = '';
             }
             if (input) input.value = '';
             showEmpty();
@@ -1992,8 +1963,8 @@ function makeDropdown(btnId, panelId) {
             li.style.background = active ? 'rgba(79,142,247,.15)' : '';
             const t   = li.querySelector('.result-title');
             const arr = li.querySelector('.mdi-arrow-right');
-            if (t)   t.style.color           = active ? '#7eb8fb' : '#fff';
-            if (arr) arr.style.transform      = active ? 'translateX(5px)' : 'translateX(0)';
+            if (t)   t.style.color      = active ? '#7eb8fb' : '#fff';
+            if (arr) arr.style.transform = active ? 'translateX(5px)' : 'translateX(0)';
             if (active) li.scrollIntoView({ block: 'nearest' });
         });
     }
