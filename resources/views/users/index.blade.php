@@ -206,31 +206,102 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 .u-btn.danger   { background:var(--u-danger); color:#fff; }
 .u-btn.ghost    { background:#fff; color:var(--u-primary); border:1.5px solid var(--u-border); }
 
-/* ── Modal redesign ── */
+/* ── Modal Styles (FIXED) ── */
+.modal.u-modal {
+    --bs-modal-zindex: 1055;
+    --bs-modal-bg: transparent;
+    --bs-modal-border-color: transparent;
+    --bs-modal-border-width: 0;
+    --bs-modal-border-radius: 18px;
+}
+
+.modal.u-modal .modal-dialog {
+    position: relative;
+    margin: 1.75rem auto;
+    pointer-events: auto;
+}
+
 .modal.u-modal .modal-content {
     border: none;
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: var(--u-shadow-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background: transparent;
 }
-.modal.u-modal .modal-content {
-    animation: scaleIn .25s ease;
+
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
 }
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0);
+}
+
+.modal-backdrop {
+    --bs-backdrop-zindex: 1050;
+    --bs-backdrop-bg: #000;
+    --bs-backdrop-opacity: 0.5;
+    z-index: 1040;
+}
+
+.modal-backdrop.show {
+    opacity: 0.5;
+}
+
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}
+
 .u-modal-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     padding: 22px 28px;
-    position: relative; overflow: hidden;
+    position: relative;
+    overflow: hidden;
 }
 .u-modal-hero::before {
     content:''; position:absolute; top:-40px; right:-40px;
     width:140px; height:140px;
     background:rgba(255,255,255,.07); border-radius:50%;
 }
-.u-modal-hero h5 { color:#fff; font-weight:700; font-size:16px; margin:0; position:relative; }
-.u-modal-hero p  { color:rgba(255,255,255,.72); font-size:12px; margin:4px 0 0; position:relative; }
-.u-modal-hero .btn-close { position:absolute; top:18px; right:20px; filter:invert(1); opacity:.8; }
-.u-modal-body { padding: 22px 24px; background: var(--u-bg); }
-.u-modal-footer { padding: 14px 24px; background: var(--u-surface); border-top:1px solid var(--u-border); }
+.u-modal-hero h5 {
+    color:#fff;
+    font-weight:700;
+    font-size:16px;
+    margin:0;
+    position:relative;
+    z-index: 1;
+}
+.u-modal-hero p {
+    color:rgba(255,255,255,.72);
+    font-size:12px;
+    margin:4px 0 0;
+    position:relative;
+    z-index: 1;
+}
+.u-modal-hero .btn-close {
+    position:absolute;
+    top:18px;
+    right:20px;
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+    z-index: 2;
+}
+.u-modal-hero .btn-close:hover {
+    opacity: 1;
+}
+.u-modal-body {
+    padding: 22px 24px;
+    background: var(--u-bg);
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.u-modal-footer {
+    padding: 14px 24px;
+    background: var(--u-surface);
+    border-top: 1px solid var(--u-border);
+}
 
 .u-form-label {
     font-size: 11.5px; font-weight: 700; color: var(--u-muted);
@@ -586,12 +657,12 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          ADD USER MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="showModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
+    <div id="showModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="true" aria-labelledby="showModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <h5><i class="bi bi-person-plus me-2"></i>Add New User</h5>
+                    <h5 id="showModalLabel"><i class="bi bi-person-plus me-2"></i>Add New User</h5>
                     <p>Create a system user with role-based access</p>
                 </div>
                 <form id="add-user-form" autocomplete="off">
@@ -639,12 +710,12 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          EDIT USER MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="editModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
+    <div id="editModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="true" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero" style="background:linear-gradient(135deg,#065f46,#16a34a,#4ade80);">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <h5><i class="ph-pencil me-2"></i>Edit User</h5>
+                    <h5 id="editModalLabel"><i class="ph-pencil me-2"></i>Edit User</h5>
                     <p>Update user information and permissions</p>
                 </div>
                 <form id="edit-user-form" autocomplete="off">
@@ -666,6 +737,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                                     <option value="{{ $role->name }}">{{ $role->name }}</option>
                                     @endforeach
                                 </select>
+                                <div class="small text-muted mt-1">Hold Ctrl/Cmd to select multiple</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="u-form-label">New Password <span class="text-muted fw-normal">(optional)</span></label>
@@ -692,7 +764,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          DELETE CONFIRM MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="deleteRecordModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
+    <div id="deleteRecordModal" class="modal fade u-modal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
             <div class="modal-content">
                 <div class="modal-body p-5 text-center">
@@ -715,12 +787,12 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          ADD STUDENT (single) MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="addStudentModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
+    <div id="addStudentModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="addStudentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero" style="background:linear-gradient(135deg,#064e3b,#059669,#34d399);">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <h5><i class="bi bi-mortarboard me-2"></i>Add Student as User</h5>
+                    <h5 id="addStudentModalLabel"><i class="bi bi-mortarboard me-2"></i>Add Student as User</h5>
                     <p>Create portal access for a registered student</p>
                 </div>
                 <div class="u-modal-body">
@@ -733,7 +805,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     </div>
                     <div class="mb-3">
                         <label class="u-form-label">Select Student</label>
-                        <select id="student-select" class="u-input" required>
+                        <select id="student-select" class="u-form-input" required>
                             <option value="">— Choose a student —</option>
                         </select>
                     </div>
@@ -754,12 +826,12 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </div>
 
     {{-- SET STUDENT CREDENTIALS MODAL --}}
-    <div id="setStudentCredentialsModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
+    <div id="setStudentCredentialsModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="credentialsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero" style="background:linear-gradient(135deg,#1e3a5f,#2563eb,#4f46e5);">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <h5><i class="bi bi-key me-2"></i>Set Credentials</h5>
+                    <h5 id="credentialsModalLabel"><i class="bi bi-key me-2"></i>Set Credentials</h5>
                     <p>Configure login details for the selected student</p>
                 </div>
                 <form id="add-student-credentials-form" autocomplete="off">
@@ -807,64 +879,45 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         </div>
     </div>
 
-    {{-- Include Mass Student Modal --}}
-    @include('users.partials.mass-student-modal')
-
 </div>
 </div>
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════
-     SCRIPTS (No duplicate Bootstrap - using master layout's)
+     SCRIPTS
 ══════════════════════════════════════════════════════════════ --}}
-
-<!-- Only add libraries that aren't in master layout -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
 (function () {
     'use strict';
 
-    // Wait for DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-
-        // Log to debug
-        console.log('Page loaded, checking modals...');
-
-        // Check if modals exist in DOM
-        const modals = ['showModal', 'editModal', 'deleteRecordModal', 'addStudentModal', 'setStudentCredentialsModal'];
-        modals.forEach(modalId => {
-            const modalEl = document.getElementById(modalId);
-            if (modalEl) {
-                console.log(`✓ Modal #${modalId} found in DOM`);
-            } else {
-                console.warn(`✗ Modal #${modalId} NOT found in DOM`);
-            }
-        });
 
         const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-        // ── Ensure Bootstrap modals work with data-bs-toggle ──
-        // Bootstrap should handle data-bs-toggle automatically, but we need to make sure
-        // the modal elements are properly initialized
-
-        // Re-initialize all modals to ensure they work
-        modals.forEach(modalId => {
+        // Helper function to safely show modals
+        function safeShowModal(modalId) {
             const modalElement = document.getElementById(modalId);
-            if (modalElement) {
-                // Initialize Bootstrap modal if not already initialized
-                if (!bootstrap.Modal.getInstance(modalElement)) {
-                    new bootstrap.Modal(modalElement);
-                    console.log(`Initialized modal: ${modalId}`);
-                }
+            if (!modalElement) {
+                console.error('Modal not found:', modalId);
+                return;
             }
-        });
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: true
+                });
+            }
+            modal.show();
+        }
 
         // ── Collect all rows once ──────────────────────────────
         const allRows = () => Array.from(document.querySelectorAll('#usersTableBody tr[data-id]'));
-        let visibleIds = new Set(allRows().map(r => r.dataset.id));
 
         // ── Live filter ────────────────────────────────────────
         function applyFilters() {
@@ -873,8 +926,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             const email  = document.getElementById('emailFilter')?.value.toLowerCase().trim() || '';
 
             let shown = 0;
-            visibleIds = new Set();
-
             allRows().forEach(row => {
                 const name  = row.dataset.name  || '';
                 const rEmail = row.dataset.email || '';
@@ -886,7 +937,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
                 const visible = matchSearch && matchRole && matchEmail;
                 row.style.display = visible ? '' : 'none';
-                if (visible) { shown++; visibleIds.add(row.dataset.id); }
+                if (visible) shown++;
             });
 
             const showingSpan = document.getElementById('showingCount');
@@ -974,32 +1025,23 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             const btn = e.target.closest('.remove-item-btn');
             if (!btn) return;
             const id = btn.dataset.id;
-
-            // Show delete confirmation modal
             const deleteModal = document.getElementById('deleteRecordModal');
             if (deleteModal) {
                 const modal = bootstrap.Modal.getInstance(deleteModal) || new bootstrap.Modal(deleteModal);
-
-                // Remove old event listener and add new one
                 const deleteBtn = document.getElementById('delete-record');
                 if (deleteBtn) {
-                    const freshDeleteBtn = deleteBtn.cloneNode(true);
-                    deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
-
-                    freshDeleteBtn.addEventListener('click', function delHandler() {
+                    const newDeleteBtn = deleteBtn.cloneNode(true);
+                    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+                    newDeleteBtn.addEventListener('click', function delHandler() {
                         axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': CSRF } })
                             .then(() => {
                                 const row = document.querySelector(`tr[data-id="${id}"]`);
-                                if (row) {
-                                    row.style.transition = 'all .3s ease';
-                                    row.style.opacity = '0';
-                                    row.style.transform = 'translateX(-20px)';
-                                    setTimeout(() => row.remove(), 300);
-                                }
+                                if (row) row.remove();
                                 const totalEl = document.getElementById('totalCount');
                                 if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) - 1;
                                 modal.hide();
                                 Swal.fire({ icon: 'success', title: 'Deleted!', text: 'User removed.', showConfirmButton: false, timer: 2000 });
+                                applyFilters();
                             })
                             .catch(err => Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error'));
                     });
@@ -1031,8 +1073,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                         });
                         Swal.fire('Deleted!', ids.length + ' users removed.', 'success');
                         updateRemoveBtn();
-                        const totalEl = document.getElementById('totalCount');
-                        if (totalEl) totalEl.textContent = allRows().length;
                         applyFilters();
                     });
             });
@@ -1043,36 +1083,23 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             const btn = e.target.closest('.edit-item-btn');
             if (!btn) return;
 
-            const idField = document.getElementById('edit-id-field');
-            const nameField = document.getElementById('edit-name');
-            const emailField = document.getElementById('edit-email');
-            const roleSelect = document.getElementById('edit-role');
-
-            if (idField) idField.value = btn.dataset.id;
-            if (nameField) nameField.value = btn.dataset.name;
-            if (emailField) emailField.value = btn.dataset.email;
+            document.getElementById('edit-id-field').value = btn.dataset.id;
+            document.getElementById('edit-name').value = btn.dataset.name;
+            document.getElementById('edit-email').value = btn.dataset.email;
 
             const roles = (btn.dataset.roles || '').split(',').filter(r => r.trim());
+            const roleSelect = document.getElementById('edit-role');
             if (roleSelect) {
                 Array.from(roleSelect.options).forEach(opt => {
                     opt.selected = roles.includes(opt.value);
                 });
             }
 
-            const passwordField = document.getElementById('edit-password');
-            const confirmField = document.getElementById('edit-password_confirmation');
-            if (passwordField) passwordField.value = '';
-            if (confirmField) confirmField.value = '';
+            document.getElementById('edit-password').value = '';
+            document.getElementById('edit-password_confirmation').value = '';
+            document.getElementById('edit-alert')?.classList.add('d-none');
 
-            const alertDiv = document.getElementById('edit-alert');
-            if (alertDiv) alertDiv.classList.add('d-none');
-
-            // Show edit modal
-            const editModal = document.getElementById('editModal');
-            if (editModal) {
-                const modal = bootstrap.Modal.getInstance(editModal) || new bootstrap.Modal(editModal);
-                modal.show();
-            }
+            safeShowModal('editModal');
         });
 
         // ── Add user form ──────────────────────────────────────
@@ -1083,17 +1110,17 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 const alert = document.getElementById('add-alert');
                 if (alert) alert.classList.add('d-none');
 
-                const name  = document.getElementById('name')?.value.trim() || '';
+                const name = document.getElementById('name')?.value.trim() || '';
                 const email = document.getElementById('email')?.value.trim() || '';
-                const pass  = document.getElementById('password')?.value || '';
-                const conf  = document.getElementById('password_confirmation')?.value || '';
+                const pass = document.getElementById('password')?.value || '';
+                const conf = document.getElementById('password_confirmation')?.value || '';
                 const roles = Array.from(document.getElementById('role')?.selectedOptions || []).map(o => o.value);
 
-                if (!name)         { showAlert(alert, 'Enter a name'); return; }
-                if (!email)        { showAlert(alert, 'Enter an email'); return; }
-                if (!roles.length) { showAlert(alert, 'Select at least one role'); return; }
-                if (!pass)         { showAlert(alert, 'Enter a password'); return; }
-                if (pass !== conf) { showAlert(alert, 'Passwords do not match'); return; }
+                if (!name) { alert.innerHTML = 'Enter a name'; alert.classList.remove('d-none'); return; }
+                if (!email) { alert.innerHTML = 'Enter an email'; alert.classList.remove('d-none'); return; }
+                if (!roles.length) { alert.innerHTML = 'Select at least one role'; alert.classList.remove('d-none'); return; }
+                if (!pass) { alert.innerHTML = 'Enter a password'; alert.classList.remove('d-none'); return; }
+                if (pass !== conf) { alert.innerHTML = 'Passwords do not match'; alert.classList.remove('d-none'); return; }
 
                 const btn = document.getElementById('add-btn');
                 if (btn) {
@@ -1105,19 +1132,16 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     .then(res => {
                         const u = res.data.user;
                         addRowToTable(u);
-                        // Hide modal
-                        const modal = document.getElementById('showModal');
-                        if (modal) {
-                            const bsModal = bootstrap.Modal.getInstance(modal);
-                            if (bsModal) bsModal.hide();
-                        }
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('showModal'));
+                        if (modal) modal.hide();
                         Swal.fire({ icon: 'success', title: 'User Created!', text: u.name + ' added successfully.', showConfirmButton: false, timer: 2500 });
                     })
                     .catch(err => {
                         const msg = err.response?.status === 422
                             ? Object.values(err.response.data.errors || {}).flat().join(', ')
                             : (err.response?.data?.message || 'Error creating user');
-                        showAlert(alert, msg);
+                        alert.innerHTML = msg;
+                        alert.classList.remove('d-none');
                     })
                     .finally(() => {
                         if (btn) {
@@ -1136,17 +1160,17 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 const alert = document.getElementById('edit-alert');
                 if (alert) alert.classList.add('d-none');
 
-                const id    = document.getElementById('edit-id-field')?.value || '';
-                const name  = document.getElementById('edit-name')?.value.trim() || '';
+                const id = document.getElementById('edit-id-field')?.value || '';
+                const name = document.getElementById('edit-name')?.value.trim() || '';
                 const email = document.getElementById('edit-email')?.value.trim() || '';
-                const pass  = document.getElementById('edit-password')?.value || '';
-                const conf  = document.getElementById('edit-password_confirmation')?.value || '';
+                const pass = document.getElementById('edit-password')?.value || '';
+                const conf = document.getElementById('edit-password_confirmation')?.value || '';
                 const roles = Array.from(document.getElementById('edit-role')?.selectedOptions || []).map(o => o.value);
 
-                if (!name)         { showAlert(alert, 'Enter a name'); return; }
-                if (!email)        { showAlert(alert, 'Enter an email'); return; }
-                if (!roles.length) { showAlert(alert, 'Select at least one role'); return; }
-                if (pass && pass !== conf) { showAlert(alert, 'Passwords do not match'); return; }
+                if (!name) { alert.innerHTML = 'Enter a name'; alert.classList.remove('d-none'); return; }
+                if (!email) { alert.innerHTML = 'Enter an email'; alert.classList.remove('d-none'); return; }
+                if (!roles.length) { alert.innerHTML = 'Select at least one role'; alert.classList.remove('d-none'); return; }
+                if (pass && pass !== conf) { alert.innerHTML = 'Passwords do not match'; alert.classList.remove('d-none'); return; }
 
                 const btn = document.getElementById('update-btn');
                 if (btn) {
@@ -1161,19 +1185,16 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     .then(res => {
                         const u = res.data.user;
                         updateRowInTable(u);
-                        // Hide modal
-                        const modal = document.getElementById('editModal');
-                        if (modal) {
-                            const bsModal = bootstrap.Modal.getInstance(modal);
-                            if (bsModal) bsModal.hide();
-                        }
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                        if (modal) modal.hide();
                         Swal.fire({ icon: 'success', title: 'Updated!', text: u.name + ' updated successfully.', showConfirmButton: false, timer: 2500 });
                     })
                     .catch(err => {
                         const msg = err.response?.status === 422
                             ? Object.values(err.response.data.errors || {}).flat().join(', ')
                             : (err.response?.data?.message || 'Error updating user');
-                        showAlert(alert, msg);
+                        alert.innerHTML = msg;
+                        alert.classList.remove('d-none');
                     })
                     .finally(() => {
                         if (btn) {
@@ -1185,13 +1206,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         }
 
         // ── DOM helpers ────────────────────────────────────────
-        function showAlert(el, msg) {
-            if (!el) return;
-            el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg;
-            el.classList.remove('d-none');
-            setTimeout(() => el.classList.add('d-none'), 5000);
-        }
-
         function rolePill(roleName) {
             const map = { Student: 'student', Admin: 'admin', Teacher: 'teacher', Staff: 'staff' };
             const cls = map[roleName] || 'default';
@@ -1213,16 +1227,16 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             row.innerHTML = `
                 <td><input type="checkbox" class="row-check" style="accent-color:var(--u-accent);cursor:pointer;"></td>
                 <td><div class="u-avatar">${initials}</div></td>
-                <td><div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div></td>
-                <td><span class="text-muted small">${escHtml(user.email)}</span></td>
+                <td><div class="fw-semibold" style="color:var(--u-primary)">${escapeHtml(user.name)}</div></td>
+                <td><span class="text-muted small">${escapeHtml(user.email)}</span></td>
                 <td>${(user.roles || []).map(rolePill).join('')}</td>
                 <td class="text-muted small">${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                 <td>
                     <div class="d-flex gap-1">
                         <a href="/users/${user.id}" class="u-action-btn view" title="View"><i class="ph-eye"></i></a>
                         <button type="button" class="u-action-btn edit edit-item-btn" title="Edit"
-                            data-id="${user.id}" data-name="${escHtml(user.name)}"
-                            data-email="${escHtml(user.email)}" data-roles="${(user.roles || []).join(',')}">
+                            data-id="${user.id}" data-name="${escapeHtml(user.name)}"
+                            data-email="${escapeHtml(user.email)}" data-roles="${(user.roles || []).join(',')}">
                             <i class="ph-pencil"></i>
                         </button>
                         <button type="button" class="u-action-btn del remove-item-btn" title="Delete" data-id="${user.id}">
@@ -1236,8 +1250,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 row.style.transition = 'opacity .4s ease, transform .4s ease';
                 row.style.opacity = '1';
             });
-            const t = document.getElementById('totalCount');
-            if (t) t.textContent = parseInt(t.textContent) + 1;
+            const totalEl = document.getElementById('totalCount');
+            if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) + 1;
             applyFilters();
         }
 
@@ -1247,8 +1261,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             row.dataset.name = user.name.toLowerCase();
             row.dataset.email = user.email.toLowerCase();
             row.dataset.roles = (user.roles || []).join(',').toLowerCase();
-            if (row.cells[2]) row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div>`;
-            if (row.cells[3]) row.cells[3].innerHTML = `<span class="text-muted small">${escHtml(user.email)}</span>`;
+            if (row.cells[2]) row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escapeHtml(user.name)}</div>`;
+            if (row.cells[3]) row.cells[3].innerHTML = `<span class="text-muted small">${escapeHtml(user.email)}</span>`;
             if (row.cells[4]) row.cells[4].innerHTML = (user.roles || []).map(rolePill).join('');
             row.style.background = '#fffbeb';
             setTimeout(() => row.style.background = '', 1500);
@@ -1259,7 +1273,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
         }
 
-        function escHtml(s) {
+        function escapeHtml(s) {
             return String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
         }
 
@@ -1281,7 +1295,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
                 fetch(`/users/reset-single-password/${userId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF }
                 })
                     .then(r => r.json())
                     .then(data => {
@@ -1289,15 +1303,15 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                             Swal.fire({
                                 title: 'Password Reset!',
                                 html: `<div style="text-align:center">
-                            <p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
-                            <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
-                                <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
-                            </div>
-                            <br>
-                            <button class="btn btn-sm btn-outline-primary mt-3" onclick="navigator.clipboard.writeText('${data.password}').then(()=>this.textContent='✓ Copied!')">
-                                <i class="bi bi-clipboard me-1"></i> Copy Password
-                            </button>
-                        </div>`,
+                                    <p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
+                                    <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
+                                        <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
+                                    </div>
+                                    <br>
+                                    <button class="btn btn-sm btn-outline-primary mt-3" onclick="navigator.clipboard.writeText('${data.password}').then(()=>this.textContent='✓ Copied!')">
+                                        <i class="bi bi-clipboard me-1"></i> Copy Password
+                                    </button>
+                                </div>`,
                                 icon: 'success',
                                 confirmButtonColor: '#2563eb',
                                 showConfirmButton: true
@@ -1309,154 +1323,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     .catch(() => Swal.fire('Error', 'Network error', 'error'));
             });
         });
-
-        // ── Single student modal logic ─────────────────────────
-        const addStudentModalEl = document.getElementById('addStudentModal');
-        const credentialsModalEl = document.getElementById('setStudentCredentialsModal');
-
-        if (addStudentModalEl && credentialsModalEl) {
-            let selectedStudent = null;
-
-            addStudentModalEl.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
-
-            function loadStudentsForSingle(search) {
-                const proceedBtn = document.getElementById('proceed-to-credentials');
-                if (proceedBtn) proceedBtn.disabled = true;
-                let url = '{{ route("get.students") }}?limit=500&has_account=no';
-                if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
-                fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF } })
-                    .then(r => r.json())
-                    .then(data => {
-                        const sel = document.getElementById('student-select');
-                        if (sel) {
-                            sel.innerHTML = '<option value="">— Choose a student —</option>';
-                            (data.students || []).forEach(s => {
-                                const o = document.createElement('option');
-                                o.value = s.id;
-                                o.textContent = `${s.name} (${s.admissionNo})`;
-                                Object.assign(o.dataset, { name: s.name, email: s.email || '', admission: s.admissionNo || '' });
-                                sel.appendChild(o);
-                            });
-                        }
-                    })
-                    .catch(err => console.error('Error loading students:', err));
-            }
-
-            const studentSearch = document.getElementById('student-search');
-            if (studentSearch) {
-                studentSearch.addEventListener('input', debounce(e => {
-                    loadStudentsForSingle(e.target.value);
-                }, 350));
-            }
-
-            const studentSelect = document.getElementById('student-select');
-            if (studentSelect) {
-                studentSelect.addEventListener('change', function() {
-                    const opt = this.options[this.selectedIndex];
-                    if (!opt || !opt.value) {
-                        selectedStudent = null;
-                        const proceedBtn = document.getElementById('proceed-to-credentials');
-                        if (proceedBtn) proceedBtn.disabled = true;
-                        return;
-                    }
-                    selectedStudent = {
-                        id: opt.value,
-                        name: opt.dataset.name,
-                        email: opt.dataset.email,
-                        admissionNo: opt.dataset.admission
-                    };
-                    const proceedBtn = document.getElementById('proceed-to-credentials');
-                    if (proceedBtn) proceedBtn.disabled = false;
-                });
-            }
-
-            const proceedBtn = document.getElementById('proceed-to-credentials');
-            if (proceedBtn) {
-                proceedBtn.addEventListener('click', () => {
-                    if (!selectedStudent) return;
-                    const studentIdField = document.getElementById('student-id-field');
-                    const studentNameField = document.getElementById('student-name-field');
-                    const studentUserEmail = document.getElementById('student-user-email');
-                    const studentUsername = document.getElementById('student-username');
-
-                    if (studentIdField) studentIdField.value = selectedStudent.id;
-                    if (studentNameField) studentNameField.value = selectedStudent.name;
-                    if (studentUserEmail) studentUserEmail.value = selectedStudent.email;
-                    if (studentUsername) studentUsername.value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
-
-                    // Hide first modal and show credentials modal
-                    const addModal = bootstrap.Modal.getInstance(addStudentModalEl);
-                    if (addModal) addModal.hide();
-
-                    setTimeout(() => {
-                        const credModal = bootstrap.Modal.getInstance(credentialsModalEl) || new bootstrap.Modal(credentialsModalEl);
-                        credModal.show();
-                    }, 300);
-                });
-            }
-
-            const generatePwdBtn = document.getElementById('generate-temp-password');
-            if (generatePwdBtn) {
-                generatePwdBtn.addEventListener('click', () => {
-                    const p = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
-                    const pwdField = document.getElementById('student-password');
-                    const confField = document.getElementById('student-password_confirmation');
-                    if (pwdField) pwdField.value = p;
-                    if (confField) confField.value = p;
-                });
-            }
-
-            const studentCredForm = document.getElementById('add-student-credentials-form');
-            if (studentCredForm) {
-                studentCredForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const fd = new FormData(this);
-                    fd.append('_token', CSRF);
-                    const btn = document.getElementById('create-student-user');
-                    if (btn) {
-                        btn.disabled = true;
-                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
-                    }
-                    fetch('{{ route("users.store-student") }}', { method: 'POST', body: fd })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire({ icon: 'success', title: 'Student User Created!', text: data.message, showConfirmButton: false, timer: 2000 });
-                                const credModal = bootstrap.Modal.getInstance(credentialsModalEl);
-                                if (credModal) credModal.hide();
-                                setTimeout(() => location.reload(), 2000);
-                            } else {
-                                const errDiv = document.getElementById('student-credentials-error');
-                                if (errDiv) {
-                                    errDiv.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message || 'Error');
-                                    errDiv.classList.remove('d-none');
-                                }
-                            }
-                        })
-                        .catch(() => Swal.fire('Error', 'Network error', 'error'))
-                        .finally(() => {
-                            if (btn) {
-                                btn.disabled = false;
-                                btn.innerHTML = '<i class="bi bi-person-check"></i> Create Student User';
-                            }
-                        });
-                });
-            }
-
-            window.resetStudentCredentialsModal = function() {
-                ['student-id-field', 'student-name-field', 'student-user-email', 'student-username',
-                    'student-password', 'student-password_confirmation'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-                const errDiv = document.getElementById('student-credentials-error');
-                if (errDiv) errDiv.classList.add('d-none');
-            };
-
-            if (credentialsModalEl) {
-                credentialsModalEl.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
-            }
-        }
 
         // ── Chart ──────────────────────────────────────────────
         const ctx = document.getElementById('usersByRoleChart')?.getContext('2d');
@@ -1478,6 +1344,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' users' } }
@@ -1491,40 +1358,28 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             });
         }
 
-        // ── Modal cleanup ──────────────────────────────────────
-        const showModalEl = document.getElementById('showModal');
-        if (showModalEl) {
-            showModalEl.addEventListener('hidden.bs.modal', () => {
-                const form = document.getElementById('add-user-form');
-                if (form) form.reset();
-                const alertDiv = document.getElementById('add-alert');
-                if (alertDiv) alertDiv.classList.add('d-none');
+        // Modal cleanup
+        const showModal = document.getElementById('showModal');
+        if (showModal) {
+            showModal.addEventListener('hidden.bs.modal', () => {
+                document.getElementById('add-user-form')?.reset();
+                document.getElementById('add-alert')?.classList.add('d-none');
             });
         }
 
-        const editModalEl = document.getElementById('editModal');
-        if (editModalEl) {
-            editModalEl.addEventListener('hidden.bs.modal', () => {
-                const form = document.getElementById('edit-user-form');
-                if (form) form.reset();
-                const alertDiv = document.getElementById('edit-alert');
-                if (alertDiv) alertDiv.classList.add('d-none');
+        const editModal = document.getElementById('editModal');
+        if (editModal) {
+            editModal.addEventListener('hidden.bs.modal', () => {
+                document.getElementById('edit-user-form')?.reset();
+                document.getElementById('edit-alert')?.classList.add('d-none');
             });
         }
 
-        function debounce(fn, ms) {
-            let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-        }
-
-        // Expose for mass modal compatibility
         window.filterData = applyFilters;
-
-        // Initial filter application
         applyFilters();
-        console.log('User management page initialized successfully');
 
-    }); // End DOMContentLoaded
-
+        console.log('User management page initialized');
+    });
 })();
 </script>
 
