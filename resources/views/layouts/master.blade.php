@@ -295,143 +295,194 @@
         @media print { .no-print{display:none!important} body{padding:0;margin:0} }
 
         /* =====================================================
-           SPOTLIGHT SEARCH MODAL - Non-intrusive, higher z-index but auto-closes on modal open
+           SPOTLIGHT SEARCH MODAL - APPLE STYLE DARK & LARGER
            ===================================================== */
         .spotlight-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
             z-index: 1060;
             display: flex;
             align-items: flex-start;
             justify-content: center;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.2s ease, visibility 0.2s;
+            transition: opacity 0.25s ease, visibility 0.25s;
         }
         .spotlight-overlay.active {
             opacity: 1;
             visibility: visible;
         }
         .spotlight-modal {
-            background: var(--vz-dropdown-bg, #fff);
-            border-radius: 28px;
+            background: #1c1c1e;
+            border-radius: 32px;
             width: 90%;
-            max-width: 640px;
-            margin-top: 80px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
-            border: 1px solid var(--vz-border-color, rgba(0, 0, 0, 0.08));
+            max-width: 720px;
+            margin-top: 100px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.05);
             overflow: hidden;
-            transform: translateY(-12px);
-            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(-20px);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .spotlight-overlay.active .spotlight-modal {
             transform: translateY(0);
         }
         .spotlight-search-wrap {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--vz-border-color, #eef2f6);
+            padding: 20px 24px;
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+            background: #1c1c1e;
         }
         .spotlight-search-wrap i {
-            font-size: 22px;
-            color: #94a3b8;
+            font-size: 28px;
+            color: #8e8e93;
         }
         .spotlight-search-wrap input {
             flex: 1;
             border: none;
             outline: none;
             background: transparent;
-            font-size: 1.1rem;
+            font-size: 1.5rem;
             font-weight: 500;
-            color: var(--vz-body-color, #1e293b);
-            padding: 8px 0;
+            color: #ffffff;
+            padding: 12px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Poppins', sans-serif;
         }
         .spotlight-search-wrap input::placeholder {
-            color: #94a3b8;
-            font-weight: 400;
+            color: #636366;
+            font-weight: 500;
+            font-size: 1.5rem;
         }
         .spotlight-close-hint {
-            background: var(--vz-light, #f1f5f9);
-            border-radius: 40px;
-            padding: 5px 10px;
-            font-size: 12px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 13px;
             font-weight: 500;
-            color: #334155;
+            color: #8e8e93;
+            letter-spacing: 0.3px;
         }
         .spotlight-results {
-            max-height: 460px;
+            max-height: 520px;
             overflow-y: auto;
-            padding: 12px 8px;
+            padding: 8px 12px 20px;
+            background: #1c1c1e;
+        }
+        .spotlight-results::-webkit-scrollbar {
+            width: 6px;
+        }
+        .spotlight-results::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        .spotlight-results::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
         }
         .spotlight-section-title {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 12px 16px 6px;
-            color: #64748b;
+            letter-spacing: 0.8px;
+            padding: 16px 16px 8px;
+            color: #8e8e93;
         }
         .spotlight-result-item {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
+            gap: 16px;
+            padding: 14px 16px;
             margin: 4px 8px;
-            border-radius: 16px;
+            border-radius: 14px;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.18s ease;
+            background: transparent;
         }
         .spotlight-result-item:hover,
         .spotlight-result-item.selected {
-            background: var(--vz-light, #f8fafc);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.08);
         }
         .spotlight-result-icon {
-            width: 36px;
-            height: 36px;
-            background: #eef2ff;
-            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #4f46e5;
-            font-size: 18px;
+            color: #4f8ef7;
+            font-size: 22px;
         }
         .spotlight-result-text {
             flex: 1;
         }
         .spotlight-result-title {
             font-weight: 600;
-            font-size: 0.95rem;
-            color: var(--vz-body-color, #0f172a);
+            font-size: 1.05rem;
+            color: #ffffff;
+            margin-bottom: 4px;
         }
         .spotlight-result-desc {
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-top: 2px;
+            font-size: 0.8rem;
+            color: #8e8e93;
         }
         .spotlight-empty {
             text-align: center;
-            padding: 40px 20px;
-            color: #94a3b8;
+            padding: 60px 20px;
+            color: #8e8e93;
+            font-size: 1rem;
+        }
+        .search-tooltip {
+            position: absolute;
+            bottom: -38px;
+            left: 0;
+            background: #1c1c1e;
+            color: #ffffff;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            border: 0.5px solid rgba(255,255,255,0.1);
+            font-weight: 500;
+        }
+        .search-tooltip kbd {
+            background: rgba(255,255,255,0.15);
+            color: #ffffff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin: 0 2px;
         }
         kbd {
-            background: rgba(0, 0, 0, 0.06);
+            background: rgba(0,0,0,0.08);
             border-radius: 6px;
-            padding: 2px 6px;
+            padding: 2px 8px;
             font-size: 11px;
             font-family: monospace;
         }
-        /* Ensure modals (bootstrap modals z-index 1055) don't conflict - spotlight closes on modal open */
+        /* Ensure modals don't conflict */
         .modal {
             z-index: 1055 !important;
         }
         .modal-backdrop {
             z-index: 1050 !important;
+        }
+        /* Spotlight trigger button text visibility */
+        #spotlight-trigger span {
+            color: #ffffff !important;
+            opacity: 0.8 !important;
+        }
+        #spotlight-trigger kbd {
+            background: rgba(255,255,255,0.2);
+            color: #ffffff;
         }
     </style>
 
@@ -1266,12 +1317,12 @@
                         <span class="hamburger-icon"><span></span><span></span><span></span></span>
                     </button>
                     <div class="d-none d-md-inline-flex align-items-center" style="position:relative;">
-                        <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
-                            <i class="mdi mdi-magnify" style="font-size:16px;opacity:.6;"></i>
-                            <span style="font-size:13px;opacity:.55;flex:1;text-align:left;">Search everything…</span>
-                            <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.12);">K</kbd></div>
+                        <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:8px 16px;cursor:pointer;transition:all .2s;min-width:240px;backdrop-filter:blur(8px);">
+                            <i class="mdi mdi-magnify" style="font-size:18px;color:#ffffff;"></i>
+                            <span style="font-size:14px;font-weight:500;color:#ffffff;opacity:0.9;flex:1;text-align:left;">Search everything…</span>
+                            <div style="display:flex;gap:6px;"><kbd style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,0.2);color:#ffffff;">⌘</kbd><kbd style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,0.2);color:#ffffff;">K</kbd></div>
                         </button>
-                        <div class="search-tooltip">Press <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;">⌘K</kbd> or <kbd style="background:rgba(255,255,255,.2);padding:2px 5px;border-radius:4px;">Ctrl+K</kbd> to search</div>
+                        <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-1">
@@ -1366,12 +1417,12 @@
 <button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up fs-3xl"></i></button>
 <div id="preloader"><div id="status"><div class="spinner-border text-primary avatar-sm" role="status"><span class="visually-hidden">Loading...</span></div></div></div>
 
-<!-- SPOTLIGHT MODAL - FULLY ISOLATED & NON-INTRUSIVE TO OTHER MODALS -->
+<!-- SPOTLIGHT MODAL - APPLE STYLE DARK & LARGER -->
 <div id="global-spotlight" class="spotlight-overlay">
     <div class="spotlight-modal">
         <div class="spotlight-search-wrap">
             <i class="mdi mdi-magnify"></i>
-            <input type="text" id="spotlight-input" placeholder="Search pages, students, or settings..." autocomplete="off">
+            <input type="text" id="spotlight-input" placeholder="Search everything..." autocomplete="off">
             <span class="spotlight-close-hint">ESC</span>
         </div>
         <div id="spotlight-results-container" class="spotlight-results">
@@ -1490,7 +1541,7 @@
     });
 
     // =====================================================
-    // SPOTLIGHT SEARCH - FULL FEATURE, NO MODAL CONFLICT
+    // SPOTLIGHT SEARCH - APPLE STYLE DARK & LARGER
     // =====================================================
     const spotlightOverlay = document.getElementById('global-spotlight');
     const spotlightInput = document.getElementById('spotlight-input');
@@ -1498,7 +1549,7 @@
     let currentSelectedIndex = -1;
     let currentResults = [];
 
-    // Predefined navigation links (dynamic based on routes)
+    // Predefined navigation links (dynamic based on roles)
     const baseRoutes = [
         { title: 'Dashboard', description: 'Administration Analytics', url: '{{ route("dashboard") }}', category: 'Navigation', icon: 'mdi mdi-view-dashboard' },
         @can('View user'){ title: 'Users', description: 'Manage system users', url: '{{ route("users.index") }}', category: 'Users', icon: 'mdi mdi-account-group' },@endcan
