@@ -32,23 +32,6 @@
 .loading-spinner .spinner-border { width: 2.5rem; height: 2.5rem; }
 .loading-spinner p { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--pay-primary); }
 
-/* DataTable-style processing overlay */
-.dt-processing {
-    position: relative; min-height: 120px;
-}
-.dt-processing-overlay {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(255,255,255,0.85); z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: var(--pay-radius);
-}
-.dt-processing-box {
-    display: flex; align-items: center; gap: 12px;
-    background: #fff; padding: 14px 22px; border-radius: 10px;
-    box-shadow: 0 4px 18px rgba(0,0,0,.12);
-    font-size: 13px; font-weight: 600; color: var(--pay-primary);
-}
-
 /* Hero */
 .pay-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
@@ -69,15 +52,11 @@
     margin-bottom: 20px; box-shadow: var(--pay-shadow);
 }
 .student-avatar-lg {
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid var(--pay-border);
-    background: #f0f0f0;
+    width: 72px; height: 72px; border-radius: 50%;
+    object-fit: cover; border: 3px solid var(--pay-border); background: #f0f0f0;
 }
 .avatar-placeholder-lg {
-    width: 72px; height: 72px;
-    border-radius: 50%;
+    width: 72px; height: 72px; border-radius: 50%;
     background: linear-gradient(135deg, #dbeafe, #93c5fd);
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 22px; font-weight: 700; color: var(--pay-accent);
@@ -98,6 +77,14 @@
 .benefit-banner.schol { background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
 .benefit-banner.disc  { background: #ede9fe; border: 1px solid #ddd6fe; color: #6d28d9; }
 .benefit-banner .icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+/* Fallback warning banner */
+.fallback-banner {
+    background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412;
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 10px; font-size: 13px;
+}
+.fallback-banner i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
 
 /* Bill cards */
 .bill-card {
@@ -133,6 +120,12 @@
     color: #6d28d9; border-radius: 20px; padding: 2px 9px;
     font-size: 11px; font-weight: 600;
 }
+.select-hint {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--pay-muted);
+    background: #f8fafc; border: 1px dashed var(--pay-border);
+    border-radius: 6px; padding: 3px 8px; margin-top: 4px;
+}
 
 /* Progress bar */
 .progress { height: 6px; border-radius: 10px; background: #e2e8f0; overflow: hidden; }
@@ -161,9 +154,7 @@
 .rec-table tr:hover td { background: #f0f9ff; }
 
 /* Empty state */
-.empty-state {
-    text-align: center; padding: 52px 24px; color: var(--pay-muted);
-}
+.empty-state { text-align: center; padding: 52px 24px; color: var(--pay-muted); }
 .empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
 .empty-state p { margin: 0; font-size: 14px; }
 
@@ -212,14 +203,8 @@
     display: flex; justify-content: space-between;
     padding: 8px 0; border-bottom: 1px solid #dcfce7;
 }
-.bulk-summary-item:last-child { border-bottom: none; font-weight: 700; color: var(--pay-primary); }
-
-/* Bulk-select hint */
-.select-hint {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11px; color: var(--pay-muted);
-    background: #f8fafc; border: 1px dashed var(--pay-border);
-    border-radius: 6px; padding: 3px 8px; margin-top: 4px;
+.bulk-summary-item:last-child {
+    border-bottom: none; font-weight: 700; color: var(--pay-primary);
 }
 </style>
 
@@ -253,15 +238,13 @@
         <p>Manage school fee payments for the selected student, term, and session.</p>
     </div>
 
-    {{-- DataTable-style initial loader --}}
-    <div id="paymentContent" class="dt-processing">
-        <div class="dt-processing-overlay" id="initialLoader">
-            <div class="dt-processing-box">
-                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                Loading payment data…
+    <div id="paymentContent">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading…</span>
             </div>
+            <p class="mt-3 text-muted">Loading payment data…</p>
         </div>
-        <div style="height:200px"></div>
     </div>
 
 </div>
@@ -295,9 +278,7 @@
                         <input type="text" id="bulk_payment_amount" class="form-control"
                                placeholder="Enter total amount to pay">
                     </div>
-                    <div class="form-text text-muted">
-                        Amount is distributed across selected bills in order.
-                    </div>
+                    <div class="form-text text-muted">Amount is distributed across selected bills in order.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Payment Method <span class="text-danger">*</span></label>
@@ -309,13 +290,14 @@
                         <option value="Cheque">Cheque</option>
                     </select>
                 </div>
-                <div id="paymentDistribution" style="display:none;">
+                <div id="paymentDistribution" style="display:none">
                     <label class="form-label">Distribution Preview</label>
                     <div id="distributionList"></div>
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 px-4 pb-4">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                {{-- FIX: id stays stable; listener is attached fresh each time the modal opens --}}
                 <button type="button" class="btn btn-primary" id="submitBulkPayment">
                     <i class="ri-wallet-line me-1"></i>Process Payment
                 </button>
@@ -443,13 +425,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Read params
+    // ── URL params (primary) or Blade-injected fallback ───────────────────
     const urlParams = new URLSearchParams(window.location.search);
     const studentId = urlParams.get('studentId') || '{{ $studentId ?? "" }}';
     const termid    = urlParams.get('termid')    || '{{ $termid ?? "" }}';
     const sessionid = urlParams.get('sessionid') || '{{ $sessionid ?? "" }}';
 
     // State
+    // FIX (doc6): use a plain object map so bill data is always available for bulk submit.
+    // Key = String(bill.id), value = the full bill object.
     let selectedBillsMap = {};
     let billsDataGlobal  = [];
     let currentDeleteUrl = '';
@@ -468,9 +452,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showLoading(show) {
-        document.getElementById('loadingOverlay').classList.toggle('active', show);
+        document.getElementById('loadingOverlay').classList.toggle('active', !!show);
     }
 
+    // FIX (doc6): correct avatar sub-directory
     function getAvatarUrl(picture) {
         if (!picture || picture === 'unnamed.jpg' || picture === '') return null;
         return '/storage/images/student_avatars/' + picture.replace(/^\/+/, '');
@@ -488,47 +473,46 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const content = document.getElementById('paymentContent');
-        if (!content.querySelector('#initialLoader')) {
-            content.classList.add('dt-processing');
-            content.insertAdjacentHTML('afterbegin', `
-                <div class="dt-processing-overlay" id="dtOverlay">
-                    <div class="dt-processing-box">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        Loading payment data…
-                    </div>
-                </div>`);
-        }
+        document.getElementById('paymentContent').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading…</span>
+                </div>
+                <p class="mt-3 text-muted">Loading payment data…</p>
+            </div>`;
 
         const url = '{{ route("schoolpayment.getPaymentDetailsAjax") }}'
                   + '?studentId=' + studentId
                   + '&termid='    + termid
                   + '&sessionid=' + sessionid;
 
-        fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-            .then(result => {
-                if (result.success) {
-                    renderPaymentContent(result.data);
-                } else {
-                    content.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="ri-error-warning-line me-2"></i>${escapeHtml(result.message || 'Failed to load data')}
-                        </div>`;
-                }
-            })
-            .catch(err => {
-                console.error('Load error:', err);
-                content.innerHTML = `
+        fetch(url, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(result => {
+            if (result.success) {
+                // FIX (doc3/doc6): surface the fallback warning to the user
+                renderPaymentContent(result.data, result.used_fallback === true);
+            } else {
+                document.getElementById('paymentContent').innerHTML = `
                     <div class="alert alert-danger">
-                        <i class="ri-error-warning-line me-2"></i>An error occurred. Please refresh and try again.
+                        <i class="ri-error-warning-line me-2"></i>${escapeHtml(result.message || 'Failed to load data')}
                     </div>`;
-            });
+            }
+        })
+        .catch(err => {
+            console.error('Load error:', err);
+            document.getElementById('paymentContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="ri-error-warning-line me-2"></i>An error occurred. Please refresh and try again.
+                </div>`;
+        });
     }
 
     // ── Render ────────────────────────────────────────────────────────────
 
-    function renderPaymentContent(data) {
+    function renderPaymentContent(data, usedFallback) {
         const student        = data.student;
         const bills          = data.bills;
         const paymentRecords = data.payment_records;
@@ -539,21 +523,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         billsDataGlobal = bills;
 
-        // Rebuild selectedBillsMap keeping only still-valid selections
+        // Keep only still-valid selections across reloads
         const newMap = {};
         Object.keys(selectedBillsMap).forEach(id => {
-            const refreshed = bills.find(b => String(b.id) === String(id));
-            if (refreshed && !refreshed.is_paid) newMap[String(id)] = refreshed;
+            const refreshed = bills.find(b => String(b.id) === id);
+            if (refreshed && !refreshed.is_paid && !refreshed.has_pending_invoice) {
+                newMap[id] = refreshed;
+            }
         });
         selectedBillsMap = newMap;
 
-        // Avatar
-        const initials = (student.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        // ── Avatar ────────────────────────────────────────────────────────
+        const initials = (student.name || '??')
+            .split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
         let avatarHtml;
-        if (student.avatar && student.avatar !== 'unnamed.jpg' && student.avatar !== '') {
-            const avatarUrl = getAvatarUrl(student.avatar);
+        const avatarUrl = getAvatarUrl(student.avatar);
+        if (avatarUrl) {
             avatarHtml = `
-                <img src="${avatarUrl}"
+                <img src="${escapeHtml(avatarUrl)}"
                      alt="${escapeHtml(student.name)}"
                      class="student-avatar-lg"
                      onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
@@ -563,11 +550,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // ── Bill cards ────────────────────────────────────────────────────
+        // FIX (doc6): bill data is stored in the map and looked up by id —
+        // NOT embedded as JSON in data-attributes to avoid XSS and quote escaping issues.
         const billsHtml = bills.map(bill => {
             const billKey    = String(bill.id);
             const isSelected = !!selectedBillsMap[billKey];
-            const cardClass  = bill.is_paid    ? 'paid'
-                             : bill.is_partial  ? 'partial'
+            const cardClass  = bill.is_paid     ? 'paid'
+                             : bill.is_partial   ? 'partial'
                              : bill.total_savings > 0 ? 'savings'
                              : 'unpaid';
 
@@ -596,7 +585,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         ${bill.discount_deduction    > 0 ? `<span class="disc-pill"><i class="ri-price-tag-3-line"></i> -₦${fmt(bill.discount_deduction)} Discount</span>` : ''}
                     </div>` : ''}
                     <div class="text-center mb-2">
-                        ${bill.total_savings > 0 ? `<div class="text-muted text-decoration-line-through" style="font-size:12px">₦${fmt(bill.original_amount)}</div>` : ''}
+                        ${bill.total_savings > 0
+                            ? `<div class="text-muted text-decoration-line-through" style="font-size:12px">₦${fmt(bill.original_amount)}</div>`
+                            : ''}
                         <div class="bill-amount-main">₦${fmt(bill.adjusted_amount)}</div>
                         <div style="font-size:11px;color:var(--pay-muted)">${bill.total_savings > 0 ? 'After savings' : 'Payable amount'}</div>
                     </div>
@@ -627,14 +618,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             : `<button class="btn btn-primary btn-sm w-100 make-payment-btn"
                                        data-bill-id="${bill.id}">
                                    <i class="ri-wallet-line me-1"></i>Make Payment
-                               </button>`)
+                               </button>
+                               <div class="select-hint mt-2"><i class="ri-checkbox-line"></i>Tick to include in bulk payment</div>`)
                         : `<button class="btn btn-success btn-sm w-100" disabled>
                                <i class="ri-checkbox-circle-line me-1"></i>Fully Paid
                            </button>`
                     }
-                    ${!bill.is_paid && !bill.has_pending_invoice
-                        ? `<div class="select-hint mt-2"><i class="ri-checkbox-line"></i>Tick to include in bulk payment</div>`
-                        : ''}
                 </div>
             </div>`;
         }).join('');
@@ -645,26 +634,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 <table class="table rec-table w-100 mb-0">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Bill</th>
-                            <th>Bill Amt</th>
-                            <th>Paid</th>
-                            <th>Balance</th>
-                            <th>Method</th>
-                            <th>Received By</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
+                            <th>Balance</th><th>Method</th><th>Received By</th>
+                            <th>Date</th><th>Status</th><th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                     ${paymentRecords.map((sp, i) => `
                         <tr>
                             <td>${i + 1}</td>
-                            <td>
-                                <div class="fw-semibold">${escapeHtml(sp.title)}</div>
-                                ${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}
-                            </td>
+                            <td><div class="fw-semibold">${escapeHtml(sp.title)}</div>${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}</td>
                             <td>₦${fmt(sp.billAmount)}</td>
                             <td class="text-success fw-semibold">₦${fmt(sp.totalAmountPaid)}</td>
                             <td class="${sp.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(sp.balance)}</td>
@@ -690,26 +669,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 <table class="table rec-table w-100 mb-0">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Bill</th>
-                            <th>Bill Amt</th>
-                            <th>Paid</th>
-                            <th>Balance</th>
-                            <th>Method</th>
-                            <th>Received By</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Invoice</th>
+                            <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
+                            <th>Balance</th><th>Method</th><th>Received By</th>
+                            <th>Date</th><th>Status</th><th>Invoice</th>
                         </tr>
                     </thead>
                     <tbody>
                     ${paymentHistory.map((ph, i) => `
                         <tr>
                             <td>${i + 1}</td>
-                            <td>
-                                <div class="fw-semibold">${escapeHtml(ph.title)}</div>
-                                ${ph.description ? `<div class="text-muted small">${escapeHtml(ph.description)}</div>` : ''}
-                            </td>
+                            <td><div class="fw-semibold">${escapeHtml(ph.title)}</div>${ph.description ? `<div class="text-muted small">${escapeHtml(ph.description)}</div>` : ''}</td>
                             <td>₦${fmt(ph.billAmount)}</td>
                             <td class="text-success fw-semibold">₦${fmt(ph.totalAmountPaid)}</td>
                             <td class="${ph.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(ph.balance)}</td>
@@ -733,7 +702,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedCount    = Object.keys(selectedBillsMap).length;
         const hasBulkableBills = bills.some(b => !b.is_paid && !b.has_pending_invoice);
 
+        // FIX (doc3/doc6): surface the fallback warning when controller fell back to Current session
+        const fallbackBanner = usedFallback ? `
+            <div class="fallback-banner">
+                <i class="ri-information-line"></i>
+                <div>
+                    <strong>Note:</strong> This student was not enrolled in the selected term/session.
+                    Data shown is from their current active enrollment.
+                </div>
+            </div>` : '';
+
         const contentHtml = `
+            ${fallbackBanner}
+
             <div class="student-card">
                 <div class="d-flex align-items-start gap-4 flex-wrap">
                     <div class="flex-shrink-0">${avatarHtml}</div>
@@ -775,7 +756,8 @@ document.addEventListener('DOMContentLoaded', function () {
                            class="btn btn-outline-primary btn-sm">
                             <i class="ri-file-list-line me-1"></i>Statement
                         </a>
-                        <button class="btn btn-success btn-sm" id="bulkPaymentBtn" ${!hasBulkableBills ? 'disabled' : ''}>
+                        <button class="btn btn-success btn-sm" id="bulkPaymentBtn"
+                                ${!hasBulkableBills ? 'disabled' : ''}>
                             <i class="ri-wallet-3-line me-1"></i>Bulk Payment
                             <span class="badge bg-white text-success ms-1" id="selectedCount">${selectedCount}</span>
                         </button>
@@ -789,7 +771,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div>
                     <div class="fw-semibold mb-1">Scholarship Active: ${escapeHtml(scholarship.title)}</div>
                     <div class="small">
-                        ${scholarship.value_type === 'percentage' ? `${scholarship.value}% deduction.` : `₦${fmt(scholarship.value)} fixed deduction per bill.`}
+                        ${scholarship.value_type === 'percentage'
+                            ? `${scholarship.value}% deduction.`
+                            : `₦${fmt(scholarship.value)} fixed deduction per bill.`}
                         ${scholarship.effective_to ? ` Valid until ${new Date(scholarship.effective_to).toLocaleDateString('en-GB')}.` : ''}
                         <strong class="ms-2">Total Savings: ₦${fmt(totals.savings)}</strong>
                     </div>
@@ -802,7 +786,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div>
                     <div class="fw-semibold mb-1">Discount(s) Active</div>
                     <div class="small">
-                        ${discounts.map(d => `<span class="me-3"><strong>${escapeHtml(d.title)}:</strong> ${d.value_type === 'percentage' ? `${d.value}% off` : `₦${fmt(d.value)} off`}</span>`).join('')}
+                        ${discounts.map(d =>
+                            `<span class="me-3"><strong>${escapeHtml(d.title)}:</strong>
+                             ${d.value_type === 'percentage' ? `${d.value}% off` : `₦${fmt(d.value)} off`}</span>`
+                        ).join('')}
                     </div>
                 </div>
             </div>` : ''}
@@ -870,17 +857,17 @@ document.addEventListener('DOMContentLoaded', function () {
     function attachBillSelectionEvents(bills) {
         document.querySelectorAll('.bill-select-checkbox').forEach(cb => {
             cb.addEventListener('change', function () {
-                const billId = String(this.dataset.billId);
-                const bill   = bills.find(b => String(b.id) === billId);
+                const billKey = String(this.dataset.billId);
+                const bill    = bills.find(b => String(b.id) === billKey);
 
                 if (this.checked && bill) {
-                    selectedBillsMap[billId] = bill;
+                    selectedBillsMap[billKey] = bill;
                 } else {
-                    delete selectedBillsMap[billId];
+                    delete selectedBillsMap[billKey];
                 }
 
-                const card = document.querySelector(`.bill-card[data-bill-id="${billId}"]`);
-                if (card) card.classList.toggle('selected', !!selectedBillsMap[billId]);
+                const card = document.querySelector(`.bill-card[data-bill-id="${billKey}"]`);
+                if (card) card.classList.toggle('selected', !!selectedBillsMap[billKey]);
 
                 const badge = document.getElementById('selectedCount');
                 if (badge) badge.textContent = Object.keys(selectedBillsMap).length;
@@ -893,8 +880,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function attachPaymentButtons(bills) {
         document.querySelectorAll('.make-payment-btn').forEach(btn => {
             btn.addEventListener('click', function () {
-                const billId = String(this.dataset.billId);
-                const bill   = bills.find(b => String(b.id) === billId);
+                const billKey = String(this.dataset.billId);
+                // FIX (doc6): look up bill by id from global array — no JSON in data-attributes
+                const bill = bills.find(b => String(b.id) === billKey);
                 if (bill) {
                     openPaymentModal(bill);
                 } else {
@@ -963,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const totalPayable = selectedBills.reduce((s, b) => s + parseFloat(b.balance || 0), 0);
+        const totalPayable = selectedBills.reduce((s, b) => s + parseFloat(b.balance   || 0), 0);
         const totalSavings = selectedBills.reduce((s, b) => s + parseFloat(b.total_savings || 0), 0);
 
         document.getElementById('selectedBillsSummary').innerHTML = `
@@ -987,16 +975,12 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('bulk_payment_method').value         = '';
         document.getElementById('paymentDistribution').style.display = 'none';
 
-        const bulkModal = new bootstrap.Modal(document.getElementById('bulkPaymentModal'));
-        bulkModal.show();
+        new bootstrap.Modal(document.getElementById('bulkPaymentModal')).show();
 
-        // Live distribution preview — clone input to remove stale listeners
-        const oldInput = document.getElementById('bulk_payment_amount');
-        const newInput = oldInput.cloneNode(true);
-        oldInput.parentNode.replaceChild(newInput, oldInput);
-
-        newInput.addEventListener('input', function () {
-            let remaining = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
+        // Distribution preview
+        document.getElementById('bulk_payment_amount').oninput = function () {
+            const remaining0 = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
+            let remaining = remaining0;
             const dist = [];
             for (const bill of selectedBills) {
                 if (remaining <= 0) break;
@@ -1020,20 +1004,20 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 distDiv.style.display = 'none';
             }
-        });
+        };
 
-        // Clone submit button to remove stale listeners
-        const oldBtn = document.getElementById('submitBulkPayment');
-        const newBtn = oldBtn.cloneNode(true);
-        oldBtn.parentNode.replaceChild(newBtn, oldBtn);
-        newBtn.addEventListener('click', () => submitBulkPayment(selectedBills));
+        // FIX (doc3): replace the submit button's onclick each time to avoid stacked listeners
+        const submitBtn = document.getElementById('submitBulkPayment');
+        submitBtn.onclick = null;
+        submitBtn.onclick = () => submitBulkPayment(selectedBills);
     }
 
     // ── Submit bulk payment ───────────────────────────────────────────────
 
     function submitBulkPayment(selectedBills) {
-        const amountInput   = document.getElementById('bulk_payment_amount');
-        const paymentAmount = parseFloat((amountInput ? amountInput.value : '').replace(/[^0-9.]/g, '')) || 0;
+        const paymentAmount = parseFloat(
+            (document.getElementById('bulk_payment_amount').value || '').replace(/[^0-9.]/g, '')
+        ) || 0;
         const paymentMethod = document.getElementById('bulk_payment_method').value;
         const totalPayable  = selectedBills.reduce((s, b) => s + parseFloat(b.balance || 0), 0);
 
@@ -1046,6 +1030,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         showLoading(true);
 
+        // FIX (doc6): use class_id from the bill data, NOT hardcoded as 1
         const classId = selectedBills[0]?.class_id || 0;
 
         fetch('{{ route("schoolpayment.bulk-store") }}', {
@@ -1077,8 +1062,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (result.success) {
                 Swal.fire({ icon: 'success', title: 'Success!', text: result.message, timer: 2000, showConfirmButton: false })
                     .then(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal'));
-                        if (modal) modal.hide();
+                        bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal'))?.hide();
                         selectedBillsMap = {};
                         loadPaymentData();
                     });
@@ -1131,14 +1115,13 @@ document.addEventListener('DOMContentLoaded', function () {
             body:    new FormData(this),
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
+                'Accept':       'application/json',
             },
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
-                if (modal) modal.hide();
+                bootstrap.Modal.getInstance(document.getElementById('paymentModal'))?.hide();
                 Swal.fire({ icon: 'success', title: 'Recorded!', text: data.message, timer: 2000, showConfirmButton: false })
                     .then(() => loadPaymentData());
             } else {
@@ -1155,8 +1138,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Delete confirm ────────────────────────────────────────────────────
 
     document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
-        if (modal) modal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))?.hide();
 
         const self = this;
         self.disabled = true;
@@ -1165,9 +1147,9 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(currentDeleteUrl, {
             method:  'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
+                'Accept':        'application/json',
+                'Content-Type':  'application/json',
             },
             body: JSON.stringify({}),
         })
