@@ -2,131 +2,128 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SchoolArm;
 use Illuminate\Http\Request;
-use App\Models\Schoolarm;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class SchoolArmController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:View school-arm|Create school-arm|Update school-arm|Delete school-arm', ['only' => ['index']]);
-        $this->middleware('permission:Create school-arm', ['only' => ['store']]);
-        $this->middleware('permission:Update school-arm', ['only' => ['update', 'updatearm']]);
-        $this->middleware('permission:Delete school-arm', ['only' => ['destroy', 'deletearm']]);
-    }
-
+    /**
+     * Display a listing of the resource.
+     */
     public function index(Request $request)
     {
-        Log::info('Index School Arm Request:', $request->all());
-        $pagetitle = "School Arm Management";
-        $query = Schoolarm::query();
+        $all_arms = SchoolArm::orderBy('arm', 'asc')->get();
 
-        if ($request->has('search')) {
-            $query->where('arm', 'like', '%' . $request->query('search') . '%')
-                  ->orWhere('description', 'like', '%' . $request->query('search') . '%');
-        }
+        // For pagination example
+        $data = SchoolArm::orderBy('arm', 'asc')->paginate(10);
 
-        $data = Schoolarm::latest()->paginate(5);
-        $all_arms = $query->orderBy('arm')->paginate(30);
-
-        if ($request->ajax()) {
-            return response()->json(['arms' => $all_arms->items()]);
-        }
-
-        return view('arm.index')->with('all_arms', $all_arms)->with('data', $data)->with('pagetitle', $pagetitle);
+        return view('arm.index', compact('all_arms', 'data'));
     }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
-        Log::info('Store School Arm Request:', $request->all());
-        $request->validate([
-            'arm' => 'required|string|max:255|unique:schoolarm,arm',
-            'description' => 'required|string'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'arm' => 'required|string|max:255|unique:school_arms,arm'
+            ]);
 
-        $checkArm = Schoolarm::where('arm', $request->input('arm'))->exists();
-        if ($checkArm) {
-            Log::warning('School arm already taken:', ['arm' => $request->input('arm')]);
-            return response()->json(['success' => false, 'message' => 'School arm is already taken'], 422);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $arm = SchoolArm::create([
+                'arm' => $request->arm,
+                'description' => $request->remark
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Arm created successfully',
+                'data' => $arm
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create arm: ' . $e->getMessage()
+            ], 500);
         }
-
-        $arm = Schoolarm::create([
-            'arm' => $request->input('arm'),
-            'description' => $request->input('description')
-        ]);
-        Log::info('School Arm Created:', $arm->toArray());
-
-        return response()->json(['success' => true, 'message' => 'School arm has been created successfully']);
     }
 
-    public function update(Request $request, $id)
-    {
-        Log::info('Update School Arm Request:', ['id' => $id, 'data' => $request->all()]);
-        $request->validate([
-            'arm' => "required|string|max:255|unique:schoolarm,arm,$id",
-            'description' => 'required|string'
-        ]);
-
-        $checkArm = Schoolarm::where('arm', $request->input('arm'))->where('id', '!=', $id)->exists();
-        if ($checkArm) {
-            Log::warning('School arm already taken:', ['arm' => $request->input('arm')]);
-            return response()->json(['success' => false, 'message' => 'School arm is already taken'], 422);
-        }
-
-        $arm = Schoolarm::findOrFail($id);
-        $arm->update([
-            'arm' => $request->input('arm'),
-            'description' => $request->input('description')
-        ]);
-        Log::info('School Arm Updated:', $arm->toArray());
-
-        return response()->json(['success' => true, 'message' => 'School arm has been updated successfully']);
-    }
-
-    public function destroy($id)
-    {
-        Log::info('Delete School Arm Request:', ['id' => $id]);
-        $arm = Schoolarm::findOrFail($id);
-        $arm->delete();
-        Log::info('School Arm Deleted:', ['id' => $id]);
-
-        return response()->json(['success' => true, 'message' => 'School arm has been deleted successfully']);
-    }
-
-    public function deletearm(Request $request)
-    {
-        Log::info('Delete School Arm AJAX Request:', $request->all());
-        $request->validate(['armid' => 'required|exists:schoolarm,id']);
-        $arm = Schoolarm::findOrFail($request->armid);
-        $arm->delete();
-        Log::info('School Arm Deleted via AJAX:', ['id' => $request->armid]);
-
-        return response()->json(['success' => true, 'message' => 'School arm has been deleted successfully']);
-    }
-
+    /**
+     * Update the specified resource in storage.
+     */
     public function updatearm(Request $request)
     {
-        Log::info('Update School Arm AJAX Request:', $request->all());
-        $request->validate([
-            'id' => 'required|exists:schoolarm,id',
-            'arm' => "required|string|max:255|unique:schoolarm,arm,{$request->id}",
-            'description' => 'required|string'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|exists:school_arms,id',
+                'arm' => 'required|string|max:255|unique:school_arms,arm,' . $request->id
+            ]);
 
-        $checkArm = Schoolarm::where('arm', $request->input('arm'))->where('id', '!=', $request->id)->exists();
-        if ($checkArm) {
-            Log::warning('School arm already taken:', ['arm' => $request->input('arm')]);
-            return response()->json(['success' => false, 'message' => 'School arm is already taken'], 422);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $arm = SchoolArm::findOrFail($request->id);
+            $arm->arm = $request->arm;
+            $arm->description = $request->remark;
+            $arm->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Arm updated successfully',
+                'data' => $arm
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update arm: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        $arm = Schoolarm::findOrFail($request->id);
-        $arm->update([
-            'arm' => $request->input('arm'),
-            'description' => $request->input('description')
-        ]);
-        Log::info('School Arm Updated via AJAX:', $arm->toArray());
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function deletearm(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'armid' => 'required|exists:school_arms,id'
+            ]);
 
-        return response()->json(['success' => true, 'message' => 'School arm has been updated successfully']);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $arm = SchoolArm::findOrFail($request->armid);
+            $arm->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Arm deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete arm: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

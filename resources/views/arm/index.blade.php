@@ -62,12 +62,6 @@
 }
 .arm-table tr:hover td { background: #f0f9ff; }
 
-.badge-arm {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
-    padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-
 .dataTables_wrapper .dataTables_filter input {
     border: 1.5px solid var(--arm-border);
     border-radius: 8px;
@@ -151,6 +145,57 @@
 }
 .btn-icon-sm i { font-size: 16px; }
 .btn-icon-sm:hover { transform: scale(1.05); }
+
+.btn-subtle-primary {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    border: none;
+}
+.btn-subtle-primary:hover {
+    background: rgba(37, 99, 235, 0.2);
+    color: #1d4ed8;
+}
+.btn-subtle-danger {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border: none;
+}
+.btn-subtle-danger:hover {
+    background: rgba(220, 38, 38, 0.2);
+    color: #b91c1c;
+}
+
+.avatar-placeholder {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    transition: transform 0.2s ease;
+}
+.avatar-placeholder:hover {
+    transform: scale(1.05);
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+.pagination .page-link {
+    border-radius: 8px;
+    margin: 0 3px;
+    color: #1e3a5f;
+    border: 1px solid #e2e8f0;
+}
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    border-color: #2563eb;
+    color: white;
+}
 </style>
 
 <div class="main-content">
@@ -240,11 +285,11 @@
                     </thead>
                     <tbody>
                         @forelse($all_arms as $i => $arm)
-                        <tr data-id="{{ $arm->id }}" data-url="{{ route('schoolarm.deletearm', ['armid' => $arm->id]) }}">
+                        <tr data-id="{{ $arm->id }}">
                             <td class="text-center fw-semibold">{{ $i + 1 }}</td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="avatar-placeholder" style="width: 36px; height: 36px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">
+                                    <div class="avatar-placeholder">
                                         {{ strtoupper(substr($arm->arm, 0, 2)) }}
                                     </div>
                                     <div>
@@ -284,25 +329,25 @@
                                         </button>
                                     @endcan
                                 </div>
-                            </td>
-                        </tr>
+                             </td>
+                         </tr>
                         @empty
-                        <tr>
+                         <tr>
                             <td colspan="5" class="text-center text-muted py-5">
                                 <i class="ri-inbox-line d-block mb-2" style="font-size: 2rem; opacity: 0.4;"></i>
                                 No school arms found. Click "Create Arm" to add one.
                             </td>
-                        </tr>
+                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
-            @if(method_exists($data, 'links'))
+            @if(isset($data) && method_exists($data, 'links'))
             <div class="row mt-4 align-items-center">
                 <div class="col-sm">
                     <div class="text-muted">
-                        Showing {{ $data->firstItem() ?? 0 }} to {{ $data->lastItem() ?? 0 }} of {{ $data->total() }} results
+                        Showing {{ $data->firstItem() ?? 0 }} to {{ $data->lastItem() ?? 0 }} of {{ $data->total() ?? $all_arms->count() }} results
                     </div>
                 </div>
                 <div class="col-sm-auto mt-3 mt-sm-0">
@@ -367,7 +412,6 @@
             <div class="p-4">
                 <form id="editArmForm">
                     @csrf
-                    @method('PUT')
                     <input type="hidden" name="id" id="editArmId">
                     <div class="mb-4">
                         <label class="arm-label">
@@ -427,8 +471,8 @@
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
-    if ($('#armsTable tbody tr').length > 1 || ($('#armsTable tbody tr').length === 1 && !$('#armsTable tbody tr td').hasClass('text-center'))) {
+    // Initialize DataTable if there are rows
+    if ($('#armsTable tbody tr').length > 0 && !$('#armsTable tbody tr td').hasClass('text-center')) {
         $('#armsTable').DataTable({
             pageLength: 25,
             order: [[0, 'asc']],
@@ -467,7 +511,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'success',
                         title: 'Success!',
-                        text: 'Arm created successfully',
+                        text: response.message || 'Arm created successfully',
                         confirmButtonColor: '#2563eb'
                     }).then(() => {
                         location.reload();
@@ -510,24 +554,25 @@ $(document).ready(function() {
 
         const submitBtn = $('#submitEditBtn');
         const originalHtml = submitBtn.html();
+        const armId = $('#editArmId').val();
+
         submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...');
 
         $.ajax({
-            url: '{{ route("schoolarm.update") }}',
+            url: '{{ route("schoolarm.updatearm") }}',
             method: 'POST',
             data: {
-                id: $('#editArmId').val(),
+                id: armId,
                 arm: $('#editArmName').val(),
                 remark: $('#editArmRemark').val(),
-                _token: '{{ csrf_token() }}',
-                _method: 'PUT'
+                _token: '{{ csrf_token() }}'
             },
             success: function(response) {
                 if (response.success) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Updated!',
-                        text: 'Arm updated successfully',
+                        text: response.message || 'Arm updated successfully',
                         confirmButtonColor: '#2563eb'
                     }).then(() => {
                         location.reload();
@@ -569,9 +614,10 @@ $(document).ready(function() {
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Deleting...');
 
         $.ajax({
-            url: '{{ route("schoolarm.deletearm", "") }}/' + id,
-            method: 'DELETE',
+            url: '{{ route("schoolarm.deletearm") }}',
+            method: 'POST',
             data: {
+                armid: id,
                 _token: '{{ csrf_token() }}'
             },
             success: function(response) {
@@ -579,7 +625,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'success',
                         title: 'Deleted!',
-                        text: 'Arm deleted successfully',
+                        text: response.message || 'Arm deleted successfully',
                         confirmButtonColor: '#2563eb'
                     }).then(() => {
                         location.reload();
@@ -596,10 +642,14 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                let errorMsg = 'An error occurred while deleting the arm';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Error!',
-                    text: 'An error occurred while deleting the arm',
+                    text: errorMsg,
                     confirmButtonColor: '#2563eb'
                 });
                 btn.prop('disabled', false).html(originalHtml);
@@ -619,48 +669,5 @@ $(document).ready(function() {
     });
 });
 </script>
-
-@push('styles')
-<style>
-.btn-subtle-primary {
-    background: rgba(37, 99, 235, 0.1);
-    color: #2563eb;
-    border: none;
-}
-.btn-subtle-primary:hover {
-    background: rgba(37, 99, 235, 0.2);
-    color: #1d4ed8;
-}
-.btn-subtle-danger {
-    background: rgba(220, 38, 38, 0.1);
-    color: #dc2626;
-    border: none;
-}
-.btn-subtle-danger:hover {
-    background: rgba(220, 38, 38, 0.2);
-    color: #b91c1c;
-}
-.avatar-placeholder {
-    transition: transform 0.2s ease;
-}
-.avatar-placeholder:hover {
-    transform: scale(1.05);
-}
-.pagination {
-    margin-bottom: 0;
-}
-.pagination .page-link {
-    border-radius: 8px;
-    margin: 0 3px;
-    color: #1e3a5f;
-    border: 1px solid #e2e8f0;
-}
-.pagination .page-item.active .page-link {
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
-    border-color: #2563eb;
-    color: white;
-}
-</style>
-@endpush
 
 @endsection
