@@ -297,7 +297,6 @@
             </div>
             <div class="modal-footer border-0 pt-0 px-4 pb-4">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                {{-- FIX: id stays stable; listener is attached fresh each time the modal opens --}}
                 <button type="button" class="btn btn-primary" id="submitBulkPayment">
                     <i class="ri-wallet-line me-1"></i>Process Payment
                 </button>
@@ -432,8 +431,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const sessionid = urlParams.get('sessionid') || '{{ $sessionid ?? "" }}';
 
     // State
-    // FIX (doc6): use a plain object map so bill data is always available for bulk submit.
-    // Key = String(bill.id), value = the full bill object.
     let selectedBillsMap = {};
     let billsDataGlobal  = [];
     let currentDeleteUrl = '';
@@ -455,7 +452,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('loadingOverlay').classList.toggle('active', !!show);
     }
 
-    // FIX (doc6): correct avatar sub-directory
     function getAvatarUrl(picture) {
         if (!picture || picture === 'unnamed.jpg' || picture === '') return null;
         return '/storage/images/student_avatars/' + picture.replace(/^\/+/, '');
@@ -492,7 +488,6 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(result => {
             if (result.success) {
-                // FIX (doc3/doc6): surface the fallback warning to the user
                 renderPaymentContent(result.data, result.used_fallback === true);
             } else {
                 document.getElementById('paymentContent').innerHTML = `
@@ -550,8 +545,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // ── Bill cards ────────────────────────────────────────────────────
-        // FIX (doc6): bill data is stored in the map and looked up by id —
-        // NOT embedded as JSON in data-attributes to avoid XSS and quote escaping issues.
         const billsHtml = bills.map(bill => {
             const billKey    = String(bill.id);
             const isSelected = !!selectedBillsMap[billKey];
@@ -699,10 +692,11 @@ document.addEventListener('DOMContentLoaded', function () {
             : '<div class="empty-state"><i class="ri-history-line"></i><p>No payment history found.</p></div>';
 
         const totalOutstanding = totals.outstanding;
+        const totalPaid = totals.paid;
         const selectedCount    = Object.keys(selectedBillsMap).length;
         const hasBulkableBills = bills.some(b => !b.is_paid && !b.has_pending_invoice);
 
-        // FIX (doc3/doc6): surface the fallback warning when controller fell back to Current session
+        // Fallback warning banner
         const fallbackBanner = usedFallback ? `
             <div class="fallback-banner">
                 <i class="ri-information-line"></i>
@@ -735,9 +729,13 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="info-chip"><i class="ri-time-line text-warning"></i>${escapeHtml(data.session || '')}</div>
                             <div class="info-chip"><i class="ri-money-dollar-circle-line text-danger"></i>Total: ₦${fmt(totals.adjusted)}</div>
                             <div class="info-chip"><i class="ri-check-line text-success"></i>Paid: ₦${fmt(totals.paid)}</div>
-                            ${totalOutstanding > 0
-                                ? `<div class="info-chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626"><i class="ri-alert-line"></i>Outstanding: ₦${fmt(totalOutstanding)}</div>`
-                                : `<div class="info-chip" style="background:#f0fdf4;border-color:#bbf7d0;color:#16a34a"><i class="ri-checkbox-circle-line"></i>Fully Paid</div>`}
+                            ${bills.length === 0
+                                ? `<div class="info-chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626"><i class="ri-alert-line"></i>No Bills Assigned</div>`
+                                : totalOutstanding > 0
+                                    ? `<div class="info-chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626"><i class="ri-alert-line"></i>Outstanding: ₦${fmt(totalOutstanding)}</div>`
+                                    : totalPaid > 0
+                                        ? `<div class="info-chip" style="background:#f0fdf4;border-color:#bbf7d0;color:#16a34a"><i class="ri-checkbox-circle-line"></i>Fully Paid</div>`
+                                        : `<div class="info-chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626"><i class="ri-alert-line"></i>No Payments Made</div>`}
                         </div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap align-items-start">
@@ -800,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <li class="nav-item">
                             <a class="nav-link active" data-bs-toggle="tab" href="#tab-bills">
                                 <i class="ri-bill-line me-1"></i>School Bills
-                                <span class="badge bg-primary-subtle text-primary ms-1">${bills.length}</span>
+                                <span class="badge ${bills.length === 0 ? 'bg-danger-subtle text-danger' : 'bg-primary-subtle text-primary'} ms-1">${bills.length}</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -822,19 +820,32 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="tab-pane fade show active" id="tab-bills">
                             ${bills.length > 0
                                 ? `<div class="row g-3 mt-1">${billsHtml}</div>
-                                   ${totals.savings > 0
-                                       ? `<div class="mt-4 p-3 rounded-3" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:1px solid #ddd6fe">
-                                              <div class="d-flex align-items-center gap-2">
-                                                  <i class="ri-gift-line" style="font-size:18px;color:#7c3aed"></i>
-                                                  <div>
-                                                      <span class="fw-semibold" style="color:#7c3aed">Total Savings Applied: </span>
-                                                      <span class="fw-bold" style="color:#7c3aed">₦${fmt(totals.savings)}</span>
-                                                      <span class="text-muted small ms-2">(Original: ₦${fmt(totals.original)} → Payable: ₦${fmt(totals.adjusted)})</span>
-                                                  </div>
-                                              </div>
-                                          </div>`
-                                       : ''}`
-                                : '<div class="empty-state"><i class="ri-inbox-line"></i><p>No bills assigned to this student for the selected term/session.</p></div>'}
+                                   ${bills.length === 0 ? '' : totals.savings > 0 ? `
+                                   <div class="mt-4 p-3 rounded-3" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:1px solid #ddd6fe">
+                                       <div class="d-flex align-items-center gap-2">
+                                           <i class="ri-gift-line" style="font-size:18px;color:#7c3aed"></i>
+                                           <div>
+                                               <span class="fw-semibold" style="color:#7c3aed">Total Savings Applied: </span>
+                                               <span class="fw-bold" style="color:#7c3aed">₦${fmt(totals.savings)}</span>
+                                               <span class="text-muted small ms-2">(Original: ₦${fmt(totals.original)} → Payable: ₦${fmt(totals.adjusted)})</span>
+                                           </div>
+                                       </div>
+                                   </div>` : ''}`
+                                : `<div class="empty-state">
+                                    <i class="ri-inbox-line"></i>
+                                    <p>No bills assigned to this student for the selected term/session.</p>
+                                    <div class="alert alert-info mt-3 text-start" style="font-size:12px">
+                                        <i class="ri-information-line me-2"></i>
+                                        <strong>Possible reasons:</strong>
+                                        <ul class="mb-0 mt-2">
+                                            <li>No fee structure has been configured for this class (${escapeHtml(student.schoolclass)} ${escapeHtml(student.arm)})</li>
+                                            <li>The selected term (${escapeHtml(data.term || '')}) or session (${escapeHtml(data.session || '')}) has no associated bills</li>
+                                            <li>The student's enrollment in this class may not have bills assigned</li>
+                                        </ul>
+                                        <hr class="my-2">
+                                        <p class="mb-0 small">Please contact the school administrator to configure fee structures for this class, term, and session.</p>
+                                    </div>
+                                </div>`}
                         </div>
                         <div class="tab-pane fade" id="tab-records">${paymentRecordsHtml}</div>
                         <div class="tab-pane fade" id="tab-history">${historyHtml}</div>
@@ -881,7 +892,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.make-payment-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 const billKey = String(this.dataset.billId);
-                // FIX (doc6): look up bill by id from global array — no JSON in data-attributes
                 const bill = bills.find(b => String(b.id) === billKey);
                 if (bill) {
                     openPaymentModal(bill);
@@ -1006,7 +1016,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
 
-        // FIX (doc3): replace the submit button's onclick each time to avoid stacked listeners
         const submitBtn = document.getElementById('submitBulkPayment');
         submitBtn.onclick = null;
         submitBtn.onclick = () => submitBulkPayment(selectedBills);
@@ -1030,7 +1039,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         showLoading(true);
 
-        // FIX (doc6): use class_id from the bill data, NOT hardcoded as 1
         const classId = selectedBills[0]?.class_id || 0;
 
         fetch('{{ route("schoolpayment.bulk-store") }}', {
