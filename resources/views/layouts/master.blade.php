@@ -1700,7 +1700,6 @@
         /* Finance */
         {title:'Student Bill',                          url:'{{ route("schoolpayment.index") }}',                            icon:'mdi-receipt',                 category:'Finance',            keywords:['bill','fees','invoice','payment','student']},
         {title:'Payment Portal',                        url:'{{ route("payment.index") }}',                                  icon:'mdi-wallet',                  category:'Finance',            keywords:['pay','portal','fees','transaction']},
-        // {title:'School Payment Analysis',               url:'{{ route("analysis.index") }}',                                 icon:'mdi-chart-pie',               category:'Finance',            keywords:['analysis','payment','summary','report']},
         {title:'All Scholarships',                      url:'{{ route("admin.scholarship.index") }}',                        icon:'mdi-medal',                   category:'Finance',            keywords:['scholarship','award','bursary','fund']},
         {title:'Create Scholarship',                    url:'{{ route("admin.scholarship.create") }}',                       icon:'mdi-medal-outline',           category:'Finance',            keywords:['scholarship','create','new','add']},
         {title:'Scholarship Assignments',               url:'{{ route("admin.scholarship.assignments") }}',                  icon:'mdi-account-star',            category:'Finance',            keywords:['scholarship','assign','student']},
