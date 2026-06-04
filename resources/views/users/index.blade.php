@@ -4,8 +4,7 @@
 <?php use Spatie\Permission\Models\Role; ?>
 
 <style>
-/* Your existing styles here - keeping them compact */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
     --u-primary: #1e3a5f;
@@ -26,11 +25,10 @@
 /* Keyframes */
 @keyframes fadeInUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeInDown { from { opacity:0; transform:translateY(-14px);} to { opacity:1; transform:translateY(0); } }
-@keyframes scaleIn { from { opacity:0; transform:scale(.92); } to { opacity:1; transform:scale(1); } }
 @keyframes rowIn { from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);} }
 @keyframes badgePop { 0%{transform:scale(0.5);}70%{transform:scale(1.15);}100%{transform:scale(1);} }
 
-/* Hero */
+/* Hero Section */
 .u-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 55%, #4f46e5 100%);
     border-radius: var(--u-radius);
@@ -43,7 +41,7 @@
 .u-hero h1 { font-size:22px; font-weight:800; color:#fff; margin:0 0 6px; }
 .u-hero p { font-size:13px; color:rgba(255,255,255,.75); margin:0; }
 
-/* Stat cards */
+/* Stat Cards */
 .stat-card {
     background: var(--u-surface);
     border: 1px solid var(--u-border);
@@ -57,13 +55,14 @@
 .stat-card .stat-label { font-size:12px; color:var(--u-muted); margin-top:5px; }
 .stat-card .stat-icon { font-size:34px; opacity:.1; float:right; margin-top:-6px; }
 
-/* Filter area */
+/* Filter Area */
 .u-filter-card {
     background: var(--u-surface);
     border: 1px solid var(--u-border);
     border-top: 3px solid var(--u-accent);
     border-radius: var(--u-radius);
     padding: 16px 20px;
+    margin-bottom: 24px;
     animation: fadeInUp .5s .1s ease both;
 }
 .u-input {
@@ -79,7 +78,7 @@
 .u-input-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:#94a3b8; }
 .u-input-icon-wrap .u-input { padding-left: 34px; }
 
-/* Table */
+/* Table Card */
 .u-table-card {
     background: var(--u-surface);
     border: 1px solid var(--u-border);
@@ -122,7 +121,7 @@
     border: 2px solid var(--u-border);
 }
 
-/* Role badges */
+/* Role Badges */
 .u-role-pill {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 10px; border-radius: 20px;
@@ -132,9 +131,10 @@
 .u-role-pill.student { background:#dbeafe; color:#1e40af; }
 .u-role-pill.admin { background:#fce7f3; color:#9d174d; }
 .u-role-pill.teacher { background:#d1fae5; color:#065f46; }
+.u-role-pill.staff { background:#fef3c7; color:#92400e; }
 .u-role-pill.default { background:#f1f5f9; color:#475569; }
 
-/* Action buttons */
+/* Action Buttons */
 .u-action-btn {
     width: 30px; height: 30px;
     border-radius: 7px;
@@ -145,6 +145,7 @@
 .u-action-btn:hover { transform: translateY(-1px); }
 .u-action-btn.view { background:#eff6ff; color:#2563eb; }
 .u-action-btn.edit { background:#f0fdf4; color:#16a34a; }
+.u-action-btn.key { background:#fffbeb; color:#d97706; }
 .u-action-btn.del { background:#fef2f2; color:#dc2626; }
 
 /* Buttons */
@@ -162,20 +163,7 @@
 .u-btn.danger { background:var(--u-danger); color:#fff; }
 .u-btn.ghost { background:#fff; color:var(--u-primary); border:1.5px solid var(--u-border); }
 
-/* Modal styles */
-.modal-content {
-    border-radius: 18px;
-    overflow: hidden;
-}
-.modal-header-custom {
-    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-    padding: 22px 28px;
-    position: relative;
-}
-.modal-header-custom h5 { color:#fff; font-weight:700; margin:0; }
-.modal-header-custom p { color:rgba(255,255,255,.72); font-size:12px; margin:4px 0 0; }
-.modal-header-custom .btn-close { filter:invert(1); opacity:.8; }
-
+/* Form Labels */
 .u-form-label {
     font-size: 11.5px; font-weight: 700; color: var(--u-muted);
     text-transform: uppercase; letter-spacing: .4px;
@@ -190,12 +178,13 @@
 }
 .u-form-input:focus { border-color: var(--u-accent); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
 
+/* Empty State */
 .u-empty {
     text-align:center; padding:48px 24px; color: var(--u-muted);
 }
 .u-empty i { font-size:3rem; display:block; margin-bottom:12px; opacity:.3; }
 
-/* Chart card */
+/* Chart Card */
 .u-chart-card {
     background: var(--u-surface);
     border: 1px solid var(--u-border);
@@ -226,7 +215,7 @@
         </div>
     </div>
 
-    {{-- Hero --}}
+    {{-- Hero Section --}}
     <div class="u-hero">
         <div class="row align-items-center">
             <div class="col">
@@ -236,10 +225,10 @@
             <div class="col-auto">
                 <div class="d-flex gap-2">
                     @can('Create user')
-                    <button type="button" class="u-btn primary" onclick="openAddUserModal()">
+                    <button type="button" class="u-btn primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
                         <i class="bi bi-plus-circle"></i> Add User
                     </button>
-                    <button type="button" class="u-btn success" onclick="openAddStudentModal()">
+                    <button type="button" class="u-btn success" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                         <i class="bi bi-person-plus"></i> Add Student
                     </button>
                     @endcan
@@ -248,7 +237,7 @@
         </div>
     </div>
 
-    {{-- Alerts --}}
+    {{-- Alert Messages --}}
     @if ($errors->any())
     <div class="alert alert-danger border-0 rounded-3 mb-3">
         <strong>Error:</strong> {{ $errors->all()[0] }}
@@ -260,7 +249,7 @@
     </div>
     @endif
 
-    {{-- Stat Cards --}}
+    {{-- Statistics Cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-6">
             <div class="stat-card">
@@ -291,8 +280,8 @@
         </div>
     </div>
 
-    {{-- Filter Bar --}}
-    <div class="u-filter-card mb-3">
+    {{-- Filter Section --}}
+    <div class="u-filter-card">
         <div class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label class="u-form-label">Search</label>
@@ -327,8 +316,8 @@
         </div>
     </div>
 
-    {{-- Table --}}
-    <div class="u-table-card">
+    {{-- Users Table --}}
+    <div class="u-table-card mt-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <div class="fw-bold">
                 <i class="ri-list-check me-2" style="color:var(--u-accent)"></i>
@@ -366,9 +355,16 @@
                         <td>
                             @if($roleNames->isNotEmpty())
                                 @foreach($roleNames as $role)
-                                    <span class="u-role-pill {{ strtolower($role) == 'student' ? 'student' : (strtolower($role) == 'admin' ? 'admin' : 'default') }}">
-                                        {{ $role }}
-                                    </span>
+                                    @php
+                                        $roleClass = match(strtolower($role)) {
+                                            'student' => 'student',
+                                            'admin' => 'admin',
+                                            'teacher' => 'teacher',
+                                            'staff' => 'staff',
+                                            default => 'default'
+                                        };
+                                    @endphp
+                                    <span class="u-role-pill {{ $roleClass }}">{{ $role }}</span>
                                 @endforeach
                             @else
                                 <span class="u-role-pill default">No Role</span>
@@ -377,20 +373,33 @@
                         <td>{{ $user->created_at->format('d M Y') }}</td>
                         <td>
                             <div class="d-flex gap-1">
-                                <button class="u-action-btn view" onclick="viewUser({{ $user->id }})" title="View">
+                                @can('View user')
+                                <a href="{{ route('users.show', $user->id) }}" class="u-action-btn view" title="View">
                                     <i class="ph-eye"></i>
-                                </button>
-                                <button class="u-action-btn edit" onclick="editUser({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ $user->email }}', '{{ $roleNames->implode(',') }}')" title="Edit">
+                                </a>
+                                @endcan
+                                @can('Update user')
+                                <button type="button" class="u-action-btn edit" onclick="openEditModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ $user->email }}', '{{ $roleNames->implode(',') }}')" title="Edit">
                                     <i class="ph-pencil"></i>
                                 </button>
-                                <button class="u-action-btn del" onclick="deleteUser({{ $user->id }})" title="Delete">
+                                @endcan
+                                @can('Update user')
+                                @if($user->hasRole('Student'))
+                                <button type="button" class="u-action-btn key" onclick="resetStudentPassword({{ $user->id }}, '{{ addslashes($user->name) }}')" title="Reset Password">
+                                    <i class="bi bi-key-fill"></i>
+                                </button>
+                                @endif
+                                @endcan
+                                @can('Delete user')
+                                <button type="button" class="u-action-btn del" onclick="openDeleteModal({{ $user->id }})" title="Delete">
                                     <i class="ph-trash"></i>
                                 </button>
+                                @endcan
                             </div>
                         </td>
                     </tr>
                     @empty
-                    <tr>
+                    <tr id="emptyRow">
                         <td colspan="7"><div class="u-empty"><i class="ri-user-line"></i>No users found</div></td>
                     </tr>
                     @endforelse
@@ -406,27 +415,29 @@
 {{-- ==============================================
      ADD USER MODAL
 ============================================== --}}
-<div class="modal fade" id="addUserModal" tabindex="-1">
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header-custom">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="bi bi-person-plus me-2"></i>Add New User</h5>
-                <p>Create a system user with role-based access</p>
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%); color: white;">
+                <div>
+                    <h5 class="modal-title" id="addUserModalLabel"><i class="bi bi-person-plus me-2"></i>Add New User</h5>
+                    <p class="mb-0 small opacity-75">Create a system user with role-based access</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="addUserForm">
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="u-form-label">Full Name</label>
-                        <input type="text" id="add_name" class="u-form-input" required>
+                        <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" id="add_name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="u-form-label">Email Address</label>
-                        <input type="email" id="add_email" class="u-form-input" required>
+                        <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" id="add_email" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="u-form-label">Role(s)</label>
-                        <select id="add_roles" class="u-form-input" multiple required>
+                        <label class="form-label fw-semibold">Role(s) <span class="text-danger">*</span></label>
+                        <select id="add_roles" class="form-select" multiple size="4" required>
                             @foreach (Role::all() as $role)
                             <option value="{{ $role->name }}">{{ $role->name }}</option>
                             @endforeach
@@ -434,20 +445,20 @@
                         <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
-                            <label class="u-form-label">Password</label>
-                            <input type="password" id="add_password" class="u-form-input" required>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <input type="password" id="add_password" class="form-control" required>
                         </div>
-                        <div class="col-md-6">
-                            <label class="u-form-label">Confirm Password</label>
-                            <input type="password" id="add_password_confirmation" class="u-form-input" required>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" id="add_password_confirmation" class="form-control" required>
                         </div>
                     </div>
-                    <div id="addUserError" class="alert alert-danger d-none mt-3"></div>
+                    <div id="addUserError" class="alert alert-danger d-none"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="u-btn primary">Create User</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create User</button>
                 </div>
             </form>
         </div>
@@ -457,48 +468,50 @@
 {{-- ==============================================
      EDIT USER MODAL
 ============================================== --}}
-<div class="modal fade" id="editUserModal" tabindex="-1">
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header-custom" style="background:linear-gradient(135deg,#065f46,#16a34a,#4ade80);">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="ph-pencil me-2"></i>Edit User</h5>
-                <p>Update user information and permissions</p>
+            <div class="modal-header" style="background: linear-gradient(135deg, #065f46, #16a34a, #4ade80); color: white;">
+                <div>
+                    <h5 class="modal-title" id="editUserModalLabel"><i class="ph-pencil me-2"></i>Edit User</h5>
+                    <p class="mb-0 small opacity-75">Update user information and permissions</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editUserForm">
                 <div class="modal-body p-4">
                     <input type="hidden" id="edit_id">
                     <div class="mb-3">
-                        <label class="u-form-label">Full Name</label>
-                        <input type="text" id="edit_name" class="u-form-input" required>
+                        <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" id="edit_name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="u-form-label">Email Address</label>
-                        <input type="email" id="edit_email" class="u-form-input" required>
+                        <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" id="edit_email" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="u-form-label">Role(s)</label>
-                        <select id="edit_roles" class="u-form-input" multiple required>
+                        <label class="form-label fw-semibold">Role(s) <span class="text-danger">*</span></label>
+                        <select id="edit_roles" class="form-select" multiple size="4" required>
                             @foreach (Role::all() as $role)
                             <option value="{{ $role->name }}">{{ $role->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
-                            <label class="u-form-label">New Password <span class="text-muted">(optional)</span></label>
-                            <input type="password" id="edit_password" class="u-form-input" placeholder="Leave blank to keep">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">New Password <span class="text-muted">(optional)</span></label>
+                            <input type="password" id="edit_password" class="form-control" placeholder="Leave blank to keep">
                         </div>
-                        <div class="col-md-6">
-                            <label class="u-form-label">Confirm Password</label>
-                            <input type="password" id="edit_password_confirmation" class="u-form-input">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Confirm Password</label>
+                            <input type="password" id="edit_password_confirmation" class="form-control">
                         </div>
                     </div>
-                    <div id="editUserError" class="alert alert-danger d-none mt-3"></div>
+                    <div id="editUserError" class="alert alert-danger d-none"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="u-btn success">Update User</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Update User</button>
                 </div>
             </form>
         </div>
@@ -508,11 +521,11 @@
 {{-- ==============================================
      DELETE CONFIRM MODAL
 ============================================== --}}
-<div class="modal fade" id="deleteUserModal" tabindex="-1">
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
         <div class="modal-content text-center p-4">
             <div class="mb-3">
-                <div style="width:70px;height:70px;border-radius:50%;background:#fef2f2;display:inline-flex;align-items:center;justify-content:center;">
+                <div style="width:70px;height:70px;border-radius:50%;background:#fef2f2;display:inline-flex;align-items:center;justify-content:center;margin:0 auto;">
                     <i class="bi bi-trash" style="font-size:28px;color:var(--u-danger)"></i>
                 </div>
             </div>
@@ -520,8 +533,8 @@
             <p class="text-muted mb-4">This action cannot be undone. The user will be permanently removed.</p>
             <input type="hidden" id="delete_user_id">
             <div class="d-flex gap-3 justify-content-center">
-                <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="u-btn danger" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     <i class="bi bi-trash"></i> Yes, Delete
                 </button>
             </div>
@@ -530,25 +543,27 @@
 </div>
 
 {{-- ==============================================
-     ADD STUDENT MODAL
+     ADD STUDENT MODAL (Step 1)
 ============================================== --}}
-<div class="modal fade" id="addStudentModal" tabindex="-1">
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header-custom" style="background:linear-gradient(135deg,#064e3b,#059669,#34d399);">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="bi bi-mortarboard me-2"></i>Add Student as User</h5>
-                <p>Create portal access for a registered student</p>
+            <div class="modal-header" style="background: linear-gradient(135deg, #064e3b, #059669, #34d399); color: white;">
+                <div>
+                    <h5 class="modal-title" id="addStudentModalLabel"><i class="bi bi-mortarboard me-2"></i>Add Student as User</h5>
+                    <p class="mb-0 small opacity-75">Create portal access for a registered student</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="mb-3">
-                    <label class="u-form-label">Select Student</label>
-                    <select id="student_select" class="u-form-input" required>
+                    <label class="form-label fw-semibold">Select Student <span class="text-danger">*</span></label>
+                    <select id="student_select" class="form-select" required>
                         <option value="">— Choose a student —</option>
                         @php
-                            $students = \App\Models\Student::whereDoesntHave('user')->get();
+                            $availableStudents = \App\Models\Student::whereDoesntHave('user')->get();
                         @endphp
-                        @foreach($students as $student)
+                        @foreach($availableStudents as $student)
                         <option value="{{ $student->id }}" data-name="{{ $student->name }}" data-email="{{ $student->email ?? '' }}" data-admission="{{ $student->admissionNo }}">
                             {{ $student->name }} ({{ $student->admissionNo }})
                         </option>
@@ -557,59 +572,66 @@
                 </div>
                 <div class="alert alert-info">
                     <i class="bi bi-envelope me-2"></i>
-                    Email will be: <code id="previewEmail">student.email@school.com</code>
+                    Email will be: <code id="previewEmail">select a student</code>
                 </div>
-                <div id="studentError" class="alert alert-danger d-none"></div>
+                <div id="studentSelectError" class="alert alert-danger d-none"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="u-btn success" id="continueToCredentialsBtn">Continue <i class="bi bi-arrow-right ms-1"></i></button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="continueToCredentialsBtn" disabled>Continue <i class="bi bi-arrow-right ms-1"></i></button>
             </div>
         </div>
     </div>
 </div>
 
 {{-- ==============================================
-     SET STUDENT CREDENTIALS MODAL
+     SET STUDENT CREDENTIALS MODAL (Step 2)
 ============================================== --}}
-<div class="modal fade" id="setStudentCredentialsModal" tabindex="-1">
+<div class="modal fade" id="setStudentCredentialsModal" tabindex="-1" aria-labelledby="setStudentCredentialsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header-custom">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="bi bi-key me-2"></i>Set Student Credentials</h5>
-                <p>Configure login details for the student</p>
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3a5f, #2563eb, #4f46e5); color: white;">
+                <div>
+                    <h5 class="modal-title" id="setStudentCredentialsModalLabel"><i class="bi bi-key me-2"></i>Set Student Credentials</h5>
+                    <p class="mb-0 small opacity-75">Configure login details for the student</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="studentCredentialsForm">
                 <div class="modal-body p-4">
                     <input type="hidden" id="student_id" name="student_id">
                     <div class="mb-3">
-                        <label class="u-form-label">Email Address</label>
-                        <input type="email" id="student_email" name="email" class="u-form-input" required>
+                        <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" id="student_email" name="email" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="u-form-label">Username (Admission No)</label>
-                        <input type="text" id="student_username" name="username" class="u-form-input" readonly>
+                        <label class="form-label fw-semibold">Username (Admission No)</label>
+                        <input type="text" id="student_username" name="username" class="form-control" readonly>
                     </div>
                     <div class="row">
-                        <div class="col-md-8">
-                            <label class="u-form-label">Password</label>
-                            <input type="text" id="student_password" name="password" class="u-form-input" required>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <input type="text" id="student_password" name="password" class="form-control" required>
                         </div>
-                        <div class="col-md-4">
-                            <label class="u-form-label">&nbsp;</label>
-                            <button type="button" class="u-btn ghost w-100" id="generatePasswordBtn">Generate</button>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">&nbsp;</label>
+                            <button type="button" class="btn btn-outline-secondary w-100" id="generatePasswordBtn">Generate</button>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="u-form-label">Confirm Password</label>
-                        <input type="password" id="student_password_confirmation" name="password_confirmation" class="u-form-input" required>
+                        <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                        <input type="password" id="student_password_confirmation" name="password_confirmation" class="form-control" required>
                     </div>
-                    <div id="studentCredError" class="alert alert-danger d-none mt-3"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Role</label>
+                        <input type="text" class="form-control" value="Student" disabled>
+                        <input type="hidden" name="roles[]" value="Student">
+                    </div>
+                    <div id="studentCredError" class="alert alert-danger d-none"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="u-btn primary">Create Student User</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Student User</button>
                 </div>
             </form>
         </div>
@@ -622,41 +644,19 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
-// Wait for Bootstrap to be ready
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded, initializing...');
+// CSRF Token setup
+axios.defaults.headers.common['X-CSRF-TOKEN'] = '{{ csrf_token() }}';
 
-    // Test if Bootstrap is working
-    if (typeof bootstrap !== 'undefined') {
-        console.log('Bootstrap is loaded');
-    } else {
-        console.error('Bootstrap is NOT loaded');
-    }
-});
+// ==============================================
+// MODAL MANAGEMENT
+// ==============================================
 
-// Global functions for modals
-function openAddUserModal() {
-    const modalEl = document.getElementById('addUserModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-}
-
-function openAddStudentModal() {
-    const modalEl = document.getElementById('addStudentModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-}
-
-function viewUser(id) {
-    window.location.href = '/users/' + id;
-}
-
-function editUser(id, name, email, roles) {
+function openEditModal(id, name, email, roles) {
     document.getElementById('edit_id').value = id;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_email').value = email;
 
-    // Set roles
+    // Set selected roles
     const roleArray = roles.split(',');
     const roleSelect = document.getElementById('edit_roles');
     for(let opt of roleSelect.options) {
@@ -667,21 +667,64 @@ function editUser(id, name, email, roles) {
     document.getElementById('edit_password_confirmation').value = '';
     document.getElementById('editUserError').classList.add('d-none');
 
-    const modalEl = document.getElementById('editUserModal');
-    const modal = new bootstrap.Modal(modalEl);
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
     modal.show();
 }
 
-let deleteUserId = null;
-function deleteUser(id) {
-    deleteUserId = id;
+function openDeleteModal(id) {
     document.getElementById('delete_user_id').value = id;
-    const modalEl = document.getElementById('deleteUserModal');
-    const modal = new bootstrap.Modal(modalEl);
+    const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
     modal.show();
 }
 
-// Add User Form Submit
+function resetStudentPassword(userId, userName) {
+    Swal.fire({
+        title: 'Reset Password?',
+        html: `Reset password for <strong>${userName}</strong>?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d97706',
+        confirmButtonText: 'Yes, Reset'
+    }).then(result => {
+        if (result.isConfirmed) {
+            Swal.fire({ title: 'Resetting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            fetch(`/users/reset-single-password/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Password Reset!',
+                        html: `<div class="text-center">
+                            <p>New password for <strong>${data.user.name}</strong></p>
+                            <div class="bg-light p-3 rounded mb-3">
+                                <code style="font-size: 20px; letter-spacing: 2px;">${data.password}</code>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard.writeText('${data.password}')">
+                                <i class="bi bi-clipboard"></i> Copy Password
+                            </button>
+                        </div>`,
+                        icon: 'success',
+                        showConfirmButton: true
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Reset failed', 'error');
+                }
+            })
+            .catch(() => Swal.fire('Error', 'Network error', 'error'));
+        }
+    });
+}
+
+// ==============================================
+// ADD USER FORM HANDLER
+// ==============================================
 document.getElementById('addUserForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -710,11 +753,11 @@ document.getElementById('addUserForm')?.addEventListener('submit', function(e) {
         email: email,
         roles: roles,
         password: password,
-        password_confirmation: password_confirmation,
-        _token: '{{ csrf_token() }}'
+        password_confirmation: password_confirmation
     }).then(response => {
-        Swal.fire('Success', 'User created successfully', 'success');
-        location.reload();
+        Swal.fire('Success', 'User created successfully', 'success').then(() => {
+            location.reload();
+        });
     }).catch(error => {
         let msg = error.response?.data?.message || 'Error creating user';
         if (error.response?.data?.errors) {
@@ -726,7 +769,9 @@ document.getElementById('addUserForm')?.addEventListener('submit', function(e) {
     });
 });
 
-// Edit User Form Submit
+// ==============================================
+// EDIT USER FORM HANDLER
+// ==============================================
 document.getElementById('editUserForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -751,15 +796,16 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
 
-    const data = { name, email, roles, _token: '{{ csrf_token() }}' };
+    const data = { name, email, roles };
     if (password) {
         data.password = password;
         data.password_confirmation = password_confirmation;
     }
 
     axios.put(`/users/${id}`, data).then(response => {
-        Swal.fire('Success', 'User updated successfully', 'success');
-        location.reload();
+        Swal.fire('Success', 'User updated successfully', 'success').then(() => {
+            location.reload();
+        });
     }).catch(error => {
         let msg = error.response?.data?.message || 'Error updating user';
         if (error.response?.data?.errors) {
@@ -771,18 +817,19 @@ document.getElementById('editUserForm')?.addEventListener('submit', function(e) 
     });
 });
 
-// Confirm Delete
+// ==============================================
+// DELETE USER HANDLER
+// ==============================================
 document.getElementById('confirmDeleteBtn')?.addEventListener('click', function() {
     const id = document.getElementById('delete_user_id').value;
 
     this.disabled = true;
     this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
 
-    axios.delete(`/users/${id}`, {
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-    }).then(() => {
-        Swal.fire('Deleted', 'User removed successfully', 'success');
-        location.reload();
+    axios.delete(`/users/${id}`).then(() => {
+        Swal.fire('Deleted', 'User removed successfully', 'success').then(() => {
+            location.reload();
+        });
     }).catch(error => {
         Swal.fire('Error', error.response?.data?.message || 'Delete failed', 'error');
         this.disabled = false;
@@ -790,48 +837,90 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', function(
     });
 });
 
-// Student selection preview
+// ==============================================
+// DELETE MULTIPLE USERS
+// ==============================================
+function deleteMultiple() {
+    const ids = [];
+    document.querySelectorAll('.row-check:checked').forEach(cb => {
+        const id = cb.closest('tr').dataset.id;
+        if (id) ids.push(id);
+    });
+
+    if (ids.length === 0) {
+        Swal.fire('Select at least one user', '', 'warning');
+        return;
+    }
+
+    Swal.fire({
+        title: `Delete ${ids.length} user(s)?`,
+        text: 'This cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Yes, delete them!'
+    }).then(result => {
+        if (result.isConfirmed) {
+            Swal.fire({ title: 'Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            Promise.all(ids.map(id => axios.delete(`/users/${id}`)))
+                .then(() => {
+                    Swal.fire('Deleted!', `${ids.length} users removed.`, 'success').then(() => {
+                        location.reload();
+                    });
+                })
+                .catch(() => {
+                    Swal.fire('Error', 'Some deletions failed', 'error');
+                });
+        }
+    });
+}
+
+// ==============================================
+// STUDENT MODAL HANDLERS
+// ==============================================
+let selectedStudent = null;
+
 document.getElementById('student_select')?.addEventListener('change', function() {
     const option = this.options[this.selectedIndex];
-    if (option.value) {
+    if (option && option.value) {
         const name = option.dataset.name || '';
         const emailPreview = name.toLowerCase().replace(/[^a-z]/g, '.') + '@csskabba.ng';
         document.getElementById('previewEmail').textContent = emailPreview;
         document.getElementById('continueToCredentialsBtn').disabled = false;
+        selectedStudent = {
+            id: option.value,
+            name: option.dataset.name,
+            email: option.dataset.email,
+            admission: option.dataset.admission
+        };
     } else {
+        document.getElementById('previewEmail').textContent = 'select a student';
         document.getElementById('continueToCredentialsBtn').disabled = true;
+        selectedStudent = null;
     }
 });
 
-// Continue to credentials
 document.getElementById('continueToCredentialsBtn')?.addEventListener('click', function() {
-    const select = document.getElementById('student_select');
-    const option = select.options[select.selectedIndex];
-
-    if (!option.value) return;
-
-    const studentId = option.value;
-    const studentName = option.dataset.name || '';
-    const studentEmail = option.dataset.email || '';
-    const admissionNo = option.dataset.admission || '';
+    if (!selectedStudent) return;
 
     // Generate email
-    const generatedEmail = studentName.toLowerCase().replace(/[^a-z]/g, '.') + '@csskabba.ng';
+    const generatedEmail = selectedStudent.name.toLowerCase().replace(/[^a-z]/g, '.') + '@csskabba.ng';
 
-    document.getElementById('student_id').value = studentId;
-    document.getElementById('student_email').value = studentEmail || generatedEmail;
-    document.getElementById('student_username').value = admissionNo.replace(/[\/\\]/g, '_');
+    document.getElementById('student_id').value = selectedStudent.id;
+    document.getElementById('student_email').value = selectedStudent.email || generatedEmail;
+    document.getElementById('student_username').value = (selectedStudent.admission || '').replace(/[\/\\]/g, '_');
 
     // Close first modal, open second
-    bootstrap.Modal.getInstance(document.getElementById('addStudentModal')).hide();
+    const addModal = bootstrap.Modal.getInstance(document.getElementById('addStudentModal'));
+    addModal.hide();
+
     setTimeout(() => {
-        const modalEl = document.getElementById('setStudentCredentialsModal');
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
+        const credModal = new bootstrap.Modal(document.getElementById('setStudentCredentialsModal'));
+        credModal.show();
     }, 300);
 });
 
-// Generate random password
 document.getElementById('generatePasswordBtn')?.addEventListener('click', function() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
     let password = '';
@@ -842,7 +931,6 @@ document.getElementById('generatePasswordBtn')?.addEventListener('click', functi
     document.getElementById('student_password_confirmation').value = password;
 });
 
-// Student Credentials Form Submit
 document.getElementById('studentCredentialsForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -855,8 +943,9 @@ document.getElementById('studentCredentialsForm')?.addEventListener('submit', fu
 
     axios.post('{{ route("users.store-student") }}', formData)
         .then(response => {
-            Swal.fire('Success', 'Student user created successfully', 'success');
-            location.reload();
+            Swal.fire('Success', 'Student user created successfully', 'success').then(() => {
+                location.reload();
+            });
         })
         .catch(error => {
             let msg = error.response?.data?.message || 'Error creating student user';
@@ -864,14 +953,16 @@ document.getElementById('studentCredentialsForm')?.addEventListener('submit', fu
                 msg = Object.values(error.response.data.errors).flat().join('<br>');
             }
             const errorDiv = document.getElementById('studentCredError');
-            errorDiv.innerHTML = msg;
+            errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg;
             errorDiv.classList.remove('d-none');
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Create Student User';
         });
 });
 
-// Helper functions
+// ==============================================
+// HELPER FUNCTIONS
+// ==============================================
 function showError(elementId, message) {
     const el = document.getElementById(elementId);
     el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + message;
@@ -879,21 +970,13 @@ function showError(elementId, message) {
     setTimeout(() => el.classList.add('d-none'), 5000);
 }
 
-// Filter functionality
-document.getElementById('liveSearch')?.addEventListener('keyup', filterTable);
-document.getElementById('roleFilter')?.addEventListener('change', filterTable);
-document.getElementById('emailFilter')?.addEventListener('change', filterTable);
-document.getElementById('clearFilters')?.addEventListener('click', function() {
-    document.getElementById('liveSearch').value = '';
-    document.getElementById('roleFilter').value = '';
-    document.getElementById('emailFilter').value = '';
-    filterTable();
-});
-
+// ==============================================
+// FILTER FUNCTIONALITY
+// ==============================================
 function filterTable() {
-    const search = document.getElementById('liveSearch').value.toLowerCase();
-    const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
-    const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
+    const search = document.getElementById('liveSearch')?.value.toLowerCase() || '';
+    const roleFilter = document.getElementById('roleFilter')?.value.toLowerCase() || '';
+    const emailFilter = document.getElementById('emailFilter')?.value.toLowerCase() || '';
 
     const rows = document.querySelectorAll('#usersTableBody tr[data-id]');
     let visibleCount = 0;
@@ -915,13 +998,47 @@ function filterTable() {
         }
     });
 
-    document.getElementById('userCountBadge').textContent = visibleCount;
+    const badge = document.getElementById('userCountBadge');
+    if (badge) badge.textContent = visibleCount;
+
+    // Show/hide empty state
+    const tbody = document.getElementById('usersTableBody');
+    let emptyRow = document.getElementById('noResults');
+    if (visibleCount === 0 && rows.length > 0) {
+        if (!emptyRow && tbody) {
+            emptyRow = document.createElement('tr');
+            emptyRow.id = 'noResults';
+            emptyRow.innerHTML = '<td colspan="7"><div class="u-empty"><i class="ri-search-line"></i>No users match your filters</div></td>';
+            tbody.appendChild(emptyRow);
+        }
+    } else if (emptyRow) {
+        emptyRow.remove();
+    }
 }
 
-// Check all functionality
+document.getElementById('liveSearch')?.addEventListener('keyup', filterTable);
+document.getElementById('roleFilter')?.addEventListener('change', filterTable);
+document.getElementById('emailFilter')?.addEventListener('change', filterTable);
+document.getElementById('clearFilters')?.addEventListener('click', function() {
+    const search = document.getElementById('liveSearch');
+    const role = document.getElementById('roleFilter');
+    const email = document.getElementById('emailFilter');
+    if (search) search.value = '';
+    if (role) role.value = '';
+    if (email) email.value = '';
+    filterTable();
+});
+
+// ==============================================
+// CHECK ALL FUNCTIONALITY
+// ==============================================
 document.getElementById('checkAll')?.addEventListener('change', function() {
-    document.querySelectorAll('.row-check:not(:disabled)').forEach(cb => {
-        cb.checked = this.checked;
+    const isChecked = this.checked;
+    document.querySelectorAll('.row-check').forEach(cb => {
+        const row = cb.closest('tr');
+        if (row && row.style.display !== 'none') {
+            cb.checked = isChecked;
+        }
     });
     toggleDeleteButton();
 });
@@ -940,37 +1057,9 @@ function toggleDeleteButton() {
     }
 }
 
-function deleteMultiple() {
-    const ids = [];
-    document.querySelectorAll('.row-check:checked').forEach(cb => {
-        const id = cb.closest('tr').dataset.id;
-        if (id) ids.push(id);
-    });
-
-    if (ids.length === 0) return;
-
-    Swal.fire({
-        title: `Delete ${ids.length} user(s)?`,
-        text: 'This cannot be undone!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Yes, delete them!'
-    }).then(result => {
-        if (result.isConfirmed) {
-            Promise.all(ids.map(id =>
-                axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
-            )).then(() => {
-                Swal.fire('Deleted!', `${ids.length} users removed.`, 'success');
-                location.reload();
-            }).catch(() => {
-                Swal.fire('Error', 'Some deletions failed', 'error');
-            });
-        }
-    });
-}
-
-// Chart
+// ==============================================
+// CHART INITIALIZATION
+// ==============================================
 const chartCtx = document.getElementById('usersByRoleChart')?.getContext('2d');
 if (chartCtx) {
     new Chart(chartCtx, {
@@ -986,11 +1075,20 @@ if (chartCtx) {
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.raw} users` } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
         }
     });
 }
+
+// Initialize filter on page load
+filterTable();
 </script>
 
 @endsection
