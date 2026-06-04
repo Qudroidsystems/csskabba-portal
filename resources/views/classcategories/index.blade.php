@@ -474,7 +474,7 @@ textarea.form-control {
                                         @endcan
                                     </div>
                                 </td>
-                            </tr>
+                            </table>
                         @empty
                             <tr>
                                 <td colspan="6" class="text-center">
@@ -698,8 +698,20 @@ $(document).ready(function() {
     let editSubIndex = 0;
     let deleteCategoryId = null;
 
+    // Define route URLs
+    const storeUrl = '{{ route("classcategories.store") }}';
+    const updateUrl = '{{ route("classcategories.updateclasscategory") }}';
+    const deleteUrlBase = '{{ url("classcategories") }}';
+
     function showLoading(show) {
         $('#loadingOverlay').toggleClass('active', show);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+        });
     }
 
     function addSubAssessment(containerId, subData = null, isEdit = false) {
@@ -729,14 +741,7 @@ $(document).ready(function() {
         $(container).append(subHtml);
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
-        });
-    }
-
-    // Add initial sub assessment
+    // Add initial sub assessment for add modal
     addSubAssessment('add-sub-container', null, false);
 
     $('#add-sub-btn').click(function() {
@@ -747,7 +752,7 @@ $(document).ready(function() {
         addSubAssessment('edit-sub-container', null, true);
     });
 
-    // Add Category Form Submit
+    // ========== ADD CATEGORY ==========
     $('#addCategoryForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -786,7 +791,7 @@ $(document).ready(function() {
 
         const formData = {
             category: category,
-            is_senior: isSenior,
+            is_senior: parseInt(isSenior),
             assessments: [{
                 name: assessmentName,
                 sub_assessments: subAssessments
@@ -797,12 +802,13 @@ $(document).ready(function() {
         $('#addBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creating...');
 
         $.ajax({
-            url: '{{ route("classcategories.store") }}',
+            url: storeUrl,
             method: 'POST',
             data: JSON.stringify(formData),
             contentType: 'application/json',
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
             },
             success: function(response) {
                 if (response.success) {
@@ -812,13 +818,20 @@ $(document).ready(function() {
                         text: response.message,
                         timer: 2000,
                         showConfirmButton: false
-                    }).then(() => location.reload());
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', response.message || 'Failed to create category.', 'error');
                 }
             },
             error: function(xhr) {
                 let errorMsg = 'Failed to create category.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMsg = xhr.responseJSON.message;
+                }
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
                 }
                 Swal.fire('Error', errorMsg, 'error');
             },
@@ -829,7 +842,7 @@ $(document).ready(function() {
         });
     });
 
-    // Edit Category Button
+    // ========== EDIT CATEGORY ==========
     $(document).on('click', '.edit-category-btn', function() {
         const id = $(this).data('id');
         const category = $(this).data('category');
@@ -861,7 +874,6 @@ $(document).ready(function() {
         $('#editModal').modal('show');
     });
 
-    // Edit Category Form Submit
     $('#editCategoryForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -893,7 +905,7 @@ $(document).ready(function() {
         const formData = {
             id: id,
             category: category,
-            is_senior: isSenior,
+            is_senior: parseInt(isSenior),
             assessments: [{
                 name: assessmentName,
                 sub_assessments: subAssessments
@@ -904,12 +916,13 @@ $(document).ready(function() {
         $('#updateBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Updating...');
 
         $.ajax({
-            url: '{{ route("classcategories.updateclasscategory") }}',
+            url: updateUrl,
             method: 'POST',
             data: JSON.stringify(formData),
             contentType: 'application/json',
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
             },
             success: function(response) {
                 if (response.success) {
@@ -919,11 +932,22 @@ $(document).ready(function() {
                         text: response.message,
                         timer: 2000,
                         showConfirmButton: false
-                    }).then(() => location.reload());
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', response.message || 'Failed to update category.', 'error');
                 }
             },
             error: function(xhr) {
-                Swal.fire('Error', xhr.responseJSON?.message || 'Failed to update category.', 'error');
+                let errorMsg = 'Failed to update category.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                }
+                Swal.fire('Error', errorMsg, 'error');
             },
             complete: function() {
                 showLoading(false);
@@ -932,7 +956,7 @@ $(document).ready(function() {
         });
     });
 
-    // Delete Category Button
+    // ========== DELETE CATEGORY ==========
     $(document).on('click', '.delete-category-btn', function() {
         deleteCategoryId = $(this).data('id');
         const categoryName = $(this).data('name');
@@ -947,11 +971,13 @@ $(document).ready(function() {
         const btn = $(this);
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
 
+        // FIXED: Use proper URL construction with DELETE method
         $.ajax({
-            url: '{{ route("classcategories.destroy", "") }}/' + deleteCategoryId,
+            url: deleteUrlBase + '/' + deleteCategoryId,
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
             },
             success: function(response) {
                 if (response.success) {
@@ -961,11 +987,20 @@ $(document).ready(function() {
                         text: response.message,
                         timer: 2000,
                         showConfirmButton: false
-                    }).then(() => location.reload());
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', response.message || 'Failed to delete category.', 'error');
+                    $('#deleteRecordModal').modal('hide');
                 }
             },
             error: function(xhr) {
-                Swal.fire('Error', xhr.responseJSON?.message || 'Failed to delete category.', 'error');
+                let errorMsg = 'Failed to delete category.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                Swal.fire('Error', errorMsg, 'error');
                 $('#deleteRecordModal').modal('hide');
             },
             complete: function() {
