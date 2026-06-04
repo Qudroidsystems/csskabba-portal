@@ -161,6 +161,10 @@
     top: 16px;
     right: 20px;
     filter: invert(1);
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
 }
 .modal-body {
     padding: 24px;
@@ -170,6 +174,7 @@
     font-weight: 600;
     color: #374151;
     margin-bottom: 6px;
+    display: block;
 }
 .form-control, .form-select {
     border: 1.5px solid var(--pay-border);
@@ -177,6 +182,7 @@
     font-size: 13px;
     padding: 9px 14px;
     width: 100%;
+    box-sizing: border-box;
 }
 .form-control:focus, .form-select:focus {
     border-color: var(--pay-accent);
@@ -190,6 +196,9 @@ textarea.form-control {
 .modal-footer {
     padding: 16px 24px 24px;
     border-top: none;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 .btn {
     padding: 8px 20px;
@@ -198,10 +207,10 @@ textarea.form-control {
     border-radius: 8px;
     transition: all .15s;
     cursor: pointer;
+    border: none;
 }
 .btn-primary {
     background: linear-gradient(135deg, #2563eb, #4f46e5);
-    border: none;
     color: white;
 }
 .btn-primary:hover {
@@ -226,6 +235,15 @@ textarea.form-control {
     background: var(--pay-accent);
     color: white;
 }
+.btn-outline-danger {
+    border: 1.5px solid #dc2626;
+    background: transparent;
+    color: #dc2626;
+}
+.btn-outline-danger:hover {
+    background: #dc2626;
+    color: white;
+}
 
 .sub-assessment-row {
     background: #f8fafc;
@@ -243,6 +261,7 @@ textarea.form-control {
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
+    display: inline-block;
 }
 .badge-junior {
     background: #eff6ff;
@@ -252,6 +271,7 @@ textarea.form-control {
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
+    display: inline-block;
 }
 
 .empty-state {
@@ -271,6 +291,7 @@ textarea.form-control {
     border-radius: 10px;
     padding: 14px 18px;
     font-size: 13px;
+    margin-bottom: 20px;
 }
 .alert-danger {
     background: #fef2f2;
@@ -281,6 +302,11 @@ textarea.form-control {
     background: #f0fdf4;
     color: #166534;
     border-left: 3px solid #16a34a;
+}
+.alert-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border-left: 3px solid #f59e0b;
 }
 
 .pagination {
@@ -307,6 +333,7 @@ textarea.form-control {
 .pagination .page-item.disabled .page-link {
     opacity: 0.5;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .form-check {
@@ -318,6 +345,103 @@ textarea.form-control {
     width: 18px;
     height: 18px;
     cursor: pointer;
+}
+
+.d-none {
+    display: none;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -8px;
+}
+.col-md-3, .col-md-4, .col-sm, .col-sm-auto {
+    padding: 8px;
+}
+.col-md-3 { width: 25%; }
+.col-md-4 { width: 33.333%; }
+.col-sm { flex: 1; }
+.col-sm-auto { flex: 0 0 auto; }
+
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 16px; }
+.gap-4 { gap: 24px; }
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 16px; }
+.mb-4 { margin-bottom: 24px; }
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 16px; }
+.p-3 { padding: 16px; }
+.py-3 { padding-top: 16px; padding-bottom: 16px; }
+.px-4 { padding-left: 24px; padding-right: 24px; }
+.pb-4 { padding-bottom: 24px; }
+.pt-0 { padding-top: 0; }
+.text-center { text-align: center; }
+.text-start { text-align: left; }
+.text-end { text-align: right; }
+.text-muted { color: var(--pay-muted); }
+.text-success { color: var(--pay-success); }
+.text-warning { color: var(--pay-warning); }
+.text-danger { color: var(--pay-danger); }
+.fw-semibold { font-weight: 600; }
+.fw-bold { font-weight: 700; }
+.small { font-size: 11px; }
+
+.card {
+    background: white;
+    border: 1px solid var(--pay-border);
+    border-radius: var(--pay-radius);
+    box-shadow: var(--pay-shadow);
+}
+.card-header {
+    border-bottom: 1px solid var(--pay-border);
+    background: white;
+}
+.card-body {
+    padding: 20px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.d-flex {
+    display: flex;
+}
+.align-items-center {
+    align-items: center;
+}
+.justify-content-between {
+    justify-content: space-between;
+}
+.justify-content-center {
+    justify-content: center;
+}
+.flex-wrap {
+    flex-wrap: wrap;
+}
+.flex-grow-1 {
+    flex-grow: 1;
+}
+.flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+.badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.bg-primary {
+    background: var(--pay-accent);
+    color: white;
 }
 </style>
 
@@ -382,7 +506,7 @@ textarea.form-control {
             </h5>
             <div class="d-flex gap-2">
                 @can('Create class-category')
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <button type="button" class="btn btn-primary" onclick="openAddModal()">
                         <i class="ri-add-line me-1"></i>Create Category
                     </button>
                 @endcan
@@ -412,12 +536,12 @@ textarea.form-control {
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show">
                     <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" style="float: right; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
                 </div>
             @endif
 
             <div class="table-responsive">
-                <table class="category-table" id="categoriesTable">
+                <table class="category-table">
                     <thead>
                         <tr>
                             <th width="50">#</th>
@@ -447,7 +571,7 @@ textarea.form-control {
                                         <div class="small text-muted">Max Score: {{ number_format($assessment->max_score, 2) }}</div>
                                         @if($subAssessments->count() > 0)
                                             <div class="mt-1">
-                                                <span class="badge bg-secondary-subtle text-secondary">
+                                                <span class="badge">
                                                     {{ $subAssessments->count() }} Sub-assessment(s)
                                                 </span>
                                             </div>
@@ -468,20 +592,15 @@ textarea.form-control {
                                     <div class="d-flex gap-2">
                                         @can('Update class-category')
                                             <button type="button"
-                                                    class="btn-icon btn-subtle-secondary edit-category-btn"
-                                                    data-id="{{ $sc->id }}"
-                                                    data-category="{{ $sc->category }}"
-                                                    data-is_senior="{{ $sc->is_senior ? 1 : 0 }}"
-                                                    data-assessment-name="{{ $assessment->name ?? '' }}"
-                                                    data-sub-assessments='@json($subAssessments)'>
+                                                    class="btn-icon btn-subtle-secondary"
+                                                    onclick="openEditModal({{ $sc->id }}, '{{ addslashes($sc->category) }}', {{ $sc->is_senior ? 1 : 0 }}, '{{ addslashes($assessment->name ?? '') }}', {{ json_encode($subAssessments) }})">
                                                 <i class="ri-pencil-line"></i>
                                             </button>
                                         @endcan
                                         @can('Delete class-category')
                                             <button type="button"
-                                                    class="btn-icon btn-subtle-danger delete-category-btn"
-                                                    data-id="{{ $sc->id }}"
-                                                    data-name="{{ $sc->category }}">
+                                                    class="btn-icon btn-subtle-danger"
+                                                    onclick="openDeleteModal({{ $sc->id }}, '{{ addslashes($sc->category) }}')">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
                                         @endcan
@@ -495,12 +614,12 @@ textarea.form-control {
                                         <i class="ri-inbox-line"></i>
                                         <p>No class categories found.</p>
                                         @can('Create class-category')
-                                            <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                            <button class="btn btn-primary btn-sm mt-3" onclick="openAddModal()">
                                                 <i class="ri-add-line me-1"></i>Create your first category
                                             </button>
                                         @endcan
                                     </div>
-                                </td>
+                                </tr>
                             </tr>
                         @endforelse
                     </tbody>
@@ -525,14 +644,14 @@ textarea.form-control {
 </div>
 
 {{-- ADD CATEGORY MODAL --}}
-<div id="addCategoryModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+<div id="addCategoryModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 700px; width: 90%; margin: auto;">
         <div class="modal-content">
             <div class="modal-hero-bar">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" onclick="closeAddModal()">&times;</button>
                 <h5><i class="ri-add-line me-2"></i>Create New Class Category</h5>
             </div>
-            <form id="addCategoryForm">
+            <form id="addCategoryForm" onsubmit="submitAddForm(event)">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
@@ -566,7 +685,7 @@ textarea.form-control {
                     <div class="mb-3">
                         <label class="form-label">Sub Assessments <span class="text-danger">*</span></label>
                         <div id="add-sub-container" class="mb-2"></div>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-sub-btn">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSubAssessmentField('add')">
                             <i class="ri-add-line me-1"></i>Add Sub Assessment
                         </button>
                         <div class="form-text text-muted mt-2">At least one sub-assessment with a valid max score is required.</div>
@@ -575,7 +694,7 @@ textarea.form-control {
                     <div class="alert alert-danger d-none" id="addAlertError"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-light" onclick="closeAddModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="addBtn">
                         <i class="ri-save-line me-1"></i>Create Category
                     </button>
@@ -586,14 +705,14 @@ textarea.form-control {
 </div>
 
 {{-- EDIT CATEGORY MODAL --}}
-<div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+<div id="editModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 700px; width: 90%; margin: auto;">
         <div class="modal-content">
             <div class="modal-hero-bar">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" onclick="closeEditModal()">&times;</button>
                 <h5><i class="ri-edit-line me-2"></i>Edit Class Category</h5>
             </div>
-            <form id="editCategoryForm">
+            <form id="editCategoryForm" onsubmit="submitEditForm(event)">
                 @csrf
                 <input type="hidden" name="id" id="edit_id">
                 <div class="modal-body">
@@ -628,7 +747,7 @@ textarea.form-control {
                     <div class="mb-3">
                         <label class="form-label">Sub Assessments <span class="text-danger">*</span></label>
                         <div id="edit-sub-container" class="mb-2"></div>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="edit-sub-btn">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addSubAssessmentField('edit')">
                             <i class="ri-add-line me-1"></i>Add Sub Assessment
                         </button>
                     </div>
@@ -636,7 +755,7 @@ textarea.form-control {
                     <div class="alert alert-danger d-none" id="editAlertError"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-light" onclick="closeEditModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="updateBtn">
                         <i class="ri-save-line me-1"></i>Update Category
                     </button>
@@ -647,11 +766,11 @@ textarea.form-control {
 </div>
 
 {{-- DELETE CONFIRMATION MODAL --}}
-<div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+<div id="deleteRecordModal" class="modal fade" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="max-width: 400px; width: 90%; margin: auto;">
         <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header border-0 pb-0" style="display: flex; justify-content: flex-end; padding: 16px;">
+                <button type="button" class="btn-close" onclick="closeDeleteModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <div class="modal-body text-center pt-0">
                 <div class="mb-3">
@@ -664,8 +783,8 @@ textarea.form-control {
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-light" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
                     <i class="ri-delete-bin-line me-1"></i>Yes, Delete
                 </button>
             </div>
@@ -677,324 +796,382 @@ textarea.form-control {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-$(document).ready(function() {
-    let addSubIndex = 0;
-    let editSubIndex = 0;
-    let deleteCategoryId = null;
+// Global variables
+let addSubIndex = 0;
+let editSubIndex = 0;
+let deleteCategoryId = null;
+let deleteCategoryName = null;
 
-    // Define route URLs
-    const storeUrl = '{{ route("classcategories.store") }}';
-    const updateUrl = '{{ route("classcategories.updateclasscategory") }}';
-    const deleteUrlBase = '{{ url("classcategories") }}';
+// Route URLs
+const storeUrl = '{{ route("classcategories.store") }}';
+const updateUrl = '{{ route("classcategories.updateclasscategory") }}';
+const deleteUrlBase = '{{ url("classcategories") }}';
 
-    function showLoading(show) {
-        $('#loadingOverlay').toggleClass('active', show);
+function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (show) {
+        overlay.classList.add('active');
+    } else {
+        overlay.classList.remove('active');
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+    });
+}
+
+// Modal functions
+function openAddModal() {
+    document.getElementById('addCategoryModal').style.display = 'flex';
+    addSubIndex = 0;
+    document.getElementById('add-sub-container').innerHTML = '';
+    addSubAssessmentField('add');
+    document.getElementById('category').value = '';
+    document.getElementById('assessment_name').value = '';
+    document.getElementById('junior').checked = true;
+    document.getElementById('addAlertError').classList.add('d-none');
+}
+
+function closeAddModal() {
+    document.getElementById('addCategoryModal').style.display = 'none';
+}
+
+function openEditModal(id, category, isSenior, assessmentName, subAssessments) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_category').value = category;
+    document.getElementById('edit_assessment_name').value = assessmentName;
+
+    if (isSenior == 1) {
+        document.getElementById('edit_senior').checked = true;
+    } else {
+        document.getElementById('edit_junior').checked = true;
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+    document.getElementById('edit-sub-container').innerHTML = '';
+    editSubIndex = 0;
+
+    if (subAssessments && subAssessments.length > 0) {
+        subAssessments.forEach(function(sub) {
+            addSubAssessmentField('edit', sub);
         });
+    } else {
+        addSubAssessmentField('edit', null);
     }
 
-    function addSubAssessment(containerId, subData = null, isEdit = false) {
-        const container = document.getElementById(containerId);
-        const currentIndex = isEdit ? editSubIndex++ : addSubIndex++;
-        const subHtml = `
-            <div class="sub-assessment-row" data-index="${currentIndex}">
-                <div class="row g-2">
-                    <div class="col-md-5">
-                        <input type="text" name="assessments[0][sub_assessments][${currentIndex}][name]"
-                               class="form-control" placeholder="Sub Assessment Name"
-                               value="${subData && subData.name ? escapeHtml(subData.name) : ''}">
-                    </div>
-                    <div class="col-md-4">
-                        <input type="number" name="assessments[0][sub_assessments][${currentIndex}][max_score]"
-                               class="form-control" placeholder="Max Score" min="0" step="0.01"
-                               value="${subData && subData.max_score ? subData.max_score : ''}" required>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-outline-danger w-100" onclick="$(this).closest('.sub-assessment-row').remove();">
-                            <i class="ri-delete-bin-line"></i> Remove
-                        </button>
-                    </div>
+    document.getElementById('editAlertError').classList.add('d-none');
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function openDeleteModal(id, name) {
+    deleteCategoryId = id;
+    deleteCategoryName = name;
+    document.getElementById('deleteItemName').innerHTML = `<strong>${escapeHtml(name)}</strong> will be permanently deleted.`;
+    document.getElementById('deleteRecordModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteRecordModal').style.display = 'none';
+    deleteCategoryId = null;
+    deleteCategoryName = null;
+}
+
+// Sub Assessment functions
+function addSubAssessmentField(type, subData = null) {
+    const containerId = type === 'add' ? 'add-sub-container' : 'edit-sub-container';
+    const container = document.getElementById(containerId);
+    const currentIndex = type === 'add' ? addSubIndex++ : editSubIndex++;
+
+    const subHtml = `
+        <div class="sub-assessment-row" data-index="${currentIndex}">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <input type="text" name="assessments[0][sub_assessments][${currentIndex}][name]"
+                           class="form-control" placeholder="Sub Assessment Name"
+                           value="${subData && subData.name ? escapeHtml(subData.name) : ''}">
+                </div>
+                <div class="col-md-4">
+                    <input type="number" name="assessments[0][sub_assessments][${currentIndex}][max_score]"
+                           class="form-control" placeholder="Max Score" min="0" step="0.01"
+                           value="${subData && subData.max_score ? subData.max_score : ''}" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-outline-danger w-100" onclick="this.closest('.sub-assessment-row').remove();">
+                        <i class="ri-delete-bin-line"></i> Remove
+                    </button>
                 </div>
             </div>
-        `;
-        $(container).append(subHtml);
-    }
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', subHtml);
+}
 
-    // Add initial sub assessment for add modal
-    addSubAssessment('add-sub-container', null, false);
-
-    $('#add-sub-btn').click(function() {
-        addSubAssessment('add-sub-container', null, false);
-    });
-
-    $('#edit-sub-btn').click(function() {
-        addSubAssessment('edit-sub-container', null, true);
-    });
-
-    // Search functionality
-    $('#searchInput').on('keyup', function() {
-        const value = $(this).val().toLowerCase();
-        $('#tableBody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-        });
-    });
-
-    // ========== ADD CATEGORY ==========
-    $('#addCategoryForm').on('submit', function(e) {
-        e.preventDefault();
-
-        const category = $('#category').val().trim();
-        const isSenior = $('input[name="is_senior"]:checked').val();
-        const assessmentName = $('#assessment_name').val().trim();
-
-        if (!category) {
-            Swal.fire('Error', 'Please enter a category name.', 'error');
-            return;
-        }
-        if (!assessmentName) {
-            Swal.fire('Error', 'Please enter an assessment name.', 'error');
-            return;
-        }
-
-        const subRows = $('#add-sub-container .sub-assessment-row');
-        const subAssessments = [];
-        let validSubs = 0;
-
-        subRows.each(function() {
-            const maxScore = parseFloat($(this).find('input[name*="[max_score]"]').val());
-            if (!isNaN(maxScore) && maxScore >= 0) {
-                validSubs++;
-                subAssessments.push({
-                    name: $(this).find('input[name*="[name]"]').val() || null,
-                    max_score: maxScore
-                });
-            }
-        });
-
-        if (validSubs === 0) {
-            Swal.fire('Error', 'Please add at least one valid sub-assessment with a max score.', 'error');
-            return;
-        }
-
-        const formData = {
-            category: category,
-            is_senior: parseInt(isSenior),
-            assessments: [{
-                name: assessmentName,
-                sub_assessments: subAssessments
-            }]
-        };
-
-        showLoading(true);
-        $('#addBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creating...');
-
-        $.ajax({
-            url: storeUrl,
-            method: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'Accept': 'application/json'
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', response.message || 'Failed to create category.', 'error');
-                }
-            },
-            error: function(xhr) {
-                let errorMsg = 'Failed to create category.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-                Swal.fire('Error', errorMsg, 'error');
-            },
-            complete: function() {
-                showLoading(false);
-                $('#addBtn').prop('disabled', false).html('<i class="ri-save-line me-1"></i>Create Category');
-            }
-        });
-    });
-
-    // ========== EDIT CATEGORY ==========
-    $(document).on('click', '.edit-category-btn', function() {
-        const id = $(this).data('id');
-        const category = $(this).data('category');
-        const isSenior = $(this).data('is_senior');
-        const assessmentName = $(this).data('assessment-name');
-        const subAssessments = $(this).data('sub-assessments');
-
-        $('#edit_id').val(id);
-        $('#edit_category').val(category);
-        $('#edit_assessment_name').val(assessmentName);
-
-        if (isSenior == 1) {
-            $('#edit_senior').prop('checked', true);
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const value = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.indexOf(value) > -1) {
+            row.style.display = '';
         } else {
-            $('#edit_junior').prop('checked', true);
+            row.style.display = 'none';
         }
-
-        $('#edit-sub-container').empty();
-        editSubIndex = 0;
-
-        if (subAssessments && subAssessments.length > 0) {
-            subAssessments.forEach(function(sub) {
-                addSubAssessment('edit-sub-container', sub, true);
-            });
-        } else {
-            addSubAssessment('edit-sub-container', null, true);
-        }
-
-        $('#editModal').modal('show');
-    });
-
-    $('#editCategoryForm').on('submit', function(e) {
-        e.preventDefault();
-
-        const id = $('#edit_id').val();
-        const category = $('#edit_category').val().trim();
-        const isSenior = $('input[name="is_senior"]:checked').val();
-        const assessmentName = $('#edit_assessment_name').val().trim();
-
-        const subRows = $('#edit-sub-container .sub-assessment-row');
-        const subAssessments = [];
-        let validSubs = 0;
-
-        subRows.each(function() {
-            const maxScore = parseFloat($(this).find('input[name*="[max_score]"]').val());
-            if (!isNaN(maxScore) && maxScore >= 0) {
-                validSubs++;
-                subAssessments.push({
-                    name: $(this).find('input[name*="[name]"]').val() || null,
-                    max_score: maxScore
-                });
-            }
-        });
-
-        if (validSubs === 0) {
-            Swal.fire('Error', 'Please add at least one valid sub-assessment with a max score.', 'error');
-            return;
-        }
-
-        const formData = {
-            id: id,
-            category: category,
-            is_senior: parseInt(isSenior),
-            assessments: [{
-                name: assessmentName,
-                sub_assessments: subAssessments
-            }]
-        };
-
-        showLoading(true);
-        $('#updateBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Updating...');
-
-        $.ajax({
-            url: updateUrl,
-            method: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'Accept': 'application/json'
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Updated!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', response.message || 'Failed to update category.', 'error');
-                }
-            },
-            error: function(xhr) {
-                let errorMsg = 'Failed to update category.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-                Swal.fire('Error', errorMsg, 'error');
-            },
-            complete: function() {
-                showLoading(false);
-                $('#updateBtn').prop('disabled', false).html('<i class="ri-save-line me-1"></i>Update Category');
-            }
-        });
-    });
-
-    // ========== DELETE CATEGORY ==========
-    $(document).on('click', '.delete-category-btn', function() {
-        deleteCategoryId = $(this).data('id');
-        const categoryName = $(this).data('name');
-        $('#deleteItemName').html(`<strong>${escapeHtml(categoryName)}</strong> will be permanently deleted.`);
-        $('#deleteRecordModal').modal('show');
-    });
-
-    $('#confirmDeleteBtn').on('click', function() {
-        if (!deleteCategoryId) return;
-
-        showLoading(true);
-        const btn = $(this);
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
-
-        $.ajax({
-            url: deleteUrlBase + '/' + deleteCategoryId,
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'Accept': 'application/json'
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Deleted!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', response.message || 'Failed to delete category.', 'error');
-                    $('#deleteRecordModal').modal('hide');
-                }
-            },
-            error: function(xhr) {
-                let errorMsg = 'Failed to delete category.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-                Swal.fire('Error', errorMsg, 'error');
-                $('#deleteRecordModal').modal('hide');
-            },
-            complete: function() {
-                showLoading(false);
-                btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Yes, Delete');
-                deleteCategoryId = null;
-            }
-        });
     });
 });
+
+// Add Category Form Submit
+async function submitAddForm(event) {
+    event.preventDefault();
+
+    const category = document.getElementById('category').value.trim();
+    const isSenior = document.querySelector('input[name="is_senior"]:checked').value;
+    const assessmentName = document.getElementById('assessment_name').value.trim();
+
+    if (!category) {
+        Swal.fire('Error', 'Please enter a category name.', 'error');
+        return;
+    }
+    if (!assessmentName) {
+        Swal.fire('Error', 'Please enter an assessment name.', 'error');
+        return;
+    }
+
+    const subRows = document.querySelectorAll('#add-sub-container .sub-assessment-row');
+    const subAssessments = [];
+    let validSubs = 0;
+
+    subRows.forEach(row => {
+        const maxScoreInput = row.querySelector('input[name*="[max_score]"]');
+        const maxScore = parseFloat(maxScoreInput.value);
+        if (!isNaN(maxScore) && maxScore >= 0) {
+            validSubs++;
+            subAssessments.push({
+                name: row.querySelector('input[name*="[name]"]').value || null,
+                max_score: maxScore
+            });
+        }
+    });
+
+    if (validSubs === 0) {
+        Swal.fire('Error', 'Please add at least one valid sub-assessment with a max score.', 'error');
+        return;
+    }
+
+    const formData = {
+        category: category,
+        is_senior: parseInt(isSenior),
+        assessments: [{
+            name: assessmentName,
+            sub_assessments: subAssessments
+        }]
+    };
+
+    showLoading(true);
+    const submitBtn = document.getElementById('addBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
+
+    try {
+        const response = await fetch(storeUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire('Error', data.message || 'Failed to create category.', 'error');
+        }
+    } catch (error) {
+        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Edit Category Form Submit
+async function submitEditForm(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('edit_id').value;
+    const category = document.getElementById('edit_category').value.trim();
+    const isSenior = document.querySelector('input[name="is_senior"]:checked').value;
+    const assessmentName = document.getElementById('edit_assessment_name').value.trim();
+
+    const subRows = document.querySelectorAll('#edit-sub-container .sub-assessment-row');
+    const subAssessments = [];
+    let validSubs = 0;
+
+    subRows.forEach(row => {
+        const maxScoreInput = row.querySelector('input[name*="[max_score]"]');
+        const maxScore = parseFloat(maxScoreInput.value);
+        if (!isNaN(maxScore) && maxScore >= 0) {
+            validSubs++;
+            subAssessments.push({
+                name: row.querySelector('input[name*="[name]"]').value || null,
+                max_score: maxScore
+            });
+        }
+    });
+
+    if (validSubs === 0) {
+        Swal.fire('Error', 'Please add at least one valid sub-assessment with a max score.', 'error');
+        return;
+    }
+
+    const formData = {
+        id: id,
+        category: category,
+        is_senior: parseInt(isSenior),
+        assessments: [{
+            name: assessmentName,
+            sub_assessments: subAssessments
+        }]
+    };
+
+    showLoading(true);
+    const submitBtn = document.getElementById('updateBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Updating...';
+
+    try {
+        const response = await fetch(updateUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Updated!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire('Error', data.message || 'Failed to update category.', 'error');
+        }
+    } catch (error) {
+        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Confirm Delete
+async function confirmDelete() {
+    if (!deleteCategoryId) return;
+
+    showLoading(true);
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+
+    try {
+        const response = await fetch(deleteUrlBase + '/' + deleteCategoryId, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire('Error', data.message || 'Failed to delete category.', 'error');
+            closeDeleteModal();
+        }
+    } catch (error) {
+        Swal.fire('Error', 'An error occurred. Please try again.', 'error');
+        closeDeleteModal();
+    } finally {
+        showLoading(false);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        deleteCategoryId = null;
+    }
+}
+
+// Initialize with one sub-assessment field on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const addModal = document.getElementById('addCategoryModal');
+        const editModal = document.getElementById('editModal');
+        const deleteModal = document.getElementById('deleteRecordModal');
+
+        if (event.target === addModal) {
+            closeAddModal();
+        }
+        if (event.target === editModal) {
+            closeEditModal();
+        }
+        if (event.target === deleteModal) {
+            closeDeleteModal();
+        }
+    };
+
+    // Add initial sub assessment fields for add modal (will be added when modal opens)
+    // The first sub assessment will be added when openAddModal() is called
+});
+
+// Override openAddModal to add initial sub assessment
+const originalOpenAddModal = openAddModal;
+window.openAddModal = function() {
+    originalOpenAddModal();
+    // Ensure at least one sub assessment field
+    if (document.querySelectorAll('#add-sub-container .sub-assessment-row').length === 0) {
+        addSubAssessmentField('add');
+    }
+};
 </script>
 @endsection
