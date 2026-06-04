@@ -393,18 +393,14 @@
                                     <img src="{{ $avatarUrl }}"
                                          alt="{{ $fullNameWithOther }}"
                                          class="student-avatar avatar-clickable"
-                                         data-bs-toggle="modal"
-                                         data-bs-target="#imageZoomModal"
                                          data-image="{{ $avatarUrl }}"
                                          data-name="{{ $fullNameWithOther }}"
                                          data-admission="{{ $s->admissionNo ?? 'N/A' }}"
                                          data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
                                          data-gender="{{ $s->gender ?? 'N/A' }}"
-                                         style="cursor: pointer;">
+                                         data-initials="{{ $initials }}">
                                 @else
                                     <div class="avatar-placeholder avatar-clickable"
-                                         data-bs-toggle="modal"
-                                         data-bs-target="#imageZoomModal"
                                          data-name="{{ $fullNameWithOther }}"
                                          data-admission="{{ $s->admissionNo ?? 'N/A' }}"
                                          data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
@@ -559,7 +555,7 @@
 <script>
 $(document).ready(function () {
     // Initialize DataTable
-    $('#studentsTable').DataTable({
+    var table = $('#studentsTable').DataTable({
         pageLength: 25,
         order: [[2, 'asc']],
         language: {
@@ -573,11 +569,12 @@ $(document).ready(function () {
         columnDefs: [{ orderable: false, targets: [1, 6, 7] }],
     });
 
-    // ── Image Zoom ────────────────────────────────────────────────────────
+    // ── Helper Functions ───────────────────────────────────────────────────
 
     function buildInitialsDataUrl(initials) {
         const canvas = document.createElement('canvas');
-        canvas.width = 400; canvas.height = 400;
+        canvas.width = 400;
+        canvas.height = 400;
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createLinearGradient(0, 0, 400, 400);
         gradient.addColorStop(0, '#667eea');
@@ -607,92 +604,101 @@ $(document).ready(function () {
         $('#imageZoomModal').modal('show');
     }
 
-    function setupImageZoom() {
-        $('.avatar-clickable').off('click.zoom').on('click.zoom', function (e) {
-            e.stopPropagation();
-            openZoomModal(
-                $(this).data('image')    || '',
-                $(this).data('name')     || '',
-                $(this).data('admission')|| '',
-                $(this).data('class')    || '',
-                $(this).data('gender')   || '',
-                $(this).data('initials') || ''
-            );
-        });
-    }
+    // ── EVENT DELEGATION (Fixes pagination issue) ─────────────────────────
 
-    setupImageZoom();
+    // Handle Pay button clicks - using event delegation
+    $(document).on('click', '.open-pay-modal', function (e) {
+        e.preventDefault();
+
+        const studentId       = this.dataset.id;
+        const studentName     = this.dataset.name;
+        const studentClass    = this.dataset.class;
+        const studentAdmission = this.dataset.admission;
+        const studentInitials = this.dataset.initials;
+        const studentAvatar   = this.dataset.avatar;
+
+        document.getElementById('tsStudentId').value = studentId;
+        document.getElementById('tsName').textContent = studentName;
+        document.getElementById('tsClass').textContent = studentClass;
+        document.getElementById('tsAdmission').textContent = studentAdmission;
+
+        // Avatar in modal chip
+        const avatarContainer = document.getElementById('tsAvatarContainer');
+        const initialsSpan = document.getElementById('tsInitials');
+        const avatarImg = document.getElementById('tsAvatarImg');
+
+        // Store data for zoom functionality
+        avatarContainer.setAttribute('data-name', studentName);
+        avatarContainer.setAttribute('data-initials', studentInitials);
+        avatarContainer.setAttribute('data-admission', studentAdmission);
+        avatarContainer.setAttribute('data-class', studentClass);
+
+        // Setup click handler for avatar in modal
+        avatarContainer.onclick = function (e) {
+            e.stopPropagation();
+            const hasImage = avatarImg.style.display === 'block' && avatarImg.src && avatarImg.src !== '';
+            openZoomModal(
+                hasImage ? avatarImg.src : '',
+                studentName,
+                studentAdmission,
+                studentClass,
+                '',
+                studentInitials
+            );
+        };
+
+        if (studentAvatar && studentAvatar !== '' && studentAvatar !== 'null') {
+            avatarImg.src = studentAvatar;
+            avatarImg.style.display = 'block';
+            initialsSpan.style.display = 'none';
+            avatarImg.onerror = function () {
+                this.style.display = 'none';
+                initialsSpan.style.display = 'flex';
+                initialsSpan.textContent = studentInitials;
+            };
+        } else {
+            avatarImg.style.display = 'none';
+            initialsSpan.style.display = 'flex';
+            initialsSpan.textContent = studentInitials;
+        }
+
+        document.getElementById('tsTermId').value = '';
+        document.getElementById('tsSessionId').value = '';
+        const proceedBtn = document.getElementById('tsProceedBtn');
+        proceedBtn.disabled = false;
+        proceedBtn.innerHTML = '<i class="ri-search-eye-line"></i> View Payment Details';
+
+        new bootstrap.Modal(document.getElementById('termSessionModal')).show();
+    });
+
+    // Handle avatar/image clicks - using event delegation
+    $(document).on('click', '.avatar-clickable', function (e) {
+        e.stopPropagation();
+
+        // Skip if this is from the modal chip (handled separately)
+        if ($(this).closest('#tsAvatarContainer').length) {
+            return;
+        }
+
+        openZoomModal(
+            $(this).data('image') || '',
+            $(this).data('name') || '',
+            $(this).data('admission') || '',
+            $(this).data('class') || '',
+            $(this).data('gender') || '',
+            $(this).data('initials') || ''
+        );
+    });
 
     // Close zoom by clicking the image itself
     $(document).on('click', '.zoomed-image', function () {
         $('#imageZoomModal').modal('hide');
     });
 
-    // ── Open Payment Modal ────────────────────────────────────────────────
-
-    document.querySelectorAll('.open-pay-modal').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const studentId       = this.dataset.id;
-            const studentName     = this.dataset.name;
-            const studentClass    = this.dataset.class;
-            const studentAdmission= this.dataset.admission;
-            const studentInitials = this.dataset.initials;
-            const studentAvatar   = this.dataset.avatar;
-
-            document.getElementById('tsStudentId').value    = studentId;
-            document.getElementById('tsName').textContent   = studentName;
-            document.getElementById('tsClass').textContent  = studentClass;
-            document.getElementById('tsAdmission').textContent = studentAdmission;
-
-            // Avatar in modal chip
-            const avatarContainer = document.getElementById('tsAvatarContainer');
-            const initialsSpan    = document.getElementById('tsInitials');
-            const avatarImg       = document.getElementById('tsAvatarImg');
-
-            avatarContainer.setAttribute('data-name',      studentName);
-            avatarContainer.setAttribute('data-initials',  studentInitials);
-            avatarContainer.setAttribute('data-admission', studentAdmission);
-            avatarContainer.setAttribute('data-class',     studentClass);
-
-            avatarContainer.onclick = function (e) {
-                e.stopPropagation();
-                const hasImage = avatarImg.style.display === 'block'
-                              && avatarImg.src && avatarImg.src !== '';
-                openZoomModal(
-                    hasImage ? avatarImg.src : '',
-                    studentName, studentAdmission, studentClass, '', studentInitials
-                );
-            };
-
-            if (studentAvatar && studentAvatar !== '' && studentAvatar !== 'null') {
-                avatarImg.src = studentAvatar;
-                avatarImg.style.display = 'block';
-                initialsSpan.style.display = 'none';
-                avatarImg.onerror = function () {
-                    this.style.display = 'none';
-                    initialsSpan.style.display = 'flex';
-                    initialsSpan.textContent = studentInitials;
-                };
-            } else {
-                avatarImg.style.display = 'none';
-                initialsSpan.style.display = 'flex';
-                initialsSpan.textContent = studentInitials;
-            }
-
-            document.getElementById('tsTermId').value    = '';
-            document.getElementById('tsSessionId').value = '';
-            const proceedBtn = document.getElementById('tsProceedBtn');
-            proceedBtn.disabled = false;
-            proceedBtn.innerHTML = '<i class="ri-search-eye-line"></i> View Payment Details';
-
-            new bootstrap.Modal(document.getElementById('termSessionModal')).show();
-        });
-    });
-
     // ── Term/Session form validation ──────────────────────────────────────
 
     document.getElementById('tsForm').addEventListener('submit', function (e) {
-        const termid    = document.getElementById('tsTermId').value;
+        const termid = document.getElementById('tsTermId').value;
         const sessionid = document.getElementById('tsSessionId').value;
 
         if (!termid || !sessionid) {
@@ -712,9 +718,9 @@ $(document).ready(function () {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
     });
 
-    // Re-attach zoom after DataTable redraws
-    $('#studentsTable').on('draw.dt', function () {
-        setupImageZoom();
+    // Optional: Log when table redraws (for debugging)
+    table.on('draw.dt', function () {
+        console.log('Table redrawn - event handlers remain active via delegation');
     });
 });
 </script>
