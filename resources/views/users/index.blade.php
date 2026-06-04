@@ -246,7 +246,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     transition: border-color .2s, box-shadow .2s;
 }
 .u-form-input:focus { border-color: var(--u-accent); outline:none; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-.u-form-input select { appearance: none; }
 
 /* ── Empty state ── */
 .u-empty {
@@ -341,13 +340,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             </div>
             <div class="col-auto d-none d-md-flex gap-2">
                 @can('Create user')
-                <button class="u-btn primary" data-bs-toggle="modal" data-bs-target="#showModal">
+                <button type="button" class="u-btn primary" id="openAddUserModalBtn">
                     <i class="bi bi-plus-circle"></i> Add User
                 </button>
-                <button class="u-btn success" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <button type="button" class="u-btn success" id="openAddStudentModalBtn">
                     <i class="bi bi-person-plus"></i> Add Student
                 </button>
-                <button class="u-btn warning" data-bs-toggle="modal" data-bs-target="#massStudentModal">
+                <button type="button" class="u-btn warning" id="openMassStudentModalBtn">
                     <i class="bi bi-people-fill"></i> Mass Manage
                 </button>
                 @endcan
@@ -449,13 +448,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 </button>
                 @can('Create user')
                 <div class="d-md-none d-flex gap-2">
-                    <button class="u-btn primary" data-bs-toggle="modal" data-bs-target="#showModal">
+                    <button type="button" class="u-btn primary" id="openAddUserModalBtnMobile">
                         <i class="bi bi-plus-circle"></i>
                     </button>
-                    <button class="u-btn success" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                    <button type="button" class="u-btn success" id="openAddStudentModalBtnMobile">
                         <i class="bi bi-person-plus"></i>
                     </button>
-                    <button class="u-btn warning" data-bs-toggle="modal" data-bs-target="#massStudentModal">
+                    <button type="button" class="u-btn warning" id="openMassStudentModalBtnMobile">
                         <i class="bi bi-people-fill"></i>
                     </button>
                 </div>
@@ -531,7 +530,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                                 </a>
                                 @endcan
                                 @can('Update user')
-                                <button class="u-action-btn edit edit-item-btn" title="Edit"
+                                <button type="button" class="u-action-btn edit edit-item-btn" title="Edit"
                                     data-id="{{ $user->id }}"
                                     data-name="{{ $user->name }}"
                                     data-email="{{ $user->email }}"
@@ -541,7 +540,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                                 @endcan
                                 @can('Update user')
                                 @if($user->hasRole('Student'))
-                                <button class="u-action-btn key reset-student-pwd-btn" title="Reset Password"
+                                <button type="button" class="u-action-btn key reset-student-pwd-btn" title="Reset Password"
                                     data-user-id="{{ $user->id }}"
                                     data-user-name="{{ $user->name }}">
                                     <i class="bi bi-key-fill"></i>
@@ -549,7 +548,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                                 @endif
                                 @endcan
                                 @can('Delete user')
-                                <button class="u-action-btn del remove-item-btn" title="Delete"
+                                <button type="button" class="u-action-btn del remove-item-btn" title="Delete"
                                     data-id="{{ $user->id }}">
                                     <i class="ph-trash"></i>
                                 </button>
@@ -585,11 +584,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          ADD USER MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="showModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static">
+    <div id="showModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     <h5><i class="bi bi-person-plus me-2"></i>Add New User</h5>
                     <p>Create a system user with role-based access</p>
                 </div>
@@ -638,11 +637,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          EDIT USER MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="editModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static">
+    <div id="editModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero" style="background:linear-gradient(135deg,#065f46,#16a34a,#4ade80);">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     <h5><i class="ph-pencil me-2"></i>Edit User</h5>
                     <p>Update user information and permissions</p>
                 </div>
@@ -691,7 +690,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          DELETE CONFIRM MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="deleteRecordModal" class="modal fade u-modal" tabindex="-1">
+    <div id="deleteRecordModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
             <div class="modal-content">
                 <div class="modal-body p-5 text-center">
@@ -714,11 +713,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- ══════════════════════════════════════════════════════
          ADD STUDENT (single) MODAL
     ══════════════════════════════════════════════════════ --}}
-    <div id="addStudentModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static">
+    <div id="addStudentModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero" style="background:linear-gradient(135deg,#064e3b,#059669,#34d399);">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     <h5><i class="bi bi-mortarboard me-2"></i>Add Student as User</h5>
                     <p>Create portal access for a registered student</p>
                 </div>
@@ -753,11 +752,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </div>
 
     {{-- SET STUDENT CREDENTIALS MODAL --}}
-    <div id="setStudentCredentialsModal" class="modal fade u-modal" tabindex="-1" data-bs-backdrop="static">
+    <div id="setStudentCredentialsModal" class="modal fade u-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="u-modal-hero" style="background:linear-gradient(135deg,#1e3a5f,#2563eb,#4f46e5);">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="resetStudentCredentialsModal()"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     <h5><i class="bi bi-key me-2"></i>Set Credentials</h5>
                     <p>Configure login details for the selected student</p>
                 </div>
@@ -796,7 +795,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                         <div class="alert alert-danger d-none mt-3 rounded-3" id="student-credentials-error"></div>
                     </div>
                     <div class="u-modal-footer d-flex justify-content-end gap-2">
-                        <button type="button" class="u-btn ghost" data-bs-dismiss="modal" onclick="resetStudentCredentialsModal()">Cancel</button>
+                        <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="u-btn primary" id="create-student-user">
                             <i class="bi bi-person-check"></i> Create Student User
                         </button>
@@ -814,534 +813,736 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════
-     SCRIPTS
+     SCRIPTS - CORRECT ORDER
 ══════════════════════════════════════════════════════════════ --}}
+
+<!-- First: jQuery (required for Bootstrap) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Then: Bootstrap JS (from your assets) -->
+<script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+<!-- Then: Other libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
 (function () {
     'use strict';
 
-    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
 
-    // ── Collect all rows once ──────────────────────────────
-    const allRows = () => Array.from(document.querySelectorAll('#usersTableBody tr[data-id]'));
-    let visibleIds = new Set(allRows().map(r => r.dataset.id));
-
-    // ── Live filter ────────────────────────────────────────
-    function applyFilters() {
-        const search = document.getElementById('liveSearch').value.toLowerCase().trim();
-        const role   = document.getElementById('roleFilter').value.toLowerCase().trim();
-        const email  = document.getElementById('emailFilter').value.toLowerCase().trim();
-
-        let shown = 0;
-        visibleIds = new Set();
-
-        allRows().forEach(row => {
-            const name  = row.dataset.name  || '';
-            const rEmail = row.dataset.email || '';
-            const roles = row.dataset.roles || '';
-
-            const matchSearch = !search || name.includes(search) || rEmail.includes(search);
-            const matchRole   = !role   || roles.split(',').some(r => r.trim() === role) || (role === 'no role' && !roles.trim());
-            const matchEmail  = !email  || rEmail === email;
-
-            const visible = matchSearch && matchRole && matchEmail;
-            row.style.display = visible ? '' : 'none';
-            if (visible) { shown++; visibleIds.add(row.dataset.id); }
-        });
-
-        document.getElementById('showingCount').textContent = shown;
-
-        // Empty state
-        let empty = document.getElementById('noResults');
-        if (shown === 0 && allRows().length > 0) {
-            if (!empty) {
-                empty = document.createElement('tr');
-                empty.id = 'noResults';
-                empty.innerHTML = `<td colspan="7"><div class="u-empty"><i class="ri-search-line"></i>No users match your filters</div></td>`;
-                document.getElementById('usersTableBody').appendChild(empty);
-            }
-        } else if (empty) {
-            empty.remove();
+        // Check if Bootstrap is loaded
+        if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap not loaded! Modals will not work.');
+            return;
         }
 
-        document.getElementById('userCountBadge').textContent = shown;
-    }
+        const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-    document.getElementById('liveSearch').addEventListener('input', applyFilters);
-    document.getElementById('roleFilter').addEventListener('change', applyFilters);
-    document.getElementById('emailFilter').addEventListener('change', applyFilters);
-    document.getElementById('clearFilters').addEventListener('click', () => {
-        document.getElementById('liveSearch').value = '';
-        document.getElementById('roleFilter').value = '';
-        document.getElementById('emailFilter').value = '';
-        applyFilters();
-    });
+        // Helper function to safely show modals
+        function showModal(modalId) {
+            const modalElement = document.getElementById(modalId);
+            if (!modalElement) {
+                console.error('Modal element not found:', modalId);
+                return null;
+            }
 
-    // ── Sortable columns ───────────────────────────────────
-    let sortDir = {};
-    document.querySelectorAll('.sortable').forEach(th => {
-        th.style.cursor = 'pointer';
-        th.addEventListener('click', () => {
-            const col = parseInt(th.dataset.col);
-            sortDir[col] = !sortDir[col];
-            const tbody = document.getElementById('usersTableBody');
-            const rows = [...document.querySelectorAll('#usersTableBody tr[data-id]')];
-            rows.sort((a, b) => {
-                const vals = ['name','email','','' ,'','date'];
-                const key = ['name','email','','','','date'][col] || 'name';
-                const av = a.dataset[key] || a.cells[col]?.textContent || '';
-                const bv = b.dataset[key] || b.cells[col]?.textContent || '';
-                return sortDir[col] ? av.localeCompare(bv) : bv.localeCompare(av);
-            });
-            rows.forEach(r => tbody.appendChild(r));
-        });
-    });
-
-    // ── Check all ──────────────────────────────────────────
-    document.getElementById('checkAll').addEventListener('change', function() {
-        document.querySelectorAll('.row-check').forEach(cb => {
-            const row = cb.closest('tr');
-            if (row.style.display !== 'none') cb.checked = this.checked;
-        });
-        updateRemoveBtn();
-    });
-
-    document.addEventListener('change', e => {
-        if (e.target.classList.contains('row-check')) updateRemoveBtn();
-    });
-
-    function updateRemoveBtn() {
-        const count = document.querySelectorAll('.row-check:checked').length;
-        document.getElementById('remove-actions').classList.toggle('d-none', count === 0);
-    }
-
-    // ── Delete single ──────────────────────────────────────
-    document.addEventListener('click', e => {
-        const btn = e.target.closest('.remove-item-btn');
-        if (!btn) return;
-        const id = btn.dataset.id;
-
-        const deleteBtn = document.getElementById('delete-record');
-        const fresh = deleteBtn.cloneNode(true);
-        deleteBtn.replaceWith(fresh);
-        fresh.addEventListener('click', () => {
-            axios.delete(`/users/${id}`, { headers:{'X-CSRF-TOKEN':CSRF} })
-            .then(() => {
-                const row = document.querySelector(`tr[data-id="${id}"]`);
-                if (row) {
-                    row.style.transition = 'all .3s ease';
-                    row.style.opacity = '0';
-                    row.style.transform = 'translateX(-20px)';
-                    setTimeout(() => row.remove(), 300);
-                }
-                const totalEl = document.getElementById('totalCount');
-                totalEl.textContent = parseInt(totalEl.textContent) - 1;
-                bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'))?.hide();
-                Swal.fire({ icon:'success', title:'Deleted!', text:'User removed.', showConfirmButton:false, timer:2000 });
-            })
-            .catch(err => Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error'));
-        });
-        new bootstrap.Modal(document.getElementById('deleteRecordModal')).show();
-    });
-
-    // ── Delete multiple ────────────────────────────────────
-    window.deleteMultiple = function() {
-        const ids = [...document.querySelectorAll('.row-check:checked')]
-            .map(cb => cb.closest('tr').dataset.id).filter(Boolean);
-        if (!ids.length) { Swal.fire('Select at least one user'); return; }
-
-        Swal.fire({
-            title: 'Delete ' + ids.length + ' user(s)?',
-            text: 'This cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Yes, Delete All'
-        }).then(r => {
-            if (!r.isConfirmed) return;
-            Promise.all(ids.map(id => axios.delete(`/users/${id}`, { headers:{'X-CSRF-TOKEN':CSRF} })))
-            .then(() => {
-                ids.forEach(id => {
-                    const row = document.querySelector(`tr[data-id="${id}"]`);
-                    if (row) row.remove();
+            // Get or create modal instance
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement, {
+                    backdrop: 'static',
+                    keyboard: true
                 });
-                Swal.fire('Deleted!', ids.length + ' users removed.', 'success');
-                updateRemoveBtn();
-                document.getElementById('totalCount').textContent = allRows().length;
+            }
+            modal.show();
+            return modal;
+        }
+
+        function hideModal(modalId) {
+            const modalElement = document.getElementById(modalId);
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+            }
+        }
+
+        // ── Manual modal trigger handlers ─────────────────────
+        // Add User Modal triggers
+        const openAddUserBtns = ['openAddUserModalBtn', 'openAddUserModalBtnMobile'];
+        openAddUserBtns.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showModal('showModal');
+                });
+            }
+        });
+
+        // Add Student Modal triggers
+        const openAddStudentBtns = ['openAddStudentModalBtn', 'openAddStudentModalBtnMobile'];
+        openAddStudentBtns.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showModal('addStudentModal');
+                });
+            }
+        });
+
+        // Mass Student Modal triggers
+        const openMassStudentBtns = ['openMassStudentModalBtn', 'openMassStudentModalBtnMobile'];
+        openMassStudentBtns.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const massModal = document.getElementById('massStudentModal');
+                    if (massModal) {
+                        showModal('massStudentModal');
+                    } else {
+                        console.error('Mass student modal not found');
+                    }
+                });
+            }
+        });
+
+        // ── Collect all rows once ──────────────────────────────
+        const allRows = () => Array.from(document.querySelectorAll('#usersTableBody tr[data-id]'));
+        let visibleIds = new Set(allRows().map(r => r.dataset.id));
+
+        // ── Live filter ────────────────────────────────────────
+        function applyFilters() {
+            const search = document.getElementById('liveSearch')?.value.toLowerCase().trim() || '';
+            const role   = document.getElementById('roleFilter')?.value.toLowerCase().trim() || '';
+            const email  = document.getElementById('emailFilter')?.value.toLowerCase().trim() || '';
+
+            let shown = 0;
+            visibleIds = new Set();
+
+            allRows().forEach(row => {
+                const name  = row.dataset.name  || '';
+                const rEmail = row.dataset.email || '';
+                const roles = row.dataset.roles || '';
+
+                const matchSearch = !search || name.includes(search) || rEmail.includes(search);
+                const matchRole   = !role   || roles.split(',').some(r => r.trim() === role) || (role === 'no role' && !roles.trim());
+                const matchEmail  = !email  || rEmail === email;
+
+                const visible = matchSearch && matchRole && matchEmail;
+                row.style.display = visible ? '' : 'none';
+                if (visible) { shown++; visibleIds.add(row.dataset.id); }
+            });
+
+            const showingSpan = document.getElementById('showingCount');
+            if (showingSpan) showingSpan.textContent = shown;
+
+            // Empty state
+            let empty = document.getElementById('noResults');
+            if (shown === 0 && allRows().length > 0) {
+                if (!empty) {
+                    empty = document.createElement('tr');
+                    empty.id = 'noResults';
+                    empty.innerHTML = `<td colspan="7"><div class="u-empty"><i class="ri-search-line"></i>No users match your filters</div></td>`;
+                    document.getElementById('usersTableBody')?.appendChild(empty);
+                }
+            } else if (empty) {
+                empty.remove();
+            }
+
+            const userBadge = document.getElementById('userCountBadge');
+            if (userBadge) userBadge.textContent = shown;
+        }
+
+        // Attach filter event listeners
+        const liveSearch = document.getElementById('liveSearch');
+        const roleFilter = document.getElementById('roleFilter');
+        const emailFilter = document.getElementById('emailFilter');
+        const clearFilters = document.getElementById('clearFilters');
+
+        if (liveSearch) liveSearch.addEventListener('input', applyFilters);
+        if (roleFilter) roleFilter.addEventListener('change', applyFilters);
+        if (emailFilter) emailFilter.addEventListener('change', applyFilters);
+        if (clearFilters) {
+            clearFilters.addEventListener('click', () => {
+                if (liveSearch) liveSearch.value = '';
+                if (roleFilter) roleFilter.value = '';
+                if (emailFilter) emailFilter.value = '';
                 applyFilters();
             });
-        });
-    };
-
-    // ── Edit user ──────────────────────────────────────────
-    document.addEventListener('click', e => {
-        const btn = e.target.closest('.edit-item-btn');
-        if (!btn) return;
-        document.getElementById('edit-id-field').value = btn.dataset.id;
-        document.getElementById('edit-name').value  = btn.dataset.name;
-        document.getElementById('edit-email').value = btn.dataset.email;
-        const roles = (btn.dataset.roles || '').split(',').filter(r => r.trim());
-        Array.from(document.getElementById('edit-role').options).forEach(opt => {
-            opt.selected = roles.includes(opt.value);
-        });
-        document.getElementById('edit-password').value = '';
-        document.getElementById('edit-password_confirmation').value = '';
-        document.getElementById('edit-alert').classList.add('d-none');
-        new bootstrap.Modal(document.getElementById('editModal')).show();
-    });
-
-    // ── Add user form ──────────────────────────────────────
-    document.getElementById('add-user-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const alert = document.getElementById('add-alert');
-        alert.classList.add('d-none');
-
-        const name  = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const pass  = document.getElementById('password').value;
-        const conf  = document.getElementById('password_confirmation').value;
-        const roles = Array.from(document.getElementById('role').selectedOptions).map(o => o.value);
-
-        if (!name)         { showAlert(alert,'Enter a name'); return; }
-        if (!email)        { showAlert(alert,'Enter an email'); return; }
-        if (!roles.length) { showAlert(alert,'Select at least one role'); return; }
-        if (!pass)         { showAlert(alert,'Enter a password'); return; }
-        if (pass !== conf) { showAlert(alert,'Passwords do not match'); return; }
-
-        const btn = document.getElementById('add-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
-
-        axios.post('/users', { name, email, roles, password:pass, password_confirmation:conf, _token:CSRF })
-        .then(res => {
-            const u = res.data.user;
-            addRowToTable(u);
-            bootstrap.Modal.getInstance(document.getElementById('showModal'))?.hide();
-            Swal.fire({ icon:'success', title:'User Created!', text:u.name + ' added successfully.', showConfirmButton:false, timer:2500 });
-        })
-        .catch(err => {
-            const msg = err.response?.status === 422
-                ? Object.values(err.response.data.errors || {}).flat().join(', ')
-                : (err.response?.data?.message || 'Error creating user');
-            showAlert(alert, msg);
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-plus-circle"></i> Create User';
-        });
-    });
-
-    // ── Edit user form ─────────────────────────────────────
-    document.getElementById('edit-user-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const alert = document.getElementById('edit-alert');
-        alert.classList.add('d-none');
-
-        const id    = document.getElementById('edit-id-field').value;
-        const name  = document.getElementById('edit-name').value.trim();
-        const email = document.getElementById('edit-email').value.trim();
-        const pass  = document.getElementById('edit-password').value;
-        const conf  = document.getElementById('edit-password_confirmation').value;
-        const roles = Array.from(document.getElementById('edit-role').selectedOptions).map(o => o.value);
-
-        if (!name)         { showAlert(alert,'Enter a name'); return; }
-        if (!email)        { showAlert(alert,'Enter an email'); return; }
-        if (!roles.length) { showAlert(alert,'Select at least one role'); return; }
-        if (pass && pass !== conf) { showAlert(alert,'Passwords do not match'); return; }
-
-        const btn = document.getElementById('update-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
-
-        const payload = { name, email, roles, _token:CSRF };
-        if (pass) { payload.password = pass; payload.password_confirmation = conf; }
-
-        axios.put(`/users/${id}`, payload, { headers:{'X-CSRF-TOKEN':CSRF} })
-        .then(res => {
-            const u = res.data.user;
-            updateRowInTable(u);
-            bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
-            Swal.fire({ icon:'success', title:'Updated!', text:u.name + ' updated successfully.', showConfirmButton:false, timer:2500 });
-        })
-        .catch(err => {
-            const msg = err.response?.status === 422
-                ? Object.values(err.response.data.errors || {}).flat().join(', ')
-                : (err.response?.data?.message || 'Error updating user');
-            showAlert(alert, msg);
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-circle"></i> Update User';
-        });
-    });
-
-    // ── DOM helpers ────────────────────────────────────────
-    function showAlert(el, msg) {
-        el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg;
-        el.classList.remove('d-none');
-        setTimeout(() => el.classList.add('d-none'), 5000);
-    }
-
-    function rolePill(roleName) {
-        const map = { Student:'student', Admin:'admin', Teacher:'teacher', Staff:'staff' };
-        const cls = map[roleName] || 'default';
-        return `<span class="u-role-pill ${cls}"><i class="bi bi-shield-check"></i>${roleName}</span>`;
-    }
-
-    function addRowToTable(user) {
-        const tbody = document.getElementById('usersTableBody');
-        const emptyRow = document.getElementById('emptyRow');
-        if (emptyRow) emptyRow.remove();
-        const row = document.createElement('tr');
-        row.dataset.id    = user.id;
-        row.dataset.name  = user.name.toLowerCase();
-        row.dataset.email = user.email.toLowerCase();
-        row.dataset.roles = (user.roles || []).join(',').toLowerCase();
-        row.dataset.date  = new Date().toISOString().slice(0,10);
-        const initials = getInitials(user.name);
-        row.innerHTML = `
-            <td><input type="checkbox" class="row-check" style="accent-color:var(--u-accent);cursor:pointer;"></td>
-            <td><div class="u-avatar">${initials}</div></td>
-            <td><div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div></td>
-            <td><span class="text-muted small">${escHtml(user.email)}</span></td>
-            <td>${(user.roles||[]).map(rolePill).join('')}</td>
-            <td class="text-muted small">${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
-            <td>
-                <div class="d-flex gap-1">
-                    <a href="/users/${user.id}" class="u-action-btn view" title="View"><i class="ph-eye"></i></a>
-                    <button class="u-action-btn edit edit-item-btn" title="Edit"
-                        data-id="${user.id}" data-name="${escHtml(user.name)}"
-                        data-email="${escHtml(user.email)}" data-roles="${(user.roles||[]).join(',')}">
-                        <i class="ph-pencil"></i>
-                    </button>
-                    <button class="u-action-btn del remove-item-btn" title="Delete" data-id="${user.id}">
-                        <i class="ph-trash"></i>
-                    </button>
-                </div>
-            </td>`;
-        row.style.opacity = '0';
-        tbody.prepend(row);
-        requestAnimationFrame(() => {
-            row.style.transition = 'opacity .4s ease, transform .4s ease';
-            row.style.opacity = '1';
-        });
-        const t = document.getElementById('totalCount');
-        t.textContent = parseInt(t.textContent) + 1;
-        applyFilters();
-    }
-
-    function updateRowInTable(user) {
-        const row = document.querySelector(`tr[data-id="${user.id}"]`);
-        if (!row) return;
-        row.dataset.name  = user.name.toLowerCase();
-        row.dataset.email = user.email.toLowerCase();
-        row.dataset.roles = (user.roles||[]).join(',').toLowerCase();
-        row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div>`;
-        row.cells[3].innerHTML = `<span class="text-muted small">${escHtml(user.email)}</span>`;
-        row.cells[4].innerHTML = (user.roles||[]).map(rolePill).join('');
-        row.style.background = '#fffbeb';
-        setTimeout(() => row.style.background = '', 1500);
-    }
-
-    function getInitials(name) {
-        const parts = (name || '').split(' ');
-        return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
-    }
-    function escHtml(s) {
-        return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
-    // ── Password reset (single student) ───────────────────
-    $(document).on('click', '.reset-student-pwd-btn', function() {
-        const userId   = $(this).data('user-id');
-        const userName = $(this).data('user-name');
-
-        Swal.fire({
-            title: 'Reset Password?',
-            html: `Reset password for <strong>${userName}</strong>?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#d97706',
-            confirmButtonText: 'Reset'
-        }).then(r => {
-            if (!r.isConfirmed) return;
-            Swal.fire({ title:'Resetting…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
-
-            fetch(`/users/reset-single-password/${userId}`, {
-                method:'POST',
-                headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'}
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Password Reset!',
-                        html: `<div style="text-align:center">
-                            <p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
-                            <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
-                                <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
-                            </div>
-                            <br>
-                            <button class="btn btn-sm btn-outline-primary mt-3" onclick="navigator.clipboard.writeText('${data.password}').then(()=>this.textContent='✓ Copied!')">
-                                <i class="bi bi-clipboard me-1"></i> Copy Password
-                            </button>
-                        </div>`,
-                        icon: 'success',
-                        confirmButtonColor: '#2563eb',
-                        showConfirmButton: true
-                    });
-                } else {
-                    Swal.fire('Error', data.message || 'Reset failed', 'error');
-                }
-            })
-            .catch(() => Swal.fire('Error', 'Network error', 'error'));
-        });
-    });
-
-    // ── Single student modal logic ─────────────────────────
-    const addStudentModalEl = document.getElementById('addStudentModal');
-    const credentialsModalEl = document.getElementById('setStudentCredentialsModal');
-
-    if (addStudentModalEl && credentialsModalEl) {
-        const addStudentModal   = new bootstrap.Modal(addStudentModalEl);
-        const credentialsModal  = new bootstrap.Modal(credentialsModalEl);
-        let selectedStudent     = null;
-
-        addStudentModalEl.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
-
-        function loadStudentsForSingle(search) {
-            document.getElementById('proceed-to-credentials').disabled = true;
-            let url = '{{ route("get.students") }}?limit=500&has_account=no';
-            if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
-            fetch(url).then(r=>r.json()).then(data => {
-                const sel = document.getElementById('student-select');
-                sel.innerHTML = '<option value="">— Choose a student —</option>';
-                (data.students||[]).forEach(s => {
-                    const o = document.createElement('option');
-                    o.value = s.id;
-                    o.textContent = `${s.name} (${s.admissionNo})`;
-                    Object.assign(o.dataset, { name:s.name, email:s.email||'', admission:s.admissionNo||'' });
-                    sel.appendChild(o);
-                });
-            }).catch(()=>{});
         }
 
-        document.getElementById('student-search').addEventListener('input', debounce(e => {
-            loadStudentsForSingle(e.target.value);
-        }, 350));
-
-        document.getElementById('student-select').addEventListener('change', function() {
-            const opt = this.options[this.selectedIndex];
-            if (!opt.value) { selectedStudent = null; document.getElementById('proceed-to-credentials').disabled = true; return; }
-            selectedStudent = { id:opt.value, name:opt.dataset.name, email:opt.dataset.email, admissionNo:opt.dataset.admission };
-            document.getElementById('proceed-to-credentials').disabled = false;
-        });
-
-        document.getElementById('proceed-to-credentials').addEventListener('click', () => {
-            if (!selectedStudent) return;
-            document.getElementById('student-id-field').value    = selectedStudent.id;
-            document.getElementById('student-name-field').value  = selectedStudent.name;
-            document.getElementById('student-user-email').value  = selectedStudent.email;
-            document.getElementById('student-username').value    = (selectedStudent.admissionNo||'').replace(/[\/\\]/g,'_');
-            addStudentModal.hide();
-            setTimeout(() => credentialsModal.show(), 300);
-        });
-
-        document.getElementById('generate-temp-password').addEventListener('click', () => {
-            const p = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
-            document.getElementById('student-password').value = p;
-            document.getElementById('student-password_confirmation').value = p;
-        });
-
-        document.getElementById('add-student-credentials-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const fd = new FormData(this);
-            fd.append('_token','{{ csrf_token() }}');
-            const btn = document.getElementById('create-student-user');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
-            fetch('{{ route("users.store-student") }}', { method:'POST', body:fd })
-            .then(r=>r.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({ icon:'success', title:'Student User Created!', text:data.message, showConfirmButton:false, timer:2000 });
-                    credentialsModal.hide();
-                    setTimeout(() => location.reload(), 2000);
-                } else {
-                    const err = document.getElementById('student-credentials-error');
-                    err.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message||'Error');
-                    err.classList.remove('d-none');
-                }
-            })
-            .catch(()=> Swal.fire('Error','Network error','error'))
-            .finally(()=>{ btn.disabled=false; btn.innerHTML='<i class="bi bi-person-check"></i> Create Student User'; });
-        });
-
-        window.resetStudentCredentialsModal = function() {
-            ['student-id-field','student-name-field','student-user-email','student-username',
-             'student-password','student-password_confirmation'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
+        // ── Sortable columns ───────────────────────────────────
+        let sortDir = {};
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.style.cursor = 'pointer';
+            th.addEventListener('click', () => {
+                const col = parseInt(th.dataset.col);
+                sortDir[col] = !sortDir[col];
+                const tbody = document.getElementById('usersTableBody');
+                if (!tbody) return;
+                const rows = [...document.querySelectorAll('#usersTableBody tr[data-id]')];
+                rows.sort((a, b) => {
+                    const key = ['name','email','','','','date'][col] || 'name';
+                    const av = a.dataset[key] || a.cells[col]?.textContent || '';
+                    const bv = b.dataset[key] || b.cells[col]?.textContent || '';
+                    return sortDir[col] ? av.localeCompare(bv) : bv.localeCompare(av);
+                });
+                rows.forEach(r => tbody.appendChild(r));
             });
-            document.getElementById('student-credentials-error')?.classList.add('d-none');
-        };
-        credentialsModalEl.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
-    }
-
-    // ── Chart ──────────────────────────────────────────────
-    const ctx = document.getElementById('usersByRoleChart')?.getContext('2d');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: @json(array_keys($role_counts)),
-                datasets: [{
-                    label: 'Users',
-                    data:  @json(array_values($role_counts)),
-                    backgroundColor: [
-                        'rgba(37,99,235,.75)','rgba(16,185,129,.75)','rgba(245,158,11,.75)',
-                        'rgba(239,68,68,.75)','rgba(139,92,246,.75)','rgba(20,184,166,.75)'
-                    ],
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' users' } }
-                },
-                scales: {
-                    y: { beginAtZero:true, grid:{ color:'#f1f5f9' }, ticks:{ stepSize:1 } },
-                    x: { grid:{ display:false } }
-                },
-                animation: { duration:1000, easing:'easeOutQuart' }
-            }
         });
-    }
 
-    // ── Modal cleanup ──────────────────────────────────────
-    document.getElementById('showModal').addEventListener('hidden.bs.modal', () => {
-        document.getElementById('add-user-form').reset();
-        document.getElementById('add-alert').classList.add('d-none');
-    });
-    document.getElementById('editModal').addEventListener('hidden.bs.modal', () => {
-        document.getElementById('edit-user-form').reset();
-        document.getElementById('edit-alert').classList.add('d-none');
-    });
+        // ── Check all ──────────────────────────────────────────
+        const checkAll = document.getElementById('checkAll');
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                document.querySelectorAll('.row-check').forEach(cb => {
+                    const row = cb.closest('tr');
+                    if (row && row.style.display !== 'none') cb.checked = this.checked;
+                });
+                updateRemoveBtn();
+            });
+        }
 
-    function debounce(fn, ms) {
-        let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-    }
+        document.addEventListener('change', e => {
+            if (e.target.classList.contains('row-check')) updateRemoveBtn();
+        });
 
-    // Expose for mass modal compatibility
-    window.filterData = applyFilters;
+        function updateRemoveBtn() {
+            const count = document.querySelectorAll('.row-check:checked').length;
+            const removeBtn = document.getElementById('remove-actions');
+            if (removeBtn) removeBtn.classList.toggle('d-none', count === 0);
+        }
+
+        // ── Delete single ──────────────────────────────────────
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.remove-item-btn');
+            if (!btn) return;
+            const id = btn.dataset.id;
+
+            const deleteBtn = document.getElementById('delete-record');
+            if (deleteBtn) {
+                const fresh = deleteBtn.cloneNode(true);
+                deleteBtn.replaceWith(fresh);
+                fresh.addEventListener('click', () => {
+                    axios.delete(`/users/${id}`, { headers:{'X-CSRF-TOKEN':CSRF} })
+                    .then(() => {
+                        const row = document.querySelector(`tr[data-id="${id}"]`);
+                        if (row) {
+                            row.style.transition = 'all .3s ease';
+                            row.style.opacity = '0';
+                            row.style.transform = 'translateX(-20px)';
+                            setTimeout(() => row.remove(), 300);
+                        }
+                        const totalEl = document.getElementById('totalCount');
+                        if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) - 1;
+                        hideModal('deleteRecordModal');
+                        Swal.fire({ icon:'success', title:'Deleted!', text:'User removed.', showConfirmButton:false, timer:2000 });
+                    })
+                    .catch(err => Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error'));
+                });
+            }
+            showModal('deleteRecordModal');
+        });
+
+        // ── Delete multiple ────────────────────────────────────
+        window.deleteMultiple = function() {
+            const ids = [...document.querySelectorAll('.row-check:checked')]
+                .map(cb => cb.closest('tr').dataset.id).filter(Boolean);
+            if (!ids.length) { Swal.fire('Select at least one user'); return; }
+
+            Swal.fire({
+                title: 'Delete ' + ids.length + ' user(s)?',
+                text: 'This cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Yes, Delete All'
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                Promise.all(ids.map(id => axios.delete(`/users/${id}`, { headers:{'X-CSRF-TOKEN':CSRF} })))
+                .then(() => {
+                    ids.forEach(id => {
+                        const row = document.querySelector(`tr[data-id="${id}"]`);
+                        if (row) row.remove();
+                    });
+                    Swal.fire('Deleted!', ids.length + ' users removed.', 'success');
+                    updateRemoveBtn();
+                    const totalEl = document.getElementById('totalCount');
+                    if (totalEl) totalEl.textContent = allRows().length;
+                    applyFilters();
+                });
+            });
+        };
+
+        // ── Edit user ──────────────────────────────────────────
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.edit-item-btn');
+            if (!btn) return;
+            const idField = document.getElementById('edit-id-field');
+            const nameField = document.getElementById('edit-name');
+            const emailField = document.getElementById('edit-email');
+            const roleSelect = document.getElementById('edit-role');
+
+            if (idField) idField.value = btn.dataset.id;
+            if (nameField) nameField.value = btn.dataset.name;
+            if (emailField) emailField.value = btn.dataset.email;
+
+            const roles = (btn.dataset.roles || '').split(',').filter(r => r.trim());
+            if (roleSelect) {
+                Array.from(roleSelect.options).forEach(opt => {
+                    opt.selected = roles.includes(opt.value);
+                });
+            }
+
+            const passwordField = document.getElementById('edit-password');
+            const confirmField = document.getElementById('edit-password_confirmation');
+            if (passwordField) passwordField.value = '';
+            if (confirmField) confirmField.value = '';
+
+            const alertDiv = document.getElementById('edit-alert');
+            if (alertDiv) alertDiv.classList.add('d-none');
+
+            showModal('editModal');
+        });
+
+        // ── Add user form ──────────────────────────────────────
+        const addUserForm = document.getElementById('add-user-form');
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const alert = document.getElementById('add-alert');
+                if (alert) alert.classList.add('d-none');
+
+                const name  = document.getElementById('name')?.value.trim() || '';
+                const email = document.getElementById('email')?.value.trim() || '';
+                const pass  = document.getElementById('password')?.value || '';
+                const conf  = document.getElementById('password_confirmation')?.value || '';
+                const roles = Array.from(document.getElementById('role')?.selectedOptions || []).map(o => o.value);
+
+                if (!name)         { showAlert(alert,'Enter a name'); return; }
+                if (!email)        { showAlert(alert,'Enter an email'); return; }
+                if (!roles.length) { showAlert(alert,'Select at least one role'); return; }
+                if (!pass)         { showAlert(alert,'Enter a password'); return; }
+                if (pass !== conf) { showAlert(alert,'Passwords do not match'); return; }
+
+                const btn = document.getElementById('add-btn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
+                }
+
+                axios.post('/users', { name, email, roles, password:pass, password_confirmation:conf, _token:CSRF })
+                .then(res => {
+                    const u = res.data.user;
+                    addRowToTable(u);
+                    hideModal('showModal');
+                    Swal.fire({ icon:'success', title:'User Created!', text:u.name + ' added successfully.', showConfirmButton:false, timer:2500 });
+                })
+                .catch(err => {
+                    const msg = err.response?.status === 422
+                        ? Object.values(err.response.data.errors || {}).flat().join(', ')
+                        : (err.response?.data?.message || 'Error creating user');
+                    showAlert(alert, msg);
+                })
+                .finally(() => {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-plus-circle"></i> Create User';
+                    }
+                });
+            });
+        }
+
+        // ── Edit user form ─────────────────────────────────────
+        const editUserForm = document.getElementById('edit-user-form');
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const alert = document.getElementById('edit-alert');
+                if (alert) alert.classList.add('d-none');
+
+                const id    = document.getElementById('edit-id-field')?.value || '';
+                const name  = document.getElementById('edit-name')?.value.trim() || '';
+                const email = document.getElementById('edit-email')?.value.trim() || '';
+                const pass  = document.getElementById('edit-password')?.value || '';
+                const conf  = document.getElementById('edit-password_confirmation')?.value || '';
+                const roles = Array.from(document.getElementById('edit-role')?.selectedOptions || []).map(o => o.value);
+
+                if (!name)         { showAlert(alert,'Enter a name'); return; }
+                if (!email)        { showAlert(alert,'Enter an email'); return; }
+                if (!roles.length) { showAlert(alert,'Select at least one role'); return; }
+                if (pass && pass !== conf) { showAlert(alert,'Passwords do not match'); return; }
+
+                const btn = document.getElementById('update-btn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
+                }
+
+                const payload = { name, email, roles, _token:CSRF };
+                if (pass) { payload.password = pass; payload.password_confirmation = conf; }
+
+                axios.put(`/users/${id}`, payload, { headers:{'X-CSRF-TOKEN':CSRF} })
+                .then(res => {
+                    const u = res.data.user;
+                    updateRowInTable(u);
+                    hideModal('editModal');
+                    Swal.fire({ icon:'success', title:'Updated!', text:u.name + ' updated successfully.', showConfirmButton:false, timer:2500 });
+                })
+                .catch(err => {
+                    const msg = err.response?.status === 422
+                        ? Object.values(err.response.data.errors || {}).flat().join(', ')
+                        : (err.response?.data?.message || 'Error updating user');
+                    showAlert(alert, msg);
+                })
+                .finally(() => {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-check-circle"></i> Update User';
+                    }
+                });
+            });
+        }
+
+        // ── DOM helpers ────────────────────────────────────────
+        function showAlert(el, msg) {
+            if (!el) return;
+            el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg;
+            el.classList.remove('d-none');
+            setTimeout(() => el.classList.add('d-none'), 5000);
+        }
+
+        function rolePill(roleName) {
+            const map = { Student:'student', Admin:'admin', Teacher:'teacher', Staff:'staff' };
+            const cls = map[roleName] || 'default';
+            return `<span class="u-role-pill ${cls}"><i class="bi bi-shield-check"></i>${roleName}</span>`;
+        }
+
+        function addRowToTable(user) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            const emptyRow = document.getElementById('emptyRow');
+            if (emptyRow) emptyRow.remove();
+            const row = document.createElement('tr');
+            row.dataset.id    = user.id;
+            row.dataset.name  = user.name.toLowerCase();
+            row.dataset.email = user.email.toLowerCase();
+            row.dataset.roles = (user.roles || []).join(',').toLowerCase();
+            row.dataset.date  = new Date().toISOString().slice(0,10);
+            const initials = getInitials(user.name);
+            row.innerHTML = `
+                <td><input type="checkbox" class="row-check" style="accent-color:var(--u-accent);cursor:pointer;"></td>
+                <td><div class="u-avatar">${initials}</div></td>
+                <td><div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div></td>
+                <td><span class="text-muted small">${escHtml(user.email)}</span></td>
+                <td>${(user.roles||[]).map(rolePill).join('')}</td>
+                <td class="text-muted small">${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="/users/${user.id}" class="u-action-btn view" title="View"><i class="ph-eye"></i></a>
+                        <button type="button" class="u-action-btn edit edit-item-btn" title="Edit"
+                            data-id="${user.id}" data-name="${escHtml(user.name)}"
+                            data-email="${escHtml(user.email)}" data-roles="${(user.roles||[]).join(',')}">
+                            <i class="ph-pencil"></i>
+                        </button>
+                        <button type="button" class="u-action-btn del remove-item-btn" title="Delete" data-id="${user.id}">
+                            <i class="ph-trash"></i>
+                        </button>
+                    </div>
+                </td>`;
+            row.style.opacity = '0';
+            tbody.prepend(row);
+            requestAnimationFrame(() => {
+                row.style.transition = 'opacity .4s ease, transform .4s ease';
+                row.style.opacity = '1';
+            });
+            const t = document.getElementById('totalCount');
+            if (t) t.textContent = parseInt(t.textContent) + 1;
+            applyFilters();
+        }
+
+        function updateRowInTable(user) {
+            const row = document.querySelector(`tr[data-id="${user.id}"]`);
+            if (!row) return;
+            row.dataset.name  = user.name.toLowerCase();
+            row.dataset.email = user.email.toLowerCase();
+            row.dataset.roles = (user.roles||[]).join(',').toLowerCase();
+            if (row.cells[2]) row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div>`;
+            if (row.cells[3]) row.cells[3].innerHTML = `<span class="text-muted small">${escHtml(user.email)}</span>`;
+            if (row.cells[4]) row.cells[4].innerHTML = (user.roles||[]).map(rolePill).join('');
+            row.style.background = '#fffbeb';
+            setTimeout(() => row.style.background = '', 1500);
+        }
+
+        function getInitials(name) {
+            const parts = (name || '').split(' ');
+            return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+        }
+
+        function escHtml(s) {
+            return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+
+        // ── Password reset (single student) ───────────────────
+        $(document).on('click', '.reset-student-pwd-btn', function() {
+            const userId   = $(this).data('user-id');
+            const userName = $(this).data('user-name');
+
+            Swal.fire({
+                title: 'Reset Password?',
+                html: `Reset password for <strong>${userName}</strong>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#d97706',
+                confirmButtonText: 'Reset'
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                Swal.fire({ title:'Resetting…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+
+                fetch(`/users/reset-single-password/${userId}`, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''}
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Password Reset!',
+                            html: `<div style="text-align:center">
+                                <p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
+                                <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
+                                    <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
+                                </div>
+                                <br>
+                                <button class="btn btn-sm btn-outline-primary mt-3" onclick="navigator.clipboard.writeText('${data.password}').then(()=>this.textContent='✓ Copied!')">
+                                    <i class="bi bi-clipboard me-1"></i> Copy Password
+                                </button>
+                            </div>`,
+                            icon: 'success',
+                            confirmButtonColor: '#2563eb',
+                            showConfirmButton: true
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Reset failed', 'error');
+                    }
+                })
+                .catch(() => Swal.fire('Error', 'Network error', 'error'));
+            });
+        });
+
+        // ── Single student modal logic ─────────────────────────
+        const addStudentModalEl = document.getElementById('addStudentModal');
+        const credentialsModalEl = document.getElementById('setStudentCredentialsModal');
+
+        if (addStudentModalEl && credentialsModalEl) {
+            let selectedStudent = null;
+
+            addStudentModalEl.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
+
+            function loadStudentsForSingle(search) {
+                const proceedBtn = document.getElementById('proceed-to-credentials');
+                if (proceedBtn) proceedBtn.disabled = true;
+                let url = '{{ route("get.students") }}?limit=500&has_account=no';
+                if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
+                fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF } })
+                    .then(r => r.json())
+                    .then(data => {
+                        const sel = document.getElementById('student-select');
+                        if (sel) {
+                            sel.innerHTML = '<option value="">— Choose a student —</option>';
+                            (data.students||[]).forEach(s => {
+                                const o = document.createElement('option');
+                                o.value = s.id;
+                                o.textContent = `${s.name} (${s.admissionNo})`;
+                                Object.assign(o.dataset, { name:s.name, email:s.email||'', admission:s.admissionNo||'' });
+                                sel.appendChild(o);
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Error loading students:', err));
+            }
+
+            const studentSearch = document.getElementById('student-search');
+            if (studentSearch) {
+                studentSearch.addEventListener('input', debounce(e => {
+                    loadStudentsForSingle(e.target.value);
+                }, 350));
+            }
+
+            const studentSelect = document.getElementById('student-select');
+            if (studentSelect) {
+                studentSelect.addEventListener('change', function() {
+                    const opt = this.options[this.selectedIndex];
+                    if (!opt || !opt.value) {
+                        selectedStudent = null;
+                        const proceedBtn = document.getElementById('proceed-to-credentials');
+                        if (proceedBtn) proceedBtn.disabled = true;
+                        return;
+                    }
+                    selectedStudent = {
+                        id: opt.value,
+                        name: opt.dataset.name,
+                        email: opt.dataset.email,
+                        admissionNo: opt.dataset.admission
+                    };
+                    const proceedBtn = document.getElementById('proceed-to-credentials');
+                    if (proceedBtn) proceedBtn.disabled = false;
+                });
+            }
+
+            const proceedBtn = document.getElementById('proceed-to-credentials');
+            if (proceedBtn) {
+                proceedBtn.addEventListener('click', () => {
+                    if (!selectedStudent) return;
+                    const studentIdField = document.getElementById('student-id-field');
+                    const studentNameField = document.getElementById('student-name-field');
+                    const studentUserEmail = document.getElementById('student-user-email');
+                    const studentUsername = document.getElementById('student-username');
+
+                    if (studentIdField) studentIdField.value = selectedStudent.id;
+                    if (studentNameField) studentNameField.value = selectedStudent.name;
+                    if (studentUserEmail) studentUserEmail.value = selectedStudent.email;
+                    if (studentUsername) studentUsername.value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
+
+                    hideModal('addStudentModal');
+                    setTimeout(() => showModal('setStudentCredentialsModal'), 300);
+                });
+            }
+
+            const generatePwdBtn = document.getElementById('generate-temp-password');
+            if (generatePwdBtn) {
+                generatePwdBtn.addEventListener('click', () => {
+                    const p = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+                    const pwdField = document.getElementById('student-password');
+                    const confField = document.getElementById('student-password_confirmation');
+                    if (pwdField) pwdField.value = p;
+                    if (confField) confField.value = p;
+                });
+            }
+
+            const studentCredForm = document.getElementById('add-student-credentials-form');
+            if (studentCredForm) {
+                studentCredForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const fd = new FormData(this);
+                    fd.append('_token', CSRF);
+                    const btn = document.getElementById('create-student-user');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
+                    }
+                    fetch('{{ route("users.store-student") }}', { method:'POST', body:fd })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({ icon:'success', title:'Student User Created!', text:data.message, showConfirmButton:false, timer:2000 });
+                                hideModal('setStudentCredentialsModal');
+                                setTimeout(() => location.reload(), 2000);
+                            } else {
+                                const errDiv = document.getElementById('student-credentials-error');
+                                if (errDiv) {
+                                    errDiv.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message||'Error');
+                                    errDiv.classList.remove('d-none');
+                                }
+                            }
+                        })
+                        .catch(() => Swal.fire('Error','Network error','error'))
+                        .finally(() => {
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="bi bi-person-check"></i> Create Student User';
+                            }
+                        });
+                });
+            }
+
+            window.resetStudentCredentialsModal = function() {
+                ['student-id-field','student-name-field','student-user-email','student-username',
+                 'student-password','student-password_confirmation'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+                const errDiv = document.getElementById('student-credentials-error');
+                if (errDiv) errDiv.classList.add('d-none');
+            };
+
+            if (credentialsModalEl) {
+                credentialsModalEl.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
+            }
+        }
+
+        // ── Chart ──────────────────────────────────────────────
+        const ctx = document.getElementById('usersByRoleChart')?.getContext('2d');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: @json(array_keys($role_counts)),
+                    datasets: [{
+                        label: 'Users',
+                        data:  @json(array_values($role_counts)),
+                        backgroundColor: [
+                            'rgba(37,99,235,.75)','rgba(16,185,129,.75)','rgba(245,158,11,.75)',
+                            'rgba(239,68,68,.75)','rgba(139,92,246,.75)','rgba(20,184,166,.75)'
+                        ],
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' users' } }
+                    },
+                    scales: {
+                        y: { beginAtZero:true, grid:{ color:'#f1f5f9' }, ticks:{ stepSize:1 } },
+                        x: { grid:{ display:false } }
+                    },
+                    animation: { duration:1000, easing:'easeOutQuart' }
+                }
+            });
+        }
+
+        // ── Modal cleanup ──────────────────────────────────────
+        const showModalEl = document.getElementById('showModal');
+        if (showModalEl) {
+            showModalEl.addEventListener('hidden.bs.modal', () => {
+                const form = document.getElementById('add-user-form');
+                if (form) form.reset();
+                const alertDiv = document.getElementById('add-alert');
+                if (alertDiv) alertDiv.classList.add('d-none');
+            });
+        }
+
+        const editModalEl = document.getElementById('editModal');
+        if (editModalEl) {
+            editModalEl.addEventListener('hidden.bs.modal', () => {
+                const form = document.getElementById('edit-user-form');
+                if (form) form.reset();
+                const alertDiv = document.getElementById('edit-alert');
+                if (alertDiv) alertDiv.classList.add('d-none');
+            });
+        }
+
+        function debounce(fn, ms) {
+            let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+        }
+
+        // Expose for mass modal compatibility
+        window.filterData = applyFilters;
+
+        // Initial filter application
+        applyFilters();
+        console.log('User management page initialized successfully');
+
+    }); // End DOMContentLoaded
 
 })();
 </script>
