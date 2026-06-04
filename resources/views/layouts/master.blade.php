@@ -1524,59 +1524,65 @@
     });
 
     /* ── MANUAL DROPDOWN (animated) ─────────────────────── */
-    function makeDropdown(btnId, panelId) {
-        const btn   = document.getElementById(btnId);
-        const panel = document.getElementById(panelId);
-        if (!btn || !panel) return;
+function makeDropdown(btnId, panelId) {
+    const btn   = document.getElementById(btnId);
+    const panel = document.getElementById(panelId);
+    if (!btn || !panel) return;
 
-        Object.assign(panel.style, {
-            display: 'none', opacity: '0',
-            transform: 'translateY(-10px) scale(0.95)',
-            transformOrigin: 'top right',
-            transition: 'opacity .22s ease, transform .22s cubic-bezier(0.4,0,0.2,1)'
-        });
+    Object.assign(panel.style, {
+        display: 'none', opacity: '0',
+        transform: 'translateY(-10px) scale(0.95)',
+        transformOrigin: 'top right',
+        transition: 'opacity .22s ease, transform .22s cubic-bezier(0.4,0,0.2,1)'
+    });
 
-        const isOpen = () => panel.style.display === 'block';
+    const isOpen = () => panel.style.display === 'block';
 
-        const open = () => {
-            panel.style.display = 'block';
-            panel.getBoundingClientRect();
-            panel.style.opacity = '1';
-            panel.style.transform = 'translateY(0) scale(1)';
-            btn.setAttribute('aria-expanded', 'true');
-        };
-        const close = () => {
-            panel.style.opacity = '0';
-            panel.style.transform = 'translateY(-8px) scale(0.95)';
-            btn.setAttribute('aria-expanded', 'false');
-            setTimeout(() => {
-                if (panel.style.opacity === '0') panel.style.display = 'none';
-            }, 220);
-        };
+    const open = () => {
+        panel.style.display = 'block';
+        panel.getBoundingClientRect();
+        panel.style.opacity = '1';
+        panel.style.transform = 'translateY(0) scale(1)';
+        btn.setAttribute('aria-expanded', 'true');
+    };
+    const close = () => {
+        panel.style.opacity = '0';
+        panel.style.transform = 'translateY(-8px) scale(0.95)';
+        btn.setAttribute('aria-expanded', 'false');
+        setTimeout(() => {
+            if (panel.style.opacity === '0') panel.style.display = 'none';
+        }, 220);
+    };
 
-        btn.addEventListener('click', e => { e.stopPropagation(); isOpen() ? close() : open(); });
+    btn.addEventListener('click', e => { e.stopPropagation(); isOpen() ? close() : open(); });
 
-        /* ── FIX 2: Do NOT close dropdowns when clicking Bootstrap-controlled
-                     elements (modal triggers, dismiss buttons, modal backdrop,
-                     and anything inside an open modal).               ────── */
-        document.addEventListener('click', e => {
-            if (
-                e.target.closest('[data-bs-toggle]')   ||
-                e.target.closest('[data-bs-dismiss]')  ||
-                e.target.closest('[data-bs-target]')   ||
-                e.target.closest('.modal')             ||
-                e.target.closest('.modal-backdrop')
-            ) return;
-            if (!btn.contains(e.target) && !panel.contains(e.target)) close();
-        });
+    // Use CAPTURE phase so our guard runs before Bootstrap's bubble-phase handlers.
+    document.addEventListener('click', e => {
+        const t = e.target;
 
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+        // Never interfere with Bootstrap-controlled elements
+        if (
+            t.closest('[data-bs-toggle]')    ||
+            t.closest('[data-bs-dismiss]')   ||
+            t.closest('[data-bs-target]')    ||
+            t.closest('[data-bs-slide]')     ||
+            t.closest('[data-bs-slide-to]')  ||
+            t.closest('[data-bs-parent]')    ||
+            t.closest('.modal')              ||
+            t.closest('.modal-backdrop')     ||
+            t.closest('.offcanvas')
+        ) return;
 
-        $$('a', panel).forEach(a => {
-            a.addEventListener('mouseenter', () => a.style.background = 'rgba(64,81,137,.08)');
-            a.addEventListener('mouseleave', () => a.style.background = '');
-        });
-    }
+        if (!btn.contains(t) && !panel.contains(t)) close();
+    }, true); // <-- capture phase
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+    $$('a', panel).forEach(a => {
+        a.addEventListener('mouseenter', () => a.style.background = 'rgba(64,81,137,.08)');
+        a.addEventListener('mouseleave', () => a.style.background = '');
+    });
+}
 
     /* ── THEME ───────────────────────────────────────────── */
     function initTheme() {
