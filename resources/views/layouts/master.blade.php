@@ -295,195 +295,43 @@
         @media print { .no-print{display:none!important} body{padding:0;margin:0} }
 
         /* =====================================================
-           SPOTLIGHT SEARCH MODAL - APPLE STYLE DARK & LARGER
+           SPOTLIGHT SEARCH MODAL - APPLE STYLE DARK & LARGER (Robust)
            ===================================================== */
-        .spotlight-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(20px);
-            z-index: 1060;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.25s ease, visibility 0.25s;
-        }
-        .spotlight-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .spotlight-modal {
-            background: #1c1c1e;
-            border-radius: 32px;
-            width: 90%;
-            max-width: 720px;
-            margin-top: 100px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.05);
-            overflow: hidden;
-            transform: translateY(-20px);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .spotlight-overlay.active .spotlight-modal {
-            transform: translateY(0);
-        }
-        .spotlight-search-wrap {
-            padding: 20px 24px;
-            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: #1c1c1e;
-        }
-        .spotlight-search-wrap i {
-            font-size: 28px;
-            color: #8e8e93;
-        }
-        .spotlight-search-wrap input {
-            flex: 1;
-            border: none;
-            outline: none;
-            background: transparent;
-            font-size: 1.5rem;
-            font-weight: 500;
-            color: #ffffff;
-            padding: 12px 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Poppins', sans-serif;
-        }
-        .spotlight-search-wrap input::placeholder {
-            color: #636366;
-            font-weight: 500;
-            font-size: 1.5rem;
-        }
-        .spotlight-close-hint {
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #8e8e93;
-            letter-spacing: 0.3px;
-        }
-        .spotlight-results {
-            max-height: 520px;
-            overflow-y: auto;
-            padding: 8px 12px 20px;
-            background: #1c1c1e;
-        }
-        .spotlight-results::-webkit-scrollbar {
-            width: 6px;
-        }
-        .spotlight-results::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-        .spotlight-results::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-        }
-        .spotlight-section-title {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            padding: 16px 16px 8px;
-            color: #8e8e93;
-        }
-        .spotlight-result-item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 14px 16px;
-            margin: 4px 8px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.18s ease;
-            background: transparent;
-        }
-        .spotlight-result-item:hover,
-        .spotlight-result-item.selected {
-            background: rgba(255, 255, 255, 0.08);
-        }
-        .spotlight-result-icon {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #4f8ef7;
-            font-size: 22px;
-        }
-        .spotlight-result-text {
-            flex: 1;
-        }
-        .spotlight-result-title {
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-        .spotlight-result-desc {
-            font-size: 0.8rem;
-            color: #8e8e93;
-        }
-        .spotlight-empty {
-            text-align: center;
-            padding: 60px 20px;
-            color: #8e8e93;
-            font-size: 1rem;
-        }
-        .search-tooltip {
-            position: absolute;
-            bottom: -38px;
-            left: 0;
-            background: #1c1c1e;
-            color: #ffffff;
-            font-size: 12px;
-            padding: 6px 12px;
-            border-radius: 10px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-            border: 0.5px solid rgba(255,255,255,0.1);
-            font-weight: 500;
-        }
-        .search-tooltip kbd {
-            background: rgba(255,255,255,0.15);
-            color: #ffffff;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            margin: 0 2px;
-        }
-        kbd {
-            background: rgba(0,0,0,0.08);
-            border-radius: 6px;
-            padding: 2px 8px;
-            font-size: 11px;
-            font-family: monospace;
-        }
+        @keyframes spotlightOverlayFadeIn  { from{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} to{background:rgba(0,0,0,.85);backdrop-filter:blur(20px)} }
+        @keyframes spotlightOverlayFadeOut { from{background:rgba(0,0,0,.85);backdrop-filter:blur(20px)} to{background:rgba(0,0,0,.2);backdrop-filter:blur(0)} }
+        @keyframes spotlightModalBounceIn  { 0%{opacity:0;transform:translateY(-40px) scale(.96)} 40%{opacity:.9;transform:translateY(8px) scale(1.01)} 70%{opacity:.95;transform:translateY(-2px) scale(.99)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes spotlightModalFadeOut   { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-20px) scale(.95)} }
+        @keyframes resultBounceIn { 0%{opacity:0;transform:translateX(-16px) scale(.96)} 60%{opacity:.8;transform:translateX(4px) scale(1.01)} 100%{opacity:1;transform:translateX(0) scale(1)} }
+        @keyframes resultGlowPulse { 0%{box-shadow:0 0 0 0 rgba(79,142,247,.5)} 70%{box-shadow:0 0 0 8px rgba(79,142,247,0)} 100%{box-shadow:0 0 0 0 rgba(79,142,247,0)} }
+        @keyframes loadingSpin    { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+        @keyframes historySlideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes typingDot      { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+
+        .spotlight-result-item { animation:resultBounceIn .35s cubic-bezier(.34,1.3,.64,1) forwards; opacity:0; }
+        .spotlight-result-item:nth-child(1){animation-delay:.00s}
+        .spotlight-result-item:nth-child(2){animation-delay:.03s}
+        .spotlight-result-item:nth-child(3){animation-delay:.06s}
+        .spotlight-result-item.top-match { animation:resultBounceIn .4s cubic-bezier(.34,1.3,.64,1) forwards,resultGlowPulse .6s ease .3s; border-left:3px solid #4f8ef7; background:linear-gradient(90deg,rgba(79,142,247,.12) 0%,transparent 100%); }
+        .spotlight-history-item { animation:historySlideIn .25s ease forwards; opacity:0; animation-fill-mode:forwards; }
+        .spotlight-history-item:nth-child(1){animation-delay:.00s}
+        .spotlight-history-item:nth-child(2){animation-delay:.04s}
+        .spotlight-history-item:nth-child(3){animation-delay:.08s}
+        .typing-dot { display:inline-block; animation:typingDot 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(2){animation-delay:.2s}
+        .typing-dot:nth-child(3){animation-delay:.4s}
+
+        .search-tooltip { position:absolute; bottom:-38px; left:0; background:#1c1c1e; color:#fff; font-size:12px; padding:6px 12px; border-radius:10px; white-space:nowrap; opacity:0; transition:opacity .2s; pointer-events:none; z-index:100; backdrop-filter:blur(8px); border:0.5px solid rgba(255,255,255,0.1); font-weight:500; }
+        .search-tooltip kbd { background:rgba(255,255,255,0.15); color:#fff; padding:2px 8px; border-radius:6px; font-size:11px; margin:0 2px; }
+        kbd { background:rgba(0,0,0,0.08); border-radius:6px; padding:2px 8px; font-size:11px; font-family:monospace; }
+
         /* Ensure modals don't conflict */
-        .modal {
-            z-index: 1055 !important;
-        }
-        .modal-backdrop {
-            z-index: 1050 !important;
-        }
-        /* Spotlight trigger button text visibility */
-        #spotlight-trigger span {
-            color: #ffffff !important;
-            opacity: 0.8 !important;
-        }
-        #spotlight-trigger kbd {
-            background: rgba(255,255,255,0.2);
-            color: #ffffff;
-        }
+        .modal { z-index: 1055 !important; }
+        .modal-backdrop { z-index: 1050 !important; }
+
+        /* Spotlight trigger button styling */
+        #spotlight-trigger { background:rgba(0,0,0,0.6) !important; border:1px solid rgba(255,255,255,0.15) !important; border-radius:12px !important; padding:8px 16px !important; min-width:260px !important; backdrop-filter:blur(8px) !important; }
+        #spotlight-trigger span { color:#ffffff !important; opacity:0.9 !important; font-weight:500 !important; }
+        #spotlight-trigger kbd { background:rgba(255,255,255,0.2) !important; color:#ffffff !important; border:none !important; }
     </style>
 
     <!-- Route-specific CSS includes -->
@@ -594,7 +442,7 @@
             </button>
         </div>
 
-        <!-- NAV (scrollable) - FULL SIDEBAR RESTORED -->
+        <!-- NAV (scrollable) -->
         <div id="scrollbar">
             <div class="container-fluid">
                 <div id="two-column-menu"></div>
@@ -1317,10 +1165,10 @@
                         <span class="hamburger-icon"><span></span><span></span><span></span></span>
                     </button>
                     <div class="d-none d-md-inline-flex align-items-center" style="position:relative;">
-                        <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:8px 16px;cursor:pointer;transition:all .2s;min-width:240px;backdrop-filter:blur(8px);">
-                            <i class="mdi mdi-magnify" style="font-size:18px;color:#ffffff;"></i>
-                            <span style="font-size:14px;font-weight:500;color:#ffffff;opacity:0.9;flex:1;text-align:left;">Search everything…</span>
-                            <div style="display:flex;gap:6px;"><kbd style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,0.2);color:#ffffff;">⌘</kbd><kbd style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,0.2);color:#ffffff;">K</kbd></div>
+                        <button type="button" id="spotlight-trigger" style="display:flex;align-items:center;gap:8px;border-radius:10px;padding:7px 14px;cursor:pointer;transition:all .2s;min-width:220px;">
+                            <i class="mdi mdi-magnify" style="font-size:16px;opacity:.8;"></i>
+                            <span style="font-size:13px;flex:1;text-align:left;">Search everything…</span>
+                            <div style="display:flex;gap:4px;"><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;">⌘</kbd><kbd style="font-size:10px;padding:2px 6px;border-radius:4px;">K</kbd></div>
                         </button>
                         <div class="search-tooltip">Press <kbd>⌘K</kbd> or <kbd>Ctrl+K</kbd> to search</div>
                     </div>
@@ -1335,7 +1183,7 @@
                         </div>
                     </div>
 
-                    <!-- ===== USER DROPDOWN with all variables properly defined ===== -->
+                    <!-- ===== USER DROPDOWN ===== -->
                     @php
                         use App\Models\User as UserModel;
                         use App\Models\Student;
@@ -1417,16 +1265,42 @@
 <button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up fs-3xl"></i></button>
 <div id="preloader"><div id="status"><div class="spinner-border text-primary avatar-sm" role="status"><span class="visually-hidden">Loading...</span></div></div></div>
 
-<!-- SPOTLIGHT MODAL - APPLE STYLE DARK & LARGER -->
-<div id="global-spotlight" class="spotlight-overlay">
-    <div class="spotlight-modal">
-        <div class="spotlight-search-wrap">
-            <i class="mdi mdi-magnify"></i>
-            <input type="text" id="spotlight-input" placeholder="Search everything..." autocomplete="off">
-            <span class="spotlight-close-hint">ESC</span>
+<!-- ========== SPOTLIGHT MODAL - APPLE STYLE DARK & LARGER (Robust) ========== -->
+<div id="spotlight-overlay" style="display:none;position:fixed;inset:0;z-index:1060;align-items:flex-start;justify-content:center;padding-top:12vh;">
+    <div id="spotlight-box" style="width:100%;max-width:720px;margin:0 24px;background:rgba(28,28,30,0.98);border:1px solid rgba(255,255,255,0.12);border-radius:32px;box-shadow:0 32px 80px rgba(0,0,0,0.6),0 0 0 0.5px rgba(255,255,255,0.08);overflow:hidden;backdrop-filter:blur(20px);">
+        <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:0.5px solid rgba(255,255,255,0.1);">
+            <i class="mdi mdi-magnify" style="font-size:28px;color:#4f8ef7;flex-shrink:0;"></i>
+            <input id="spotlight-input" type="text" placeholder="Search everything..." autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;font-size:1.5rem;font-weight:500;color:#fff;caret-color:#4f8ef7;padding:8px 0;">
+            <div style="display:flex;gap:8px;">
+                <button id="spotlight-clear-history" style="display:none;background:rgba(255,255,255,0.08);border:none;border-radius:10px;padding:6px 12px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:500;cursor:pointer;">Clear History</button>
+                <kbd id="spotlight-esc" style="font-size:13px;padding:5px 12px;border-radius:10px;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);cursor:pointer;">ESC</kbd>
+            </div>
         </div>
-        <div id="spotlight-results-container" class="spotlight-results">
-            <div class="spotlight-empty">✨ Type to search across dashboard, users, classes, payments...</div>
+        <div id="spotlight-results" style="max-height:540px;overflow-y:auto;padding:12px 0;">
+            <div id="spotlight-history-section" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 24px 8px;">
+                    <span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.4);">Recent Searches</span>
+                    <button id="spotlight-clear-history-btn" style="background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;">Clear All</button>
+                </div>
+                <div id="spotlight-history-list"></div>
+                <div style="height:1px;background:rgba(255,255,255,0.06);margin:12px 20px;"></div>
+            </div>
+            <div id="spotlight-empty" style="padding:48px 24px;text-align:center;color:rgba(255,255,255,0.35);">
+                <i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:0.4;"></i>
+                <span style="font-size:15px;">Start typing to search…</span>
+                <div style="margin-top:16px;font-size:12px;opacity:0.4;">Popular: Students, Classes, Payments, Exams</div>
+            </div>
+            <ul id="spotlight-list" style="list-style:none;margin:0;padding:0;display:none;"></ul>
+            <div id="spotlight-loading" style="display:none;padding:48px;text-align:center;">
+                <div style="display:inline-block;width:32px;height:32px;border:2px solid rgba(255,255,255,0.15);border-top-color:#4f8ef7;border-radius:50%;animation:loadingSpin 0.7s linear infinite;"></div>
+                <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,0.45);">Searching<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></div>
+            </div>
+        </div>
+        <div style="padding:14px 24px;border-top:0.5px solid rgba(255,255,255,0.07);display:flex;gap:24px;font-size:12px;color:rgba(255,255,255,0.35);flex-wrap:wrap;">
+            <span><kbd style="background:rgba(255,255,255,0.1);border-radius:5px;padding:2px 8px;">⌘K</kbd> / <kbd style="background:rgba(255,255,255,0.1);border-radius:5px;padding:2px 8px;">Ctrl+K</kbd> open</span>
+            <span><kbd style="background:rgba(255,255,255,0.1);border-radius:5px;padding:2px 8px;">↑↓</kbd> navigate</span>
+            <span><kbd style="background:rgba(255,255,255,0.1);border-radius:5px;padding:2px 8px;">↵</kbd> open</span>
+            <span><kbd style="background:rgba(255,255,255,0.1);border-radius:5px;padding:2px 8px;">ESC</kbd> close</span>
         </div>
     </div>
 </div>
@@ -1541,157 +1415,264 @@
     });
 
     // =====================================================
-    // SPOTLIGHT SEARCH - APPLE STYLE DARK & LARGER
+    // SPOTLIGHT SEARCH - ROBUST & APPLE STYLE
     // =====================================================
-    const spotlightOverlay = document.getElementById('global-spotlight');
-    const spotlightInput = document.getElementById('spotlight-input');
-    const resultsContainer = document.getElementById('spotlight-results-container');
-    let currentSelectedIndex = -1;
-    let currentResults = [];
+    (function(){
+        // Static pages database (comprehensive)
+        var STATIC_PAGES = [
+            {title:'Administration Dashboard', url:'{{ route("dashboard") }}', icon:'mdi-gauge', category:'Dashboards'},
+            @can('View user'){title:'User Management', url:'{{ route("users.index") }}', icon:'mdi-account-group', category:'Users & Privileges'},@endcan
+            @can('View role'){title:'Roles', url:'{{ route("roles.index") }}', icon:'mdi-shield-account', category:'Users & Privileges'},@endcan
+            @can('View permission'){title:'Permissions', url:'{{ route("permissions.index") }}', icon:'mdi-lock', category:'Users & Privileges'},@endcan
+            {title:'My Profile', url:'{{ route("users.overview", ["id" => Auth::id()]) }}', icon:'mdi-account-circle', category:'My Account'},
+            {title:'Account Settings', url:'{{ route("profile.settings", ["id" => Auth::id()]) }}', icon:'mdi-cog', category:'My Account'},
+            @can('View student'){title:'All Students', url:'{{ route("student.index") }}', icon:'mdi-school', category:'Students'},@endcan
+            @can('Create student-bulk-upload'){title:'Batch Student Registration', url:'{{ route("studentbatchindex") }}', icon:'mdi-account-multiple-plus', category:'Students'},@endcan
+            @can('View id card'){title:'ID Card Generator', url:'{{ route("student-id-cards.index") }}', icon:'mdi-card-account-details', category:'Students'},@endcan
+            @can('View parent'){title:'All Parents', url:'{{ route("parent.index") }}', icon:'mdi-account-group', category:'Parents'},@endcan
+            @can('View my-class'){title:'My Class', url:'{{ route("myclass.index") }}', icon:'mdi-google-classroom', category:'Classes & Records'},@endcan
+            @can('View my-subject'){title:'My Subject', url:'{{ route("mysubject.index") }}', icon:'mdi-book-open', category:'Classes & Records'},@endcan
+            @can('View myresult-room'){title:'Terminal Records', url:'{{ route("myresultroom.index") }}', icon:'mdi-file-chart', category:'Records & Results'},@endcan
+            @can('View student-report'){title:'Terminal Result Reports', url:'{{ route("studentreports.index") }}', icon:'mdi-file-document', category:'Records & Results'},@endcan
+            @can('View student-report'){title:'Terminal Result Broadsheet', url:'{{ route("broadsheet.index") }}', icon:'mdi-table-large', category:'Records & Results'},@endcan
+            @can('View myresult-room'){title:'Student Promotions', url:'{{ route("promotions.index") }}', icon:'mdi-arrow-up-circle', category:'Promotions'},@endcan
+            @can('View school-payment'){title:'Student Bill', url:'{{ route("schoolpayment.index") }}', icon:'mdi-receipt', category:'Finance'},@endcan
+            @can('View school-payment'){title:'Payment Portal', url:'{{ route("payment.index") }}', icon:'mdi-wallet', category:'Finance'},@endcan
+            @can('View scholarship'){title:'All Scholarships', url:'{{ route("admin.scholarship.index") }}', icon:'mdi-medal', category:'Finance'},@endcan
+            @can('View discount'){title:'All Discounts', url:'{{ route("admin.discount.index") }}', icon:'mdi-tag-multiple', category:'Finance'},@endcan
+            @can('View payroll'){title:'Payroll Periods', url:'{{ route("payroll.periods") }}', icon:'mdi-calendar-clock', category:'Payroll'},@endcan
+            @can('View payroll'){title:'Payroll Summary', url:'{{ route("payroll.summary") }}', icon:'mdi-cash-multiple', category:'Payroll'},@endcan
+            @can('View exam'){title:'All Examinations', url:'{{ route("exams.index") }}', icon:'mdi-clipboard-text', category:'Exams & CBT'},@endcan
+            @can('View cbt-exam'){title:'CBT Exercise', url:'{{ route("cbt.index") }}', icon:'mdi-monitor', category:'Exams & CBT'},@endcan
+            @can('View timetable'){title:'Admin Timetable', url:'{{ route("timetable.index") }}', icon:'mdi-table-clock', category:'Timetable'},@endcan
+            @can('View my timetable'){title:'My Timetable', url:'{{ route("timetable.teacher") }}', icon:'mdi-calendar-clock', category:'Timetable'},@endcan
+            @can('View attendance-register'){title:'Mark Attendance', url:'{{ route("attendance.my-classes") }}', icon:'mdi-clipboard-check', category:'Attendance'},@endcan
+            @can('View financial reports'){title:'Balance Sheet', url:'{{ route("reports.financial.balance-sheet") }}', icon:'mdi-scale-balance', category:'Accounting'},@endcan
+            @can('View financial reports'){title:'Income Statement', url:'{{ route("reports.financial.income-statement") }}', icon:'mdi-chart-line', category:'Accounting'},@endcan
+            @can('View financial reports'){title:'Student Debtors List', url:'{{ route("reports.financial.debtors") }}', icon:'mdi-account-alert', category:'Accounting'},@endcan
+            @can('View student-transcript'){title:'Generate Transcript', url:'{{ route("transcript.index") }}', icon:'mdi-file-account', category:'Transcripts'},@endcan
+            @can('View admin-score-entry'){title:'Admin Score Entry', url:'{{ route("admin.score-entry.index") }}', icon:'mdi-clipboard-edit', category:'Admin Tools'},@endcan
+            @can('View schoolinformation'){title:'School Information', url:'{{ route("school-information.index") }}', icon:'mdi-domain', category:'School Settings'},@endcan
+            @can('View session'){title:'School Session', url:'{{ route("session.index") }}', icon:'mdi-calendar-range', category:'School Settings'},@endcan
+            @can('View term'){title:'School Term', url:'{{ route("term.index") }}', icon:'mdi-calendar', category:'School Settings'},@endcan
+            @can('View schoolhouse'){title:'School House', url:'{{ route("schoolhouse.index") }}', icon:'mdi-home-group', category:'School Settings'},@endcan
+            @can('View subjects'){title:'Subjects', url:'{{ route("subject.index") }}', icon:'mdi-book-open-variant', category:'Subjects'},@endcan
+            @can('View subject-teacher'){title:'Assign Subject Teacher', url:'{{ route("subjectteacher.index") }}', icon:'mdi-account-tie', category:'Subjects'},@endcan
+            @can('View subject-class'){title:'Assign Class Subject', url:'{{ route("subjectclass.index") }}', icon:'mdi-book-plus', category:'Subjects'},@endcan
+            {title:'My Payments', url:'{{ route("student.payments") }}', icon:'mdi-cash-multiple', category:'Student Portal'},
+            @can('View student assessments'){title:'My Assessments', url:'{{ route("assessments") }}', icon:'mdi-graduation-cap', category:'Student Portal'},@endcan
+        ];
 
-    // Predefined navigation links (dynamic based on roles)
-    const baseRoutes = [
-        { title: 'Dashboard', description: 'Administration Analytics', url: '{{ route("dashboard") }}', category: 'Navigation', icon: 'mdi mdi-view-dashboard' },
-        @can('View user'){ title: 'Users', description: 'Manage system users', url: '{{ route("users.index") }}', category: 'Users', icon: 'mdi mdi-account-group' },@endcan
-        { title: 'My Profile', description: 'View your profile', url: '{{ route("users.overview", ["id" => Auth::id()]) }}', category: 'Account', icon: 'mdi mdi-account-circle' },
-        { title: 'Account Settings', description: 'Update account & password', url: '{{ route("profile.settings", ["id" => Auth::id()]) }}', category: 'Account', icon: 'mdi mdi-cog' },
-        @can('View role'){ title: 'Roles', description: 'Manage roles', url: '{{ route("roles.index") }}', category: 'Permissions', icon: 'mdi mdi-shield-account' },@endcan
-        @can('View permission'){ title: 'Permissions', description: 'Access rights', url: '{{ route("permissions.index") }}', category: 'Permissions', icon: 'mdi mdi-lock' },@endcan
-        @can('View student'){ title: 'All Students', description: 'Student management', url: '{{ route("student.index") }}', category: 'Students', icon: 'mdi mdi-school' },@endcan
-        @can('View school-payment'){ title: 'Student Payments', description: 'Bills and payments', url: '{{ route("schoolpayment.index") }}', category: 'Finance', icon: 'mdi mdi-cash' },@endcan
-        @can('View scholarship'){ title: 'Scholarships', description: 'Manage scholarships', url: '{{ route("admin.scholarship.index") }}', category: 'Finance', icon: 'mdi mdi-gift' },@endcan
-        @can('View discount'){ title: 'Discounts', description: 'Discount management', url: '{{ route("admin.discount.index") }}', category: 'Finance', icon: 'mdi mdi-tag' },@endcan
-        @can('View timetable'){ title: 'Timetable', description: 'View timetable', url: '{{ route("timetable.index") }}', category: 'Academics', icon: 'mdi mdi-calendar-clock' },@endcan
-        @can('View exam'){ title: 'Exam Management', description: 'Exams & CBT', url: '{{ route("exams.index") }}', category: 'Exams', icon: 'mdi mdi-clipboard-text' },@endcan
-        @can('View attendance-register'){ title: 'Attendance', description: 'Mark attendance', url: '{{ route("attendance.my-classes") }}', category: 'Attendance', icon: 'mdi mdi-calendar-check' },@endcan
-        @can('View subjects'){ title: 'Subject Vetting', description: 'Terminal subject vettings', url: '{{ route("subjectvetting.index") }}', category: 'Academics', icon: 'mdi mdi-book-open' },@endcan
-        { title: 'My Payments', description: 'View your payments', url: '{{ route("student.payments") }}', category: 'Student Portal', icon: 'mdi mdi-cash-multiple' },
-        @can('View myresult-room'){ title: 'Terminal Records', description: 'View terminal records', url: '{{ route("myresultroom.index") }}', category: 'Records', icon: 'mdi mdi-file-document' },@endcan
-        @can('View student-report'){ title: 'Result Reports', description: 'Student result reports', url: '{{ route("studentreports.index") }}', category: 'Reports', icon: 'mdi mdi-chart-line' },@endcan
-    ];
+        var CAT_COLORS = {
+            'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
+            'School Settings':'#6a0572','Subjects':'#e9c46a','Classes & Records':'#0a9396','Records & Results':'#457b9d',
+            'Promotions':'#2a9d8f','Finance':'#10b981','Payroll':'#e76f51','Exams & CBT':'#f4a261','Timetable':'#4f8ef7',
+            'Attendance':'#e9c46a','Accounting':'#10b981','Transcripts':'#457b9d','Admin Tools':'#ef4444',
+            'Parents':'#6c757d','Student Portal':'#20c997'
+        };
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
+        var HISTORY_KEY = 'spotlight_search_history';
 
-    function renderSpotlightResults(results, searchTerm) {
-        if (!resultsContainer) return;
-        if (!results.length) {
-            resultsContainer.innerHTML = `<div class="spotlight-empty">🔍 No results found for "${escapeHtml(searchTerm)}"</div>`;
-            return;
+        function getHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }catch(e){ return []; } }
+        function saveHistory(h){ localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0,10))); }
+        function addHistory(query, result){
+            if (!query || query.trim().length < 2) return;
+            var h = getHistory();
+            var item = {query:query, url:result.url, title:result.title, icon:result.icon, category:result.category, ts:Date.now()};
+            var idx = h.findIndex(function(x){ return x.query===query && x.url===result.url; });
+            if (idx !== -1) h.splice(idx,1);
+            h.unshift(item);
+            saveHistory(h);
+            renderHistory();
         }
-        let html = '';
-        const grouped = {};
-        results.forEach(r => { if(!grouped[r.category]) grouped[r.category]=[]; grouped[r.category].push(r); });
-        for (let cat in grouped) {
-            html += `<div class="spotlight-section-title">${escapeHtml(cat)}</div>`;
-            grouped[cat].forEach((item, idx) => {
-                const globalIdx = results.findIndex(x=> x.title===item.title && x.url===item.url);
-                const selectedClass = (currentSelectedIndex === globalIdx) ? 'selected' : '';
-                html += `<div class="spotlight-result-item ${selectedClass}" data-url="${escapeHtml(item.url)}" data-index="${globalIdx}">
-                    <div class="spotlight-result-icon"><i class="${item.icon || 'mdi mdi-link-variant'}"></i></div>
-                    <div class="spotlight-result-text">
-                        <div class="spotlight-result-title">${escapeHtml(item.title)}</div>
-                        <div class="spotlight-result-desc">${escapeHtml(item.description)}</div>
-                    </div>
-                </div>`;
+
+        var overlay = document.getElementById('spotlight-overlay');
+        var box = document.getElementById('spotlight-box');
+        var input = document.getElementById('spotlight-input');
+        var emptyEl = document.getElementById('spotlight-empty');
+        var loadEl = document.getElementById('spotlight-loading');
+        var list = document.getElementById('spotlight-list');
+        var trigger = document.getElementById('spotlight-trigger');
+        var escBtn = document.getElementById('spotlight-esc');
+        var histSec = document.getElementById('spotlight-history-section');
+        var histList = document.getElementById('spotlight-history-list');
+        var clearBtn = document.getElementById('spotlight-clear-history-btn');
+        var clearMain = document.getElementById('spotlight-clear-history');
+
+        var timer = null, activeIndex = -1, currentResults = [];
+
+        function open(){
+            if(!overlay) return;
+            overlay.style.display='flex';
+            overlay.style.animation='spotlightOverlayFadeIn 0.25s ease forwards';
+            if(box) box.style.animation='spotlightModalBounceIn 0.35s cubic-bezier(0.34,1.3,0.64,1) forwards';
+            setTimeout(function(){ if(input) input.focus(); },100);
+            renderHistory();
+            if(clearMain) clearMain.style.display = getHistory().length>0?'block':'none';
+        }
+        function close(){
+            if(box) box.style.animation='spotlightModalFadeOut 0.2s ease forwards';
+            if(overlay) overlay.style.animation='spotlightOverlayFadeOut 0.2s ease forwards';
+            setTimeout(function(){
+                if(overlay) overlay.style.display='none';
+                if(input) input.value='';
+                showEmpty();
+            },200);
+        }
+        function showEmpty(){
+            if(emptyEl){ emptyEl.innerHTML='<i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:0.4;"></i><span style="font-size:15px;">Start typing to search…</span><div style="margin-top:16px;font-size:12px;opacity:0.4;">Popular: Students, Classes, Payments, Exams</div>'; emptyEl.style.display='block'; }
+            if(loadEl) loadEl.style.display='none';
+            if(list){ list.style.display='none'; list.innerHTML=''; }
+            if(clearMain) clearMain.style.display = getHistory().length>0?'block':'none';
+            renderHistory();
+            currentResults=[]; activeIndex=-1;
+        }
+        function showLoading(){
+            if(emptyEl) emptyEl.style.display='none';
+            if(loadEl) loadEl.style.display='block';
+            if(list) list.style.display='none';
+            if(histSec) histSec.style.display='none';
+        }
+
+        function renderHistory(){
+            var h = getHistory();
+            if(h.length>0 && (!input||!input.value.trim())){
+                if(histSec) histSec.style.display='block';
+                if(histList) histList.innerHTML='';
+                if(clearMain) clearMain.style.display='block';
+                h.forEach(function(item,idx){
+                    var div=document.createElement('div');
+                    div.className='spotlight-history-item';
+                    div.style.cssText='display:flex;align-items:center;gap:14px;padding:10px 24px;cursor:pointer;transition:background 0.15s;border-radius:10px;margin:0 16px;';
+                    var c=CAT_COLORS[item.category]||'#4f8ef7';
+                    div.innerHTML='<span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:'+c+'22;"><i class="'+(item.icon||'mdi-history')+' mdi" style="font-size:16px;color:'+c+';"></i></span>'
+                        +'<span style="flex:1;min-width:0;"><span style="display:block;font-size:14px;font-weight:500;color:rgba(255,255,255,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(item.title)+'</span><span style="display:block;font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">'+escapeHtml(item.query)+'</span></span>'
+                        +'<button class="hist-remove" style="background:transparent;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:13px;padding:6px 10px;border-radius:6px;">✕</button>';
+                    div.querySelector('.hist-remove').addEventListener('click',function(e){
+                        e.stopPropagation();
+                        var his=getHistory(); his.splice(idx,1); saveHistory(his); renderHistory();
+                        if(!input||!input.value.trim()) showEmpty();
+                    });
+                    div.addEventListener('click',function(){ if(input){ input.value=item.query; performSearch(item.query); } });
+                    if(histList) histList.appendChild(div);
+                });
+            } else {
+                if(histSec) histSec.style.display='none';
+                if(clearMain) clearMain.style.display='none';
+            }
+        }
+
+        function escapeHtml(str){
+            if(!str) return '';
+            return str.replace(/[&<>]/g, function(m){
+                if(m==='&') return '&amp;';
+                if(m==='<') return '&lt;';
+                if(m==='>') return '&gt;';
+                return m;
             });
         }
-        resultsContainer.innerHTML = html;
-        document.querySelectorAll('.spotlight-result-item').forEach(el => {
-            el.addEventListener('click', (e) => {
-                const url = el.getAttribute('data-url');
-                if(url) window.location.href = url;
-                closeSpotlight();
+
+        function performSearch(query){
+            if(!query||!query.trim()){ showEmpty(); return; }
+            showLoading();
+            var sr = searchStatic(query);
+            renderResults(sr);
+            clearTimeout(timer);
+            timer = setTimeout(function(){
+                if(query.length<2) return;
+                fetch('{{ url("/api/search") }}?q='+encodeURIComponent(query)+'&_token={{ csrf_token() }}',{headers:{'Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'}})
+                    .then(function(r){ return r.ok?r.json():{results:[]}; })
+                    .then(function(d){
+                        if(!input||input.value.trim()!==query) return;
+                        var merged=sr.concat(d.results||[]), seen={};
+                        renderResults(merged.filter(function(r){ if(seen[r.url]) return false; seen[r.url]=true; return true; }));
+                    }).catch(function(){});
+            },280);
+        }
+
+        function searchStatic(q){
+            var lq=q.toLowerCase().trim();
+            return STATIC_PAGES.filter(function(p){ return p.title.toLowerCase().includes(lq)||p.category.toLowerCase().includes(lq); }).slice(0,15);
+        }
+
+        function renderResults(results){
+            if(loadEl) loadEl.style.display='none';
+            if(emptyEl) emptyEl.style.display='none';
+            if(list){ list.innerHTML=''; list.style.display='block'; }
+            if(histSec) histSec.style.display='none';
+            activeIndex=-1; currentResults=results;
+
+            if(!results.length){
+                if(emptyEl){ emptyEl.innerHTML='<i class="mdi mdi-magnify-close" style="font-size:42px;display:block;margin-bottom:16px;opacity:0.4;"></i><span style="font-size:15px;">No results for "'+(input?escapeHtml(input.value):'')+'"</span>'; emptyEl.style.display='block'; }
+                if(list) list.style.display='none';
+                return;
+            }
+            var g={};
+            results.forEach(function(r){ if(!g[r.category]) g[r.category]=[]; g[r.category].push(r); });
+            var idx=0;
+            Object.keys(g).forEach(function(cat){
+                var h=document.createElement('li');
+                h.style.cssText='padding:12px 24px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);';
+                h.textContent=cat; list.appendChild(h);
+                g[cat].forEach(function(r,gi){
+                    var li=document.createElement('li');
+                    var isTop=(idx===0&&gi===0);
+                    li.className='spotlight-result-item'+(isTop?' top-match':'');
+                    li.setAttribute('data-idx',idx);
+                    li.style.cssText='display:flex;align-items:center;gap:14px;padding:12px 24px;cursor:pointer;transition:all 0.2s;border-radius:10px;margin:4px 12px;';
+                    var c=CAT_COLORS[r.category]||'#4f8ef7';
+                    li.innerHTML='<span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:'+c+'22;"><i class="'+(r.icon||'mdi-chevron-right')+' mdi" style="font-size:18px;color:'+c+';"></i></span>'
+                        +'<span style="flex:1;min-width:0;"><span class="result-title" style="display:block;font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escapeHtml(r.title)+'</span><span style="display:block;font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">'+escapeHtml(r.category)+'</span></span>'
+                        +'<i class="mdi mdi-arrow-right" style="font-size:16px;color:rgba(255,255,255,0.25);flex-shrink:0;transition:transform 0.2s;"></i>';
+                    li.addEventListener('mouseenter',function(){ li.style.background='rgba(79,142,247,0.12)'; activeIndex=idx; });
+                    li.addEventListener('mouseleave',function(){ li.style.background=activeIndex===idx?'rgba(79,142,247,0.18)':''; });
+                    li.addEventListener('click',function(){ addHistory(input?input.value:'',r); window.location.href=r.url; });
+                    list.appendChild(li); idx++;
+                });
             });
+        }
+
+        // Event listeners
+        if(trigger) trigger.addEventListener('click',open);
+        if(escBtn) escBtn.addEventListener('click',close);
+        if(clearBtn) clearBtn.addEventListener('click',function(){ localStorage.removeItem(HISTORY_KEY); renderHistory(); showEmpty(); });
+        if(clearMain) clearMain.addEventListener('click',function(){ localStorage.removeItem(HISTORY_KEY); renderHistory(); showEmpty(); });
+        if(overlay) overlay.addEventListener('click',function(e){ if(e.target===overlay) close(); });
+
+        document.addEventListener('keydown',function(e){
+            if((e.metaKey||e.ctrlKey)&&e.key==='k'){ e.preventDefault(); overlay&&overlay.style.display==='flex'?close():open(); }
+            if(e.key==='Escape'&&overlay&&overlay.style.display==='flex') close();
         });
-    }
 
-    function filterSpotlight(query) {
-        if (!query.trim()) {
-            currentResults = [];
-            resultsContainer.innerHTML = `<div class="spotlight-empty">✨ Type to search across dashboard, users, classes, payments...</div>`;
-            return;
+        if(input){
+            input.addEventListener('keydown',function(e){
+                var items=list.querySelectorAll('li[data-idx]');
+                if(e.key==='ArrowDown'){ e.preventDefault(); activeIndex=Math.min(activeIndex+1,items.length-1); highlightItem(items); }
+                else if(e.key==='ArrowUp'){ e.preventDefault(); activeIndex=Math.max(activeIndex-1,0); highlightItem(items); }
+                else if(e.key==='Enter'&&activeIndex>=0&&currentResults[activeIndex]){ addHistory(input.value,currentResults[activeIndex]); window.location.href=currentResults[activeIndex].url; }
+            });
+            input.addEventListener('input',function(){
+                var q=this.value.trim();
+                if(!q){ showEmpty(); renderHistory(); if(clearMain) clearMain.style.display=getHistory().length>0?'block':'none'; return; }
+                if(clearMain) clearMain.style.display='none';
+                performSearch(q);
+            });
         }
-        const lowerQuery = query.toLowerCase();
-        const filtered = baseRoutes.filter(item =>
-            item.title.toLowerCase().includes(lowerQuery) ||
-            item.description.toLowerCase().includes(lowerQuery)
-        );
-        currentResults = filtered;
-        currentSelectedIndex = filtered.length > 0 ? 0 : -1;
-        renderSpotlightResults(filtered, query);
-    }
 
-    function openSpotlight() {
-        spotlightOverlay.classList.add('active');
-        spotlightInput.value = '';
-        filterSpotlight('');
-        spotlightInput.focus();
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeSpotlight() {
-        spotlightOverlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    function navigateSelection(delta) {
-        if (!currentResults.length) return;
-        let newIdx = currentSelectedIndex + delta;
-        if (newIdx < 0) newIdx = currentResults.length - 1;
-        if (newIdx >= currentResults.length) newIdx = 0;
-        currentSelectedIndex = newIdx;
-        renderSpotlightResults(currentResults, spotlightInput.value);
-        const selectedEl = document.querySelector('.spotlight-result-item.selected');
-        if(selectedEl) selectedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-
-    function activateCurrent() {
-        if (currentSelectedIndex >= 0 && currentResults[currentSelectedIndex]) {
-            window.location.href = currentResults[currentSelectedIndex].url;
-            closeSpotlight();
+        function highlightItem(items){
+            items.forEach(function(li,i){
+                var active=(i===activeIndex);
+                li.style.background=active?'rgba(79,142,247,0.18)':'';
+                var t=li.querySelector('.result-title');
+                if(t) t.style.color=active?'#4f8ef7':'#fff';
+                var arr=li.querySelector('.mdi-arrow-right');
+                if(arr) arr.style.transform=active?'translateX(6px)':'translateX(0)';
+                if(active) li.scrollIntoView({block:'nearest'});
+            });
         }
-    }
 
-    // Bind spotlight trigger button
-    const triggerBtn = document.getElementById('spotlight-trigger');
-    if (triggerBtn) triggerBtn.addEventListener('click', openSpotlight);
-
-    // Keyboard shortcut (Cmd+K / Ctrl+K)
-    document.addEventListener('keydown', (e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-            e.preventDefault();
-            openSpotlight();
-        }
-        if (e.key === 'Escape' && spotlightOverlay.classList.contains('active')) {
-            e.preventDefault();
-            closeSpotlight();
-        }
-        if (spotlightOverlay.classList.contains('active')) {
-            if (e.key === 'ArrowDown') { e.preventDefault(); navigateSelection(1); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); navigateSelection(-1); }
-            else if (e.key === 'Enter') { e.preventDefault(); activateCurrent(); }
-        }
-    });
-
-    if (spotlightInput) {
-        spotlightInput.addEventListener('input', (e) => filterSpotlight(e.target.value));
-    }
-
-    // Close on overlay background click
-    spotlightOverlay.addEventListener('click', (e) => { if(e.target === spotlightOverlay) closeSpotlight(); });
-
-    // PREVENT MODAL CONFLICT: whenever Bootstrap modal opens, close spotlight
-    document.addEventListener('show.bs.modal', function() {
-        if(spotlightOverlay.classList.contains('active')) closeSpotlight();
-    });
+        renderHistory();
+    })();
 
     // Back to top button
     const backBtn = document.getElementById('back-to-top');
@@ -1703,7 +1684,7 @@
 })();
 </script>
 
-<!-- Route-specific JS includes (same as original) -->
+<!-- Route-specific JS includes -->
 @if (Route::is('dashboard'))             @include('layouts.pages-assets.js.dashboard-list-js') @endif
 @if (Route::is('users.*'))               @include('layouts.pages-assets.js.users-list-js') @endif
 @if (Route::is('student-id-cards.*'))    @include('layouts.pages-assets.js.idcard-list-js') @endif
