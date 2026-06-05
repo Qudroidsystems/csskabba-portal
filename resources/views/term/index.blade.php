@@ -10,6 +10,7 @@
     --term-success: #16a34a;
     --term-warning: #d97706;
     --term-danger:  #dc2626;
+    --term-purple:  #7c3aed;
     --term-muted:   #6b7280;
     --term-border:  #e2e8f0;
     --term-bg:      #f8fafc;
@@ -31,7 +32,7 @@
 .loading-spinner .spinner-border { width: 2.5rem; height: 2.5rem; }
 .loading-spinner p { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--term-primary); }
 
-/* Hero section */
+/* Hero */
 .term-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--term-radius); padding: 24px 32px; margin-bottom: 24px;
@@ -44,58 +45,67 @@
 .term-hero h1 { font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px; position: relative; }
 .term-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
+/* Term cards */
+.term-card {
+    background: #fff; border: 1px solid var(--term-border);
+    border-radius: var(--term-radius); padding: 18px 20px;
+    transition: transform .15s, box-shadow .15s; cursor: pointer;
+}
+.term-card:hover {
+    transform: translateY(-2px); box-shadow: var(--term-shadow);
+}
+.term-card.promotional {
+    border-left: 4px solid var(--term-success);
+    background: linear-gradient(135deg, #f0fdf4, #ffffff);
+}
+.term-card.inactive {
+    opacity: 0.7;
+    background: #f9fafb;
+}
+.term-name {
+    font-size: 16px; font-weight: 700; color: var(--term-primary);
+    margin-bottom: 8px;
+}
+.badge-promotional {
+    background: #16a34a; color: white;
+    font-size: 10px; padding: 4px 8px; border-radius: 20px;
+}
+.badge-inactive {
+    background: #6b7280; color: white;
+    font-size: 10px; padding: 4px 8px; border-radius: 20px;
+}
+.badge-active {
+    background: #2563eb; color: white;
+    font-size: 10px; padding: 4px 8px; border-radius: 20px;
+}
+
 /* Info banner */
-.info-banner {
-    border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;
-    display: flex; align-items: flex-start; gap: 12px; font-size: 13px;
+.promo-banner {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1px solid #bbf7d0; border-radius: 12px;
+    padding: 16px 20px; margin-bottom: 20px;
 }
-.info-banner.success {
-    background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
+.promo-banner-warning {
+    background: linear-gradient(135deg, #fffbeb, #fef9c3);
+    border: 1px solid #fde68a;
 }
-.info-banner.warning {
-    background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
-}
-.info-banner i { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
 
-/* Table styles */
-.term-table th {
-    background: var(--term-bg); color: var(--term-primary);
-    padding: 12px 16px; font-size: 12px; font-weight: 700;
-    border-bottom: 2px solid var(--term-border);
+/* Switch styling */
+.form-check-input.status-toggle,
+.form-check-input.promotional-toggle {
+    width: 3em; height: 1.5em; cursor: pointer;
+    transition: all .3s ease;
 }
-.term-table td {
-    padding: 12px 16px; vertical-align: middle;
-    font-size: 13px; border-bottom: 1px solid var(--term-border);
-}
-.term-table tr:hover td { background: #f0f9ff; }
-
-/* Toggle switches */
-.form-check-input.term-toggle,
-.form-check-input.promo-toggle {
-    width: 3em; height: 1.5em; cursor: pointer; transition: all .3s ease;
-}
-.form-check-input.promo-toggle:checked {
+.form-check-input.promotional-toggle:checked {
     background-color: #198754; border-color: #198754;
 }
-.form-check-input.term-toggle:checked {
+.form-check-input.status-toggle:checked {
     background-color: #198754; border-color: #198754;
 }
 .status-label.active   { color: #198754; font-weight: 500; }
 .status-label.inactive { color: #dc3545; font-weight: 500; }
 
-/* Badge styles */
-.promo-badge-active {
-    background: #f0fdf4; color: #166534;
-    border: 1px solid #bbf7d0; padding: 4px 12px;
-    border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-.promo-badge-inactive {
-    background: #f1f5f9; color: #64748b;
-    border: 1px solid #e2e8f0; padding: 4px 12px;
-    border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-
-/* Modal styles */
+/* Modal styling */
 #addTermModal .modal-content,
 #editModal .modal-content {
     border: none; border-radius: 16px; overflow: hidden;
@@ -112,19 +122,35 @@
 .modal-hero-bar h5 { color: #fff; font-weight: 700; margin: 0; font-size: 15px; position: relative; }
 .modal-hero-bar .btn-close { position: absolute; top: 16px; right: 20px; filter: invert(1); }
 
-.form-label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-.form-control, .form-select {
-    border: 1.5px solid var(--term-border); border-radius: 8px;
-    font-size: 13px; padding: 9px 14px; transition: border .15s;
+/* Table styling */
+.term-table th {
+    background: var(--term-bg); color: var(--term-primary);
+    padding: 12px 16px; font-size: 12px; font-weight: 700;
+    border-bottom: 2px solid var(--term-border);
 }
-.form-control:focus, .form-select:focus {
-    border-color: var(--term-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+.term-table td {
+    padding: 12px 16px; vertical-align: middle;
+    font-size: 13px; border-bottom: 1px solid var(--term-border);
 }
+.term-table tr:hover td { background: #f0f9ff; }
 
-/* Empty state */
-.empty-state { text-align: center; padding: 52px 24px; color: var(--term-muted); }
-.empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
-.empty-state p { margin: 0; font-size: 14px; }
+/* Search box */
+.search-box {
+    position: relative;
+}
+.search-box .form-control {
+    padding-left: 38px;
+    border-radius: 10px;
+    border: 1.5px solid var(--term-border);
+}
+.search-box .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--term-muted);
+    font-size: 16px;
+}
 </style>
 
 <div class="main-content">
@@ -143,578 +169,585 @@
 
     <div class="term-hero">
         <h1><i class="ri-calendar-line me-2"></i>Term Management</h1>
-        <p>Create, manage, and configure academic terms with promotional settings</p>
+        <p>Manage academic terms, set active/inactive status, and define promotional terms for student progression.</p>
     </div>
 
     {{-- Promotional term info banner --}}
     @php $promotionalTerm = $terms->firstWhere('is_promotional', true); @endphp
     @if ($promotionalTerm)
-        <div class="info-banner success">
-            <i class="ri-award-line"></i>
-            <div>
-                <strong>Promotional Term Active:</strong>
-                <span class="fw-semibold">{{ $promotionalTerm->term }}</span>
-                <span class="text-muted ms-2">— Student promotion is evaluated at the end of this term.</span>
+        <div class="promo-banner d-flex align-items-start gap-3">
+            <i class="ri-award-line fs-4 text-success" style="flex-shrink:0"></i>
+            <div class="flex-grow-1">
+                <div class="fw-semibold mb-1" style="color: var(--term-success);">
+                    <i class="ri-star-fill me-1"></i> Promotional Term Active
+                </div>
+                <div>
+                    <strong>{{ $promotionalTerm->term }}</strong> is currently set as the promotional term.
+                    <span class="text-muted ms-2">Student promotion is evaluated at the end of this term.</span>
+                </div>
             </div>
         </div>
     @else
-        <div class="info-banner warning">
-            <i class="ri-alert-line"></i>
-            <div>
-                <strong>No promotional term set.</strong>
-                <span class="text-muted ms-1">Students will show <strong>Awaiting Final Term</strong> on their reports.</span>
+        <div class="promo-banner promo-banner-warning d-flex align-items-start gap-3">
+            <i class="ri-alert-line fs-4 text-warning" style="flex-shrink:0"></i>
+            <div class="flex-grow-1">
+                <div class="fw-semibold mb-1" style="color: var(--term-warning);">
+                    <i class="ri-information-line me-1"></i> No Promotional Term Set
+                </div>
+                <div>
+                    No promotional term is currently selected.
+                    <span class="text-muted">Students will show <strong>Awaiting Final Term</strong> on their reports until a promotional term is designated.</span>
+                </div>
             </div>
         </div>
     @endif
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
-            <div class="flex-grow-1">
-                <div class="search-box" style="max-width: 300px;">
-                    <input type="text" class="form-control search-terms" placeholder="Search terms..." id="searchInput">
-                    <i class="ri-search-line search-icon"></i>
-                </div>
-            </div>
-            <div class="flex-shrink-0">
-                @can('Create term')
-                    <button type="button" class="btn btn-primary add-btn"
-                            data-bs-toggle="modal" data-bs-target="#addTermModal">
-                        <i class="ri-add-line align-baseline me-1"></i> Create Term
-                    </button>
-                @endcan
-            </div>
-        </div>
-
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table term-table mb-0" id="termsTable">
-                    <thead>
-                        <tr>
-                            <th class="w-50px">#</th>
-                            <th>Term Name</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-center">Promotional Term</th>
-                            <th>Date Updated</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="termsTableBody">
-                        @forelse ($terms as $index => $term)
-                            <tr id="term-row-{{ $term->id }}" data-term-name="{{ strtolower($term->term) }}">
-                                <td>{{ $index + 1 }}</td>
-                                <td class="fw-semibold" style="color: var(--term-primary)">{{ $term->term }}</td>
-                                <td class="text-center">
-                                    <div class="form-check form-switch d-inline-block">
-                                        <input type="checkbox"
-                                               class="form-check-input term-toggle"
-                                               data-id="{{ $term->id }}"
-                                               id="status-switch-{{ $term->id }}"
-                                               {{ $term->status ? 'checked' : '' }}>
-                                        <label class="form-check-label ms-1 status-label {{ $term->status ? 'active' : 'inactive' }}"
-                                               for="status-switch-{{ $term->id }}">
-                                            {{ $term->status ? 'Active' : 'Inactive' }}
-                                        </label>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="form-check form-switch d-inline-flex align-items-center gap-2">
-                                        <input type="checkbox"
-                                               class="form-check-input promo-toggle"
-                                               data-id="{{ $term->id }}"
-                                               id="promo-switch-{{ $term->id }}"
-                                               {{ $term->is_promotional ? 'checked' : '' }}>
-                                        <span class="promo-badge-{{ $term->is_promotional ? 'active' : 'inactive' }}" id="promo-badge-{{ $term->id }}">
-                                            <i class="ri-award-line me-1"></i>
-                                            {{ $term->is_promotional ? 'Promotional' : 'Not Promotional' }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="text-muted">{{ $term->updated_at->format('d M Y') }}</td>
-                                <td class="text-center">
-                                    <div class="d-flex gap-2 justify-content-center">
-                                        @can('Update term')
-                                            <button class="btn btn-sm btn-outline-primary edit-term-btn"
-                                                    data-id="{{ $term->id }}"
-                                                    data-term="{{ $term->term }}"
-                                                    data-status="{{ $term->status ? 1 : 0 }}"
-                                                    data-promotional="{{ $term->is_promotional ? 1 : 0 }}">
-                                                <i class="ri-pencil-line"></i>
-                                            </button>
-                                        @endcan
-                                        @can('Delete term')
-                                            <button class="btn btn-sm btn-outline-danger delete-term-btn"
-                                                    data-id="{{ $term->id }}"
-                                                    data-term="{{ $term->term }}">
-                                                <i class="ri-delete-bin-line"></i>
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6">
-                                    <div class="empty-state">
-                                        <i class="ri-inbox-line"></i>
-                                        <p>No terms found. Click "Create Term" to add your first academic term.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        @if($terms->hasPages())
-            <div class="card-footer bg-white border-top">
-                <div class="d-flex justify-content-end">
-                    {{ $terms->links() }}
-                </div>
-            </div>
-        @endif
-    </div>
-
-    {{-- ── ADD TERM MODAL ── --}}
-    <div id="addTermModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-hero-bar">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    <h5><i class="ri-add-circle-line me-2"></i>Create New Term</h5>
-                </div>
-                <form id="addTermForm">
-                    @csrf
-                    <div class="modal-body p-4">
-                        <div class="mb-3">
-                            <label for="term_name" class="form-label">Term Name <span class="text-danger">*</span></label>
-                            <input type="text" name="term" id="term_name" class="form-control"
-                                   placeholder="e.g., First Term, Second Term, Third Term" required>
-                            <div class="invalid-feedback" id="termNameError"></div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input type="checkbox" class="form-check-input" id="add-status-switch" name="status" checked>
-                                <label class="form-check-label" for="add-status-switch">
-                                    <i class="ri-checkbox-circle-line text-success me-1"></i>Active
-                                </label>
-                            </div>
-                            <div class="form-text text-muted">Inactive terms won't be available for selection.</div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input type="checkbox" class="form-check-input" id="add-promo-switch" name="is_promotional">
-                                <label class="form-check-label" for="add-promo-switch">
-                                    <i class="ri-award-line text-warning me-1"></i>Promotional Term
-                                </label>
-                            </div>
-                            <div class="form-text text-muted">If enabled, all other terms will lose their promotional status.</div>
-                        </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-list-check-2 me-2"></i>Academic Terms
+                            <span class="badge bg-primary-subtle text-primary ms-2">{{ count($terms) }}</span>
+                        </h5>
                     </div>
-                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="addTermBtn">
-                            <i class="ri-save-line me-1"></i>Create Term
-                        </button>
+                    <div class="flex-shrink-0">
+                        <div class="search-box me-2" style="display: inline-block;">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search terms..." style="width: 250px;">
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                        @can('Create term')
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTermModal">
+                                <i class="ri-add-line me-1"></i> Create Term
+                            </button>
+                        @endcan
                     </div>
-                </form>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table term-table mb-0" id="termTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px">#</th>
+                                    <th>Term Name</th>
+                                    <th style="width: 120px">Status</th>
+                                    <th style="width: 180px">Promotional Term</th>
+                                    <th style="width: 120px">Date Updated</th>
+                                    <th style="width: 100px">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($terms as $index => $term)
+                                    <tr data-term-id="{{ $term->id }}" data-term-name="{{ strtolower($term->term) }}">
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>
+                                            <div class="fw-semibold" style="color: var(--term-primary);">
+                                                {{ $term->term }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-switch d-inline-block">
+                                                <input type="checkbox"
+                                                       class="form-check-input status-toggle"
+                                                       data-id="{{ $term->id }}"
+                                                       id="status-switch-{{ $term->id }}"
+                                                       {{ $term->status ? 'checked' : '' }}>
+                                                <label class="form-check-label ms-2 status-label {{ $term->status ? 'active' : 'inactive' }}"
+                                                       for="status-switch-{{ $term->id }}">
+                                                    {{ $term->status ? 'Active' : 'Inactive' }}
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-switch d-inline-flex align-items-center gap-2">
+                                                <input type="checkbox"
+                                                       class="form-check-input promotional-toggle"
+                                                       role="switch"
+                                                       data-id="{{ $term->id }}"
+                                                       id="promo-switch-{{ $term->id }}"
+                                                       {{ $term->is_promotional ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="promo-switch-{{ $term->id }}">
+                                                    @if ($term->is_promotional)
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1" id="promo-label-{{ $term->id }}">
+                                                            <i class="ri-award-line me-1"></i>Promotional
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-light text-muted px-3 py-1" id="promo-label-{{ $term->id }}">
+                                                            Not Promotional
+                                                        </span>
+                                                    @endif
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="text-muted">{{ $term->updated_at->format('Y-m-d') }}</td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                @can('Update term')
+                                                    <button class="btn btn-sm btn-outline-primary edit-item-btn"
+                                                            data-id="{{ $term->id }}"
+                                                            data-term="{{ $term->term }}"
+                                                            data-status="{{ $term->status ? 1 : 0 }}"
+                                                            data-is-promotional="{{ $term->is_promotional ? 1 : 0 }}"
+                                                            title="Edit Term">
+                                                        <i class="ri-pencil-line"></i>
+                                                    </button>
+                                                @endcan
+                                                @can('Delete term')
+                                                    <button class="btn btn-sm btn-outline-danger remove-item-btn"
+                                                            data-id="{{ $term->id }}"
+                                                            data-term="{{ $term->term }}"
+                                                            title="Delete Term">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                @endcan
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="empty-state">
+                                                <i class="ri-inbox-line" style="font-size: 48px; opacity: 0.3;"></i>
+                                                <p class="mt-3 text-muted">No terms found.</p>
+                                                <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addTermModal">
+                                                    <i class="ri-add-line me-1"></i>Create your first term
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @if(method_exists($terms, 'links'))
+                    <div class="card-footer bg-white border-top">
+                        {{ $terms->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
+</div>
+</div>
+</div>
 
-    {{-- ── EDIT TERM MODAL ── --}}
-    <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-hero-bar">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    <h5><i class="ri-edit-line me-2"></i>Edit Term</h5>
-                </div>
-                <form id="editTermForm">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" id="edit_id" name="id">
-                    <div class="modal-body p-4">
-                        <div class="mb-3">
-                            <label for="edit_term" class="form-label">Term Name <span class="text-danger">*</span></label>
-                            <input type="text" name="term" id="edit_term" class="form-control" required>
-                            <div class="invalid-feedback" id="editTermNameError"></div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input type="checkbox" class="form-check-input" id="edit-status-switch" name="status">
-                                <label class="form-check-label" for="edit-status-switch">
-                                    <i class="ri-checkbox-circle-line text-success me-1"></i>Active
-                                </label>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input type="checkbox" class="form-check-input" id="edit-promo-switch" name="is_promotional">
-                                <label class="form-check-label" for="edit-promo-switch">
-                                    <i class="ri-award-line text-warning me-1"></i>Promotional Term
-                                </label>
-                            </div>
-                            <div class="form-text text-muted">If enabled, all other terms will lose their promotional status.</div>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="updateTermBtn">
-                            <i class="ri-save-line me-1"></i>Update Term
-                        </button>
-                    </div>
-                </form>
+{{-- ADD TERM MODAL --}}
+<div id="addTermModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-hero-bar">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5><i class="ri-add-circle-line me-2"></i>Create New Term</h5>
             </div>
-        </div>
-    </div>
-
-    {{-- DELETE CONFIRM MODAL --}}
-    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
-            <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
-                <div class="modal-header bg-danger text-white border-0">
-                    <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <form id="addTermForm">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Term Name <span class="text-danger">*</span></label>
+                        <input type="text" name="term" id="term_name" class="form-control"
+                               placeholder="e.g., First Term 2024" required>
+                        <div class="invalid-feedback" id="termNameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="add-status-switch" name="status" checked>
+                            <label class="form-check-label" for="add-status-switch">
+                                <span class="fw-semibold">Active</span>
+                                <small class="text-muted d-block">Active terms will be available for use.</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="add-promo-switch" name="is_promotional">
+                            <label class="form-check-label" for="add-promo-switch">
+                                <span class="fw-semibold">Promotional Term</span>
+                                <small class="text-muted d-block">If enabled, all other terms will lose their promotional status.</small>
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <p class="mb-1">Are you sure you want to delete <strong id="deleteTermName"></strong>?</p>
-                    <p class="text-muted small mb-0">This action cannot be undone.</p>
-                </div>
-                <div class="modal-footer border-0">
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                        <i class="ri-delete-bin-line me-1"></i>Delete
+                    <button type="submit" class="btn btn-primary" id="addBtn">
+                        <i class="ri-save-line me-1"></i>Create Term
                     </button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
+
+{{-- EDIT TERM MODAL --}}
+<div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-hero-bar">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5><i class="ri-edit-circle-line me-2"></i>Edit Term</h5>
+            </div>
+            <form id="editTermForm">
+                @csrf
+                @method('PUT')
+                <div class="modal-body p-4">
+                    <input type="hidden" id="edit-id-field" name="id">
+                    <div class="mb-3">
+                        <label class="form-label">Term Name <span class="text-danger">*</span></label>
+                        <input type="text" name="term" id="edit-term" class="form-control" required>
+                        <div class="invalid-feedback" id="editTermNameError"></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="edit-status-switch" name="status">
+                            <label class="form-check-label" for="edit-status-switch">
+                                <span class="fw-semibold">Active</span>
+                                <small class="text-muted d-block">Active terms will be available for use.</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="edit-promo-switch" name="is_promotional">
+                            <label class="form-check-label" for="edit-promo-switch">
+                                <span class="fw-semibold">Promotional Term</span>
+                                <small class="text-muted d-block">If enabled, all other terms will lose their promotional status.</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="updateBtn">
+                        <i class="ri-save-line me-1"></i>Update Term
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+{{-- DELETE CONFIRM MODAL --}}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-2">Are you sure you want to delete the term: <strong id="deleteTermName"></strong>?</p>
+                <p class="text-muted small mb-0">This action cannot be undone. Associated data may be affected.</p>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="ri-delete-bin-line me-1"></i>Delete Term
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+$(function() {
+    const CSRF = '{{ csrf_token() }}';
     let deleteId = null;
 
-    // Helper to show loading
+    // Helper: Show loading
     function showLoading(show) {
-        document.getElementById('loadingOverlay').classList.toggle('active', show);
+        if (show) {
+            $('#loadingOverlay').addClass('active');
+        } else {
+            $('#loadingOverlay').removeClass('active');
+        }
     }
 
-    // Helper to show SweetAlert
-    function showAlert(icon, title, message = '', timer = 2000) {
+    // Helper: Show SweetAlert toast
+    function showToast(icon, title) {
         Swal.fire({
             icon: icon,
             title: title,
-            text: message,
-            timer: timer,
-            showConfirmButton: timer === 0,
-            confirmButtonColor: '#2563eb'
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
         });
     }
 
-    // ── Search functionality ──
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        const searchTerm = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#termsTableBody tr');
+    // Search functionality
+    $('#searchInput').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        $('#termTable tbody tr').filter(function() {
+            const termName = $(this).find('td:eq(1)').text().toLowerCase();
+            $(this).toggle(termName.indexOf(searchTerm) > -1);
+        });
+    });
 
-        rows.forEach(row => {
-            const termName = row.getAttribute('data-term-name') || '';
-            if (termName.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
+    // Promotional toggle
+    $(document).on('change', '.promotional-toggle', function() {
+        const id = $(this).data('id');
+        const isPromo = $(this).is(':checked');
+        const $toggle = $(this);
+        const $label = $(`#promo-label-${id}`);
+
+        showLoading(true);
+        $toggle.prop('disabled', true);
+
+        $.ajax({
+            url: `/term/${id}/promotional`,
+            method: 'PATCH',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: JSON.stringify({ is_promotional: isPromo ? 1 : 0 }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    if (isPromo) {
+                        // Reset all other toggles
+                        $('.promotional-toggle').not($toggle).each(function() {
+                            const otherId = $(this).data('id');
+                            $(this).prop('checked', false);
+                            $(`#promo-label-${otherId}`)
+                                .removeClass('bg-success-subtle text-success border border-success-subtle')
+                                .addClass('bg-light text-muted')
+                                .html('Not Promotional');
+                        });
+                        // Update current label
+                        $label
+                            .removeClass('bg-light text-muted')
+                            .addClass('bg-success-subtle text-success border border-success-subtle')
+                            .html('<i class="ri-award-line me-1"></i>Promotional');
+                        showToast('success', response.message);
+                    } else {
+                        $label
+                            .removeClass('bg-success-subtle text-success border border-success-subtle')
+                            .addClass('bg-light text-muted')
+                            .html('Not Promotional');
+                        showToast('success', response.message);
+                    }
+                    // Reload to update banner
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    $toggle.prop('checked', !isPromo);
+                    showToast('error', response.message || 'Failed to update promotional term');
+                }
+            },
+            error: function(xhr) {
+                $toggle.prop('checked', !isPromo);
+                const error = xhr.responseJSON?.message || 'An error occurred';
+                showToast('error', error);
+            },
+            complete: function() {
+                showLoading(false);
+                $toggle.prop('disabled', false);
             }
         });
     });
 
-    // ── Status Toggle ──
-    $(document).on('change', '.term-toggle', async function() {
+    // Status toggle
+    $(document).on('change', '.status-toggle', function() {
         const id = $(this).data('id');
         const isActive = $(this).is(':checked');
-        const $toggle = $(this);
-        const $label = $(`label[for="status-switch-${id}"]`);
+        const $label = $(`label[data-id="${id}"]`);
 
-        $toggle.prop('disabled', true);
         showLoading(true);
 
-        try {
-            const response = await fetch(`/term/${id}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ status: isActive ? 1 : 0 }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                // Update label
-                if (isActive) {
-                    $label.text('Active').removeClass('inactive').addClass('active');
-                } else {
-                    $label.text('Inactive').removeClass('active').addClass('inactive');
-                }
-                showAlert('success', 'Updated!', data.message);
-            } else {
-                $toggle.prop('checked', !isActive);
-                showAlert('error', 'Error', data.message || 'Failed to update status');
-            }
-        } catch (error) {
-            $toggle.prop('checked', !isActive);
-            showAlert('error', 'Error', 'An error occurred while updating status');
-        } finally {
-            $toggle.prop('disabled', false);
-            showLoading(false);
-        }
-    });
-
-    // ── Promotional Toggle ──
-    $(document).on('change', '.promo-toggle', async function() {
-        const id = $(this).data('id');
-        const isPromo = $(this).is(':checked');
-        const $toggle = $(this);
-        const $badge = $(`#promo-badge-${id}`);
-
-        $toggle.prop('disabled', true);
-        showLoading(true);
-
-        try {
-            const response = await fetch(`/term/${id}/promotional`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ is_promotional: isPromo ? 1 : 0 }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                // Reset ALL other toggles and badges
-                if (isPromo) {
-                    $('.promo-toggle').not($toggle).each(function() {
-                        const otherId = $(this).data('id');
-                        $(this).prop('checked', false);
-                        $(`#promo-badge-${otherId}`)
-                            .removeClass('promo-badge-active')
-                            .addClass('promo-badge-inactive')
-                            .html('<i class="ri-award-line me-1"></i>Not Promotional');
-                    });
-
-                    // Update info banner
-                    const banner = $('.info-banner');
-                    if (banner.hasClass('warning')) {
-                        location.reload(); // Reload to update banner properly
+        $.ajax({
+            url: `/term/${id}/status`,
+            method: 'PATCH',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: JSON.stringify({ status: isActive ? 1 : 0 }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    const statusText = isActive ? 'Active' : 'Inactive';
+                    showToast('success', `Term ${statusText.toLowerCase()} successfully`);
+                    // Update label class
+                    const $statusLabel = $(`.status-toggle[data-id="${id}"]`).next('.status-label');
+                    if (isActive) {
+                        $statusLabel.removeClass('inactive').addClass('active').text('Active');
+                    } else {
+                        $statusLabel.removeClass('active').addClass('inactive').text('Inactive');
                     }
-                }
-
-                // Update current badge
-                if (isPromo) {
-                    $badge
-                        .removeClass('promo-badge-inactive')
-                        .addClass('promo-badge-active')
-                        .html('<i class="ri-award-line me-1"></i>Promotional');
                 } else {
-                    $badge
-                        .removeClass('promo-badge-active')
-                        .addClass('promo-badge-inactive')
-                        .html('<i class="ri-award-line me-1"></i>Not Promotional');
+                    $(this).prop('checked', !isActive);
+                    showToast('error', response.message || 'Failed to update status');
                 }
-
-                showAlert('success', 'Updated!', data.message);
-            } else {
-                $toggle.prop('checked', !isPromo);
-                showAlert('error', 'Error', data.message || 'Failed to update promotional status');
+            },
+            error: function() {
+                $(this).prop('checked', !isActive);
+                showToast('error', 'An error occurred while updating status');
+            },
+            complete: function() {
+                showLoading(false);
             }
-        } catch (error) {
-            $toggle.prop('checked', !isPromo);
-            showAlert('error', 'Error', 'An error occurred while updating promotional status');
-        } finally {
-            $toggle.prop('disabled', false);
-            showLoading(false);
-        }
+        });
     });
 
-    // ── Edit button: pre-fill modal ──
-    $(document).on('click', '.edit-term-btn', function() {
+    // Edit button click
+    $(document).on('click', '.edit-item-btn', function() {
         const id = $(this).data('id');
         const term = $(this).data('term');
         const status = $(this).data('status');
-        const promotional = $(this).data('promotional');
+        const isPromo = $(this).data('is-promotional');
 
-        $('#edit_id').val(id);
-        $('#edit_term').val(term);
+        $('#edit-id-field').val(id);
+        $('#edit-term').val(term);
         $('#edit-status-switch').prop('checked', status == 1);
-        $('#edit-promo-switch').prop('checked', promotional == 1);
-        $('#editTermNameError').addClass('d-none').text('');
+        $('#edit-promo-switch').prop('checked', isPromo == 1);
         $('#editModal').modal('show');
     });
 
-    // ── Add form submit ──
-    $('#addTermForm').on('submit', async function(e) {
+    // Delete button click
+    $(document).on('click', '.remove-item-btn', function() {
+        deleteId = $(this).data('id');
+        const termName = $(this).data('term');
+        $('#deleteTermName').text(termName);
+        $('#deleteModal').modal('show');
+    });
+
+    // Confirm delete
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!deleteId) return;
+
+        showLoading(true);
+        const btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
+
+        $.ajax({
+            url: `/term/${deleteId}`,
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Term deleted successfully');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('error', response.message || 'Failed to delete term');
+                    $('#deleteModal').modal('hide');
+                }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.message || 'An error occurred';
+                showToast('error', error);
+                $('#deleteModal').modal('hide');
+            },
+            complete: function() {
+                showLoading(false);
+                btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete Term');
+                deleteId = null;
+            }
+        });
+    });
+
+    // Add term form submit
+    $('#addTermForm').on('submit', function(e) {
         e.preventDefault();
 
         const termName = $('#term_name').val().trim();
         if (!termName) {
-            $('#termNameError').text('Term name is required').show();
+            $('#term_name').addClass('is-invalid');
+            $('#termNameError').text('Term name is required');
             return;
         }
 
-        const btn = $('#addTermBtn');
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creating...');
+        $('#term_name').removeClass('is-invalid');
         showLoading(true);
 
-        try {
-            const response = await fetch('{{ route("term.store") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    term: termName,
-                    status: $('#add-status-switch').is(':checked') ? 1 : 0,
-                    is_promotional: $('#add-promo-switch').is(':checked') ? 1 : 0,
-                }),
-            });
+        const formData = {
+            term: termName,
+            status: $('#add-status-switch').is(':checked') ? 1 : 0,
+            is_promotional: $('#add-promo-switch').is(':checked') ? 1 : 0
+        };
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                showAlert('success', 'Created!', data.message, 1500);
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                if (data.errors && data.errors.term) {
-                    $('#termNameError').text(data.errors.term[0]).show();
+        $.ajax({
+            url: '{{ route("term.store") }}',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Term created successfully');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    showAlert('error', 'Error', data.message || 'Failed to create term');
+                    showToast('error', response.message || 'Failed to create term');
                 }
+            },
+            error: function(xhr) {
+                let errorMsg = 'An error occurred';
+                if (xhr.responseJSON?.errors?.term) {
+                    errorMsg = xhr.responseJSON.errors.term[0];
+                } else if (xhr.responseJSON?.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                $('#term_name').addClass('is-invalid');
+                $('#termNameError').text(errorMsg);
+                showToast('error', errorMsg);
+            },
+            complete: function() {
+                showLoading(false);
             }
-        } catch (error) {
-            showAlert('error', 'Error', 'An error occurred while creating the term');
-        } finally {
-            btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Create Term');
-            showLoading(false);
-        }
+        });
     });
 
-    // ── Edit form submit ──
-    $('#editTermForm').on('submit', async function(e) {
+    // Edit term form submit
+    $('#editTermForm').on('submit', function(e) {
         e.preventDefault();
 
-        const id = $('#edit_id').val();
-        const termName = $('#edit_term').val().trim();
+        const id = $('#edit-id-field').val();
+        const termName = $('#edit-term').val().trim();
 
         if (!termName) {
-            $('#editTermNameError').text('Term name is required').show();
+            $('#edit-term').addClass('is-invalid');
+            $('#editTermNameError').text('Term name is required');
             return;
         }
 
-        const btn = $('#updateTermBtn');
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Updating...');
+        $('#edit-term').removeClass('is-invalid');
         showLoading(true);
 
-        try {
-            const response = await fetch(`/term/${id}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    _method: 'PUT',
-                    term: termName,
-                    status: $('#edit-status-switch').is(':checked') ? 1 : 0,
-                    is_promotional: $('#edit-promo-switch').is(':checked') ? 1 : 0,
-                }),
-            });
+        const formData = {
+            term: termName,
+            status: $('#edit-status-switch').is(':checked') ? 1 : 0,
+            is_promotional: $('#edit-promo-switch').is(':checked') ? 1 : 0
+        };
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                showAlert('success', 'Updated!', data.message, 1500);
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                if (data.errors && data.errors.term) {
-                    $('#editTermNameError').text(data.errors.term[0]).show();
+        $.ajax({
+            url: `/term/${id}`,
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': CSRF,
+                'X-HTTP-Method-Override': 'PUT'
+            },
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Term updated successfully');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    showAlert('error', 'Error', data.message || 'Failed to update term');
+                    showToast('error', response.message || 'Failed to update term');
                 }
+            },
+            error: function(xhr) {
+                let errorMsg = 'An error occurred';
+                if (xhr.responseJSON?.errors?.term) {
+                    errorMsg = xhr.responseJSON.errors.term[0];
+                } else if (xhr.responseJSON?.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                $('#edit-term').addClass('is-invalid');
+                $('#editTermNameError').text(errorMsg);
+                showToast('error', errorMsg);
+            },
+            complete: function() {
+                showLoading(false);
             }
-        } catch (error) {
-            showAlert('error', 'Error', 'An error occurred while updating the term');
-        } finally {
-            btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Update Term');
-            showLoading(false);
-        }
-    });
-
-    // ── Delete button click ──
-    $(document).on('click', '.delete-term-btn', function() {
-        deleteId = $(this).data('id');
-        const termName = $(this).data('term');
-        $('#deleteTermName').text(termName);
-        $('#confirmDeleteModal').modal('show');
-    });
-
-    // ── Confirm Delete ──
-    $('#confirmDeleteBtn').on('click', async function() {
-        if (!deleteId) return;
-
-        const btn = $(this);
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
-        showLoading(true);
-
-        try {
-            const response = await fetch(`/term/${deleteId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Accept': 'application/json',
-                },
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                $('#confirmDeleteModal').modal('hide');
-                showAlert('success', 'Deleted!', data.message, 1500);
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showAlert('error', 'Error', data.message || 'Failed to delete term');
-            }
-        } catch (error) {
-            showAlert('error', 'Error', 'An error occurred while deleting the term');
-        } finally {
-            btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete');
-            showLoading(false);
-            deleteId = null;
-        }
-    });
-
-    // Clear validation errors when modals are closed
-    $('#addTermModal').on('hidden.bs.modal', function() {
-        $('#termNameError').addClass('d-none').text('');
-        $('#term_name').val('');
-        $('#add-status-switch').prop('checked', true);
-        $('#add-promo-switch').prop('checked', false);
-    });
-
-    $('#editModal').on('hidden.bs.modal', function() {
-        $('#editTermNameError').addClass('d-none').text('');
+        });
     });
 });
 </script>
