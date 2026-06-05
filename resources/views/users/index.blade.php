@@ -1530,7 +1530,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             });
         }
 
-        // ── Mass Student Modal Logic with WORKING PHOTOS ─────────────────────────────────
+        // ── Mass Student Modal Logic with LARGER PRINT SLIPS (6 per page) ─────────────────────────────────
         let selectedStudents = [];
         let allStudents = [];
         let currentResults = null;
@@ -1548,7 +1548,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             return has ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>' : '<span class="msm-badge-none"><i class="bi bi-circle me-1"></i>No Account</span>';
         }
 
-        // Helper to get student photo URL - matches your schoolpayment blade
+        // Helper to get student photo URL
         function getStudentPhotoUrl(student) {
             if (student.photo_url) return student.photo_url;
             if (student.picture && student.picture !== 'unnamed.jpg' && student.picture !== '') {
@@ -1586,7 +1586,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             if (classId) url += `&class_id=${classId}`;
             if (status !== 'all') url += `&has_account=${status}`;
             fetch(url).then(r => r.json()).then(data => {
-                if (!data.success) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.</td></tr>'; return; }
+                if (!data.success) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.小说网</td>'; return; }
                 allStudents = data.students.map(s => ({
                     ...s,
                     generatedEmail: genEmail(s.firstname, s.lastname),
@@ -1605,13 +1605,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     }
                     classFilter.innerHTML = html;
                 }
-            }).catch(() => { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.</td></tr>'; });
+            }).catch(() => { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.小说网</td>'; });
         }
 
         function renderStudentTable(students) {
             const tbody = document.getElementById('massStudentList');
             if (!tbody) return;
-            if (!students.length) { tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell">No students found.</td></tr>'; updateSelectedCount(); return; }
+            if (!students.length) { tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell">No students found.小说网</td>'; updateSelectedCount(); return; }
             let html = '';
             students.forEach(s => {
                 const checked = selectedStudents.some(x => x.id === s.id) ? 'checked' : '';
@@ -1753,7 +1753,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <p class="mb-0 text-muted">${escHtml(data.message)}</p>
             </div>`;
             if (data.created?.length) html += mkTable('Created Accounts', data.created, 'success', 'person-plus-fill', ['Name', 'Username', 'Email', 'Password', 'Admission No', 'Class'],
-                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></td>`);
+                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></table>`);
             if (data.reset?.length) html += mkTable('Password Resets', data.reset, 'warning', 'key-fill', ['Name', 'Username', 'Email', 'New Password', 'Admission No', 'Class'],
                 r => `<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td><code class="text-warning fw-bold">${escHtml(r.password)}</code></td><td>${escHtml(r.admissionNo || 'N/A')}</td><td>${escHtml(r.class_name || '')}</td></tr>`);
             if (data.revoked?.length) { html += `<div class="mt-3 p-3 border rounded-3"><strong><i class="bi bi-person-x-fill text-danger me-2"></i>Revoked (${data.revoked.length})</strong><ul class="mt-2 mb-0">`; data.revoked.forEach(r => { html += `<li>${escHtml(r.name)} (${escHtml(r.admissionNo || 'N/A')}) — account removed</li>`; }); html += '</ul></div>'; }
@@ -1769,7 +1769,9 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <div class="table-responsive mt-2"><table class="table table-sm table-bordered msm-table"><thead class="table-${color}"><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(rowFn).join('')}</tbody></table></div></div>`;
         }
 
-        // Print with photos - 9 per page
+        // ============================================================
+        // PRINT WITH LARGER, BOLDER SLIPS - 6 PER PAGE (3x2)
+        // ============================================================
         document.getElementById('printResults')?.addEventListener('click', () => {
             if (!currentResults) return;
             const school = document.querySelector('meta[name="school-name"]')?.content || 'CSS Kabba';
@@ -1793,18 +1795,19 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 return { ...cred, photo_url: photoUrl, initials: initials, name: studentName };
             });
 
+            // Generate larger, bolder slips
             const slips = credsWithPhotos.map(s => {
                 const isReset = s.type === 'reset';
                 const tag = isReset ? 'RESET' : 'NEW';
                 const tagColor = isReset ? '#d97706' : '#16a34a';
                 const initialsVal = (s.initials || 'ST').substring(0, 2);
 
-                // Build photo HTML with working image path
+                // Build larger photo HTML
                 let photoHtml = '';
                 if (s.photo_url && s.photo_url !== '' && s.photo_url !== 'null') {
-                    photoHtml = `<div class="slip-photo"><img src="${s.photo_url}" alt="Photo" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'slip-photo-fallback\\' style=\\'background: linear-gradient(135deg, #667eea, #764ba2);\\'>${escHtml(initialsVal)}</div>'"></div>`;
+                    photoHtml = `<div class="slip-photo"><img src="${s.photo_url}" alt="Photo" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'slip-photo-fallback\\'>${escHtml(initialsVal)}</div>'"></div>`;
                 } else {
-                    photoHtml = `<div class="slip-photo"><div class="slip-photo-fallback" style="background: linear-gradient(135deg, #667eea, #764ba2);">${escHtml(initialsVal)}</div></div>`;
+                    photoHtml = `<div class="slip-photo"><div class="slip-photo-fallback">${escHtml(initialsVal)}</div></div>`;
                 }
 
                 return `<div class="print-slip">
@@ -1830,65 +1833,224 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 </div>`;
             });
 
-            const perPage = 9;
+            // 6 slips per page (3 columns x 2 rows) - fewer per page = larger cards
+            const perPage = 6;
             const pages = [];
-            for (let i = 0; i < slips.length; i += perPage) pages.push(slips.slice(i, i + perPage));
+            for (let i = 0; i < slips.length; i += perPage) {
+                pages.push(slips.slice(i, i + perPage));
+            }
 
             const printWin = window.open('', '_blank');
             printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student Credentials — ${today}</title>
             <style>
                 * { margin:0; padding:0; box-sizing:border-box; }
-                body { font-family: 'Segoe UI', Arial, sans-serif; background:#fff; font-size:12px; }
+                body { font-family: 'Segoe UI', 'Roboto', Arial, sans-serif; background:#fff; font-size:14px; }
+
+                /* Cover page */
                 .cover-page { text-align:center; padding:40px 20px; page-break-after:always; break-after:page; display:flex; flex-direction:column; justify-content:center; min-height:100vh; }
-                .cover-school { font-size:28px; font-weight:800; color:#1e3a5f; margin-bottom:16px; }
-                .cover-title { font-size:22px; font-weight:600; color:#2563eb; margin-bottom:12px; }
-                .cover-date { font-size:14px; color:#64748b; margin-bottom:40px; }
-                .cover-stats { display:flex; justify-content:center; gap:30px; margin-top:40px; flex-wrap:wrap; }
-                .cover-stat { background:#f8fafc; border-radius:16px; padding:20px 30px; min-width:150px; }
-                .cover-stat-number { font-size:36px; font-weight:800; color:#1e3a5f; }
-                .cover-stat-label { font-size:12px; color:#64748b; margin-top:5px; }
-                .cover-footer { margin-top:60px; font-size:11px; color:#94a3b8; }
-                .slips-page { page-break-after:always; break-after:page; padding:12px; }
-                .slips-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
-                .print-slip { border:2px solid #cbd5e1; border-radius:12px; padding:12px; background:#fff; break-inside:avoid; page-break-inside:avoid; position:relative; }
-                .print-slip::after { content:'✂'; position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); font-size:10px; color:#94a3b8; background:#fff; padding:0 6px; font-family:monospace; }
-                .slip-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:6px; border-bottom:2px dashed #e2e8f0; }
-                .slip-tag { font-size:9px; font-weight:800; color:#fff; padding:2px 8px; border-radius:20px; }
-                .slip-school { font-size:9px; font-weight:700; color:#1e3a5f; text-transform:uppercase; }
-                .slip-content { display:flex; gap:12px; margin-bottom:8px; }
-                .slip-photo { flex-shrink:0; width:70px; height:70px; border-radius:12px; overflow:hidden; background:#f1f5f9; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0; }
-                .slip-photo img { width:100%; height:100%; object-fit:cover; }
-                .slip-photo-fallback { font-size:28px; font-weight:700; display:flex; align-items:center; justify-content:center; width:100%; height:100%; color:white; }
+                .cover-school { font-size:32px; font-weight:800; color:#1e3a5f; margin-bottom:20px; letter-spacing:-0.5px; }
+                .cover-title { font-size:26px; font-weight:700; color:#2563eb; margin-bottom:15px; }
+                .cover-date { font-size:16px; color:#64748b; margin-bottom:50px; }
+                .cover-stats { display:flex; justify-content:center; gap:40px; margin-top:50px; flex-wrap:wrap; }
+                .cover-stat { background:#f8fafc; border-radius:20px; padding:25px 35px; min-width:180px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+                .cover-stat-number { font-size:44px; font-weight:800; color:#1e3a5f; }
+                .cover-stat-label { font-size:13px; color:#64748b; margin-top:8px; letter-spacing:0.5px; text-transform:uppercase; font-weight:600; }
+                .cover-footer { margin-top:70px; font-size:12px; color:#94a3b8; }
+
+                /* Slips page - 3x2 grid = 6 large slips per page */
+                .slips-page { page-break-after:always; break-after:page; padding:15px; }
+                .slips-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+
+                /* Individual slip - LARGER AND BOLDER */
+                .print-slip {
+                    border:2px solid #cbd5e1;
+                    border-radius:16px;
+                    padding:18px;
+                    background:#fff;
+                    break-inside:avoid;
+                    page-break-inside:avoid;
+                    position:relative;
+                    box-shadow:0 2px 6px rgba(0,0,0,0.08);
+                }
+                .print-slip::after {
+                    content:'✂';
+                    position:absolute;
+                    bottom:-12px;
+                    left:50%;
+                    transform:translateX(-50%);
+                    font-size:12px;
+                    font-weight:bold;
+                    color:#94a3b8;
+                    background:#fff;
+                    padding:0 8px;
+                    font-family:monospace;
+                }
+                .slip-header {
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    margin-bottom:14px;
+                    padding-bottom:8px;
+                    border-bottom:2px dashed #e2e8f0;
+                }
+                .slip-tag {
+                    font-size:11px;
+                    font-weight:800;
+                    color:#fff;
+                    padding:4px 12px;
+                    border-radius:25px;
+                    letter-spacing:1px;
+                }
+                .slip-school {
+                    font-size:11px;
+                    font-weight:700;
+                    color:#1e3a5f;
+                    text-transform:uppercase;
+                }
+                .slip-content {
+                    display:flex;
+                    gap:16px;
+                    margin-bottom:12px;
+                }
+                .slip-photo {
+                    flex-shrink:0;
+                    width:85px;
+                    height:85px;
+                    border-radius:50%;
+                    overflow:hidden;
+                    background:#f1f5f9;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    border:2px solid #e2e8f0;
+                }
+                .slip-photo img {
+                    width:100%;
+                    height:100%;
+                    object-fit:cover;
+                }
+                .slip-photo-fallback {
+                    font-size:36px;
+                    font-weight:700;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    width:100%;
+                    height:100%;
+                    background:linear-gradient(135deg, #667eea, #764ba2);
+                    color:white;
+                }
                 .slip-info { flex:1; }
-                .slip-name { font-size:14px; font-weight:800; color:#0f172a; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; }
-                .slip-detail { display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; }
-                .detail-label { font-weight:700; color:#64748b; text-transform:uppercase; font-size:8px; letter-spacing:.5px; }
-                .detail-value { font-weight:500; color:#1e293b; text-align:right; word-break:break-word; }
-                .mono { font-family:'Courier New',monospace; font-size:9px; }
-                .slip-password { background:linear-gradient(135deg,#f0f9ff,#eff6ff); border:2px solid #bfdbfe; border-radius:8px; padding:6px 8px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px; }
-                .pwd-label { font-size:8px; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:1px; }
-                .pwd-value { font-family:'Courier New',monospace; font-size:13px; font-weight:900; color:#1e40af; letter-spacing:1px; word-break:break-all; text-align:right; }
-                .slip-footer { margin-top:8px; padding-top:6px; border-top:1px dashed #e2e8f0; font-size:7px; color:#94a3b8; text-align:center; }
-                .page-cut-row { text-align:center; margin:8px 0 4px; font-family:monospace; font-size:9px; color:#cbd5e1; letter-spacing:3px; }
+                .slip-name {
+                    font-size:18px;
+                    font-weight:800;
+                    color:#0f172a;
+                    margin-bottom:12px;
+                    border-bottom:1.5px solid #e2e8f0;
+                    padding-bottom:6px;
+                }
+                .slip-detail {
+                    display:flex;
+                    justify-content:space-between;
+                    margin-bottom:8px;
+                    font-size:12px;
+                }
+                .detail-label {
+                    font-weight:800;
+                    color:#64748b;
+                    text-transform:uppercase;
+                    font-size:10px;
+                    letter-spacing:0.5px;
+                }
+                .detail-value {
+                    font-weight:600;
+                    color:#1e293b;
+                    text-align:right;
+                    word-break:break-word;
+                }
+                .mono { font-family:'Courier New', monospace; font-size:11px; font-weight:600; }
+                .slip-password {
+                    background:linear-gradient(135deg,#f0f9ff,#eff6ff);
+                    border:2px solid #bfdbfe;
+                    border-radius:12px;
+                    padding:10px 12px;
+                    margin-top:12px;
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    flex-wrap:wrap;
+                    gap:6px;
+                }
+                .pwd-label {
+                    font-size:10px;
+                    font-weight:800;
+                    color:#1e40af;
+                    text-transform:uppercase;
+                    letter-spacing:1px;
+                }
+                .pwd-value {
+                    font-family:'Courier New', monospace;
+                    font-size:18px;
+                    font-weight:900;
+                    color:#1e40af;
+                    letter-spacing:1.5px;
+                    word-break:break-all;
+                    text-align:right;
+                }
+                .slip-footer {
+                    margin-top:12px;
+                    padding-top:8px;
+                    border-top:1px dashed #e2e8f0;
+                    font-size:9px;
+                    font-weight:500;
+                    color:#94a3b8;
+                    text-align:center;
+                }
+
+                /* Cut line between pages */
+                .page-cut-row {
+                    text-align:center;
+                    margin:10px 0 5px;
+                    font-family:monospace;
+                    font-size:11px;
+                    font-weight:bold;
+                    color:#cbd5e1;
+                    letter-spacing:4px;
+                }
                 .slips-page:last-child { page-break-after:auto; break-after:auto; }
+
                 @media print {
-                    .cover-page { padding:30px; }
-                    .slips-page { padding:8px; }
-                    .slips-grid { gap:10px; }
+                    .cover-page { padding:25px; }
+                    .slips-page { padding:10px; }
+                    .slips-grid { gap:12px; }
                     .print-slip { border:1.5px solid #cbd5e1; break-inside:avoid; page-break-inside:avoid; }
                     .print-slip::after { display:none; }
                     .slip-photo img, .slip-photo-fallback { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                     .slip-password { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                 }
             </style></head><body>
-            <div class="cover-page"><div class="cover-school">${escHtml(school)}</div><div class="cover-title">Student Portal Credentials</div><div class="cover-date">Printed: ${today}</div>
-            <div class="cover-stats"><div class="cover-stat"><div class="cover-stat-number">${allCreds.length}</div><div class="cover-stat-label">Total Slips</div></div>
-            <div class="cover-stat"><div class="cover-stat-number">${currentResults.created?.length || 0}</div><div class="cover-stat-label">New Accounts</div></div>
-            <div class="cover-stat"><div class="cover-stat-number">${currentResults.reset?.length || 0}</div><div class="cover-stat-label">Password Resets</div></div>
-            <div class="cover-stat"><div class="cover-stat-number">${currentResults.skipped?.length || 0}</div><div class="cover-stat-label">Skipped</div></div></div>
-            <div class="cover-footer">✂ Cut along the dotted lines between slips | Keep credentials secure</div></div>
-            ${pages.map((pageSlips, pageIndex) => `<div class="slips-page"><div class="slips-grid">${pageSlips.join('')}</div>${pageIndex < pages.length - 1 ? '<div class="page-cut-row">·················· CUT HERE ··················</div>' : ''}</div>`).join('')}
-            <script>window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close();},1500);},500);};<\/script></body></html>`);
+            <div class="cover-page">
+                <div class="cover-school">${escHtml(school)}</div>
+                <div class="cover-title">🎓 Student Portal Credentials</div>
+                <div class="cover-date">Printed: ${today}</div>
+                <div class="cover-stats">
+                    <div class="cover-stat"><div class="cover-stat-number">${allCreds.length}</div><div class="cover-stat-label">Total Slips</div></div>
+                    <div class="cover-stat"><div class="cover-stat-number">${currentResults.created?.length || 0}</div><div class="cover-stat-label">New Accounts</div></div>
+                    <div class="cover-stat"><div class="cover-stat-number">${currentResults.reset?.length || 0}</div><div class="cover-stat-label">Password Resets</div></div>
+                    <div class="cover-stat"><div class="cover-stat-number">${currentResults.skipped?.length || 0}</div><div class="cover-stat-label">Skipped</div></div>
+                </div>
+                <div class="cover-footer">✂ Cut along the dotted lines between slips | Keep credentials secure</div>
+            </div>
+            ${pages.map((pageSlips, pageIndex) => `
+            <div class="slips-page">
+                <div class="slips-grid">
+                    ${pageSlips.map(slip => slip).join('')}
+                </div>
+                ${pageIndex < pages.length - 1 ? '<div class="page-cut-row">·················· CUT HERE ··················</div>' : ''}
+            </div>
+            `).join('')}
+            <script>window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close();},1500);},500);};<\/script>
+            </body></html>`);
             printWin.document.close();
         });
 
