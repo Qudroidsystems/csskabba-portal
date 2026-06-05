@@ -12,7 +12,7 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11px;           /* ↑ was 9.5px */
+            font-size: 11px;
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
@@ -42,7 +42,7 @@
             width: 100%;
             background: #111827;
             color: white;
-            padding: 7px 10px 5px 10px;   /* tightened slightly */
+            padding: 7px 10px 5px 10px;
             border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
@@ -50,7 +50,7 @@
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 20px;               /* unchanged – already prominent */
+            font-size: 20px;
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -58,27 +58,23 @@
         }
 
         .school-name-header .motto {
-            font-size: 10.5px;             /* ↑ was 9.8px */
+            font-size: 10.5px;
             font-weight: 700;
             letter-spacing: 2px;
             opacity: 0.95;
             margin-top: 2px;
         }
 
-        /*
-         * KEY CHANGE: each student card must sit on exactly ONE printed page.
-         * A4 is ~297 mm tall; with 2mm body padding top & bottom the card gets
-         * ~293 mm.  We set height + overflow hidden so nothing spills.
-         */
+        /* One card per printed page — content height is natural, page-break handles pagination */
         .student-section {
             width: 190mm;
-            height: 277mm;               /* fits comfortably on A4 with margins */
-            overflow: hidden;            /* prevent content from bleeding to next page */
             page-break-after: always;
             page-break-inside: avoid;
+            break-after: page;
+            break-inside: avoid;
             background: #ffffff;
             border: 3px double #000000;
-            margin: 0 auto 8px auto;
+            margin: 0 auto;
             position: relative;
             text-align: left;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -91,12 +87,13 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            padding: 3px 7px 3px 7px;    /* slightly reduced */
+            padding: 3px 7px 3px 7px;
         }
 
-        .school-logo, .photo-frame {
-            width: 60px;
-            height: 66px;
+        /* School logo — contain image with padding */
+        .school-logo {
+            width: 68px;
+            height: 76px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
@@ -106,10 +103,31 @@
             text-align: center;
         }
 
-        .school-logo img, .photo-frame img {
+        .school-logo img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+        }
+
+        /* Photo frame — image covers the full frame, no gaps */
+        .photo-frame {
+            width: 68px;
+            height: 76px;
+            border: 2px solid #47b492;
+            border-radius: 6px;
+            background: #e2e8f0;
+            padding: 0;
+            overflow: hidden;
+            display: block;
+            margin-left: auto;   /* push to right within td */
+            margin-right: 4px;   /* small gap from card border */
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .header-divider  { height: 2px; background: #1e40af; width: 100%; }
@@ -119,7 +137,7 @@
             background: #111827;
             color: white;
             padding: 5px 8px;
-            font-size: 12px;             /* ↑ was 11.5px */
+            font-size: 12px;
             font-weight: 700;
             text-align: center;
         }
@@ -130,14 +148,14 @@
             border-radius: 6px;
             padding: 5px 10px;
             margin: 5px 8px;
-            font-size: 10px;             /* ↑ was 9.2px */
+            font-size: 10px;
             text-align: center;
         }
 
         .info-table { width: 100%; margin: 0 auto; }
         .info-table td { padding: 2px 6px; text-align: center; }
-        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 9.5px; white-space: nowrap; }  /* ↑ was 8.6px */
-        .info-bar-value { font-weight: 900; font-size: 10.5px; padding-left: 3px; }                   /* ↑ was 9.4px */
+        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 9.5px; white-space: nowrap; }
+        .info-bar-value { font-weight: 900; font-size: 10.5px; padding-left: 3px; }
 
         .result-table { padding: 0 8px; margin: 5px 0; }
 
@@ -145,7 +163,7 @@
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 9px;              /* ↑ was 7.8px */
+            font-size: 9px;
             margin: 0;
         }
 
@@ -155,7 +173,7 @@
             font-weight: 800;
             border: 1px solid #000000;
             padding: 3px 2px;
-            font-size: 8.2px;            /* ↑ was 6.9px */
+            font-size: 8.2px;
             text-align: center;
             line-height: 1.2;
         }
@@ -164,7 +182,7 @@
             border: 1px solid #000000;
             padding: 2px 2px;
             text-align: center;
-            font-size: 9px;              /* ↑ was 8px */
+            font-size: 9px;
             background: white;
             font-weight: 800;
             height: 15px;
@@ -174,7 +192,7 @@
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 800;
-            font-size: 9px;              /* ↑ was 8px */
+            font-size: 9px;
             padding-left: 6px;
         }
 
@@ -197,7 +215,7 @@
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 9px;              /* ↑ was 7.9px */
+            font-size: 9px;
             padding: 4px 8px;
             border: 2px solid #000000;
             border-top: none;
@@ -224,7 +242,7 @@
         .attendance-box-header {
             background: #0d9488;
             color: #ffffff;
-            font-size: 9px;              /* ↑ was 8.5px */
+            font-size: 9px;
             font-weight: 900;
             padding: 4px 10px;
             letter-spacing: 0.8px;
@@ -249,7 +267,7 @@
         .att-cell:last-child { border-right: none; }
 
         .att-label {
-            font-size: 8px;              /* ↑ was 7px */
+            font-size: 8px;
             font-weight: 700;
             color: #0f766e;
             text-transform: uppercase;
@@ -259,7 +277,7 @@
         }
 
         .att-value {
-            font-size: 11px;             /* ↑ was 10px */
+            font-size: 11px;
             font-weight: 900;
             color: #111827;
             display: block;
@@ -300,13 +318,13 @@
             padding: 4px 6px;
             background: white;
             vertical-align: top;
-            font-size: 9.5px;            /* ↑ was 8.5px */
+            font-size: 9.5px;
         }
 
         .remarks-table .h6 {
             font-weight: 700;
             margin-bottom: 3px;
-            font-size: 10px;             /* ↑ was 9px */
+            font-size: 10px;
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
@@ -316,10 +334,10 @@
         .bottom-strip table { width: 100%; border-collapse: collapse; }
         .bottom-strip td { padding: 5px 8px; vertical-align: middle; }
         .bottom-strip .cell-qr    { width: 80px;  text-align: center; vertical-align: middle; }
-        .bottom-strip .cell-footer{ text-align: center; font-size: 9.5px; vertical-align: middle; }  /* ↑ was 8.6px */
+        .bottom-strip .cell-footer{ text-align: center; font-size: 9.5px; vertical-align: middle; }
         .bottom-strip .cell-stamp { width: 110px; text-align: center; vertical-align: middle; }
         .bottom-strip .cell-qr img { width: 65px; height: 65px; display: block; margin: 0 auto 2px; }
-        .qr-label { font-size: 7.5px; color: #333; font-weight: 600; text-align: center; }  /* ↑ was 6.5px */
+        .qr-label { font-size: 7.5px; color: #333; font-weight: 600; text-align: center; }
         .bottom-strip .cell-stamp img { width: 95px; height: 95px; transform: rotate(-8deg); display: block; margin: 0 auto; }
 
         .text-dot-space2 {
@@ -330,7 +348,7 @@
             margin: 0 4px;
         }
 
-        .powered-by { font-size: 9px; margin-top: 3px; color: #64748b; }  /* ↑ was 8px */
+        .powered-by { font-size: 9px; margin-top: 3px; color: #64748b; }
 
         /* Grade colours */
         .grade-A { color: #16a34a; font-weight: 900; }
@@ -346,17 +364,17 @@
             padding: 5px 10px;
             border-radius: 6px;
             border: 2px solid #000;
-            font-size: 10px;             /* ↑ was 9px */
+            font-size: 10px;
             font-weight: 700;
         }
         .promo-badge-pdf .promo-pdf-label {
-            font-size: 12px;             /* ↑ was 11px */
+            font-size: 12px;
             font-weight: 900;
             letter-spacing: .4px;
             display: block;
         }
         .promo-badge-pdf .promo-pdf-sub {
-            font-size: 9px;              /* ↑ was 8px */
+            font-size: 9px;
             display: block;
             margin-top: 2px;
             font-weight: 600;
@@ -370,10 +388,9 @@
             body { background: white; padding: 0; }
             .student-section {
                 box-shadow: none;
-                height: 277mm;
-                overflow: hidden;
                 page-break-inside: avoid;
                 page-break-after: always;
+                break-after: page;
             }
         }
     </style>
@@ -457,7 +474,7 @@
             {{-- HEADER: Logo + Contact + Photo --}}
             <table class="header-table">
                 <tr>
-                    <td width="20%" style="text-align:center;">
+                    <td width="18%" style="text-align:center; padding: 4px 6px; vertical-align:middle;">
                         <div class="school-logo">
                             @php
                                 $logoSrc = $studentData['school_logo_base64'] ??
@@ -473,7 +490,7 @@
                         </div>
                     </td>
 
-                    <td style="vertical-align:top; padding: 3px 7px;">
+                    <td style="vertical-align:top; padding: 4px 7px;">
                         <table style="border:none; border-collapse:collapse; width:100%; font-size:10px;">
                             <tr>
                                 <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
@@ -494,9 +511,10 @@
                         </table>
                     </td>
 
-                    <td width="29%" style="text-align:right; padding-right:7px; vertical-align:top; padding-top:5px;">
+                    {{-- Photo: right-aligned, image fills frame fully --}}
+                    <td width="20%" style="text-align:right; padding: 4px 6px 4px 0; vertical-align:middle;">
                         @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
+                        <div class="photo-frame">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
@@ -606,10 +624,10 @@
                     <tbody>
                         @forelse ($studentData['scores'] as $scoreIndex => $score)
                         @php
-                            $posCum   = isset($score->position) && $score->position > 0 ? $score->position : null;
-                            $posTotal = isset($score->position_total) && $score->position_total > 0 ? $score->position_total : null;
-                            $armPos   = isset($score->arm_position) && $score->arm_position > 0 ? $score->arm_position : null;
-                            $armPosCum= isset($score->arm_position_cum) && $score->arm_position_cum > 0 ? $score->arm_position_cum : null;
+                            $posCum    = isset($score->position) && $score->position > 0 ? $score->position : null;
+                            $posTotal  = isset($score->position_total) && $score->position_total > 0 ? $score->position_total : null;
+                            $armPos    = isset($score->arm_position) && $score->arm_position > 0 ? $score->arm_position : null;
+                            $armPosCum = isset($score->arm_position_cum) && $score->arm_position_cum > 0 ? $score->arm_position_cum : null;
 
                             if (!$posCum && property_exists($score, 'subject_position_class')) {
                                 $posCum = $score->subject_position_class > 0 ? $score->subject_position_class : null;
@@ -618,15 +636,15 @@
                                 $posTotal = $score->subject_position_class_total > 0 ? $score->subject_position_class_total : null;
                             }
 
-                            $posCumClass   = ($posCum == 1) ? 'position-1' : (($posCum == 2) ? 'position-2' : (($posCum == 3) ? 'position-3' : ''));
-                            $posTotalClass = ($posTotal == 1) ? 'position-1' : (($posTotal == 2) ? 'position-2' : (($posTotal == 3) ? 'position-3' : ''));
-                            $armPosClass   = ($armPos == 1) ? 'position-1' : (($armPos == 2) ? 'position-2' : (($armPos == 3) ? 'position-3' : ''));
-                            $armPosCumClass= ($armPosCum == 1) ? 'position-1' : (($armPosCum == 2) ? 'position-2' : (($armPosCum == 3) ? 'position-3' : ''));
+                            $posCumClass    = ($posCum == 1) ? 'position-1' : (($posCum == 2) ? 'position-2' : (($posCum == 3) ? 'position-3' : ''));
+                            $posTotalClass  = ($posTotal == 1) ? 'position-1' : (($posTotal == 2) ? 'position-2' : (($posTotal == 3) ? 'position-3' : ''));
+                            $armPosClass    = ($armPos == 1) ? 'position-1' : (($armPos == 2) ? 'position-2' : (($armPos == 3) ? 'position-3' : ''));
+                            $armPosCumClass = ($armPosCum == 1) ? 'position-1' : (($armPosCum == 2) ? 'position-2' : (($armPosCum == 3) ? 'position-3' : ''));
 
-                            $posCumFormatted   = formatOrdinal($posCum);
-                            $posTotalFormatted = formatOrdinal($posTotal);
-                            $armPosFormatted   = formatOrdinal($armPos);
-                            $armPosCumFormatted= formatOrdinal($armPosCum);
+                            $posCumFormatted    = formatOrdinal($posCum);
+                            $posTotalFormatted  = formatOrdinal($posTotal);
+                            $armPosFormatted    = formatOrdinal($armPos);
+                            $armPosCumFormatted = formatOrdinal($armPosCum);
                         @endphp
                         <tr>
                             @if(in_array('sn', $columnsToShow))
