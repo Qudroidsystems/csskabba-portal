@@ -359,7 +359,7 @@
 
         /* Promotion badge */
         .promo-badge-pdf {
-            width: calc(100% - 16px);
+            width: calc(97.5% - 16px);
             margin: 3px 8px 5px 8px;
             padding: 5px 10px;
             border-radius: 6px;
