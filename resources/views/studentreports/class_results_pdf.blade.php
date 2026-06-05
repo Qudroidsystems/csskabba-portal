@@ -17,7 +17,7 @@
             color: #000;
             background: #f5f5f5;
             margin: 0;
-            padding: 3mm 3mm 0 3mm; /* top/sides show border, bottom flush */
+            padding: 2mm 2mm 0 2mm; /* small margin so double border is visible */
             text-align: center;
         }
 
@@ -78,7 +78,7 @@
             break-after: page;
             break-inside: avoid;
             background: #ffffff;
-            border: 2px solid #000000;
+            border: 3px double #000000;
             margin: 0;
             padding: 0;
             position: relative;
@@ -98,8 +98,8 @@
         }
 
         .school-logo, .photo-frame {
-            width: 62px;
-            height: 80px;
+            width: 75px;
+            height: 90px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
@@ -377,14 +377,14 @@
         .promo-pdf-repeated { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
         .promo-pdf-awaiting { background: #f8fafc; border-color: #94a3b8; color: #475569; }
 
-        @page { margin: 4mm 4mm 1mm 4mm; } /* top/sides visible, bottom near-flush */
+        @page { margin: 4mm 4mm 3mm 4mm; } /* small uniform margin, tight at bottom */
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .student-section {
                 box-shadow: none;
                 width: 100%;
                 margin: 0;
-                border: 2px solid #000000;
+                border: 3px double #000000;
                 page-break-inside: avoid;
                 page-break-after: always;
                 break-after: page;
@@ -508,9 +508,9 @@
                         </table>
                     </td>
 
-                    <td width="20%" style="text-align:center; padding: 4px 6px; vertical-align:middle;">
+                    <td width="20%" style="text-align:right; padding: 4px 8px 4px 0; vertical-align:middle;">
                         @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame" style="margin: 0 auto;">
+                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
