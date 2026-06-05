@@ -39,7 +39,7 @@
 
         /* SCHOOL NAME HEADER */
         .school-name-header {
-            width: 96%;
+            width: 96.5%;
             background: #111827;
             color: white;
             padding: 7px 10px 5px 10px;
