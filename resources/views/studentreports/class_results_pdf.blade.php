@@ -39,7 +39,7 @@
 
         /* SCHOOL NAME HEADER */
         .school-name-header {
-            width: 100%;
+            width: 80%;
             background: #111827;
             color: white;
             padding: 7px 10px 5px 10px;
@@ -50,7 +50,7 @@
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 10px;
+            font-size: 20px;
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
