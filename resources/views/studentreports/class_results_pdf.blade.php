@@ -50,7 +50,7 @@
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 20px;
+            font-size: 10px;
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
