@@ -850,119 +850,127 @@ class UserController extends Controller
     // ============================================================
 
     public function getStudents(Request $request): JsonResponse
-    {
-        try {
-            $search = trim($request->get('search', ''));
-            $limit = min((int) $request->get('limit', 2000), 5000);
-            $classId = $request->get('class_id');
-            $armId = $request->get('arm_id');
-            $hasAccount = $request->get('has_account');
+{
+    try {
+        $search = trim($request->get('search', ''));
+        $limit = min((int) $request->get('limit', 2000), 5000);
+        $classId = $request->get('class_id');
+        $armId = $request->get('arm_id');
+        $hasAccount = $request->get('has_account');
 
-            $query = DB::table('studentRegistration as sr')
-                ->leftJoin('studentclass as sc', function ($join) {
-                    $join->on('sc.studentId', '=', 'sr.id')
-                        ->whereRaw('sc.id = (SELECT id FROM studentclass WHERE studentId = sr.id ORDER BY id DESC LIMIT 1)');
-                })
-                ->leftJoin('schoolclass as cls', 'cls.id', '=', 'sc.schoolclassid')
-                ->leftJoin('schoolarm as arm', 'arm.id', '=', 'cls.arm')
-                ->leftJoin('users as u', 'u.student_id', '=', 'sr.id')
-                ->whereNotNull('sr.admissionNo')
-                ->select(
-                    'sr.id',
-                    'sr.admissionNo',
-                    'sr.firstname',
-                    'sr.lastname',
-                    'sr.email',
-                    'sr.phone_number',
-                    'cls.id as class_id',
-                    'cls.schoolclass as class_name',
-                    'arm.id as arm_id',
-                    'arm.arm as arm_name',
-                    DB::raw('CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END as has_account'),
-                    DB::raw('u.id as user_id'),
-                    DB::raw('u.username as username')
-                );
+        $query = DB::table('studentRegistration as sr')
+            ->leftJoin('studentclass as sc', function ($join) {
+                $join->on('sc.studentId', '=', 'sr.id')
+                    ->whereRaw('sc.id = (SELECT id FROM studentclass WHERE studentId = sr.id ORDER BY id DESC LIMIT 1)');
+            })
+            ->leftJoin('schoolclass as cls', 'cls.id', '=', 'sc.schoolclassid')
+            ->leftJoin('schoolarm as arm', 'arm.id', '=', 'cls.arm')
+            ->leftJoin('users as u', 'u.student_id', '=', 'sr.id')
+            ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 'sr.id')  // ADD THIS LINE
+            ->whereNotNull('sr.admissionNo')
+            ->select(
+                'sr.id',
+                'sr.admissionNo',
+                'sr.firstname',
+                'sr.lastname',
+                'sr.email',
+                'sr.phone_number',
+                'cls.id as class_id',
+                'cls.schoolclass as class_name',
+                'arm.id as arm_id',
+                'arm.arm as arm_name',
+                DB::raw('CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END as has_account'),
+                DB::raw('u.id as user_id'),
+                DB::raw('u.username as username'),
+                'sp.picture as picture'  // ADD THIS LINE - get the picture filename
+            );
 
-            if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('sr.admissionNo', 'like', "%{$search}%")
-                        ->orWhere('sr.firstname', 'like', "%{$search}%")
-                        ->orWhere('sr.lastname', 'like', "%{$search}%")
-                        ->orWhereRaw("CONCAT(sr.firstname, ' ', sr.lastname) LIKE ?", ["%{$search}%"]);
-                });
-            }
-
-            if ($classId) {
-                $query->where('cls.id', $classId);
-            }
-
-            if ($armId) {
-                $query->where('arm.id', $armId);
-            }
-
-            if ($hasAccount === 'yes') {
-                $query->whereNotNull('u.id');
-            } elseif ($hasAccount === 'no') {
-                $query->whereNull('u.id');
-            }
-
-            $students = $query
-                ->orderBy('sr.lastname')
-                ->orderBy('sr.firstname')
-                ->limit($limit)
-                ->get();
-
-            // Get UNIQUE class names - group by schoolclass name to remove duplicates
-            $classes = DB::table('schoolclass as cls')
-    ->join('schoolarm as arm', 'arm.id', '=', 'cls.arm')
-    ->select('cls.id', DB::raw("CONCAT(cls.schoolclass, ' ', arm.arm) as name"))
-    ->orderByRaw("cls.schoolclass, arm.arm")
-    ->get();
-            // Get all arms
-            $arms = DB::table('schoolarm')
-                ->select('id', 'arm as name')
-                ->orderBy('arm')
-                ->get();
-
-            // Get class-arm relationships - which arms belong to which class
-            $classArms = DB::table('schoolclass')
-                ->join('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->select('schoolclass.id as class_id', 'schoolclass.schoolclass as class_name', 'schoolarm.id as arm_id', 'schoolarm.arm as arm_name')
-                ->orderBy('schoolclass.schoolclass')
-                ->orderBy('schoolarm.arm')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'students' => $students->map(fn ($s) => [
-                    'id' => $s->id,
-                    'admissionNo' => $s->admissionNo,
-                    'name' => trim("{$s->firstname} {$s->lastname}"),
-                    'firstname' => $s->firstname,
-                    'lastname' => $s->lastname,
-                    'email' => $s->email ?? '',
-                    'phone_number' => $s->phone_number ?? '',
-                    'class_id' => $s->class_id,
-                    'class_name' => $s->class_name ?? '',
-                    'arm_id' => $s->arm_id,
-                    'arm_name' => $s->arm_name ?? '',
-                    'has_account' => (bool) $s->has_account,
-                    'user_id' => $s->user_id,
-                    'username' => $s->username,
-                ])->values()->toArray(),
-                'classes' => $classes,
-                'arms' => $arms,
-                'class_arms' => $classArms,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("getStudents error: {$e->getMessage()}");
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load students: ' . $e->getMessage(),
-            ], 500);
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('sr.admissionNo', 'like', "%{$search}%")
+                    ->orWhere('sr.firstname', 'like', "%{$search}%")
+                    ->orWhere('sr.lastname', 'like', "%{$search}%")
+                    ->orWhereRaw("CONCAT(sr.firstname, ' ', sr.lastname) LIKE ?", ["%{$search}%"]);
+            });
         }
+
+        if ($classId) {
+            $query->where('cls.id', $classId);
+        }
+
+        if ($armId) {
+            $query->where('arm.id', $armId);
+        }
+
+        if ($hasAccount === 'yes') {
+            $query->whereNotNull('u.id');
+        } elseif ($hasAccount === 'no') {
+            $query->whereNull('u.id');
+        }
+
+        $students = $query
+            ->orderBy('sr.lastname')
+            ->orderBy('sr.firstname')
+            ->limit($limit)
+            ->get();
+
+        // Get UNIQUE class names
+        $classes = DB::table('schoolclass as cls')
+            ->join('schoolarm as arm', 'arm.id', '=', 'cls.arm')
+            ->select('cls.id', DB::raw("CONCAT(cls.schoolclass, ' ', arm.arm) as name"))
+            ->orderByRaw("cls.schoolclass, arm.arm")
+            ->get();
+
+        // Get all arms
+        $arms = DB::table('schoolarm')
+            ->select('id', 'arm as name')
+            ->orderBy('arm')
+            ->get();
+
+        // Get class-arm relationships
+        $classArms = DB::table('schoolclass')
+            ->join('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id as class_id', 'schoolclass.schoolclass as class_name', 'schoolarm.id as arm_id', 'schoolarm.arm as arm_name')
+            ->orderBy('schoolclass.schoolclass')
+            ->orderBy('schoolarm.arm')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'students' => $students->map(fn ($s) => [
+                'id' => $s->id,
+                'admissionNo' => $s->admissionNo,
+                'name' => trim("{$s->firstname} {$s->lastname}"),
+                'firstname' => $s->firstname,
+                'lastname' => $s->lastname,
+                'email' => $s->email ?? '',
+                'phone_number' => $s->phone_number ?? '',
+                'class_id' => $s->class_id,
+                'class_name' => $s->class_name ?? '',
+                'arm_id' => $s->arm_id,
+                'arm_name' => $s->arm_name ?? '',
+                'has_account' => (bool) $s->has_account,
+                'user_id' => $s->user_id,
+                'username' => $s->username,
+                'picture' => $s->picture,  // ADD THIS LINE
+                'photo_url' => $s->picture && $s->picture != 'unnamed.jpg' && $s->picture != ''
+                    ? asset('storage/images/student_avatars/' . $s->picture)
+                    : null,  // ADD THIS LINE - generate full URL
+            ])->values()->toArray(),
+            'classes' => $classes,
+            'arms' => $arms,
+            'class_arms' => $classArms,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error("getStudents error: {$e->getMessage()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to load students: ' . $e->getMessage(),
+        ], 500);
     }
+}
+
 
     // ============================================================
     // EXTRA METHODS

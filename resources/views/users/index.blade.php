@@ -806,7 +806,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </div>
 
     {{-- ══════════════════════════════════════════════════════
-         MASS STUDENT MODAL (Full Implementation)
+         MASS STUDENT MODAL
     ══════════════════════════════════════════════════════ --}}
     <div id="massStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -1530,14 +1530,40 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             });
         }
 
-        // ── Mass Student Modal Logic ─────────────────────────────────
+        // ── Mass Student Modal Logic with WORKING PHOTOS ─────────────────────────────────
         let selectedStudents = [];
         let allStudents = [];
         let currentResults = null;
 
-        function classLabel(s) { const c = (s.class_name || '').trim(); const a = (s.arm_name || '').trim(); return c && a ? `${c} ${a}` : c || a || '—'; }
-        function genEmail(first, last) { const c = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user'; return c(first) + '.' + c(last) + '@csskabba.ng'; }
-        function statusBadge(has) { return has ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>' : '<span class="msm-badge-none"><i class="bi bi-circle me-1"></i>No Account</span>'; }
+        function classLabel(s) {
+            const c = (s.class_name || '').trim();
+            const a = (s.arm_name || '').trim();
+            return c && a ? `${c} ${a}` : c || a || '—';
+        }
+        function genEmail(first, last) {
+            const c = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+            return c(first) + '.' + c(last) + '@csskabba.ng';
+        }
+        function statusBadge(has) {
+            return has ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>' : '<span class="msm-badge-none"><i class="bi bi-circle me-1"></i>No Account</span>';
+        }
+
+        // Helper to get student photo URL - matches your schoolpayment blade
+        function getStudentPhotoUrl(student) {
+            if (student.photo_url) return student.photo_url;
+            if (student.picture && student.picture !== 'unnamed.jpg' && student.picture !== '') {
+                return '/storage/images/student_avatars/' + student.picture;
+            }
+            return null;
+        }
+
+        // Helper to get initials from name
+        function getStudentInitials(student) {
+            const firstName = student.firstname || '';
+            const lastName = student.lastname || '';
+            return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'ST';
+        }
+
         function setStep(n) {
             [1, 2, 3].forEach(i => {
                 const el = document.getElementById('stepBar' + i);
@@ -1561,7 +1587,12 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             if (status !== 'all') url += `&has_account=${status}`;
             fetch(url).then(r => r.json()).then(data => {
                 if (!data.success) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.</td></tr>'; return; }
-                allStudents = data.students.map(s => ({ ...s, generatedEmail: genEmail(s.firstname, s.lastname) }));
+                allStudents = data.students.map(s => ({
+                    ...s,
+                    generatedEmail: genEmail(s.firstname, s.lastname),
+                    photo_url: getStudentPhotoUrl(s),
+                    initials: getStudentInitials(s)
+                }));
                 renderStudentTable(allStudents);
                 const classFilter = document.getElementById('massClassFilter');
                 if (classFilter && classFilter.options.length <= 1) {
@@ -1636,7 +1667,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             if (!selectedStudents.length) { Swal.fire({ icon: 'warning', title: 'No Students Selected', text: 'Select at least one student.', confirmButtonColor: '#2563eb' }); return; }
             let html = '';
             selectedStudents.forEach(s => {
-                html += `<tr><td>${escHtml(s.name)}</td><td>${escHtml(s.admissionNo || 'N/A')}</td><td>${escHtml(classLabel(s))}</td><td>${statusBadge(s.has_account)}</td><td><small class="font-monospace">${escHtml(s.generatedEmail)}</small></td></tr>`;
+                html += `<tr>
+                    <td>${escHtml(s.name)}</td>
+                    <td>${escHtml(s.admissionNo || 'N/A')}</td>
+                    <td>${escHtml(classLabel(s))}</td>
+                    <td>${statusBadge(s.has_account)}</td>
+                    <td><small class="font-monospace">${escHtml(s.generatedEmail)}</small></td>
+                </tr>`;
             });
             const listBody = document.getElementById('selectedStudentsList');
             if (listBody) listBody.innerHTML = html;
@@ -1716,7 +1753,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <p class="mb-0 text-muted">${escHtml(data.message)}</p>
             </div>`;
             if (data.created?.length) html += mkTable('Created Accounts', data.created, 'success', 'person-plus-fill', ['Name', 'Username', 'Email', 'Password', 'Admission No', 'Class'],
-                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></tr>`);
+                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></td>`);
             if (data.reset?.length) html += mkTable('Password Resets', data.reset, 'warning', 'key-fill', ['Name', 'Username', 'Email', 'New Password', 'Admission No', 'Class'],
                 r => `<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td><code class="text-warning fw-bold">${escHtml(r.password)}</code></td><td>${escHtml(r.admissionNo || 'N/A')}</td><td>${escHtml(r.class_name || '')}</td></tr>`);
             if (data.revoked?.length) { html += `<div class="mt-3 p-3 border rounded-3"><strong><i class="bi bi-person-x-fill text-danger me-2"></i>Revoked (${data.revoked.length})</strong><ul class="mt-2 mb-0">`; data.revoked.forEach(r => { html += `<li>${escHtml(r.name)} (${escHtml(r.admissionNo || 'N/A')}) — account removed</li>`; }); html += '</ul></div>'; }
@@ -1737,23 +1774,60 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             if (!currentResults) return;
             const school = document.querySelector('meta[name="school-name"]')?.content || 'CSS Kabba';
             const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const allCreds = [...(currentResults.created || []).map(c => ({ ...c, type: 'created' })), ...(currentResults.reset || []).map(r => ({ ...r, type: 'reset' }))];
+
+            // Merge created and reset credentials
+            const allCreds = [
+                ...(currentResults.created || []).map(c => ({ ...c, type: 'created' })),
+                ...(currentResults.reset || []).map(r => ({ ...r, type: 'reset' })),
+            ];
+
             if (!allCreds.length) { Swal.fire({ icon: 'info', title: 'Nothing to Print', text: 'No created or reset credentials available.', confirmButtonColor: '#2563eb' }); return; }
 
-            const slips = allCreds.map(s => {
+            // For each credential, find matching student from selectedStudents to get photo
+            const credsWithPhotos = allCreds.map(cred => {
+                const matchingStudent = selectedStudents.find(s => s.id == cred.student_id);
+                let photoUrl = cred.photo_url || (matchingStudent ? matchingStudent.photo_url : null);
+                let initials = cred.initials || (matchingStudent ? matchingStudent.initials : 'ST');
+                let studentName = cred.name || (matchingStudent ? matchingStudent.name : '');
+
+                return { ...cred, photo_url: photoUrl, initials: initials, name: studentName };
+            });
+
+            const slips = credsWithPhotos.map(s => {
                 const isReset = s.type === 'reset';
                 const tag = isReset ? 'RESET' : 'NEW';
                 const tagColor = isReset ? '#d97706' : '#16a34a';
-                const photoUrl = s.photo_url || (s.photo ? `/storage/${s.photo}` : null);
-                const photoHtml = photoUrl ? `<div class="slip-photo"><img src="${photoUrl}" alt="Photo" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="slip-photo-fallback" style="display:none">📷</div></div>` : `<div class="slip-photo"><div class="slip-photo-fallback">👨‍🎓</div></div>`;
-                return `<div class="print-slip"><div class="slip-header"><span class="slip-tag" style="background:${tagColor}">${tag}</span><span class="slip-school">${escHtml(school)}</span></div>
-                    <div class="slip-content">${photoHtml}<div class="slip-info"><div class="slip-name">${escHtml(s.name)}</div>
-                    <div class="slip-detail"><span class="detail-label">Adm No</span><span class="detail-value">${escHtml(s.admissionNo || 'N/A')}</span></div>
-                    <div class="slip-detail"><span class="detail-label">Class</span><span class="detail-value">${escHtml(s.class_name || '—')}</span></div>
-                    <div class="slip-detail"><span class="detail-label">Email</span><span class="detail-value mono">${escHtml(s.email)}</span></div>
-                    <div class="slip-detail"><span class="detail-label">Username</span><span class="detail-value mono">${escHtml(s.username || '')}</span></div>
-                    <div class="slip-password"><span class="pwd-label">${isReset ? 'New Password' : 'Password'}</span><span class="pwd-value">${escHtml(s.password)}</span></div></div></div>
-                    <div class="slip-footer">Change password after login &bull; ${window.location.hostname}</div></div>`;
+                const initialsVal = (s.initials || 'ST').substring(0, 2);
+
+                // Build photo HTML with working image path
+                let photoHtml = '';
+                if (s.photo_url && s.photo_url !== '' && s.photo_url !== 'null') {
+                    photoHtml = `<div class="slip-photo"><img src="${s.photo_url}" alt="Photo" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'slip-photo-fallback\\' style=\\'background: linear-gradient(135deg, #667eea, #764ba2);\\'>${escHtml(initialsVal)}</div>'"></div>`;
+                } else {
+                    photoHtml = `<div class="slip-photo"><div class="slip-photo-fallback" style="background: linear-gradient(135deg, #667eea, #764ba2);">${escHtml(initialsVal)}</div></div>`;
+                }
+
+                return `<div class="print-slip">
+                    <div class="slip-header">
+                        <span class="slip-tag" style="background:${tagColor}">${tag}</span>
+                        <span class="slip-school">${escHtml(school)}</span>
+                    </div>
+                    <div class="slip-content">
+                        ${photoHtml}
+                        <div class="slip-info">
+                            <div class="slip-name">${escHtml(s.name)}</div>
+                            <div class="slip-detail"><span class="detail-label">Adm No</span><span class="detail-value">${escHtml(s.admissionNo || 'N/A')}</span></div>
+                            <div class="slip-detail"><span class="detail-label">Class</span><span class="detail-value">${escHtml(s.class_name || '—')}</span></div>
+                            <div class="slip-detail"><span class="detail-label">Email</span><span class="detail-value mono">${escHtml(s.email)}</span></div>
+                            <div class="slip-detail"><span class="detail-label">Username</span><span class="detail-value mono">${escHtml(s.username || '')}</span></div>
+                            <div class="slip-password">
+                                <span class="pwd-label">${isReset ? 'New Password' : 'Password'}</span>
+                                <span class="pwd-value">${escHtml(s.password)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slip-footer">Change password after login &bull; ${window.location.hostname}</div>
+                </div>`;
             });
 
             const perPage = 9;
@@ -1769,7 +1843,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 .cover-school { font-size:28px; font-weight:800; color:#1e3a5f; margin-bottom:16px; }
                 .cover-title { font-size:22px; font-weight:600; color:#2563eb; margin-bottom:12px; }
                 .cover-date { font-size:14px; color:#64748b; margin-bottom:40px; }
-                .cover-stats { display:flex; justify-content:center; gap:30px; margin-top:40px; }
+                .cover-stats { display:flex; justify-content:center; gap:30px; margin-top:40px; flex-wrap:wrap; }
                 .cover-stat { background:#f8fafc; border-radius:16px; padding:20px 30px; min-width:150px; }
                 .cover-stat-number { font-size:36px; font-weight:800; color:#1e3a5f; }
                 .cover-stat-label { font-size:12px; color:#64748b; margin-top:5px; }
@@ -1784,20 +1858,28 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 .slip-content { display:flex; gap:12px; margin-bottom:8px; }
                 .slip-photo { flex-shrink:0; width:70px; height:70px; border-radius:12px; overflow:hidden; background:#f1f5f9; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0; }
                 .slip-photo img { width:100%; height:100%; object-fit:cover; }
-                .slip-photo-fallback { font-size:32px; display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
+                .slip-photo-fallback { font-size:28px; font-weight:700; display:flex; align-items:center; justify-content:center; width:100%; height:100%; color:white; }
                 .slip-info { flex:1; }
                 .slip-name { font-size:14px; font-weight:800; color:#0f172a; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; }
                 .slip-detail { display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; }
                 .detail-label { font-weight:700; color:#64748b; text-transform:uppercase; font-size:8px; letter-spacing:.5px; }
-                .detail-value { font-weight:500; color:#1e293b; text-align:right; }
+                .detail-value { font-weight:500; color:#1e293b; text-align:right; word-break:break-word; }
                 .mono { font-family:'Courier New',monospace; font-size:9px; }
-                .slip-password { background:linear-gradient(135deg,#f0f9ff,#eff6ff); border:2px solid #bfdbfe; border-radius:8px; padding:6px 8px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
+                .slip-password { background:linear-gradient(135deg,#f0f9ff,#eff6ff); border:2px solid #bfdbfe; border-radius:8px; padding:6px 8px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px; }
                 .pwd-label { font-size:8px; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:1px; }
                 .pwd-value { font-family:'Courier New',monospace; font-size:13px; font-weight:900; color:#1e40af; letter-spacing:1px; word-break:break-all; text-align:right; }
                 .slip-footer { margin-top:8px; padding-top:6px; border-top:1px dashed #e2e8f0; font-size:7px; color:#94a3b8; text-align:center; }
                 .page-cut-row { text-align:center; margin:8px 0 4px; font-family:monospace; font-size:9px; color:#cbd5e1; letter-spacing:3px; }
                 .slips-page:last-child { page-break-after:auto; break-after:auto; }
-                @media print { .cover-page { padding:30px; } .slips-page { padding:8px; } .slips-grid { gap:10px; } .print-slip { border:1.5px solid #cbd5e1; break-inside:avoid; page-break-inside:avoid; } .print-slip::after { display:none; } }
+                @media print {
+                    .cover-page { padding:30px; }
+                    .slips-page { padding:8px; }
+                    .slips-grid { gap:10px; }
+                    .print-slip { border:1.5px solid #cbd5e1; break-inside:avoid; page-break-inside:avoid; }
+                    .print-slip::after { display:none; }
+                    .slip-photo img, .slip-photo-fallback { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                    .slip-password { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                }
             </style></head><body>
             <div class="cover-page"><div class="cover-school">${escHtml(school)}</div><div class="cover-title">Student Portal Credentials</div><div class="cover-date">Printed: ${today}</div>
             <div class="cover-stats"><div class="cover-stat"><div class="cover-stat-number">${allCreds.length}</div><div class="cover-stat-label">Total Slips</div></div>
