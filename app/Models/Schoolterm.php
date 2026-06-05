@@ -1,4 +1,5 @@
 <?php
+// app/Models/Schoolterm.php
 
 namespace App\Models;
 
@@ -14,22 +15,26 @@ class Schoolterm extends Model
     protected $fillable = [
         'term',
         'status',
+        'is_promotional',
     ];
 
-    // Cast the status field to boolean
     protected $casts = [
-        'status' => 'boolean',
+        'status'         => 'boolean',
+        'is_promotional' => 'boolean',
     ];
 
-    // Scope for active terms only
     public function scopeActive($query)
     {
         return $query->where('status', true);
     }
 
-    // Scope for inactive terms
     public function scopeInactive($query)
     {
         return $query->where('status', false);
+    }
+
+    public function scopePromotional($query)
+    {
+        return $query->where('is_promotional', true);
     }
 }

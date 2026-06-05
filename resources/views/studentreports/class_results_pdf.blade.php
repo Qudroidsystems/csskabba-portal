@@ -357,6 +357,47 @@
             body { background: white; padding: 0; }
             .student-section { box-shadow: none; }
         }
+
+
+/* ── PROMOTION BADGE (PDF) ── */
+.promo-badge-pdf {
+    width: calc(100% - 20px);
+    margin: 4px 10px 8px 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 2px solid #000;
+    font-size: 9px;
+    font-weight: 700;
+}
+.promo-badge-pdf .promo-pdf-label {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .4px;
+    display: block;
+}
+.promo-badge-pdf .promo-pdf-sub {
+    font-size: 8px;
+    display: block;
+    margin-top: 2px;
+    font-weight: 600;
+    opacity: .9;
+}
+.promo-pdf-promoted {
+    background: #f0fdf4;
+    border-color: #16a34a;
+    color: #14532d;
+}
+.promo-pdf-repeated {
+    background: #fef2f2;
+    border-color: #dc2626;
+    color: #7f1d1d;
+}
+.promo-pdf-awaiting {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #475569;
+}
+
     </style>
 </head>
 <body>
@@ -726,6 +767,64 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
+
+            {{--
+                ═══════════════════════════════════════════════════════════════════════
+                STEP 2 — Paste this HTML block INSIDE the per-student loop in class_results_pdf.blade.php
+                        Place it AFTER the totals-summary div and BEFORE the attendance-box div.
+
+                        
+                        Paste the block ABOVE it.
+                ═══════════════════════════════════════════════════════════════════════
+                --}}
+
+                @php
+                    $pr           = $studentData['promotion_result'] ?? [];
+                    $promoStatus  = $pr['status']              ?? 'awaiting';
+                    $isPromoTerm  = $pr['is_promotional_term'] ?? false;
+                    $promoFailed  = $pr['failed_compulsory']   ?? [];
+                    $promoAvgFail = $pr['average_failed']      ?? false;
+                    $reqAvg       = $pr['required_average']    ?? null;
+                    $actAvg       = $pr['actual_average']      ?? null;
+                    $promoTotal   = $pr['compulsory_count']    ?? 0;
+                    $promoPassed  = $pr['passed_compulsory']   ?? 0;
+                @endphp
+
+                @if (!$isPromoTerm)
+                    <div class="promo-badge-pdf promo-pdf-awaiting">
+                        <span class="promo-pdf-label">⏳ Awaiting Final Term</span>
+                        <span class="promo-pdf-sub">Promotion will be assessed at the end of the academic year.</span>
+                    </div>
+                @elseif ($promoStatus === 'promoted')
+                    <div class="promo-badge-pdf promo-pdf-promoted">
+                        <span class="promo-pdf-label">🎓 PROMOTED</span>
+                        @if ($promoTotal > 0)
+                            <span class="promo-pdf-sub">Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s).</span>
+                        @endif
+                        @if ($reqAvg !== null && $actAvg !== null)
+                            <span class="promo-pdf-sub">Overall average: {{ number_format($actAvg, 1) }}% (minimum required: {{ number_format($reqAvg, 1) }}%).</span>
+                        @endif
+                    </div>
+                @else
+                    <div class="promo-badge-pdf promo-pdf-repeated">
+                        <span class="promo-pdf-label">⚠️ NOT PROMOTED</span>
+                        @if (!empty($promoFailed))
+                            <span class="promo-pdf-sub">
+                                Failed compulsory subject(s):
+                                {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') ?: count($promoFailed) . ' subject(s)' }}
+                                @foreach($promoFailed as $pf)
+                                    ({{ $pf['subject'] ?? 'Subject' }}: got {{ $pf['grade'] ?? '-' }}
+                                    @if($pf['min_grade']) , required {{ $pf['min_grade'] }} @endif)
+                                @endforeach
+                            </span>
+                        @endif
+                        @if ($promoAvgFail && $reqAvg !== null && $actAvg !== null)
+                            <span class="promo-pdf-sub">
+                                Overall average {{ number_format($actAvg, 1) }}% is below the required {{ number_format($reqAvg, 1) }}%.
+                            </span>
+                        @endif
+                    </div>
+                @endif
             {{-- ATTENDANCE BOX --}}
             @if($showAnyAttendance)
             <div class="attendance-box">
