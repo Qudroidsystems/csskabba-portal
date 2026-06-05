@@ -270,7 +270,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // PRINT RESULT (PDF)
+    // PRINT RESULT (PDF) - DISPLAY IN BROWSER (STREAM/INLINE)
     // =========================================================================
     public function printResult(Request $request)
     {
@@ -414,7 +414,6 @@ class StudentAssessmentController extends Controller
             DB::table('studentpicture')->where('studentid', $studentId)->value('picture')
         );
 
-        // Get school stamp base64
         $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
 
         $numberOfStudents = DB::table('studentclass')
@@ -423,9 +422,7 @@ class StudentAssessmentController extends Controller
             ->where('termid', $selectedTermId)
             ->count();
 
-        // =====================================================================
-        // FETCH STUDENT PROFILE/REMARKS DATA using correct model
-        // =====================================================================
+        // Fetch student profile/remarks data
         $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery, $schoolclassId);
 
         // Fetch attendance summary
@@ -486,14 +483,14 @@ class StudentAssessmentController extends Controller
         // SAFE FILENAME
         $safeAdmissionNo = preg_replace('/[^A-Za-z0-9\-]/', '_', $student->admissionNo ?? 'student');
         $safeTerm = preg_replace('/[^A-Za-z0-9\-]/', '_', $termModel->term ?? 'Term');
-
         $filename = 'Terminal_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
 
+        // Generate PDF
         $pdf = Pdf::loadView('student.assessments.print-pdf', [
             'allStudentData' => $allStudentData,
             'metadata' => $metadata,
         ])
-        ->setPaper('A5', 'portrait')
+        ->setPaper('A4', 'portrait')
         ->setOptions([
             'dpi' => 150,
             'defaultFont' => 'DejaVu Sans',
@@ -501,7 +498,10 @@ class StudentAssessmentController extends Controller
             'isHtml5ParserEnabled' => true,
         ]);
 
-        return $pdf->download($filename);
+        // =====================================================================
+        // DISPLAY PDF IN BROWSER (STREAM/INLINE) INSTEAD OF DOWNLOAD
+        // =====================================================================
+        return $pdf->stream($filename);
     }
 
     // =========================================================================
@@ -510,7 +510,6 @@ class StudentAssessmentController extends Controller
 
     /**
      * Get student profile/remarks data from Studentpersonalityprofile model
-     * This is the correct table - not 'studentpp'
      */
     private function getStudentProfileData($studentId, $termId, $sessionId, $schoolclassId)
     {
