@@ -307,12 +307,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 }
 .u-page-btn:hover, .u-page-btn.active { background: var(--u-accent); color:#fff; border-color:var(--u-accent); }
 
-/* ── Print styles ── */
-@media print {
-    body * { visibility: hidden; }
-    #printArea, #printArea * { visibility: visible; }
-    #printArea { position: absolute; left: 0; top: 0; width: 100%; }
-}
 </style>
 
 <div class="main-content">
@@ -1530,7 +1524,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             });
         }
 
-        // ── Mass Student Modal Logic with LARGER PRINT SLIPS (6 per page) ─────────────────────────────────
+        // ── Mass Student Modal Logic with IMPROVED PRINT FORMAT (4 per page, horizontal layout, cut lines) ─────────────────────────────────
         let selectedStudents = [];
         let allStudents = [];
         let currentResults = null;
@@ -1586,7 +1580,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             if (classId) url += `&class_id=${classId}`;
             if (status !== 'all') url += `&has_account=${status}`;
             fetch(url).then(r => r.json()).then(data => {
-                if (!data.success) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.小说网</td>'; return; }
+                if (!data.success) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.</td></tr>'; return; }
                 allStudents = data.students.map(s => ({
                     ...s,
                     generatedEmail: genEmail(s.firstname, s.lastname),
@@ -1605,13 +1599,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     }
                     classFilter.innerHTML = html;
                 }
-            }).catch(() => { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.小说网</td>'; });
+            }).catch(() => { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.</td></tr>'; });
         }
 
         function renderStudentTable(students) {
             const tbody = document.getElementById('massStudentList');
             if (!tbody) return;
-            if (!students.length) { tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell">No students found.小说网</td>'; updateSelectedCount(); return; }
+            if (!students.length) { tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell">No students found.</td></tr>'; updateSelectedCount(); return; }
             let html = '';
             students.forEach(s => {
                 const checked = selectedStudents.some(x => x.id === s.id) ? 'checked' : '';
@@ -1622,7 +1616,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     <td>${escHtml(classLabel(s))}</td>
                     <td>${statusBadge(s.has_account)}</td>
                     <td><small class="text-muted font-monospace">${escHtml(s.generatedEmail)}</small></td>
-                </tr>`;
+                <tr>`;
             });
             tbody.innerHTML = html;
             updateSelectedCount();
@@ -1753,7 +1747,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <p class="mb-0 text-muted">${escHtml(data.message)}</p>
             </div>`;
             if (data.created?.length) html += mkTable('Created Accounts', data.created, 'success', 'person-plus-fill', ['Name', 'Username', 'Email', 'Password', 'Admission No', 'Class'],
-                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></table>`);
+                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></tr>`);
             if (data.reset?.length) html += mkTable('Password Resets', data.reset, 'warning', 'key-fill', ['Name', 'Username', 'Email', 'New Password', 'Admission No', 'Class'],
                 r => `<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td><code class="text-warning fw-bold">${escHtml(r.password)}</code></td><td>${escHtml(r.admissionNo || 'N/A')}</td><td>${escHtml(r.class_name || '')}</td></tr>`);
             if (data.revoked?.length) { html += `<div class="mt-3 p-3 border rounded-3"><strong><i class="bi bi-person-x-fill text-danger me-2"></i>Revoked (${data.revoked.length})</strong><ul class="mt-2 mb-0">`; data.revoked.forEach(r => { html += `<li>${escHtml(r.name)} (${escHtml(r.admissionNo || 'N/A')}) — account removed</li>`; }); html += '</ul></div>'; }
@@ -1770,7 +1764,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         }
 
         // ============================================================
-        // PRINT WITH LARGER, BOLDER SLIPS - 6 PER PAGE (3x2)
+        // IMPROVED PRINT WITH 4 HORIZONTAL SLIPS PER PAGE + CUT LINES
         // ============================================================
         document.getElementById('printResults')?.addEventListener('click', () => {
             if (!currentResults) return;
@@ -1795,7 +1789,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 return { ...cred, photo_url: photoUrl, initials: initials, name: studentName };
             });
 
-            // Generate larger, bolder slips
+            // Generate larger, bolder slips - Horizontal layout (4 per page in 2x2 grid)
             const slips = credsWithPhotos.map(s => {
                 const isReset = s.type === 'reset';
                 const tag = isReset ? 'RESET' : 'NEW';
@@ -1814,6 +1808,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     <div class="slip-header">
                         <span class="slip-tag" style="background:${tagColor}">${tag}</span>
                         <span class="slip-school">${escHtml(school)}</span>
+                        <span class="slip-cut-icon">✂</span>
                     </div>
                     <div class="slip-content">
                         ${photoHtml}
@@ -1833,8 +1828,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 </div>`;
             });
 
-            // 6 slips per page (3 columns x 2 rows) - fewer per page = larger cards
-            const perPage = 6;
+            // 4 slips per page in 2x2 grid (2 columns x 2 rows) for horizontal layout
+            const perPage = 4;
             const pages = [];
             for (let i = 0; i < slips.length; i += perPage) {
                 pages.push(slips.slice(i, i + perPage));
@@ -1857,47 +1852,36 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 .cover-stat-label { font-size:13px; color:#64748b; margin-top:8px; letter-spacing:0.5px; text-transform:uppercase; font-weight:600; }
                 .cover-footer { margin-top:70px; font-size:12px; color:#94a3b8; }
 
-                /* Slips page - 3x2 grid = 6 large slips per page */
-                .slips-page { page-break-after:always; break-after:page; padding:15px; }
-                .slips-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+                /* Slips page - 2x2 grid = 4 horizontal slips per page */
+                .slips-page { page-break-after:always; break-after:page; padding:15px; position:relative; }
+                .slips-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:20px; }
+                .slips-grid:last-child { margin-bottom:0; }
 
-                /* Individual slip - LARGER AND BOLDER */
+                /* Individual slip - LARGER AND BOLDER WITH CUT MARKS */
                 .print-slip {
                     border:2px solid #cbd5e1;
                     border-radius:16px;
-                    padding:18px;
+                    padding:20px;
                     background:#fff;
                     break-inside:avoid;
                     page-break-inside:avoid;
                     position:relative;
                     box-shadow:0 2px 6px rgba(0,0,0,0.08);
                 }
-                .print-slip::after {
-                    content:'✂';
-                    position:absolute;
-                    bottom:-12px;
-                    left:50%;
-                    transform:translateX(-50%);
-                    font-size:12px;
-                    font-weight:bold;
-                    color:#94a3b8;
-                    background:#fff;
-                    padding:0 8px;
-                    font-family:monospace;
-                }
                 .slip-header {
                     display:flex;
                     justify-content:space-between;
                     align-items:center;
-                    margin-bottom:14px;
-                    padding-bottom:8px;
+                    margin-bottom:16px;
+                    padding-bottom:10px;
                     border-bottom:2px dashed #e2e8f0;
+                    position:relative;
                 }
                 .slip-tag {
                     font-size:11px;
                     font-weight:800;
                     color:#fff;
-                    padding:4px 12px;
+                    padding:4px 14px;
                     border-radius:25px;
                     letter-spacing:1px;
                 }
@@ -1907,15 +1891,21 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     color:#1e3a5f;
                     text-transform:uppercase;
                 }
+                .slip-cut-icon {
+                    font-size:14px;
+                    font-weight:bold;
+                    color:#94a3b8;
+                    opacity:0.7;
+                }
                 .slip-content {
                     display:flex;
-                    gap:16px;
-                    margin-bottom:12px;
+                    gap:20px;
+                    margin-bottom:14px;
                 }
                 .slip-photo {
                     flex-shrink:0;
-                    width:85px;
-                    height:85px;
+                    width:90px;
+                    height:90px;
                     border-radius:50%;
                     overflow:hidden;
                     background:#f1f5f9;
@@ -1930,7 +1920,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     object-fit:cover;
                 }
                 .slip-photo-fallback {
-                    font-size:36px;
+                    font-size:38px;
                     font-weight:700;
                     display:flex;
                     align-items:center;
@@ -1942,18 +1932,18 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 }
                 .slip-info { flex:1; }
                 .slip-name {
-                    font-size:18px;
+                    font-size:19px;
                     font-weight:800;
                     color:#0f172a;
-                    margin-bottom:12px;
-                    border-bottom:1.5px solid #e2e8f0;
-                    padding-bottom:6px;
+                    margin-bottom:14px;
+                    border-bottom:2px solid #e2e8f0;
+                    padding-bottom:8px;
                 }
                 .slip-detail {
                     display:flex;
                     justify-content:space-between;
-                    margin-bottom:8px;
-                    font-size:12px;
+                    margin-bottom:10px;
+                    font-size:13px;
                 }
                 .detail-label {
                     font-weight:800;
@@ -1973,13 +1963,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     background:linear-gradient(135deg,#f0f9ff,#eff6ff);
                     border:2px solid #bfdbfe;
                     border-radius:12px;
-                    padding:10px 12px;
-                    margin-top:12px;
+                    padding:12px 14px;
+                    margin-top:14px;
                     display:flex;
                     justify-content:space-between;
                     align-items:center;
                     flex-wrap:wrap;
-                    gap:6px;
+                    gap:8px;
                 }
                 .pwd-label {
                     font-size:10px;
@@ -1990,7 +1980,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 }
                 .pwd-value {
                     font-family:'Courier New', monospace;
-                    font-size:18px;
+                    font-size:19px;
                     font-weight:900;
                     color:#1e40af;
                     letter-spacing:1.5px;
@@ -1998,8 +1988,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     text-align:right;
                 }
                 .slip-footer {
-                    margin-top:12px;
-                    padding-top:8px;
+                    margin-top:14px;
+                    padding-top:10px;
                     border-top:1px dashed #e2e8f0;
                     font-size:9px;
                     font-weight:500;
@@ -2007,26 +1997,78 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                     text-align:center;
                 }
 
-                /* Cut line between pages */
-                .page-cut-row {
-                    text-align:center;
-                    margin:10px 0 5px;
-                    font-family:monospace;
-                    font-size:11px;
+                /* Horizontal cut lines between rows and columns */
+                .slips-grid::before {
+                    display:none;
+                }
+
+                /* Cut line between rows in the same page */
+                .slips-grid .print-slip {
+                    position:relative;
+                }
+                .slips-grid .print-slip::after {
+                    content:'✂';
+                    position:absolute;
+                    bottom:-12px;
+                    left:50%;
+                    transform:translateX(-50%);
+                    font-size:12px;
                     font-weight:bold;
                     color:#cbd5e1;
-                    letter-spacing:4px;
+                    background:#fff;
+                    padding:0 8px;
+                    font-family:monospace;
                 }
-                .slips-page:last-child { page-break-after:auto; break-after:auto; }
+
+                /* Vertical cut line between columns */
+                .slips-grid {
+                    position:relative;
+                }
+                .slips-grid::after {
+                    content:'✂';
+                    position:absolute;
+                    top:50%;
+                    right:-10px;
+                    transform:translateY(-50%) rotate(90deg);
+                    font-size:12px;
+                    font-weight:bold;
+                    color:#cbd5e1;
+                    background:#fff;
+                    padding:0 8px;
+                    font-family:monospace;
+                    display:none;
+                }
+
+                /* Page cut line between pages */
+                .page-cut-row {
+                    text-align:center;
+                    margin:15px 0 10px;
+                    font-family:monospace;
+                    font-size:12px;
+                    font-weight:bold;
+                    color:#cbd5e1;
+                    letter-spacing:6px;
+                    border-top:2px dashed #cbd5e1;
+                    padding-top:10px;
+                }
+
+                /* Remove cut marks on last row of each page */
+                .slips-grid .print-slip:last-child::after {
+                    display:none;
+                }
+
+                .slips-page:last-child .page-cut-row {
+                    display:none;
+                }
 
                 @media print {
                     .cover-page { padding:25px; }
-                    .slips-page { padding:10px; }
-                    .slips-grid { gap:12px; }
+                    .slips-page { padding:12px; page-break-after:always; break-after:page; }
+                    .slips-grid { gap:15px; }
                     .print-slip { border:1.5px solid #cbd5e1; break-inside:avoid; page-break-inside:avoid; }
-                    .print-slip::after { display:none; }
                     .slip-photo img, .slip-photo-fallback { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                     .slip-password { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                    .page-cut-row { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                 }
             </style></head><body>
             <div class="cover-page">
@@ -2046,7 +2088,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <div class="slips-grid">
                     ${pageSlips.map(slip => slip).join('')}
                 </div>
-                ${pageIndex < pages.length - 1 ? '<div class="page-cut-row">·················· CUT HERE ··················</div>' : ''}
+                ${pageIndex < pages.length - 1 ? '<div class="page-cut-row">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - CUT HERE - - - - - - - - - - - - - - - - - - - - - - - - - - - - ✂</div>' : ''}
             </div>
             `).join('')}
             <script>window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close();},1500);},500);};<\/script>
