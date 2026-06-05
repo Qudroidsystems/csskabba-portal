@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Models\Schoolsession;
 use App\Models\BroadsheetRecord;
 use App\Models\AttendanceSummary;
+use App\Models\Studentpersonalityprofile;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -322,8 +323,9 @@ class StudentAssessmentController extends Controller
         }
 
         $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;
+        $schoolclassId = $studentClassData->class_id;
 
-        $schoolclass = Schoolclass::with('classcategories')->find($studentClassData->class_id);
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
         $isSenior = $schoolclass?->classcategories->first()?->is_senior ?? false;
         $categoryIds = $schoolclass?->classcategories->pluck('id') ?? collect();
 
@@ -351,7 +353,7 @@ class StudentAssessmentController extends Controller
         foreach ($registeredSubjects as $regSubject) {
             $broadsheetRecord = BroadsheetRecord::where('student_id', $studentId)
                 ->where('subject_id', $regSubject->subject_id)
-                ->where('schoolclass_id', $studentClassData->class_id)
+                ->where('schoolclass_id', $schoolclassId)
                 ->where('session_id', $sessionIdForQuery)
                 ->first();
 
@@ -416,15 +418,15 @@ class StudentAssessmentController extends Controller
         $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
 
         $numberOfStudents = DB::table('studentclass')
-            ->where('schoolclassid', $studentClassData->class_id)
+            ->where('schoolclassid', $schoolclassId)
             ->where('sessionid', $sessionIdForQuery)
             ->where('termid', $selectedTermId)
             ->count();
 
         // =====================================================================
-        // FETCH STUDENT PROFILE/REMARKS DATA (studentpp)
+        // FETCH STUDENT PROFILE/REMARKS DATA using correct model
         // =====================================================================
-        $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery);
+        $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery, $schoolclassId);
 
         // Fetch attendance summary
         $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
@@ -476,9 +478,9 @@ class StudentAssessmentController extends Controller
             'school_stamp_base64' => $stampBase64,
             'student_image_base64' => $pictureBase64,
             'numberOfStudents' => $numberOfStudents,
-            'studentpp' => $studentProfileData,  // <-- ADDED: Student remarks/profile data
+            'studentpp' => $studentProfileData,
             'attendance_summary' => $attendanceData,
-            'promotion_result' => [], // Add promotion logic here if needed
+            'promotion_result' => [],
         ]];
 
         // SAFE FILENAME
@@ -507,17 +509,26 @@ class StudentAssessmentController extends Controller
     // =========================================================================
 
     /**
-     * Get student profile/remarks data from studentpp table
+     * Get student profile/remarks data from Studentpersonalityprofile model
+     * This is the correct table - not 'studentpp'
      */
-    private function getStudentProfileData($studentId, $termId, $sessionId)
+    private function getStudentProfileData($studentId, $termId, $sessionId, $schoolclassId)
     {
-        $profile = DB::table('studentpp')
-            ->where('studentid', $studentId)
-            ->where('termid', $termId)
-            ->where('sessionid', $sessionId)
-            ->first();
+        try {
+            $profile = Studentpersonalityprofile::where('studentid', $studentId)
+                ->where('termid', $termId)
+                ->where('sessionid', $sessionId)
+                ->where('schoolclassid', $schoolclassId)
+                ->first();
 
-        return $profile ? collect([$profile]) : collect();
+            return $profile ? collect([$profile]) : collect();
+        } catch (\Exception $e) {
+            \Log::error('Error fetching student personality profile', [
+                'student_id' => $studentId,
+                'error' => $e->getMessage()
+            ]);
+            return collect();
+        }
     }
 
     /**
