@@ -438,9 +438,22 @@
             $totals = $studentData['totals_summary'] ?? [];
             $attendance = $studentData['attendance_summary'] ?? [];
 
+            // SAFE ACCESS: Check if studentpp exists and is not empty
+            $profile = null;
+            if (isset($studentData['studentpp']) && $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty()) {
+                $profile = $studentData['studentpp']->first();
+            }
+
             $admNo = $student->admissionNo ?? 'N/A';
             $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
-            $classVal = trim(($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? ''));
+
+            // SAFE ACCESS: Check if arms relationship exists
+            $armName = '';
+            if (isset($studentData['schoolclass']) && isset($studentData['schoolclass']->arms)) {
+                $armName = $studentData['schoolclass']->arms->arm ?? '';
+            }
+            $classVal = trim(($studentData['schoolclass']->schoolclass ?? '') . ' ' . $armName);
+
             $session = $metadata['session'] ?? '2025/2026';
             $term = $metadata['term'] ?? 'SECOND TERM';
 
@@ -536,11 +549,9 @@
             {{-- STUDENT INFO BAR --}}
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
-                    $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty()
-                        ? $studentData['studentpp']->first() : null;
                     $fullNameDisplay = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
                     $admNoDisplay = $student->admissionNo ?? '—';
-                    $classValDisplay = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
+                    $classValDisplay = $classVal;
                     $schoolOpened = $schoolInfo->date_school_opened
                         ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—';
                     $numInClass = $studentData['numberOfStudents'] ?? '—';

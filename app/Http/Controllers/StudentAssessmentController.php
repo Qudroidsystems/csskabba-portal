@@ -89,7 +89,6 @@ class StudentAssessmentController extends Controller
             }
         }
 
-        // FIXED: Join schoolarm
         $studentClassData = DB::table('studentclass')
             ->where('studentclass.studentId', $studentId)
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
@@ -322,12 +321,14 @@ class StudentAssessmentController extends Controller
             $selectedTermId = $studentClassData->term_id;
         }
 
+        $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;
+
         $schoolclass = Schoolclass::with('classcategories')->find($studentClassData->class_id);
         $isSenior = $schoolclass?->classcategories->first()?->is_senior ?? false;
         $categoryIds = $schoolclass?->classcategories->pluck('id') ?? collect();
 
         $termModel = Schoolterm::find($selectedTermId);
-        $sessionModel = Schoolsession::find($selectedSessionId ?? $studentClassData->session_id);
+        $sessionModel = Schoolsession::find($sessionIdForQuery);
 
         $registeredSubjects = DB::table('student_subject_register_record as ssrr')
             ->where('ssrr.studentId', $studentId)
@@ -351,7 +352,7 @@ class StudentAssessmentController extends Controller
             $broadsheetRecord = BroadsheetRecord::where('student_id', $studentId)
                 ->where('subject_id', $regSubject->subject_id)
                 ->where('schoolclass_id', $studentClassData->class_id)
-                ->where('session_id', $selectedSessionId ?? $studentClassData->session_id)
+                ->where('session_id', $sessionIdForQuery)
                 ->first();
 
             if (!$broadsheetRecord) continue;
@@ -402,7 +403,7 @@ class StudentAssessmentController extends Controller
 
         $gpaData = $this->computeOverallForStudent(
             $studentId, $schoolclass, $selectedTermId,
-            $selectedSessionId ?? $studentClassData->session_id, $isSenior
+            $sessionIdForQuery, $isSenior
         );
 
         $schoolInfo = SchoolInformation::first();
@@ -411,11 +412,41 @@ class StudentAssessmentController extends Controller
             DB::table('studentpicture')->where('studentid', $studentId)->value('picture')
         );
 
+        // Get school stamp base64
+        $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
+
         $numberOfStudents = DB::table('studentclass')
             ->where('schoolclassid', $studentClassData->class_id)
-            ->where('sessionid', $selectedSessionId ?? $studentClassData->session_id)
+            ->where('sessionid', $sessionIdForQuery)
             ->where('termid', $selectedTermId)
             ->count();
+
+        // =====================================================================
+        // FETCH STUDENT PROFILE/REMARKS DATA (studentpp)
+        // =====================================================================
+        $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery);
+
+        // Fetch attendance summary
+        $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
+            ->where('term_id', $selectedTermId)
+            ->where('session_id', $sessionIdForQuery)
+            ->first();
+
+        $attendanceData = [];
+        if ($attendanceSummary) {
+            $attendanceData = [
+                'found' => true,
+                'total_school_days' => $attendanceSummary->total_school_days ?? 0,
+                'days_present' => $attendanceSummary->days_present ?? 0,
+                'days_absent' => $attendanceSummary->days_absent ?? 0,
+                'days_late' => $attendanceSummary->days_late ?? 0,
+                'days_sick_leave' => $attendanceSummary->days_sick_leave ?? 0,
+                'days_excused' => $attendanceSummary->days_excused ?? 0,
+                'attendance_percentage' => $attendanceSummary->attendance_percentage ?? 0,
+            ];
+        } else {
+            $attendanceData = ['found' => false];
+        }
 
         $metadata = [
             'term' => $termModel->term ?? 'Term',
@@ -423,9 +454,15 @@ class StudentAssessmentController extends Controller
             'selected_columns' => $selectedColumns
         ];
 
+        // Build the school class object with arms relationship
+        $schoolclassWithArms = new \stdClass();
+        $schoolclassWithArms->schoolclass = $studentClassData->class_name ?? '';
+        $schoolclassWithArms->arms = new \stdClass();
+        $schoolclassWithArms->arms->arm = $studentClassData->arm_name ?? '';
+
         $allStudentData = [[
             'students' => collect([$student]),
-            'schoolclass' => $schoolclass,
+            'schoolclass' => $schoolclassWithArms,
             'scores' => $scores,
             'assessments' => $allAssessments,
             'gpa_data' => $gpaData,
@@ -436,15 +473,19 @@ class StudentAssessmentController extends Controller
             ],
             'schoolInfo' => $schoolInfo,
             'school_logo_base64' => $logoBase64,
+            'school_stamp_base64' => $stampBase64,
             'student_image_base64' => $pictureBase64,
             'numberOfStudents' => $numberOfStudents,
+            'studentpp' => $studentProfileData,  // <-- ADDED: Student remarks/profile data
+            'attendance_summary' => $attendanceData,
+            'promotion_result' => [], // Add promotion logic here if needed
         ]];
 
-        // SAFE FILENAME - Remove invalid characters
+        // SAFE FILENAME
         $safeAdmissionNo = preg_replace('/[^A-Za-z0-9\-]/', '_', $student->admissionNo ?? 'student');
         $safeTerm = preg_replace('/[^A-Za-z0-9\-]/', '_', $termModel->term ?? 'Term');
 
-        $filename = 'Assessment_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
+        $filename = 'Terminal_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
 
         $pdf = Pdf::loadView('student.assessments.print-pdf', [
             'allStudentData' => $allStudentData,
@@ -464,6 +505,51 @@ class StudentAssessmentController extends Controller
     // =========================================================================
     // HELPER METHODS
     // =========================================================================
+
+    /**
+     * Get student profile/remarks data from studentpp table
+     */
+    private function getStudentProfileData($studentId, $termId, $sessionId)
+    {
+        $profile = DB::table('studentpp')
+            ->where('studentid', $studentId)
+            ->where('termid', $termId)
+            ->where('sessionid', $sessionId)
+            ->first();
+
+        return $profile ? collect([$profile]) : collect();
+    }
+
+    /**
+     * Get school stamp as base64 for PDF
+     */
+    private function getSchoolStampBase64($schoolInfo)
+    {
+        $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="#f1f5f9" stroke="#3b82f6" stroke-width="2"/>
+                <text x="50" y="55" text-anchor="middle" fill="#1e293b" font-size="12" font-family="Arial">STAMP</text>
+            </svg>'
+        );
+
+        if (!$schoolInfo || empty($schoolInfo->school_stamp)) {
+            return $placeholder;
+        }
+
+        $paths = [
+            storage_path('app/public/' . $schoolInfo->school_stamp),
+            public_path('storage/' . $schoolInfo->school_stamp),
+        ];
+
+        foreach ($paths as $path) {
+            if (file_exists($path) && filesize($path) > 100) {
+                $mime = mime_content_type($path) ?: 'image/png';
+                return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+            }
+        }
+
+        return $placeholder;
+    }
 
     private function buildGpaTrend(int $studentId, ?int $sessionId, bool $isSenior): array
     {
@@ -546,7 +632,10 @@ class StudentAssessmentController extends Controller
     private function logoToBase64($schoolInfo): string
     {
         $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#1e3a5f"/><text x="40" y="46" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text></svg>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+                <rect width="80" height="80" rx="40" fill="#1e3a5f"/>
+                <text x="40" y="46" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text>
+            </svg>'
         );
 
         if (!$schoolInfo || empty($schoolInfo->school_logo)) return $placeholder;
@@ -568,7 +657,12 @@ class StudentAssessmentController extends Controller
     private function imageToBase64ForPdf(?string $path): string
     {
         $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="95" viewBox="0 0 80 95"><rect width="80" height="95" fill="#e2e8f0"/><circle cx="40" cy="32" r="18" fill="#94a3b8"/><rect x="20" y="56" width="40" height="28" rx="4" fill="#94a3b8"/><text x="40" y="90" text-anchor="middle" fill="#475569" font-family="Arial" font-size="8">PHOTO</text></svg>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="95" viewBox="0 0 80 95">
+                <rect width="80" height="95" fill="#e2e8f0"/>
+                <circle cx="40" cy="32" r="18" fill="#94a3b8"/>
+                <rect x="20" y="56" width="40" height="28" rx="4" fill="#94a3b8"/>
+                <text x="40" y="90" text-anchor="middle" fill="#475569" font-family="Arial" font-size="8">PHOTO</text>
+            </svg>'
         );
 
         if (!$path) return $placeholder;
