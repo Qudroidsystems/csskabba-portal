@@ -95,7 +95,7 @@
             padding: 3px 7px 3px 7px;    /* slightly reduced */
         }
 
-        .school-logo {
+        .school-logo, .photo-frame {
             width: 60px;
             height: 66px;
             border: 2px solid #47b492;
@@ -107,30 +107,10 @@
             text-align: center;
         }
 
-        .school-logo img {
+        .school-logo img, .photo-frame img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-        }
-
-        /* Photo frame stretches to fill the full height of the header row */
-        .photo-frame {
-            width: 60px;
-            height: 100%;
-            min-height: 66px;
-            border: 2px solid #47b492;
-            border-radius: 6px;
-            background: white;
-            padding: 0;
-            overflow: hidden;
-            display: block;
-        }
-
-        .photo-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
         }
 
         .header-divider  { height: 2px; background: #1e40af; width: 100%; }
@@ -476,7 +456,7 @@
             </div>
 
             {{-- HEADER: Logo + Contact + Photo --}}
-            <table class="header-table" style="height:80px;">
+            <table class="header-table">
                 <tr>
                     <td width="20%" style="text-align:center;">
                         <div class="school-logo">
@@ -515,9 +495,9 @@
                         </table>
                     </td>
 
-                    <td width="29%" style="text-align:right; padding-right:0; padding-left:0; padding-top:0; padding-bottom:0; vertical-align:top;">
+                    <td width="29%" style="text-align:right; padding-right:7px; vertical-align:top; padding-top:5px;">
                         @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame" style="margin-left:auto; margin-right:0; width:70px; height:100%; min-height:80px;">
+                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
