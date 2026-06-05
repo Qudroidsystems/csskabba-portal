@@ -66,19 +66,20 @@
         }
 
         /*
-         * KEY CHANGE: each student card must sit on exactly ONE printed page.
-         * A4 is ~297 mm tall; with 2mm body padding top & bottom the card gets
-         * ~293 mm.  We set height + overflow hidden so nothing spills.
+         * Each student card sits on exactly ONE printed page.
+         * No fixed height — content fills naturally; page-break-after pushes
+         * the next student onto a new page.  The PDF renderer (wkhtmltopdf /
+         * Puppeteer) honours page-break-after:always on block elements.
          */
         .student-section {
             width: 190mm;
-            height: 277mm;               /* fits comfortably on A4 with margins */
-            overflow: hidden;            /* prevent content from bleeding to next page */
             page-break-after: always;
             page-break-inside: avoid;
+            break-after: page;           /* modern alias */
+            break-inside: avoid;
             background: #ffffff;
             border: 3px double #000000;
-            margin: 0 auto 8px auto;
+            margin: 0 auto;              /* no bottom margin — page break handles spacing */
             position: relative;
             text-align: left;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -370,10 +371,10 @@
             body { background: white; padding: 0; }
             .student-section {
                 box-shadow: none;
-                height: 277mm;
-                overflow: hidden;
+                margin: 0 auto;
                 page-break-inside: avoid;
                 page-break-after: always;
+                break-after: page;
             }
         }
     </style>
