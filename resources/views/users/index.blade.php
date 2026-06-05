@@ -805,1026 +805,291 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
         </div>
     </div>
 
-    {{-- Include Mass Student Modal --}}
-    @include('users.partials.mass-student-modal')
+    {{-- ══════════════════════════════════════════════════════
+         MASS STUDENT MODAL (Full Implementation)
+    ══════════════════════════════════════════════════════ --}}
+    <div id="massStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content msm-modal-content">
+
+                {{-- HEADER --}}
+                <div class="modal-header msm-header">
+                    <div class="msm-header-inner">
+                        <div class="msm-header-icon"><i class="bi bi-people-fill"></i></div>
+                        <div>
+                            <h5 class="modal-title msm-title">Mass Student Account Management</h5>
+                            <p class="msm-subtitle">Create, reset, revoke or reprint student credentials in bulk</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                {{-- STEP BAR --}}
+                <div class="msm-steps-bar">
+                    <div class="msm-step active" id="stepBar1">
+                        <div class="msm-step-circle">1</div><span>Select Students</span>
+                    </div>
+                    <div class="msm-step-line"></div>
+                    <div class="msm-step" id="stepBar2">
+                        <div class="msm-step-circle">2</div><span>Choose Action</span>
+                    </div>
+                    <div class="msm-step-line"></div>
+                    <div class="msm-step" id="stepBar3">
+                        <div class="msm-step-circle">3</div><span>Results</span>
+                    </div>
+                </div>
+
+                <div class="modal-body msm-body">
+
+                    {{-- STEP 1 --}}
+                    <div id="massStep1">
+                        <div class="msm-card msm-filter-card mb-3">
+                            <div class="msm-card-header"><i class="bi bi-funnel-fill me-2"></i>Filter Students</div>
+                            <div class="msm-card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="msm-label">Search</label>
+                                        <div class="position-relative">
+                                            <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;pointer-events:none;"></i>
+                                            <input type="text" id="massStudentSearch" class="form-control msm-input ps-4" placeholder="Name or Admission No…">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="msm-label">Class</label>
+                                        <select id="massClassFilter" class="form-select msm-input">
+                                            <option value="">All Classes</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="msm-label">Account Status</label>
+                                        <select id="massAccountStatus" class="form-select msm-input">
+                                            <option value="all">All Students</option>
+                                            <option value="no">No Account Only</option>
+                                            <option value="yes">Has Account Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="msm-info-banner mb-3">
+                            <i class="bi bi-envelope-at-fill me-2"></i>
+                            Emails are auto-generated as <code>firstname.lastname@csskabba.ng</code> — special characters removed.
+                        </div>
+
+                        <div class="msm-card mb-3">
+                            <div class="msm-card-header d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-person-lines-fill me-2"></i>Select Students</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="msm-count-badge" id="massSelectedCount">0 selected</span>
+                                    <button type="button" class="msm-btn-sm" id="selectAllStudents">
+                                        <i class="bi bi-check-all me-1"></i>Select All
+                                    </button>
+                                    <button type="button" class="msm-btn-sm" id="deselectAll" style="border-color:#94a3b8;color:#94a3b8;">
+                                        <i class="bi bi-x me-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="msm-card-body p-0">
+                                <div class="table-responsive msm-table-wrap">
+                                    <table class="table msm-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th width="40"><input type="checkbox" id="selectAllCheckbox" class="msm-checkbox"></th>
+                                                <th>Admission No</th>
+                                                <th>Student Name</th>
+                                                <th>Class</th>
+                                                <th>Status</th>
+                                                <th>Generated Email</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="massStudentList">
+                                            <tr><td colspan="6" class="msm-loading-cell">
+                                                <div class="spinner-border spinner-border-sm me-2 text-primary"></div>Loading students…
+                                            </td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="msm-legend mb-3">
+                            <div class="msm-legend-title"><i class="bi bi-lightbulb-fill me-1"></i>Available Actions</div>
+                            <div class="msm-legend-grid">
+                                <div class="msm-legend-item create"><i class="bi bi-person-plus-fill"></i><div><strong>Create</strong> — new accounts for students without one</div></div>
+                                <div class="msm-legend-item reset"><i class="bi bi-key-fill"></i><div><strong>Reset</strong> — new passwords for existing accounts</div></div>
+                                <div class="msm-legend-item revoke"><i class="bi bi-person-x-fill"></i><div><strong>Revoke</strong> — remove user access (student record kept)</div></div>
+                                <div class="msm-legend-item reprint"><i class="bi bi-printer-fill"></i><div><strong>Reprint</strong> — show existing credentials (password hidden)</div></div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="msm-btn-primary" id="proceedToAction">
+                                Continue to Action <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- STEP 2 --}}
+                    <div id="massStep2" style="display:none;">
+                        <div class="msm-card mb-3">
+                            <div class="msm-card-header">
+                                <i class="bi bi-check-square-fill me-2"></i>
+                                Selected Students — <span id="step2SelectedCount" class="fw-bold">0</span>
+                            </div>
+                            <div class="msm-card-body p-0">
+                                <div class="table-responsive msm-summary-wrap">
+                                    <table class="table msm-table msm-table-sm mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Student Name</th>
+                                                <th>Admission No</th>
+                                                <th>Class</th>
+                                                <th>Status</th>
+                                                <th>Generated Email</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="selectedStudentsList"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="msm-card mb-3">
+                            <div class="msm-card-header"><i class="bi bi-lightning-charge-fill me-2"></i>Choose Action</div>
+                            <div class="msm-card-body">
+                                <div class="msm-action-grid">
+                                    <div class="msm-action-card" data-action="create">
+                                        <div class="msm-action-icon create"><i class="bi bi-person-plus-fill"></i></div>
+                                        <div class="msm-action-label">Create Accounts</div>
+                                        <div class="msm-action-desc">For students without accounts</div>
+                                    </div>
+                                    <div class="msm-action-card" data-action="reset">
+                                        <div class="msm-action-icon reset"><i class="bi bi-key-fill"></i></div>
+                                        <div class="msm-action-label">Reset Passwords</div>
+                                        <div class="msm-action-desc">New password for existing accounts</div>
+                                    </div>
+                                    <div class="msm-action-card" data-action="revoke">
+                                        <div class="msm-action-icon revoke"><i class="bi bi-person-x-fill"></i></div>
+                                        <div class="msm-action-label">Revoke Accounts</div>
+                                        <div class="msm-action-desc">Remove user access</div>
+                                    </div>
+                                    <div class="msm-action-card" data-action="reprint">
+                                        <div class="msm-action-icon reprint"><i class="bi bi-printer-fill"></i></div>
+                                        <div class="msm-action-label">Reprint Credentials</div>
+                                        <div class="msm-action-desc">Print without password shown</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="selectedAction" value="">
+                            </div>
+                        </div>
+
+                        <div id="passwordSettings" style="display:none;">
+                            <div class="msm-card mb-3">
+                                <div class="msm-card-header"><i class="bi bi-lock-fill me-2"></i>Password Settings</div>
+                                <div class="msm-card-body">
+                                    <div class="msm-radio-group">
+                                        <label class="msm-radio-card">
+                                            <input type="radio" name="passwordTypeRadio" value="individual" checked>
+                                            <div class="msm-radio-inner">
+                                                <i class="bi bi-shuffle"></i>
+                                                <div><strong>Individual Random Passwords</strong><p>Each student gets a unique random password</p></div>
+                                            </div>
+                                        </label>
+                                        <label class="msm-radio-card">
+                                            <input type="radio" name="passwordTypeRadio" value="same">
+                                            <div class="msm-radio-inner">
+                                                <i class="bi bi-people-fill"></i>
+                                                <div><strong>Same Password for All</strong><p>All selected students share one password</p></div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div id="sharedPasswordContainer" style="display:none;" class="mt-3">
+                                        <label class="msm-label">Shared Password</label>
+                                        <input type="text" id="sharedPassword" class="form-control msm-input" placeholder="Minimum 6 characters">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="roleSettings" style="display:none;">
+                            <div class="msm-card mb-3">
+                                <div class="msm-card-header"><i class="bi bi-tags-fill me-2"></i>Role Assignment</div>
+                                <div class="msm-card-body">
+                                    <div class="msm-role-notice">
+                                        <i class="bi bi-shield-check-fill me-2"></i>
+                                        Student accounts are automatically assigned the <strong>Student</strong> role.
+                                    </div>
+                                    @php
+                                        $allRoles   = Spatie\Permission\Models\Role::all();
+                                        $studentRole = $allRoles->where('name','Student')->first();
+                                        $otherRoles  = $allRoles->where('name','!=','Student');
+                                    @endphp
+                                    @if($studentRole)
+                                    <div class="msm-role-assigned">
+                                        <i class="bi bi-person-badge-fill me-2 text-success"></i>
+                                        <strong class="text-success">{{ $studentRole->name }}</strong>
+                                        <span class="msm-badge-default ms-2">Auto-assigned</span>
+                                    </div>
+                                    @endif
+                                    @if($otherRoles->count() > 0)
+                                    <div class="mt-3">
+                                        <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1"></i>These roles cannot be assigned to student accounts:</p>
+                                        <div class="msm-disabled-roles">
+                                            @foreach($otherRoles as $role)
+                                            <span class="msm-disabled-role"><i class="bi bi-lock-fill me-1"></i>{{ $role->name }}</span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="actionWarning" class="msm-warning-banner mb-3" style="display:none;"></div>
+
+                        <div class="d-flex justify-content-between mt-1">
+                            <button type="button" class="msm-btn-secondary" id="backToStep1">
+                                <i class="bi bi-arrow-left me-1"></i>Back
+                            </button>
+                            <button type="button" class="msm-btn-primary" id="executeAction">
+                                <i class="bi bi-check-circle me-1"></i>Execute Action
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- STEP 3 --}}
+                    <div id="massStep3" style="display:none;">
+                        <div id="resultsContainer"></div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="msm-btn-secondary" id="newAction">
+                                <i class="bi bi-plus-circle me-1"></i>New Action
+                            </button>
+                            <button type="button" class="msm-btn-primary" id="printResults">
+                                <i class="bi bi-printer me-1"></i>Print Credentials
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 </div>
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════
-     SCRIPTS - CORRECT ORDER
+     SCRIPTS
 ══════════════════════════════════════════════════════════════ --}}
 
-<!-- First: jQuery (required for Bootstrap) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Then: Bootstrap JS (from your assets) -->
 <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
-<!-- Then: Other libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-<script>
-(function () {
-    'use strict';
-
-    // Wait for DOM to be fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-
-        // Check if Bootstrap is loaded
-        if (typeof bootstrap === 'undefined') {
-            console.error('Bootstrap not loaded! Modals will not work.');
-            return;
-        }
-
-        const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
-
-        // Helper function to safely show modals
-        function showModal(modalId) {
-            const modalElement = document.getElementById(modalId);
-            if (!modalElement) {
-                console.error('Modal element not found:', modalId);
-                return null;
-            }
-
-            // Get or create modal instance
-            let modal = bootstrap.Modal.getInstance(modalElement);
-            if (!modal) {
-                modal = new bootstrap.Modal(modalElement, {
-                    backdrop: 'static',
-                    keyboard: true
-                });
-            }
-            modal.show();
-            return modal;
-        }
-
-        function hideModal(modalId) {
-            const modalElement = document.getElementById(modalId);
-            if (modalElement) {
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) modal.hide();
-            }
-        }
-
-        // ── Manual modal trigger handlers ─────────────────────
-        // Add User Modal triggers
-        const openAddUserBtns = ['openAddUserModalBtn', 'openAddUserModalBtnMobile'];
-        openAddUserBtns.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    showModal('showModal');
-                });
-            }
-        });
-
-        // Add Student Modal triggers
-        const openAddStudentBtns = ['openAddStudentModalBtn', 'openAddStudentModalBtnMobile'];
-        openAddStudentBtns.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    showModal('addStudentModal');
-                });
-            }
-        });
-
-        // Mass Student Modal triggers
-        const openMassStudentBtns = ['openMassStudentModalBtn', 'openMassStudentModalBtnMobile'];
-        openMassStudentBtns.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const massModal = document.getElementById('massStudentModal');
-                    if (massModal) {
-                        showModal('massStudentModal');
-                    } else {
-                        console.error('Mass student modal not found');
-                    }
-                });
-            }
-        });
-
-        // ── Collect all rows once ──────────────────────────────
-        const allRows = () => Array.from(document.querySelectorAll('#usersTableBody tr[data-id]'));
-        let visibleIds = new Set(allRows().map(r => r.dataset.id));
-
-        // ── Live filter ────────────────────────────────────────
-        function applyFilters() {
-            const search = document.getElementById('liveSearch')?.value.toLowerCase().trim() || '';
-            const role   = document.getElementById('roleFilter')?.value.toLowerCase().trim() || '';
-            const email  = document.getElementById('emailFilter')?.value.toLowerCase().trim() || '';
-
-            let shown = 0;
-            visibleIds = new Set();
-
-            allRows().forEach(row => {
-                const name  = row.dataset.name  || '';
-                const rEmail = row.dataset.email || '';
-                const roles = row.dataset.roles || '';
-
-                const matchSearch = !search || name.includes(search) || rEmail.includes(search);
-                const matchRole   = !role   || roles.split(',').some(r => r.trim() === role) || (role === 'no role' && !roles.trim());
-                const matchEmail  = !email  || rEmail === email;
-
-                const visible = matchSearch && matchRole && matchEmail;
-                row.style.display = visible ? '' : 'none';
-                if (visible) { shown++; visibleIds.add(row.dataset.id); }
-            });
-
-            const showingSpan = document.getElementById('showingCount');
-            if (showingSpan) showingSpan.textContent = shown;
-
-            // Empty state
-            let empty = document.getElementById('noResults');
-            if (shown === 0 && allRows().length > 0) {
-                if (!empty) {
-                    empty = document.createElement('tr');
-                    empty.id = 'noResults';
-                    empty.innerHTML = `<td colspan="7"><div class="u-empty"><i class="ri-search-line"></i>No users match your filters</div></td>`;
-                    document.getElementById('usersTableBody')?.appendChild(empty);
-                }
-            } else if (empty) {
-                empty.remove();
-            }
-
-            const userBadge = document.getElementById('userCountBadge');
-            if (userBadge) userBadge.textContent = shown;
-        }
-
-        // Attach filter event listeners
-        const liveSearch = document.getElementById('liveSearch');
-        const roleFilter = document.getElementById('roleFilter');
-        const emailFilter = document.getElementById('emailFilter');
-        const clearFilters = document.getElementById('clearFilters');
-
-        if (liveSearch) liveSearch.addEventListener('input', applyFilters);
-        if (roleFilter) roleFilter.addEventListener('change', applyFilters);
-        if (emailFilter) emailFilter.addEventListener('change', applyFilters);
-        if (clearFilters) {
-            clearFilters.addEventListener('click', () => {
-                if (liveSearch) liveSearch.value = '';
-                if (roleFilter) roleFilter.value = '';
-                if (emailFilter) emailFilter.value = '';
-                applyFilters();
-            });
-        }
-
-        // ── Sortable columns ───────────────────────────────────
-        let sortDir = {};
-        document.querySelectorAll('.sortable').forEach(th => {
-            th.style.cursor = 'pointer';
-            th.addEventListener('click', () => {
-                const col = parseInt(th.dataset.col);
-                sortDir[col] = !sortDir[col];
-                const tbody = document.getElementById('usersTableBody');
-                if (!tbody) return;
-                const rows = [...document.querySelectorAll('#usersTableBody tr[data-id]')];
-                rows.sort((a, b) => {
-                    const key = ['name','email','','','','date'][col] || 'name';
-                    const av = a.dataset[key] || a.cells[col]?.textContent || '';
-                    const bv = b.dataset[key] || b.cells[col]?.textContent || '';
-                    return sortDir[col] ? av.localeCompare(bv) : bv.localeCompare(av);
-                });
-                rows.forEach(r => tbody.appendChild(r));
-            });
-        });
-
-        // ── Check all ──────────────────────────────────────────
-        const checkAll = document.getElementById('checkAll');
-        if (checkAll) {
-            checkAll.addEventListener('change', function() {
-                document.querySelectorAll('.row-check').forEach(cb => {
-                    const row = cb.closest('tr');
-                    if (row && row.style.display !== 'none') cb.checked = this.checked;
-                });
-                updateRemoveBtn();
-            });
-        }
-
-        document.addEventListener('change', e => {
-            if (e.target.classList.contains('row-check')) updateRemoveBtn();
-        });
-
-        function updateRemoveBtn() {
-            const count = document.querySelectorAll('.row-check:checked').length;
-            const removeBtn = document.getElementById('remove-actions');
-            if (removeBtn) removeBtn.classList.toggle('d-none', count === 0);
-        }
-
-        // ── Delete single ──────────────────────────────────────
-        document.addEventListener('click', e => {
-            const btn = e.target.closest('.remove-item-btn');
-            if (!btn) return;
-            const id = btn.dataset.id;
-
-            const deleteBtn = document.getElementById('delete-record');
-            if (deleteBtn) {
-                const fresh = deleteBtn.cloneNode(true);
-                deleteBtn.replaceWith(fresh);
-                fresh.addEventListener('click', () => {
-                    axios.delete(`/users/${id}`, { headers:{'X-CSRF-TOKEN':CSRF} })
-                    .then(() => {
-                        const row = document.querySelector(`tr[data-id="${id}"]`);
-                        if (row) {
-                            row.style.transition = 'all .3s ease';
-                            row.style.opacity = '0';
-                            row.style.transform = 'translateX(-20px)';
-                            setTimeout(() => row.remove(), 300);
-                        }
-                        const totalEl = document.getElementById('totalCount');
-                        if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) - 1;
-                        hideModal('deleteRecordModal');
-                        Swal.fire({ icon:'success', title:'Deleted!', text:'User removed.', showConfirmButton:false, timer:2000 });
-                    })
-                    .catch(err => Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error'));
-                });
-            }
-            showModal('deleteRecordModal');
-        });
-
-        // ── Delete multiple ────────────────────────────────────
-        window.deleteMultiple = function() {
-            const ids = [...document.querySelectorAll('.row-check:checked')]
-                .map(cb => cb.closest('tr').dataset.id).filter(Boolean);
-            if (!ids.length) { Swal.fire('Select at least one user'); return; }
-
-            Swal.fire({
-                title: 'Delete ' + ids.length + ' user(s)?',
-                text: 'This cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                confirmButtonText: 'Yes, Delete All'
-            }).then(r => {
-                if (!r.isConfirmed) return;
-                Promise.all(ids.map(id => axios.delete(`/users/${id}`, { headers:{'X-CSRF-TOKEN':CSRF} })))
-                .then(() => {
-                    ids.forEach(id => {
-                        const row = document.querySelector(`tr[data-id="${id}"]`);
-                        if (row) row.remove();
-                    });
-                    Swal.fire('Deleted!', ids.length + ' users removed.', 'success');
-                    updateRemoveBtn();
-                    const totalEl = document.getElementById('totalCount');
-                    if (totalEl) totalEl.textContent = allRows().length;
-                    applyFilters();
-                });
-            });
-        };
-
-        // ── Edit user ──────────────────────────────────────────
-        document.addEventListener('click', e => {
-            const btn = e.target.closest('.edit-item-btn');
-            if (!btn) return;
-            const idField = document.getElementById('edit-id-field');
-            const nameField = document.getElementById('edit-name');
-            const emailField = document.getElementById('edit-email');
-            const roleSelect = document.getElementById('edit-role');
-
-            if (idField) idField.value = btn.dataset.id;
-            if (nameField) nameField.value = btn.dataset.name;
-            if (emailField) emailField.value = btn.dataset.email;
-
-            const roles = (btn.dataset.roles || '').split(',').filter(r => r.trim());
-            if (roleSelect) {
-                Array.from(roleSelect.options).forEach(opt => {
-                    opt.selected = roles.includes(opt.value);
-                });
-            }
-
-            const passwordField = document.getElementById('edit-password');
-            const confirmField = document.getElementById('edit-password_confirmation');
-            if (passwordField) passwordField.value = '';
-            if (confirmField) confirmField.value = '';
-
-            const alertDiv = document.getElementById('edit-alert');
-            if (alertDiv) alertDiv.classList.add('d-none');
-
-            showModal('editModal');
-        });
-
-        // ── Add user form ──────────────────────────────────────
-        const addUserForm = document.getElementById('add-user-form');
-        if (addUserForm) {
-            addUserForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const alert = document.getElementById('add-alert');
-                if (alert) alert.classList.add('d-none');
-
-                const name  = document.getElementById('name')?.value.trim() || '';
-                const email = document.getElementById('email')?.value.trim() || '';
-                const pass  = document.getElementById('password')?.value || '';
-                const conf  = document.getElementById('password_confirmation')?.value || '';
-                const roles = Array.from(document.getElementById('role')?.selectedOptions || []).map(o => o.value);
-
-                if (!name)         { showAlert(alert,'Enter a name'); return; }
-                if (!email)        { showAlert(alert,'Enter an email'); return; }
-                if (!roles.length) { showAlert(alert,'Select at least one role'); return; }
-                if (!pass)         { showAlert(alert,'Enter a password'); return; }
-                if (pass !== conf) { showAlert(alert,'Passwords do not match'); return; }
-
-                const btn = document.getElementById('add-btn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
-                }
-
-                axios.post('/users', { name, email, roles, password:pass, password_confirmation:conf, _token:CSRF })
-                .then(res => {
-                    const u = res.data.user;
-                    addRowToTable(u);
-                    hideModal('showModal');
-                    Swal.fire({ icon:'success', title:'User Created!', text:u.name + ' added successfully.', showConfirmButton:false, timer:2500 });
-                })
-                .catch(err => {
-                    const msg = err.response?.status === 422
-                        ? Object.values(err.response.data.errors || {}).flat().join(', ')
-                        : (err.response?.data?.message || 'Error creating user');
-                    showAlert(alert, msg);
-                })
-                .finally(() => {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="bi bi-plus-circle"></i> Create User';
-                    }
-                });
-            });
-        }
-
-        // ── Edit user form ─────────────────────────────────────
-        const editUserForm = document.getElementById('edit-user-form');
-        if (editUserForm) {
-            editUserForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const alert = document.getElementById('edit-alert');
-                if (alert) alert.classList.add('d-none');
-
-                const id    = document.getElementById('edit-id-field')?.value || '';
-                const name  = document.getElementById('edit-name')?.value.trim() || '';
-                const email = document.getElementById('edit-email')?.value.trim() || '';
-                const pass  = document.getElementById('edit-password')?.value || '';
-                const conf  = document.getElementById('edit-password_confirmation')?.value || '';
-                const roles = Array.from(document.getElementById('edit-role')?.selectedOptions || []).map(o => o.value);
-
-                if (!name)         { showAlert(alert,'Enter a name'); return; }
-                if (!email)        { showAlert(alert,'Enter an email'); return; }
-                if (!roles.length) { showAlert(alert,'Select at least one role'); return; }
-                if (pass && pass !== conf) { showAlert(alert,'Passwords do not match'); return; }
-
-                const btn = document.getElementById('update-btn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
-                }
-
-                const payload = { name, email, roles, _token:CSRF };
-                if (pass) { payload.password = pass; payload.password_confirmation = conf; }
-
-                axios.put(`/users/${id}`, payload, { headers:{'X-CSRF-TOKEN':CSRF} })
-                .then(res => {
-                    const u = res.data.user;
-                    updateRowInTable(u);
-                    hideModal('editModal');
-                    Swal.fire({ icon:'success', title:'Updated!', text:u.name + ' updated successfully.', showConfirmButton:false, timer:2500 });
-                })
-                .catch(err => {
-                    const msg = err.response?.status === 422
-                        ? Object.values(err.response.data.errors || {}).flat().join(', ')
-                        : (err.response?.data?.message || 'Error updating user');
-                    showAlert(alert, msg);
-                })
-                .finally(() => {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="bi bi-check-circle"></i> Update User';
-                    }
-                });
-            });
-        }
-
-        // ── DOM helpers ────────────────────────────────────────
-        function showAlert(el, msg) {
-            if (!el) return;
-            el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg;
-            el.classList.remove('d-none');
-            setTimeout(() => el.classList.add('d-none'), 5000);
-        }
-
-        function rolePill(roleName) {
-            const map = { Student:'student', Admin:'admin', Teacher:'teacher', Staff:'staff' };
-            const cls = map[roleName] || 'default';
-            return `<span class="u-role-pill ${cls}"><i class="bi bi-shield-check"></i>${roleName}</span>`;
-        }
-
-        function addRowToTable(user) {
-            const tbody = document.getElementById('usersTableBody');
-            if (!tbody) return;
-            const emptyRow = document.getElementById('emptyRow');
-            if (emptyRow) emptyRow.remove();
-            const row = document.createElement('tr');
-            row.dataset.id    = user.id;
-            row.dataset.name  = user.name.toLowerCase();
-            row.dataset.email = user.email.toLowerCase();
-            row.dataset.roles = (user.roles || []).join(',').toLowerCase();
-            row.dataset.date  = new Date().toISOString().slice(0,10);
-            const initials = getInitials(user.name);
-            row.innerHTML = `
-                <td><input type="checkbox" class="row-check" style="accent-color:var(--u-accent);cursor:pointer;"></td>
-                <td><div class="u-avatar">${initials}</div></td>
-                <td><div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div></td>
-                <td><span class="text-muted small">${escHtml(user.email)}</span></td>
-                <td>${(user.roles||[]).map(rolePill).join('')}</td>
-                <td class="text-muted small">${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <a href="/users/${user.id}" class="u-action-btn view" title="View"><i class="ph-eye"></i></a>
-                        <button type="button" class="u-action-btn edit edit-item-btn" title="Edit"
-                            data-id="${user.id}" data-name="${escHtml(user.name)}"
-                            data-email="${escHtml(user.email)}" data-roles="${(user.roles||[]).join(',')}">
-                            <i class="ph-pencil"></i>
-                        </button>
-                        <button type="button" class="u-action-btn del remove-item-btn" title="Delete" data-id="${user.id}">
-                            <i class="ph-trash"></i>
-                        </button>
-                    </div>
-                </td>`;
-            row.style.opacity = '0';
-            tbody.prepend(row);
-            requestAnimationFrame(() => {
-                row.style.transition = 'opacity .4s ease, transform .4s ease';
-                row.style.opacity = '1';
-            });
-            const t = document.getElementById('totalCount');
-            if (t) t.textContent = parseInt(t.textContent) + 1;
-            applyFilters();
-        }
-
-        function updateRowInTable(user) {
-            const row = document.querySelector(`tr[data-id="${user.id}"]`);
-            if (!row) return;
-            row.dataset.name  = user.name.toLowerCase();
-            row.dataset.email = user.email.toLowerCase();
-            row.dataset.roles = (user.roles||[]).join(',').toLowerCase();
-            if (row.cells[2]) row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div>`;
-            if (row.cells[3]) row.cells[3].innerHTML = `<span class="text-muted small">${escHtml(user.email)}</span>`;
-            if (row.cells[4]) row.cells[4].innerHTML = (user.roles||[]).map(rolePill).join('');
-            row.style.background = '#fffbeb';
-            setTimeout(() => row.style.background = '', 1500);
-        }
-
-        function getInitials(name) {
-            const parts = (name || '').split(' ');
-            return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
-        }
-
-        function escHtml(s) {
-            return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-        }
-
-        // ── Password reset (single student) ───────────────────
-        $(document).on('click', '.reset-student-pwd-btn', function() {
-            const userId   = $(this).data('user-id');
-            const userName = $(this).data('user-name');
-
-            Swal.fire({
-                title: 'Reset Password?',
-                html: `Reset password for <strong>${userName}</strong>?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#d97706',
-                confirmButtonText: 'Reset'
-            }).then(r => {
-                if (!r.isConfirmed) return;
-                Swal.fire({ title:'Resetting…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
-
-                fetch(`/users/reset-single-password/${userId}`, {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''}
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: 'Password Reset!',
-                            html: `<div style="text-align:center">
-                                <p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
-                                <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
-                                    <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
-                                </div>
-                                <br>
-                                <button class="btn btn-sm btn-outline-primary mt-3" onclick="navigator.clipboard.writeText('${data.password}').then(()=>this.textContent='✓ Copied!')">
-                                    <i class="bi bi-clipboard me-1"></i> Copy Password
-                                </button>
-                            </div>`,
-                            icon: 'success',
-                            confirmButtonColor: '#2563eb',
-                            showConfirmButton: true
-                        });
-                    } else {
-                        Swal.fire('Error', data.message || 'Reset failed', 'error');
-                    }
-                })
-                .catch(() => Swal.fire('Error', 'Network error', 'error'));
-            });
-        });
-
-        // ── Single student modal logic ─────────────────────────
-        const addStudentModalEl = document.getElementById('addStudentModal');
-        const credentialsModalEl = document.getElementById('setStudentCredentialsModal');
-
-        if (addStudentModalEl && credentialsModalEl) {
-            let selectedStudent = null;
-
-            addStudentModalEl.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
-
-            function loadStudentsForSingle(search) {
-                const proceedBtn = document.getElementById('proceed-to-credentials');
-                if (proceedBtn) proceedBtn.disabled = true;
-                let url = '{{ route("get.students") }}?limit=500&has_account=no';
-                if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
-                fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF } })
-                    .then(r => r.json())
-                    .then(data => {
-                        const sel = document.getElementById('student-select');
-                        if (sel) {
-                            sel.innerHTML = '<option value="">— Choose a student —</option>';
-                            (data.students||[]).forEach(s => {
-                                const o = document.createElement('option');
-                                o.value = s.id;
-                                o.textContent = `${s.name} (${s.admissionNo})`;
-                                Object.assign(o.dataset, { name:s.name, email:s.email||'', admission:s.admissionNo||'' });
-                                sel.appendChild(o);
-                            });
-                        }
-                    })
-                    .catch(err => console.error('Error loading students:', err));
-            }
-
-            const studentSearch = document.getElementById('student-search');
-            if (studentSearch) {
-                studentSearch.addEventListener('input', debounce(e => {
-                    loadStudentsForSingle(e.target.value);
-                }, 350));
-            }
-
-            const studentSelect = document.getElementById('student-select');
-            if (studentSelect) {
-                studentSelect.addEventListener('change', function() {
-                    const opt = this.options[this.selectedIndex];
-                    if (!opt || !opt.value) {
-                        selectedStudent = null;
-                        const proceedBtn = document.getElementById('proceed-to-credentials');
-                        if (proceedBtn) proceedBtn.disabled = true;
-                        return;
-                    }
-                    selectedStudent = {
-                        id: opt.value,
-                        name: opt.dataset.name,
-                        email: opt.dataset.email,
-                        admissionNo: opt.dataset.admission
-                    };
-                    const proceedBtn = document.getElementById('proceed-to-credentials');
-                    if (proceedBtn) proceedBtn.disabled = false;
-                });
-            }
-
-            const proceedBtn = document.getElementById('proceed-to-credentials');
-            if (proceedBtn) {
-                proceedBtn.addEventListener('click', () => {
-                    if (!selectedStudent) return;
-                    const studentIdField = document.getElementById('student-id-field');
-                    const studentNameField = document.getElementById('student-name-field');
-                    const studentUserEmail = document.getElementById('student-user-email');
-                    const studentUsername = document.getElementById('student-username');
-
-                    if (studentIdField) studentIdField.value = selectedStudent.id;
-                    if (studentNameField) studentNameField.value = selectedStudent.name;
-                    if (studentUserEmail) studentUserEmail.value = selectedStudent.email;
-                    if (studentUsername) studentUsername.value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
-
-                    hideModal('addStudentModal');
-                    setTimeout(() => showModal('setStudentCredentialsModal'), 300);
-                });
-            }
-
-            const generatePwdBtn = document.getElementById('generate-temp-password');
-            if (generatePwdBtn) {
-                generatePwdBtn.addEventListener('click', () => {
-                    const p = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
-                    const pwdField = document.getElementById('student-password');
-                    const confField = document.getElementById('student-password_confirmation');
-                    if (pwdField) pwdField.value = p;
-                    if (confField) confField.value = p;
-                });
-            }
-
-            const studentCredForm = document.getElementById('add-student-credentials-form');
-            if (studentCredForm) {
-                studentCredForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const fd = new FormData(this);
-                    fd.append('_token', CSRF);
-                    const btn = document.getElementById('create-student-user');
-                    if (btn) {
-                        btn.disabled = true;
-                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
-                    }
-                    fetch('{{ route("users.store-student") }}', { method:'POST', body:fd })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire({ icon:'success', title:'Student User Created!', text:data.message, showConfirmButton:false, timer:2000 });
-                                hideModal('setStudentCredentialsModal');
-                                setTimeout(() => location.reload(), 2000);
-                            } else {
-                                const errDiv = document.getElementById('student-credentials-error');
-                                if (errDiv) {
-                                    errDiv.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message||'Error');
-                                    errDiv.classList.remove('d-none');
-                                }
-                            }
-                        })
-                        .catch(() => Swal.fire('Error','Network error','error'))
-                        .finally(() => {
-                            if (btn) {
-                                btn.disabled = false;
-                                btn.innerHTML = '<i class="bi bi-person-check"></i> Create Student User';
-                            }
-                        });
-                });
-            }
-
-            window.resetStudentCredentialsModal = function() {
-                ['student-id-field','student-name-field','student-user-email','student-username',
-                 'student-password','student-password_confirmation'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-                const errDiv = document.getElementById('student-credentials-error');
-                if (errDiv) errDiv.classList.add('d-none');
-            };
-
-            if (credentialsModalEl) {
-                credentialsModalEl.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
-            }
-        }
-
-        // ── Chart ──────────────────────────────────────────────
-        const ctx = document.getElementById('usersByRoleChart')?.getContext('2d');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: @json(array_keys($role_counts)),
-                    datasets: [{
-                        label: 'Users',
-                        data:  @json(array_values($role_counts)),
-                        backgroundColor: [
-                            'rgba(37,99,235,.75)','rgba(16,185,129,.75)','rgba(245,158,11,.75)',
-                            'rgba(239,68,68,.75)','rgba(139,92,246,.75)','rgba(20,184,166,.75)'
-                        ],
-                        borderRadius: 8,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' users' } }
-                    },
-                    scales: {
-                        y: { beginAtZero:true, grid:{ color:'#f1f5f9' }, ticks:{ stepSize:1 } },
-                        x: { grid:{ display:false } }
-                    },
-                    animation: { duration:1000, easing:'easeOutQuart' }
-                }
-            });
-        }
-
-        // ── Modal cleanup ──────────────────────────────────────
-        const showModalEl = document.getElementById('showModal');
-        if (showModalEl) {
-            showModalEl.addEventListener('hidden.bs.modal', () => {
-                const form = document.getElementById('add-user-form');
-                if (form) form.reset();
-                const alertDiv = document.getElementById('add-alert');
-                if (alertDiv) alertDiv.classList.add('d-none');
-            });
-        }
-
-        const editModalEl = document.getElementById('editModal');
-        if (editModalEl) {
-            editModalEl.addEventListener('hidden.bs.modal', () => {
-                const form = document.getElementById('edit-user-form');
-                if (form) form.reset();
-                const alertDiv = document.getElementById('edit-alert');
-                if (alertDiv) alertDiv.classList.add('d-none');
-            });
-        }
-
-        function debounce(fn, ms) {
-            let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-        }
-
-        // Expose for mass modal compatibility
-        window.filterData = applyFilters;
-
-        // Initial filter application
-        applyFilters();
-        console.log('User management page initialized successfully');
-
-    }); // End DOMContentLoaded
-
-})();
-</script>
-
-@endsection
-{{--
-    Mass Student Account Management Modal
-    – Dense, paper-optimised credential slips (9 per page landscape / 3 columns x 3 rows)
-    – Clear cut lines between each slip for easy separation
---}}
-
-<div id="massStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content msm-modal-content">
-
-            {{-- HEADER --}}
-            <div class="modal-header msm-header">
-                <div class="msm-header-inner">
-                    <div class="msm-header-icon"><i class="bi bi-people-fill"></i></div>
-                    <div>
-                        <h5 class="modal-title msm-title">Mass Student Account Management</h5>
-                        <p class="msm-subtitle">Create, reset, revoke or reprint student credentials in bulk</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-
-            {{-- STEP BAR --}}
-            <div class="msm-steps-bar">
-                <div class="msm-step active" id="stepBar1">
-                    <div class="msm-step-circle">1</div><span>Select Students</span>
-                </div>
-                <div class="msm-step-line"></div>
-                <div class="msm-step" id="stepBar2">
-                    <div class="msm-step-circle">2</div><span>Choose Action</span>
-                </div>
-                <div class="msm-step-line"></div>
-                <div class="msm-step" id="stepBar3">
-                    <div class="msm-step-circle">3</div><span>Results</span>
-                </div>
-            </div>
-
-            <div class="modal-body msm-body">
-
-                {{-- ═══════════════ STEP 1 ═══════════════ --}}
-                <div id="massStep1">
-                    <div class="msm-card msm-filter-card mb-3">
-                        <div class="msm-card-header"><i class="bi bi-funnel-fill me-2"></i>Filter Students</div>
-                        <div class="msm-card-body">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="msm-label">Search</label>
-                                    <div class="position-relative">
-                                        <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;pointer-events:none;"></i>
-                                        <input type="text" id="massStudentSearch" class="form-control msm-input ps-4" placeholder="Name or Admission No…">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="msm-label">Class</label>
-                                    <select id="massClassFilter" class="form-select msm-input">
-                                        <option value="">All Classes</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="msm-label">Account Status</label>
-                                    <select id="massAccountStatus" class="form-select msm-input">
-                                        <option value="all">All Students</option>
-                                        <option value="no">No Account Only</option>
-                                        <option value="yes">Has Account Only</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="msm-info-banner mb-3">
-                        <i class="bi bi-envelope-at-fill me-2"></i>
-                        Emails are auto-generated as <code>firstname.lastname@csskabba.ng</code> — special characters removed.
-                    </div>
-
-                    <div class="msm-card mb-3">
-                        <div class="msm-card-header d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-person-lines-fill me-2"></i>Select Students</span>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="msm-count-badge" id="massSelectedCount">0 selected</span>
-                                <button type="button" class="msm-btn-sm" id="selectAllStudents">
-                                    <i class="bi bi-check-all me-1"></i>Select All
-                                </button>
-                                <button type="button" class="msm-btn-sm" id="deselectAll" style="border-color:#94a3b8;color:#94a3b8;">
-                                    <i class="bi bi-x me-1"></i>Clear
-                                </button>
-                            </div>
-                        </div>
-                        <div class="msm-card-body p-0">
-                            <div class="table-responsive msm-table-wrap">
-                                <table class="table msm-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th width="40"><input type="checkbox" id="selectAllCheckbox" class="msm-checkbox"></th>
-                                            <th>Admission No</th>
-                                            <th>Student Name</th>
-                                            <th>Class</th>
-                                            <th>Status</th>
-                                            <th>Generated Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="massStudentList">
-                                        <tr><td colspan="6" class="msm-loading-cell">
-                                            <div class="spinner-border spinner-border-sm me-2 text-primary"></div>Loading students…
-                                        </td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="msm-legend mb-3">
-                        <div class="msm-legend-title"><i class="bi bi-lightbulb-fill me-1"></i>Available Actions</div>
-                        <div class="msm-legend-grid">
-                            <div class="msm-legend-item create"><i class="bi bi-person-plus-fill"></i><div><strong>Create</strong> — new accounts for students without one</div></div>
-                            <div class="msm-legend-item reset"><i class="bi bi-key-fill"></i><div><strong>Reset</strong> — new passwords for existing accounts</div></div>
-                            <div class="msm-legend-item revoke"><i class="bi bi-person-x-fill"></i><div><strong>Revoke</strong> — remove user access (student record kept)</div></div>
-                            <div class="msm-legend-item reprint"><i class="bi bi-printer-fill"></i><div><strong>Reprint</strong> — show existing credentials (password hidden)</div></div>
-                        </div>
-                    </div>
-
-                    <div class="text-end">
-                        <button type="button" class="msm-btn-primary" id="proceedToAction">
-                            Continue to Action <i class="bi bi-arrow-right ms-1"></i>
-                        </button>
-                    </div>
-                </div>
-
-                {{-- ═══════════════ STEP 2 ═══════════════ --}}
-                <div id="massStep2" style="display:none;">
-                    <div class="msm-card mb-3">
-                        <div class="msm-card-header">
-                            <i class="bi bi-check-square-fill me-2"></i>
-                            Selected Students — <span id="step2SelectedCount" class="fw-bold">0</span>
-                        </div>
-                        <div class="msm-card-body p-0">
-                            <div class="table-responsive msm-summary-wrap">
-                                <table class="table msm-table msm-table-sm mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Student Name</th>
-                                            <th>Admission No</th>
-                                            <th>Class</th>
-                                            <th>Status</th>
-                                            <th>Generated Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="selectedStudentsList"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="msm-card mb-3">
-                        <div class="msm-card-header"><i class="bi bi-lightning-charge-fill me-2"></i>Choose Action</div>
-                        <div class="msm-card-body">
-                            <div class="msm-action-grid">
-                                <div class="msm-action-card" data-action="create">
-                                    <div class="msm-action-icon create"><i class="bi bi-person-plus-fill"></i></div>
-                                    <div class="msm-action-label">Create Accounts</div>
-                                    <div class="msm-action-desc">For students without accounts</div>
-                                </div>
-                                <div class="msm-action-card" data-action="reset">
-                                    <div class="msm-action-icon reset"><i class="bi bi-key-fill"></i></div>
-                                    <div class="msm-action-label">Reset Passwords</div>
-                                    <div class="msm-action-desc">New password for existing accounts</div>
-                                </div>
-                                <div class="msm-action-card" data-action="revoke">
-                                    <div class="msm-action-icon revoke"><i class="bi bi-person-x-fill"></i></div>
-                                    <div class="msm-action-label">Revoke Accounts</div>
-                                    <div class="msm-action-desc">Remove user access</div>
-                                </div>
-                                <div class="msm-action-card" data-action="reprint">
-                                    <div class="msm-action-icon reprint"><i class="bi bi-printer-fill"></i></div>
-                                    <div class="msm-action-label">Reprint Credentials</div>
-                                    <div class="msm-action-desc">Print without password shown</div>
-                                </div>
-                            </div>
-                            <input type="hidden" id="selectedAction" value="">
-                        </div>
-                    </div>
-
-                    <div id="passwordSettings" style="display:none;">
-                        <div class="msm-card mb-3">
-                            <div class="msm-card-header"><i class="bi bi-lock-fill me-2"></i>Password Settings</div>
-                            <div class="msm-card-body">
-                                <div class="msm-radio-group">
-                                    <label class="msm-radio-card">
-                                        <input type="radio" name="passwordTypeRadio" value="individual" checked>
-                                        <div class="msm-radio-inner">
-                                            <i class="bi bi-shuffle"></i>
-                                            <div><strong>Individual Random Passwords</strong><p>Each student gets a unique random password</p></div>
-                                        </div>
-                                    </label>
-                                    <label class="msm-radio-card">
-                                        <input type="radio" name="passwordTypeRadio" value="same">
-                                        <div class="msm-radio-inner">
-                                            <i class="bi bi-people-fill"></i>
-                                            <div><strong>Same Password for All</strong><p>All selected students share one password</p></div>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div id="sharedPasswordContainer" style="display:none;" class="mt-3">
-                                    <label class="msm-label">Shared Password</label>
-                                    <input type="text" id="sharedPassword" class="form-control msm-input" placeholder="Minimum 6 characters">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="roleSettings" style="display:none;">
-                        <div class="msm-card mb-3">
-                            <div class="msm-card-header"><i class="bi bi-tags-fill me-2"></i>Role Assignment</div>
-                            <div class="msm-card-body">
-                                <div class="msm-role-notice">
-                                    <i class="bi bi-shield-check-fill me-2"></i>
-                                    Student accounts are automatically assigned the <strong>Student</strong> role.
-                                </div>
-                                @php
-                                    $allRoles   = Spatie\Permission\Models\Role::all();
-                                    $studentRole = $allRoles->where('name','Student')->first();
-                                    $otherRoles  = $allRoles->where('name','!=','Student');
-                                @endphp
-                                @if($studentRole)
-                                <div class="msm-role-assigned">
-                                    <i class="bi bi-person-badge-fill me-2 text-success"></i>
-                                    <strong class="text-success">{{ $studentRole->name }}</strong>
-                                    <span class="msm-badge-default ms-2">Auto-assigned</span>
-                                </div>
-                                @endif
-                                @if($otherRoles->count() > 0)
-                                <div class="mt-3">
-                                    <p class="text-muted small mb-2"><i class="bi bi-lock-fill me-1"></i>These roles cannot be assigned to student accounts:</p>
-                                    <div class="msm-disabled-roles">
-                                        @foreach($otherRoles as $role)
-                                        <span class="msm-disabled-role"><i class="bi bi-lock-fill me-1"></i>{{ $role->name }}</span>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="actionWarning" class="msm-warning-banner mb-3" style="display:none;"></div>
-
-                    <div class="d-flex justify-content-between mt-1">
-                        <button type="button" class="msm-btn-secondary" id="backToStep1">
-                            <i class="bi bi-arrow-left me-1"></i>Back
-                        </button>
-                        <button type="button" class="msm-btn-primary" id="executeAction">
-                            <i class="bi bi-check-circle me-1"></i>Execute Action
-                        </button>
-                    </div>
-                </div>
-
-                {{-- ═══════════════ STEP 3 ═══════════════ --}}
-                <div id="massStep3" style="display:none;">
-                    <div id="resultsContainer"></div>
-                    <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="msm-btn-secondary" id="newAction">
-                            <i class="bi bi-plus-circle me-1"></i>New Action
-                        </button>
-                        <button type="button" class="msm-btn-primary" id="printResults">
-                            <i class="bi bi-printer me-1"></i>Print Credentials
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- ══════════════════════════════════════════════════════
-     STYLES
-══════════════════════════════════════════════════════ --}}
 <style>
 :root {
     --msm-primary: #1e3a5f;
@@ -1918,673 +1183,739 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 }
 </style>
 
-{{-- ══════════════════════════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════════════════════════ --}}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
+    'use strict';
 
-    let selectedStudents = [];
-    let allStudents      = [];
-    let currentResults   = null;
+    document.addEventListener('DOMContentLoaded', function() {
 
-    function escHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-    function classLabel(s) {
-        const c = (s.class_name||'').trim();
-        const a = (s.arm_name||'').trim();
-        return c && a ? `${c} ${a}` : c || a || '—';
-    }
-    function genEmail(first, last) {
-        const c = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,'') || 'user';
-        return c(first) + '.' + c(last) + '@csskabba.ng';
-    }
-    function statusBadge(has) {
-        return has
-            ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>'
-            : '<span class="msm-badge-none"><i class="bi bi-circle me-1"></i>No Account</span>';
-    }
-    function setStep(n) {
-        [1,2,3].forEach(i => {
-            const el = document.getElementById('stepBar'+i);
-            const circle = el.querySelector('.msm-step-circle');
-            el.classList.remove('active','done');
-            if (i < n) { el.classList.add('done'); circle.innerHTML='<i class="bi bi-check-lg"></i>'; }
-            else { circle.textContent = i; if (i===n) el.classList.add('active'); }
-        });
-    }
-
-    // ── Load students ──────────────────────────────────────
-    function loadStudents() {
-        const search  = document.getElementById('massStudentSearch').value;
-        const classId = document.getElementById('massClassFilter').value;
-        const status  = document.getElementById('massAccountStatus').value;
-
-        document.getElementById('massStudentList').innerHTML =
-            '<tr><td colspan="6" class="msm-loading-cell"><div class="spinner-border spinner-border-sm me-2 text-primary"></div>Loading students…</td></tr>';
-
-        let url = '{{ route("get.students") }}?limit=2000';
-        if (search)           url += `&search=${encodeURIComponent(search)}`;
-        if (classId)          url += `&class_id=${classId}`;
-        if (status !== 'all') url += `&has_account=${status}`;
-
-        fetch(url).then(r=>r.json()).then(data => {
-            if (!data.success) {
-                document.getElementById('massStudentList').innerHTML =
-                    '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.</td></tr>';
-                return;
-            }
-            allStudents = data.students.map(s => ({
-                ...s, generatedEmail: genEmail(s.firstname, s.lastname)
-            }));
-            renderStudentTable(allStudents);
-
-            if (document.getElementById('massClassFilter').options.length <= 1) {
-                let html = '<option value="">All Classes</option>';
-                if (data.classes?.length) {
-                    data.classes.forEach(c => {
-                        html += `<option value="${escHtml(String(c.id))}">${escHtml(c.name || c.class_name || '')}</option>`;
-                    });
-                } else {
-                    const seen = new Map();
-                    allStudents.forEach(s => { if (s.class_id && !seen.has(s.class_id)) seen.set(s.class_id, classLabel(s)); });
-                    [...seen.entries()].sort((a,b)=>a[1].localeCompare(b[1])).forEach(([id,lbl]) => {
-                        html += `<option value="${escHtml(String(id))}">${escHtml(lbl)}</option>`;
-                    });
-                }
-                document.getElementById('massClassFilter').innerHTML = html;
-            }
-        }).catch(() => {
-            document.getElementById('massStudentList').innerHTML =
-                '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.</td></tr>';
-        });
-    }
-
-    function renderStudentTable(students) {
-        if (!students.length) {
-            document.getElementById('massStudentList').innerHTML =
-                '<tr><td colspan="6" class="msm-loading-cell">No students found.</td></tr>';
-            updateSelectedCount(); return;
+        if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap not loaded!');
+            return;
         }
-        let html = '';
-        students.forEach(s => {
-            const checked = selectedStudents.some(x=>x.id===s.id) ? 'checked' : '';
-            html += `<tr>
-                <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked}></td>
-                <td><strong>${escHtml(s.admissionNo||'N/A')}</strong></td>
-                <td>${escHtml(s.name)}</td>
-                <td>${escHtml(classLabel(s))}</td>
-                <td>${statusBadge(s.has_account)}</td>
-                <td><small class="text-muted font-monospace">${escHtml(s.generatedEmail)}</small></td>
-            </tr>`;
+
+        const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+        function showModal(modalId) {
+            const modalElement = document.getElementById(modalId);
+            if (!modalElement) return null;
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: true });
+            modal.show();
+            return modal;
+        }
+
+        function hideModal(modalId) {
+            const modalElement = document.getElementById(modalId);
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+            }
+        }
+
+        // Modal triggers
+        ['openAddUserModalBtn', 'openAddUserModalBtnMobile'].forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('showModal'); });
         });
-        document.getElementById('massStudentList').innerHTML = html;
-        updateSelectedCount();
-        document.querySelectorAll('.student-checkbox').forEach(cb => {
-            cb.addEventListener('change', function() {
-                const id  = parseInt(this.dataset.id);
-                const stu = allStudents.find(x=>x.id===id);
-                if (this.checked) { if (!selectedStudents.some(x=>x.id===id)) selectedStudents.push(stu); }
-                else selectedStudents = selectedStudents.filter(x=>x.id!==id);
-                updateSelectedCount();
+        ['openAddStudentModalBtn', 'openAddStudentModalBtnMobile'].forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('addStudentModal'); });
+        });
+        ['openMassStudentModalBtn', 'openMassStudentModalBtnMobile'].forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('massStudentModal'); });
+        });
+
+        // ── Table filtering ─────────────────────────────────────
+        const allRows = () => Array.from(document.querySelectorAll('#usersTableBody tr[data-id]'));
+
+        function applyFilters() {
+            const search = document.getElementById('liveSearch')?.value.toLowerCase().trim() || '';
+            const role   = document.getElementById('roleFilter')?.value.toLowerCase().trim() || '';
+            const email  = document.getElementById('emailFilter')?.value.toLowerCase().trim() || '';
+            let shown = 0;
+            allRows().forEach(row => {
+                const name = row.dataset.name || '';
+                const rEmail = row.dataset.email || '';
+                const roles = row.dataset.roles || '';
+                const matchSearch = !search || name.includes(search) || rEmail.includes(search);
+                const matchRole = !role || roles.split(',').some(r => r.trim() === role) || (role === 'no role' && !roles.trim());
+                const matchEmail = !email || rEmail === email;
+                const visible = matchSearch && matchRole && matchEmail;
+                row.style.display = visible ? '' : 'none';
+                if (visible) shown++;
+            });
+            const showingSpan = document.getElementById('showingCount');
+            if (showingSpan) showingSpan.textContent = shown;
+            const userBadge = document.getElementById('userCountBadge');
+            if (userBadge) userBadge.textContent = shown;
+
+            let empty = document.getElementById('noResults');
+            if (shown === 0 && allRows().length > 0) {
+                if (!empty) {
+                    empty = document.createElement('tr');
+                    empty.id = 'noResults';
+                    empty.innerHTML = `<td colspan="7"><div class="u-empty"><i class="ri-search-line"></i>No users match your filters</div></td>`;
+                    document.getElementById('usersTableBody')?.appendChild(empty);
+                }
+            } else if (empty) empty.remove();
+        }
+
+        document.getElementById('liveSearch')?.addEventListener('input', applyFilters);
+        document.getElementById('roleFilter')?.addEventListener('change', applyFilters);
+        document.getElementById('emailFilter')?.addEventListener('change', applyFilters);
+        document.getElementById('clearFilters')?.addEventListener('click', () => {
+            if (document.getElementById('liveSearch')) document.getElementById('liveSearch').value = '';
+            if (document.getElementById('roleFilter')) document.getElementById('roleFilter').value = '';
+            if (document.getElementById('emailFilter')) document.getElementById('emailFilter').value = '';
+            applyFilters();
+        });
+
+        // Sortable columns
+        let sortDir = {};
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.style.cursor = 'pointer';
+            th.addEventListener('click', () => {
+                const col = parseInt(th.dataset.col);
+                sortDir[col] = !sortDir[col];
+                const tbody = document.getElementById('usersTableBody');
+                if (!tbody) return;
+                const rows = [...document.querySelectorAll('#usersTableBody tr[data-id]')];
+                rows.sort((a, b) => {
+                    const key = ['name','email','','','','date'][col] || 'name';
+                    const av = a.dataset[key] || a.cells[col]?.textContent || '';
+                    const bv = b.dataset[key] || b.cells[col]?.textContent || '';
+                    return sortDir[col] ? av.localeCompare(bv) : bv.localeCompare(av);
+                });
+                rows.forEach(r => tbody.appendChild(r));
             });
         });
-    }
 
-    function updateSelectedCount() {
-        document.getElementById('massSelectedCount').textContent = `${selectedStudents.length} selected`;
-        document.getElementById('selectAllCheckbox').checked =
-            allStudents.length > 0 && selectedStudents.length === allStudents.length;
-    }
-
-    function applyClientFilters() {
-        const search = document.getElementById('massStudentSearch').value.toLowerCase();
-        const status = document.getElementById('massAccountStatus').value;
-        const filtered = allStudents.filter(s => {
-            if (search && !s.name.toLowerCase().includes(search) && !(s.admissionNo||'').toLowerCase().includes(search)) return false;
-            if (status==='yes' && !s.has_account) return false;
-            if (status==='no'  &&  s.has_account) return false;
-            return true;
-        });
-        renderStudentTable(filtered);
-    }
-
-    document.getElementById('massStudentSearch').addEventListener('input', applyClientFilters);
-    document.getElementById('massAccountStatus').addEventListener('change', applyClientFilters);
-    document.getElementById('massClassFilter').addEventListener('change', () => { selectedStudents=[]; loadStudents(); });
-
-    document.getElementById('selectAllStudents').addEventListener('click', () => {
-        selectedStudents = [...allStudents]; renderStudentTable(allStudents);
-    });
-    document.getElementById('deselectAll').addEventListener('click', () => {
-        selectedStudents = []; renderStudentTable(allStudents);
-    });
-    document.getElementById('selectAllCheckbox').addEventListener('change', function() {
-        selectedStudents = this.checked ? [...allStudents] : [];
-        renderStudentTable(allStudents);
-    });
-
-    // ── Step 1 → 2 ────────────────────────────────────────
-    document.getElementById('proceedToAction').addEventListener('click', () => {
-        if (!selectedStudents.length) {
-            Swal.fire({ icon:'warning', title:'No Students Selected', text:'Select at least one student.', confirmButtonColor:'#2563eb' });
-            return;
+        // Check all functionality
+        const checkAll = document.getElementById('checkAll');
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                document.querySelectorAll('.row-check').forEach(cb => {
+                    const row = cb.closest('tr');
+                    if (row && row.style.display !== 'none') cb.checked = this.checked;
+                });
+                updateRemoveBtn();
+            });
         }
-        let html = '';
-        selectedStudents.forEach(s => {
-            html += `<tr>
-                <td>${escHtml(s.name)}</td>
-                <td>${escHtml(s.admissionNo||'N/A')}</td>
-                <td>${escHtml(classLabel(s))}</td>
-                <td>${statusBadge(s.has_account)}</td>
-                <td><small class="font-monospace">${escHtml(s.generatedEmail)}</small></td>
-            </tr>`;
-        });
-        document.getElementById('selectedStudentsList').innerHTML = html;
-        document.getElementById('step2SelectedCount').textContent = selectedStudents.length;
-        document.getElementById('massStep1').style.display = 'none';
-        document.getElementById('massStep2').style.display = '';
-        setStep(2);
-    });
-
-    document.querySelectorAll('.msm-action-card').forEach(card => {
-        card.addEventListener('click', function() {
-            document.querySelectorAll('.msm-action-card').forEach(c => c.classList.remove('selected'));
-            this.classList.add('selected');
-            const action = this.dataset.action;
-            document.getElementById('selectedAction').value = action;
-            const showPwd = action==='create' || action==='reset';
-            document.getElementById('passwordSettings').style.display = showPwd ? '' : 'none';
-            document.getElementById('roleSettings').style.display     = showPwd ? '' : 'none';
-
-            const hasAcc = selectedStudents.filter(s=>s.has_account).length;
-            const noAcc  = selectedStudents.filter(s=>!s.has_account).length;
-            let warn = '';
-            if (action==='create' && hasAcc) warn=`<i class="bi bi-exclamation-triangle-fill me-2"></i>${hasAcc} student(s) already have accounts and will be skipped.`;
-            if (action==='reset'  && noAcc)  warn=`<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
-            if (action==='revoke' && noAcc)  warn=`<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
-            const w = document.getElementById('actionWarning');
-            if (warn) { w.innerHTML=warn; w.style.display=''; } else w.style.display='none';
-        });
-    });
-
-    document.querySelectorAll('input[name="passwordTypeRadio"]').forEach(r => {
-        r.addEventListener('change', function() {
-            document.getElementById('sharedPasswordContainer').style.display = this.value==='same' ? '' : 'none';
-        });
-    });
-
-    document.getElementById('backToStep1').addEventListener('click', () => {
-        document.getElementById('massStep2').style.display='none';
-        document.getElementById('massStep1').style.display='';
-        setStep(1);
-    });
-
-    // ── Execute ────────────────────────────────────────────
-    document.getElementById('executeAction').addEventListener('click', () => {
-        const actionType = document.getElementById('selectedAction').value;
-        if (!actionType) {
-            Swal.fire({ icon:'error', title:'No Action', text:'Choose an action first.', confirmButtonColor:'#2563eb' });
-            return;
+        document.addEventListener('change', e => { if (e.target.classList.contains('row-check')) updateRemoveBtn(); });
+        function updateRemoveBtn() {
+            const count = document.querySelectorAll('.row-check:checked').length;
+            const removeBtn = document.getElementById('remove-actions');
+            if (removeBtn) removeBtn.classList.toggle('d-none', count === 0);
         }
-        const payload = {
-            _token: '{{ csrf_token() }}',
-            students: selectedStudents.map(s=>({student_id:s.id})),
-            action_type: actionType,
+
+        // Delete single
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.remove-item-btn');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            const deleteBtn = document.getElementById('delete-record');
+            if (deleteBtn) {
+                const fresh = deleteBtn.cloneNode(true);
+                deleteBtn.replaceWith(fresh);
+                fresh.addEventListener('click', () => {
+                    axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': CSRF } })
+                        .then(() => {
+                            const row = document.querySelector(`tr[data-id="${id}"]`);
+                            if (row) row.remove();
+                            const totalEl = document.getElementById('totalCount');
+                            if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) - 1;
+                            hideModal('deleteRecordModal');
+                            Swal.fire({ icon: 'success', title: 'Deleted!', text: 'User removed.', showConfirmButton: false, timer: 2000 });
+                            applyFilters();
+                        })
+                        .catch(err => Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error'));
+                });
+            }
+            showModal('deleteRecordModal');
+        });
+
+        // Delete multiple
+        window.deleteMultiple = function() {
+            const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.closest('tr').dataset.id).filter(Boolean);
+            if (!ids.length) { Swal.fire('Select at least one user'); return; }
+            Swal.fire({
+                title: 'Delete ' + ids.length + ' user(s)?',
+                text: 'This cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Yes, Delete All'
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                Promise.all(ids.map(id => axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': CSRF } })))
+                    .then(() => {
+                        ids.forEach(id => { const row = document.querySelector(`tr[data-id="${id}"]`); if (row) row.remove(); });
+                        Swal.fire('Deleted!', ids.length + ' users removed.', 'success');
+                        updateRemoveBtn();
+                        applyFilters();
+                    });
+            });
         };
-        if (actionType==='create' || actionType==='reset') {
-            const pwdType = document.querySelector('input[name="passwordTypeRadio"]:checked').value;
-            payload.password_type = pwdType;
-            if (pwdType==='same') {
-                payload.shared_password = document.getElementById('sharedPassword').value;
-                if (!payload.shared_password || payload.shared_password.length < 6) {
-                    Swal.fire({ icon:'error', title:'Password Too Short', text:'Minimum 6 characters.', confirmButtonColor:'#2563eb' }); return;
-                }
+
+        // Edit user
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.edit-item-btn');
+            if (!btn) return;
+            document.getElementById('edit-id-field').value = btn.dataset.id;
+            document.getElementById('edit-name').value = btn.dataset.name;
+            document.getElementById('edit-email').value = btn.dataset.email;
+            const roles = (btn.dataset.roles || '').split(',');
+            const roleSelect = document.getElementById('edit-role');
+            if (roleSelect) {
+                Array.from(roleSelect.options).forEach(opt => { opt.selected = roles.includes(opt.value); });
             }
-            payload.roles = ['Student'];
-        }
-        Swal.fire({ title:'Processing…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
-        fetch('{{ route("users.mass-create-students") }}', {
-            method:'POST',
-            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'},
-            body:JSON.stringify(payload)
-        })
-        .then(r=>r.json())
-        .then(data => {
-            Swal.close();
-            if (data.success) {
-                currentResults = data;
-                displayResults(data);
-                document.getElementById('massStep2').style.display='none';
-                document.getElementById('massStep3').style.display='';
-                setStep(3);
-            } else {
-                Swal.fire({ icon:'error', title:'Error', text:data.message||'Operation failed.', confirmButtonColor:'#2563eb' });
-            }
-        })
-        .catch(()=>{ Swal.close(); Swal.fire({ icon:'error', title:'Network Error', confirmButtonColor:'#2563eb' }); });
-    });
-
-    // ── Results ────────────────────────────────────────────
-    function displayResults(data) {
-        let html = `<div class="alert alert-success border-0 rounded-3" style="background:#f0fdf4;border-left:4px solid #16a34a !important;">
-            <h5 class="mb-1"><i class="bi bi-check-circle-fill me-2 text-success"></i>Operation Complete</h5>
-            <p class="mb-0 text-muted">${escHtml(data.message)}</p>
-        </div>`;
-        if (data.created?.length) html += mkTable('Created Accounts',data.created,'success','person-plus-fill',
-            ['Name','Username','Email','Password','Admission No','Class'],
-            c=>`<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo||'N/A')}</td><td>${escHtml(c.class_name||'')}</td></tr>`
-        );
-        if (data.reset?.length) html += mkTable('Password Resets',data.reset,'warning','key-fill',
-            ['Name','Username','Email','New Password','Admission No','Class'],
-            r=>`<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td><code class="text-warning fw-bold">${escHtml(r.password)}</code></td><td>${escHtml(r.admissionNo||'N/A')}</td><td>${escHtml(r.class_name||'')}</td></tr>`
-        );
-        if (data.revoked?.length) {
-            html+=`<div class="mt-3 p-3 border rounded-3"><strong><i class="bi bi-person-x-fill text-danger me-2"></i>Revoked (${data.revoked.length})</strong><ul class="mt-2 mb-0">`;
-            data.revoked.forEach(r=>{ html+=`<li>${escHtml(r.name)} (${escHtml(r.admissionNo||'N/A')}) — account removed</li>`; });
-            html+='</ul></div>';
-        }
-        if (data.reprinted?.length) html += mkTable('Reprinted Credentials',data.reprinted,'info','printer-fill',
-            ['Name','Username','Email','Admission No','Note'],
-            r=>`<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td>${escHtml(r.admissionNo||'N/A')}</td><td><small class="text-muted">Password hidden</small></td></tr>`
-        );
-        if (data.skipped?.length) {
-            html+=`<div class="mt-3 p-3 border rounded-3 bg-light"><strong><i class="bi bi-skip-forward-fill text-muted me-2"></i>Skipped (${data.skipped.length})</strong><ul class="mt-2 mb-0">`;
-            data.skipped.forEach(s=>{ html+=`<li class="text-muted">${escHtml(s)}</li>`; });
-            html+='</ul></div>';
-        }
-        document.getElementById('resultsContainer').innerHTML = html;
-    }
-
-    function mkTable(title,rows,color,icon,headers,rowFn) {
-        return `<div class="mt-3">
-            <strong><i class="bi bi-${icon} text-${color} me-2"></i>${title} (${rows.length})</strong>
-            <div class="table-responsive mt-2">
-                <table class="table table-sm table-bordered msm-table">
-                    <thead class="table-${color}"><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-                    <tbody>${rows.map(rowFn).join('')}</tbody>
-                </table>
-            </div>
-        </div>`;
-    }
-
-    // ── PRINT — 9 slips per page (3 columns x 3 rows) with cut lines ─────
-    document.getElementById('printResults').addEventListener('click', () => {
-        if (!currentResults) return;
-        const school  = document.querySelector('meta[name="school-name"]')?.content || 'CSS Kabba';
-        const today   = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-        const allCreds = [
-            ...(currentResults.created||[]).map(c=>({...c,type:'created'})),
-            ...(currentResults.reset  ||[]).map(r=>({...r,type:'reset'})),
-        ];
-
-        if (!allCreds.length) {
-            Swal.fire({ icon:'info', title:'Nothing to Print', text:'No created or reset credentials available.', confirmButtonColor:'#2563eb' });
-            return;
-        }
-
-        // Generate slips as a flat array
-        const slips = allCreds.map(s => {
-            const isReset = s.type==='reset';
-            const tag = isReset ? 'RESET' : 'NEW';
-            const tagColor = isReset ? '#d97706' : '#16a34a';
-            return `
-            <div class="print-slip">
-                <div class="slip-header">
-                    <span class="slip-tag" style="background:${tagColor}">${tag}</span>
-                    <span class="slip-school">${escHtml(school)}</span>
-                </div>
-                <div class="slip-name">${escHtml(s.name)}</div>
-                <div class="slip-detail"><span class="detail-label">Adm No</span><span class="detail-value">${escHtml(s.admissionNo||'N/A')}</span></div>
-                <div class="slip-detail"><span class="detail-label">Class</span><span class="detail-value">${escHtml(s.class_name||'—')}</span></div>
-                <div class="slip-detail"><span class="detail-label">Email</span><span class="detail-value mono">${escHtml(s.email)}</span></div>
-                <div class="slip-detail"><span class="detail-label">Username</span><span class="detail-value mono">${escHtml(s.username||'')}</span></div>
-                <div class="slip-password">
-                    <span class="pwd-label">${isReset?'New Password':'Password'}</span>
-                    <span class="pwd-value">${escHtml(s.password)}</span>
-                </div>
-                <div class="slip-footer">Change password after login &bull; ${window.location.hostname}</div>
-            </div>`;
+            document.getElementById('edit-password').value = '';
+            document.getElementById('edit-password_confirmation').value = '';
+            document.getElementById('edit-alert')?.classList.add('d-none');
+            showModal('editModal');
         });
 
-        // Split slips into pages (9 per page)
-        const perPage = 9;
-        const pages = [];
-        for (let i = 0; i < slips.length; i += perPage) {
-            pages.push(slips.slice(i, i + perPage));
+        // Add user form
+        const addUserForm = document.getElementById('add-user-form');
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const alert = document.getElementById('add-alert');
+                alert?.classList.add('d-none');
+                const name = document.getElementById('name')?.value.trim();
+                const email = document.getElementById('email')?.value.trim();
+                const pass = document.getElementById('password')?.value;
+                const conf = document.getElementById('password_confirmation')?.value;
+                const roles = Array.from(document.getElementById('role')?.selectedOptions || []).map(o => o.value);
+                if (!name) return showAlert(alert, 'Enter a name');
+                if (!email) return showAlert(alert, 'Enter an email');
+                if (!roles.length) return showAlert(alert, 'Select at least one role');
+                if (!pass) return showAlert(alert, 'Enter a password');
+                if (pass !== conf) return showAlert(alert, 'Passwords do not match');
+                const btn = document.getElementById('add-btn');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…'; }
+                axios.post('/users', { name, email, roles, password: pass, password_confirmation: conf, _token: CSRF })
+                    .then(res => {
+                        addRowToTable(res.data.user);
+                        hideModal('showModal');
+                        Swal.fire({ icon: 'success', title: 'User Created!', text: res.data.user.name + ' added.', showConfirmButton: false, timer: 2500 });
+                    })
+                    .catch(err => showAlert(alert, err.response?.data?.message || 'Error creating user'))
+                    .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle"></i> Create User'; } });
+            });
         }
 
-        // Build the print document
-        const printWin = window.open('', '_blank');
-        printWin.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<title>Student Credentials — ${today}</title>
-<style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-        font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-        background: #fff;
-        font-size: 12px;
-        margin: 0;
-        padding: 0;
-    }
-
-    /* Summary page styling */
-    .summary-page {
-        padding: 20px;
-        page-break-after: always;
-        break-after: page;
-    }
-    .summary-header {
-        text-align: center;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
-        border-bottom: 2px solid #1e3a5f;
-    }
-    .summary-header h1 {
-        font-size: 24px;
-        color: #1e3a5f;
-        margin-bottom: 8px;
-    }
-    .summary-header .date {
-        color: #64748b;
-        font-size: 13px;
-    }
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .stat-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 16px;
-        text-align: center;
-    }
-    .stat-number {
-        font-size: 32px;
-        font-weight: 800;
-        color: #1e3a5f;
-    }
-    .stat-label {
-        font-size: 11px;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 4px;
-    }
-    .summary-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 11px;
-        margin-top: 20px;
-    }
-    .summary-table th {
-        background: #1e3a5f;
-        color: #fff;
-        padding: 10px 12px;
-        text-align: left;
-        font-weight: 600;
-    }
-    .summary-table td {
-        border: 1px solid #e2e8f0;
-        padding: 8px 12px;
-    }
-    .summary-table tr:nth-child(even) {
-        background: #f8fafc;
-    }
-
-    /* Slips page - 3x3 grid = 9 per page */
-    .slips-page {
-        page-break-after: always;
-        break-after: page;
-        padding: 12px;
-    }
-    .slips-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-    }
-
-    /* Individual slip styling - larger, readable */
-    .print-slip {
-        border: 2px solid #cbd5e1;
-        border-radius: 12px;
-        padding: 14px;
-        background: #fff;
-        break-inside: avoid;
-        page-break-inside: avoid;
-        position: relative;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .print-slip::before {
-        content: '✂';
-        position: absolute;
-        bottom: -14px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 10px;
-        color: #94a3b8;
-        background: #fff;
-        padding: 0 6px;
-        font-family: monospace;
-    }
-    .slip-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 2px dashed #e2e8f0;
-    }
-    .slip-tag {
-        font-size: 10px;
-        font-weight: 800;
-        color: #fff;
-        padding: 3px 10px;
-        border-radius: 20px;
-        letter-spacing: 1px;
-    }
-    .slip-school {
-        font-size: 10px;
-        font-weight: 700;
-        color: #1e3a5f;
-        text-transform: uppercase;
-    }
-    .slip-name {
-        font-size: 16px;
-        font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #e2e8f0;
-        word-break: break-word;
-    }
-    .slip-detail {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 11px;
-    }
-    .detail-label {
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        font-size: 9px;
-        letter-spacing: 0.5px;
-    }
-    .detail-value {
-        font-weight: 500;
-        color: #1e293b;
-        word-break: break-all;
-        text-align: right;
-    }
-    .mono {
-        font-family: 'Courier New', monospace;
-        font-size: 10px;
-    }
-    .slip-password {
-        background: linear-gradient(135deg, #f0f9ff, #eff6ff);
-        border: 2px solid #bfdbfe;
-        border-radius: 10px;
-        padding: 10px 12px;
-        margin: 12px 0 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .pwd-label {
-        font-size: 10px;
-        font-weight: 800;
-        color: #1e40af;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .pwd-value {
-        font-family: 'Courier New', monospace;
-        font-size: 16px;
-        font-weight: 900;
-        color: #1e40af;
-        letter-spacing: 2px;
-        word-break: break-all;
-        text-align: right;
-    }
-    .slip-footer {
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px dashed #e2e8f0;
-        font-size: 8px;
-        color: #94a3b8;
-        text-align: center;
-    }
-
-    /* Cut line between rows of slips */
-    .page-cut-row {
-        text-align: center;
-        margin: 4px 0;
-        font-family: monospace;
-        font-size: 10px;
-        color: #cbd5e1;
-        letter-spacing: 3px;
-    }
-
-    /* Last page doesn't need break after */
-    .slips-page:last-child {
-        page-break-after: auto;
-        break-after: auto;
-    }
-
-    @media print {
-        body {
-            margin: 0;
-            padding: 0;
+        // Edit user form
+        const editUserForm = document.getElementById('edit-user-form');
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const alert = document.getElementById('edit-alert');
+                alert?.classList.add('d-none');
+                const id = document.getElementById('edit-id-field')?.value;
+                const name = document.getElementById('edit-name')?.value.trim();
+                const email = document.getElementById('edit-email')?.value.trim();
+                const pass = document.getElementById('edit-password')?.value;
+                const conf = document.getElementById('edit-password_confirmation')?.value;
+                const roles = Array.from(document.getElementById('edit-role')?.selectedOptions || []).map(o => o.value);
+                if (!name) return showAlert(alert, 'Enter a name');
+                if (!email) return showAlert(alert, 'Enter an email');
+                if (!roles.length) return showAlert(alert, 'Select at least one role');
+                if (pass && pass !== conf) return showAlert(alert, 'Passwords do not match');
+                const btn = document.getElementById('update-btn');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…'; }
+                const payload = { name, email, roles, _token: CSRF };
+                if (pass) { payload.password = pass; payload.password_confirmation = conf; }
+                axios.put(`/users/${id}`, payload, { headers: { 'X-CSRF-TOKEN': CSRF } })
+                    .then(res => {
+                        updateRowInTable(res.data.user);
+                        hideModal('editModal');
+                        Swal.fire({ icon: 'success', title: 'Updated!', text: res.data.user.name + ' updated.', showConfirmButton: false, timer: 2500 });
+                    })
+                    .catch(err => showAlert(alert, err.response?.data?.message || 'Error updating user'))
+                    .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Update User'; } });
+            });
         }
-        .summary-page {
-            padding: 15px;
-        }
-        .slips-page {
-            padding: 8px;
-        }
-        .slips-grid {
-            gap: 8px;
-        }
-        .print-slip {
-            border: 1.5px solid #cbd5e1;
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-        .print-slip::before {
-            display: none;
-        }
-        /* Physical cut markers - appear as thin dashed lines between slips */
-        .slips-grid {
-            border-bottom: 1px dashed #ddd;
-        }
-        .print-slip {
-            border-bottom: 1px dashed #ddd;
-        }
-    }
-</style>
-</head>
-<body>
 
-<!-- Summary Page -->
-<div class="summary-page">
-    <div class="summary-header">
-        <h1>🎓 Student Portal Credentials</h1>
-        <div class="date">${escHtml(school)} &nbsp;|&nbsp; Printed: ${today} &nbsp;|&nbsp; Total Slips: ${allCreds.length}</div>
-    </div>
-    <div class="stats-grid">
-        <div class="stat-card"><div class="stat-number">${allCreds.length}</div><div class="stat-label">Total Slips</div></div>
-        <div class="stat-card"><div class="stat-number">${currentResults.created?.length||0}</div><div class="stat-label">New Accounts</div></div>
-        <div class="stat-card"><div class="stat-number">${currentResults.reset?.length||0}</div><div class="stat-label">Password Resets</div></div>
-        <div class="stat-card"><div class="stat-number">${currentResults.skipped?.length||0}</div><div class="stat-label">Skipped</div></div>
-    </div>
-    <table class="summary-table">
-        <thead><tr><th>#</th><th>Student Name</th><th>Admission No</th><th>Class</th><th>Email</th><th>Type</th></tr></thead>
-        <tbody>
-            ${allCreds.map((s,i)=>`<tr>
-                <td>${i+1}</td>
-                <td><strong>${escHtml(s.name)}</strong></td>
-                <td>${escHtml(s.admissionNo||'N/A')}</td>
-                <td>${escHtml(s.class_name||'—')}</td>
-                <td style="font-family:monospace;font-size:10px">${escHtml(s.email)}</td>
-                <td style="color:${s.type==='reset'?'#d97706':'#16a34a'};font-weight:700">${s.type==='reset'?'RESET':'NEW'}</td>
-            </tr>`).join('')}
-        </tbody>
-    </table>
-    <div style="margin-top: 20px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-        ✂ Cut along the lines between slips | Keep credentials secure | ${school} School Management System
-    </div>
-</div>
+        function showAlert(el, msg) { if (el) { el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg; el.classList.remove('d-none'); setTimeout(() => el.classList.add('d-none'), 5000); } }
+        function rolePill(roleName) {
+            const map = { Student: 'student', Admin: 'admin', Teacher: 'teacher', Staff: 'staff' };
+            const cls = map[roleName] || 'default';
+            return `<span class="u-role-pill ${cls}"><i class="bi bi-shield-check"></i>${roleName}</span>`;
+        }
+        function escHtml(s) { return String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
+        function getInitials(name) { const parts = (name || '').split(' '); return (parts[0]?.[0] || '') + (parts[1]?.[0] || ''); }
+        function addRowToTable(user) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            const emptyRow = document.getElementById('emptyRow');
+            if (emptyRow) emptyRow.remove();
+            const row = document.createElement('tr');
+            row.dataset.id = user.id;
+            row.dataset.name = user.name.toLowerCase();
+            row.dataset.email = user.email.toLowerCase();
+            row.dataset.roles = (user.roles || []).join(',').toLowerCase();
+            row.dataset.date = new Date().toISOString().slice(0, 10);
+            row.innerHTML = `
+                <td><input type="checkbox" class="row-check" style="accent-color:var(--u-accent);cursor:pointer;"></td>
+                <td><div class="u-avatar">${getInitials(user.name)}</div></td>
+                <td><div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div></td>
+                <td><span class="text-muted small">${escHtml(user.email)}</span></td>
+                <td>${(user.roles || []).map(rolePill).join('')}</td>
+                <td class="text-muted small">${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                <td><div class="d-flex gap-1">
+                    <a href="/users/${user.id}" class="u-action-btn view"><i class="ph-eye"></i></a>
+                    <button class="u-action-btn edit edit-item-btn" data-id="${user.id}" data-name="${escHtml(user.name)}" data-email="${escHtml(user.email)}" data-roles="${(user.roles || []).join(',')}"><i class="ph-pencil"></i></button>
+                    <button class="u-action-btn del remove-item-btn" data-id="${user.id}"><i class="ph-trash"></i></button>
+                </div></td>
+            `;
+            tbody.prepend(row);
+            const total = document.getElementById('totalCount');
+            if (total) total.textContent = parseInt(total.textContent) + 1;
+            applyFilters();
+        }
+        function updateRowInTable(user) {
+            const row = document.querySelector(`tr[data-id="${user.id}"]`);
+            if (!row) return;
+            row.dataset.name = user.name.toLowerCase();
+            row.dataset.email = user.email.toLowerCase();
+            row.dataset.roles = (user.roles || []).join(',').toLowerCase();
+            if (row.cells[2]) row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div>`;
+            if (row.cells[3]) row.cells[3].innerHTML = `<span class="text-muted small">${escHtml(user.email)}</span>`;
+            if (row.cells[4]) row.cells[4].innerHTML = (user.roles || []).map(rolePill).join('');
+        }
 
-<!-- Credential Slips Pages - 9 per page (3 columns x 3 rows) -->
-${pages.map((pageSlips, pageIndex) => `
-<div class="slips-page">
-    <div class="slips-grid">
-        ${pageSlips.map(slip => slip).join('')}
-    </div>
-    ${pageIndex < pages.length - 1 ? '<div class="page-cut-row">·················· CUT HERE ··················</div>' : ''}
-</div>
-`).join('')}
+        // Password reset for student
+        $(document).on('click', '.reset-student-pwd-btn', function() {
+            const userId = $(this).data('user-id');
+            const userName = $(this).data('user-name');
+            Swal.fire({
+                title: 'Reset Password?',
+                html: `Reset password for <strong>${userName}</strong>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#d97706',
+                confirmButtonText: 'Reset'
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                Swal.fire({ title: 'Resetting…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                fetch(`/users/reset-single-password/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF }
+                }).then(r => r.json()).then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Password Reset!',
+                            html: `<div style="text-align:center"><p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
+                                <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
+                                    <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
+                                </div></div>`,
+                            icon: 'success',
+                            confirmButtonColor: '#2563eb'
+                        });
+                    } else Swal.fire('Error', data.message || 'Reset failed', 'error');
+                }).catch(() => Swal.fire('Error', 'Network error', 'error'));
+            });
+        });
 
-<script>
-    window.onload = function() {
-        setTimeout(function() {
-            window.print();
-            setTimeout(function() { window.close(); }, 1500);
-        }, 500);
-    };
-<\/script>
-</body></html>`);
-        printWin.document.close();
+        // Chart
+        const ctx = document.getElementById('usersByRoleChart')?.getContext('2d');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: { labels: @json(array_keys($role_counts)), datasets: [{ label: 'Users', data: @json(array_values($role_counts)), backgroundColor: ['rgba(37,99,235,.75)', 'rgba(16,185,129,.75)', 'rgba(245,158,11,.75)', 'rgba(239,68,68,.75)'], borderRadius: 8 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+        }
+
+        // ── Mass Student Modal Logic ─────────────────────────────────
+        let selectedStudents = [];
+        let allStudents = [];
+        let currentResults = null;
+
+        function classLabel(s) { const c = (s.class_name || '').trim(); const a = (s.arm_name || '').trim(); return c && a ? `${c} ${a}` : c || a || '—'; }
+        function genEmail(first, last) { const c = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user'; return c(first) + '.' + c(last) + '@csskabba.ng'; }
+        function statusBadge(has) { return has ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>' : '<span class="msm-badge-none"><i class="bi bi-circle me-1"></i>No Account</span>'; }
+        function setStep(n) {
+            [1, 2, 3].forEach(i => {
+                const el = document.getElementById('stepBar' + i);
+                const circle = el?.querySelector('.msm-step-circle');
+                if (!el || !circle) return;
+                el.classList.remove('active', 'done');
+                if (i < n) { el.classList.add('done'); circle.innerHTML = '<i class="bi bi-check-lg"></i>'; }
+                else { circle.textContent = i; if (i === n) el.classList.add('active'); }
+            });
+        }
+
+        function loadStudents() {
+            const search = document.getElementById('massStudentSearch')?.value || '';
+            const classId = document.getElementById('massClassFilter')?.value || '';
+            const status = document.getElementById('massAccountStatus')?.value || 'all';
+            const tbody = document.getElementById('massStudentList');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell"><div class="spinner-border spinner-border-sm me-2 text-primary"></div>Loading students…</td></tr>';
+            let url = '{{ route("get.students") }}?limit=2000';
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (classId) url += `&class_id=${classId}`;
+            if (status !== 'all') url += `&has_account=${status}`;
+            fetch(url).then(r => r.json()).then(data => {
+                if (!data.success) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.</td></tr>'; return; }
+                allStudents = data.students.map(s => ({ ...s, generatedEmail: genEmail(s.firstname, s.lastname) }));
+                renderStudentTable(allStudents);
+                const classFilter = document.getElementById('massClassFilter');
+                if (classFilter && classFilter.options.length <= 1) {
+                    let html = '<option value="">All Classes</option>';
+                    if (data.classes?.length) data.classes.forEach(c => { html += `<option value="${escHtml(String(c.id))}">${escHtml(c.name || c.class_name || '')}</option>`; });
+                    else {
+                        const seen = new Map();
+                        allStudents.forEach(s => { if (s.class_id && !seen.has(s.class_id)) seen.set(s.class_id, classLabel(s)); });
+                        [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1])).forEach(([id, lbl]) => { html += `<option value="${escHtml(String(id))}">${escHtml(lbl)}</option>`; });
+                    }
+                    classFilter.innerHTML = html;
+                }
+            }).catch(() => { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.</td></tr>'; });
+        }
+
+        function renderStudentTable(students) {
+            const tbody = document.getElementById('massStudentList');
+            if (!tbody) return;
+            if (!students.length) { tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell">No students found.</td></tr>'; updateSelectedCount(); return; }
+            let html = '';
+            students.forEach(s => {
+                const checked = selectedStudents.some(x => x.id === s.id) ? 'checked' : '';
+                html += `<tr>
+                    <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked}></td>
+                    <td><strong>${escHtml(s.admissionNo || 'N/A')}</strong></td>
+                    <td>${escHtml(s.name)}</td>
+                    <td>${escHtml(classLabel(s))}</td>
+                    <td>${statusBadge(s.has_account)}</td>
+                    <td><small class="text-muted font-monospace">${escHtml(s.generatedEmail)}</small></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+            updateSelectedCount();
+            document.querySelectorAll('.student-checkbox').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const id = parseInt(this.dataset.id);
+                    const stu = allStudents.find(x => x.id === id);
+                    if (this.checked) { if (!selectedStudents.some(x => x.id === id)) selectedStudents.push(stu); }
+                    else selectedStudents = selectedStudents.filter(x => x.id !== id);
+                    updateSelectedCount();
+                });
+            });
+        }
+
+        function updateSelectedCount() {
+            const countSpan = document.getElementById('massSelectedCount');
+            if (countSpan) countSpan.textContent = `${selectedStudents.length} selected`;
+            const selectAllCheck = document.getElementById('selectAllCheckbox');
+            if (selectAllCheck) selectAllCheck.checked = allStudents.length > 0 && selectedStudents.length === allStudents.length;
+        }
+
+        function applyClientFilters() {
+            const search = document.getElementById('massStudentSearch')?.value.toLowerCase() || '';
+            const status = document.getElementById('massAccountStatus')?.value || 'all';
+            const filtered = allStudents.filter(s => {
+                if (search && !s.name.toLowerCase().includes(search) && !(s.admissionNo || '').toLowerCase().includes(search)) return false;
+                if (status === 'yes' && !s.has_account) return false;
+                if (status === 'no' && s.has_account) return false;
+                return true;
+            });
+            renderStudentTable(filtered);
+        }
+
+        document.getElementById('massStudentSearch')?.addEventListener('input', applyClientFilters);
+        document.getElementById('massAccountStatus')?.addEventListener('change', applyClientFilters);
+        document.getElementById('massClassFilter')?.addEventListener('change', () => { selectedStudents = []; loadStudents(); });
+        document.getElementById('selectAllStudents')?.addEventListener('click', () => { selectedStudents = [...allStudents]; renderStudentTable(allStudents); });
+        document.getElementById('deselectAll')?.addEventListener('click', () => { selectedStudents = []; renderStudentTable(allStudents); });
+        document.getElementById('selectAllCheckbox')?.addEventListener('change', function() { selectedStudents = this.checked ? [...allStudents] : []; renderStudentTable(allStudents); });
+
+        document.getElementById('proceedToAction')?.addEventListener('click', () => {
+            if (!selectedStudents.length) { Swal.fire({ icon: 'warning', title: 'No Students Selected', text: 'Select at least one student.', confirmButtonColor: '#2563eb' }); return; }
+            let html = '';
+            selectedStudents.forEach(s => {
+                html += `<tr><td>${escHtml(s.name)}</td><td>${escHtml(s.admissionNo || 'N/A')}</td><td>${escHtml(classLabel(s))}</td><td>${statusBadge(s.has_account)}</td><td><small class="font-monospace">${escHtml(s.generatedEmail)}</small></td></tr>`;
+            });
+            const listBody = document.getElementById('selectedStudentsList');
+            if (listBody) listBody.innerHTML = html;
+            const countSpan = document.getElementById('step2SelectedCount');
+            if (countSpan) countSpan.textContent = selectedStudents.length;
+            document.getElementById('massStep1').style.display = 'none';
+            document.getElementById('massStep2').style.display = '';
+            setStep(2);
+        });
+
+        document.querySelectorAll('.msm-action-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.msm-action-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                const action = this.dataset.action;
+                document.getElementById('selectedAction').value = action;
+                const showPwd = action === 'create' || action === 'reset';
+                document.getElementById('passwordSettings').style.display = showPwd ? '' : 'none';
+                document.getElementById('roleSettings').style.display = showPwd ? '' : 'none';
+                const hasAcc = selectedStudents.filter(s => s.has_account).length;
+                const noAcc = selectedStudents.filter(s => !s.has_account).length;
+                let warn = '';
+                if (action === 'create' && hasAcc) warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${hasAcc} student(s) already have accounts and will be skipped.`;
+                if (action === 'reset' && noAcc) warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
+                if (action === 'revoke' && noAcc) warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
+                const w = document.getElementById('actionWarning');
+                if (w) { if (warn) { w.innerHTML = warn; w.style.display = ''; } else w.style.display = 'none'; }
+            });
+        });
+
+        document.querySelectorAll('input[name="passwordTypeRadio"]').forEach(r => {
+            r.addEventListener('change', function() {
+                const sharedContainer = document.getElementById('sharedPasswordContainer');
+                if (sharedContainer) sharedContainer.style.display = this.value === 'same' ? '' : 'none';
+            });
+        });
+
+        document.getElementById('backToStep1')?.addEventListener('click', () => {
+            document.getElementById('massStep2').style.display = 'none';
+            document.getElementById('massStep1').style.display = '';
+            setStep(1);
+        });
+
+        document.getElementById('executeAction')?.addEventListener('click', () => {
+            const actionType = document.getElementById('selectedAction')?.value;
+            if (!actionType) { Swal.fire({ icon: 'error', title: 'No Action', text: 'Choose an action first.', confirmButtonColor: '#2563eb' }); return; }
+            const payload = { _token: '{{ csrf_token() }}', students: selectedStudents.map(s => ({ student_id: s.id })), action_type: actionType };
+            if (actionType === 'create' || actionType === 'reset') {
+                const pwdType = document.querySelector('input[name="passwordTypeRadio"]:checked')?.value;
+                payload.password_type = pwdType;
+                if (pwdType === 'same') {
+                    payload.shared_password = document.getElementById('sharedPassword')?.value;
+                    if (!payload.shared_password || payload.shared_password.length < 6) { Swal.fire({ icon: 'error', title: 'Password Too Short', text: 'Minimum 6 characters.', confirmButtonColor: '#2563eb' }); return; }
+                }
+                payload.roles = ['Student'];
+            }
+            Swal.fire({ title: 'Processing…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            fetch('{{ route("users.mass-create-students") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(data => {
+                Swal.close();
+                if (data.success) {
+                    currentResults = data;
+                    displayResults(data);
+                    document.getElementById('massStep2').style.display = 'none';
+                    document.getElementById('massStep3').style.display = '';
+                    setStep(3);
+                } else { Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Operation failed.', confirmButtonColor: '#2563eb' }); }
+            }).catch(() => { Swal.close(); Swal.fire({ icon: 'error', title: 'Network Error', confirmButtonColor: '#2563eb' }); });
+        });
+
+        function displayResults(data) {
+            let html = `<div class="alert alert-success border-0 rounded-3" style="background:#f0fdf4;border-left:4px solid #16a34a !important;">
+                <h5 class="mb-1"><i class="bi bi-check-circle-fill me-2 text-success"></i>Operation Complete</h5>
+                <p class="mb-0 text-muted">${escHtml(data.message)}</p>
+            </div>`;
+            if (data.created?.length) html += mkTable('Created Accounts', data.created, 'success', 'person-plus-fill', ['Name', 'Username', 'Email', 'Password', 'Admission No', 'Class'],
+                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></tr>`);
+            if (data.reset?.length) html += mkTable('Password Resets', data.reset, 'warning', 'key-fill', ['Name', 'Username', 'Email', 'New Password', 'Admission No', 'Class'],
+                r => `<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td><code class="text-warning fw-bold">${escHtml(r.password)}</code></td><td>${escHtml(r.admissionNo || 'N/A')}</td><td>${escHtml(r.class_name || '')}</td></tr>`);
+            if (data.revoked?.length) { html += `<div class="mt-3 p-3 border rounded-3"><strong><i class="bi bi-person-x-fill text-danger me-2"></i>Revoked (${data.revoked.length})</strong><ul class="mt-2 mb-0">`; data.revoked.forEach(r => { html += `<li>${escHtml(r.name)} (${escHtml(r.admissionNo || 'N/A')}) — account removed</li>`; }); html += '</ul></div>'; }
+            if (data.reprinted?.length) html += mkTable('Reprinted Credentials', data.reprinted, 'info', 'printer-fill', ['Name', 'Username', 'Email', 'Admission No', 'Note'],
+                r => `<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td>${escHtml(r.admissionNo || 'N/A')}</td><td><small class="text-muted">Password hidden</small></td></tr>`);
+            if (data.skipped?.length) { html += `<div class="mt-3 p-3 border rounded-3 bg-light"><strong><i class="bi bi-skip-forward-fill text-muted me-2"></i>Skipped (${data.skipped.length})</strong><ul class="mt-2 mb-0">`; data.skipped.forEach(s => { html += `<li class="text-muted">${escHtml(s)}</li>`; }); html += '</ul></div>'; }
+            const container = document.getElementById('resultsContainer');
+            if (container) container.innerHTML = html;
+        }
+
+        function mkTable(title, rows, color, icon, headers, rowFn) {
+            return `<div class="mt-3"><strong><i class="bi bi-${icon} text-${color} me-2"></i>${title} (${rows.length})</strong>
+                <div class="table-responsive mt-2"><table class="table table-sm table-bordered msm-table"><thead class="table-${color}"><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(rowFn).join('')}</tbody></table></div></div>`;
+        }
+
+        // Print with photos - 9 per page
+        document.getElementById('printResults')?.addEventListener('click', () => {
+            if (!currentResults) return;
+            const school = document.querySelector('meta[name="school-name"]')?.content || 'CSS Kabba';
+            const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const allCreds = [...(currentResults.created || []).map(c => ({ ...c, type: 'created' })), ...(currentResults.reset || []).map(r => ({ ...r, type: 'reset' }))];
+            if (!allCreds.length) { Swal.fire({ icon: 'info', title: 'Nothing to Print', text: 'No created or reset credentials available.', confirmButtonColor: '#2563eb' }); return; }
+
+            const slips = allCreds.map(s => {
+                const isReset = s.type === 'reset';
+                const tag = isReset ? 'RESET' : 'NEW';
+                const tagColor = isReset ? '#d97706' : '#16a34a';
+                const photoUrl = s.photo_url || (s.photo ? `/storage/${s.photo}` : null);
+                const photoHtml = photoUrl ? `<div class="slip-photo"><img src="${photoUrl}" alt="Photo" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="slip-photo-fallback" style="display:none">📷</div></div>` : `<div class="slip-photo"><div class="slip-photo-fallback">👨‍🎓</div></div>`;
+                return `<div class="print-slip"><div class="slip-header"><span class="slip-tag" style="background:${tagColor}">${tag}</span><span class="slip-school">${escHtml(school)}</span></div>
+                    <div class="slip-content">${photoHtml}<div class="slip-info"><div class="slip-name">${escHtml(s.name)}</div>
+                    <div class="slip-detail"><span class="detail-label">Adm No</span><span class="detail-value">${escHtml(s.admissionNo || 'N/A')}</span></div>
+                    <div class="slip-detail"><span class="detail-label">Class</span><span class="detail-value">${escHtml(s.class_name || '—')}</span></div>
+                    <div class="slip-detail"><span class="detail-label">Email</span><span class="detail-value mono">${escHtml(s.email)}</span></div>
+                    <div class="slip-detail"><span class="detail-label">Username</span><span class="detail-value mono">${escHtml(s.username || '')}</span></div>
+                    <div class="slip-password"><span class="pwd-label">${isReset ? 'New Password' : 'Password'}</span><span class="pwd-value">${escHtml(s.password)}</span></div></div></div>
+                    <div class="slip-footer">Change password after login &bull; ${window.location.hostname}</div></div>`;
+            });
+
+            const perPage = 9;
+            const pages = [];
+            for (let i = 0; i < slips.length; i += perPage) pages.push(slips.slice(i, i + perPage));
+
+            const printWin = window.open('', '_blank');
+            printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student Credentials — ${today}</title>
+            <style>
+                * { margin:0; padding:0; box-sizing:border-box; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; background:#fff; font-size:12px; }
+                .cover-page { text-align:center; padding:40px 20px; page-break-after:always; break-after:page; display:flex; flex-direction:column; justify-content:center; min-height:100vh; }
+                .cover-school { font-size:28px; font-weight:800; color:#1e3a5f; margin-bottom:16px; }
+                .cover-title { font-size:22px; font-weight:600; color:#2563eb; margin-bottom:12px; }
+                .cover-date { font-size:14px; color:#64748b; margin-bottom:40px; }
+                .cover-stats { display:flex; justify-content:center; gap:30px; margin-top:40px; }
+                .cover-stat { background:#f8fafc; border-radius:16px; padding:20px 30px; min-width:150px; }
+                .cover-stat-number { font-size:36px; font-weight:800; color:#1e3a5f; }
+                .cover-stat-label { font-size:12px; color:#64748b; margin-top:5px; }
+                .cover-footer { margin-top:60px; font-size:11px; color:#94a3b8; }
+                .slips-page { page-break-after:always; break-after:page; padding:12px; }
+                .slips-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+                .print-slip { border:2px solid #cbd5e1; border-radius:12px; padding:12px; background:#fff; break-inside:avoid; page-break-inside:avoid; position:relative; }
+                .print-slip::after { content:'✂'; position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); font-size:10px; color:#94a3b8; background:#fff; padding:0 6px; font-family:monospace; }
+                .slip-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:6px; border-bottom:2px dashed #e2e8f0; }
+                .slip-tag { font-size:9px; font-weight:800; color:#fff; padding:2px 8px; border-radius:20px; }
+                .slip-school { font-size:9px; font-weight:700; color:#1e3a5f; text-transform:uppercase; }
+                .slip-content { display:flex; gap:12px; margin-bottom:8px; }
+                .slip-photo { flex-shrink:0; width:70px; height:70px; border-radius:12px; overflow:hidden; background:#f1f5f9; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0; }
+                .slip-photo img { width:100%; height:100%; object-fit:cover; }
+                .slip-photo-fallback { font-size:32px; display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
+                .slip-info { flex:1; }
+                .slip-name { font-size:14px; font-weight:800; color:#0f172a; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; }
+                .slip-detail { display:flex; justify-content:space-between; margin-bottom:5px; font-size:10px; }
+                .detail-label { font-weight:700; color:#64748b; text-transform:uppercase; font-size:8px; letter-spacing:.5px; }
+                .detail-value { font-weight:500; color:#1e293b; text-align:right; }
+                .mono { font-family:'Courier New',monospace; font-size:9px; }
+                .slip-password { background:linear-gradient(135deg,#f0f9ff,#eff6ff); border:2px solid #bfdbfe; border-radius:8px; padding:6px 8px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
+                .pwd-label { font-size:8px; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:1px; }
+                .pwd-value { font-family:'Courier New',monospace; font-size:13px; font-weight:900; color:#1e40af; letter-spacing:1px; word-break:break-all; text-align:right; }
+                .slip-footer { margin-top:8px; padding-top:6px; border-top:1px dashed #e2e8f0; font-size:7px; color:#94a3b8; text-align:center; }
+                .page-cut-row { text-align:center; margin:8px 0 4px; font-family:monospace; font-size:9px; color:#cbd5e1; letter-spacing:3px; }
+                .slips-page:last-child { page-break-after:auto; break-after:auto; }
+                @media print { .cover-page { padding:30px; } .slips-page { padding:8px; } .slips-grid { gap:10px; } .print-slip { border:1.5px solid #cbd5e1; break-inside:avoid; page-break-inside:avoid; } .print-slip::after { display:none; } }
+            </style></head><body>
+            <div class="cover-page"><div class="cover-school">${escHtml(school)}</div><div class="cover-title">Student Portal Credentials</div><div class="cover-date">Printed: ${today}</div>
+            <div class="cover-stats"><div class="cover-stat"><div class="cover-stat-number">${allCreds.length}</div><div class="cover-stat-label">Total Slips</div></div>
+            <div class="cover-stat"><div class="cover-stat-number">${currentResults.created?.length || 0}</div><div class="cover-stat-label">New Accounts</div></div>
+            <div class="cover-stat"><div class="cover-stat-number">${currentResults.reset?.length || 0}</div><div class="cover-stat-label">Password Resets</div></div>
+            <div class="cover-stat"><div class="cover-stat-number">${currentResults.skipped?.length || 0}</div><div class="cover-stat-label">Skipped</div></div></div>
+            <div class="cover-footer">✂ Cut along the dotted lines between slips | Keep credentials secure</div></div>
+            ${pages.map((pageSlips, pageIndex) => `<div class="slips-page"><div class="slips-grid">${pageSlips.join('')}</div>${pageIndex < pages.length - 1 ? '<div class="page-cut-row">·················· CUT HERE ··················</div>' : ''}</div>`).join('')}
+            <script>window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close();},1500);},500);};<\/script></body></html>`);
+            printWin.document.close();
+        });
+
+        function resetModal() {
+            selectedStudents = [];
+            currentResults = null;
+            const actionField = document.getElementById('selectedAction');
+            if (actionField) actionField.value = '';
+            const step2 = document.getElementById('massStep2');
+            const step3 = document.getElementById('massStep3');
+            const step1 = document.getElementById('massStep1');
+            if (step2) step2.style.display = 'none';
+            if (step3) step3.style.display = 'none';
+            if (step1) step1.style.display = '';
+            document.querySelectorAll('.msm-action-card').forEach(c => c.classList.remove('selected'));
+            const warning = document.getElementById('actionWarning');
+            if (warning) warning.style.display = 'none';
+            const pwdSettings = document.getElementById('passwordSettings');
+            const roleSettings = document.getElementById('roleSettings');
+            if (pwdSettings) pwdSettings.style.display = 'none';
+            if (roleSettings) roleSettings.style.display = 'none';
+            setStep(1);
+            loadStudents();
+        }
+
+        document.getElementById('newAction')?.addEventListener('click', resetModal);
+        const massModal = document.getElementById('massStudentModal');
+        if (massModal) {
+            massModal.addEventListener('hidden.bs.modal', resetModal);
+            massModal.addEventListener('show.bs.modal', () => { selectedStudents = []; loadStudents(); });
+        }
+
+        // Single student modal
+        const addStudentModal = document.getElementById('addStudentModal');
+        const credentialsModal = document.getElementById('setStudentCredentialsModal');
+        if (addStudentModal && credentialsModal) {
+            let selectedStudent = null;
+            addStudentModal.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
+            function loadStudentsForSingle(search) {
+                const proceed = document.getElementById('proceed-to-credentials');
+                if (proceed) proceed.disabled = true;
+                let url = '{{ route("get.students") }}?limit=500&has_account=no';
+                if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
+                fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF } }).then(r => r.json()).then(data => {
+                    const sel = document.getElementById('student-select');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">— Choose a student —</option>';
+                        (data.students || []).forEach(s => {
+                            const o = document.createElement('option');
+                            o.value = s.id;
+                            o.textContent = `${s.name} (${s.admissionNo})`;
+                            Object.assign(o.dataset, { name: s.name, email: s.email || '', admission: s.admissionNo || '' });
+                            sel.appendChild(o);
+                        });
+                    }
+                }).catch(err => console.error(err));
+            }
+            document.getElementById('student-search')?.addEventListener('input', debounce(e => loadStudentsForSingle(e.target.value), 350));
+            document.getElementById('student-select')?.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                if (!opt || !opt.value) { selectedStudent = null; const proceed = document.getElementById('proceed-to-credentials'); if (proceed) proceed.disabled = true; return; }
+                selectedStudent = { id: opt.value, name: opt.dataset.name, email: opt.dataset.email, admissionNo: opt.dataset.admission };
+                const proceed = document.getElementById('proceed-to-credentials');
+                if (proceed) proceed.disabled = false;
+            });
+            document.getElementById('proceed-to-credentials')?.addEventListener('click', () => {
+                if (!selectedStudent) return;
+                const idField = document.getElementById('student-id-field');
+                const nameField = document.getElementById('student-name-field');
+                const emailField = document.getElementById('student-user-email');
+                const usernameField = document.getElementById('student-username');
+                if (idField) idField.value = selectedStudent.id;
+                if (nameField) nameField.value = selectedStudent.name;
+                if (emailField) emailField.value = selectedStudent.email;
+                if (usernameField) usernameField.value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
+                hideModal('addStudentModal');
+                setTimeout(() => showModal('setStudentCredentialsModal'), 300);
+            });
+            document.getElementById('generate-temp-password')?.addEventListener('click', () => {
+                const p = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+                const pwdField = document.getElementById('student-password');
+                const confField = document.getElementById('student-password_confirmation');
+                if (pwdField) pwdField.value = p;
+                if (confField) confField.value = p;
+            });
+            document.getElementById('add-student-credentials-form')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const fd = new FormData(this);
+                fd.append('_token', CSRF);
+                const btn = document.getElementById('create-student-user');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…'; }
+                fetch('{{ route("users.store-student") }}', { method: 'POST', body: fd }).then(r => r.json()).then(data => {
+                    if (data.success) { Swal.fire({ icon: 'success', title: 'Student User Created!', text: data.message, showConfirmButton: false, timer: 2000 }); hideModal('setStudentCredentialsModal'); setTimeout(() => location.reload(), 2000); }
+                    else { const errDiv = document.getElementById('student-credentials-error'); if (errDiv) { errDiv.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message || 'Error'); errDiv.classList.remove('d-none'); } }
+                }).catch(() => Swal.fire('Error', 'Network error', 'error')).finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-check"></i> Create Student User'; } });
+            });
+            window.resetStudentCredentialsModal = function() {
+                ['student-id-field', 'student-name-field', 'student-user-email', 'student-username', 'student-password', 'student-password_confirmation'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                const errDiv = document.getElementById('student-credentials-error');
+                if (errDiv) errDiv.classList.add('d-none');
+            };
+            credentialsModal.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
+        }
+
+        function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+        applyFilters();
+        console.log('User management page initialized');
     });
-
-    // ── Modal lifecycle ────────────────────────────────────
-    function resetModal() {
-        selectedStudents = [];
-        currentResults   = null;
-        document.getElementById('selectedAction').value = '';
-        document.getElementById('massStep2').style.display='none';
-        document.getElementById('massStep3').style.display='none';
-        document.getElementById('massStep1').style.display='';
-        document.querySelectorAll('.msm-action-card').forEach(c=>c.classList.remove('selected'));
-        document.getElementById('actionWarning').style.display='none';
-        document.getElementById('passwordSettings').style.display='none';
-        document.getElementById('roleSettings').style.display='none';
-        setStep(1);
-        loadStudents();
-    }
-
-    document.getElementById('newAction').addEventListener('click', resetModal);
-    document.getElementById('massStudentModal').addEventListener('hidden.bs.modal', resetModal);
-    document.getElementById('massStudentModal').addEventListener('show.bs.modal', () => {
-        selectedStudents = [];
-        loadStudents();
-    });
-});
+})();
 </script>
+@endsection
