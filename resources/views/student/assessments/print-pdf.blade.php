@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Terminal Progress Report – Student Copy</title>
+    <title>Terminal Progress Report | Student Copy</title>
     <style>
         * {
             margin: 0;
@@ -12,18 +12,15 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11px;
-            line-height: 1.3;
             background: #e2e8f0;
-            padding: 0;
-            margin: 0;
+            padding: 8mm 5mm;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
 
-        /* WATERMARK – clear "NOT FOR OFFICIAL USE" */
+        /* WATERMARK – visible but not intrusive */
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -38,194 +35,180 @@
             pointer-events: none;
             z-index: 1000;
             text-transform: uppercase;
-            border: 3px double rgba(220, 38, 38, 0.25);
-            padding: 16px 36px;
+            border: 3px double rgba(220, 38, 38, 0.2);
+            padding: 12px 32px;
             border-radius: 24px;
-            backdrop-filter: blur(1px);
         }
 
-        /* main card – exactly fills A5 portrait with balanced margins */
+        /* MAIN CARD – fills A4/A5 perfectly */
         .student-section {
+            max-width: 200mm;
             width: 100%;
-            max-width: 170mm;
-            margin: 6mm auto;
+            margin: 0 auto;
             background: white;
-            border: 3px solid #1a1a2e;
-            border-radius: 4px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            page-break-after: avoid;
+            border: 3px solid #0f172a;
+            border-radius: 6px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            page-break-after: always;
             break-inside: avoid;
-            position: relative;
             display: flex;
             flex-direction: column;
-            min-height: 265mm;  /* fills A5 height */
         }
 
         .card-inner {
-            padding: 8px 12px 12px 12px;
+            padding: 12px 14px 14px 14px;
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            gap: 6px;
         }
 
-        /* SCHOOL HEADER – terminal style */
+        /* SCHOOL HEADER – bold & compact */
         .school-name-header {
             background: #111827;
             color: white;
-            padding: 6px 12px 5px 12px;
-            border: 2px double #fbbf24;
+            padding: 10px 14px 8px 14px;
+            border: 2px solid #fbbf24;
             border-left: none;
             border-right: none;
             text-align: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 19px;
+            font-size: 22px;
             font-weight: 900;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
         }
         .motto {
-            font-size: 9px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
             letter-spacing: 2px;
-            opacity: 0.9;
+            margin-top: 3px;
+            opacity: 0.95;
         }
 
-        /* header table (logo + contact + photo) */
+        /* HEADER TABLE (logo + info + photo) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 4px 0;
+            margin: 6px 0 4px;
         }
         .school-logo {
-            width: 62px;
-            height: 70px;
-            border: 2px solid #1e3a5f;
-            border-radius: 8px;
+            width: 72px;
+            height: 80px;
+            border: 2px solid #2c7a4d;
+            border-radius: 10px;
             background: white;
-            padding: 3px;
+            padding: 4px;
             text-align: center;
             margin: 0 auto;
         }
-        .school-logo img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
+        .school-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .photo-frame {
-            width: 62px;
-            height: 70px;
-            border: 2px solid #1e3a5f;
-            border-radius: 8px;
+            width: 72px;
+            height: 80px;
+            border: 2px solid #2c7a4d;
+            border-radius: 10px;
             overflow: hidden;
             margin-left: auto;
+            background: #f1f5f9;
         }
-        .photo-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .contact-info {
-            font-size: 8.5px;
-            width: 100%;
-        }
-        .contact-info td {
-            padding: 1px 3px;
-        }
-        .contact-label {
-            font-weight: 900;
-            color: #1e40af;
-            width: 50px;
-        }
-        .header-divider { height: 2px; background: #1e40af; margin: 4px 0 2px; }
-        .header-divider2 { height: 1px; background: #94a3b8; margin: 1px 0 3px; }
+        .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .contact-info { width: 100%; font-size: 9.5px; border-collapse: collapse; }
+        .contact-info td { padding: 3px 4px; }
+        .contact-label { font-weight: 900; color: #1e40af; width: 58px; }
+
+        .divider-dark { height: 2px; background: #1e40af; margin: 5px 0 2px; }
+        .divider-light { height: 1px; background: #94a3b8; margin: 2px 0 4px; }
 
         .report-title {
             background: #0f172a;
             color: white;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 800;
             text-align: center;
-            padding: 5px;
-            border-radius: 4px;
-            margin: 5px 0;
+            padding: 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
         }
 
-        /* STUDENT INFO BAR */
+        /* STUDENT INFO – tighter, well spaced */
         .student-info-bar {
-            background: linear-gradient(145deg, #eff6ff, #ffffff);
-            border: 1.5px solid #2aa886;
-            border-radius: 8px;
-            padding: 5px 8px;
-            margin: 6px 0;
+            background: linear-gradient(135deg, #eff6ff, #ffffff);
+            border: 1.8px solid #2aa886;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin: 4px 0;
         }
         .info-table {
             width: 100%;
         }
         .info-table td {
-            padding: 2px 4px;
+            padding: 4px 6px;
             text-align: center;
-            font-size: 8.8px;
+            font-size: 10px;
         }
-        .info-bar-label {
+        .info-badge {
             background: #e0f2fe;
-            padding: 2px 8px;
-            border-radius: 20px;
+            padding: 3px 10px;
+            border-radius: 30px;
             font-weight: 900;
             color: #0f3b5c;
+            display: inline-block;
         }
-        .info-bar-value {
+        .info-value {
             font-weight: 900;
-            margin-left: 4px;
+            margin-left: 5px;
+            font-size: 10.5px;
         }
 
-        /* RESULT TABLE – strong borders, compact but readable */
+        /* RESULT TABLE – robust, full width */
         .result-wrapper {
-            margin: 5px 0;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
+            margin: 8px 0;
+            border: 1.5px solid #94a3b8;
+            border-radius: 6px;
             overflow-x: auto;
         }
         .result-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 7.8px;
+            font-size: 8.8px;
         }
         .result-table th {
             background: #0b2b44;
             color: white;
             border: 1.2px solid #000;
-            padding: 4px 1px;
-            font-size: 7px;
+            padding: 6px 2px;
+            font-size: 8px;
             text-align: center;
+            font-weight: 800;
         }
         .result-table td {
             border: 1.2px solid #000;
-            padding: 3px 1px;
+            padding: 5px 2px;
             text-align: center;
-            font-size: 7.8px;
+            font-size: 8.8px;
             background: white;
             font-weight: 600;
         }
         .subject-name-cell {
             text-align: left;
             font-weight: 800;
-            padding-left: 6px;
-            background: #fefce8;
+            padding-left: 8px;
+            background: #fef9e3;
         }
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        /* GRADE COLORS – terminal style */
+        /* GRADE COLORS */
         .grade-A { color: #15803d; font-weight: 900; }
         .grade-B { color: #1d4ed8; font-weight: 900; }
         .grade-C { color: #b45309; font-weight: 900; }
         .grade-D { color: #e11d48; font-weight: 900; }
         .grade-F { color: #b91c1c; font-weight: 900; }
 
-        /* POSITION BADGES (gold/silver/bronze) */
+        /* POSITION BADGES */
         .pos-1 { background-color: #FFD966 !important; color: #000; font-weight: 900; }
         .pos-2 { background-color: #D1D5DB !important; color: #000; font-weight: 900; }
         .pos-3 { background-color: #E6B17E !important; color: #000; font-weight: 900; }
@@ -234,56 +217,56 @@
             background: #0b2b44;
             color: white;
             font-weight: 900;
-            font-size: 8.5px;
+            font-size: 10px;
             text-align: center;
-            padding: 5px;
-            border-radius: 30px;
-            margin: 6px 0;
+            padding: 7px;
+            border-radius: 40px;
+            margin: 5px 0;
         }
 
-        /* attendance block */
+        /* ATTENDANCE */
         .attendance-box {
             border: 1.8px solid #0f766e;
-            border-radius: 10px;
+            border-radius: 12px;
             margin: 5px 0;
             background: #f0fdfa;
         }
-        .attendance-box-header {
+        .attendance-header {
             background: #0f766e;
             color: white;
             font-weight: 900;
-            padding: 3px 8px;
-            font-size: 8.5px;
+            padding: 6px;
+            font-size: 9.5px;
             text-align: center;
         }
-        .attendance-flex {
+        .att-flex {
             display: flex;
             flex-wrap: wrap;
         }
         .att-cell {
             flex: 1;
             text-align: center;
-            padding: 4px 2px;
-            border-right: 1px solid #ccf0e8;
+            padding: 6px 2px;
+            border-right: 1px solid #cbd5e1;
         }
         .att-cell:last-child { border-right: none; }
         .att-label {
-            font-size: 7px;
+            font-size: 8px;
             font-weight: 800;
             color: #0f766e;
             text-transform: uppercase;
         }
         .att-value {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 900;
         }
         .att-warn { color: #dc2626; }
         .att-ok { color: #16a34a; }
-        .progress-bar-wrap {
+        .progress-bar {
             background: #e2e8f0;
             border-radius: 20px;
-            height: 5px;
-            margin: 5px 8px 6px;
+            height: 6px;
+            margin: 6px 10px 8px;
         }
         .progress-fill {
             height: 100%;
@@ -292,7 +275,7 @@
         }
         .progress-fill.warning { background: #f97316; }
 
-        /* remarks table */
+        /* REMARKS TABLE */
         .remarks-table {
             width: 100%;
             border-collapse: collapse;
@@ -301,84 +284,86 @@
         }
         .remarks-table td {
             border: 1.2px solid #000;
-            padding: 4px 6px;
+            padding: 6px 8px;
             vertical-align: top;
-            font-size: 8.2px;
+            font-size: 9px;
             background: white;
         }
         .remark-title {
             font-weight: 900;
-            font-size: 8.5px;
-            border-bottom: 1px solid #bbb;
+            font-size: 9.5px;
+            border-bottom: 1.5px solid #94a3b8;
             display: inline-block;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
 
-        /* bottom strip – compact, no extra white space */
+        /* BOTTOM STRIP – no empty gaps */
         .bottom-strip {
-            margin-top: 4px;
-            border-top: 1.5px solid #cbd5e1;
+            margin-top: 5px;
+            border-top: 1.8px solid #cbd5e1;
             background: #f8fafc;
-            padding: 4px 0 0 0;
+            padding: 6px 0 2px;
         }
         .strip-table {
             width: 100%;
         }
         .strip-table td {
-            padding: 4px 3px;
+            padding: 5px 4px;
             vertical-align: middle;
             text-align: center;
         }
         .qr-img {
-            width: 48px;
-            height: 48px;
+            width: 55px;
+            height: 55px;
             display: block;
             margin: 0 auto;
         }
         .qr-label {
-            font-size: 6px;
+            font-size: 7px;
             font-weight: 700;
+            margin-top: 2px;
         }
         .stamp-img {
-            width: 65px;
+            width: 75px;
             transform: rotate(-6deg);
         }
         .sign-line {
-            border-bottom: 1px dotted #1e293b;
-            min-width: 85px;
+            border-bottom: 1.5px dotted #1e293b;
+            min-width: 100px;
             display: inline-block;
-            margin: 0 4px;
+            margin: 0 6px;
         }
         .powered {
-            font-size: 6.5px;
+            font-size: 7px;
             color: #475569;
+            margin-top: 4px;
         }
 
-        /* promotion badge – minimal */
+        /* PROMOTION BADGE – compact */
         .promo-badge {
             margin: 4px 0;
-            padding: 4px 8px;
-            border-radius: 20px;
+            padding: 6px 10px;
+            border-radius: 40px;
             font-weight: 800;
             text-align: center;
-            font-size: 8.5px;
-            border: 1px solid;
+            font-size: 9.5px;
+            border: 1.5px solid;
         }
         .promo-pass { background: #dcfce7; border-color: #15803d; color: #14532d; }
         .promo-fail { background: #fee2e2; border-color: #b91c1c; color: #7f1d1d; }
         .promo-wait { background: #fef9c3; border-color: #ca8a04; color: #854d0e; }
 
-        /* column width hints */
-        .col-sn { width: 24px; }
-        .col-adm { width: 60px; }
-        .col-subj { width: 120px; }
-        .col-assess { width: 32px; }
-        .col-num { width: 34px; }
-        .col-pos { width: 42px; }
+        /* COLUMN WIDTHS */
+        .col-sn { width: 28px; }
+        .col-adm { width: 65px; }
+        .col-subj { width: 135px; }
+        .col-assess { width: 38px; }
+        .col-num { width: 42px; }
+        .col-pos { width: 48px; }
 
         @media print {
-            body { background: white; margin: 0; padding: 0; }
-            .student-section { box-shadow: none; margin: 0 auto; page-break-after: avoid; }
+            body { background: white; padding: 0; margin: 0; }
+            .student-section { box-shadow: none; margin: 0; page-break-after: avoid; }
             .watermark-text { color: rgba(220,38,38,0.1); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
@@ -393,10 +378,9 @@
             return $n.match($n % 10) {1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'};
         }
 
-        $selectedCols = $metadata['selected_columns'] ?? [];
-        $defaultCols = ['sn','admission_no','name','total','bf','cum','grade','position','position_total','arm_position','arm_position_cum','class_average','attendance_percentage'];
-        $showCols = !empty($selectedCols) ? $selectedCols : $defaultCols;
-
+        $selected = $metadata['selected_columns'] ?? [];
+        $defaultCols = ['sn','admission_no','name','total','bf','cum','grade','position','position_total','arm_position','arm_position_cum','class_average','attendance_days_present','attendance_days_absent','attendance_percentage'];
+        $showCols = !empty($selected) ? $selected : $defaultCols;
         $showAttendance = collect(['attendance_days_present','attendance_days_absent','attendance_total_days','attendance_percentage'])->contains(fn($c)=>in_array($c,$showCols));
     @endphp
 
@@ -413,19 +397,20 @@
                 $profile = $studentData['studentpp']->first();
             }
 
-            $adm = $student->admissionNo ?? 'N/A';
+            $admNo = $student->admissionNo ?? 'N/A';
             $fullName = trim(strtoupper($student->lastname ?? '').' '.($student->fname ?? '').' '.($student->othername ?? ''));
-            $arm = $studentData['schoolclass']->arms->arm ?? '';
-            $classVal = trim(($studentData['schoolclass']->schoolclass ?? '').' '.$arm);
+            $armName = $studentData['schoolclass']->arms->arm ?? '';
+            $className = trim(($studentData['schoolclass']->schoolclass ?? '').' '.$armName);
             $session = $metadata['session'] ?? '2025/2026';
             $term = $metadata['term'] ?? 'SECOND TERM';
             $classSize = $studentData['numberOfStudents'] ?? '—';
+            $schoolOpened = $school->date_school_opened ? \Carbon\Carbon::parse($school->date_school_opened)->format('jS M, Y') : '—';
 
-            $qrData = "Student: {$fullName}\nAdm: {$adm}\nClass: {$classVal}\nTerm: {$term}\nSession: {$session}";
-            $qrBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(200)->errorCorrection('H')->generate($qrData));
+            $qrData = "Student: {$fullName}\nAdm: {$admNo}\nClass: {$className}\nTerm: {$term}\nSession: {$session}";
+            $qrBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(220)->errorCorrection('H')->generate($qrData));
 
             $stampSrc = !empty($studentData['school_stamp_base64']) ? $studentData['school_stamp_base64'] : 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="42" fill="%23f8fafc" stroke="%233b82f6" stroke-width="3"/%3E%3Ctext x="50" y="55" text-anchor="middle" fill="%231e293b" font-size="11"%3ESTAMP%3C/text%3E%3C/svg%3E';
-            $logoBase = $studentData['school_logo_base64'] ?? 'data:image/svg+xml;base64,'.base64_encode('<svg width="70" height="80" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#1e3a5f" stroke-width="2"/><circle cx="50" cy="40" r="16" fill="#1e3a5f" opacity="0.7"/><text x="50" y="70" text-anchor="middle" font-size="12" fill="#1e3a5f">SCH</text></svg>');
+            $logoBase = $studentData['school_logo_base64'] ?? 'data:image/svg+xml;base64,'.base64_encode('<svg width="80" height="90" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#2c7a4d" stroke-width="2"/><circle cx="50" cy="40" r="18" fill="#2c7a4d" opacity="0.7"/><text x="50" y="70" text-anchor="middle" font-size="12" fill="#1e3a5f">SCH</text></svg>');
 
             $attPct = isset($att['attendance_percentage']) ? round($att['attendance_percentage'],1) : 0;
             $attWarn = $attPct < 75 && $attPct > 0;
@@ -434,10 +419,10 @@
 
         <div class="student-section">
             <div class="card-inner">
-                {{-- SCHOOL BRAND --}}
+                {{-- SCHOOL HEADER --}}
                 <div class="school-name-header">
                     <div class="school-full-name">{{ $school->school_name ?? 'PREMIER ACADEMY' }}</div>
-                    <div class="motto">{{ $school->school_motto ?? 'DISCIPLINE & EXCELLENCE' }}</div>
+                    <div class="motto">{{ $school->school_motto ?? 'KNOWLEDGE & INTEGRITY' }}</div>
                 </div>
 
                 {{-- LOGO + CONTACT + PHOTO --}}
@@ -455,7 +440,7 @@
                         <td width="20%" style="text-align:right">
                             <div class="photo-frame">
                                 @if(!empty($studentData['student_image_base64']))
-                                    <img src="{{ $studentData['student_image_base64'] }}" alt="photo">
+                                    <img src="{{ $studentData['student_image_base64'] }}" alt="student">
                                 @else
                                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='30' y='65' width='40' height='25' fill='%2394a3b8'/%3E%3C/svg%3E" alt="photo">
                                 @endif
@@ -464,23 +449,27 @@
                     </tr>
                 </table>
 
-                <div class="header-divider"></div>
-                <div class="header-divider2"></div>
+                <div class="divider-dark"></div>
+                <div class="divider-light"></div>
 
                 <div class="report-title">{{ strtoupper($term) }} {{ strtoupper($session) }} – TERMINAL PROGRESS REPORT</div>
 
-                {{-- STUDENT INFO --}}
+                {{-- STUDENT INFO BAR --}}
                 <div class="student-info-bar">
                     <table class="info-table">
-                        <tr><td><span class="info-bar-label">NAME</span> <span class="info-bar-value">{{ $fullName }}</span></td>
-                            <td><span class="info-bar-label">SESSION</span> <span class="info-bar-value">{{ $session }}</span></td>
-                            <td><span class="info-bar-label">TERM</span> <span class="info-bar-value">{{ $term }}</span></td>
-                            <td><span class="info-bar-label">CLASS</span> <span class="info-bar-value">{{ $classVal }}</span></td>
+                        <tr>
+                            <td><span class="info-badge">NAME</span> <span class="info-value">{{ $fullName }}</span></td>
+                            <td><span class="info-badge">SESSION</span> <span class="info-value">{{ $session }}</span></td>
+                            <td><span class="info-badge">TERM</span> <span class="info-value">{{ $term }}</span></td>
+                            <td><span class="info-badge">CLASS</span> <span class="info-value">{{ $className }}</span></td>
                         </tr>
-                        <tr><td><span class="info-bar-label">ADM NO</span> <span class="info-bar-value">{{ $adm }}</span></td>
-                            <td><span class="info-bar-label">OPENED</span> <span class="info-bar-value">{{ $school->date_school_opened ? \Carbon\Carbon::parse($school->date_school_opened)->format('jS M, Y') : '—' }}</span></td>
-                            <td><span class="info-bar-label">CLASS SIZE</span> <span class="info-bar-value">{{ $classSize }}</span></td>
-                            @if(in_array('gender', $showCols))<td><span class="info-bar-label">SEX</span> <span class="info-bar-value">{{ $student->gender ?? '—' }}</span></td>@endif
+                        <tr>
+                            <td><span class="info-badge">ADM NO</span> <span class="info-value">{{ $admNo }}</span></td>
+                            <td><span class="info-badge">SCHOOL OPENED</span> <span class="info-value">{{ $schoolOpened }}</span></td>
+                            <td><span class="info-badge">CLASS SIZE</span> <span class="info-value">{{ $classSize }}</span></td>
+                            @if(in_array('gender', $showCols))
+                            <td><span class="info-badge">SEX</span> <span class="info-value">{{ $student->gender ?? '—' }}</span></td>
+                            @endif
                         </tr>
                     </table>
                 </div>
@@ -495,15 +484,15 @@
                                 @if(in_array('name', $showCols)) <th class="col-subj">SUBJECT</th> @endif
                                 @foreach($assessments as $ass)
                                     @if(in_array($ass->id, $showCols) || in_array('all_assessments', $showCols))
-                                        <th class="col-assess">{{ $ass->name }}<br><span style="font-size:5.5px;">({{ $ass->max_score }})</span></th>
+                                        <th class="col-assess">{{ $ass->name }}<br><span style="font-size:6px;">({{ $ass->max_score }})</span></th>
                                     @endif
                                 @endforeach
                                 @if(in_array('total', $showCols)) <th class="col-num">Total</th> @endif
                                 @if(in_array('bf', $showCols)) <th class="col-num">BF</th> @endif
                                 @if(in_array('cum', $showCols)) <th class="col-num">Cum</th> @endif
                                 @if(in_array('grade', $showCols)) <th class="col-num">Grade</th> @endif
-                                @if(in_array('position', $showCols)) <th class="col-pos">Pos (Cum)</th> @endif
-                                @if(in_array('position_total', $showCols)) <th class="col-pos">Pos (Tot)</th> @endif
+                                @if(in_array('position', $showCols)) <th class="col-pos">Pos(Cum)</th> @endif
+                                @if(in_array('position_total', $showCols)) <th class="col-pos">Pos(Tot)</th> @endif
                                 @if(in_array('arm_position', $showCols)) <th class="col-pos">Arm Pos</th> @endif
                                 @if(in_array('arm_position_cum', $showCols)) <th class="col-pos">Arm Cum</th> @endif
                                 @if(in_array('class_average', $showCols)) <th class="col-num">Avg</th> @endif
@@ -516,19 +505,17 @@
                                 $posTot = $sc->position_total ?? $sc->subject_position_class_total ?? null;
                                 $armPos = $sc->arm_position ?? null;
                                 $armCum = $sc->arm_position_cum ?? null;
-
                                 $posCumClass = ($posCum == 1) ? 'pos-1' : (($posCum == 2) ? 'pos-2' : (($posCum == 3) ? 'pos-3' : ''));
                                 $posTotClass = ($posTot == 1) ? 'pos-1' : (($posTot == 2) ? 'pos-2' : (($posTot == 3) ? 'pos-3' : ''));
                                 $armPosClass = ($armPos == 1) ? 'pos-1' : (($armPos == 2) ? 'pos-2' : (($armPos == 3) ? 'pos-3' : ''));
                                 $armCumClass = ($armCum == 1) ? 'pos-1' : (($armCum == 2) ? 'pos-2' : (($armCum == 3) ? 'pos-3' : ''));
-
                                 $gRaw = $sc->grade ?? '-';
                                 $gLetter = ($gRaw !== '-') ? substr($gRaw,0,1) : 'F';
                                 $gradeStyle = match($gLetter) { 'A'=>'grade-A','B'=>'grade-B','C'=>'grade-C','D'=>'grade-D', default=>'grade-F' };
                             @endphp
                             <tr>
                                 @if(in_array('sn', $showCols)) <td>{{ $idx+1 }}</td> @endif
-                                @if(in_array('admission_no', $showCols)) <td>{{ $adm }}</td> @endif
+                                @if(in_array('admission_no', $showCols)) <td>{{ $admNo }}</td> @endif
                                 @if(in_array('name', $showCols)) <td class="subject-name-cell">{{ $sc->subject_name ?? '—' }}</td> @endif
 
                                 @foreach($assessments as $ass)
@@ -549,7 +536,7 @@
                                 @if(in_array('class_average', $showCols)) <td>{{ number_format($sc->class_average ?? 0,1) }}</td> @endif
                             </tr>
                             @empty
-                            <tr><td colspan="20" style="text-align:center; padding:12px;">No subject records</td></tr>
+                            <tr><td colspan="20" style="text-align:center; padding:16px;">📌 No subject scores recorded</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -557,30 +544,37 @@
 
                 {{-- TOTALS & PROMOTION --}}
                 <div class="totals-summary">
-                    🎯 TOTAL: {{ number_format($totals['obtained'] ?? 0,1) }} / {{ $totals['obtainable'] ?? 0 }} &nbsp;|&nbsp;
+                    🎯 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0,1) }} &nbsp;|&nbsp;
+                    TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;|&nbsp;
                     PERCENTAGE: {{ $totals['percentage'] ?? 0 }}%
                 </div>
 
-                @php $promoTerm = (stripos($term, 'third') !== false); $status = (($totals['percentage'] ?? 0) >= 50) ? 'pass' : 'fail'; @endphp
-                @if(!$promoTerm)
-                    <div class="promo-badge promo-wait"><strong>⏳ AWAITING FINAL TERM</strong> – Promotion decided end of year</div>
-                @elseif($status === 'pass')
-                    <div class="promo-badge promo-pass">🎓 PROMOTED TO NEXT CLASS</div>
+                @php $isPromoTerm = (stripos($term, 'third') !== false); $promoState = (($totals['percentage'] ?? 0) >= 50) ? 'pass' : 'fail'; @endphp
+                @if(!$isPromoTerm)
+                    <div class="promo-badge promo-wait"><strong>⏳ AWAITING FINAL TERM</strong> – Promotion will be assessed at year end</div>
+                @elseif($promoState === 'pass')
+                    <div class="promo-badge promo-pass"><strong>🎓 PROMOTED TO NEXT CLASS</strong> – Excellent performance</div>
                 @else
-                    <div class="promo-badge promo-fail">⚠️ NOT PROMOTED – REPEAT CLASS</div>
+                    <div class="promo-badge promo-fail"><strong>⚠️ NOT PROMOTED</strong> – Requires improvement, repeat class</div>
                 @endif
 
-                {{-- ATTENDANCE --}}
+                {{-- ATTENDANCE BLOCK --}}
                 @if($showAttendance && $attFound)
                 <div class="attendance-box">
-                    <div class="attendance-box-header">📅 ATTENDANCE RECORD – {{ $term }}</div>
-                    <div class="attendance-flex">
-                        @if(in_array('attendance_days_present', $showCols))<div class="att-cell"><span class="att-label">PRESENT</span><span class="att-value att-ok">{{ $att['days_present'] ?? 0 }}</span></div>@endif
-                        @if(in_array('attendance_days_absent', $showCols))<div class="att-cell"><span class="att-label">ABSENT</span><span class="att-value {{ ($att['days_absent'] ?? 0) > 0 ? 'att-warn' : 'att-ok' }}">{{ $att['days_absent'] ?? 0 }}</span></div>@endif
-                        @if(in_array('attendance_percentage', $showCols))<div class="att-cell"><span class="att-label">ATTENDANCE</span><span class="att-value {{ $attWarn ? 'att-warn' : 'att-ok' }}">{{ $attPct }}%</span></div>@endif
+                    <div class="attendance-header">📅 TERMINAL ATTENDANCE – {{ $term }}</div>
+                    <div class="att-flex">
+                        @if(in_array('attendance_days_present', $showCols))
+                        <div class="att-cell"><span class="att-label">PRESENT</span><span class="att-value att-ok">{{ $att['days_present'] ?? 0 }}</span></div>
+                        @endif
+                        @if(in_array('attendance_days_absent', $showCols))
+                        <div class="att-cell"><span class="att-label">ABSENT</span><span class="att-value {{ ($att['days_absent'] ?? 0) > 0 ? 'att-warn' : 'att-ok' }}">{{ $att['days_absent'] ?? 0 }}</span></div>
+                        @endif
+                        @if(in_array('attendance_percentage', $showCols))
+                        <div class="att-cell"><span class="att-label">ATTENDANCE %</span><span class="att-value {{ $attWarn ? 'att-warn' : 'att-ok' }}">{{ $attPct }}%</span></div>
+                        @endif
                     </div>
                     @if(in_array('attendance_percentage', $showCols))
-                    <div class="progress-bar-wrap"><div class="progress-fill {{ $attWarn ? 'warning' : '' }}" style="width:{{ min($attPct,100) }}%;"></div></div>
+                    <div class="progress-bar"><div class="progress-fill {{ $attWarn ? 'warning' : '' }}" style="width:{{ min($attPct,100) }}%;"></div></div>
                     @endif
                 </div>
                 @endif
@@ -588,19 +582,19 @@
                 {{-- REMARKS --}}
                 <table class="remarks-table">
                     <tr>
-                        <td width="50%"><span class="remark-title">📌 CLASS TEACHER'S REMARK</span><br>{{ $profile ? ($profile->classteachercomment ?? '—') : '—' }}</td>
+                        <td width="50%"><span class="remark-title">📖 CLASS TEACHER'S REMARK</span><br>{{ $profile ? ($profile->classteachercomment ?? '—') : '—' }}</td>
                         <td width="50%"><span class="remark-title">🏛️ PRINCIPAL'S REMARK</span><br>{{ $profile ? ($profile->principalscomment ?? '—') : '—' }}</td>
                     </tr>
                 </table>
 
-                {{-- FOOTER (QR, SIGN, STAMP) – COMPACT, fills last space --}}
+                {{-- FOOTER (QR, SIGNATURE, STAMP) --}}
                 <div class="bottom-strip">
                     <table class="strip-table">
                         <tr>
-                            <td width="22%"><img class="qr-img" src="data:image/png;base64,{{ $qrBase64 }}" alt="QR"><div class="qr-label">verify@portal</div></td>
+                            <td width="22%"><img class="qr-img" src="data:image/png;base64,{{ $qrBase64 }}" alt="QR"><div class="qr-label">verify with portal</div></td>
                             <td width="56%" style="text-align:center">
                                 <div><strong>Issued:</strong> <span class="sign-line">{{ now()->format('jS F, Y') }}</span></div>
-                                <div style="margin:3px 0"><strong>Parent/Guardian:</strong> <span class="sign-line"> _________________ </span></div>
+                                <div style="margin:6px 0"><strong>Parent/Guardian sign:</strong> <span class="sign-line"> _________________ </span></div>
                                 <div><strong>Next term begins:</strong> <span class="sign-line">{{ $school->date_next_term_begins ? \Carbon\Carbon::parse($school->date_next_term_begins)->format('jS F, Y') : 'to be announced' }}</span></div>
                                 <div class="powered">🔹 Powered by Qudroid Systems 🔹</div>
                             </td>
