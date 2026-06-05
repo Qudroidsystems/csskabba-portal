@@ -97,15 +97,25 @@ class CompulsorySubjectClassController extends Controller
             }
         }
 
-        // Query subjectclass for this class, filtered by term/session if provided
-        $query = Subjectclass::with(['subject', 'subjectTeacher.staff'])
-            ->where('schoolclassid', $classId);
+        // Query via subjectteacher (which has termid + sessionid) joined to subjectclass
+        $query = Subjectclass::with(['subject'])
+            ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+            ->join('users', 'users.id', '=', 'subjectteacher.staffid')
+            ->where('subjectclass.schoolclassid', $classId)
+            ->select([
+                'subjectclass.id as id',
+                'subjectclass.subjectid',
+                'subjectteacher.staffid',
+                'subjectteacher.termid',
+                'subjectteacher.sessionid',
+                'users.name as teacher_name',
+            ]);
 
         if ($termId) {
-            $query->where('termid', $termId);
+            $query->where('subjectteacher.termid', $termId);
         }
         if ($sessionId) {
-            $query->where('sessionid', $sessionId);
+            $query->where('subjectteacher.sessionid', $sessionId);
         }
 
         $subjectclasses = $query->get();
@@ -120,16 +130,15 @@ class CompulsorySubjectClassController extends Controller
         $assignedMap = $alreadyAssigned->keyBy('subjectid');
 
         $subjects = $subjectclasses->map(function ($sc) use ($assignedMap) {
-            $teacherName = $sc->subjectTeacher?->staff?->name ?? 'N/A';
-            $subjectId   = $sc->subject?->id;
-            $assigned    = $assignedMap->has($subjectId);
-            $minGrade    = $assigned ? ($assignedMap[$subjectId]->min_grade ?? null) : null;
+            $subjectId = $sc->subjectid;
+            $assigned  = $assignedMap->has($subjectId);
+            $minGrade  = $assigned ? ($assignedMap[$subjectId]->min_grade ?? null) : null;
 
             return [
                 'id'           => $subjectId,
                 'subject'      => $sc->subject?->subject,
                 'subject_code' => $sc->subject?->subject_code,
-                'teacher'      => $teacherName,
+                'teacher'      => $sc->teacher_name ?? 'N/A',
                 'assigned'     => $assigned,
                 'min_grade'    => $minGrade,
             ];
