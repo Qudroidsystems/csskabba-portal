@@ -23,9 +23,6 @@ class StudentAssessmentController extends Controller
         $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult']]);
     }
 
-    /**
-     * Format number with ordinal suffix (st, nd, rd, th)
-     */
     protected function formatOrdinal($number)
     {
         if (!is_numeric($number) || $number <= 0) {
@@ -270,7 +267,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // PRINT RESULT (PDF) - DISPLAY IN BROWSER (STREAM/INLINE)
+    // PRINT RESULT (PDF) - STREAM IN BROWSER
     // =========================================================================
     public function printResult(Request $request)
     {
@@ -332,6 +329,9 @@ class StudentAssessmentController extends Controller
         $termModel = Schoolterm::find($selectedTermId);
         $sessionModel = Schoolsession::find($sessionIdForQuery);
 
+        // Get previous term ID for BF (Bring Forward) calculation
+        $previousTermId = Schoolterm::where('id', '<', $selectedTermId)->orderBy('id', 'desc')->first()?->id;
+
         $registeredSubjects = DB::table('student_subject_register_record as ssrr')
             ->where('ssrr.studentId', $studentId)
             ->leftJoin('subjectclass', 'subjectclass.id', '=', 'ssrr.subjectclassid')
@@ -369,8 +369,19 @@ class StudentAssessmentController extends Controller
 
             $scoreData = new \stdClass();
             $scoreData->subject_name = $regSubject->subject_name;
+            $scoreData->subject_code = $regSubject->subject_code;
             $scoreData->total = $broadsheet->total ?? 0;
-            $scoreData->bf = $broadsheet->bf ?? 0;
+
+            // BF (Bring Forward) - get from previous term's cumulative score
+            $bfValue = 0;
+            if ($previousTermId) {
+                $previousBroadsheet = Broadsheets::where('broadSheet_record_id', $broadsheetRecord->id)
+                    ->where('term_id', $previousTermId)
+                    ->first();
+                $bfValue = $previousBroadsheet ? ($previousBroadsheet->cum ?? 0) : 0;
+            }
+            $scoreData->bf = $bfValue;
+
             $scoreData->cum = $broadsheet->cum ?? 0;
             $scoreData->grade = $broadsheet->grade ?? '-';
             $scoreData->class_average = $broadsheet->avg ?? 0;
@@ -379,6 +390,8 @@ class StudentAssessmentController extends Controller
             $scoreData->position_total = $broadsheet->subject_position_class_total ?? null;
             $scoreData->arm_position = $broadsheet->arm_position ?? null;
             $scoreData->arm_position_cum = $broadsheet->arm_position_cum ?? null;
+            $scoreData->subject_position_class = $broadsheet->subject_position_class ?? null;
+            $scoreData->subject_position_class_total = $broadsheet->subject_position_class_total ?? null;
 
             $scoreData->position_formatted = $broadsheet->subject_position_class ? $this->formatOrdinal($broadsheet->subject_position_class) : '-';
             $scoreData->position_total_formatted = $broadsheet->subject_position_class_total ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-';
@@ -422,10 +435,8 @@ class StudentAssessmentController extends Controller
             ->where('termid', $selectedTermId)
             ->count();
 
-        // Fetch student profile/remarks data
         $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery, $schoolclassId);
 
-        // Fetch attendance summary
         $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
             ->where('term_id', $selectedTermId)
             ->where('session_id', $sessionIdForQuery)
@@ -453,7 +464,6 @@ class StudentAssessmentController extends Controller
             'selected_columns' => $selectedColumns
         ];
 
-        // Build the school class object with arms relationship
         $schoolclassWithArms = new \stdClass();
         $schoolclassWithArms->schoolclass = $studentClassData->class_name ?? '';
         $schoolclassWithArms->arms = new \stdClass();
@@ -480,12 +490,10 @@ class StudentAssessmentController extends Controller
             'promotion_result' => [],
         ]];
 
-        // SAFE FILENAME
         $safeAdmissionNo = preg_replace('/[^A-Za-z0-9\-]/', '_', $student->admissionNo ?? 'student');
         $safeTerm = preg_replace('/[^A-Za-z0-9\-]/', '_', $termModel->term ?? 'Term');
         $filename = 'Terminal_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
 
-        // Generate PDF
         $pdf = Pdf::loadView('student.assessments.print-pdf', [
             'allStudentData' => $allStudentData,
             'metadata' => $metadata,
@@ -498,9 +506,6 @@ class StudentAssessmentController extends Controller
             'isHtml5ParserEnabled' => true,
         ]);
 
-        // =====================================================================
-        // DISPLAY PDF IN BROWSER (STREAM/INLINE) INSTEAD OF DOWNLOAD
-        // =====================================================================
         return $pdf->stream($filename);
     }
 
@@ -508,9 +513,6 @@ class StudentAssessmentController extends Controller
     // HELPER METHODS
     // =========================================================================
 
-    /**
-     * Get student profile/remarks data from Studentpersonalityprofile model
-     */
     private function getStudentProfileData($studentId, $termId, $sessionId, $schoolclassId)
     {
         try {
@@ -530,9 +532,6 @@ class StudentAssessmentController extends Controller
         }
     }
 
-    /**
-     * Get school stamp as base64 for PDF
-     */
     private function getSchoolStampBase64($schoolInfo)
     {
         $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
