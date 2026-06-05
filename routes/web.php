@@ -258,8 +258,11 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::resource('term', SchooltermController::class);
     Route::patch('term/{term}/status', [SchooltermController::class, 'updateStatus'])->name('term.status.update');
+    Route::patch('term/{term}/promotional', [SchooltermController::class, 'updatePromotional'])->name('term.promotional.update');
     Route::post('term/deleteterm', [SchooltermController::class, 'deleteterm'])->name('term.deleteterm');
     Route::post('term/updateterm', [SchooltermController::class, 'updateterm'])->name('term.updateterm');
+
+
 
     Route::resource('schoolarm', SchoolArmController::class);
     Route::post('schoolarm/deletearm', [SchoolArmController::class, 'deletearm'])->name('schoolarm.deletearm');
@@ -1013,7 +1016,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     Route::get('/classbroadsheet/past-comments/{studentId}', [ClassBroadsheetController::class, 'getPastComments']);
 
     // compulsory subject class
-  
+
     Route::get('compulsorysubjectclass/subjects-by-class', [CompulsorySubjectClassController::class, 'subjectsByClass'])->name('compulsorysubjectclass.subjectsByClass');
     Route::post('compulsorysubjectclass/bulk-destroy', [CompulsorySubjectClassController::class, 'bulkDestroy']) ->name('compulsorysubjectclass.bulkDestroy');
     Route::resource('compulsorysubjectclass', CompulsorySubjectClassController::class);
