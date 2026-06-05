@@ -125,6 +125,22 @@
 .empty-state { text-align: center; padding: 52px 24px; color: var(--term-muted); }
 .empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
 .empty-state p { margin: 0; font-size: 14px; }
+
+/* Alert animations */
+.alert {
+    border-radius: 10px;
+    animation: slideDown 0.3s ease-out;
+}
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 </style>
 
 <div class="main-content">
@@ -140,6 +156,9 @@
             <p>Processing…</p>
         </div>
     </div>
+
+    {{-- Alert messages container --}}
+    <div id="alertContainer"></div>
 
     <div class="term-hero">
         <h1><i class="ri-calendar-line me-2"></i>Term Management</h1>
@@ -394,7 +413,6 @@
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
@@ -405,16 +423,33 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('loadingOverlay').classList.toggle('active', show);
     }
 
-    // Helper to show SweetAlert
-    function showAlert(icon, title, message = '', timer = 2000) {
-        Swal.fire({
-            icon: icon,
-            title: title,
-            text: message,
-            timer: timer,
-            showConfirmButton: timer === 0,
-            confirmButtonColor: '#2563eb'
-        });
+    // Helper to show alert message (Bootstrap style)
+    function showAlert(type, title, message, autoClose = true) {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertId = 'alert_' + Date.now();
+
+        const alertHtml = `
+            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="${type === 'success' ? 'ri-checkbox-circle-line' : (type === 'danger' ? 'ri-error-warning-line' : 'ri-information-line')} me-2"></i>
+                <strong>${title}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+
+        if (autoClose) {
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.classList.remove('show');
+                    setTimeout(() => alertElement.remove(), 150);
+                }
+            }, 3000);
+        }
+
+        // Scroll to top to show alert
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // ── Search functionality ──
@@ -462,14 +497,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     $label.text('Inactive').removeClass('active').addClass('inactive');
                 }
-                showAlert('success', 'Updated!', data.message);
+                showAlert('success', 'Success!', data.message);
             } else {
                 $toggle.prop('checked', !isActive);
-                showAlert('error', 'Error', data.message || 'Failed to update status');
+                showAlert('danger', 'Error!', data.message || 'Failed to update status');
             }
         } catch (error) {
             $toggle.prop('checked', !isActive);
-            showAlert('error', 'Error', 'An error occurred while updating status');
+            showAlert('danger', 'Error!', 'An error occurred while updating status');
         } finally {
             $toggle.prop('disabled', false);
             showLoading(false);
@@ -510,12 +545,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             .addClass('promo-badge-inactive')
                             .html('<i class="ri-award-line me-1"></i>Not Promotional');
                     });
-
-                    // Update info banner
-                    const banner = $('.info-banner');
-                    if (banner.hasClass('warning')) {
-                        location.reload(); // Reload to update banner properly
-                    }
                 }
 
                 // Update current badge
@@ -531,14 +560,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         .html('<i class="ri-award-line me-1"></i>Not Promotional');
                 }
 
-                showAlert('success', 'Updated!', data.message);
+                showAlert('success', 'Success!', data.message);
+
+                // Reload to update banner after 1 second
+                if (isPromo) {
+                    setTimeout(() => location.reload(), 1500);
+                }
             } else {
                 $toggle.prop('checked', !isPromo);
-                showAlert('error', 'Error', data.message || 'Failed to update promotional status');
+                showAlert('danger', 'Error!', data.message || 'Failed to update promotional status');
             }
         } catch (error) {
             $toggle.prop('checked', !isPromo);
-            showAlert('error', 'Error', 'An error occurred while updating promotional status');
+            showAlert('danger', 'Error!', 'An error occurred while updating promotional status');
         } finally {
             $toggle.prop('disabled', false);
             showLoading(false);
@@ -592,17 +626,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                showAlert('success', 'Created!', data.message, 1500);
+                $('#addTermModal').modal('hide');
+                showAlert('success', 'Success!', data.message);
                 setTimeout(() => location.reload(), 1500);
             } else {
                 if (data.errors && data.errors.term) {
                     $('#termNameError').text(data.errors.term[0]).show();
                 } else {
-                    showAlert('error', 'Error', data.message || 'Failed to create term');
+                    showAlert('danger', 'Error!', data.message || 'Failed to create term');
                 }
             }
         } catch (error) {
-            showAlert('error', 'Error', 'An error occurred while creating the term');
+            showAlert('danger', 'Error!', 'An error occurred while creating the term');
         } finally {
             btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Create Term');
             showLoading(false);
@@ -644,17 +679,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                showAlert('success', 'Updated!', data.message, 1500);
+                $('#editModal').modal('hide');
+                showAlert('success', 'Success!', data.message);
                 setTimeout(() => location.reload(), 1500);
             } else {
                 if (data.errors && data.errors.term) {
                     $('#editTermNameError').text(data.errors.term[0]).show();
                 } else {
-                    showAlert('error', 'Error', data.message || 'Failed to update term');
+                    showAlert('danger', 'Error!', data.message || 'Failed to update term');
                 }
             }
         } catch (error) {
-            showAlert('error', 'Error', 'An error occurred while updating the term');
+            showAlert('danger', 'Error!', 'An error occurred while updating the term');
         } finally {
             btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Update Term');
             showLoading(false);
@@ -691,13 +727,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok && data.success) {
                 $('#confirmDeleteModal').modal('hide');
-                showAlert('success', 'Deleted!', data.message, 1500);
+                showAlert('success', 'Success!', data.message);
                 setTimeout(() => location.reload(), 1500);
             } else {
-                showAlert('error', 'Error', data.message || 'Failed to delete term');
+                showAlert('danger', 'Error!', data.message || 'Failed to delete term');
             }
         } catch (error) {
-            showAlert('error', 'Error', 'An error occurred while deleting the term');
+            showAlert('danger', 'Error!', 'An error occurred while deleting the term');
         } finally {
             btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete');
             showLoading(false);
