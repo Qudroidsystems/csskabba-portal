@@ -12,12 +12,11 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11px;
+            font-size: 11px;           /* ↑ was 9.5px */
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            margin: 0;
-            padding: 2mm 2mm 0 2mm; /* small margin so double border is visible */
+            padding: 2mm 0;
             text-align: center;
         }
 
@@ -43,10 +42,10 @@
             width: 100%;
             background: #111827;
             color: white;
-            padding: 7px 10px 5px 10px;
+            padding: 7px 10px 5px 10px;   /* tightened slightly */
+            border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
-            box-sizing: border-box;
         }
 
         .school-name-header .school-full-name {
@@ -67,24 +66,23 @@
         }
 
         /*
-         * Each student card = one printed page.
-         * width:100% fills the PDF page content area exactly — no overflow.
-         * The PDF renderer's own page margins control white space around the card.
+         * Each student card sits on exactly ONE printed page.
+         * No fixed height — content fills naturally; page-break-after pushes
+         * the next student onto a new page.  The PDF renderer (wkhtmltopdf /
+         * Puppeteer) honours page-break-after:always on block elements.
          */
         .student-section {
-            width: 100%;
+            width: 190mm;
             page-break-after: always;
             page-break-inside: avoid;
-            break-after: page;
+            break-after: page;           /* modern alias */
             break-inside: avoid;
             background: #ffffff;
             border: 3px double #000000;
-            margin: 0;
-            padding: 0;
+            margin: 0 auto;              /* no bottom margin — page break handles spacing */
             position: relative;
             text-align: left;
-            box-sizing: border-box;
-            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
         .student-section:last-child {
@@ -98,29 +96,21 @@
         }
 
         .school-logo, .photo-frame {
-            width: 75px;
-            height: 90px;
+            width: 60px;
+            height: 66px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
-            padding: 0;
+            padding: 3px;
             overflow: hidden;
             display: block;
+            text-align: center;
         }
 
-        .school-logo img {
-            width: 100%;
-            height: 100%;
+        .school-logo img, .photo-frame img {
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-            padding: 3px;
-            box-sizing: border-box;
-        }
-
-        .photo-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
         }
 
         .header-divider  { height: 2px; background: #1e40af; width: 100%; }
@@ -323,15 +313,15 @@
         }
 
         /* Bottom Strip */
-        .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 3px; }
+        .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 4px; }
         .bottom-strip table { width: 100%; border-collapse: collapse; }
-        .bottom-strip td { padding: 3px 8px; vertical-align: middle; }
+        .bottom-strip td { padding: 5px 8px; vertical-align: middle; }
         .bottom-strip .cell-qr    { width: 80px;  text-align: center; vertical-align: middle; }
         .bottom-strip .cell-footer{ text-align: center; font-size: 9.5px; vertical-align: middle; }  /* ↑ was 8.6px */
         .bottom-strip .cell-stamp { width: 110px; text-align: center; vertical-align: middle; }
         .bottom-strip .cell-qr img { width: 65px; height: 65px; display: block; margin: 0 auto 2px; }
         .qr-label { font-size: 7.5px; color: #333; font-weight: 600; text-align: center; }  /* ↑ was 6.5px */
-        .bottom-strip .cell-stamp img { width: 80px; height: 80px; transform: rotate(-8deg); display: block; margin: 0 auto; }
+        .bottom-strip .cell-stamp img { width: 95px; height: 95px; transform: rotate(-8deg); display: block; margin: 0 auto; }
 
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
@@ -377,14 +367,11 @@
         .promo-pdf-repeated { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
         .promo-pdf-awaiting { background: #f8fafc; border-color: #94a3b8; color: #475569; }
 
-        @page { margin: 4mm 4mm 3mm 4mm; } /* small uniform margin, tight at bottom */
         @media print {
-            body { background: white; padding: 0; margin: 0; }
+            body { background: white; padding: 0; }
             .student-section {
                 box-shadow: none;
-                width: 100%;
-                margin: 0;
-                border: 3px double #000000;
+                margin: 0 auto;
                 page-break-inside: avoid;
                 page-break-after: always;
                 break-after: page;
@@ -508,7 +495,7 @@
                         </table>
                     </td>
 
-                    <td width="20%" style="text-align:right; padding: 4px 8px 4px 0; vertical-align:middle;">
+                    <td width="29%" style="text-align:right; padding-right:7px; vertical-align:top; padding-top:5px;">
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame" style="margin-left:auto; margin-right:0;">
                             @if(!empty($studentData['student_image_base64']))
