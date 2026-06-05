@@ -15,9 +15,9 @@
             font-size: 11px;
             line-height: 1.3;
             color: #000;
-            background: #ffffff;
+            background: #f5f5f5;
             margin: 0;
-            padding: 0;
+            padding: 3mm 3mm 0 3mm; /* top/sides show border, bottom flush */
             text-align: center;
         }
 
@@ -377,7 +377,7 @@
         .promo-pdf-repeated { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
         .promo-pdf-awaiting { background: #f8fafc; border-color: #94a3b8; color: #475569; }
 
-        @page { margin: 4mm; }
+        @page { margin: 4mm 4mm 1mm 4mm; } /* top/sides visible, bottom near-flush */
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .student-section {
