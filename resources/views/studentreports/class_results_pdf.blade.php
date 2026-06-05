@@ -12,11 +12,11 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 9.5px;
-            line-height: 1.35;
+            font-size: 11px;           /* ↑ was 9.5px */
+            line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 4mm 0;
+            padding: 2mm 0;
             text-align: center;
         }
 
@@ -42,7 +42,7 @@
             width: 100%;
             background: #111827;
             color: white;
-            padding: 10px 10px 6px 10px;
+            padding: 7px 10px 5px 10px;   /* tightened slightly */
             border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
@@ -50,7 +50,7 @@
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 19.5px;
+            font-size: 20px;               /* unchanged – already prominent */
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -58,23 +58,30 @@
         }
 
         .school-name-header .motto {
-            font-size: 9.8px;
+            font-size: 10.5px;             /* ↑ was 9.8px */
             font-weight: 700;
             letter-spacing: 2px;
             opacity: 0.95;
-            margin-top: 3px;
+            margin-top: 2px;
         }
 
+        /*
+         * KEY CHANGE: each student card must sit on exactly ONE printed page.
+         * A4 is ~297 mm tall; with 2mm body padding top & bottom the card gets
+         * ~293 mm.  We set height + overflow hidden so nothing spills.
+         */
         .student-section {
             width: 190mm;
+            height: 277mm;               /* fits comfortably on A4 with margins */
+            overflow: hidden;            /* prevent content from bleeding to next page */
             page-break-after: always;
+            page-break-inside: avoid;
             background: #ffffff;
             border: 3px double #000000;
-            margin: 0 auto 15px auto;
+            margin: 0 auto 8px auto;
             position: relative;
             text-align: left;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
         }
 
         .student-section:last-child {
@@ -84,12 +91,12 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            padding: 4px 8px 4px 8px;
+            padding: 3px 7px 3px 7px;    /* slightly reduced */
         }
 
         .school-logo, .photo-frame {
-            width: 65px;
-            height: 72px;
+            width: 60px;
+            height: 66px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
@@ -106,13 +113,13 @@
         }
 
         .header-divider  { height: 2px; background: #1e40af; width: 100%; }
-        .header-divider2 { height: 1px; background: #64748b; width: 100%; margin: 2px 0; }
+        .header-divider2 { height: 1px; background: #64748b; width: 100%; margin: 1px 0; }
 
         .report-title {
             background: #111827;
             color: white;
-            padding: 6px 8px;
-            font-size: 11.5px;
+            padding: 5px 8px;
+            font-size: 12px;             /* ↑ was 11.5px */
             font-weight: 700;
             text-align: center;
         }
@@ -121,24 +128,24 @@
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
             border-radius: 6px;
-            padding: 7px 12px;
-            margin: 8px 10px;
-            font-size: 9.2px;
+            padding: 5px 10px;
+            margin: 5px 8px;
+            font-size: 10px;             /* ↑ was 9.2px */
             text-align: center;
         }
 
         .info-table { width: 100%; margin: 0 auto; }
-        .info-table td { padding: 3px 8px; text-align: center; }
-        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 8.6px; white-space: nowrap; }
-        .info-bar-value { font-weight: 900; font-size: 9.4px; padding-left: 3px; }
+        .info-table td { padding: 2px 6px; text-align: center; }
+        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 9.5px; white-space: nowrap; }  /* ↑ was 8.6px */
+        .info-bar-value { font-weight: 900; font-size: 10.5px; padding-left: 3px; }                   /* ↑ was 9.4px */
 
-        .result-table { padding: 0 10px; margin: 8px 0; }
+        .result-table { padding: 0 8px; margin: 5px 0; }
 
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 7.8px;
+            font-size: 9px;              /* ↑ was 7.8px */
             margin: 0;
         }
 
@@ -147,89 +154,68 @@
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
-            padding: 4px 2px;
-            font-size: 6.9px;
+            padding: 3px 2px;
+            font-size: 8.2px;            /* ↑ was 6.9px */
             text-align: center;
             line-height: 1.2;
         }
 
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 3px 3px;
+            padding: 2px 2px;
             text-align: center;
-            font-size: 8px;
+            font-size: 9px;              /* ↑ was 8px */
             background: white;
             font-weight: 800;
-            height: 17px;
-            line-height: 17px;
+            height: 15px;
+            line-height: 15px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 800;
-            font-size: 8px;
-            padding-left: 7px;
+            font-size: 9px;              /* ↑ was 8px */
+            padding-left: 6px;
         }
 
         .highlight-red { color: #dc2626; font-weight: 900; }
 
         /* Column widths */
-        .col-sn            { width: 22px; }
-        .col-admissionno   { width: 72px; }
-        .col-name          { width: 155px; }
-        .col-assessment    { width: 38px; }
-        .col-total         { width: 38px; }
-        .col-bf            { width: 32px; }
-        .col-cum           { width: 36px; }
-        .col-grade         { width: 34px; }
-        .col-position      { width: 34px; }
-        .col-class-average { width: 36px; }
+        .col-sn            { width: 20px; }
+        .col-admissionno   { width: 70px; }
+        .col-name          { width: 148px; }
+        .col-assessment    { width: 36px; }
+        .col-total         { width: 36px; }
+        .col-bf            { width: 30px; }
+        .col-cum           { width: 34px; }
+        .col-grade         { width: 32px; }
+        .col-position      { width: 32px; }
+        .col-class-average { width: 34px; }
 
         .totals-summary {
-            width: calc(100% - 20px);
+            width: calc(100% - 16px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 7.9px;
-            padding: 6px 10px;
+            font-size: 9px;              /* ↑ was 7.9px */
+            padding: 4px 8px;
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 0 10px 8px 10px;
+            margin: 0 8px 5px 8px;
         }
 
-        /* FIXED: Position styling - guaranteed to be visible in PDF */
-        .position-cell {
-            font-weight: 900;
-            text-align: center;
-            padding: 2px 4px;
-        }
-
-        .position-1 {
-            background-color: #FFD700;
-            color: #000000;
-            font-weight: 900;
-        }
-        .position-2 {
-            background-color: #C0C0C0;
-            color: #000000;
-            font-weight: 900;
-        }
-        .position-3 {
-            background-color: #CD7F32;
-            color: #000000;  /* BLACK text for visibility on bronze background */
-            font-weight: 900;
-        }
-
-        /* Ensure text is always visible */
-        td.position-1, td.position-2, td.position-3 {
-            color: #000000 !important;
-        }
+        /* Position styling */
+        .position-cell { font-weight: 900; text-align: center; padding: 2px 4px; }
+        .position-1 { background-color: #FFD700; color: #000000; font-weight: 900; }
+        .position-2 { background-color: #C0C0C0; color: #000000; font-weight: 900; }
+        .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
+        td.position-1, td.position-2, td.position-3 { color: #000000 !important; }
 
         /* Attendance Box */
         .attendance-box {
-            width: calc(100% - 20px);
-            margin: 0 10px 8px 10px;
+            width: calc(100% - 16px);
+            margin: 0 8px 5px 8px;
             border: 2px solid #0d9488;
             border-radius: 5px;
             overflow: hidden;
@@ -238,9 +224,9 @@
         .attendance-box-header {
             background: #0d9488;
             color: #ffffff;
-            font-size: 8.5px;
+            font-size: 9px;              /* ↑ was 8.5px */
             font-weight: 900;
-            padding: 5px 10px;
+            padding: 4px 10px;
             letter-spacing: 0.8px;
             text-transform: uppercase;
         }
@@ -253,7 +239,7 @@
 
         .att-cell {
             display: table-cell;
-            padding: 5px 8px;
+            padding: 4px 6px;
             text-align: center;
             border-right: 1px solid #d1fae5;
             vertical-align: middle;
@@ -263,17 +249,17 @@
         .att-cell:last-child { border-right: none; }
 
         .att-label {
-            font-size: 7px;
+            font-size: 8px;              /* ↑ was 7px */
             font-weight: 700;
             color: #0f766e;
             text-transform: uppercase;
             letter-spacing: 0.3px;
             display: block;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .att-value {
-            font-size: 10px;
+            font-size: 11px;             /* ↑ was 10px */
             font-weight: 900;
             color: #111827;
             display: block;
@@ -283,11 +269,11 @@
         .att-value.att-ok   { color: #16a34a; }
 
         .att-pct-bar-wrap {
-            width: calc(100% - 20px);
-            margin: 0 10px 2px 10px;
+            width: calc(100% - 16px);
+            margin: 0 8px 2px 8px;
             background: #e2e8f0;
             border-radius: 20px;
-            height: 6px;
+            height: 5px;
             overflow: hidden;
         }
 
@@ -303,38 +289,38 @@
 
         /* Remarks Table */
         .remarks-table {
-            width: calc(100% - 20px);
+            width: calc(100% - 16px);
             border: 2px solid #000000;
             border-collapse: collapse;
-            margin: 8px 10px 4px;
+            margin: 5px 8px 3px;
         }
 
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 6px 8px;
+            padding: 4px 6px;
             background: white;
             vertical-align: top;
-            font-size: 8.5px;
+            font-size: 9.5px;            /* ↑ was 8.5px */
         }
 
         .remarks-table .h6 {
             font-weight: 700;
-            margin-bottom: 4px;
-            font-size: 9px;
+            margin-bottom: 3px;
+            font-size: 10px;             /* ↑ was 9px */
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
 
         /* Bottom Strip */
-        .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 6px; }
+        .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 4px; }
         .bottom-strip table { width: 100%; border-collapse: collapse; }
-        .bottom-strip td { padding: 8px 10px; vertical-align: middle; }
-        .bottom-strip .cell-qr    { width: 90px;  text-align: center; vertical-align: middle; }
-        .bottom-strip .cell-footer{ text-align: center; font-size: 8.6px; vertical-align: middle; }
-        .bottom-strip .cell-stamp { width: 120px; text-align: center; vertical-align: middle; }
-        .bottom-strip .cell-qr img { width: 72px; height: 72px; display: block; margin: 0 auto 2px; }
-        .qr-label { font-size: 6.5px; color: #333; font-weight: 600; text-align: center; }
-        .bottom-strip .cell-stamp img { width: 105px; height: 105px; transform: rotate(-8deg); display: block; margin: 0 auto; }
+        .bottom-strip td { padding: 5px 8px; vertical-align: middle; }
+        .bottom-strip .cell-qr    { width: 80px;  text-align: center; vertical-align: middle; }
+        .bottom-strip .cell-footer{ text-align: center; font-size: 9.5px; vertical-align: middle; }  /* ↑ was 8.6px */
+        .bottom-strip .cell-stamp { width: 110px; text-align: center; vertical-align: middle; }
+        .bottom-strip .cell-qr img { width: 65px; height: 65px; display: block; margin: 0 auto 2px; }
+        .qr-label { font-size: 7.5px; color: #333; font-weight: 600; text-align: center; }  /* ↑ was 6.5px */
+        .bottom-strip .cell-stamp img { width: 95px; height: 95px; transform: rotate(-8deg); display: block; margin: 0 auto; }
 
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
@@ -344,7 +330,7 @@
             margin: 0 4px;
         }
 
-        .powered-by { font-size: 8px; margin-top: 4px; color: #64748b; }
+        .powered-by { font-size: 9px; margin-top: 3px; color: #64748b; }  /* ↑ was 8px */
 
         /* Grade colours */
         .grade-A { color: #16a34a; font-weight: 900; }
@@ -353,69 +339,54 @@
         .grade-D { color: #ea580c; font-weight: 900; }
         .grade-F { color: #dc2626; font-weight: 900; }
 
+        /* Promotion badge */
+        .promo-badge-pdf {
+            width: calc(100% - 16px);
+            margin: 3px 8px 5px 8px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 2px solid #000;
+            font-size: 10px;             /* ↑ was 9px */
+            font-weight: 700;
+        }
+        .promo-badge-pdf .promo-pdf-label {
+            font-size: 12px;             /* ↑ was 11px */
+            font-weight: 900;
+            letter-spacing: .4px;
+            display: block;
+        }
+        .promo-badge-pdf .promo-pdf-sub {
+            font-size: 9px;              /* ↑ was 8px */
+            display: block;
+            margin-top: 2px;
+            font-weight: 600;
+            opacity: .9;
+        }
+        .promo-pdf-promoted { background: #f0fdf4; border-color: #16a34a; color: #14532d; }
+        .promo-pdf-repeated { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
+        .promo-pdf-awaiting { background: #f8fafc; border-color: #94a3b8; color: #475569; }
+
         @media print {
             body { background: white; padding: 0; }
-            .student-section { box-shadow: none; }
+            .student-section {
+                box-shadow: none;
+                height: 277mm;
+                overflow: hidden;
+                page-break-inside: avoid;
+                page-break-after: always;
+            }
         }
-
-
-/* ── PROMOTION BADGE (PDF) ── */
-.promo-badge-pdf {
-    width: calc(100% - 20px);
-    margin: 4px 10px 8px 10px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 2px solid #000;
-    font-size: 9px;
-    font-weight: 700;
-}
-.promo-badge-pdf .promo-pdf-label {
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: .4px;
-    display: block;
-}
-.promo-badge-pdf .promo-pdf-sub {
-    font-size: 8px;
-    display: block;
-    margin-top: 2px;
-    font-weight: 600;
-    opacity: .9;
-}
-.promo-pdf-promoted {
-    background: #f0fdf4;
-    border-color: #16a34a;
-    color: #14532d;
-}
-.promo-pdf-repeated {
-    background: #fef2f2;
-    border-color: #dc2626;
-    color: #7f1d1d;
-}
-.promo-pdf-awaiting {
-    background: #f8fafc;
-    border-color: #94a3b8;
-    color: #475569;
-}
-
     </style>
 </head>
 <body>
     <div class="watermark-text">ORIGINAL COPY</div>
 
     @php
-        /**
-         * Format number with ordinal suffix (st, nd, rd, th)
-         */
         function formatOrdinal($number) {
-            if (!is_numeric($number) || $number <= 0) {
-                return '-';
-            }
+            if (!is_numeric($number) || $number <= 0) { return '-'; }
             $lastDigit     = $number % 10;
             $lastTwoDigits = $number % 100;
-            if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) {
-                return $number . 'th';
-            }
+            if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) { return $number . 'th'; }
             switch ($lastDigit) {
                 case 1: return $number . 'st';
                 case 2: return $number . 'nd';
@@ -446,8 +417,7 @@
         @php
             $schoolInfo  = $studentData['schoolInfo'] ?? null;
             $student     = $studentData['students'] && $studentData['students']->isNotEmpty()
-                ? $studentData['students']->first()
-                : null;
+                ? $studentData['students']->first() : null;
             $assessments = $studentData['assessments'] ?? collect();
             $totals      = $studentData['totals_summary'] ?? [];
             $attendance  = $studentData['attendance_summary'] ?? [];
@@ -471,9 +441,9 @@
                 ? $studentData['school_stamp_base64']
                 : asset('stamp.jpeg');
 
-            $attPct    = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
-            $attWarn   = $attPct < 75;
-            $attFound  = $attendance['found'] ?? false;
+            $attPct   = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
+            $attWarn  = $attPct < 75;
+            $attFound = $attendance['found'] ?? false;
         @endphp
 
         <div class="student-section">
@@ -503,8 +473,8 @@
                         </div>
                     </td>
 
-                    <td style="vertical-align:top; padding: 4px 8px;">
-                        <table style="border:none; border-collapse:collapse; width:100%; font-size:9px;">
+                    <td style="vertical-align:top; padding: 3px 7px;">
+                        <table style="border:none; border-collapse:collapse; width:100%; font-size:10px;">
                             <tr>
                                 <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
@@ -524,7 +494,7 @@
                         </table>
                     </td>
 
-                    <td width="29%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
+                    <td width="29%" style="text-align:right; padding-right:7px; vertical-align:top; padding-top:5px;">
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame" style="margin-left:auto; margin-right:0;">
                             @if(!empty($studentData['student_image_base64']))
@@ -584,7 +554,6 @@
                 <table>
                     <thead>
                         <tr>
-                            {{-- Student info columns --}}
                             @if(in_array('sn', $columnsToShow))
                                 <th class="col-sn">S/N</th>
                             @endif
@@ -595,17 +564,15 @@
                                 <th class="col-name">Subject</th>
                             @endif
 
-                            {{-- Dynamic assessment columns --}}
                             @foreach ($assessments as $assessment)
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     <th class="col-assessment">
                                         {{ $assessment->name }}<br>
-                                        <span style="font-size:5.5px;">({{ $assessment->max_score }})</span>
+                                        <span style="font-size:6.5px;">({{ $assessment->max_score }})</span>
                                     </th>
                                 @endif
                             @endforeach
 
-                            {{-- Score columns --}}
                             @if(in_array('total', $columnsToShow))
                                 <th class="col-total">Total</th>
                             @endif
@@ -618,8 +585,6 @@
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
                             @endif
-
-                            {{-- Position columns --}}
                             @if(in_array('position', $columnsToShow))
                                 <th class="col-position">Class Pos<br>(Cum)</th>
                             @endif
@@ -632,7 +597,6 @@
                             @if(in_array('arm_position_cum', $columnsToShow))
                                 <th class="col-position">Arm Pos<br>(Cum)</th>
                             @endif
-
                             @if(in_array('class_average', $columnsToShow))
                                 <th class="col-class-average">Avg</th>
                             @endif
@@ -642,13 +606,11 @@
                     <tbody>
                         @forelse ($studentData['scores'] as $scoreIndex => $score)
                         @php
-                            // Extract position values directly from the score object
-                            $posCum = isset($score->position) && $score->position > 0 ? $score->position : null;
+                            $posCum   = isset($score->position) && $score->position > 0 ? $score->position : null;
                             $posTotal = isset($score->position_total) && $score->position_total > 0 ? $score->position_total : null;
-                            $armPos = isset($score->arm_position) && $score->arm_position > 0 ? $score->arm_position : null;
-                            $armPosCum = isset($score->arm_position_cum) && $score->arm_position_cum > 0 ? $score->arm_position_cum : null;
+                            $armPos   = isset($score->arm_position) && $score->arm_position > 0 ? $score->arm_position : null;
+                            $armPosCum= isset($score->arm_position_cum) && $score->arm_position_cum > 0 ? $score->arm_position_cum : null;
 
-                            // Fallback to raw properties if needed
                             if (!$posCum && property_exists($score, 'subject_position_class')) {
                                 $posCum = $score->subject_position_class > 0 ? $score->subject_position_class : null;
                             }
@@ -656,20 +618,17 @@
                                 $posTotal = $score->subject_position_class_total > 0 ? $score->subject_position_class_total : null;
                             }
 
-                            // Position classes for styling
-                            $posCumClass = ($posCum == 1) ? 'position-1' : (($posCum == 2) ? 'position-2' : (($posCum == 3) ? 'position-3' : ''));
+                            $posCumClass   = ($posCum == 1) ? 'position-1' : (($posCum == 2) ? 'position-2' : (($posCum == 3) ? 'position-3' : ''));
                             $posTotalClass = ($posTotal == 1) ? 'position-1' : (($posTotal == 2) ? 'position-2' : (($posTotal == 3) ? 'position-3' : ''));
-                            $armPosClass = ($armPos == 1) ? 'position-1' : (($armPos == 2) ? 'position-2' : (($armPos == 3) ? 'position-3' : ''));
-                            $armPosCumClass = ($armPosCum == 1) ? 'position-1' : (($armPosCum == 2) ? 'position-2' : (($armPosCum == 3) ? 'position-3' : ''));
+                            $armPosClass   = ($armPos == 1) ? 'position-1' : (($armPos == 2) ? 'position-2' : (($armPos == 3) ? 'position-3' : ''));
+                            $armPosCumClass= ($armPosCum == 1) ? 'position-1' : (($armPosCum == 2) ? 'position-2' : (($armPosCum == 3) ? 'position-3' : ''));
 
-                            // Formatted values
-                            $posCumFormatted = formatOrdinal($posCum);
+                            $posCumFormatted   = formatOrdinal($posCum);
                             $posTotalFormatted = formatOrdinal($posTotal);
-                            $armPosFormatted = formatOrdinal($armPos);
-                            $armPosCumFormatted = formatOrdinal($armPosCum);
+                            $armPosFormatted   = formatOrdinal($armPos);
+                            $armPosCumFormatted= formatOrdinal($armPosCum);
                         @endphp
                         <tr>
-                            {{-- Student info cells --}}
                             @if(in_array('sn', $columnsToShow))
                                 <td>{{ $scoreIndex + 1 }}</td>
                             @endif
@@ -680,7 +639,6 @@
                                 <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
                             @endif
 
-                            {{-- Assessment score cells --}}
                             @foreach ($assessments as $assessment)
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     @php
@@ -697,7 +655,6 @@
                                 @endif
                             @endforeach
 
-                            {{-- Score cells --}}
                             @if(in_array('total', $columnsToShow))
                                 <td @if(($score->total ?? 0) < 50) class="highlight-red" @endif>
                                     {{ $score->total ? number_format($score->total, 1) : '-' }}
@@ -725,33 +682,25 @@
                                 <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
                             @endif
 
-                            {{-- Class Position (Cumulative) --}}
                             @if(in_array('position', $columnsToShow))
                                 <td class="{{ $posCumClass }}">{{ $posCumFormatted }}</td>
                             @endif
-
-                            {{-- Class Position (Total) --}}
                             @if(in_array('position_total', $columnsToShow))
                                 <td class="{{ $posTotalClass }}">{{ $posTotalFormatted }}</td>
                             @endif
-
-                            {{-- Arm Position (Total) --}}
                             @if(in_array('arm_position', $columnsToShow))
                                 <td class="{{ $armPosClass }}">{{ $armPosFormatted }}</td>
                             @endif
-
-                            {{-- Arm Position (Cumulative) --}}
                             @if(in_array('arm_position_cum', $columnsToShow))
                                 <td class="{{ $armPosCumClass }}">{{ $armPosCumFormatted }}</td>
                             @endif
-
                             @if(in_array('class_average', $columnsToShow))
                                 <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td>
                             @endif
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="30" style="text-align:center; padding:10px;">No scores available.</td>
+                            <td colspan="30" style="text-align:center; padding:8px;">No scores available.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -767,71 +716,62 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
+            {{-- PROMOTION BADGE --}}
+            @php
+                $pr           = $studentData['promotion_result'] ?? [];
+                $promoStatus  = $pr['status']              ?? 'awaiting';
+                $isPromoTerm  = $pr['is_promotional_term'] ?? false;
+                $promoFailed  = $pr['failed_compulsory']   ?? [];
+                $promoAvgFail = $pr['average_failed']      ?? false;
+                $reqAvg       = $pr['required_average']    ?? null;
+                $actAvg       = $pr['actual_average']      ?? null;
+                $promoTotal   = $pr['compulsory_count']    ?? 0;
+                $promoPassed  = $pr['passed_compulsory']   ?? 0;
+            @endphp
 
-            {{--
-                ═══════════════════════════════════════════════════════════════════════
-                STEP 2 — Paste this HTML block INSIDE the per-student loop in class_results_pdf.blade.php
-                        Place it AFTER the totals-summary div and BEFORE the attendance-box div.
+            @if (!$isPromoTerm)
+                <div class="promo-badge-pdf promo-pdf-awaiting">
+                    <span class="promo-pdf-label">⏳ Awaiting Final Term</span>
+                    <span class="promo-pdf-sub">Promotion will be assessed at the end of the academic year.</span>
+                </div>
+            @elseif ($promoStatus === 'promoted')
+                <div class="promo-badge-pdf promo-pdf-promoted">
+                    <span class="promo-pdf-label">🎓 PROMOTED</span>
+                    @if ($promoTotal > 0)
+                        <span class="promo-pdf-sub">Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s).</span>
+                    @endif
+                    @if ($reqAvg !== null && $actAvg !== null)
+                        <span class="promo-pdf-sub">Overall average: {{ number_format($actAvg, 1) }}% (minimum required: {{ number_format($reqAvg, 1) }}%).</span>
+                    @endif
+                </div>
+            @else
+                <div class="promo-badge-pdf promo-pdf-repeated">
+                    <span class="promo-pdf-label">⚠️ NOT PROMOTED</span>
+                    @if (!empty($promoFailed))
+                        <span class="promo-pdf-sub">
+                            Failed compulsory subject(s):
+                            {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') ?: count($promoFailed) . ' subject(s)' }}
+                            @foreach($promoFailed as $pf)
+                                ({{ $pf['subject'] ?? 'Subject' }}: got {{ $pf['grade'] ?? '-' }}
+                                @if($pf['min_grade']) , required {{ $pf['min_grade'] }} @endif)
+                            @endforeach
+                        </span>
+                    @endif
+                    @if ($promoAvgFail && $reqAvg !== null && $actAvg !== null)
+                        <span class="promo-pdf-sub">
+                            Overall average {{ number_format($actAvg, 1) }}% is below the required {{ number_format($reqAvg, 1) }}%.
+                        </span>
+                    @endif
+                </div>
+            @endif
 
-                        
-                        Paste the block ABOVE it.
-                ═══════════════════════════════════════════════════════════════════════
-                --}}
-
-                @php
-                    $pr           = $studentData['promotion_result'] ?? [];
-                    $promoStatus  = $pr['status']              ?? 'awaiting';
-                    $isPromoTerm  = $pr['is_promotional_term'] ?? false;
-                    $promoFailed  = $pr['failed_compulsory']   ?? [];
-                    $promoAvgFail = $pr['average_failed']      ?? false;
-                    $reqAvg       = $pr['required_average']    ?? null;
-                    $actAvg       = $pr['actual_average']      ?? null;
-                    $promoTotal   = $pr['compulsory_count']    ?? 0;
-                    $promoPassed  = $pr['passed_compulsory']   ?? 0;
-                @endphp
-
-                @if (!$isPromoTerm)
-                    <div class="promo-badge-pdf promo-pdf-awaiting">
-                        <span class="promo-pdf-label">⏳ Awaiting Final Term</span>
-                        <span class="promo-pdf-sub">Promotion will be assessed at the end of the academic year.</span>
-                    </div>
-                @elseif ($promoStatus === 'promoted')
-                    <div class="promo-badge-pdf promo-pdf-promoted">
-                        <span class="promo-pdf-label">🎓 PROMOTED</span>
-                        @if ($promoTotal > 0)
-                            <span class="promo-pdf-sub">Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s).</span>
-                        @endif
-                        @if ($reqAvg !== null && $actAvg !== null)
-                            <span class="promo-pdf-sub">Overall average: {{ number_format($actAvg, 1) }}% (minimum required: {{ number_format($reqAvg, 1) }}%).</span>
-                        @endif
-                    </div>
-                @else
-                    <div class="promo-badge-pdf promo-pdf-repeated">
-                        <span class="promo-pdf-label">⚠️ NOT PROMOTED</span>
-                        @if (!empty($promoFailed))
-                            <span class="promo-pdf-sub">
-                                Failed compulsory subject(s):
-                                {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') ?: count($promoFailed) . ' subject(s)' }}
-                                @foreach($promoFailed as $pf)
-                                    ({{ $pf['subject'] ?? 'Subject' }}: got {{ $pf['grade'] ?? '-' }}
-                                    @if($pf['min_grade']) , required {{ $pf['min_grade'] }} @endif)
-                                @endforeach
-                            </span>
-                        @endif
-                        @if ($promoAvgFail && $reqAvg !== null && $actAvg !== null)
-                            <span class="promo-pdf-sub">
-                                Overall average {{ number_format($actAvg, 1) }}% is below the required {{ number_format($reqAvg, 1) }}%.
-                            </span>
-                        @endif
-                    </div>
-                @endif
             {{-- ATTENDANCE BOX --}}
             @if($showAnyAttendance)
             <div class="attendance-box">
                 <div class="attendance-box-header">📅 Attendance Record — {{ $term }}</div>
 
                 @if(!$attFound)
-                    <div style="padding:8px 12px;font-size:8px;color:#6b7280;text-align:center;background:#f9fafb;">
+                    <div style="padding:6px 10px;font-size:9px;color:#6b7280;text-align:center;background:#f9fafb;">
                         No attendance record available for this term.
                     </div>
                 @else
@@ -842,14 +782,12 @@
                             <span class="att-value">{{ $attendance['total_school_days'] ?? 0 }}</span>
                         </div>
                         @endif
-
                         @if(in_array('attendance_days_present', $columnsToShow))
                         <div class="att-cell">
                             <span class="att-label">Present</span>
                             <span class="att-value att-ok">{{ $attendance['days_present'] ?? 0 }}</span>
                         </div>
                         @endif
-
                         @if(in_array('attendance_days_absent', $columnsToShow))
                         <div class="att-cell">
                             <span class="att-label">Absent</span>
@@ -858,7 +796,6 @@
                             </span>
                         </div>
                         @endif
-
                         @if(in_array('attendance_days_late', $columnsToShow))
                         <div class="att-cell">
                             <span class="att-label">Late</span>
@@ -867,21 +804,18 @@
                             </span>
                         </div>
                         @endif
-
                         @if(in_array('attendance_sick_leave', $columnsToShow))
                         <div class="att-cell">
                             <span class="att-label">Sick</span>
                             <span class="att-value">{{ $attendance['days_sick_leave'] ?? 0 }}</span>
                         </div>
                         @endif
-
                         @if(in_array('attendance_excused', $columnsToShow))
                         <div class="att-cell">
                             <span class="att-label">Excused</span>
                             <span class="att-value">{{ $attendance['days_excused'] ?? 0 }}</span>
                         </div>
                         @endif
-
                         @if(in_array('attendance_percentage', $columnsToShow))
                         <div class="att-cell" style="min-width:70px;">
                             <span class="att-label">Attendance %</span>
@@ -891,12 +825,12 @@
                     </div>
 
                     @if(in_array('attendance_percentage', $columnsToShow))
-                    <div style="padding:4px 10px 6px;">
+                    <div style="padding:3px 8px 5px;">
                         <div class="att-pct-bar-wrap">
                             <div class="att-pct-bar {{ $attWarn ? 'att-pct-warn' : '' }}"
                                  style="width:{{ min($attPct, 100) }}%;"></div>
                         </div>
-                        <div style="font-size:7px;color:#6b7280;margin-top:2px;text-align:right;">
+                        <div style="font-size:8px;color:#6b7280;margin-top:2px;text-align:right;">
                             {{ $attWarn ? 'Below 75% — requires attention' : 'Satisfactory attendance' }}
                         </div>
                     </div>
@@ -934,11 +868,11 @@
                                 <strong>Issued:</strong>
                                 <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span>
                             </div>
-                            <div style="margin-top:4px;">
+                            <div style="margin-top:3px;">
                                 <strong>Collected by:</strong>
                                 <span class="text-dot-space2">.......................................</span>
                             </div>
-                            <div style="margin-top:4px;">
+                            <div style="margin-top:3px;">
                                 <strong>Next Term Begins:</strong>
                                 <span class="text-dot-space2">
                                     @php
@@ -953,7 +887,7 @@
                         </td>
                         <td class="cell-stamp">
                             <img src="{{ $stampSrc }}" alt="School Stamp">
-                        </tr>
+                        </td>
                     </tr>
                 </table>
             </div>
