@@ -20,7 +20,7 @@
             text-align: center;
         }
 
-        /* WATERMARK */
+        /* WATERMARK - "NOT FOR OFFICIAL USE" as requested */
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -28,19 +28,19 @@
             transform: translate(-50%, -50%) rotate(-25deg);
             font-size: 65px;
             font-weight: 900;
-            color: rgba(220, 38, 38, 0.12);
+            color: rgba(220, 38, 38, 0.08);
             font-family: 'Arial Black', sans-serif;
             letter-spacing: 5px;
             white-space: nowrap;
             pointer-events: none;
             z-index: 1000;
             text-transform: uppercase;
-            border: 2px double rgba(220, 38, 38, 0.3);
-            padding: 15px 40px;
-            border-radius: 15px;
+            border: 2px double rgba(220, 38, 38, 0.2);
+            padding: 12px 32px;
+            border-radius: 16px;
         }
 
-        /* SCHOOL NAME HEADER */
+        /* SCHOOL NAME HEADER (exact terminal style) */
         .school-name-header {
             width: 96.5%;
             background: #111827;
@@ -69,6 +69,7 @@
             margin-top: 2px;
         }
 
+        /* main card container — exact dimensions as terminal */
         .student-section {
             width: 190mm;
             page-break-after: always;
@@ -104,7 +105,6 @@
             display: block;
             text-align: center;
         }
-
         .school-logo img {
             max-width: 100%;
             max-height: 100%;
@@ -123,7 +123,6 @@
             margin-left: auto;
             margin-right: 4px;
         }
-
         .photo-frame img {
             width: 100%;
             height: 100%;
@@ -158,6 +157,7 @@
         .info-bar-label { color: #1e40af; font-weight: 900; font-size: 9.5px; white-space: nowrap; }
         .info-bar-value { font-weight: 900; font-size: 10.5px; padding-left: 3px; }
 
+        /* RESULT TABLE — strong borders, terminal style */
         .result-table { padding: 0 8px; margin: 5px 0; }
         .result-table table {
             width: 100%;
@@ -166,7 +166,6 @@
             font-size: 8.5px;
             margin: 0;
         }
-
         .result-table thead th {
             background: #0d1a3d;
             color: white;
@@ -175,37 +174,47 @@
             padding: 3px 2px;
             font-size: 7.5px;
             text-align: center;
-            line-height: 1.2;
         }
-
         .result-table tbody td {
             border: 1px solid #000000;
             padding: 2px 2px;
             text-align: center;
             font-size: 8px;
             background: white;
-            font-weight: 800;
+            font-weight: 600;
         }
-
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 800;
             font-size: 8px;
             padding-left: 6px;
         }
-
         .highlight-red { color: #dc2626; font-weight: 900; }
 
+        /* fixed widths to avoid overflow */
         .col-sn { width: 25px; }
         .col-admissionno { width: 65px; }
         .col-name { width: 130px; }
         .col-assessment { width: 35px; }
         .col-total { width: 38px; }
-        .col-bf { width: 30px; }
+        .col-bf { width: 32px; }
         .col-cum { width: 38px; }
         .col-grade { width: 35px; }
-        .col-position { width: 42px; }
+        .col-position { width: 44px; }
         .col-class-average { width: 35px; }
+
+        /* GRADE COLOURS — exact terminal style */
+        .grade-A { color: #16a34a; font-weight: 900; }
+        .grade-B { color: #2563eb; font-weight: 900; }
+        .grade-C { color: #ca8a04; font-weight: 900; }
+        .grade-D { color: #ea580c; font-weight: 900; }
+        .grade-F { color: #dc2626; font-weight: 900; }
+
+        /* POSITION BADGES (Gold/Silver/Bronze) as in terminal */
+        .position-1 { background-color: #FFD700; color: #000000; font-weight: 900; }
+        .position-2 { background-color: #C0C0C0; color: #000000; font-weight: 900; }
+        .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
+        td.position-1, td.position-2, td.position-3 { color: #000000 !important; }
 
         .totals-summary {
             width: calc(97.5% - 16px);
@@ -220,11 +229,7 @@
             margin: 0 8px 5px 8px;
         }
 
-        .position-1 { background-color: #FFD700; color: #000000; font-weight: 900; }
-        .position-2 { background-color: #C0C0C0; color: #000000; font-weight: 900; }
-        .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
-        td.position-1, td.position-2, td.position-3 { color: #000000 !important; }
-
+        /* attendance box terminal style */
         .attendance-box {
             width: calc(100% - 16px);
             margin: 0 8px 5px 8px;
@@ -232,7 +237,6 @@
             border-radius: 5px;
             overflow: hidden;
         }
-
         .attendance-box-header {
             background: #0d9488;
             color: #ffffff;
@@ -242,13 +246,11 @@
             letter-spacing: 0.8px;
             text-transform: uppercase;
         }
-
         .attendance-grid {
             display: flex;
             flex-wrap: wrap;
             width: 100%;
         }
-
         .att-cell {
             flex: 1;
             padding: 4px 6px;
@@ -256,9 +258,7 @@
             border-right: 1px solid #d1fae5;
             background: #f0fdf9;
         }
-
         .att-cell:last-child { border-right: none; }
-
         .att-label {
             font-size: 8px;
             font-weight: 700;
@@ -266,17 +266,13 @@
             text-transform: uppercase;
             display: block;
         }
-
         .att-value {
             font-size: 11px;
             font-weight: 900;
-            color: #111827;
             display: block;
         }
-
-        .att-value.att-warn { color: #dc2626; }
-        .att-value.att-ok { color: #16a34a; }
-
+        .att-warn { color: #dc2626; }
+        .att-ok { color: #16a34a; }
         .att-pct-bar-wrap {
             width: calc(100% - 16px);
             margin: 0 8px 2px 8px;
@@ -285,24 +281,22 @@
             height: 5px;
             overflow: hidden;
         }
-
         .att-pct-bar {
             height: 100%;
             border-radius: 20px;
             background: linear-gradient(90deg, #0d9488, #22c55e);
         }
-
         .att-pct-bar.att-pct-warn {
             background: linear-gradient(90deg, #f59e0b, #dc2626);
         }
 
+        /* remarks table */
         .remarks-table {
             width: calc(100% - 16px);
             border: 2px solid #000000;
             border-collapse: collapse;
             margin: 5px 8px 3px;
         }
-
         .remarks-table td {
             border: 1px solid #000000;
             padding: 4px 6px;
@@ -310,7 +304,6 @@
             vertical-align: top;
             font-size: 9.5px;
         }
-
         .remarks-table .h6 {
             font-weight: 700;
             margin-bottom: 3px;
@@ -319,6 +312,7 @@
             display: inline-block;
         }
 
+        /* bottom strip same as terminal */
         .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 4px; }
         .bottom-strip table { width: 100%; border-collapse: collapse; }
         .bottom-strip td { padding: 5px 8px; vertical-align: middle; }
@@ -328,7 +322,6 @@
         .bottom-strip .cell-qr img { width: 65px; height: 65px; display: block; margin: 0 auto 2px; }
         .qr-label { font-size: 7.5px; color: #333; font-weight: 600; }
         .bottom-strip .cell-stamp img { width: 95px; height: 95px; transform: rotate(-8deg); display: block; margin: 0 auto; }
-
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
@@ -336,15 +329,9 @@
             font-weight: bold;
             margin: 0 4px;
         }
-
         .powered-by { font-size: 9px; margin-top: 3px; color: #64748b; }
 
-        .grade-A { color: #16a34a; font-weight: 900; }
-        .grade-B { color: #2563eb; font-weight: 900; }
-        .grade-C { color: #ca8a04; font-weight: 900; }
-        .grade-D { color: #ea580c; font-weight: 900; }
-        .grade-F { color: #dc2626; font-weight: 900; }
-
+        /* promotion badge */
         .promo-badge-pdf {
             width: calc(97% - 16px);
             margin: 3px 8px 5px 8px;
@@ -364,6 +351,9 @@
                 box-shadow: none;
                 page-break-inside: avoid;
                 page-break-after: always;
+            }
+            .watermark-text {
+                color: rgba(220, 38, 38, 0.1);
             }
         }
     </style>
@@ -418,6 +408,7 @@
             $classVal = trim(($studentData['schoolclass']->schoolclass ?? '') . ' ' . $armName);
             $session = $metadata['session'] ?? '2025/2026';
             $term = $metadata['term'] ?? 'SECOND TERM';
+            $numInClass = $studentData['numberOfStudents'] ?? '—';
 
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$classVal}\nTerm: {$term}\nSession: {$session}\nSchool: " . ($schoolInfo->school_name ?? 'School');
             $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(280)->errorCorrection('H')->generate($qrData));
@@ -432,17 +423,17 @@
 
         <div class="student-section">
             <div class="school-name-header">
-                <div class="school-full-name">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</div>
+                <div class="school-full-name">{{ $schoolInfo->school_name ?? 'PREMIER ACADEMY' }}</div>
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
             <table class="header-table">
                 <tr>
-                    <td width="18%" style="text-align:center; padding: 4px 6px; vertical-align:middle;">
-                        <div class="school-logo"><img src="{{ $logoSrc }}" alt="School Logo"></div>
+                    <td width="18%" style="text-align:center; padding: 4px 6px;">
+                        <div class="school-logo"><img src="{{ $logoSrc }}" alt="Logo"></div>
                     </td>
                     <td style="vertical-align:top; padding: 4px 7px;">
-                        <table style="width:100%; font-size:10px;">
+                        <table style="width:100%; font-size:9px;">
                             <tr><td style="font-weight:900; color:#1e40af;">Address:</td><td>{{ $schoolInfo->school_address ?? '—' }}</td></tr>
                             <tr><td style="font-weight:900; color:#1e40af;">Phone:</td><td>{{ $schoolInfo->formatted_phones ?? '—' }}</td></tr>
                             <tr><td style="font-weight:900; color:#1e40af;">Email:</td><td>{{ $schoolInfo->school_email ?? '—' }}</td></tr>
@@ -453,9 +444,9 @@
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame">
                             @if(!empty($studentData['student_image_base64']))
-                                <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
+                                <img src="{{ $studentData['student_image_base64'] }}" alt="Student">
                             @else
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default Photo">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Photo">
                             @endif
                         </div>
                         @endif
@@ -473,19 +464,16 @@
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
                     $fullNameDisplay = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
-                    $admNoDisplay = $student->admissionNo ?? '—';
-                    $classValDisplay = $classVal;
                     $schoolOpened = $schoolInfo->date_school_opened ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—';
-                    $numInClass = $studentData['numberOfStudents'] ?? '—';
                 @endphp
                 <div class="student-info-bar">
                     <table class="info-table">
                         <tr><td><span class="info-bar-label">NAME:</span> <span class="info-bar-value">{{ $fullNameDisplay }}</span></td>
                             <td><span class="info-bar-label">SESSION:</span> <span class="info-bar-value">{{ $session }}</span></td>
                             <td><span class="info-bar-label">TERM:</span> <span class="info-bar-value">{{ $term }}</span></td>
-                            <td><span class="info-bar-label">CLASS:</span> <span class="info-bar-value">{{ $classValDisplay }}</span></td>
+                            <td><span class="info-bar-label">CLASS:</span> <span class="info-bar-value">{{ $classVal }}</span></td>
                         </tr>
-                        <tr><td><span class="info-bar-label">ADM NO:</span> <span class="info-bar-value">{{ $admNoDisplay }}</span></td>
+                        <tr><td><span class="info-bar-label">ADM NO:</span> <span class="info-bar-value">{{ $admNo }}</span></td>
                             <td><span class="info-bar-label">SCHOOL OPENED:</span> <span class="info-bar-value">{{ $schoolOpened }}</span></td>
                             <td><span class="info-bar-label">NO. IN CLASS:</span> <span class="info-bar-value">{{ $numInClass }}</span></td>
                             @if(in_array('gender', $columnsToShow))<td><span class="info-bar-label">SEX:</span> <span class="info-bar-value">{{ $student->gender ?? '—' }}</span></td>@endif
@@ -520,50 +508,44 @@
                     <tbody>
                         @forelse ($studentData['scores'] as $scoreIndex => $score)
                         @php
-                            $posCum = isset($score->position) && $score->position > 0 ? $score->position : (isset($score->subject_position_class) && $score->subject_position_class > 0 ? $score->subject_position_class : null);
-                            $posTotal = isset($score->position_total) && $score->position_total > 0 ? $score->position_total : (isset($score->subject_position_class_total) && $score->subject_position_class_total > 0 ? $score->subject_position_class_total : null);
-                            $armPos = isset($score->arm_position) && $score->arm_position > 0 ? $score->arm_position : null;
-                            $armPosCum = isset($score->arm_position_cum) && $score->arm_position_cum > 0 ? $score->arm_position_cum : null;
+                            $posCum = $score->position ?? $score->subject_position_class ?? null;
+                            $posTotal = $score->position_total ?? $score->subject_position_class_total ?? null;
+                            $armPos = $score->arm_position ?? null;
+                            $armPosCum = $score->arm_position_cum ?? null;
 
                             $posCumClass = ($posCum == 1) ? 'position-1' : (($posCum == 2) ? 'position-2' : (($posCum == 3) ? 'position-3' : ''));
                             $posTotalClass = ($posTotal == 1) ? 'position-1' : (($posTotal == 2) ? 'position-2' : (($posTotal == 3) ? 'position-3' : ''));
                             $armPosClass = ($armPos == 1) ? 'position-1' : (($armPos == 2) ? 'position-2' : (($armPos == 3) ? 'position-3' : ''));
                             $armPosCumClass = ($armPosCum == 1) ? 'position-1' : (($armPosCum == 2) ? 'position-2' : (($armPosCum == 3) ? 'position-3' : ''));
 
-                            $posCumFormatted = formatOrdinal($posCum);
-                            $posTotalFormatted = formatOrdinal($posTotal);
-                            $armPosFormatted = formatOrdinal($armPos);
-                            $armPosCumFormatted = formatOrdinal($armPosCum);
+                            $gradeRaw = $score->grade ?? '-';
+                            $gradeLetter = $gradeRaw !== '-' ? substr($gradeRaw, 0, 1) : 'F';
+                            $gradeClass = match($gradeLetter) { 'A' => 'grade-A', 'B' => 'grade-B', 'C' => 'grade-C', 'D' => 'grade-D', default => 'grade-F' };
                         @endphp
                         <tr>
                             @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
                             @if(in_array('admission_no', $columnsToShow)) <td>{{ $student->admissionNo ?? '-' }}</td> @endif
-                            @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
+                            @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? '—' }}</td> @endif
+
                             @foreach ($assessments as $assessment)
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
-                                    @php
-                                        $assessmentScore = 0;
-                                        if (isset($score->assessment_scores)) {
-                                            $found = $score->assessment_scores->firstWhere('assessment_id', $assessment->id);
-                                            $assessmentScore = $found ? $found->score : 0;
-                                        }
-                                        $isLow = $assessmentScore < ($assessment->max_score * 0.5);
-                                    @endphp
-                                    <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>{{ $assessmentScore ? number_format($assessmentScore, 0) : '-' }}</td>
+                                    @php $assScore = $score->assessment_scores->firstWhere('assessment_id', $assessment->id)->score ?? 0; $isLow = $assScore < ($assessment->max_score * 0.5); @endphp
+                                    <td @if($isLow && is_numeric($assScore)) class="highlight-red" @endif>{{ $assScore ? number_format($assScore, 0) : '-' }}</td>
                                 @endif
                             @endforeach
-                            @if(in_array('total', $columnsToShow)) <td @if(($score->total ?? 0) < 50) class="highlight-red" @endif>{{ $score->total ? number_format($score->total, 1) : '-' }}</td> @endif
-                            @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
-                            @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
-                            @if(in_array('grade', $columnsToShow)) <td class="grade-{{ substr($score->grade ?? 'F', 0, 1) }}">{{ $score->grade ?? '-' }}</td> @endif
-                            @if(in_array('position', $columnsToShow)) <td class="{{ $posCumClass }}">{{ $posCumFormatted }}</td> @endif
-                            @if(in_array('position_total', $columnsToShow)) <td class="{{ $posTotalClass }}">{{ $posTotalFormatted }}</td> @endif
-                            @if(in_array('arm_position', $columnsToShow)) <td class="{{ $armPosClass }}">{{ $armPosFormatted }}</td> @endif
-                            @if(in_array('arm_position_cum', $columnsToShow)) <td class="{{ $armPosCumClass }}">{{ $armPosCumFormatted }}</td> @endif
-                            @if(in_array('class_average', $columnsToShow)) <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td> @endif
+
+                            @if(in_array('total', $columnsToShow)) <td @if(($score->total ?? 0) < 50) class="highlight-red" @endif>{{ number_format($score->total ?? 0, 1) }}</td> @endif
+                            @if(in_array('bf', $columnsToShow)) <td>{{ number_format($score->bf ?? 0, 1) }}</td> @endif
+                            @if(in_array('cum', $columnsToShow)) <td>{{ number_format($score->cum ?? 0, 1) }}</td> @endif
+                            @if(in_array('grade', $columnsToShow)) <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td> @endif
+                            @if(in_array('position', $columnsToShow)) <td class="{{ $posCumClass }}">{{ formatOrdinal($posCum) }}</td> @endif
+                            @if(in_array('position_total', $columnsToShow)) <td class="{{ $posTotalClass }}">{{ formatOrdinal($posTotal) }}</td> @endif
+                            @if(in_array('arm_position', $columnsToShow)) <td class="{{ $armPosClass }}">{{ formatOrdinal($armPos) }}</td> @endif
+                            @if(in_array('arm_position_cum', $columnsToShow)) <td class="{{ $armPosCumClass }}">{{ formatOrdinal($armPosCum) }}</td> @endif
+                            @if(in_array('class_average', $columnsToShow)) <td>{{ number_format($score->class_average ?? 0, 1) }}</td> @endif
                         </tr>
                         @empty
-                        <tr><td colspan="30" style="text-align:center; padding:8px;">No scores available.</td></tr>
+                        <tr><td colspan="20" style="text-align:center; padding:8px;">No scores recorded</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -571,13 +553,11 @@
 
             <div class="totals-summary">
                 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }}
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }}
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
+                &nbsp;&nbsp;|&nbsp;&nbsp; TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }}
+                &nbsp;&nbsp;|&nbsp;&nbsp; % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            @php $isPromoTerm = ($term == 'THIRD TERM'); $promoStatus = ($totals['percentage'] ?? 0) >= 50 ? 'promoted' : 'repeated'; @endphp
+            @php $isPromoTerm = (stripos($term, 'third') !== false); $promoStatus = ($totals['percentage'] ?? 0) >= 50 ? 'promoted' : 'repeated'; @endphp
             @if (!$isPromoTerm)
                 <div class="promo-badge-pdf promo-pdf-awaiting"><span class="promo-pdf-label">⏳ Awaiting Final Term</span><span class="promo-pdf-sub">Promotion will be assessed at the end of the academic year.</span></div>
             @elseif ($promoStatus === 'promoted')
@@ -593,9 +573,6 @@
                     @if(in_array('attendance_total_days', $columnsToShow))<div class="att-cell"><span class="att-label">School Days</span><span class="att-value">{{ $attendance['total_school_days'] ?? 0 }}</span></div>@endif
                     @if(in_array('attendance_days_present', $columnsToShow))<div class="att-cell"><span class="att-label">Present</span><span class="att-value att-ok">{{ $attendance['days_present'] ?? 0 }}</span></div>@endif
                     @if(in_array('attendance_days_absent', $columnsToShow))<div class="att-cell"><span class="att-label">Absent</span><span class="att-value {{ ($attendance['days_absent'] ?? 0) > 0 ? 'att-warn' : 'att-ok' }}">{{ $attendance['days_absent'] ?? 0 }}</span></div>@endif
-                    @if(in_array('attendance_days_late', $columnsToShow))<div class="att-cell"><span class="att-label">Late</span><span class="att-value">{{ $attendance['days_late'] ?? 0 }}</span></div>@endif
-                    @if(in_array('attendance_sick_leave', $columnsToShow))<div class="att-cell"><span class="att-label">Sick</span><span class="att-value">{{ $attendance['days_sick_leave'] ?? 0 }}</span></div>@endif
-                    @if(in_array('attendance_excused', $columnsToShow))<div class="att-cell"><span class="att-label">Excused</span><span class="att-value">{{ $attendance['days_excused'] ?? 0 }}</span></div>@endif
                     @if(in_array('attendance_percentage', $columnsToShow))<div class="att-cell"><span class="att-label">Attendance %</span><span class="att-value {{ $attWarn ? 'att-warn' : 'att-ok' }}">{{ $attPct }}%</span></div>@endif
                 </div>
                 @if(in_array('attendance_percentage', $columnsToShow))
@@ -621,7 +598,7 @@
                             <div style="margin-top:3px;"><strong>Next Term Begins:</strong> <span class="text-dot-space2">{{ $schoolInfo->date_next_term_begins ? \Carbon\Carbon::parse($schoolInfo->date_next_term_begins)->format('jS F, Y') : '........................' }}</span></div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
-                        <td class="cell-stamp"><img src="{{ $stampSrc }}" alt="School Stamp"></td>
+                        <td class="cell-stamp"><img src="{{ $stampSrc }}" alt="Stamp"></td>
                     </tr>
                 </table>
             </div>
