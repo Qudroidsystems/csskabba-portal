@@ -211,7 +211,7 @@
         .col-class-average { width: 34px; }
 
         .totals-summary {
-            width: calc(100% - 16px);
+            width: calc(96.5% - 16px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
