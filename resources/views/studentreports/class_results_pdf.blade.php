@@ -16,7 +16,7 @@
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 2mm 0;
+            padding: 0;
             text-align: center;
         }
 
@@ -503,7 +503,7 @@
                         </table>
                     </td>
 
-                    <td width="20%" style="text-align:right; padding-right:6px; vertical-align:top; padding-top:3px;">
+                    <td width="22%" style="text-align:right; padding-right:8px; padding-top:3px; padding-bottom:3px; vertical-align:top;">
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame" style="margin-left:auto; margin-right:0;">
                             @if(!empty($studentData['student_image_base64']))
