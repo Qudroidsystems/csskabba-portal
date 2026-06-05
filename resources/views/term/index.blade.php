@@ -45,40 +45,6 @@
 .term-hero h1 { font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px; position: relative; }
 .term-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
-/* Term cards */
-.term-card {
-    background: #fff; border: 1px solid var(--term-border);
-    border-radius: var(--term-radius); padding: 18px 20px;
-    transition: transform .15s, box-shadow .15s; cursor: pointer;
-}
-.term-card:hover {
-    transform: translateY(-2px); box-shadow: var(--term-shadow);
-}
-.term-card.promotional {
-    border-left: 4px solid var(--term-success);
-    background: linear-gradient(135deg, #f0fdf4, #ffffff);
-}
-.term-card.inactive {
-    opacity: 0.7;
-    background: #f9fafb;
-}
-.term-name {
-    font-size: 16px; font-weight: 700; color: var(--term-primary);
-    margin-bottom: 8px;
-}
-.badge-promotional {
-    background: #16a34a; color: white;
-    font-size: 10px; padding: 4px 8px; border-radius: 20px;
-}
-.badge-inactive {
-    background: #6b7280; color: white;
-    font-size: 10px; padding: 4px 8px; border-radius: 20px;
-}
-.badge-active {
-    background: #2563eb; color: white;
-    font-size: 10px; padding: 4px 8px; border-radius: 20px;
-}
-
 /* Info banner */
 .promo-banner {
     background: linear-gradient(135deg, #f0fdf4, #dcfce7);
@@ -122,17 +88,51 @@
 .modal-hero-bar h5 { color: #fff; font-weight: 700; margin: 0; font-size: 15px; position: relative; }
 .modal-hero-bar .btn-close { position: absolute; top: 16px; right: 20px; filter: invert(1); }
 
-/* Table styling */
+/* Table styling - EVEN COLUMN WIDTHS */
+.term-table {
+    width: 100%;
+    table-layout: fixed; /* This ensures even distribution */
+}
+.term-table th,
+.term-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    font-size: 13px;
+    border-bottom: 1px solid var(--term-border);
+}
 .term-table th {
-    background: var(--term-bg); color: var(--term-primary);
-    padding: 12px 16px; font-size: 12px; font-weight: 700;
+    background: var(--term-bg);
+    color: var(--term-primary);
+    font-size: 12px;
+    font-weight: 700;
     border-bottom: 2px solid var(--term-border);
 }
-.term-table td {
-    padding: 12px 16px; vertical-align: middle;
-    font-size: 13px; border-bottom: 1px solid var(--term-border);
+.term-table tr:hover td {
+    background: #f0f9ff;
 }
-.term-table tr:hover td { background: #f0f9ff; }
+
+/* Specific column widths - evenly distributed */
+.term-table th:nth-child(1) { width: 5%; }   /* # */
+.term-table th:nth-child(2) { width: 25%; }  /* Term Name */
+.term-table th:nth-child(3) { width: 15%; }  /* Status */
+.term-table th:nth-child(4) { width: 25%; }  /* Promotional Term */
+.term-table th:nth-child(5) { width: 15%; }  /* Date Updated */
+.term-table th:nth-child(6) { width: 15%; }  /* Actions */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .term-table {
+        table-layout: auto;
+    }
+    .term-table th:nth-child(1),
+    .term-table th:nth-child(5) {
+        display: none;
+    }
+    .term-table td:nth-child(1),
+    .term-table td:nth-child(5) {
+        display: none;
+    }
+}
 
 /* Search box */
 .search-box {
@@ -150,6 +150,20 @@
     transform: translateY(-50%);
     color: var(--term-muted);
     font-size: 16px;
+}
+
+/* Button styles */
+.btn-outline-primary {
+    border: 1px solid var(--term-border);
+    transition: all 0.2s;
+}
+.btn-outline-primary:hover {
+    background: var(--term-accent);
+    border-color: var(--term-accent);
+}
+.btn-outline-danger:hover {
+    background: var(--term-danger);
+    border-color: var(--term-danger);
 }
 </style>
 
@@ -205,15 +219,15 @@
     <div class="row">
         <div class="col-lg-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom d-flex align-items-center">
+                <div class="card-header bg-white border-bottom d-flex align-items-center flex-wrap gap-2">
                     <div class="flex-grow-1">
                         <h5 class="card-title mb-0">
                             <i class="ri-list-check-2 me-2"></i>Academic Terms
                             <span class="badge bg-primary-subtle text-primary ms-2">{{ count($terms) }}</span>
                         </h5>
                     </div>
-                    <div class="flex-shrink-0">
-                        <div class="search-box me-2" style="display: inline-block;">
+                    <div class="flex-shrink-0 d-flex gap-2">
+                        <div class="search-box">
                             <input type="text" id="searchInput" class="form-control" placeholder="Search terms..." style="width: 250px;">
                             <i class="ri-search-line search-icon"></i>
                         </div>
@@ -229,18 +243,18 @@
                         <table class="table term-table mb-0" id="termTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 50px">#</th>
+                                    <th>#</th>
                                     <th>Term Name</th>
-                                    <th style="width: 120px">Status</th>
-                                    <th style="width: 180px">Promotional Term</th>
-                                    <th style="width: 120px">Date Updated</th>
-                                    <th style="width: 100px">Actions</th>
+                                    <th>Status</th>
+                                    <th>Promotional Term</th>
+                                    <th>Date Updated</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($terms as $index => $term)
                                     <tr data-term-id="{{ $term->id }}" data-term-name="{{ strtolower($term->term) }}">
-                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $index + $terms->firstItem() ?? $index + 1 }}</td>
                                         <td>
                                             <div class="fw-semibold" style="color: var(--term-primary);">
                                                 {{ $term->term }}
@@ -323,7 +337,9 @@
                 </div>
                 @if(method_exists($terms, 'links'))
                     <div class="card-footer bg-white border-top">
-                        {{ $terms->links() }}
+                        <div class="d-flex justify-content-end">
+                            {{ $terms->links() }}
+                        </div>
                     </div>
                 @endif
             </div>
@@ -551,7 +567,6 @@ $(function() {
     $(document).on('change', '.status-toggle', function() {
         const id = $(this).data('id');
         const isActive = $(this).is(':checked');
-        const $label = $(`label[data-id="${id}"]`);
 
         showLoading(true);
 
