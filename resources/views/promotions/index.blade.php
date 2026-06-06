@@ -109,11 +109,71 @@
     margin-bottom: 4px;
 }
 
-.promotion-badge-promoted { background: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
-.promotion-badge-trial { background: #f59e0b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
-.promotion-badge-see_principal { background: #3b82f6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
-.promotion-badge-repeated { background: #ef4444; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
-.promotion-badge-pending { background: #6b7280; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+.info-banner .text a {
+    color: #1e40af;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.promotion-badge-promoted {
+    background: #10b981;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.promotion-badge-trial {
+    background: #f59e0b;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.promotion-badge-see_principal {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.promotion-badge-repeated {
+    background: #ef4444;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.promotion-badge-pending {
+    background: #6b7280;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
 
 .bulk-action-bar {
     display: none;
@@ -314,6 +374,19 @@
 .compulsory-table tr:hover td {
     background: #f0f9ff;
 }
+
+.empty-state {
+    text-align: center;
+    padding: 52px 24px;
+    color: var(--pay-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    opacity: .25;
+    display: block;
+    margin-bottom: 14px;
+}
 </style>
 
 <div class="main-content">
@@ -352,7 +425,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
-                        <div class="stat-icon"><i class="ri-repeat-line"></i></div>
+                        <div class="stat-icon"><i class="ri-time-line"></i></div>
                         <div class="stat-value text-warning" id="trialCount">0</div>
                         <div class="stat-label">On Trial</div>
                     </div>
@@ -457,7 +530,7 @@
                                     <th>Session</th>
                                     <th>Overall Avg</th>
                                     <th>Recommendation</th>
-                                    <th width="100">Actions</th>
+                                    <th width="90">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="studentTableBody">
@@ -817,9 +890,9 @@
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 if (cells.length >= 8) {
-                    students.push({
-                        recommendation: cells[7]?.innerText?.trim() || 'pending'
-                    });
+                    const recommendationCell = cells[7];
+                    const recommendationText = recommendationCell?.innerText?.trim() || 'pending';
+                    students.push({ recommendation: recommendationText });
                 }
             });
             updateStats(students);
@@ -829,14 +902,20 @@
         }).catch(function (error) {
             console.error('AJAX Error:', error);
             tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+            Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch student data." });
         });
     }
 
     function updateStats(students) {
         const total = students.length;
-        const promoted = students.filter(s => s.recommendation?.toLowerCase().includes('promoted') && !s.recommendation?.toLowerCase().includes('trial')).length;
-        const trial = students.filter(s => s.recommendation?.toLowerCase().includes('trial')).length;
-        const repeat = students.filter(s => s.recommendation?.toLowerCase().includes('repeat')).length;
+        let promoted = 0, trial = 0, repeat = 0;
+
+        students.forEach(s => {
+            const text = s.recommendation.toLowerCase();
+            if (text.includes('promoted') && !text.includes('trial')) promoted++;
+            else if (text.includes('trial')) trial++;
+            else if (text.includes('repeat')) repeat++;
+        });
 
         document.getElementById('totalStudents').innerText = total;
         document.getElementById('promotedCount').innerText = promoted;
@@ -860,7 +939,7 @@
 
     function loadPage(url) {
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</tr></tr>';
 
         axios.get(url, {
             headers: {
@@ -880,9 +959,7 @@
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
                 if (cells.length >= 8) {
-                    students.push({
-                        recommendation: cells[7]?.innerText?.trim() || 'pending'
-                    });
+                    students.push({ recommendation: cells[7]?.innerText?.trim() || 'pending' });
                 }
             });
             updateStats(students);
@@ -1042,6 +1119,10 @@
                         html += `<div class="mt-2"><small>Compulsory Subjects: ${result.passed_compulsory}/${result.compulsory_count} passed</small></div>`;
                     }
 
+                    if (result.failed_compulsory && result.failed_compulsory.length > 0) {
+                        html += `<div class="mt-2 text-danger"><small>Failed Subjects: ${result.failed_compulsory.map(f => f.subject || f.subject_id).join(', ')}</small></div>`;
+                    }
+
                     html += `</div>`;
                     recContent.innerHTML = html;
                 } else {
@@ -1054,7 +1135,7 @@
                     let html = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Subject</th><th>Min Grade</th><th>Status</th></tr></thead><tbody>';
 
                     response.data.compulsory_subjects.forEach(cs => {
-                        html += `<tr><td>${cs.subject?.subject || 'N/A'}</td><td>${cs.min_grade || 'Pass'}</td><td><span class="badge bg-warning">Pending Evaluation</span></td></tr>`;
+                        html += `<tr><td>${cs.subject?.subject || 'N/A'}</td><td>${cs.min_grade || 'Pass'}</td><td><span class="badge bg-warning">Pending</span></td></tr>`;
                     });
 
                     html += '</tbody></table></div>';
@@ -1196,9 +1277,7 @@
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
             if (cells.length >= 8) {
-                students.push({
-                    recommendation: cells[7]?.innerText?.trim() || 'pending'
-                });
+                students.push({ recommendation: cells[7]?.innerText?.trim() || 'pending' });
             }
         });
         updateStats(students);
