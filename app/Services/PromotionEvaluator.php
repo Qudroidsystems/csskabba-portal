@@ -6,6 +6,7 @@ namespace App\Services;
 use App\Models\CompulsorySubjectClass;
 use App\Models\Schoolclass;
 use App\Models\Schoolterm;
+use Illuminate\Support\Facades\DB;
 
 class PromotionEvaluator
 {
@@ -31,23 +32,6 @@ class PromotionEvaluator
 
     /**
      * Evaluate whether a student should be promoted.
-     *
-     * @param  int         $studentId
-     * @param  int         $schoolclassid
-     * @param  int         $termid
-     * @param  int         $sessionid
-     * @param  \Illuminate\Support\Collection  $scores   — the student's broadsheet scores for this term
-     * @param  float|null  $overallAverage              — pre-computed overall percentage
-     * @return array {
-     *   status: 'promoted'|'repeated'|'awaiting',
-     *   is_promotional_term: bool,
-     *   failed_compulsory: array,   // subjects that caused failure
-     *   average_failed: bool,
-     *   required_average: float|null,
-     *   actual_average: float|null,
-     *   compulsory_count: int,
-     *   passed_compulsory: int,
-     * }
      */
     public function evaluate(
         int    $studentId,
@@ -65,46 +49,41 @@ class PromotionEvaluator
         }
 
         // ── 2. Load compulsory subjects for this class ────────────────────────
-        // Priority: rules scoped to this exact term+session,
-        // then rules scoped to this session only (no term),
-        // then global rules (no term, no session).
         $compulsoryRules = CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
             ->where(function ($q) use ($termid, $sessionid) {
                 $q->where(function ($q2) use ($termid, $sessionid) {
-                    // Exact match
                     $q2->where('termid', $termid)->where('sessionid', $sessionid);
                 })->orWhere(function ($q2) use ($sessionid) {
-                    // Session-scoped, all terms
                     $q2->whereNull('termid')->where('sessionid', $sessionid);
                 })->orWhere(function ($q2) {
-                    // Fully global
                     $q2->whereNull('termid')->whereNull('sessionid');
                 });
             })
             ->get(['subjectId', 'min_grade']);
 
+        // ── 3. Get promotion pass average from PIVOT TABLE (class-specific) ───
+        $requiredAverage = null;
+        $averageFailed   = false;
+
+        // Get the class-specific promotion pass average from schoolclass_classcategory pivot table
+        $passAverage = DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $schoolclassid)
+            ->value('promotion_pass_average');
+
+        if ($passAverage !== null && $overallAverage !== null) {
+            $requiredAverage = (float) $passAverage;
+            $averageFailed   = $overallAverage < $requiredAverage;
+        }
+
         if ($compulsoryRules->isEmpty()) {
-            // No compulsory rules defined → promote if average passes (or always if no threshold)
-            $averageFailed   = false;
-            $requiredAverage = null;
-
-            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
-            $category    = $schoolclass?->classcategories->first();
-
-            if ($category && $category->promotion_pass_average !== null && $overallAverage !== null) {
-                $requiredAverage = (float) $category->promotion_pass_average;
-                $averageFailed   = $overallAverage < $requiredAverage;
-            }
-
             $status = $averageFailed ? self::STATUS_REPEATED : self::STATUS_PROMOTED;
             return $this->result($status, true, [], $averageFailed, $requiredAverage, $overallAverage, 0, 0);
         }
 
-        // ── 3. Build a subject-id → score/grade map from student's scores ─────
-        // $scores can be a Collection of objects with subject_id, total, grade
+        // ── 4. Build a subject-id → score/grade map from student's scores ─────
         $scoreMap = collect($scores)->keyBy(fn($s) => is_object($s) ? ($s->subject_id ?? null) : ($s['subject_id'] ?? null));
 
-        // ── 4. Check each compulsory subject ─────────────────────────────────
+        // ── 5. Check each compulsory subject ─────────────────────────────────
         $failedCompulsory = [];
         $passedCount      = 0;
         $totalCount       = $compulsoryRules->count();
@@ -115,7 +94,6 @@ class PromotionEvaluator
             $scoreEntry = $scoreMap->get($subjectId);
 
             if (!$scoreEntry) {
-                // Subject not sat — automatic fail
                 $failedCompulsory[] = [
                     'subject_id'  => $subjectId,
                     'reason'      => 'not_sat',
@@ -143,18 +121,6 @@ class PromotionEvaluator
             }
         }
 
-        // ── 5. Check overall average threshold ───────────────────────────────
-        $averageFailed   = false;
-        $requiredAverage = null;
-
-        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
-        $category    = $schoolclass?->classcategories->first();
-
-        if ($category && $category->promotion_pass_average !== null && $overallAverage !== null) {
-            $requiredAverage = (float) $category->promotion_pass_average;
-            $averageFailed   = $overallAverage < $requiredAverage;
-        }
-
         // ── 6. Determine status ───────────────────────────────────────────────
         $compulsoryFailed = !empty($failedCompulsory);
         $status = ($compulsoryFailed || $averageFailed) ? self::STATUS_REPEATED : self::STATUS_PROMOTED;
@@ -164,7 +130,6 @@ class PromotionEvaluator
 
     /**
      * Returns true if the student's grade is below the required minimum.
-     * Falls back to checking whether the grade is a fail grade when no min_grade is set.
      */
     private function gradeFails(?string $studentGrade, ?string $minGrade): bool
     {
@@ -179,7 +144,6 @@ class PromotionEvaluator
             return $studentRank < $minRank;
         }
 
-        // No min_grade set → fail only on F / F9
         return in_array($studentGradeUpper, ['F', 'F9'], true);
     }
 
