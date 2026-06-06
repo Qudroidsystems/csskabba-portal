@@ -57,7 +57,7 @@ class CompulsorySubjectClassController extends Controller
             ->orderBy('sclass')
             ->get();
 
-        // Get promotion pass averages from the pivot table (class-specific)
+        // Get promotion pass averages from the pivot table
         $classPassAverages = DB::table('schoolclass_classcategory')
             ->select('schoolclass_id as classid', 'promotion_pass_average')
             ->get()

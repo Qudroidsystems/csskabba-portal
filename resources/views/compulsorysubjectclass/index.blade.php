@@ -2,21 +2,6 @@
 @extends('layouts.master')
 
 @section('content')
-<script>
-(function() {
-    const requiredElements = ['addIdField','addSubmitButton','editIdField','editCategoryField','editSubmitButton'];
-    requiredElements.forEach(function(id) {
-        if (!document.getElementById(id)) {
-            var el = document.createElement('input');
-            el.type = 'hidden'; el.id = id; el.value = '';
-            document.body.appendChild(el);
-        }
-    });
-    if (typeof window.initFormFields === 'function')    window.initFormFields    = function() { return true; };
-    if (typeof window.initializeSchoolArm === 'function') window.initializeSchoolArm = function() { return true; };
-})();
-</script>
-
 <style>
 :root {
     --pay-primary: #1e3a5f;
@@ -30,61 +15,71 @@
     --pay-radius:  12px;
     --pay-shadow:  0 2px 8px rgba(0,0,0,.08);
 }
-/* layout helpers */
-.d-none{display:none!important}.d-flex{display:flex}.align-items-center{align-items:center}
-.justify-content-between{justify-content:space-between}.justify-content-center{justify-content:center}
-.flex-wrap{flex-wrap:wrap}.flex-grow-1{flex-grow:1}
-.gap-2{gap:8px}.gap-3{gap:16px}
-.mb-0{margin-bottom:0}.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}
-.mb-3{margin-bottom:16px}.mb-4{margin-bottom:24px}
-.mt-1{margin-top:4px}.mt-2{margin-top:8px}.mt-3{margin-top:16px}
-.p-3{padding:16px}.py-3{padding-top:16px;padding-bottom:16px}
-.text-center{text-align:center}.text-start{text-align:left}
-.text-muted{color:var(--pay-muted)}.text-success{color:var(--pay-success)}
-.text-warning{color:var(--pay-warning)}.text-danger{color:var(--pay-danger)}
-.fw-semibold{font-weight:600}.fw-bold{font-weight:700}
-.small{font-size:11px}.w-100{width:100%}
-/* loading */
+.d-none{display:none!important}
+.d-flex{display:flex}
+.align-items-center{align-items:center}
+.justify-content-between{justify-content:space-between}
+.justify-content-center{justify-content:center}
+.flex-wrap{flex-wrap:wrap}
+.flex-grow-1{flex-grow:1}
+.gap-2{gap:8px}
+.gap-3{gap:16px}
+.mb-0{margin-bottom:0}
+.mb-1{margin-bottom:4px}
+.mb-2{margin-bottom:8px}
+.mb-3{margin-bottom:16px}
+.mb-4{margin-bottom:24px}
+.mt-1{margin-top:4px}
+.mt-2{margin-top:8px}
+.mt-3{margin-top:16px}
+.p-3{padding:16px}
+.py-3{padding-top:16px;padding-bottom:16px}
+.text-center{text-align:center}
+.text-start{text-align:left}
+.text-muted{color:var(--pay-muted)}
+.text-success{color:var(--pay-success)}
+.text-warning{color:var(--pay-warning)}
+.text-danger{color:var(--pay-danger)}
+.fw-semibold{font-weight:600}
+.fw-bold{font-weight:700}
+.small{font-size:11px}
+.w-100{width:100%}
 .loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:center;justify-content:center}
 .loading-overlay.active{display:flex}
 .loading-spinner{background:#fff;padding:24px 32px;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.18);text-align:center}
 .loading-spinner .spinner-border{width:2.5rem;height:2.5rem}
 .loading-spinner p{margin:10px 0 0;font-size:14px;font-weight:600;color:var(--pay-primary)}
-/* hero */
 .pay-hero{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 60%,#4f46e5 100%);border-radius:var(--pay-radius);padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden}
 .pay-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:rgba(255,255,255,.06);border-radius:50%}
 .pay-hero h1{font-size:22px;font-weight:700;color:#fff;margin:0 0 6px;position:relative}
 .pay-hero p{font-size:13px;color:rgba(255,255,255,.75);margin:0;position:relative}
-/* stat cards */
 .stat-card{background:#fff;border:1px solid var(--pay-border);border-radius:var(--pay-radius);padding:18px 20px;transition:transform .15s,box-shadow .15s}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--pay-shadow)}
 .stat-card .stat-value{font-size:28px;font-weight:700;color:var(--pay-primary)}
 .stat-card .stat-label{font-size:12px;color:var(--pay-muted);margin-top:4px}
 .stat-card .stat-icon{font-size:32px;opacity:.12;float:right;margin-top:-8px}
-/* grid */
 .row{display:flex;flex-wrap:wrap;margin:-8px}
 .col-md-3,.col-md-4,.col-md-6,.col-sm,.col-sm-auto{padding:8px}
-.col-md-3{width:25%}.col-md-4{width:33.333%}.col-md-6{width:50%}
-.col-sm{flex:1}.col-sm-auto{flex:0 0 auto}
+.col-md-3{width:25%}
+.col-md-4{width:33.333%}
+.col-md-6{width:50%}
+.col-sm{flex:1}
+.col-sm-auto{flex:0 0 auto}
 @media(max-width:768px){.col-md-3,.col-md-4,.col-md-6{width:100%}}
-/* table */
 .compulsory-table{width:100%;border-collapse:collapse}
 .compulsory-table th{background:var(--pay-primary);color:#fff;padding:12px 16px;font-weight:600;font-size:13px;white-space:nowrap;text-align:left}
 .compulsory-table td{padding:11px 16px;vertical-align:middle;border-bottom:1px solid var(--pay-border);font-size:13px}
 .compulsory-table tr:hover td{background:#f0f9ff}
 .compulsory-table .row-selected td{background:#eff6ff!important}
-/* icon buttons */
 .btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;transition:all .15s;border:none;cursor:pointer}
 .btn-subtle-secondary{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
 .btn-subtle-secondary:hover{background:#e2e8f0;color:#1e293b;transform:translateY(-1px)}
 .btn-subtle-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .btn-subtle-danger:hover{background:#fee2e2;color:#b91c1c;transform:translateY(-1px)}
-/* search */
 .search-box{position:relative}
 .search-box .form-control{border:1.5px solid var(--pay-border);border-radius:8px;padding:9px 14px;padding-right:36px;font-size:13px;width:100%}
 .search-box .form-control:focus{border-color:var(--pay-accent);outline:none;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .search-box .search-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--pay-muted);pointer-events:none}
-/* modal */
 .modal-content{border:none;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.15)}
 .modal-header{background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:20px 28px;border-bottom:none}
 .modal-header .modal-title{color:#fff;font-weight:700;font-size:15px}
@@ -92,21 +87,19 @@
 .modal-header .btn-close:hover{opacity:1}
 .modal-body{padding:24px}
 .modal-footer{padding:16px 24px 24px;border-top:none}
-/* form elements */
 .form-label{font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;display:block}
 .form-control,.form-select{border:1.5px solid var(--pay-border);border-radius:8px;font-size:13px;padding:9px 14px;width:100%;box-sizing:border-box}
 .form-control:focus,.form-select:focus{border-color:var(--pay-accent);outline:none;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .form-text{font-size:12px;color:var(--pay-muted);margin-top:4px}
-/* buttons */
 .btn{padding:8px 20px;font-size:13px;font-weight:500;border-radius:8px;transition:all .15s;cursor:pointer;border:none}
 .btn-primary{background:linear-gradient(135deg,#2563eb,#4f46e5);color:white}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 .btn-light{background:#f1f5f9;border:1px solid #e2e8f0;color:#475569}
 .btn-light:hover{background:#e2e8f0;transform:translateY(-1px)}
 .btn-danger{background:#dc2626;color:white}
 .btn-danger:hover{background:#b91c1c;transform:translateY(-1px)}
 .btn-sm{padding:5px 12px;font-size:12px}
-/* checkbox group */
 .checkbox-group{max-height:300px;overflow-y:auto;border:1px solid var(--pay-border);border-radius:8px;padding:12px;background:#f8fafc}
 .checkbox-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:6px;background:#fff;border:1px solid var(--pay-border);transition:border-color .15s}
 .checkbox-item:last-child{margin-bottom:0}
@@ -119,47 +112,33 @@
 .grade-select:focus{border-color:var(--pay-accent);outline:none;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
 .checkbox-loading{text-align:center;padding:24px;color:var(--pay-muted);font-size:13px}
 .checkbox-empty{text-align:center;padding:24px;color:var(--pay-muted);font-size:13px}
-/* alerts */
 .alert{border:none;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
 .alert-danger{background:#fef2f2;color:#991b1b;border-left:3px solid #dc2626}
 .alert-success{background:#f0fdf4;color:#166534;border-left:3px solid #16a34a}
 .alert-warning{background:#fffbeb;color:#92400e;border-left:3px solid #f59e0b}
 .alert-info{background:#eff6ff;color:#1e40af;border-left:3px solid #3b82f6}
-/* info banner */
 .info-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
 .info-banner i{font-size:20px;color:#2563eb}
 .info-banner .text{font-size:13px;color:#1e40af}
 .info-banner .text strong{display:block;margin-bottom:4px}
-/* badges */
-.badge{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.badge{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600}
 .bg-primary{background:var(--pay-accent)!important;color:white}
-.bg-success{background:#16a34a!important;color:white}
+.bg-success{background:#10b981!important;color:white}
 .bg-warning{background:#d97706!important;color:white}
 .bg-info{background:#2563eb!important;color:white}
 .badge-grade{background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
 .badge-all-terms{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
-/* card */
 .card{background:white;border:1px solid var(--pay-border);border-radius:var(--pay-radius);box-shadow:var(--pay-shadow)}
 .card-header{border-bottom:1px solid var(--pay-border);background:white;padding:16px 20px}
 .card-body{padding:20px}
 .table-responsive{overflow-x:auto}
-/* empty state */
 .empty-state{text-align:center;padding:52px 24px;color:var(--pay-muted)}
 .empty-state i{font-size:3rem;opacity:.25;display:block;margin-bottom:14px}
-/* bulk action bar */
 .bulk-action-bar{display:none;align-items:center;gap:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px 16px;margin-bottom:16px}
 .bulk-action-bar.visible{display:flex}
 .bulk-action-bar .bulk-count{font-size:13px;font-weight:600;color:#92400e}
-/* select-all */
 .select-all-checkbox{width:16px;height:16px;cursor:pointer}
-/* pagination */
-.pagination{display:flex;gap:5px;list-style:none;padding:0;margin:0}
-.pagination .page-item .page-link{border-radius:8px;padding:6px 12px;font-size:13px;color:var(--pay-primary);border:1px solid var(--pay-border);background:white;text-decoration:none}
-.pagination .page-item.active .page-link{background:var(--pay-accent);border-color:var(--pay-accent);color:white}
-.pagination .page-item.disabled .page-link{opacity:.5;cursor:not-allowed;pointer-events:none}
-/* scope badge */
 .scope-badge{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:2px 8px;font-size:11px;color:#475569;font-weight:500}
-/* pass average cards */
 .pass-avg-card{background:#fff;border:1px solid var(--pay-border);border-radius:10px;padding:14px 16px;height:100%}
 .pac-label{font-size:12px;font-weight:700;color:var(--pay-primary);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pac-input-row{display:flex;align-items:center;gap:6px}
@@ -183,13 +162,11 @@
         </div>
     </div>
 
-    {{-- Hero --}}
     <div class="pay-hero">
         <h1><i class="ri-book-open-line me-2"></i>Compulsory Subject Class Management</h1>
         <p>Manage subjects that students must pass for promotion to the next class level.</p>
     </div>
 
-    {{-- Stats --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
@@ -221,7 +198,6 @@
         </div>
     </div>
 
-    {{-- Info banner --}}
     <div class="info-banner">
         <i class="ri-information-line"></i>
         <div class="text">
@@ -230,7 +206,7 @@
         </div>
     </div>
 
-    {{-- ══ Promotion Pass Average Panel ══ --}}
+    {{-- Promotion Pass Average Panel --}}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="padding:16px 20px">
             <div>
@@ -287,7 +263,7 @@
         </div>
     </div>
 
-    {{-- ══ Main Table Card ══ --}}
+    {{-- Main Table Card --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="padding:16px 20px">
             <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
@@ -332,7 +308,6 @@
                 </div>
             @endif
 
-            {{-- Bulk action bar --}}
             @can('Delete compulsory-subject')
             <div class="bulk-action-bar" id="bulkActionBar">
                 <span class="bulk-count" id="bulkCount">0 selected</span>
@@ -361,6 +336,7 @@
                             <th>Term</th>
                             <th>Session</th>
                             <th>Min Grade</th>
+                            <th>Promotion Avg</th>
                             <th width="120">Last Updated</th>
                             <th width="90">Actions</th>
                         </tr>
@@ -400,6 +376,21 @@
                                     <span class="text-muted small">—</span>
                                 @endif
                             </td>
+                            <td>
+                                @php
+                                    $classAvg = $classPassAverages->get($csc->schoolclassid);
+                                    $passAvg = $classAvg ? $classAvg->promotion_pass_average : null;
+                                @endphp
+                                @if($passAvg !== null && $passAvg !== '')
+                                    <span class="badge bg-success">
+                                        <i class="ri-percent-line me-1"></i>{{ number_format((float)$passAvg, 1) }}%
+                                    </span>
+                                @else
+                                    <span class="text-muted small">
+                                        <i class="ri-information-line me-1"></i>Not set
+                                    </span>
+                                @endif
+                            </td>
                             <td><span class="text-muted small">{{ \Carbon\Carbon::parse($csc->updated_at)->format('d M Y') }}</span></td>
                             <td>
                                 <div class="d-flex gap-2">
@@ -433,7 +424,7 @@
                         </tr>
                         @empty
                         <tr id="emptyRow">
-                            <td colspan="10" class="text-center">
+                            <td colspan="11" class="text-center">
                                 <div class="empty-state">
                                     <i class="ri-inbox-line"></i>
                                     <p>No compulsory subjects assigned yet.</p>
@@ -464,7 +455,7 @@
 </div>
 </div>
 
-{{-- ══════════ ADD MODAL ══════════ --}}
+{{-- ADD MODAL --}}
 <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -529,7 +520,7 @@
     </div>
 </div>
 
-{{-- ══════════ EDIT MODAL ══════════ --}}
+{{-- EDIT MODAL --}}
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-md">
         <div class="modal-content">
@@ -595,7 +586,7 @@
     </div>
 </div>
 
-{{-- ══════════ DELETE MODAL ══════════ --}}
+{{-- DELETE MODAL --}}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -621,7 +612,7 @@
     </div>
 </div>
 
-{{-- ══════════ BULK DELETE MODAL ══════════ --}}
+{{-- BULK DELETE MODAL --}}
 <div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -651,8 +642,6 @@
 
 <script>
 $(function () {
-
-    /* ── URLs (all defined once here, nothing is missing) ── */
     const URL_STORE        = '{{ route("compulsorysubjectclass.store") }}';
     const URL_BASE         = '{{ url("compulsorysubjectclass") }}';
     const URL_BULK_DESTROY = '{{ route("compulsorysubjectclass.bulkDestroy") }}';
@@ -663,7 +652,6 @@ $(function () {
     let deleteSingleId = null;
     let currentGrades  = [];
 
-    /* ── helpers ── */
     function showLoading(on) { $('#loadingOverlay').toggleClass('active', on); }
 
     function esc(str) {
@@ -679,9 +667,7 @@ $(function () {
         return opts;
     }
 
-    /* ══════════════════════════════════════════════
-       PASS AVERAGE SAVE
-    ══════════════════════════════════════════════ */
+    // PASS AVERAGE SAVE
     $(document).on('click', '.pac-save-btn', async function () {
         const classId   = $(this).data('classid');
         const className = $(this).data('classname') || 'this class';
@@ -690,7 +676,6 @@ $(function () {
         const val       = $input.val().trim();
         const btn       = $(this);
 
-        // Validate
         if (val !== '' && (isNaN(val) || parseFloat(val) < 0 || parseFloat(val) > 100)) {
             Swal.fire('Invalid Input', 'Please enter a value between 0 and 100, or leave blank to disable.', 'warning');
             return;
@@ -715,7 +700,6 @@ $(function () {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                // Update the input field with the saved value (formatted)
                 if (data.saved_value !== null && data.saved_value !== undefined) {
                     $input.val(data.saved_value.toFixed(1));
                     $status.html(`<span class="pac-badge-set"><i class="ri-checkbox-circle-line me-1"></i>${data.saved_value.toFixed(1)}% set</span>`);
@@ -730,12 +714,11 @@ $(function () {
                     text:  data.message,
                     timer: 2000,
                     showConfirmButton: false,
+                }).then(() => {
+                    location.reload();
                 });
             } else {
-                const msg = data.errors
-                    ? Object.values(data.errors).flat().join('\n')
-                    : (data.message || 'Failed to update.');
-                Swal.fire('Error', msg, 'error');
+                Swal.fire('Error', data.message || 'Failed to update.', 'error');
             }
         } catch (err) {
             console.error('Pass average save error:', err);
@@ -745,7 +728,6 @@ $(function () {
         }
     });
 
-    /* Also allow Enter key in a pac-input to trigger save */
     $(document).on('keydown', '.pac-input', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -753,9 +735,7 @@ $(function () {
         }
     });
 
-    /* ══════════════════════════════════════════════
-       SEARCH
-    ══════════════════════════════════════════════ */
+    // SEARCH
     $('#searchInput').on('keyup', function () {
         const val = $(this).val().toLowerCase();
         let visible = 0;
@@ -767,9 +747,7 @@ $(function () {
         $('#visibleCount').text(visible);
     });
 
-    /* ══════════════════════════════════════════════
-       SELECT / BULK
-    ══════════════════════════════════════════════ */
+    // SELECT / BULK
     function updateBulkBar() {
         const count = $('.row-checkbox:checked').length;
         $('#bulkCount').text(count + ' selected');
@@ -837,9 +815,7 @@ $(function () {
         }
     });
 
-    /* ══════════════════════════════════════════════
-       AJAX: LOAD SUBJECTS BY CLASS
-    ══════════════════════════════════════════════ */
+    // LOAD SUBJECTS FOR ADD
     async function loadSubjectsForAdd() {
         const classId   = $('#add_classid').val();
         const termId    = $('#add_termid').val();
@@ -916,16 +892,14 @@ $(function () {
 
     $('#add_classid, #add_termid, #add_sessionid').on('change', loadSubjectsForAdd);
 
-    /* ══════════════════════════════════════════════
-       ADD — SUBMIT
-    ══════════════════════════════════════════════ */
+    // ADD SUBMIT
     $('#addBtn').on('click', async function () {
         const classId   = $('#add_classid').val();
         const termId    = $('#add_termid').val();
         const sessionId = $('#add_sessionid').val();
         const checked   = $('.subject-checkbox:checked');
 
-        if (!classId)      { Swal.fire('Error', 'Please select a class.', 'error');                  return; }
+        if (!classId)      { Swal.fire('Error', 'Please select a class.', 'error'); return; }
         if (!checked.length) { Swal.fire('Error', 'Please select at least one subject.', 'error'); return; }
 
         const body = new FormData();
@@ -968,9 +942,7 @@ $(function () {
         }
     });
 
-    /* ══════════════════════════════════════════════
-       EDIT — open modal
-    ══════════════════════════════════════════════ */
+    // EDIT - load subjects
     async function loadEditSubjects(classId, termId, sessionId, selectedSubjectId, selectedGrade) {
         const $subSel   = $('#edit_subjectid');
         const $gradeSel = $('#edit_minGrade');
@@ -1039,9 +1011,7 @@ $(function () {
         loadEditSubjects(classId, termId, sessionId, '', '');
     });
 
-    /* ══════════════════════════════════════════════
-       EDIT — SUBMIT
-    ══════════════════════════════════════════════ */
+    // EDIT SUBMIT
     $('#updateBtn').on('click', async function () {
         const id        = $('#edit_id').val();
         const classId   = $('#edit_classid').val();
@@ -1089,9 +1059,7 @@ $(function () {
         }
     });
 
-    /* ══════════════════════════════════════════════
-       DELETE — SINGLE
-    ══════════════════════════════════════════════ */
+    // DELETE SINGLE
     $(document).on('click', '.delete-btn', function () {
         deleteSingleId = $(this).data('id');
         const name     = $(this).data('name');
@@ -1131,7 +1099,7 @@ $(function () {
         }
     });
 
-    /* ── Modal cleanup ── */
+    // MODAL CLEANUP
     $('#addModal').on('hidden.bs.modal', function () {
         $('#add_classid, #add_termid, #add_sessionid').val('');
         $('#add_subjectList').html('<div class="checkbox-empty"><i class="ri-arrow-up-line"></i> Select a class above to load its subjects.</div>');
@@ -1152,11 +1120,6 @@ $(function () {
         deleteSingleId = null;
         $('#deleteItemInfo').html('');
     });
-
-    $('#bulkDeleteModal').on('hidden.bs.modal', function () {
-        // nothing to reset
-    });
-
 });
 </script>
 @endsection
