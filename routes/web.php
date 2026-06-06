@@ -42,6 +42,7 @@ use App\Http\Controllers\Payment\OnlinePaymentController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PrincipalsCommentController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\PromotionSettingController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\Reports\AnalysisReportController;
 use App\Http\Controllers\Reports\FinancialReportController;
@@ -1333,9 +1334,32 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             ->middleware('auth');
     });
 
-    Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
-    Route::put('/promotions/{studentId}', [PromotionController::class, 'update'])->name('promotions.update');
-    Route::delete('/promotions/{studentId}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
+
+    // =========================================================================
+    // PROMOTION ROUTES
+    // =========================================================================
+
+    // Promotion Management
+    Route::prefix('promotions')->group(function () {
+        Route::get('/', [PromotionController::class, 'index'])->name('promotions.index');
+        Route::put('/{studentId}', [PromotionController::class, 'update'])->name('promotions.update');
+        Route::delete('/{studentId}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
+        Route::post('/bulk-promote', [PromotionController::class, 'bulkPromote'])->name('promotions.bulk.promote');
+        Route::get('/student-details/{studentId}/{schoolclassId}/{sessionId}/{termId}',[PromotionController::class, 'getStudentDetails'])->name('promotions.student.details');
+    });
+
+    // =========================================================================
+    // PROMOTION SETTINGS ROUTES
+    // =========================================================================
+
+    Route::prefix('promotion-settings')->group(function () {
+        Route::get('/', [PromotionSettingController::class, 'index'])->name('promotion.settings.index');
+        Route::post('/store', [PromotionSettingController::class, 'store'])->name('promotion.settings.store');
+        Route::put('/{id}', [PromotionSettingController::class, 'update'])->name('promotion.settings.update');
+        Route::post('/{id}', [PromotionSettingController::class, 'update'])->name('promotion.settings.update.post');
+        Route::delete('/{id}', [PromotionSettingController::class, 'destroy'])->name('promotion.settings.destroy');
+        Route::get('/get/{schoolclassId}/{sessionId?}/{termId?}',[PromotionSettingController::class, 'getSettings'])->name('promotion.settings.get');
+    });
 
 
 
