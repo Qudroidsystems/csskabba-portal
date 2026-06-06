@@ -1,9 +1,11 @@
 <?php
+// app/Models/Schoolclass.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 
 class Schoolclass extends Model
 {
@@ -20,7 +22,9 @@ class Schoolclass extends Model
 
     public function classcategories()
     {
-        return $this->belongsToMany(Classcategory::class, 'schoolclass_classcategory', 'schoolclass_id', 'classcategory_id');
+        return $this->belongsToMany(Classcategory::class, 'schoolclass_classcategory', 'schoolclass_id', 'classcategory_id')
+                    ->withPivot('promotion_pass_average')
+                    ->withTimestamps();
     }
 
     public function arm()
@@ -28,15 +32,9 @@ class Schoolclass extends Model
         return $this->belongsTo(Schoolarm::class, 'arm');
     }
 
-    // Add this method for consistency
     public function armRelation()
     {
         return $this->belongsTo(Schoolarm::class, 'arm', 'id');
-    }
-
-    public function classcategory()
-    {
-        return $this->belongsTo(Classcategory::class, 'classcategoryid', 'id');
     }
 
     public function subjectClasses()
@@ -59,5 +57,23 @@ class Schoolclass extends Model
             'id',
             'studentId'
         )->where('student_current_term.is_current', true);
+    }
+
+    // Get promotion pass average for this specific class
+    public function getPromotionPassAverageAttribute()
+    {
+        $pivot = DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $this->id)
+            ->first();
+
+        return $pivot ? $pivot->promotion_pass_average : null;
+    }
+
+    // Set promotion pass average for this specific class
+    public function setPromotionPassAverageAttribute($value)
+    {
+        DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $this->id)
+            ->update(['promotion_pass_average' => $value]);
     }
 }

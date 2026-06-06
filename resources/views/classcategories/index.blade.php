@@ -233,10 +233,9 @@
                     @php
                         $existing = $classPassAverages->get($cls->id);
                         $current  = $existing ? $existing->promotion_pass_average : null;
-                        $hasCategory = isset($classesWithCategories[$cls->id]);
                     @endphp
                     <div class="col-md-3 mb-3">
-                        <div class="pass-avg-card {{ !$hasCategory ? 'no-category' : '' }}">
+                        <div class="pass-avg-card">
                             <div class="pac-label" title="{{ $cls->schoolclass }}{{ $cls->arm ? ' ('.$cls->arm.')' : '' }}">
                                 {{ $cls->schoolclass }}{{ $cls->arm ? ' ('.$cls->arm.')' : '' }}
                             </div>
@@ -246,24 +245,17 @@
                                        id="pac_{{ $cls->id }}"
                                        min="0" max="100" step="0.5"
                                        placeholder="e.g. 40"
-                                       value="{{ $current !== null ? number_format((float)$current, 1) : '' }}"
-                                       {{ !$hasCategory ? 'disabled' : '' }}>
+                                       value="{{ $current !== null ? number_format((float)$current, 1) : '' }}">
                                 <span class="pac-unit">%</span>
                                 <button type="button"
                                         class="btn btn-primary btn-sm pac-save-btn"
                                         data-classid="{{ $cls->id }}"
-                                        data-classname="{{ $cls->schoolclass }}{{ $cls->arm ? ' ('.$cls->arm.')' : '' }}"
-                                        {{ !$hasCategory ? 'disabled' : '' }}>
+                                        data-classname="{{ $cls->schoolclass }}{{ $cls->arm ? ' ('.$cls->arm.')' : '' }}">
                                     <i class="ri-save-line"></i>
                                 </button>
                             </div>
                             <div class="pac-status" id="pac_status_{{ $cls->id }}">
-                                @if(!$hasCategory)
-                                    <div class="category-warning">
-                                        <i class="ri-alert-line"></i>
-                                        <small>No category linked. Contact admin.</small>
-                                    </div>
-                                @elseif($current !== null)
+                                @if($current !== null)
                                     <span class="pac-badge-set">
                                         <i class="ri-checkbox-circle-line me-1"></i>{{ number_format((float)$current, 1) }}% set
                                     </span>
@@ -668,7 +660,7 @@ $(function () {
     }
 
     // PASS AVERAGE SAVE
-    $(document).on('click', '.pac-save-btn:not(:disabled)', async function () {
+    $(document).on('click', '.pac-save-btn', async function () {
         const classId   = $(this).data('classid');
         const className = $(this).data('classname') || 'this class';
         const $input    = $('#pac_' + classId);
@@ -716,11 +708,7 @@ $(function () {
                     showConfirmButton: false,
                 });
             } else {
-                let errorMsg = data.message || 'Failed to update.';
-                if (data.needs_category_link) {
-                    errorMsg = `❌ ${errorMsg}\n\nPlease contact the administrator to link this class to a category.`;
-                }
-                Swal.fire('Error', errorMsg, 'error');
+                Swal.fire('Error', data.message || 'Failed to update.', 'error');
             }
         } catch (err) {
             console.error('Pass average save error:', err);
@@ -730,7 +718,7 @@ $(function () {
         }
     });
 
-    $(document).on('keydown', '.pac-input:not(:disabled)', function (e) {
+    $(document).on('keydown', '.pac-input', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             $(this).closest('.pass-avg-card').find('.pac-save-btn').trigger('click');
@@ -851,16 +839,6 @@ $(function () {
 
             currentGrades = data.grade_scale || [];
 
-            if (!data.has_category) {
-                $list.html(`<div class="checkbox-empty text-danger">
-                    <i class="ri-alert-line"></i><br>
-                    This class is not linked to any category.<br>
-                    <small>Please contact administrator to link this class to a category first.</small>
-                </div>`);
-                $('#add_gradeScaleInfo').html('<span class="text-danger">⚠️ No category linked to this class</span>');
-                return;
-            }
-
             if (data.category) {
                 const type = data.category.is_senior ? 'Senior' : 'Junior';
                 let info = `${esc(data.category.name)} (${type} — grades: ${currentGrades.join(', ')})`;
@@ -980,12 +958,6 @@ $(function () {
 
             if (!res.ok || !data.success) {
                 $subSel.html('<option value="">Error loading subjects</option>').prop('disabled', false);
-                return;
-            }
-
-            if (!data.has_category) {
-                $subSel.html('<option value="">Cannot load subjects: No category linked to this class</option>').prop('disabled', true);
-                $gradeSel.html('<option value="">— No minimum set —</option>').prop('disabled', true);
                 return;
             }
 

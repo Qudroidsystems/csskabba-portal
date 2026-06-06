@@ -57,21 +57,11 @@ class CompulsorySubjectClassController extends Controller
             ->orderBy('sclass')
             ->get();
 
-        // Load promotion_pass_average from classcategories via the pivot table
+        // Get promotion pass averages from the pivot table (class-specific)
         $classPassAverages = DB::table('schoolclass_classcategory')
-            ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
-            ->select(
-                'schoolclass_classcategory.schoolclass_id as classid',
-                'classcategories.promotion_pass_average'
-            )
+            ->select('schoolclass_id as classid', 'promotion_pass_average')
             ->get()
             ->keyBy('classid');
-
-        // Track which classes have categories linked
-        $classesWithCategories = DB::table('schoolclass_classcategory')
-            ->pluck('schoolclass_id')
-            ->flip()
-            ->toArray();
 
         return view('compulsorysubjectclass.index', compact(
             'compulsorysubjectclasses',
@@ -79,7 +69,6 @@ class CompulsorySubjectClassController extends Controller
             'terms',
             'sessions',
             'classPassAverages',
-            'classesWithCategories',
             'pagetitle'
         ));
     }
@@ -102,6 +91,11 @@ class CompulsorySubjectClassController extends Controller
 
         $gradeScale = [];
         $category   = $schoolclass->classcategories->first();
+
+        // Get class-specific pass average from pivot table
+        $passAverage = DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $classId)
+            ->value('promotion_pass_average');
 
         if ($category) {
             $gradeScale = $category->is_senior
@@ -149,16 +143,11 @@ class CompulsorySubjectClassController extends Controller
             ];
         })->unique('id')->values();
 
-        $passAverage = $category?->promotion_pass_average !== null
-            ? (float) $category->promotion_pass_average
-            : null;
-
         return response()->json([
             'success'      => true,
             'subjects'     => $subjects,
             'grade_scale'  => $gradeScale,
             'pass_average' => $passAverage,
-            'has_category' => $category !== null,
             'category'     => $category
                 ? ['name' => $category->category, 'is_senior' => $category->is_senior, 'id' => $category->id]
                 : null,
@@ -175,12 +164,6 @@ class CompulsorySubjectClassController extends Controller
             'sessionid'              => 'nullable|exists:schoolsession,id',
             'min_grades'             => 'nullable|array',
             'min_grades.*'           => 'nullable|string|max:10',
-            'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
-        ], [
-            'schoolclassid.required' => 'Please select a class.',
-            'schoolclassid.exists'   => 'Selected class does not exist.',
-            'subjectId.required'     => 'Please select at least one subject.',
-            'subjectId.min'          => 'Please select at least one subject.',
         ]);
 
         if ($validator->fails()) {
@@ -192,22 +175,6 @@ class CompulsorySubjectClassController extends Controller
         $termId        = $request->input('termid') ?: null;
         $sessionId     = $request->input('sessionid') ?: null;
         $minGrades     = $request->input('min_grades', []);
-        $passAverage   = $request->input('promotion_pass_average');
-
-        // Check if class has category linked before saving pass average
-        $hasCategory = DB::table('schoolclass_classcategory')
-            ->where('schoolclass_id', $schoolClassId)
-            ->exists();
-
-        if ($passAverage !== null && $passAverage !== '') {
-            if (!$hasCategory) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot set promotion pass average: This class is not linked to any category. Please contact administrator.',
-                ], 422);
-            }
-            $this->savePassAverage($schoolClassId, (float) $passAverage);
-        }
 
         $created = [];
         $skipped = [];
@@ -249,12 +216,11 @@ class CompulsorySubjectClassController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'schoolclassid'          => 'required|exists:schoolclass,id',
-            'subjectId'              => 'required|exists:subject,id',
-            'termid'                 => 'nullable|exists:schoolterm,id',
-            'sessionid'              => 'nullable|exists:schoolsession,id',
-            'min_grade'              => 'nullable|string|max:10',
-            'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
+            'schoolclassid' => 'required|exists:schoolclass,id',
+            'subjectId'     => 'required|exists:subject,id',
+            'termid'        => 'nullable|exists:schoolterm,id',
+            'sessionid'     => 'nullable|exists:schoolsession,id',
+            'min_grade'     => 'nullable|string|max:10',
         ]);
 
         if ($validator->fails()) {
@@ -266,7 +232,6 @@ class CompulsorySubjectClassController extends Controller
         $termId        = $request->input('termid') ?: null;
         $sessionId     = $request->input('sessionid') ?: null;
         $minGrade      = $request->input('min_grade') ?: null;
-        $passAverage   = $request->input('promotion_pass_average');
 
         $duplicate = CompulsorySubjectClass::where('schoolclassid', $schoolClassId)
             ->where('subjectId', $subjectId)
@@ -287,20 +252,6 @@ class CompulsorySubjectClassController extends Controller
             return response()->json(['success' => false, 'message' => 'Record not found.'], 404);
         }
 
-        if ($passAverage !== null && $passAverage !== '') {
-            $hasCategory = DB::table('schoolclass_classcategory')
-                ->where('schoolclass_id', $schoolClassId)
-                ->exists();
-
-            if (!$hasCategory) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot update promotion pass average: This class is not linked to any category.',
-                ], 422);
-            }
-            $this->savePassAverage($schoolClassId, (float) $passAverage);
-        }
-
         $record->update([
             'schoolclassid' => $schoolClassId,
             'subjectId'     => $subjectId,
@@ -313,7 +264,7 @@ class CompulsorySubjectClassController extends Controller
     }
 
     /**
-     * Standalone AJAX: update only the promotion pass average for a class.
+     * Update promotion pass average for a class (stored in pivot table)
      */
     public function updatePassAverage(Request $request)
     {
@@ -332,34 +283,58 @@ class CompulsorySubjectClassController extends Controller
         // Convert empty string to null
         $passAverageValue = ($passAverage !== null && $passAverage !== '') ? (float) $passAverage : null;
 
-        // Check if class has category linked
-        $hasCategory = DB::table('schoolclass_classcategory')
+        // Check if class has a category linked
+        $pivotExists = DB::table('schoolclass_classcategory')
             ->where('schoolclass_id', $schoolClassId)
             ->exists();
 
-        if (!$hasCategory) {
+        if (!$pivotExists) {
+            // Try to auto-link to a default category
             $class = Schoolclass::find($schoolClassId);
-            $className = $class ? $class->schoolclass : 'Unknown class';
+            $className = strtoupper($class->schoolclass);
+
+            // Determine if Junior or Senior
+            $isJunior = preg_match('/^(JSS|J\.S\.S\.|JUNIOR)/', $className);
+
+            // Get or create default category
+            $categoryName = $isJunior ? 'Junior Secondary School' : 'Senior Secondary School';
+            $category = \App\Models\Classcategory::firstOrCreate(
+                ['category' => $categoryName],
+                ['is_senior' => !$isJunior]
+            );
+
+            // Create the pivot link with the pass average
+            DB::table('schoolclass_classcategory')->insert([
+                'schoolclass_id' => $schoolClassId,
+                'classcategory_id' => $category->id,
+                'promotion_pass_average' => $passAverageValue,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
             return response()->json([
-                'success' => false,
-                'message' => "Class '{$className}' is not linked to any category. Please contact administrator to link this class to a category first.",
-                'needs_category_link' => true,
-                'class_id' => $schoolClassId,
-                'class_name' => $className
-            ], 422);
+                'success' => true,
+                'message' => "Class automatically linked to '{$categoryName}' category. Promotion pass average updated to " . ($passAverageValue ? number_format($passAverageValue, 1) . '%' : 'disabled'),
+                'saved_value' => $passAverageValue,
+            ]);
         }
 
-        $savedValue = $this->savePassAverage($schoolClassId, $passAverageValue);
+        // Update the pivot table with class-specific pass average
+        DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $schoolClassId)
+            ->update([
+                'promotion_pass_average' => $passAverageValue,
+                'updated_at' => now()
+            ]);
 
-        $display = ($savedValue !== null)
-            ? number_format($savedValue, 1) . '%'
+        $display = ($passAverageValue !== null)
+            ? number_format($passAverageValue, 1) . '%'
             : 'None (threshold disabled)';
 
         return response()->json([
             'success' => true,
             'message' => "Promotion pass average updated to {$display}.",
-            'saved_value' => $savedValue,
+            'saved_value' => $passAverageValue,
         ]);
     }
 
@@ -390,60 +365,5 @@ class CompulsorySubjectClassController extends Controller
             'success' => true,
             'message' => $count . ' record(s) deleted successfully.',
         ]);
-    }
-
-    /**
-     * Get classes that don't have categories linked
-     */
-    public function getUnlinkedClasses()
-    {
-        $linkedClassIds = DB::table('schoolclass_classcategory')
-            ->pluck('schoolclass_id')
-            ->toArray();
-
-        $unlinkedClasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->whereNotIn('schoolclass.id', $linkedClassIds)
-            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
-            ->map(function($class) {
-                return [
-                    'id' => $class->id,
-                    'name' => $class->schoolclass . ($class->arm ? ' (' . $class->arm . ')' : ''),
-                    'arm' => $class->arm ?? 'N/A'
-                ];
-            });
-
-        return response()->json([
-            'success' => true,
-            'unlinked_classes' => $unlinkedClasses
-        ]);
-    }
-
-    // =========================================================================
-    // PRIVATE HELPERS
-    // =========================================================================
-
-    /**
-     * Save promotion pass average for a class
-     *
-     * @param int $schoolClassId
-     * @param float|null $passAverage
-     * @return float|null Returns the saved value or null if failed
-     */
-    private function savePassAverage(int $schoolClassId, ?float $passAverage): ?float
-    {
-        $pivotRow = DB::table('schoolclass_classcategory')
-            ->where('schoolclass_id', $schoolClassId)
-            ->first();
-
-        if (!$pivotRow) {
-            Log::warning('No class category linked to class ID: ' . $schoolClassId);
-            return null;
-        }
-
-        DB::table('classcategories')
-            ->where('id', $pivotRow->classcategory_id)
-            ->update(['promotion_pass_average' => $passAverage]);
-
-        return $passAverage;
     }
 }
