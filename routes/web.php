@@ -1019,6 +1019,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
     Route::get('compulsorysubjectclass/subjects-by-class', [CompulsorySubjectClassController::class, 'subjectsByClass'])->name('compulsorysubjectclass.subjectsByClass');
     Route::post('compulsorysubjectclass/bulk-destroy', [CompulsorySubjectClassController::class, 'bulkDestroy']) ->name('compulsorysubjectclass.bulkDestroy');
+    Route::post('compulsorysubjectclass/update-pass-average', [CompulsorySubjectClassController::class, 'updatePassAverage'])->name('compulsorysubjectclass.updatePassAverage');
     Route::resource('compulsorysubjectclass', CompulsorySubjectClassController::class);
 
     //principal's comment
