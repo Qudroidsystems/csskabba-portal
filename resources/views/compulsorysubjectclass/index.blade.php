@@ -715,12 +715,15 @@ $(function () {
             const data = await res.json();
 
             if (res.ok && data.success) {
-                if (val !== '') {
-                    $status.html(`<span class="pac-badge-set"><i class="ri-checkbox-circle-line me-1"></i>${parseFloat(val).toFixed(1)}% set</span>`);
+                // Update the input field with the saved value (formatted)
+                if (data.saved_value !== null && data.saved_value !== undefined) {
+                    $input.val(data.saved_value.toFixed(1));
+                    $status.html(`<span class="pac-badge-set"><i class="ri-checkbox-circle-line me-1"></i>${data.saved_value.toFixed(1)}% set</span>`);
                 } else {
-                    $status.html('<span class="pac-badge-none">No threshold set</span>');
                     $input.val('');
+                    $status.html('<span class="pac-badge-none">No threshold set</span>');
                 }
+
                 Swal.fire({
                     icon:  'success',
                     title: 'Saved!',

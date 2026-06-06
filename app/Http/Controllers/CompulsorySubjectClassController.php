@@ -56,10 +56,13 @@ class CompulsorySubjectClassController extends Controller
             ->orderBy('sclass')
             ->get();
 
-        // Per-class promotion_pass_average from classcategory via pivot
+        // Load promotion_pass_average correctly from classcategories via the pivot table
         $classPassAverages = DB::table('schoolclass_classcategory')
             ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
-            ->select('schoolclass_classcategory.schoolclass_id as classid', 'classcategories.promotion_pass_average')
+            ->select(
+                'schoolclass_classcategory.schoolclass_id as classid',
+                'classcategories.promotion_pass_average'
+            )
             ->get()
             ->keyBy('classid');
 
@@ -293,25 +296,26 @@ class CompulsorySubjectClassController extends Controller
         $schoolClassId = $request->input('schoolclassid');
         $passAverage   = $request->input('promotion_pass_average');
 
-        $updated = $this->savePassAverage(
-            $schoolClassId,
-            ($passAverage !== null && $passAverage !== '') ? (float) $passAverage : null
-        );
+        // Convert empty string to null
+        $passAverageValue = ($passAverage !== null && $passAverage !== '') ? (float) $passAverage : null;
 
-        if (!$updated) {
+        $savedValue = $this->savePassAverage($schoolClassId, $passAverageValue);
+
+        if ($savedValue === null) {
             return response()->json([
                 'success' => false,
                 'message' => 'No class category is linked to this class. Please assign a class category first.',
             ], 422);
         }
 
-        $display = ($passAverage !== null && $passAverage !== '')
-            ? number_format((float) $passAverage, 1) . '%'
+        $display = ($savedValue !== null)
+            ? number_format($savedValue, 1) . '%'
             : 'None (threshold disabled)';
 
         return response()->json([
             'success' => true,
             'message' => "Promotion pass average updated to {$display}.",
+            'saved_value' => $savedValue,
         ]);
     }
 
@@ -348,18 +352,25 @@ class CompulsorySubjectClassController extends Controller
     // PRIVATE HELPERS
     // =========================================================================
 
-    private function savePassAverage(int $schoolClassId, ?float $passAverage): bool
+    /**
+     * Save promotion pass average for a class
+     *
+     * @param int $schoolClassId
+     * @param float|null $passAverage
+     * @return float|null Returns the saved value or null if failed
+     */
+    private function savePassAverage(int $schoolClassId, ?float $passAverage): ?float
     {
         $pivotRow = DB::table('schoolclass_classcategory')
             ->where('schoolclass_id', $schoolClassId)
             ->first();
 
-        if (!$pivotRow) return false;
+        if (!$pivotRow) return null;
 
         DB::table('classcategories')
             ->where('id', $pivotRow->classcategory_id)
             ->update(['promotion_pass_average' => $passAverage]);
 
-        return true;
+        return $passAverage;
     }
 }
