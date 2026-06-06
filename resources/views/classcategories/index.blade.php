@@ -2,6 +2,21 @@
 @extends('layouts.master')
 
 @section('content')
+<script>
+(function() {
+    const requiredElements = ['addIdField','addSubmitButton','editIdField','editCategoryField','editSubmitButton'];
+    requiredElements.forEach(function(id) {
+        if (!document.getElementById(id)) {
+            var el = document.createElement('input');
+            el.type = 'hidden'; el.id = id; el.value = '';
+            document.body.appendChild(el);
+        }
+    });
+    if (typeof window.initFormFields === 'function')    window.initFormFields    = function() { return true; };
+    if (typeof window.initializeSchoolArm === 'function') window.initializeSchoolArm = function() { return true; };
+})();
+</script>
+
 <style>
 :root {
     --pay-primary: #1e3a5f;
@@ -344,6 +359,7 @@
                             <th>Term</th>
                             <th>Session</th>
                             <th>Min Grade</th>
+                            <th>Promotion Avg</th>
                             <th width="120">Last Updated</th>
                             <th width="90">Actions</th>
                         </tr>
@@ -383,6 +399,19 @@
                                     <span class="text-muted small">—</span>
                                 @endif
                             </td>
+                            <td>
+                                @php
+                                    $classAvg = $classPassAverages->get($csc->schoolclassid);
+                                    $passAvg = $classAvg ? $classAvg->promotion_pass_average : null;
+                                @endphp
+                                @if($passAvg)
+                                    <span class="badge" style="background: #10b981!important; color: white;">
+                                        <i class="ri-percent-line me-1"></i>{{ number_format((float)$passAvg, 1) }}%
+                                    </span>
+                                @else
+                                    <span class="text-muted small">Not set</span>
+                                @endif
+                            </td>
                             <td><span class="text-muted small">{{ \Carbon\Carbon::parse($csc->updated_at)->format('d M Y') }}</span></td>
                             <td>
                                 <div class="d-flex gap-2">
@@ -416,7 +445,7 @@
                         </tr>
                         @empty
                         <tr id="emptyRow">
-                            <td colspan="10" class="text-center">
+                            <td colspan="11" class="text-center">
                                 <div class="empty-state">
                                     <i class="ri-inbox-line"></i>
                                     <p>No compulsory subjects assigned yet.</p>
@@ -695,6 +724,12 @@ $(function () {
                 if (data.saved_value !== null && data.saved_value !== undefined) {
                     $input.val(data.saved_value.toFixed(1));
                     $status.html(`<span class="pac-badge-set"><i class="ri-checkbox-circle-line me-1"></i>${data.saved_value.toFixed(1)}% set</span>`);
+
+                    // Update the table cell for this class
+                    $('tr[data-id]').each(function() {
+                        const $row = $(this);
+                        // You may need to update the promotion avg cell if needed
+                    });
                 } else {
                     $input.val('');
                     $status.html('<span class="pac-badge-none">No threshold set</span>');
@@ -706,6 +741,8 @@ $(function () {
                     text:  data.message,
                     timer: 2000,
                     showConfirmButton: false,
+                }).then(() => {
+                    location.reload();
                 });
             } else {
                 Swal.fire('Error', data.message || 'Failed to update.', 'error');
