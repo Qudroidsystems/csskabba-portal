@@ -162,6 +162,17 @@
 .pagination .page-item.disabled .page-link{opacity:.5;cursor:not-allowed;pointer-events:none}
 /* ── term/session filter badge ── */
 .scope-badge{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:2px 8px;font-size:11px;color:#475569;font-weight:500}
+
+/* ── Pass Average Cards ── */
+.pass-avg-card{background:#fff;border:1px solid var(--pay-border);border-radius:10px;padding:14px 16px}
+.pac-label{font-size:12px;font-weight:700;color:var(--pay-primary);margin-bottom:8px}
+.pac-input-row{display:flex;align-items:center;gap:6px}
+.pac-input{width:90px;flex-shrink:0;font-size:13px;padding:7px 10px;border-radius:8px;border:1.5px solid var(--pay-border)}
+.pac-input:focus{border-color:var(--pay-accent);outline:none;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.pac-unit{font-size:13px;color:var(--pay-muted);font-weight:600}
+.pac-save-btn{padding:6px 10px;flex-shrink:0}
+.pac-status{margin-top:6px;min-height:18px}
+
 </style>
 
 <div class="main-content">
@@ -220,6 +231,51 @@
         <div class="text">
             <strong>About Compulsory Subjects</strong>
             These are core subjects that students MUST pass to be promoted. You can now set a minimum passing grade and scope rules to a specific term and session.
+        </div>
+    </div>
+
+    {{-- ── Per-Class Promotion Pass Average Panel ── --}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap">
+            <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
+                <i class="ri-percent-line me-2"></i>Promotion Pass Average — Per Class
+            </h5>
+            <span class="small text-muted">Minimum overall % a student must achieve to be promoted. Leave blank to disable.</span>
+        </div>
+        <div class="card-body">
+            <div class="row" id="passAverageGrid">
+                @foreach ($schoolclasses as $cls)
+                    @php
+                        $existing = $classPassAverages->get($cls->id);
+                        $current  = $existing ? $existing->promotion_pass_average : null;
+                    @endphp
+                    <div class="col-md-3 mb-3">
+                        <div class="pass-avg-card" id="pac-{{ $cls->id }}">
+                            <div class="pac-label">{{ $cls->schoolclass }}@if($cls->arm) ({{ $cls->arm }})@endif</div>
+                            <div class="pac-input-row">
+                                <input type="number"
+                                       class="form-control pac-input"
+                                       id="pac_input_{{ $cls->id }}"
+                                       data-classid="{{ $cls->id }}"
+                                       min="0" max="100" step="0.5"
+                                       placeholder="e.g. 40"
+                                       value="{{ $current !== null ? number_format((float)$current, 1) : '' }}">
+                                <span class="pac-unit">%</span>
+                                <button type="button" class="btn btn-primary btn-sm pac-save-btn" data-classid="{{ $cls->id }}">
+                                    <i class="ri-save-line"></i>
+                                </button>
+                            </div>
+                            <div class="pac-status" id="pac_status_{{ $cls->id }}">
+                                @if($current !== null)
+                                    <span class="badge-grade"><i class="ri-checkbox-circle-line"></i> {{ number_format((float)$current, 1) }}% set</span>
+                                @else
+                                    <span class="small text-muted">No threshold set</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 
@@ -761,7 +817,11 @@ $(function () {
 
             if (data.category) {
                 const type = data.category.is_senior ? 'Senior' : 'Junior';
-                $('#add_gradeScaleInfo').text(`${data.category.name} (${type} — grades: ${currentGrades.join(', ')})`);
+                let info = `${data.category.name} (${type} — grades: ${currentGrades.join(', ')})`;
+                if (data.pass_average !== null && data.pass_average !== undefined) {
+                    info += ` | Min avg: ${data.pass_average}%`;
+                }
+                $('#add_gradeScaleInfo').text(info);
             }
 
             if (!data.subjects.length) {

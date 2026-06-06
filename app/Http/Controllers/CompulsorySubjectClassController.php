@@ -9,6 +9,7 @@ use App\Models\Schoolterm;
 use App\Models\Subject;
 use App\Models\Subjectclass;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class CompulsorySubjectClassController extends Controller
@@ -17,7 +18,7 @@ class CompulsorySubjectClassController extends Controller
     {
         $this->middleware('permission:View compulsory-subject|Create compulsory-subject|Update compulsory-subject|Delete compulsory-subject', ['only' => ['index']]);
         $this->middleware('permission:Create compulsory-subject', ['only' => ['store']]);
-        $this->middleware('permission:Update compulsory-subject', ['only' => ['update']]);
+        $this->middleware('permission:Update compulsory-subject', ['only' => ['update', 'updatePassAverage']]);
         $this->middleware('permission:Delete compulsory-subject', ['only' => ['destroy', 'bulkDestroy']]);
     }
 
@@ -55,49 +56,48 @@ class CompulsorySubjectClassController extends Controller
             ->orderBy('sclass')
             ->get();
 
+        // Per-class promotion_pass_average from classcategory via pivot
+        $classPassAverages = DB::table('schoolclass_classcategory')
+            ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
+            ->select('schoolclass_classcategory.schoolclass_id as classid', 'classcategories.promotion_pass_average')
+            ->get()
+            ->keyBy('classid');
+
         return view('compulsorysubjectclass.index', compact(
             'compulsorysubjectclasses',
             'schoolclasses',
             'terms',
             'sessions',
+            'classPassAverages',
             'pagetitle'
         ));
     }
 
-    /**
-     * AJAX: Return subjects assigned to a class (via subjectclass table)
-     * filtered by term+session, with teacher name and grade scale.
-     */
     public function subjectsByClass(Request $request)
     {
         $classId   = $request->query('classid');
-        $termId    = $request->query('termid');    // nullable
-        $sessionId = $request->query('sessionid'); // nullable
+        $termId    = $request->query('termid');
+        $sessionId = $request->query('sessionid');
 
         if (!$classId) {
             return response()->json(['success' => false, 'message' => 'Class is required.'], 422);
         }
 
-        // Load the class with its category (for grade scale)
         $schoolclass = Schoolclass::with('classcategories')->find($classId);
 
         if (!$schoolclass) {
             return response()->json(['success' => false, 'message' => 'Class not found.'], 404);
         }
 
-        // Determine grade scale from the first linked classcategory
         $gradeScale = [];
         $category   = $schoolclass->classcategories->first();
 
         if ($category) {
-            if ($category->is_senior) {
-                $gradeScale = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
-            } else {
-                $gradeScale = ['A', 'B', 'C', 'D', 'F'];
-            }
+            $gradeScale = $category->is_senior
+                ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9']
+                : ['A', 'B', 'C', 'D', 'F'];
         }
 
-        // Query via subjectteacher (which has termid + sessionid) joined to subjectclass
         $query = Subjectclass::with(['subject'])
             ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
             ->join('users', 'users.id', '=', 'subjectteacher.staffid')
@@ -111,17 +111,11 @@ class CompulsorySubjectClassController extends Controller
                 'users.name as teacher_name',
             ]);
 
-        if ($termId) {
-            $query->where('subjectteacher.termid', $termId);
-        }
-        if ($sessionId) {
-            $query->where('subjectteacher.sessionid', $sessionId);
-        }
+        if ($termId)    $query->where('subjectteacher.termid', $termId);
+        if ($sessionId) $query->where('subjectteacher.sessionid', $sessionId);
 
         $subjectclasses = $query->get();
 
-        // Also fetch already-assigned compulsory subject IDs for this class/term/session
-        // so the front end can pre-check them
         $alreadyAssigned = CompulsorySubjectClass::where('schoolclassid', $classId)
             ->when($termId,    fn($q) => $q->where('termid', $termId))
             ->when($sessionId, fn($q) => $q->where('sessionid', $sessionId))
@@ -144,24 +138,32 @@ class CompulsorySubjectClassController extends Controller
             ];
         })->unique('id')->values();
 
+        $passAverage = $category?->promotion_pass_average !== null
+            ? (float) $category->promotion_pass_average
+            : null;
+
         return response()->json([
-            'success'     => true,
-            'subjects'    => $subjects,
-            'grade_scale' => $gradeScale,
-            'category'    => $category ? ['name' => $category->category, 'is_senior' => $category->is_senior] : null,
+            'success'      => true,
+            'subjects'     => $subjects,
+            'grade_scale'  => $gradeScale,
+            'pass_average' => $passAverage,
+            'category'     => $category
+                ? ['name' => $category->category, 'is_senior' => $category->is_senior, 'id' => $category->id]
+                : null,
         ]);
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'schoolclassid'   => 'required|exists:schoolclass,id',
-            'subjectId'       => 'required|array|min:1',
-            'subjectId.*'     => 'exists:subject,id',
-            'termid'          => 'nullable|exists:schoolterm,id',
-            'sessionid'       => 'nullable|exists:schoolsession,id',
-            'min_grades'      => 'nullable|array',
-            'min_grades.*'    => 'nullable|string|max:10',
+            'schoolclassid'          => 'required|exists:schoolclass,id',
+            'subjectId'              => 'required|array|min:1',
+            'subjectId.*'            => 'exists:subject,id',
+            'termid'                 => 'nullable|exists:schoolterm,id',
+            'sessionid'              => 'nullable|exists:schoolsession,id',
+            'min_grades'             => 'nullable|array',
+            'min_grades.*'           => 'nullable|string|max:10',
+            'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
         ], [
             'schoolclassid.required' => 'Please select a class.',
             'schoolclassid.exists'   => 'Selected class does not exist.',
@@ -177,10 +179,15 @@ class CompulsorySubjectClassController extends Controller
         $subjectIds    = $request->input('subjectId', []);
         $termId        = $request->input('termid') ?: null;
         $sessionId     = $request->input('sessionid') ?: null;
-        $minGrades     = $request->input('min_grades', []);  // keyed by subjectId
+        $minGrades     = $request->input('min_grades', []);
+        $passAverage   = $request->input('promotion_pass_average');
 
-        $created  = [];
-        $skipped  = [];
+        if ($passAverage !== null && $passAverage !== '') {
+            $this->savePassAverage($schoolClassId, (float) $passAverage);
+        }
+
+        $created = [];
+        $skipped = [];
 
         foreach ($subjectIds as $subjectId) {
             $exists = CompulsorySubjectClass::where('schoolclassid', $schoolClassId)
@@ -189,20 +196,15 @@ class CompulsorySubjectClassController extends Controller
                 ->where('sessionid', $sessionId)
                 ->exists();
 
-            if ($exists) {
-                $skipped[] = $subjectId;
-                continue;
-            }
+            if ($exists) { $skipped[] = $subjectId; continue; }
 
-            $record = CompulsorySubjectClass::create([
+            $created[] = CompulsorySubjectClass::create([
                 'schoolclassid' => $schoolClassId,
                 'subjectId'     => $subjectId,
                 'termid'        => $termId,
                 'sessionid'     => $sessionId,
                 'min_grade'     => $minGrades[$subjectId] ?? null,
             ]);
-
-            $created[] = $record;
         }
 
         if (empty($created)) {
@@ -213,9 +215,7 @@ class CompulsorySubjectClassController extends Controller
         }
 
         $msg = count($created) . ' compulsory subject(s) added successfully.';
-        if (!empty($skipped)) {
-            $msg .= ' ' . count($skipped) . ' duplicate(s) were skipped.';
-        }
+        if (!empty($skipped)) $msg .= ' ' . count($skipped) . ' duplicate(s) skipped.';
 
         return response()->json(['success' => true, 'message' => $msg, 'data' => $created], 201);
     }
@@ -223,14 +223,12 @@ class CompulsorySubjectClassController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'schoolclassid' => 'required|exists:schoolclass,id',
-            'subjectId'     => 'required|exists:subject,id',
-            'termid'        => 'nullable|exists:schoolterm,id',
-            'sessionid'     => 'nullable|exists:schoolsession,id',
-            'min_grade'     => 'nullable|string|max:10',
-        ], [
-            'schoolclassid.required' => 'Please select a class.',
-            'subjectId.required'     => 'Please select a subject.',
+            'schoolclassid'          => 'required|exists:schoolclass,id',
+            'subjectId'              => 'required|exists:subject,id',
+            'termid'                 => 'nullable|exists:schoolterm,id',
+            'sessionid'              => 'nullable|exists:schoolsession,id',
+            'min_grade'              => 'nullable|string|max:10',
+            'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -242,8 +240,8 @@ class CompulsorySubjectClassController extends Controller
         $termId        = $request->input('termid') ?: null;
         $sessionId     = $request->input('sessionid') ?: null;
         $minGrade      = $request->input('min_grade') ?: null;
+        $passAverage   = $request->input('promotion_pass_average');
 
-        // Check for duplicate (excluding current record)
         $duplicate = CompulsorySubjectClass::where('schoolclassid', $schoolClassId)
             ->where('subjectId', $subjectId)
             ->where('termid', $termId)
@@ -259,9 +257,12 @@ class CompulsorySubjectClassController extends Controller
         }
 
         $record = CompulsorySubjectClass::find($id);
-
         if (!$record) {
             return response()->json(['success' => false, 'message' => 'Record not found.'], 404);
+        }
+
+        if ($passAverage !== null && $passAverage !== '') {
+            $this->savePassAverage($schoolClassId, (float) $passAverage);
         }
 
         $record->update([
@@ -275,22 +276,55 @@ class CompulsorySubjectClassController extends Controller
         return response()->json(['success' => true, 'message' => 'Updated successfully.', 'data' => $record]);
     }
 
+    /**
+     * Standalone AJAX: update only the promotion pass average for a class.
+     */
+    public function updatePassAverage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'schoolclassid'          => 'required|exists:schoolclass,id',
+            'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $schoolClassId = $request->input('schoolclassid');
+        $passAverage   = $request->input('promotion_pass_average');
+
+        $updated = $this->savePassAverage(
+            $schoolClassId,
+            ($passAverage !== null && $passAverage !== '') ? (float) $passAverage : null
+        );
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No class category is linked to this class. Please assign a class category first.',
+            ], 422);
+        }
+
+        $display = ($passAverage !== null && $passAverage !== '')
+            ? number_format((float) $passAverage, 1) . '%'
+            : 'None (threshold disabled)';
+
+        return response()->json([
+            'success' => true,
+            'message' => "Promotion pass average updated to {$display}.",
+        ]);
+    }
+
     public function destroy($id)
     {
         $record = CompulsorySubjectClass::find($id);
-
         if (!$record) {
             return response()->json(['success' => false, 'message' => 'Record not found.'], 404);
         }
-
         $record->delete();
-
         return response()->json(['success' => true, 'message' => 'Compulsory subject removed successfully.']);
     }
 
-    /**
-     * Bulk delete selected records.
-     */
     public function bulkDestroy(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -308,5 +342,24 @@ class CompulsorySubjectClassController extends Controller
             'success' => true,
             'message' => $count . ' record(s) deleted successfully.',
         ]);
+    }
+
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
+
+    private function savePassAverage(int $schoolClassId, ?float $passAverage): bool
+    {
+        $pivotRow = DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $schoolClassId)
+            ->first();
+
+        if (!$pivotRow) return false;
+
+        DB::table('classcategories')
+            ->where('id', $pivotRow->classcategory_id)
+            ->update(['promotion_pass_average' => $passAverage]);
+
+        return true;
     }
 }

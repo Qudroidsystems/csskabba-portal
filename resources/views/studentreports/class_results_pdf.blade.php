@@ -358,31 +358,55 @@
         .grade-F { color: #dc2626; font-weight: 900; }
 
         /* Promotion badge */
-        .promo-badge-pdf {
-            width: calc(97% - 16px);
-            margin: 3px 8px 5px 8px;
-            padding: 5px 10px;
-            border-radius: 6px;
-            border: 2px solid #000;
-            font-size: 10px;
-            font-weight: 700;
-        }
-        .promo-badge-pdf .promo-pdf-label {
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: .4px;
-            display: block;
-        }
-        .promo-badge-pdf .promo-pdf-sub {
-            font-size: 9px;
-            display: block;
-            margin-top: 2px;
-            font-weight: 600;
-            opacity: .9;
-        }
-        .promo-pdf-promoted { background: #f0fdf4; border-color: #16a34a; color: #14532d; }
-        .promo-pdf-repeated { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
-        .promo-pdf-awaiting { background: #f8fafc; border-color: #94a3b8; color: #475569; }
+        /* ── PROMOTION BADGE (PDF) — paste inside <style> in class_results_pdf.blade.php ── */
+    .promo-pdf-badge {
+        width: calc(100% - 20px);
+        margin: 4px 10px 8px 10px;
+        padding: 7px 10px;
+        border-radius: 6px;
+        border-left: 4px solid #000;
+        display: table;
+        width: calc(100% - 20px);
+    }
+    .promo-pdf-icon {
+        display: table-cell;
+        font-size: 14px;
+        width: 22px;
+        vertical-align: middle;
+        padding-right: 6px;
+    }
+    .promo-pdf-badge > div {
+        display: table-cell;
+        vertical-align: middle;
+    }
+    .promo-pdf-title {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: .3px;
+    }
+    .promo-pdf-sub {
+        display: block;
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 2px;
+        opacity: .9;
+    }
+    .promo-pdf-promoted {
+        background: #f0fdf4;
+        border-left-color: #16a34a;
+        color: #14532d;
+    }
+    .promo-pdf-repeated {
+        background: #fef2f2;
+        border-left-color: #dc2626;
+        color: #7f1d1d;
+    }
+    .promo-pdf-awaiting {
+        background: #f8fafc;
+        border-left-color: #94a3b8;
+        color: #475569;
+    }
 
         @media print {
             body { background: white; padding: 0; }

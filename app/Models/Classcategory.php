@@ -14,15 +14,16 @@ class Classcategory extends Model
     protected $fillable = [
         'category',
         'is_senior',
+        'promotion_pass_average',   // ← NEW
     ];
 
     protected $casts = [
-        'is_senior' => 'boolean',
+        'is_senior'              => 'boolean',
+        'promotion_pass_average' => 'decimal:2',
     ];
 
-    /**
-     * Relationship to Assessments
-     */
+    // ── Relationships ────────────────────────────────────────────────────────
+
     public function assessments()
     {
         return $this->hasMany(Assessment::class, 'classcategory_id');
@@ -30,7 +31,12 @@ class Classcategory extends Model
 
     public function schoolClasses()
     {
-        return $this->belongsToMany(Schoolclass::class, 'schoolclass_classcategory', 'classcategory_id', 'schoolclass_id');
+        return $this->belongsToMany(
+            Schoolclass::class,
+            'schoolclass_classcategory',
+            'classcategory_id',
+            'schoolclass_id'
+        );
     }
 
     public function grades()
@@ -38,72 +44,79 @@ class Classcategory extends Model
         return $this->hasMany(Grade::class, 'classcategory_id');
     }
 
-    /**
-     * Calculate grade based on total score and class type
-     */
+    // ── Grade calculation ────────────────────────────────────────────────────
+
     public function calculateGrade($totalScore)
     {
-        if ($this->is_senior) {
-            return $this->calculateSeniorGrade($totalScore);
-        }
-        return $this->calculateJuniorGrade($totalScore);
+        return $this->is_senior
+            ? $this->calculateSeniorGrade($totalScore)
+            : $this->calculateJuniorGrade($totalScore);
     }
 
-    /**
-     * Calculate grade for junior classes
-     */
     private function calculateJuniorGrade($totalScore)
     {
-        if ($totalScore >= 70 && $totalScore <= 100) {
-            return 'A';
-        } elseif ($totalScore >= 60) {
-            return 'B';
-        } elseif ($totalScore >= 50) {
-            return 'C';
-        } elseif ($totalScore >= 40) {
-            return 'D';
-        } else {
-            return 'F';
-        }
+        if ($totalScore >= 70) return 'A';
+        if ($totalScore >= 60) return 'B';
+        if ($totalScore >= 50) return 'C';
+        if ($totalScore >= 40) return 'D';
+        return 'F';
     }
 
-    /**
-     * Calculate grade for senior classes
-     */
     private function calculateSeniorGrade($totalScore)
     {
-        if ($totalScore >= 75 && $totalScore <= 100) {
-            return 'A1';
-        } elseif ($totalScore >= 70) {
-            return 'B2';
-        } elseif ($totalScore >= 65) {
-            return 'B3';
-        } elseif ($totalScore >= 60) {
-            return 'C4';
-        } elseif ($totalScore >= 55) {
-            return 'C5';
-        } elseif ($totalScore >= 50) {
-            return 'C6';
-        } elseif ($totalScore >= 45) {
-            return 'D7';
-        } elseif ($totalScore >= 40) {
-            return 'E8';
-        } else {
-            return 'F9';
-        }
+        if ($totalScore >= 75) return 'A1';
+        if ($totalScore >= 70) return 'B2';
+        if ($totalScore >= 65) return 'B3';
+        if ($totalScore >= 60) return 'C4';
+        if ($totalScore >= 55) return 'C5';
+        if ($totalScore >= 50) return 'C6';
+        if ($totalScore >= 45) return 'D7';
+        if ($totalScore >= 40) return 'E8';
+        return 'F9';
     }
 
     /**
-     * Get the grade type label
+     * Return the full grade scale for this category as an ordered array (best → worst).
      */
-    public function getGradeTypeAttribute()
+    public function getGradeScaleAttribute(): array
+    {
+        return $this->is_senior
+            ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9']
+            : ['A', 'B', 'C', 'D', 'F'];
+    }
+
+    /**
+     * Return the passing grades (everything above F / F9).
+     */
+    public function getPassingGradesAttribute(): array
+    {
+        return $this->is_senior
+            ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8']
+            : ['A', 'B', 'C', 'D'];
+    }
+
+    // ── Accessors ────────────────────────────────────────────────────────────
+
+    public function getGradeTypeAttribute(): string
     {
         return $this->is_senior ? 'Senior' : 'Junior';
     }
 
+    public function getTotalMaxScoreAttribute()
+    {
+        return $this->assessments->sum('max_score');
+    }
+
     /**
-     * Scope to filter by class type
+     * Whether a promotion pass average threshold is configured.
      */
+    public function hasPassAverageThreshold(): bool
+    {
+        return $this->promotion_pass_average !== null;
+    }
+
+    // ── Scopes ───────────────────────────────────────────────────────────────
+
     public function scopeSenior($query)
     {
         return $query->where('is_senior', true);
@@ -114,11 +127,8 @@ class Classcategory extends Model
         return $query->where('is_senior', false);
     }
 
-    /**
-     * Calculate total maximum score from assessments
-     */
-    public function getTotalMaxScoreAttribute()
+    public function scopeWithPassAverage($query)
     {
-        return $this->assessments->sum('max_score');
+        return $query->whereNotNull('promotion_pass_average');
     }
 }
