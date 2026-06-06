@@ -11,6 +11,7 @@ use App\Models\Subjectclass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class CompulsorySubjectClassController extends Controller
 {
@@ -56,7 +57,7 @@ class CompulsorySubjectClassController extends Controller
             ->orderBy('sclass')
             ->get();
 
-        // Load promotion_pass_average correctly from classcategories via the pivot table
+        // Load promotion_pass_average from classcategories via the pivot table
         $classPassAverages = DB::table('schoolclass_classcategory')
             ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
             ->select(
@@ -66,12 +67,19 @@ class CompulsorySubjectClassController extends Controller
             ->get()
             ->keyBy('classid');
 
+        // Track which classes have categories linked
+        $classesWithCategories = DB::table('schoolclass_classcategory')
+            ->pluck('schoolclass_id')
+            ->flip()
+            ->toArray();
+
         return view('compulsorysubjectclass.index', compact(
             'compulsorysubjectclasses',
             'schoolclasses',
             'terms',
             'sessions',
             'classPassAverages',
+            'classesWithCategories',
             'pagetitle'
         ));
     }
@@ -150,6 +158,7 @@ class CompulsorySubjectClassController extends Controller
             'subjects'     => $subjects,
             'grade_scale'  => $gradeScale,
             'pass_average' => $passAverage,
+            'has_category' => $category !== null,
             'category'     => $category
                 ? ['name' => $category->category, 'is_senior' => $category->is_senior, 'id' => $category->id]
                 : null,
@@ -185,7 +194,18 @@ class CompulsorySubjectClassController extends Controller
         $minGrades     = $request->input('min_grades', []);
         $passAverage   = $request->input('promotion_pass_average');
 
+        // Check if class has category linked before saving pass average
+        $hasCategory = DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $schoolClassId)
+            ->exists();
+
         if ($passAverage !== null && $passAverage !== '') {
+            if (!$hasCategory) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot set promotion pass average: This class is not linked to any category. Please contact administrator.',
+                ], 422);
+            }
             $this->savePassAverage($schoolClassId, (float) $passAverage);
         }
 
@@ -199,7 +219,10 @@ class CompulsorySubjectClassController extends Controller
                 ->where('sessionid', $sessionId)
                 ->exists();
 
-            if ($exists) { $skipped[] = $subjectId; continue; }
+            if ($exists) {
+                $skipped[] = $subjectId;
+                continue;
+            }
 
             $created[] = CompulsorySubjectClass::create([
                 'schoolclassid' => $schoolClassId,
@@ -265,6 +288,16 @@ class CompulsorySubjectClassController extends Controller
         }
 
         if ($passAverage !== null && $passAverage !== '') {
+            $hasCategory = DB::table('schoolclass_classcategory')
+                ->where('schoolclass_id', $schoolClassId)
+                ->exists();
+
+            if (!$hasCategory) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot update promotion pass average: This class is not linked to any category.',
+                ], 422);
+            }
             $this->savePassAverage($schoolClassId, (float) $passAverage);
         }
 
@@ -299,14 +332,25 @@ class CompulsorySubjectClassController extends Controller
         // Convert empty string to null
         $passAverageValue = ($passAverage !== null && $passAverage !== '') ? (float) $passAverage : null;
 
-        $savedValue = $this->savePassAverage($schoolClassId, $passAverageValue);
+        // Check if class has category linked
+        $hasCategory = DB::table('schoolclass_classcategory')
+            ->where('schoolclass_id', $schoolClassId)
+            ->exists();
 
-        if ($savedValue === null) {
+        if (!$hasCategory) {
+            $class = Schoolclass::find($schoolClassId);
+            $className = $class ? $class->schoolclass : 'Unknown class';
+
             return response()->json([
                 'success' => false,
-                'message' => 'No class category is linked to this class. Please assign a class category first.',
+                'message' => "Class '{$className}' is not linked to any category. Please contact administrator to link this class to a category first.",
+                'needs_category_link' => true,
+                'class_id' => $schoolClassId,
+                'class_name' => $className
             ], 422);
         }
+
+        $savedValue = $this->savePassAverage($schoolClassId, $passAverageValue);
 
         $display = ($savedValue !== null)
             ? number_format($savedValue, 1) . '%'
@@ -348,6 +392,32 @@ class CompulsorySubjectClassController extends Controller
         ]);
     }
 
+    /**
+     * Get classes that don't have categories linked
+     */
+    public function getUnlinkedClasses()
+    {
+        $linkedClassIds = DB::table('schoolclass_classcategory')
+            ->pluck('schoolclass_id')
+            ->toArray();
+
+        $unlinkedClasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->whereNotIn('schoolclass.id', $linkedClassIds)
+            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
+            ->map(function($class) {
+                return [
+                    'id' => $class->id,
+                    'name' => $class->schoolclass . ($class->arm ? ' (' . $class->arm . ')' : ''),
+                    'arm' => $class->arm ?? 'N/A'
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'unlinked_classes' => $unlinkedClasses
+        ]);
+    }
+
     // =========================================================================
     // PRIVATE HELPERS
     // =========================================================================
@@ -365,7 +435,10 @@ class CompulsorySubjectClassController extends Controller
             ->where('schoolclass_id', $schoolClassId)
             ->first();
 
-        if (!$pivotRow) return null;
+        if (!$pivotRow) {
+            Log::warning('No class category linked to class ID: ' . $schoolClassId);
+            return null;
+        }
 
         DB::table('classcategories')
             ->where('id', $pivotRow->classcategory_id)
