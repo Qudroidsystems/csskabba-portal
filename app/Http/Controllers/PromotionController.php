@@ -205,6 +205,9 @@ class PromotionController extends Controller
     /**
      * Get student details for modal
      */
+  /**
+     * Get student details for modal — scoped to the selected term/session
+     */
     public function getStudentDetails($studentId, $schoolclassId, $sessionId, $termId)
     {
         try {
@@ -226,36 +229,103 @@ class PromotionController extends Controller
             }
 
             // Get scores for evaluation
-            $scores = $this->getStudentScores($studentId, $schoolclassId, $sessionId, $termId);
+            $scores         = $this->getStudentScores($studentId, $schoolclassId, $sessionId, $termId);
             $overallAverage = $this->calculateOverallAverage($scores);
 
             // Evaluate promotion
             $promotionResult = $this->promotionEvaluator->evaluate(
-                studentId: $studentId,
-                schoolclassid: $schoolclassId,
-                termid: $termId,
-                sessionid: $sessionId,
-                scores: $scores,
+                studentId:      $studentId,
+                schoolclassid:  $schoolclassId,
+                termid:         $termId,
+                sessionid:      $sessionId,
+                scores:         $scores,
                 overallAverage: $overallAverage
             );
 
-            // Get compulsory subjects for this class
-            $compulsorySubjects = CompulsorySubjectClass::where('schoolclassid', $schoolclassId)
+            // Build score map keyed by subject_id for quick look-up
+            $scoreMap = $scores->keyBy('subject_id');
+
+            // Get compulsory subjects scoped to this specific term + session
+            $compulsoryQuery = \App\Models\CompulsorySubjectClass::where('schoolclassid', $schoolclassId)
+                ->where(function ($q) use ($termId, $sessionId) {
+                    $q->where(function ($q2) use ($termId, $sessionId) {
+                        $q2->where('termid', $termId)
+                           ->where('sessionid', $sessionId);
+                    })->orWhere(function ($q2) use ($sessionId) {
+                        $q2->whereNull('termid')
+                           ->where('sessionid', $sessionId);
+                    })->orWhere(function ($q2) {
+                        $q2->whereNull('termid')
+                           ->whereNull('sessionid');
+                    });
+                })
                 ->with('subject')
                 ->get();
 
+            // Enrich each compulsory subject with the student's actual grade & pass/fail
+            $compulsorySubjectsWithStatus = $compulsoryQuery->map(function ($cs) use ($scoreMap) {
+                $entry        = $scoreMap->get($cs->subjectId);
+                $studentGrade = $entry?->grade ?? null;
+                $studentTotal = $entry?->total ?? null;
+                $minGrade     = $cs->min_grade;
+
+                // Determine pass/fail
+                if ($entry === null) {
+                    $passStatus = 'not_sat';
+                } else {
+                    $passStatus = $this->gradePassFail($studentGrade, $minGrade) ? 'pass' : 'fail';
+                }
+
+                return [
+                    'csc_id'        => $cs->id,
+                    'subject_id'    => $cs->subjectId,
+                    'subject'       => $cs->subject?->subject        ?? 'N/A',
+                    'subject_code'  => $cs->subject?->subject_code   ?? '',
+                    'min_grade'     => $minGrade ?? '—',
+                    'student_grade' => $studentGrade,
+                    'student_total' => $studentTotal,
+                    'pass_status'   => $passStatus,   // 'pass' | 'fail' | 'not_sat'
+                ];
+            });
+
             return response()->json([
-                'success' => true,
-                'student' => $student,
-                'promotion_result' => $promotionResult,
-                'overall_average' => $overallAverage,
-                'compulsory_subjects' => $compulsorySubjects,
-                'scores_count' => $scores->count(),
+                'success'              => true,
+                'student'              => $student,
+                'promotion_result'     => $promotionResult,
+                'overall_average'      => $overallAverage,
+                'compulsory_subjects'  => $compulsorySubjectsWithStatus,
+                'scores_count'         => $scores->count(),
             ]);
-        } catch (Exception $e) {
-            Log::error('Error getting student details', ['error' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error getting student details', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Failed to get student details'], 500);
         }
+    }
+
+    /**
+     * Helper: determine if a student grade meets/exceeds the minimum grade
+     */
+    private function gradePassFail(?string $studentGrade, ?string $minGrade): bool
+    {
+        if ($studentGrade === null) return false;
+
+        $gradeOrder = [
+            'F9' => 0, 'E8' => 1, 'D7' => 2,
+            'C6' => 3, 'C5' => 4, 'C4' => 5,
+            'B3' => 6, 'B2' => 7, 'A1' => 8,
+            'F'  => 0, 'D'  => 2, 'C'  => 5,
+            'B'  => 7, 'A'  => 8,
+        ];
+
+        $sg = strtoupper(trim($studentGrade));
+        if ($minGrade) {
+            $mg          = strtoupper(trim($minGrade));
+            $studentRank = $gradeOrder[$sg] ?? -1;
+            $minRank     = $gradeOrder[$mg] ?? 0;
+            return $studentRank >= $minRank;
+        }
+
+        return !in_array($sg, ['F', 'F9'], true);
     }
 
     /**
