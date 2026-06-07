@@ -7,10 +7,8 @@ use App\Models\PromotionSetting;
 use App\Models\Schoolclass;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
-use App\Models\Subject;
 use App\Models\Subjectclass;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class PromotionSettingController extends Controller
@@ -34,11 +32,14 @@ class PromotionSettingController extends Controller
         $sessions = Schoolsession::orderBy('session', 'desc')->get();
         $terms    = Schoolterm::orderBy('term')->get();
 
-        return view('promotions.settings', compact('settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'));
+        return view('promotions.settings', compact(
+            'settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'
+        ));
     }
 
     /**
-     * Return subjects available for a class (for the conditional rules builder)
+     * Return ALL subjects for a class (used by the rule builder).
+     * Term / session scoping is optional.
      */
     public function subjectsByClass(Request $request)
     {
@@ -53,9 +54,7 @@ class PromotionSettingController extends Controller
         $query = Subjectclass::with(['subject'])
             ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
             ->where('subjectclass.schoolclassid', $classId)
-            ->select([
-                'subjectclass.subjectid',
-            ]);
+            ->select('subjectclass.subjectid');
 
         if ($termId)    $query->where('subjectteacher.termid', $termId);
         if ($sessionId) $query->where('subjectteacher.sessionid', $sessionId);
@@ -73,7 +72,7 @@ class PromotionSettingController extends Controller
     }
 
     /**
-     * Return compulsory subjects for a class scoped to term/session
+     * Return compulsory subjects for a class scoped to term/session.
      */
     public function compulsoryByClass(Request $request)
     {
@@ -90,10 +89,13 @@ class PromotionSettingController extends Controller
 
         if ($termId || $sessionId) {
             $query->where(function ($q) use ($termId, $sessionId) {
+                // exact match
                 $q->where(function ($q2) use ($termId, $sessionId) {
                     if ($termId)    $q2->where('termid', $termId);
                     if ($sessionId) $q2->where('sessionid', $sessionId);
-                })->orWhere(function ($q2) {
+                })
+                // or global (no term / no session)
+                ->orWhere(function ($q2) {
                     $q2->whereNull('termid')->whereNull('sessionid');
                 });
             });
@@ -109,23 +111,41 @@ class PromotionSettingController extends Controller
         return response()->json(['success' => true, 'subjects' => $subjects]);
     }
 
+    /**
+     * Store a new promotion setting.
+     *
+     * Expected fields:
+     *   schoolclass_id, session_id?, term_id?,
+     *   promoted_label, trial_label, see_principal_label, repeat_label,
+     *   promotion_rules (JSON string)
+     *
+     * promotion_rules JSON shape:
+     * [
+     *   {
+     *     "rule_name": "All A's — Top",
+     *     "status_label": "promoted",          // promoted|trial|see_principal|repeat
+     *     "subject_conditions": [
+     *       { "subject_id": 3, "subject_name": "Mathematics",
+     *         "is_compulsory": true, "min_grade": "A1" },
+     *       { "subject_id": 7, "subject_name": "English",
+     *         "is_compulsory": true, "min_grade": "" },   // "" = Any
+     *       ...
+     *     ]
+     *   },
+     *   ...
+     * ]
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'schoolclass_id'          => 'required|exists:schoolclass,id',
-            'session_id'              => 'nullable|exists:schoolsession,id',
-            'term_id'                 => 'nullable|exists:schoolterm,id',
-            'rule_type'               => 'required|in:compulsory_only,average_only,both',
-            'compulsory_fail_action'  => 'nullable|in:repeat,see_principal,trial',
-            'promotion_pass_average'  => 'nullable|numeric|min:0|max:100',
-            'trial_pass_average'      => 'nullable|numeric|min:0|max:100',
-            'see_principal_average'   => 'nullable|numeric|min:0|max:100',
-            'combined_logic'          => 'nullable|in:and,or',
-            'promoted_label'          => 'nullable|string|max:100',
-            'trial_label'             => 'nullable|string|max:100',
-            'see_principal_label'     => 'nullable|string|max:100',
-            'repeat_label'            => 'nullable|string|max:100',
-            'promotion_rules'         => 'nullable|json',
+            'schoolclass_id'      => 'required|exists:schoolclass,id',
+            'session_id'          => 'nullable|exists:schoolsession,id',
+            'term_id'             => 'nullable|exists:schoolterm,id',
+            'promoted_label'      => 'nullable|string|max:100',
+            'trial_label'         => 'nullable|string|max:100',
+            'see_principal_label' => 'nullable|string|max:100',
+            'repeat_label'        => 'nullable|string|max:100',
+            'promotion_rules'     => 'nullable|json',
         ]);
 
         if ($validator->fails()) {
@@ -133,10 +153,9 @@ class PromotionSettingController extends Controller
         }
 
         try {
-            $promotionRules = null;
-            if ($request->filled('promotion_rules')) {
-                $promotionRules = json_decode($request->promotion_rules, true);
-            }
+            $promotionRules = $request->filled('promotion_rules')
+                ? json_decode($request->promotion_rules, true)
+                : [];
 
             $setting = PromotionSetting::updateOrCreate(
                 [
@@ -145,44 +164,45 @@ class PromotionSettingController extends Controller
                     'term_id'        => $request->term_id    ?: null,
                 ],
                 [
-                    'rule_type'               => $request->rule_type,
-                    'compulsory_fail_action'  => $request->compulsory_fail_action,
-                    'promotion_pass_average'  => $request->promotion_pass_average,
-                    'trial_pass_average'      => $request->trial_pass_average,
-                    'see_principal_average'   => $request->see_principal_average,
-                    'combined_logic'          => $request->combined_logic,
-                    'promoted_label'          => $request->promoted_label          ?? 'Promoted',
-                    'trial_label'             => $request->trial_label             ?? 'Promoted on Trial',
-                    'see_principal_label'     => $request->see_principal_label     ?? 'Advised to See Principal',
-                    'repeat_label'            => $request->repeat_label            ?? 'Advice to Repeat',
-                    'promotion_rules'         => $promotionRules,
-                    'is_active'               => true,
+                    'promoted_label'      => $request->promoted_label      ?? 'Promoted',
+                    'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
+                    'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
+                    'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
+                    'promotion_rules'     => $promotionRules,
+                    // Keep legacy columns nullable / default so existing migrations don't break
+                    'rule_type'           => 'compulsory_only',
+                    'is_active'           => true,
                 ]
             );
 
-            return response()->json(['success' => true, 'message' => 'Promotion settings saved successfully.', 'data' => $setting]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Promotion settings saved successfully.',
+                'data'    => $setting,
+            ]);
+
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to save settings: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
+    /**
+     * Update an existing promotion setting.
+     */
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'schoolclass_id'          => 'required|exists:schoolclass,id',
-            'session_id'              => 'nullable|exists:schoolsession,id',
-            'term_id'                 => 'nullable|exists:schoolterm,id',
-            'rule_type'               => 'required|in:compulsory_only,average_only,both',
-            'compulsory_fail_action'  => 'nullable|in:repeat,see_principal,trial',
-            'promotion_pass_average'  => 'nullable|numeric|min:0|max:100',
-            'trial_pass_average'      => 'nullable|numeric|min:0|max:100',
-            'see_principal_average'   => 'nullable|numeric|min:0|max:100',
-            'combined_logic'          => 'nullable|in:and,or',
-            'promoted_label'          => 'nullable|string|max:100',
-            'trial_label'             => 'nullable|string|max:100',
-            'see_principal_label'     => 'nullable|string|max:100',
-            'repeat_label'            => 'nullable|string|max:100',
-            'promotion_rules'         => 'nullable|json',
+            'schoolclass_id'      => 'required|exists:schoolclass,id',
+            'session_id'          => 'nullable|exists:schoolsession,id',
+            'term_id'             => 'nullable|exists:schoolterm,id',
+            'promoted_label'      => 'nullable|string|max:100',
+            'trial_label'         => 'nullable|string|max:100',
+            'see_principal_label' => 'nullable|string|max:100',
+            'repeat_label'        => 'nullable|string|max:100',
+            'promotion_rules'     => 'nullable|json',
         ]);
 
         if ($validator->fails()) {
@@ -192,31 +212,32 @@ class PromotionSettingController extends Controller
         try {
             $setting = PromotionSetting::findOrFail($id);
 
-            $promotionRules = null;
-            if ($request->filled('promotion_rules')) {
-                $promotionRules = json_decode($request->promotion_rules, true);
-            }
+            $promotionRules = $request->filled('promotion_rules')
+                ? json_decode($request->promotion_rules, true)
+                : [];
 
             $setting->update([
-                'schoolclass_id'          => $request->schoolclass_id,
-                'session_id'              => $request->session_id     ?: null,
-                'term_id'                 => $request->term_id        ?: null,
-                'rule_type'               => $request->rule_type,
-                'compulsory_fail_action'  => $request->compulsory_fail_action,
-                'promotion_pass_average'  => $request->promotion_pass_average,
-                'trial_pass_average'      => $request->trial_pass_average,
-                'see_principal_average'   => $request->see_principal_average,
-                'combined_logic'          => $request->combined_logic,
-                'promoted_label'          => $request->promoted_label          ?? 'Promoted',
-                'trial_label'             => $request->trial_label             ?? 'Promoted on Trial',
-                'see_principal_label'     => $request->see_principal_label     ?? 'Advised to See Principal',
-                'repeat_label'            => $request->repeat_label            ?? 'Advice to Repeat',
-                'promotion_rules'         => $promotionRules,
+                'schoolclass_id'      => $request->schoolclass_id,
+                'session_id'          => $request->session_id ?: null,
+                'term_id'             => $request->term_id    ?: null,
+                'promoted_label'      => $request->promoted_label      ?? 'Promoted',
+                'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
+                'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
+                'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
+                'promotion_rules'     => $promotionRules,
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Promotion settings updated successfully.', 'data' => $setting]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Promotion settings updated successfully.',
+                'data'    => $setting,
+            ]);
+
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to update settings: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -226,21 +247,7 @@ class PromotionSettingController extends Controller
             PromotionSetting::findOrFail($id)->delete();
             return response()->json(['success' => true, 'message' => 'Promotion settings deleted successfully.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to delete settings.'], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to delete.'], 500);
         }
-    }
-
-    public function getSettings($schoolclassId, $sessionId = null, $termId = null)
-    {
-        $query = PromotionSetting::where('schoolclass_id', $schoolclassId);
-
-        if ($sessionId) {
-            $query->where(function ($q) use ($sessionId, $termId) {
-                $q->where('session_id', $sessionId);
-                if ($termId) $q->where('term_id', $termId);
-            });
-        }
-
-        return response()->json(['success' => true, 'data' => $query->first()]);
     }
 }
