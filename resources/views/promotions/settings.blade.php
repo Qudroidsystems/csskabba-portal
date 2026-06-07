@@ -36,13 +36,33 @@
 .rule-badge.compulsory_only { background: #fef3c7; color: #92400e; }
 .rule-badge.average_only    { background: #dbeafe; color: #1e40af; }
 .rule-badge.both            { background: #dcfce7; color: #166534; }
-.modal-content { border-radius: 16px; overflow: hidden; }
+
+/* ── Modal fix: overflow:visible so modal-dialog-scrollable works ── */
+.modal-content {
+    border-radius: 16px;
+    overflow: visible; /* was: hidden — this was breaking modal-dialog-scrollable */
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 56px); /* Bootstrap default minus some breathing room */
+}
 .modal-header {
     background: linear-gradient(135deg, #1e3a5f, #2563eb);
     padding: 20px 28px; border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
 }
 .modal-header .modal-title { color: #fff; font-weight: 700; }
 .modal-header .btn-close { filter: invert(1); }
+.modal-footer {
+    flex-shrink: 0;
+    border-radius: 0 0 16px 16px;
+}
+.modal-body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    padding: 1.5rem;
+}
+
 .form-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
 .form-section-title {
     font-size: 14px; font-weight: 700; color: var(--pay-primary);
@@ -263,11 +283,11 @@
                 <input type="hidden" name="id" id="setting_id">
                 <input type="hidden" name="promotion_rules" id="promotion_rules_input">
 
-                <div class="modal-body p-4">
+                <div class="modal-body">
 
                     {{-- ── 1. Class / Session / Term ──────────────────────────────── --}}
                     <div class="form-section">
-                        <div class="form-section-title"><i class="ri-book-2-line me-2"></i>Class & Scope</div>
+                        <div class="form-section-title"><i class="ri-book-2-line me-2"></i>Class &amp; Scope</div>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Class <span class="text-danger">*</span></label>
@@ -368,7 +388,7 @@
                         </div>
                     </div>
 
-                    {{-- ── 5. Conditional Label Rules (new) ────────────────────────── --}}
+                    {{-- ── 5. Conditional Label Rules ───────────────────────────────── --}}
                     <div class="form-section">
                         <div class="form-section-title d-flex justify-content-between align-items-center">
                             <span><i class="ri-price-tag-3-line me-2"></i>Conditional Label Rules</span>
@@ -417,7 +437,8 @@
                         </div>
                     </div>
 
-                </div>
+                </div>{{-- /.modal-body --}}
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Settings</button>
@@ -432,9 +453,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    State
 ═══════════════════════════════════════════════════════════════════════════ */
-let allSubjectsForClass = [];      // [{id, subject, subject_code}]
-let compulsorySubjectsForClass = []; // [{id, subject, min_grade}]
-let condRules = [];                // [{label, color, description, failed_subject_ids, other_subject_conditions}]
+let allSubjectsForClass        = [];   // [{id, subject, subject_code}]
+let compulsorySubjectsForClass = [];   // [{id, subject, min_grade}]
+let condRules                  = [];   // [{label, color, description, failed_subject_ids, other_subject_conditions}]
 const GRADE_SCALES_SENIOR = ['A1','B2','B3','C4','C5','C6','D7','E8','F9'];
 const GRADE_SCALES_JUNIOR = ['A','B','C','D','F'];
 let gradeScale = GRADE_SCALES_JUNIOR;
@@ -469,7 +490,7 @@ async function refreshSubjects() {
         const subData  = await subResp.json();
         const compData = await compResp.json();
 
-        allSubjectsForClass       = subData.success  ? subData.subjects  : [];
+        allSubjectsForClass        = subData.success  ? subData.subjects  : [];
         compulsorySubjectsForClass = compData.success ? compData.subjects : [];
 
         // Detect grade scale from compulsory subjects or default to junior
@@ -638,7 +659,6 @@ function removeOtherCond(ruleIdx, condIdx) {
 }
 
 async function showOtherCondPicker(ruleIdx) {
-    // Build subject options excluding already added ones
     const alreadyAdded = (condRules[ruleIdx].other_subject_conditions || []).map(c => c.subject_id);
     const available    = allSubjectsForClass.filter(s => !alreadyAdded.includes(s.id));
 
@@ -690,7 +710,6 @@ async function showOtherCondPicker(ruleIdx) {
 document.getElementById('settingForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // Validate conditional rules
     for (const [i, rule] of condRules.entries()) {
         if (!rule.label.trim()) {
             Swal.fire('Validation Error', `Rule ${i+1} must have a label.`, 'warning');
@@ -710,7 +729,10 @@ document.getElementById('settingForm').addEventListener('submit', async function
     try {
         const res  = await fetch(url, {
             method: 'POST',
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
             body: formData
         });
         const data = await res.json();
@@ -743,10 +765,10 @@ document.querySelectorAll('.edit-setting').forEach(btn => {
         document.getElementById('trial_pass_average').value       = d.trial_pass_average;
         document.getElementById('see_principal_average').value    = d.see_principal_average;
         document.getElementById('combined_logic').value           = d.combined_logic || 'and';
-        document.getElementById('promoted_label').value           = d.promoted_label     || 'Promoted';
-        document.getElementById('trial_label').value              = d.trial_label        || 'Promoted on Trial';
-        document.getElementById('see_principal_label').value      = d.see_principal_label|| 'Advised to See Principal';
-        document.getElementById('repeat_label').value             = d.repeat_label       || 'Advice to Repeat';
+        document.getElementById('promoted_label').value           = d.promoted_label      || 'Promoted';
+        document.getElementById('trial_label').value              = d.trial_label         || 'Promoted on Trial';
+        document.getElementById('see_principal_label').value      = d.see_principal_label || 'Advised to See Principal';
+        document.getElementById('repeat_label').value             = d.repeat_label        || 'Advice to Repeat';
 
         try { condRules = JSON.parse(d.promotion_rules || '[]'); } catch(e) { condRules = []; }
 
@@ -774,7 +796,10 @@ document.querySelectorAll('.delete-setting').forEach(btn => {
         try {
             const res  = await fetch(`/promotion-settings/${this.dataset.id}`, {
                 method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept':'application/json' }
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                }
             });
             const data = await res.json();
             if (data.success) {
@@ -790,12 +815,11 @@ document.querySelectorAll('.delete-setting').forEach(btn => {
 ═══════════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
     toggleSections();
-    // Reset condRules & form on modal close
     document.getElementById('addSettingModal').addEventListener('hidden.bs.modal', () => {
         document.getElementById('settingForm').reset();
         document.getElementById('setting_id').value = '';
-        condRules = [];
-        allSubjectsForClass = [];
+        condRules                  = [];
+        allSubjectsForClass        = [];
         compulsorySubjectsForClass = [];
         document.getElementById('addCondRuleBtn').disabled = true;
         rerenderAllCondRules();
