@@ -483,25 +483,32 @@ async function refreshSubjects() {
 
     if (!classId) { addBtn.disabled = true; return; }
 
+    // Enable immediately — a class is selected; compulsory subjects being
+    // empty is valid and must never block the button.
+    addBtn.disabled = false;
+
     try {
         const [subResp, compResp] = await Promise.all([
             fetch(`/promotion-settings/subjects-by-class?classid=${classId}&termid=${termId}&sessionid=${sessionId}`),
             fetch(`/promotion-settings/compulsory-by-class?classid=${classId}&termid=${termId}&sessionid=${sessionId}`)
         ]);
-        const subData  = await subResp.json();
-        const compData = await compResp.json();
+
+        const subData  = subResp.ok  ? await subResp.json().catch(() => ({}))  : {};
+        const compData = compResp.ok ? await compResp.json().catch(() => ({})) : {};
 
         allSubjectsForClass        = subData.success  ? subData.subjects  : [];
         compulsorySubjectsForClass = compData.success ? compData.subjects : [];
 
-        // Detect grade scale from compulsory subjects or default to junior
         const isSeenSenior = compulsorySubjectsForClass.some(s => s.min_grade && /[0-9]/.test(s.min_grade));
         gradeScale = isSeenSenior ? GRADE_SCALES_SENIOR : GRADE_SCALES_JUNIOR;
 
-        addBtn.disabled = false;
         rerenderAllCondRules();
     } catch(e) {
-        console.error(e);
+        // Fetch failed — keep button enabled, just no subject chips
+        console.error('refreshSubjects fetch error:', e);
+        allSubjectsForClass        = [];
+        compulsorySubjectsForClass = [];
+        rerenderAllCondRules();
     }
 }
 
