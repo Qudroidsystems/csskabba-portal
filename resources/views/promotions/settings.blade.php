@@ -278,12 +278,14 @@
                 <h5 class="modal-title"><i class="ri-settings-4-line me-2"></i>Promotion Rule Settings</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="settingForm">
+            {{-- form lives outside the flex flow so it never breaks modal-body scrolling --}}
+            <form id="settingForm" hidden>
                 @csrf
-                <input type="hidden" name="id" id="setting_id">
-                <input type="hidden" name="promotion_rules" id="promotion_rules_input">
+                <input type="hidden" name="id"               id="setting_id">
+                <input type="hidden" name="promotion_rules"  id="promotion_rules_input">
+            </form>
 
-                <div class="modal-body">
+            <div class="modal-body">
 
                     {{-- ── 1. Class / Session / Term ──────────────────────────────── --}}
                     <div class="form-section">
@@ -441,9 +443,8 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" class="btn btn-primary" id="saveSettingBtn">Save Settings</button>
                 </div>
-            </form>
         </div>
     </div>
 </div>
@@ -705,11 +706,10 @@ async function showOtherCondPicker(ruleIdx) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Form submit
+   Form submit (triggered by button, not form submit event)
 ═══════════════════════════════════════════════════════════════════════════ */
-document.getElementById('settingForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
+document.getElementById('saveSettingBtn').addEventListener('click', async function() {
+    // Validate conditional rules
     for (const [i, rule] of condRules.entries()) {
         if (!rule.label.trim()) {
             Swal.fire('Validation Error', `Rule ${i+1} must have a label.`, 'warning');
@@ -717,11 +717,30 @@ document.getElementById('settingForm').addEventListener('submit', async function
         }
     }
 
+    // Required field check
+    const classId = document.getElementById('schoolclass_id').value;
+    if (!classId) {
+        Swal.fire('Validation Error', 'Please select a class.', 'warning');
+        return;
+    }
+
     document.getElementById('promotion_rules_input').value = JSON.stringify(condRules);
 
-    const formData = new FormData(this);
-    const id       = document.getElementById('setting_id').value;
-    let url        = '{{ route("promotion.settings.store") }}';
+    // Collect all field values manually (form is hidden, fields are in modal-body)
+    const formData = new FormData(document.getElementById('settingForm'));
+    const fieldIds = [
+        'schoolclass_id','session_id','term_id','rule_type',
+        'compulsory_fail_action','promotion_pass_average','trial_pass_average',
+        'see_principal_average','combined_logic',
+        'promoted_label','trial_label','see_principal_label','repeat_label'
+    ];
+    fieldIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) formData.set(id, el.value);
+    });
+
+    const id  = document.getElementById('setting_id').value;
+    let url   = '{{ route("promotion.settings.store") }}';
     if (id) { url = `/promotion-settings/${id}`; formData.append('_method', 'PUT'); }
 
     Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -816,8 +835,22 @@ document.querySelectorAll('.delete-setting').forEach(btn => {
 document.addEventListener('DOMContentLoaded', () => {
     toggleSections();
     document.getElementById('addSettingModal').addEventListener('hidden.bs.modal', () => {
+        // Reset hidden form
         document.getElementById('settingForm').reset();
         document.getElementById('setting_id').value = '';
+        // Reset visible fields
+        const fieldIds = [
+            'schoolclass_id','session_id','term_id','rule_type',
+            'compulsory_fail_action','promotion_pass_average','trial_pass_average',
+            'see_principal_average','combined_logic',
+            'promoted_label','trial_label','see_principal_label','repeat_label'
+        ];
+        fieldIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else el.value = '';
+        });
         condRules                  = [];
         allSubjectsForClass        = [];
         compulsorySubjectsForClass = [];
