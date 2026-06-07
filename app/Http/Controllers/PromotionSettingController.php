@@ -26,12 +26,11 @@ class PromotionSettingController extends Controller
     {
         $pagetitle = "Promotion Settings Management";
 
-        $settings = PromotionSetting::with(['schoolclass.arm', 'session', 'term'])
+        $settings = PromotionSetting::with(['schoolclass', 'session', 'term'])
             ->orderBy('schoolclass_id')
             ->get();
 
-        $schoolclasses = Schoolclass::with('arm')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
 
         $sessions = Schoolsession::orderBy('session', 'desc')->get();

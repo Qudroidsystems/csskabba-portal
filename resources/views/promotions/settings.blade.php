@@ -412,10 +412,7 @@
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
                                         <h6 class="mb-0 fw-bold">
-                                            {{ $setting->schoolclass->schoolclass }}
-                                            @if($setting->schoolclass->arm)
-                                                {{ $setting->schoolclass->arm->arm }}
-                                            @endif
+                                            {{ trim($setting->schoolclass->schoolclass . ' ' . ($setting->schoolclass->arm ?? '')) }}
                                         </h6>
                                         <small class="text-muted">
                                             {{ $setting->session?->session ?? 'All Sessions' }}
@@ -538,10 +535,7 @@
                                 <option value="">-- Select Class --</option>
                                 @foreach ($schoolclasses as $class)
                                 <option value="{{ $class->id }}">
-                                    {{ $class->schoolclass }}
-                                    @if($class->arm)
-                                        {{ $class->arm }}
-                                    @endif
+                                    {{ trim($class->schoolclass . ' ' . ($class->arm ?? '')) }}
                                 </option>
                                 @endforeach
                             </select>
@@ -1157,3 +1151,4 @@ function escapeHtml(str) {
 }
 </script>
 @endsection
+
