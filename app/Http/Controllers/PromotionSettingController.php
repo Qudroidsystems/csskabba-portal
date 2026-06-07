@@ -8,6 +8,7 @@ use App\Models\Schoolclass;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Subjectclass;
+use App\Models\SubjectTeacher;
 use App\Models\CompulsorySubjectClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -43,6 +44,7 @@ class PromotionSettingController extends Controller
     /**
      * Return ALL subjects for a class (used by the rule builder).
      * Term / session scoping is optional.
+     * Note: subjectclass table doesn't have sessionid/termid, we need to join with subjectteacher
      */
     public function subjectsByClass(Request $request)
     {
@@ -55,47 +57,46 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => 'Class required'], 422);
             }
 
-            // Build query for subjects assigned to this class
-            $query = Subjectclass::with(['subject'])
-                ->where('subjectclass.schoolclassid', $classId);
+            // Build query using DB raw to avoid ORM issues
+            $sql = "SELECT DISTINCT s.id, s.subject, s.subject_code
+                    FROM subjectclass sc
+                    INNER JOIN subjectteacher st ON st.id = sc.subjectteacherid
+                    INNER JOIN subject s ON s.id = sc.subjectid
+                    WHERE sc.schoolclassid = ?";
 
-            // Apply filters if provided
+            $params = [$classId];
+
             if ($termId && $termId !== 'null' && $termId !== '') {
-                $query->where('subjectclass.termid', $termId);
+                $sql .= " AND st.termid = ?";
+                $params[] = $termId;
             }
+
             if ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
-                $query->where('subjectclass.sessionid', $sessionId);
+                $sql .= " AND st.sessionid = ?";
+                $params[] = $sessionId;
             }
 
-            $subjectClasses = $query->get();
+            $results = DB::select($sql, $params);
 
-            // Log for debugging
-            Log::info('Subjects by Class Query', [
+            $subjects = array_map(function($row) {
+                return [
+                    'id' => (string)$row->id,
+                    'subject' => $row->subject,
+                    'subject_code' => $row->subject_code,
+                ];
+            }, $results);
+
+            Log::info('Subjects by Class', [
                 'class_id' => $classId,
                 'term_id' => $termId,
                 'session_id' => $sessionId,
-                'count' => $subjectClasses->count()
+                'count' => count($subjects)
             ]);
-
-            // Get unique subjects
-            $subjects = $subjectClasses
-                ->filter(function($sc) {
-                    return $sc->subject !== null;
-                })
-                ->unique('subjectid')
-                ->map(function($sc) {
-                    return [
-                        'id'           => (string)$sc->subjectid,
-                        'subject'      => $sc->subject?->subject ?? 'Unknown',
-                        'subject_code' => $sc->subject?->subject_code ?? '',
-                    ];
-                })
-                ->values();
 
             return response()->json([
                 'success' => true,
                 'subjects' => $subjects,
-                'total' => $subjects->count()
+                'total' => count($subjects)
             ]);
 
         } catch (\Exception $e) {
@@ -124,53 +125,49 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => 'Class required'], 422);
             }
 
-            $query = CompulsorySubjectClass::where('schoolclassid', $classId)
-                ->with('subject');
+            $sql = "SELECT DISTINCT cs.subjectId, s.subject, s.subject_code, cs.min_grade
+                    FROM compulsory_subject_classes cs
+                    INNER JOIN subject s ON s.id = cs.subjectId
+                    WHERE cs.schoolclassid = ?";
 
-            // Apply term/session filters
+            $params = [$classId];
+
+            // Handle term/session filters
             if ($termId && $termId !== 'null' && $termId !== '') {
-                $query->where(function ($q) use ($termId, $sessionId) {
-                    $q->where('termid', $termId);
-                    if ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
-                        $q->where('sessionid', $sessionId);
-                    }
-                    // Also include global records (where termid and sessionid are null)
-                    $q->orWhere(function ($q2) {
-                        $q2->whereNull('termid')->whereNull('sessionid');
-                    });
-                });
+                $sql .= " AND (cs.termid = ? OR (cs.termid IS NULL AND cs.sessionid IS NULL))";
+                $params[] = $termId;
+
+                if ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
+                    $sql .= " AND (cs.sessionid = ? OR (cs.termid IS NULL AND cs.sessionid IS NULL))";
+                    $params[] = $sessionId;
+                }
             } elseif ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
-                $query->where(function ($q) use ($sessionId) {
-                    $q->where('sessionid', $sessionId);
-                    $q->orWhere(function ($q2) {
-                        $q2->whereNull('termid')->whereNull('sessionid');
-                    });
-                });
+                $sql .= " AND (cs.sessionid = ? OR (cs.termid IS NULL AND cs.sessionid IS NULL))";
+                $params[] = $sessionId;
             } else {
-                // Include global records when no filters
-                $query->where(function ($q) {
-                    $q->whereNull('termid')->whereNull('sessionid');
-                });
+                $sql .= " AND (cs.termid IS NULL AND cs.sessionid IS NULL)";
             }
 
-            $subjects = $query->get()->map(function($cs) {
+            $results = DB::select($sql, $params);
+
+            $subjects = array_map(function($row) {
                 return [
-                    'id'           => (string)$cs->subjectId,
-                    'subject'      => $cs->subject?->subject ?? 'Unknown',
-                    'subject_code' => $cs->subject?->subject_code ?? '',
-                    'min_grade'    => $cs->min_grade ?? '',
+                    'id' => (string)$row->subjectId,
+                    'subject' => $row->subject,
+                    'subject_code' => $row->subject_code,
+                    'min_grade' => $row->min_grade ?? '',
                 ];
-            });
+            }, $results);
 
             Log::info('Compulsory Subjects Response', [
                 'class_id' => $classId,
-                'count' => $subjects->count()
+                'count' => count($subjects)
             ]);
 
             return response()->json([
                 'success' => true,
                 'subjects' => $subjects,
-                'total' => $subjects->count()
+                'total' => count($subjects)
             ]);
 
         } catch (\Exception $e) {
@@ -380,23 +377,27 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => 'Class required'], 422);
             }
 
-            $schoolclass = Schoolclass::with('classcategories')->find($classId);
+            $sql = "SELECT cc.is_senior
+                    FROM schoolclass sc
+                    LEFT JOIN schoolclass_classcategory scc ON scc.schoolclass_id = sc.id
+                    LEFT JOIN classcategory cc ON cc.id = scc.classcategory_id
+                    WHERE sc.id = ?";
 
-            if (!$schoolclass) {
-                return response()->json(['success' => false, 'message' => 'Class not found'], 404);
+            $result = DB::select($sql, [$classId]);
+
+            $isSenior = true; // default
+            if (!empty($result) && isset($result[0]->is_senior)) {
+                $isSenior = (bool)$result[0]->is_senior;
             }
 
-            $category = $schoolclass->classcategories->first();
-            $gradeScale = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9']; // Default senior scale
-
-            if ($category && !$category->is_senior) {
-                $gradeScale = ['A', 'B', 'C', 'D', 'F'];
-            }
+            $gradeScale = $isSenior
+                ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9']
+                : ['A', 'B', 'C', 'D', 'F'];
 
             return response()->json([
                 'success' => true,
                 'grade_scale' => $gradeScale,
-                'is_senior' => $category ? $category->is_senior : true
+                'is_senior' => $isSenior
             ]);
 
         } catch (\Exception $e) {
