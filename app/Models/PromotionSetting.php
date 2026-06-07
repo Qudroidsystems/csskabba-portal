@@ -27,6 +27,7 @@ class PromotionSetting extends Model
         'trial_label',
         'see_principal_label',
         'repeat_label',
+        'promotion_rules',  // ADD THIS - for storing JSON rules
         'is_active',
     ];
 
@@ -36,6 +37,7 @@ class PromotionSetting extends Model
         'see_principal_average' => 'decimal:2',
         'min_compulsory_pass' => 'integer',
         'is_active' => 'boolean',
+        'promotion_rules' => 'array',  // ADD THIS - to automatically cast JSON to array
     ];
 
     public function schoolclass()
@@ -51,5 +53,32 @@ class PromotionSetting extends Model
     public function term()
     {
         return $this->belongsTo(Schoolterm::class, 'term_id');
+    }
+
+    // Accessor to ensure we always get an array
+    public function getPromotionRulesAttribute($value)
+    {
+        if (is_null($value)) {
+            return [];
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        $decoded = json_decode($value, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    // Mutator to ensure JSON is stored properly
+    public function setPromotionRulesAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['promotion_rules'] = json_encode($value);
+        } elseif (is_string($value)) {
+            $this->attributes['promotion_rules'] = $value;
+        } else {
+            $this->attributes['promotion_rules'] = json_encode([]);
+        }
     }
 }

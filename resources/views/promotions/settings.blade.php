@@ -16,7 +16,6 @@
     --ps-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 
-/* Hero Section */
 .ps-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--ps-radius);
@@ -49,7 +48,6 @@
     position: relative;
 }
 
-/* Setting Card */
 .setting-card {
     background: #fff;
     border: 1px solid var(--ps-border);
@@ -68,7 +66,6 @@
     border-left: 4px solid var(--ps-success);
 }
 
-/* Modal Improvements */
 .modal-content {
     border-radius: 16px;
     overflow: hidden;
@@ -95,7 +92,6 @@
     padding: 1rem 1.5rem;
 }
 
-/* Form Sections */
 .form-section {
     background: var(--ps-bg);
     border-radius: 12px;
@@ -114,7 +110,6 @@
     justify-content: space-between;
 }
 
-/* Info Banner */
 .info-banner {
     background: #eff6ff;
     border: 1px solid #bfdbfe;
@@ -141,7 +136,6 @@
     font-size: 14px;
 }
 
-/* Rule Card */
 .rule-card {
     background: #fff;
     border: 2px solid var(--ps-border);
@@ -180,7 +174,6 @@
     padding: 20px;
 }
 
-/* Status Label Pills */
 .label-selector {
     display: flex;
     gap: 10px;
@@ -246,7 +239,6 @@
     border-color: #b91c1c;
 }
 
-/* Improved Subject Table */
 .subjects-container {
     max-height: 400px;
     overflow-y: auto;
@@ -304,28 +296,13 @@
     box-shadow: 0 0 0 2px rgba(37,99,235,.1);
 }
 
-/* Loading States */
 .spin {
     animation: spin .7s linear infinite;
 }
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255,255,255,.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    z-index: 10;
-}
 
-/* Empty State */
 .no-rules-placeholder {
     text-align: center;
     padding: 40px 20px;
@@ -445,7 +422,6 @@
     </div>
 </div>
 
-<!-- Modal -->
 <div class="modal fade" id="settingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
@@ -461,7 +437,6 @@
             </form>
 
             <div class="modal-body">
-                <!-- Class Selection -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-book-2-line me-2"></i>Class &amp; Scope</span>
@@ -504,7 +479,6 @@
                     <div id="subjectSummary" class="mt-2" style="display: none;"></div>
                 </div>
 
-                <!-- Promotion Rules -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-3-line me-2"></i>Promotion Rules</span>
@@ -531,7 +505,6 @@
                     </div>
                 </div>
 
-                <!-- Status Labels -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-line me-2"></i>Promotion Status Labels</span>
@@ -748,7 +721,6 @@ function rerenderRules() {
 
     container.innerHTML = promotionRules.map((rule, idx) => buildRuleCard(rule, idx)).join('');
 
-    // Attach event listeners
     container.querySelectorAll('.rule-name-input').forEach(inp => {
         inp.addEventListener('input', e => {
             promotionRules[+e.target.dataset.idx].rule_name = e.target.value;
@@ -820,8 +792,8 @@ function buildRuleCard(rule, idx) {
                     <option value="">Any</option>
                     ${gradeScale.map(g => `<option value="${g}" ${cond.min_grade === g ? 'selected' : ''}>${g}</option>`).join('')}
                 </select>
-            </td>
-        </tr>
+             </td>
+        </table>
     `).join('');
 
     return `
@@ -874,7 +846,6 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
         return;
     }
 
-    // Validate rules
     for (const [i, rule] of promotionRules.entries()) {
         if (!rule.rule_name || !rule.rule_name.trim()) {
             Swal.fire('Validation Error', `Rule ${i + 1} must have a name.`, 'warning');
@@ -882,7 +853,6 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
         }
     }
 
-    // Prepare data
     document.getElementById('promotion_rules_input').value = JSON.stringify(promotionRules);
 
     const formData = new FormData(document.getElementById('settingForm'));
@@ -936,7 +906,6 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
     }
 });
 
-// Edit setting
 document.querySelectorAll('.edit-setting').forEach(btn => {
     btn.addEventListener('click', async function() {
         const data = this.dataset;
@@ -962,7 +931,6 @@ document.querySelectorAll('.edit-setting').forEach(btn => {
     });
 });
 
-// Delete setting
 document.querySelectorAll('.delete-setting').forEach(btn => {
     btn.addEventListener('click', async function() {
         const result = await Swal.fire({

@@ -30,17 +30,6 @@ class PromotionSettingController extends Controller
             ->orderBy('schoolclass_id')
             ->get();
 
-        // Debug: Check if settings have rules
-        foreach ($settings as $setting) {
-            \Log::info('Setting loaded', [
-                'id' => $setting->id,
-                'class' => $setting->schoolclass->schoolclass,
-                'has_rules' => !empty($setting->promotion_rules),
-                'rules_count' => is_array($setting->promotion_rules) ? count($setting->promotion_rules) : 0,
-                'rules_type' => gettype($setting->promotion_rules)
-            ]);
-        }
-
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
 
@@ -52,9 +41,6 @@ class PromotionSettingController extends Controller
         ));
     }
 
-    /**
-     * Return ALL subjects for a class (used by the rule builder).
-     */
     public function subjectsByClass(Request $request)
     {
         try {
@@ -66,7 +52,6 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => 'Class required'], 422);
             }
 
-            // Build query using DB raw
             $sql = "SELECT DISTINCT s.id, s.subject, s.subject_code
                     FROM subjectclass sc
                     INNER JOIN subjectteacher st ON st.id = sc.subjectteacherid
@@ -110,9 +95,6 @@ class PromotionSettingController extends Controller
         }
     }
 
-    /**
-     * Return compulsory subjects for a class scoped to term/session.
-     */
     public function compulsoryByClass(Request $request)
     {
         try {
@@ -172,9 +154,6 @@ class PromotionSettingController extends Controller
         }
     }
 
-    /**
-     * Store a new promotion setting.
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -193,7 +172,6 @@ class PromotionSettingController extends Controller
         }
 
         try {
-            // Decode and validate promotion rules
             $promotionRules = [];
             if ($request->filled('promotion_rules')) {
                 $promotionRules = json_decode($request->promotion_rules, true);
@@ -205,14 +183,13 @@ class PromotionSettingController extends Controller
                 }
             }
 
-            // Clean up null/empty values
             $sessionId = $request->session_id ?: null;
             $termId = $request->term_id ?: null;
 
             if ($sessionId === 'null' || $sessionId === '') $sessionId = null;
             if ($termId === 'null' || $termId === '') $termId = null;
 
-            // Validate rule structure
+            // Validate rules
             foreach ($promotionRules as $index => $rule) {
                 if (empty($rule['rule_name'])) {
                     return response()->json([
@@ -228,15 +205,7 @@ class PromotionSettingController extends Controller
                 }
             }
 
-            // Log what we're saving
-            \Log::info('Saving promotion setting', [
-                'class_id' => $request->schoolclass_id,
-                'session_id' => $sessionId,
-                'term_id' => $termId,
-                'rules_count' => count($promotionRules),
-                'rules' => $promotionRules
-            ]);
-
+            // Find or create the setting
             $setting = PromotionSetting::updateOrCreate(
                 [
                     'schoolclass_id' => $request->schoolclass_id,
@@ -248,11 +217,14 @@ class PromotionSettingController extends Controller
                     'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
                     'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
                     'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
-                    'promotion_rules'     => $promotionRules,
-                    'rule_type'           => 'compulsory_only',
+                    'rule_type'           => 'custom_rules',
                     'is_active'           => true,
                 ]
             );
+
+            // Set the promotion rules
+            $setting->promotion_rules = $promotionRules;
+            $setting->save();
 
             return response()->json([
                 'success' => true,
@@ -308,8 +280,10 @@ class PromotionSettingController extends Controller
                 'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
                 'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
                 'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
-                'promotion_rules'     => $promotionRules,
             ]);
+
+            $setting->promotion_rules = $promotionRules;
+            $setting->save();
 
             return response()->json([
                 'success' => true,
