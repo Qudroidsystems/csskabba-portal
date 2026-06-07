@@ -8,6 +8,7 @@ use App\Models\Schoolclass;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Subjectclass;
+use App\Models\CompulsorySubjectClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -51,15 +52,25 @@ class PromotionSettingController extends Controller
             return response()->json(['success' => false, 'message' => 'Class required'], 422);
         }
 
+        // Build query for subjects assigned to this class
         $query = Subjectclass::with(['subject'])
-            ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-            ->where('subjectclass.schoolclassid', $classId)
-            ->select('subjectclass.subjectid');
+            ->where('subjectclass.schoolclassid', $classId);
 
-        if ($termId)    $query->where('subjectteacher.termid', $termId);
-        if ($sessionId) $query->where('subjectteacher.sessionid', $sessionId);
+        // Apply filters if provided
+        if ($termId && $termId !== 'null' && $termId !== '') {
+            $query->where('subjectclass.termid', $termId);
+        }
+        if ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
+            $query->where('subjectclass.sessionid', $sessionId);
+        }
 
-        $subjects = $query->get()
+        $subjectClasses = $query->get();
+
+        // Get unique subjects
+        $subjects = $subjectClasses
+            ->filter(function($sc) {
+                return $sc->subject !== null;
+            })
             ->unique('subjectid')
             ->map(fn($sc) => [
                 'id'           => $sc->subjectid,
@@ -68,7 +79,11 @@ class PromotionSettingController extends Controller
             ])
             ->values();
 
-        return response()->json(['success' => true, 'subjects' => $subjects]);
+        return response()->json([
+            'success' => true,
+            'subjects' => $subjects,
+            'total' => $subjects->count()
+        ]);
     }
 
     /**
@@ -84,20 +99,32 @@ class PromotionSettingController extends Controller
             return response()->json(['success' => false, 'message' => 'Class required'], 422);
         }
 
-        $query = \App\Models\CompulsorySubjectClass::where('schoolclassid', $classId)
+        $query = CompulsorySubjectClass::where('schoolclassid', $classId)
             ->with('subject');
 
-        if ($termId || $sessionId) {
+        // Apply term/session filters
+        if ($termId && $termId !== 'null' && $termId !== '') {
             $query->where(function ($q) use ($termId, $sessionId) {
-                // exact match
-                $q->where(function ($q2) use ($termId, $sessionId) {
-                    if ($termId)    $q2->where('termid', $termId);
-                    if ($sessionId) $q2->where('sessionid', $sessionId);
-                })
-                // or global (no term / no session)
-                ->orWhere(function ($q2) {
+                $q->where('termid', $termId);
+                if ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
+                    $q->where('sessionid', $sessionId);
+                }
+                // Also include global records (where termid and sessionid are null)
+                $q->orWhere(function ($q2) {
                     $q2->whereNull('termid')->whereNull('sessionid');
                 });
+            });
+        } elseif ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
+            $query->where(function ($q) use ($sessionId) {
+                $q->where('sessionid', $sessionId);
+                $q->orWhere(function ($q2) {
+                    $q2->whereNull('termid')->whereNull('sessionid');
+                });
+            });
+        } else {
+            // Include global records when no filters
+            $query->where(function ($q) {
+                $q->whereNull('termid')->whereNull('sessionid');
             });
         }
 
@@ -108,32 +135,15 @@ class PromotionSettingController extends Controller
             'min_grade'    => $cs->min_grade,
         ]);
 
-        return response()->json(['success' => true, 'subjects' => $subjects]);
+        return response()->json([
+            'success' => true,
+            'subjects' => $subjects,
+            'total' => $subjects->count()
+        ]);
     }
 
     /**
      * Store a new promotion setting.
-     *
-     * Expected fields:
-     *   schoolclass_id, session_id?, term_id?,
-     *   promoted_label, trial_label, see_principal_label, repeat_label,
-     *   promotion_rules (JSON string)
-     *
-     * promotion_rules JSON shape:
-     * [
-     *   {
-     *     "rule_name": "All A's — Top",
-     *     "status_label": "promoted",          // promoted|trial|see_principal|repeat
-     *     "subject_conditions": [
-     *       { "subject_id": 3, "subject_name": "Mathematics",
-     *         "is_compulsory": true, "min_grade": "A1" },
-     *       { "subject_id": 7, "subject_name": "English",
-     *         "is_compulsory": true, "min_grade": "" },   // "" = Any
-     *       ...
-     *     ]
-     *   },
-     *   ...
-     * ]
      */
     public function store(Request $request)
     {
@@ -157,11 +167,18 @@ class PromotionSettingController extends Controller
                 ? json_decode($request->promotion_rules, true)
                 : [];
 
+            // Clean up null/empty values
+            $sessionId = $request->session_id ?: null;
+            $termId = $request->term_id ?: null;
+
+            if ($sessionId === 'null' || $sessionId === '') $sessionId = null;
+            if ($termId === 'null' || $termId === '') $termId = null;
+
             $setting = PromotionSetting::updateOrCreate(
                 [
                     'schoolclass_id' => $request->schoolclass_id,
-                    'session_id'     => $request->session_id ?: null,
-                    'term_id'        => $request->term_id    ?: null,
+                    'session_id'     => $sessionId,
+                    'term_id'        => $termId,
                 ],
                 [
                     'promoted_label'      => $request->promoted_label      ?? 'Promoted',
@@ -169,7 +186,6 @@ class PromotionSettingController extends Controller
                     'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
                     'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
                     'promotion_rules'     => $promotionRules,
-                    // Keep legacy columns nullable / default so existing migrations don't break
                     'rule_type'           => 'compulsory_only',
                     'is_active'           => true,
                 ]
@@ -216,10 +232,17 @@ class PromotionSettingController extends Controller
                 ? json_decode($request->promotion_rules, true)
                 : [];
 
+            // Clean up null/empty values
+            $sessionId = $request->session_id ?: null;
+            $termId = $request->term_id ?: null;
+
+            if ($sessionId === 'null' || $sessionId === '') $sessionId = null;
+            if ($termId === 'null' || $termId === '') $termId = null;
+
             $setting->update([
                 'schoolclass_id'      => $request->schoolclass_id,
-                'session_id'          => $request->session_id ?: null,
-                'term_id'             => $request->term_id    ?: null,
+                'session_id'          => $sessionId,
+                'term_id'             => $termId,
                 'promoted_label'      => $request->promoted_label      ?? 'Promoted',
                 'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
                 'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
