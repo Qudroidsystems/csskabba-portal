@@ -154,92 +154,99 @@ class PromotionSettingController extends Controller
         }
     }
 
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'schoolclass_id'      => 'required|exists:schoolclass,id',
-            'session_id'          => 'nullable|exists:schoolsession,id',
-            'term_id'             => 'nullable|exists:schoolterm,id',
-            'promoted_label'      => 'nullable|string|max:100',
-            'trial_label'         => 'nullable|string|max:100',
-            'see_principal_label' => 'nullable|string|max:100',
-            'repeat_label'        => 'nullable|string|max:100',
-            'promotion_rules'     => 'nullable|json',
+   public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'schoolclass_id'      => 'required|exists:schoolclass,id',
+        'session_id'          => 'nullable|exists:schoolsession,id',
+        'term_id'             => 'nullable|exists:schoolterm,id',
+        'promoted_label'      => 'nullable|string|max:100',
+        'trial_label'         => 'nullable|string|max:100',
+        'see_principal_label' => 'nullable|string|max:100',
+        'repeat_label'        => 'nullable|string|max:100',
+        'promotion_rules'     => 'nullable|json',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+    }
+
+    try {
+        $promotionRules = [];
+        if ($request->filled('promotion_rules')) {
+            $promotionRules = json_decode($request->promotion_rules, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid JSON in promotion rules: ' . json_last_error_msg()
+                ], 422);
+            }
+        }
+
+        $sessionId = $request->session_id ?: null;
+        $termId = $request->term_id ?: null;
+
+        if ($sessionId === 'null' || $sessionId === '') $sessionId = null;
+        if ($termId === 'null' || $termId === '') $termId = null;
+
+        // Validate rules
+        foreach ($promotionRules as $index => $rule) {
+            if (empty($rule['rule_name'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Rule ' . ($index + 1) . ' must have a name.'
+                ], 422);
+            }
+            if (!in_array($rule['status_label'], ['promoted', 'trial', 'see_principal', 'repeat'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Rule ' . ($index + 1) . ' has an invalid status label.'
+                ], 422);
+            }
+        }
+
+        // Find or create the setting
+        $setting = PromotionSetting::updateOrCreate(
+            [
+                'schoolclass_id' => $request->schoolclass_id,
+                'session_id'     => $sessionId,
+                'term_id'        => $termId,
+            ],
+            [
+                'promoted_label'      => $request->promoted_label      ?? 'Promoted',
+                'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
+                'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
+                'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
+                'is_active'           => true,
+            ]
+        );
+
+        // Set the promotion rules (this will be saved separately)
+        $setting->promotion_rules = $promotionRules;
+        $setting->save();
+
+        // Log success
+        Log::info('Promotion setting saved successfully', [
+            'id' => $setting->id,
+            'rules_count' => count($promotionRules)
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Promotion settings saved successfully.',
+            'data'    => $setting,
+        ]);
 
-        try {
-            $promotionRules = [];
-            if ($request->filled('promotion_rules')) {
-                $promotionRules = json_decode($request->promotion_rules, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid JSON in promotion rules: ' . json_last_error_msg()
-                    ], 422);
-                }
-            }
-
-            $sessionId = $request->session_id ?: null;
-            $termId = $request->term_id ?: null;
-
-            if ($sessionId === 'null' || $sessionId === '') $sessionId = null;
-            if ($termId === 'null' || $termId === '') $termId = null;
-
-            // Validate rules
-            foreach ($promotionRules as $index => $rule) {
-                if (empty($rule['rule_name'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Rule ' . ($index + 1) . ' must have a name.'
-                    ], 422);
-                }
-                if (!in_array($rule['status_label'], ['promoted', 'trial', 'see_principal', 'repeat'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Rule ' . ($index + 1) . ' has an invalid status label.'
-                    ], 422);
-                }
-            }
-
-            // Find or create the setting
-            $setting = PromotionSetting::updateOrCreate(
-                [
-                    'schoolclass_id' => $request->schoolclass_id,
-                    'session_id'     => $sessionId,
-                    'term_id'        => $termId,
-                ],
-                [
-                    'promoted_label'      => $request->promoted_label      ?? 'Promoted',
-                    'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
-                    'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
-                    'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
-                    'rule_type'           => 'custom_rules',
-                    'is_active'           => true,
-                ]
-            );
-
-            // Set the promotion rules
-            $setting->promotion_rules = $promotionRules;
-            $setting->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Promotion settings saved successfully.',
-                'data'    => $setting,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Store Promotion Setting Error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to save: ' . $e->getMessage(),
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        Log::error('Store Promotion Setting Error: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to save: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
     public function update(Request $request, $id)
     {
