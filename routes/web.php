@@ -1352,13 +1352,14 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     // PROMOTION SETTINGS ROUTES
     // =========================================================================
 
+    // Promotion Settings Routes
     Route::prefix('promotion-settings')->group(function () {
         Route::get('/', [PromotionSettingController::class, 'index'])->name('promotion.settings.index');
-        Route::post('/store', [PromotionSettingController::class, 'store'])->name('promotion.settings.store');
+        Route::get('/subjects-by-class', [PromotionSettingController::class, 'subjectsByClass'])->name('promotion.settings.subjects-by-class');
+        Route::get('/compulsory-by-class', [PromotionSettingController::class, 'compulsoryByClass'])->name('promotion.settings.compulsory-by-class');
+        Route::post('/', [PromotionSettingController::class, 'store'])->name('promotion.settings.store');
         Route::put('/{id}', [PromotionSettingController::class, 'update'])->name('promotion.settings.update');
-        Route::post('/{id}', [PromotionSettingController::class, 'update'])->name('promotion.settings.update.post');
         Route::delete('/{id}', [PromotionSettingController::class, 'destroy'])->name('promotion.settings.destroy');
-        Route::get('/get/{schoolclassId}/{sessionId?}/{termId?}',[PromotionSettingController::class, 'getSettings'])->name('promotion.settings.get');
     });
 
 
