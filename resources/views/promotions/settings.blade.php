@@ -16,7 +16,6 @@
     --ps-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 
-/* Hero Section */
 .ps-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--ps-radius);
@@ -49,7 +48,6 @@
     position: relative;
 }
 
-/* Setting Card */
 .setting-card {
     background: #fff;
     border: 1px solid var(--ps-border);
@@ -68,7 +66,6 @@
     border-left: 4px solid var(--ps-success);
 }
 
-/* Modal Improvements */
 .modal-content {
     border-radius: 16px;
     overflow: hidden;
@@ -95,7 +92,6 @@
     padding: 1rem 1.5rem;
 }
 
-/* Form Sections */
 .form-section {
     background: var(--ps-bg);
     border-radius: 12px;
@@ -114,7 +110,6 @@
     justify-content: space-between;
 }
 
-/* Info Banner */
 .info-banner {
     background: #eff6ff;
     border: 1px solid #bfdbfe;
@@ -141,7 +136,6 @@
     font-size: 14px;
 }
 
-/* Rule Card */
 .rule-card {
     background: #fff;
     border: 2px solid var(--ps-border);
@@ -190,7 +184,6 @@
     padding: 20px;
 }
 
-/* Status Label Pills */
 .label-selector {
     display: flex;
     gap: 10px;
@@ -257,7 +250,6 @@
     border-color: #b91c1c;
 }
 
-/* Improved Subject Sections */
 .subjects-layout {
     display: flex;
     flex-direction: column;
@@ -372,7 +364,6 @@
     background: #f0fdf4;
 }
 
-/* Empty State */
 .no-rules-placeholder {
     text-align: center;
     padding: 40px 20px;
@@ -422,7 +413,9 @@
                                     <div>
                                         <h6 class="mb-0 fw-bold">
                                             {{ $setting->schoolclass->schoolclass }}
-                                            {{ $setting->schoolclass->arm ?? '' }}
+                                            @if($setting->schoolclass->arm)
+                                                {{ $setting->schoolclass->arm->arm }}
+                                            @endif
                                         </h6>
                                         <small class="text-muted">
                                             {{ $setting->session?->session ?? 'All Sessions' }}
@@ -534,7 +527,6 @@
             </form>
 
             <div class="modal-body">
-                <!-- Class Selection -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-book-2-line me-2"></i>Class &amp; Scope</span>
@@ -545,7 +537,12 @@
                             <select class="form-select" id="schoolclass_id" required>
                                 <option value="">-- Select Class --</option>
                                 @foreach ($schoolclasses as $class)
-                                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm ?? '' }}</option>
+                                <option value="{{ $class->id }}">
+                                    {{ $class->schoolclass }}
+                                    @if($class->arm)
+                                        {{ $class->arm }}
+                                    @endif
+                                </option>
                                 @endforeach
                             </select>
                         </div>
@@ -577,7 +574,6 @@
                     <div id="subjectSummary" class="mt-2" style="display: none;"></div>
                 </div>
 
-                <!-- Promotion Rules -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-3-line me-2"></i>Promotion Rules</span>
@@ -604,7 +600,6 @@
                     </div>
                 </div>
 
-                <!-- Status Labels -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-line me-2"></i>Promotion Status Labels</span>
@@ -763,12 +758,14 @@ function syncRuleSubjects(rule) {
         ...compulsorySubjects.map(s => existing.get(s.id) ?? {
             subject_id: s.id,
             subject_name: s.subject,
+            subject_code: s.subject_code,
             is_compulsory: true,
             min_grade: ''
         }),
         ...otherSubjects.map(s => existing.get(s.id) ?? {
             subject_id: s.id,
             subject_name: s.subject,
+            subject_code: s.subject_code,
             is_compulsory: false,
             min_grade: ''
         }),
@@ -823,7 +820,6 @@ function rerenderRules() {
 
     container.innerHTML = promotionRules.map((rule, idx) => buildRuleCard(rule, idx)).join('');
 
-    // Attach event listeners
     container.querySelectorAll('.rule-name-input').forEach(inp => {
         inp.addEventListener('input', e => {
             promotionRules[+e.target.dataset.idx].rule_name = e.target.value;
@@ -835,7 +831,6 @@ function rerenderRules() {
             const idx = +pill.dataset.idx;
             const stat = pill.dataset.status;
             promotionRules[idx].status_label = stat;
-            // Update UI
             const ruleCard = pill.closest('.rule-card');
             const statusBadge = ruleCard.querySelector('.rule-status-badge');
             const selectedLabel = STATUS_LABELS.find(s => s.key === stat);
@@ -843,7 +838,6 @@ function rerenderRules() {
                 statusBadge.className = `rule-status-badge ${stat}`;
                 statusBadge.innerHTML = `<i class="${selectedLabel.icon} me-1"></i>${selectedLabel.label}`;
             }
-            // Update active state on pills
             pill.closest('.label-selector').querySelectorAll('.label-pill').forEach(p => {
                 p.classList.toggle('active', p.dataset.status === stat);
             });
@@ -855,14 +849,12 @@ function rerenderRules() {
             const rIdx = +e.target.dataset.ruleIdx;
             const sIdx = +e.target.dataset.subjIdx;
             promotionRules[rIdx].subject_conditions[sIdx].min_grade = e.target.value;
-            // Highlight if value is selected
             if (e.target.value) {
                 e.target.classList.add('has-value');
             } else {
                 e.target.classList.remove('has-value');
             }
         });
-        // Initialize highlight
         if (sel.value) {
             sel.classList.add('has-value');
         }
@@ -906,31 +898,32 @@ function buildRuleCard(rule, idx) {
                 </span>`;
     }).join('');
 
-    // Build compulsory subjects table
     const compulsoryConditions = rule.subject_conditions.filter(c => c.is_compulsory);
     const otherConditions = rule.subject_conditions.filter(c => !c.is_compulsory);
 
-    const buildSubjectRows = (conditions, isCompulsory) => {
+    const buildSubjectRows = (conditions) => {
         if (conditions.length === 0) return '';
-        return conditions.map((cond, sIdx) => `
+        return conditions.map((cond, sIdx) => {
+            const globalSubjIdx = rule.subject_conditions.findIndex(c => c.subject_id === cond.subject_id);
+            return `
             <tr>
                 <td class="subject-name-cell">
-                    ${isCompulsory ? '<span class="badge-compulsory"><i class="ri-star-fill me-1"></i>Compulsory</span>' : '<span class="badge-optional"><i class="ri-checkbox-line me-1"></i>Optional</span>'}
                     <strong>${escapeHtml(cond.subject_name)}</strong>
                     ${cond.subject_code ? `<span class="subject-code">(${escapeHtml(cond.subject_code)})</span>` : ''}
-                 </td>
+                  </td>
                 <td style="width: 130px;">
-                    <select class="grade-sel form-select form-select-sm" data-rule-idx="${idx}" data-subj-idx="${sIdx}">
+                    <select class="grade-sel form-select form-select-sm" data-rule-idx="${idx}" data-subj-idx="${globalSubjIdx}">
                         <option value="">📌 Any</option>
                         ${gradeScale.map(g => `<option value="${g}" ${cond.min_grade === g ? 'selected' : ''}>${g}</option>`).join('')}
                     </select>
-                 </td>
-            </tr>
-        `).join('');
+                  </td>
+              </tr>
+            `;
+        }).join('');
     };
 
-    const compulsoryRows = buildSubjectRows(compulsoryConditions, true);
-    const otherRows = buildSubjectRows(otherConditions, false);
+    const compulsoryRows = buildSubjectRows(compulsoryConditions);
+    const otherRows = buildSubjectRows(otherConditions);
 
     return `
     <div class="rule-card">
@@ -1078,7 +1071,6 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
     }
 });
 
-// Edit and Delete handlers...
 document.querySelectorAll('.edit-setting').forEach(btn => {
     btn.addEventListener('click', async function() {
         const data = this.dataset;
