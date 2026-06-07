@@ -30,6 +30,17 @@ class PromotionSettingController extends Controller
             ->orderBy('schoolclass_id')
             ->get();
 
+        // Debug: Check if settings have rules
+        foreach ($settings as $setting) {
+            \Log::info('Setting loaded', [
+                'id' => $setting->id,
+                'class' => $setting->schoolclass->schoolclass,
+                'has_rules' => !empty($setting->promotion_rules),
+                'rules_count' => is_array($setting->promotion_rules) ? count($setting->promotion_rules) : 0,
+                'rules_type' => gettype($setting->promotion_rules)
+            ]);
+        }
+
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
 
@@ -43,8 +54,6 @@ class PromotionSettingController extends Controller
 
     /**
      * Return ALL subjects for a class (used by the rule builder).
-     * Term / session scoping is optional.
-     * Note: subjectclass table doesn't have sessionid/termid, we need to join with subjectteacher
      */
     public function subjectsByClass(Request $request)
     {
@@ -57,7 +66,7 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => 'Class required'], 422);
             }
 
-            // Build query using DB raw to avoid ORM issues
+            // Build query using DB raw
             $sql = "SELECT DISTINCT s.id, s.subject, s.subject_code
                     FROM subjectclass sc
                     INNER JOIN subjectteacher st ON st.id = sc.subjectteacherid
@@ -86,13 +95,6 @@ class PromotionSettingController extends Controller
                 ];
             }, $results);
 
-            Log::info('Subjects by Class', [
-                'class_id' => $classId,
-                'term_id' => $termId,
-                'session_id' => $sessionId,
-                'count' => count($subjects)
-            ]);
-
             return response()->json([
                 'success' => true,
                 'subjects' => $subjects,
@@ -100,10 +102,7 @@ class PromotionSettingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Subjects by Class Error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            Log::error('Subjects by Class Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading subjects: ' . $e->getMessage()
@@ -132,7 +131,6 @@ class PromotionSettingController extends Controller
 
             $params = [$classId];
 
-            // Handle term/session filters
             if ($termId && $termId !== 'null' && $termId !== '') {
                 $sql .= " AND (cs.termid = ? OR (cs.termid IS NULL AND cs.sessionid IS NULL))";
                 $params[] = $termId;
@@ -159,11 +157,6 @@ class PromotionSettingController extends Controller
                 ];
             }, $results);
 
-            Log::info('Compulsory Subjects Response', [
-                'class_id' => $classId,
-                'count' => count($subjects)
-            ]);
-
             return response()->json([
                 'success' => true,
                 'subjects' => $subjects,
@@ -171,10 +164,7 @@ class PromotionSettingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Compulsory Subjects Error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            Log::error('Compulsory Subjects Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading compulsory subjects: ' . $e->getMessage()
@@ -184,11 +174,6 @@ class PromotionSettingController extends Controller
 
     /**
      * Store a new promotion setting.
-     *
-     * Expected fields:
-     *   schoolclass_id, session_id?, term_id?,
-     *   promoted_label, trial_label, see_principal_label, repeat_label,
-     *   promotion_rules (JSON string)
      */
     public function store(Request $request)
     {
@@ -208,9 +193,17 @@ class PromotionSettingController extends Controller
         }
 
         try {
-            $promotionRules = $request->filled('promotion_rules')
-                ? json_decode($request->promotion_rules, true)
-                : [];
+            // Decode and validate promotion rules
+            $promotionRules = [];
+            if ($request->filled('promotion_rules')) {
+                $promotionRules = json_decode($request->promotion_rules, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid JSON in promotion rules: ' . json_last_error_msg()
+                    ], 422);
+                }
+            }
 
             // Clean up null/empty values
             $sessionId = $request->session_id ?: null;
@@ -234,6 +227,15 @@ class PromotionSettingController extends Controller
                     ], 422);
                 }
             }
+
+            // Log what we're saving
+            \Log::info('Saving promotion setting', [
+                'class_id' => $request->schoolclass_id,
+                'session_id' => $sessionId,
+                'term_id' => $termId,
+                'rules_count' => count($promotionRules),
+                'rules' => $promotionRules
+            ]);
 
             $setting = PromotionSetting::updateOrCreate(
                 [
@@ -267,9 +269,6 @@ class PromotionSettingController extends Controller
         }
     }
 
-    /**
-     * Update an existing promotion setting.
-     */
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
@@ -290,32 +289,16 @@ class PromotionSettingController extends Controller
         try {
             $setting = PromotionSetting::findOrFail($id);
 
-            $promotionRules = $request->filled('promotion_rules')
-                ? json_decode($request->promotion_rules, true)
-                : [];
+            $promotionRules = [];
+            if ($request->filled('promotion_rules')) {
+                $promotionRules = json_decode($request->promotion_rules, true);
+            }
 
-            // Clean up null/empty values
             $sessionId = $request->session_id ?: null;
             $termId = $request->term_id ?: null;
 
             if ($sessionId === 'null' || $sessionId === '') $sessionId = null;
             if ($termId === 'null' || $termId === '') $termId = null;
-
-            // Validate rule structure
-            foreach ($promotionRules as $index => $rule) {
-                if (empty($rule['rule_name'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Rule ' . ($index + 1) . ' must have a name.'
-                    ], 422);
-                }
-                if (!in_array($rule['status_label'], ['promoted', 'trial', 'see_principal', 'repeat'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Rule ' . ($index + 1) . ' has an invalid status label.'
-                    ], 422);
-                }
-            }
 
             $setting->update([
                 'schoolclass_id'      => $request->schoolclass_id,
@@ -343,9 +326,6 @@ class PromotionSettingController extends Controller
         }
     }
 
-    /**
-     * Delete a promotion setting.
-     */
     public function destroy($id)
     {
         try {
@@ -357,54 +337,9 @@ class PromotionSettingController extends Controller
                 'message' => 'Promotion settings deleted successfully.'
             ]);
         } catch (\Exception $e) {
-            Log::error('Delete Promotion Setting Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get grade scale for a class based on its category
-     */
-    public function getGradeScale(Request $request)
-    {
-        try {
-            $classId = $request->query('classid');
-
-            if (!$classId) {
-                return response()->json(['success' => false, 'message' => 'Class required'], 422);
-            }
-
-            $sql = "SELECT cc.is_senior
-                    FROM schoolclass sc
-                    LEFT JOIN schoolclass_classcategory scc ON scc.schoolclass_id = sc.id
-                    LEFT JOIN classcategory cc ON cc.id = scc.classcategory_id
-                    WHERE sc.id = ?";
-
-            $result = DB::select($sql, [$classId]);
-
-            $isSenior = true; // default
-            if (!empty($result) && isset($result[0]->is_senior)) {
-                $isSenior = (bool)$result[0]->is_senior;
-            }
-
-            $gradeScale = $isSenior
-                ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9']
-                : ['A', 'B', 'C', 'D', 'F'];
-
-            return response()->json([
-                'success' => true,
-                'grade_scale' => $gradeScale,
-                'is_senior' => $isSenior
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Get Grade Scale Error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error loading grade scale: ' . $e->getMessage()
             ], 500);
         }
     }

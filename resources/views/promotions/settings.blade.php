@@ -1,384 +1,584 @@
-{{-- resources/views/promotions/settings.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
 <style>
 :root {
-    --ps-primary:  #1e3a5f;
-    --ps-accent:   #2563eb;
-    --ps-success:  #16a34a;
-    --ps-warning:  #d97706;
-    --ps-danger:   #dc2626;
-    --ps-info:     #0891b2;
-    --ps-muted:    #6b7280;
-    --ps-border:   #e2e8f0;
-    --ps-bg:       #f8fafc;
-    --ps-radius:   12px;
-    --ps-shadow:   0 2px 8px rgba(0,0,0,.08);
+    --ps-primary: #1e3a5f;
+    --ps-accent: #2563eb;
+    --ps-success: #16a34a;
+    --ps-warning: #d97706;
+    --ps-danger: #dc2626;
+    --ps-info: #0891b2;
+    --ps-muted: #6b7280;
+    --ps-border: #e2e8f0;
+    --ps-bg: #f8fafc;
+    --ps-radius: 12px;
+    --ps-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 
+/* Hero Section */
 .ps-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--ps-radius); padding: 28px 32px; margin-bottom: 24px;
-    position: relative; overflow: hidden;
+    border-radius: var(--ps-radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
 }
 .ps-hero::before {
-    content:''; position:absolute; top:-60px; right:-60px;
-    width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
 }
-.ps-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
-.ps-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
+.ps-hero h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px;
+    position: relative;
+}
+.ps-hero p {
+    font-size: 13px;
+    color: rgba(255,255,255,.75);
+    margin: 0;
+    position: relative;
+}
 
+/* Setting Card */
 .setting-card {
-    background:#fff; border:1px solid var(--ps-border);
-    border-radius:var(--ps-radius); padding:20px; margin-bottom:20px;
-    transition:all .3s ease; height:100%;
+    background: #fff;
+    border: 1px solid var(--ps-border);
+    border-radius: var(--ps-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all .3s ease;
+    height: 100%;
+    position: relative;
 }
-.setting-card:hover { box-shadow:var(--ps-shadow); transform:translateY(-2px); }
+.setting-card:hover {
+    box-shadow: var(--ps-shadow);
+    transform: translateY(-2px);
+}
+.setting-card.has-rules {
+    border-left: 4px solid var(--ps-success);
+}
 
+/* Modal Improvements */
 .modal-content {
-    border-radius:16px; overflow:visible;
-    display:flex; flex-direction:column;
-    max-height:calc(100vh - 56px);
+    border-radius: 16px;
+    overflow: hidden;
 }
 .modal-header {
-    background:linear-gradient(135deg,#1e3a5f,#2563eb);
-    padding:20px 28px; border-bottom:none;
-    border-radius:16px 16px 0 0; flex-shrink:0;
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    padding: 20px 28px;
+    border-bottom: none;
 }
-.modal-header .modal-title { color:#fff; font-weight:700; }
-.modal-header .btn-close   { filter:invert(1); }
-.modal-footer { flex-shrink:0; border-radius:0 0 16px 16px; }
-.modal-body   { overflow-y:auto; flex:1 1 auto; padding:1.5rem; }
+.modal-header .modal-title {
+    color: #fff;
+    font-weight: 700;
+}
+.modal-header .btn-close {
+    filter: invert(1);
+}
+.modal-body {
+    padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.modal-footer {
+    border-top: 1px solid var(--ps-border);
+    padding: 1rem 1.5rem;
+}
 
+/* Form Sections */
 .form-section {
-    background:var(--ps-bg); border-radius:12px;
-    padding:16px; margin-bottom:20px;
+    background: var(--ps-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
 }
 .form-section-title {
-    font-size:14px; font-weight:700; color:var(--ps-primary);
-    margin-bottom:16px; padding-bottom:8px;
-    border-bottom:2px solid var(--ps-border);
-    display:flex; align-items:center; justify-content:space-between;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ps-primary);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--ps-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
-.info-banner {
-    background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px;
-    padding:12px 16px; margin-bottom:16px;
-    display:flex; align-items:flex-start; gap:10px;
-}
-.info-banner i { font-size:18px; color:#2563eb; margin-top:1px; flex-shrink:0; }
-.info-banner .text { font-size:13px; color:#1e40af; }
-.info-banner .text strong { display:block; margin-bottom:2px; }
 
-.rule-card {
-    background:#fff; border:2px solid var(--ps-border);
-    border-radius:12px; margin-bottom:16px; overflow:hidden;
-    transition:border-color .2s;
+/* Info Banner */
+.info-banner {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
-.rule-card:hover { border-color:#bfdbfe; }
+.info-banner i {
+    font-size: 20px;
+    color: #2563eb;
+    margin-top: 2px;
+}
+.info-banner .text {
+    font-size: 13px;
+    color: #1e40af;
+    line-height: 1.5;
+}
+.info-banner .text strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+/* Rule Card */
+.rule-card {
+    background: #fff;
+    border: 2px solid var(--ps-border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all .2s;
+}
+.rule-card:hover {
+    border-color: var(--ps-accent);
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
 .rule-card-header {
-    background:linear-gradient(90deg,#f0f7ff,#f8fafc);
-    border-bottom:1px solid var(--ps-border);
-    padding:12px 16px; display:flex; align-items:center; gap:10px;
-    flex-wrap:wrap;
+    background: linear-gradient(90deg, #f8fafc, #fff);
+    border-bottom: 1px solid var(--ps-border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 .rule-num-badge {
-    background:var(--ps-primary); color:#fff;
-    font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px;
-    white-space:nowrap;
+    background: var(--ps-primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
 }
-.rule-card-body { padding:16px; }
+.rule-name-input {
+    flex: 1;
+    max-width: 350px;
+    font-size: 14px;
+}
+.rule-card-body {
+    padding: 20px;
+}
 
-.label-selector { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:0; }
+/* Status Label Pills */
+.label-selector {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
 .label-pill {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600;
-    border:2px solid transparent; cursor:pointer; transition:all .15s;
-    white-space:nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all .2s;
 }
-.label-pill:hover        { transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,.12); }
-.label-pill.active       { box-shadow:0 0 0 3px rgba(0,0,0,.15); }
-.label-pill.lp-promoted  { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
-.label-pill.lp-promoted.active  { background:#16a34a; color:#fff; border-color:#15803d; }
-.label-pill.lp-trial     { background:#fef9c3; color:#854d0e; border-color:#fde68a; }
-.label-pill.lp-trial.active     { background:#ca8a04; color:#fff; border-color:#a16207; }
-.label-pill.lp-principal { background:#e0f2fe; color:#075985; border-color:#bae6fd; }
-.label-pill.lp-principal.active { background:#0284c7; color:#fff; border-color:#0369a1; }
-.label-pill.lp-repeat    { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
-.label-pill.lp-repeat.active    { background:#dc2626; color:#fff; border-color:#b91c1c; }
+.label-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+.label-pill.active {
+    box-shadow: 0 0 0 3px rgba(0,0,0,.15);
+}
+.label-pill.lp-promoted {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+.label-pill.lp-promoted.active {
+    background: #16a34a;
+    color: #fff;
+    border-color: #15803d;
+}
+.label-pill.lp-trial {
+    background: #fef9c3;
+    color: #854d0e;
+    border-color: #fde68a;
+}
+.label-pill.lp-trial.active {
+    background: #ca8a04;
+    color: #fff;
+    border-color: #a16207;
+}
+.label-pill.lp-principal {
+    background: #e0f2fe;
+    color: #075985;
+    border-color: #bae6fd;
+}
+.label-pill.lp-principal.active {
+    background: #0284c7;
+    color: #fff;
+    border-color: #0369a1;
+}
+.label-pill.lp-repeat {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+.label-pill.lp-repeat.active {
+    background: #dc2626;
+    color: #fff;
+    border-color: #b91c1c;
+}
 
-.subj-table { width:100%; border-collapse:collapse; font-size:13px; }
-.subj-table thead tr { background:#1e3a5f; color:#fff; }
-.subj-table th, .subj-table td { padding:9px 12px; border-bottom:1px solid var(--ps-border); }
-.subj-table td { vertical-align:middle; }
-.subj-table tbody tr:hover td { background:#f0f9ff; }
+/* Improved Subject Table */
+.subjects-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--ps-border);
+    border-radius: 10px;
+}
+.subj-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.subj-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.subj-table thead tr {
+    background: var(--ps-primary);
+    color: #fff;
+}
+.subj-table th {
+    padding: 12px;
+    font-weight: 600;
+    text-align: left;
+}
+.subj-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ps-border);
+    vertical-align: middle;
+}
+.subj-table tbody tr:hover {
+    background: #f0f9ff;
+}
 .subj-table .badge-compulsory {
-    background:#fef3c7; color:#92400e;
-    padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;
-}
-
-.grade-sel {
-    border:1.5px solid var(--ps-border); border-radius:6px;
-    padding:4px 8px; font-size:12px; color:var(--ps-primary);
-    background:#fff; cursor:pointer; min-width:80px;
-}
-.grade-sel:focus { border-color:var(--ps-accent); outline:none; }
-
-.no-rules-placeholder {
-    text-align:center; padding:28px 20px; color:var(--ps-muted);
-    background:var(--ps-bg); border-radius:10px;
-    border:2px dashed var(--ps-border); font-size:13px;
-}
-
-.spin { animation:spin .7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-
-.loading-spinner {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
     display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 50%;
-    border-top-color: #2563eb;
-    animation: spin .6s linear infinite;
+}
+.grade-sel {
+    border: 1.5px solid var(--ps-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    background: #fff;
+    cursor: pointer;
+    width: 100px;
+}
+.grade-sel:focus {
+    border-color: var(--ps-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37,99,235,.1);
+}
+
+/* Loading States */
+.spin {
+    animation: spin .7s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    z-index: 10;
+}
+
+/* Empty State */
+.no-rules-placeholder {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ps-muted);
+    background: var(--ps-bg);
+    border-radius: 12px;
+    border: 2px dashed var(--ps-border);
 }
 </style>
 
 <div class="main-content">
-  <div class="page-content">
-    <div class="container-fluid">
+    <div class="page-content">
+        <div class="container-fluid">
+            <div class="ps-hero">
+                <h1><i class="ri-settings-4-line me-2"></i>Promotion Settings</h1>
+                <p>Define grade-based promotion rules per class. Each rule maps subject performance to a promotion status label.</p>
+            </div>
 
-      <div class="ps-hero">
-        <h1><i class="ri-settings-4-line me-2"></i>Promotion Settings</h1>
-        <p>Define grade-based promotion rules per class. Each rule maps subject performance to a promotion status label.</p>
-      </div>
-
-      {{-- existing settings cards --}}
-      <div class="card border-0 shadow-sm">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="padding:16px 20px">
-          <h5 class="mb-0 fw-semibold" style="color:var(--ps-primary)">
-            <i class="ri-list-check me-2"></i>Promotion Rules
-            <span class="badge bg-primary ms-2">{{ $settings->count() }}</span>
-          </h5>
-          <button type="button" class="btn btn-primary" id="openAddBtn">
-            <i class="ri-add-line me-1"></i>Add New Rule
-          </button>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            @forelse ($settings as $setting)
-            <div class="col-md-6 col-lg-4">
-              <div class="setting-card">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <div>
-                    <h6 class="mb-0 fw-bold">
-                      {{ $setting->schoolclass->schoolclass }} {{ $setting->schoolclass->arm ?? '' }}
-                    </h6>
-                    <small class="text-muted">
-                      {{ $setting->session?->session ?? 'All Sessions' }}
-                      &mdash; {{ $setting->term?->term ?? 'All Terms' }}
-                    </small>
-                  </div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="padding: 16px 20px; background: #fff; border-bottom: 2px solid var(--ps-border);">
+                    <h5 class="mb-0 fw-semibold" style="color: var(--ps-primary);">
+                        <i class="ri-list-check me-2"></i>Promotion Rules
+                        <span class="badge bg-primary ms-2">{{ $settings->count() }}</span>
+                    </h5>
+                    <button type="button" class="btn btn-primary" id="openAddBtn">
+                        <i class="ri-add-line me-1"></i>Add New Rule
+                    </button>
                 </div>
+                <div class="card-body">
+                    <div class="row">
+                        @forelse ($settings as $setting)
+                        <div class="col-md-6 col-lg-4">
+                            <div class="setting-card {{ !empty($setting->promotion_rules) ? 'has-rules' : '' }}">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">
+                                            {{ $setting->schoolclass->schoolclass }}
+                                            {{ $setting->schoolclass->arm ?? '' }}
+                                        </h6>
+                                        <small class="text-muted">
+                                            {{ $setting->session?->session ?? 'All Sessions' }}
+                                            &mdash; {{ $setting->term?->term ?? 'All Terms' }}
+                                        </small>
+                                    </div>
+                                    @if(!empty($setting->promotion_rules))
+                                    <span class="badge bg-success">Active</span>
+                                    @endif
+                                </div>
 
-                @if(!empty($setting->promotion_rules))
-                  <div class="mt-2">
-                    <div class="small text-muted mb-1">
-                      <i class="ri-price-tag-3-line me-1"></i>
-                      {{ count($setting->promotion_rules) }} rule(s) configured
+                                @if(!empty($setting->promotion_rules) && is_array($setting->promotion_rules))
+                                <div class="mt-2">
+                                    <div class="small text-muted mb-2">
+                                        <i class="ri-price-tag-3-line me-1"></i>
+                                        {{ count($setting->promotion_rules) }} rule(s) configured
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach($setting->promotion_rules as $rule)
+                                        @php
+                                            $lmap = ['promoted' => 'success', 'trial' => 'warning', 'see_principal' => 'info', 'repeat' => 'danger'];
+                                            $badge = $lmap[$rule['status_label'] ?? ''] ?? 'secondary';
+                                        @endphp
+                                        <span class="badge bg-{{ $badge }} px-2 py-1">
+                                            {{ $rule['rule_name'] ?? 'Rule '.($loop->index+1) }}
+                                        </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @else
+                                <div class="alert alert-warning py-2 px-3 mt-2 mb-0 small">
+                                    <i class="ri-alert-line me-1"></i> No rules defined yet.
+                                </div>
+                                @endif
+
+                                <div class="border-top pt-3 mt-3">
+                                    <div class="row g-2 small">
+                                        <div class="col-6"><span class="text-muted">Promoted:</span> {{ $setting->promoted_label }}</div>
+                                        <div class="col-6"><span class="text-muted">Trial:</span> {{ $setting->trial_label }}</div>
+                                        <div class="col-6"><span class="text-muted">Principal:</span> {{ $setting->see_principal_label }}</div>
+                                        <div class="col-6"><span class="text-muted">Repeat:</span> {{ $setting->repeat_label }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-setting flex-fill"
+                                        data-id="{{ $setting->id }}"
+                                        data-schoolclass_id="{{ $setting->schoolclass_id }}"
+                                        data-session_id="{{ $setting->session_id }}"
+                                        data-term_id="{{ $setting->term_id }}"
+                                        data-promoted_label="{{ $setting->promoted_label }}"
+                                        data-trial_label="{{ $setting->trial_label }}"
+                                        data-see_principal_label="{{ $setting->see_principal_label }}"
+                                        data-repeat_label="{{ $setting->repeat_label }}"
+                                        data-promotion_rules="{{ json_encode($setting->promotion_rules ?? []) }}">
+                                        <i class="ri-pencil-line"></i> Edit
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-setting"
+                                        data-id="{{ $setting->id }}"
+                                        data-name="{{ $setting->schoolclass->schoolclass }}">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="col-12">
+                            <div class="text-center py-5">
+                                <i class="ri-settings-4-line" style="font-size: 48px; opacity: .3;"></i>
+                                <p class="mt-3 text-muted">No promotion rules configured yet.</p>
+                                <button class="btn btn-primary" id="openAddBtn2">Create your first promotion rule</button>
+                            </div>
+                        </div>
+                        @endforelse
                     </div>
-                    @foreach($setting->promotion_rules as $rule)
-                    @php
-                      $lmap = ['promoted'=>'bg-success','trial'=>'bg-warning','see_principal'=>'bg-info','repeat'=>'bg-danger'];
-                      $badge = $lmap[$rule['status_label'] ?? ''] ?? 'bg-secondary';
-                    @endphp
-                    <span class="badge {{ $badge }} me-1 mb-1">{{ $rule['rule_name'] ?? 'Rule '.($loop->index+1) }}</span>
-                    @endforeach
-                  </div>
-                @else
-                  <div class="text-muted small mt-2">No rules defined yet.</div>
-                @endif
-
-                <div class="border-top pt-2 mt-2">
-                  <div class="row g-1" style="font-size:12px">
-                    <div class="col-6"><span class="text-muted">Promoted:</span> {{ $setting->promoted_label }}</div>
-                    <div class="col-6"><span class="text-muted">Trial:</span> {{ $setting->trial_label }}</div>
-                    <div class="col-6"><span class="text-muted">Principal:</span> {{ $setting->see_principal_label }}</div>
-                    <div class="col-6"><span class="text-muted">Repeat:</span> {{ $setting->repeat_label }}</div>
-                  </div>
                 </div>
-
-                <div class="mt-3 d-flex gap-2">
-                  <button type="button" class="btn btn-sm btn-outline-primary edit-setting"
-                    data-id="{{ $setting->id }}"
-                    data-schoolclass_id="{{ $setting->schoolclass_id }}"
-                    data-session_id="{{ $setting->session_id }}"
-                    data-term_id="{{ $setting->term_id }}"
-                    data-promoted_label="{{ $setting->promoted_label }}"
-                    data-trial_label="{{ $setting->trial_label }}"
-                    data-see_principal_label="{{ $setting->see_principal_label }}"
-                    data-repeat_label="{{ $setting->repeat_label }}"
-                    data-promotion_rules="{{ json_encode($setting->promotion_rules ?? []) }}">
-                    <i class="ri-pencil-line"></i> Edit
-                  </button>
-                  <button type="button" class="btn btn-sm btn-outline-danger delete-setting"
-                    data-id="{{ $setting->id }}"
-                    data-name="{{ $setting->schoolclass->schoolclass }}">
-                    <i class="ri-delete-bin-line"></i> Delete
-                  </button>
-                </div>
-              </div>
             </div>
-            @empty
-            <div class="col-12">
-              <div class="text-center py-5">
-                <i class="ri-settings-4-line" style="font-size:48px;opacity:.3"></i>
-                <p class="mt-3 text-muted">No promotion rules configured yet.</p>
-                <button class="btn btn-primary" id="openAddBtn2">Create your first promotion rule</button>
-              </div>
-            </div>
-            @endforelse
-          </div>
         </div>
-      </div>
-
     </div>
-  </div>
 </div>
 
-{{-- Modal --}}
+<!-- Modal -->
 <div class="modal fade" id="settingModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="ri-settings-4-line me-2"></i>Promotion Rule Settings</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ri-settings-4-line me-2"></i>Promotion Rule Settings</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
 
-      <form id="settingForm" hidden>
-        @csrf
-        <input type="hidden" name="id" id="setting_id">
-        <input type="hidden" name="promotion_rules" id="promotion_rules_input">
-      </form>
+            <form id="settingForm" hidden>
+                @csrf
+                <input type="hidden" name="id" id="setting_id">
+                <input type="hidden" name="promotion_rules" id="promotion_rules_input">
+            </form>
 
-      <div class="modal-body">
-        <div class="form-section">
-          <div class="form-section-title">
-            <span><i class="ri-book-2-line me-2"></i>Class &amp; Scope</span>
-          </div>
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">Class <span class="text-danger">*</span></label>
-              <select class="form-select" id="schoolclass_id" required>
-                <option value="">-- Select Class --</option>
-                @foreach ($schoolclasses as $class)
-                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm ?? '' }}</option>
-                @endforeach
-              </select>
+            <div class="modal-body">
+                <!-- Class Selection -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span><i class="ri-book-2-line me-2"></i>Class &amp; Scope</span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
+                            <select class="form-select" id="schoolclass_id" required>
+                                <option value="">-- Select Class --</option>
+                                @foreach ($schoolclasses as $class)
+                                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm ?? '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Session <small class="text-muted">(optional)</small></label>
+                            <select class="form-select" id="session_id">
+                                <option value="">-- All Sessions --</option>
+                                @foreach ($sessions as $s)
+                                <option value="{{ $s->id }}">{{ $s->session }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Term <small class="text-muted">(optional)</small></label>
+                            <select class="form-select" id="term_id">
+                                <option value="">-- All Terms --</option>
+                                @foreach ($terms as $t)
+                                <option value="{{ $t->id }}">{{ $t->term }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div id="subjectLoadStatus" class="mt-3" style="display: none;">
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <small>Loading subjects...</small>
+                        </div>
+                    </div>
+                    <div id="subjectSummary" class="mt-2" style="display: none;"></div>
+                </div>
+
+                <!-- Promotion Rules -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span><i class="ri-price-tag-3-line me-2"></i>Promotion Rules</span>
+                        <button type="button" class="btn btn-sm btn-primary" id="addRuleBtn" disabled>
+                            <i class="ri-add-line me-1"></i>Add Rule
+                        </button>
+                    </div>
+
+                    <div class="info-banner">
+                        <i class="ri-lightbulb-line"></i>
+                        <div class="text">
+                            <strong>How rules work</strong>
+                            Rules are evaluated in order from top to bottom. The first rule that matches all subject
+                            requirements determines the student's promotion status. Leave a subject's grade as
+                            <strong>"Any"</strong> to skip that subject in the rule.
+                        </div>
+                    </div>
+
+                    <div id="rulesContainer">
+                        <div class="no-rules-placeholder" id="noRulesMsg">
+                            <i class="ri-clipboard-line d-block mb-2" style="font-size: 2rem; opacity: .3;"></i>
+                            Select a class above, then click <strong>Add Rule</strong> to define your first promotion condition.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Labels -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span><i class="ri-price-tag-line me-2"></i>Promotion Status Labels</span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Promoted</label>
+                            <input type="text" class="form-control" id="promoted_label" placeholder="Promoted" value="Promoted">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Trial</label>
+                            <input type="text" class="form-control" id="trial_label" placeholder="Promoted on Trial" value="Promoted on Trial">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">See Principal</label>
+                            <input type="text" class="form-control" id="see_principal_label" placeholder="Advised to See Principal" value="Advised to See Principal">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Repeat</label>
+                            <input type="text" class="form-control" id="repeat_label" placeholder="Advice to Repeat" value="Advice to Repeat">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Session <small class="text-muted">(optional)</small></label>
-              <select class="form-select" id="session_id">
-                <option value="">-- All Sessions --</option>
-                @foreach ($sessions as $s)
-                <option value="{{ $s->id }}">{{ $s->session }}</option>
-                @endforeach
-              </select>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveSettingBtn">
+                    <i class="ri-save-line me-1"></i>Save Settings
+                </button>
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Term <small class="text-muted">(optional)</small></label>
-              <select class="form-select" id="term_id">
-                <option value="">-- All Terms --</option>
-                @foreach ($terms as $t)
-                <option value="{{ $t->id }}">{{ $t->term }}</option>
-                @endforeach
-              </select>
-            </div>
-          </div>
-          <div id="subjectLoadStatus" class="mt-2" style="display:none">
-            <small class="text-muted">
-              <i class="ri-loader-4-line spin me-1"></i>Loading subjects...
-            </small>
-          </div>
-          <div id="subjectSummary" class="mt-2" style="display:none">
-            <small class="text-success fw-semibold" id="subjectSummaryText"></small>
-          </div>
         </div>
-
-        <div class="form-section">
-          <div class="form-section-title">
-            <span><i class="ri-price-tag-3-line me-2"></i>Promotion Rules</span>
-            <button type="button" class="btn btn-sm btn-primary" id="addRuleBtn" disabled>
-              <i class="ri-add-line me-1"></i>Add Rule
-            </button>
-          </div>
-
-          <div class="info-banner">
-            <i class="ri-lightbulb-line"></i>
-            <div class="text">
-              <strong>How rules work</strong>
-              Each rule specifies a minimum grade for every subject assigned to this class.
-              When a student's grades meet all the specified minimums, the selected
-              <em>Promotion Status Label</em> is applied. Rules are evaluated top-to-bottom; the first match wins.
-              Leave a subject's grade as <em>Any</em> to ignore that subject in the rule.
-            </div>
-          </div>
-
-          <div id="rulesContainer">
-            <div class="no-rules-placeholder" id="noRulesMsg">
-              <i class="ri-clipboard-line d-block mb-2" style="font-size:2rem;opacity:.3"></i>
-              Select a class above, then click <strong>Add Rule</strong> to define your first promotion condition.
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <div class="form-section-title">
-            <span><i class="ri-price-tag-line me-2"></i>Promotion Status Labels</span>
-          </div>
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label">Promoted</label>
-              <input type="text" class="form-control" id="promoted_label" placeholder="Promoted" value="Promoted">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Trial</label>
-              <input type="text" class="form-control" id="trial_label" placeholder="Promoted on Trial" value="Promoted on Trial">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">See Principal</label>
-              <input type="text" class="form-control" id="see_principal_label" placeholder="Advised to See Principal" value="Advised to See Principal">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Repeat</label>
-              <input type="text" class="form-control" id="repeat_label" placeholder="Advice to Repeat" value="Advice to Repeat">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="saveSettingBtn">
-          <i class="ri-save-line me-1"></i>Save Settings
-        </button>
-      </div>
     </div>
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-let compulsorySubjects  = [];
-let otherSubjects       = [];
-let promotionRules      = [];
-let gradeScale          = ['A1','B2','B3','C4','C5','C6','D7','E8','F9'];
+let compulsorySubjects = [];
+let otherSubjects = [];
+let promotionRules = [];
+let gradeScale = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
 
 const STATUS_LABELS = [
-    { key:'promoted',      label:'Promoted',              cls:'lp-promoted'  },
-    { key:'trial',         label:'Promoted on Trial',     cls:'lp-trial'     },
-    { key:'see_principal', label:'Advised to See Principal', cls:'lp-principal' },
-    { key:'repeat',        label:'Advice to Repeat',      cls:'lp-repeat'    },
+    { key: 'promoted', label: 'Promoted', cls: 'lp-promoted' },
+    { key: 'trial', label: 'Promoted on Trial', cls: 'lp-trial' },
+    { key: 'see_principal', label: 'Advised to See Principal', cls: 'lp-principal' },
+    { key: 'repeat', label: 'Advice to Repeat', cls: 'lp-repeat' },
 ];
 
 function openModal() {
@@ -389,12 +589,12 @@ document.getElementById('openAddBtn')?.addEventListener('click', openModal);
 document.getElementById('openAddBtn2')?.addEventListener('click', openModal);
 
 async function refreshSubjects() {
-    const classId   = document.getElementById('schoolclass_id').value;
-    const termId    = document.getElementById('term_id').value;
+    const classId = document.getElementById('schoolclass_id').value;
+    const termId = document.getElementById('term_id').value;
     const sessionId = document.getElementById('session_id').value;
-    const addBtn    = document.getElementById('addRuleBtn');
+    const addBtn = document.getElementById('addRuleBtn');
     const loadStatus = document.getElementById('subjectLoadStatus');
-    const summary    = document.getElementById('subjectSummary');
+    const summary = document.getElementById('subjectSummary');
 
     addBtn.disabled = true;
     summary.style.display = 'none';
@@ -404,13 +604,14 @@ async function refreshSubjects() {
     if (!classId) {
         rerenderRules();
         addBtn.disabled = true;
+        summary.innerHTML = '<div class="alert alert-warning py-2">Please select a class first.</div>';
+        summary.style.display = 'block';
         return;
     }
 
     loadStatus.style.display = 'block';
 
     try {
-        // Build query parameters
         let subUrl = `/promotion-settings/subjects-by-class?classid=${classId}`;
         let compUrl = `/promotion-settings/compulsory-by-class?classid=${classId}`;
 
@@ -423,19 +624,12 @@ async function refreshSubjects() {
             compUrl += `&sessionid=${sessionId}`;
         }
 
-        const [subRes, compRes] = await Promise.all([
-            fetch(subUrl),
-            fetch(compUrl)
-        ]);
+        const [subRes, compRes] = await Promise.all([fetch(subUrl), fetch(compUrl)]);
+        const subData = await subRes.json();
+        const compData = await compRes.json();
 
-        const subData = subRes.ok ? await subRes.json() : {};
-        const compData = compRes.ok ? await compRes.json() : {};
-
-        console.log('Subjects response:', subData);
-        console.log('Compulsory response:', compData);
-
-        const allSubs = subData.success && subData.subjects ? subData.subjects : [];
-        const compSubs = compData.success && compData.subjects ? compData.subjects : [];
+        const allSubs = subData.success ? subData.subjects : [];
+        const compSubs = compData.success ? compData.subjects : [];
 
         const compIds = new Set(compSubs.map(s => s.id));
 
@@ -454,45 +648,44 @@ async function refreshSubjects() {
 
         if (compSubs.length > 0 && compSubs[0].min_grade) {
             const sampleGrade = compSubs[0].min_grade;
-            if (/[0-9]/.test(sampleGrade)) {
-                gradeScale = ['A1','B2','B3','C4','C5','C6','D7','E8','F9'];
-            } else {
-                gradeScale = ['A','B','C','D','F'];
-            }
+            gradeScale = /[0-9]/.test(sampleGrade)
+                ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9']
+                : ['A', 'B', 'C', 'D', 'F'];
         }
 
         addBtn.disabled = false;
         loadStatus.style.display = 'none';
 
-        if (allSubs.length > 0 || compSubs.length > 0) {
-            summary.style.display = 'block';
-            document.getElementById('subjectSummaryText').innerHTML =
-                `✓ <strong>${compulsorySubjects.length}</strong> compulsory subject(s), <strong>${otherSubjects.length}</strong> other subject(s) loaded.`;
+        if (allSubs.length > 0) {
+            summary.innerHTML = `
+                <div class="alert alert-success py-2 mb-0">
+                    <i class="ri-checkbox-circle-line me-1"></i>
+                    <strong>${compulsorySubjects.length}</strong> compulsory subject(s),
+                    <strong>${otherSubjects.length}</strong> other subject(s) loaded.
+                </div>`;
         } else {
-            summary.style.display = 'block';
-            document.getElementById('subjectSummaryText').innerHTML =
-                `⚠️ No subjects found for this class. Please ensure subjects are assigned to this class for the selected term/session.`;
-            summary.querySelector('small').classList.remove('text-success');
-            summary.querySelector('small').classList.add('text-warning');
+            summary.innerHTML = `
+                <div class="alert alert-warning py-2 mb-0">
+                    <i class="ri-alert-line me-1"></i>
+                    No subjects found. Please ensure subjects are assigned to this class.
+                </div>`;
         }
+        summary.style.display = 'block';
 
         promotionRules.forEach(rule => syncRuleSubjects(rule));
         rerenderRules();
 
-    } catch(e) {
+    } catch (e) {
         console.error('Error loading subjects:', e);
         loadStatus.style.display = 'none';
+        summary.innerHTML = `<div class="alert alert-danger py-2">Error loading subjects: ${e.message}</div>`;
         summary.style.display = 'block';
-        document.getElementById('subjectSummaryText').innerHTML =
-            `❌ Error loading subjects: ${e.message}`;
         addBtn.disabled = true;
-        rerenderRules();
     }
 }
 
 function syncRuleSubjects(rule) {
     const existing = new Map((rule.subject_conditions || []).map(c => [c.subject_id, c]));
-
     rule.subject_conditions = [
         ...compulsorySubjects.map(s => existing.get(s.id) ?? {
             subject_id: s.id,
@@ -510,10 +703,7 @@ function syncRuleSubjects(rule) {
 }
 
 ['schoolclass_id', 'session_id', 'term_id'].forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-        element.addEventListener('change', () => refreshSubjects());
-    }
+    document.getElementById(id)?.addEventListener('change', refreshSubjects);
 });
 
 document.getElementById('addRuleBtn').addEventListener('click', () => {
@@ -542,11 +732,6 @@ document.getElementById('addRuleBtn').addEventListener('click', () => {
     };
     promotionRules.push(newRule);
     rerenderRules();
-
-    setTimeout(() => {
-        const cards = document.querySelectorAll('.rule-card');
-        if (cards.length) cards[cards.length-1].scrollIntoView({ behavior:'smooth', block:'nearest' });
-    }, 60);
 });
 
 function rerenderRules() {
@@ -563,6 +748,7 @@ function rerenderRules() {
 
     container.innerHTML = promotionRules.map((rule, idx) => buildRuleCard(rule, idx)).join('');
 
+    // Attach event listeners
     container.querySelectorAll('.rule-name-input').forEach(inp => {
         inp.addEventListener('input', e => {
             promotionRules[+e.target.dataset.idx].rule_name = e.target.value;
@@ -571,7 +757,7 @@ function rerenderRules() {
 
     container.querySelectorAll('.label-pill').forEach(pill => {
         pill.addEventListener('click', () => {
-            const idx  = +pill.dataset.idx;
+            const idx = +pill.dataset.idx;
             const stat = pill.dataset.status;
             promotionRules[idx].status_label = stat;
             pill.closest('.label-selector').querySelectorAll('.label-pill').forEach(p => {
@@ -598,18 +784,20 @@ function rerenderRules() {
     container.querySelectorAll('.move-up-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = +btn.dataset.idx;
-            if (idx === 0) return;
-            [promotionRules[idx-1], promotionRules[idx]] = [promotionRules[idx], promotionRules[idx-1]];
-            rerenderRules();
+            if (idx > 0) {
+                [promotionRules[idx-1], promotionRules[idx]] = [promotionRules[idx], promotionRules[idx-1]];
+                rerenderRules();
+            }
         });
     });
 
     container.querySelectorAll('.move-down-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = +btn.dataset.idx;
-            if (idx >= promotionRules.length-1) return;
-            [promotionRules[idx], promotionRules[idx+1]] = [promotionRules[idx+1], promotionRules[idx]];
-            rerenderRules();
+            if (idx < promotionRules.length - 1) {
+                [promotionRules[idx], promotionRules[idx+1]] = [promotionRules[idx+1], promotionRules[idx]];
+                rerenderRules();
+            }
         });
     });
 }
@@ -617,107 +805,84 @@ function rerenderRules() {
 function buildRuleCard(rule, idx) {
     const labelPills = STATUS_LABELS.map(sl => {
         const active = rule.status_label === sl.key ? 'active' : '';
-        return `<span class="label-pill ${sl.cls} ${active}"
-                      data-idx="${idx}" data-status="${sl.key}">
-                    ${sl.label}
-                </span>`;
+        return `<span class="label-pill ${sl.cls} ${active}" data-idx="${idx}" data-status="${sl.key}">${sl.label}</span>`;
     }).join('');
 
-    const tableRows = rule.subject_conditions.map((cond, sIdx) => {
-        const selectedValue = cond.min_grade || '';
-
-        return `
+    const tableRows = rule.subject_conditions.map((cond, sIdx) => `
         <tr>
-          <td>
-            ${cond.is_compulsory ? '<span class="badge-compulsory me-1">Compulsory</span>' : ''}
-            <strong>${escapeHtml(cond.subject_name)}</strong>
-           </td>
-          <td class="text-center">
-            <select class="grade-sel" data-rule-idx="${idx}" data-subj-idx="${sIdx}">
-              <option value="">Any</option>
-              ${gradeScale.map(g => `<option value="${g}" ${selectedValue === g ? 'selected' : ''}>${g}</option>`).join('')}
-            </select>
-           </td>
-        </table>`;
-    }).join('');
-
-    const noSubjRow = rule.subject_conditions.length === 0
-        ? `<tr><td colspan="2" class="text-center text-muted py-3">
-              No subjects loaded. Please select a class/term above.
-            </td></tr>`
-        : '';
-
-    const totalRules = promotionRules.length;
+            <td>
+                ${cond.is_compulsory ? '<span class="badge-compulsory me-2">Compulsory</span>' : ''}
+                <strong>${escapeHtml(cond.subject_name)}</strong>
+                ${cond.subject_code ? `<br><small class="text-muted">${escapeHtml(cond.subject_code)}</small>` : ''}
+            </td>
+            <td style="width: 120px;">
+                <select class="grade-sel form-select form-select-sm" data-rule-idx="${idx}" data-subj-idx="${sIdx}">
+                    <option value="">Any</option>
+                    ${gradeScale.map(g => `<option value="${g}" ${cond.min_grade === g ? 'selected' : ''}>${g}</option>`).join('')}
+                </select>
+            </td>
+        </tr>
+    `).join('');
 
     return `
     <div class="rule-card">
-      <div class="rule-card-header">
-        <span class="rule-num-badge">Rule ${idx+1}</span>
-        <input type="text" class="form-control form-control-sm rule-name-input"
-               data-idx="${idx}"
-               value="${escapeHtml(rule.rule_name)}"
-               placeholder="Rule name (e.g. All A's — Top Performer)"
-               style="max-width:320px">
-        <div class="ms-auto d-flex gap-1">
-          <button type="button" class="btn btn-sm btn-outline-secondary move-up-btn py-0 px-2"
-                  data-idx="${idx}" title="Move up" ${idx===0 ? 'disabled' : ''}>
-            <i class="ri-arrow-up-s-line"></i>
-          </button>
-          <button type="button" class="btn btn-sm btn-outline-secondary move-down-btn py-0 px-2"
-                  data-idx="${idx}" title="Move down" ${idx===totalRules-1 ? 'disabled' : ''}>
-            <i class="ri-arrow-down-s-line"></i>
-          </button>
-          <button type="button" class="btn btn-sm btn-outline-danger remove-rule-btn py-0 px-2"
-                  data-idx="${idx}" title="Remove rule">
-            <i class="ri-delete-bin-line"></i>
-          </button>
+        <div class="rule-card-header">
+            <span class="rule-num-badge">Rule ${idx + 1}</span>
+            <input type="text" class="form-control form-control-sm rule-name-input"
+                   data-idx="${idx}" value="${escapeHtml(rule.rule_name)}"
+                   placeholder="Enter rule name (e.g., 'All A's - Top Performer')">
+            <div class="ms-auto d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary move-up-btn" data-idx="${idx}" title="Move Up">
+                    <i class="ri-arrow-up-line"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary move-down-btn" data-idx="${idx}" title="Move Down">
+                    <i class="ri-arrow-down-line"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-rule-btn" data-idx="${idx}" title="Remove Rule">
+                    <i class="ri-delete-bin-line"></i>
+                </button>
+            </div>
         </div>
-      </div>
-
-      <div class="rule-card-body">
-        <div class="mb-3">
-          <div class="fw-semibold mb-2" style="font-size:13px;color:var(--ps-primary)">
-            <i class="ri-award-line me-1"></i>
-            Promotion Status Label — <em>applied when this rule matches</em>
-          </div>
-          <div class="label-selector">${labelPills}</div>
+        <div class="rule-card-body">
+            <div class="mb-3">
+                <label class="fw-semibold mb-2">Promotion Status Label</label>
+                <div class="label-selector">${labelPills}</div>
+            </div>
+            <div>
+                <label class="fw-semibold mb-2">Minimum Grade Requirements</label>
+                <div class="subjects-container">
+                    <table class="subj-table">
+                        <thead>
+                            <tr><th>Subject</th><th style="width: 120px;">Minimum Grade</th></tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    <i class="ri-information-line"></i>
+                    Leave as "Any" to exclude this subject from the rule evaluation.
+                </small>
+            </div>
         </div>
-
-        <div>
-          <div class="fw-semibold mb-2" style="font-size:13px;color:var(--ps-primary)">
-            <i class="ri-book-open-line me-1"></i>
-            Minimum Grade Required per Subject
-            <small class="text-muted fw-normal ms-1">
-              — leave as <em>Any</em> to skip that subject in this rule
-            </small>
-          </div>
-          <div class="table-responsive" style="max-height:320px;overflow-y:auto;">
-            <table class="subj-table">
-              <thead>
-                <tr><th>Subject</th><th class="text-center" style="width:130px">Minimum Grade</th></tr>
-              </thead>
-              <tbody>${tableRows}${noSubjRow}</tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>`;
 }
 
 document.getElementById('saveSettingBtn').addEventListener('click', async function() {
     const classId = document.getElementById('schoolclass_id').value;
     if (!classId) {
-        Swal.fire('Validation', 'Please select a class.', 'warning');
+        Swal.fire('Validation Error', 'Please select a class.', 'warning');
         return;
     }
 
+    // Validate rules
     for (const [i, rule] of promotionRules.entries()) {
-        if (!rule.rule_name.trim()) {
-            Swal.fire('Validation', `Rule ${i+1} needs a name.`, 'warning');
+        if (!rule.rule_name || !rule.rule_name.trim()) {
+            Swal.fire('Validation Error', `Rule ${i + 1} must have a name.`, 'warning');
             return;
         }
     }
 
+    // Prepare data
     document.getElementById('promotion_rules_input').value = JSON.stringify(promotionRules);
 
     const formData = new FormData(document.getElementById('settingForm'));
@@ -730,7 +895,7 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
     formData.set('repeat_label', document.getElementById('repeat_label').value || 'Advice to Repeat');
 
     const id = document.getElementById('setting_id').value;
-    let url = '{{ route("promotion.settings.store") }}';
+    let url = '/promotion-settings';
     let method = 'POST';
 
     if (id) {
@@ -741,45 +906,54 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
     Swal.fire({ title: 'Saving...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const res = await fetch(url, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: formData
         });
-        const data = await res.json();
+
+        const data = await response.json();
+
         if (data.success) {
-            Swal.fire({ icon: 'success', title: 'Saved!', text: data.message, timer: 2000, showConfirmButton: false })
-                .then(() => location.reload());
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved!',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => location.reload());
         } else {
-            const msg = data.errors ? Object.values(data.errors).flat().join('\n') : (data.message || 'Failed.');
-            Swal.fire('Error', msg, 'error');
+            const errorMsg = data.errors ? Object.values(data.errors).flat().join('\n') : (data.message || 'Failed to save.');
+            Swal.fire('Error', errorMsg, 'error');
         }
-    } catch(e) {
-        console.error(e);
-        Swal.fire('Error', 'An error occurred: ' + e.message, 'error');
+    } catch (error) {
+        console.error('Save error:', error);
+        Swal.fire('Error', 'An error occurred while saving. Please check the console for details.', 'error');
     }
 });
 
+// Edit setting
 document.querySelectorAll('.edit-setting').forEach(btn => {
     btn.addEventListener('click', async function() {
-        const d = this.dataset;
+        const data = this.dataset;
         resetModal();
 
-        document.getElementById('setting_id').value = d.id;
-        document.getElementById('schoolclass_id').value = d.schoolclass_id;
-        document.getElementById('session_id').value = d.session_id || '';
-        document.getElementById('term_id').value = d.term_id || '';
-        document.getElementById('promoted_label').value = d.promoted_label || 'Promoted';
-        document.getElementById('trial_label').value = d.trial_label || 'Promoted on Trial';
-        document.getElementById('see_principal_label').value = d.see_principal_label || 'Advised to See Principal';
-        document.getElementById('repeat_label').value = d.repeat_label || 'Advice to Repeat';
+        document.getElementById('setting_id').value = data.id;
+        document.getElementById('schoolclass_id').value = data.schoolclass_id;
+        document.getElementById('session_id').value = data.session_id || '';
+        document.getElementById('term_id').value = data.term_id || '';
+        document.getElementById('promoted_label').value = data.promoted_label || 'Promoted';
+        document.getElementById('trial_label').value = data.trial_label || 'Promoted on Trial';
+        document.getElementById('see_principal_label').value = data.see_principal_label || 'Advised to See Principal';
+        document.getElementById('repeat_label').value = data.repeat_label || 'Advice to Repeat';
 
         try {
-            promotionRules = JSON.parse(d.promotion_rules || '[]');
-        } catch(e) {
+            promotionRules = JSON.parse(data.promotion_rules || '[]');
+        } catch (e) {
             promotionRules = [];
         }
 
@@ -788,36 +962,40 @@ document.querySelectorAll('.edit-setting').forEach(btn => {
     });
 });
 
+// Delete setting
 document.querySelectorAll('.delete-setting').forEach(btn => {
     btn.addEventListener('click', async function() {
         const result = await Swal.fire({
             title: 'Confirm Delete',
+            text: `Delete promotion rules for ${this.dataset.name}?`,
             icon: 'warning',
             showCancelButton: true,
-            text: `Delete promotion rules for ${this.dataset.name}?`,
-            confirmButtonColor: '#dc3545',
+            confirmButtonColor: '#dc2626',
             confirmButtonText: 'Yes, Delete'
         });
-        if (!result.isConfirmed) return;
 
-        Swal.fire({ title: 'Deleting…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        try {
-            const res = await fetch(`/promotion-settings/${this.dataset.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
+        if (result.isConfirmed) {
+            Swal.fire({ title: 'Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                const response = await fetch(`/promotion-settings/${this.dataset.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message, 'error');
                 }
-            });
-            const data = await res.json();
-            if (data.success) {
-                Swal.fire({ icon: 'success', title: 'Deleted!', text: data.message, timer: 2000, showConfirmButton: false })
-                    .then(() => location.reload());
-            } else {
-                Swal.fire('Error', data.message, 'error');
+            } catch (error) {
+                Swal.fire('Error', 'Failed to delete.', 'error');
             }
-        } catch(e) {
-            Swal.fire('Error', 'An error occurred.', 'error');
         }
     });
 });
@@ -836,7 +1014,6 @@ function resetModal() {
     otherSubjects = [];
     rerenderRules();
     document.getElementById('addRuleBtn').disabled = true;
-    document.getElementById('subjectSummary').style.display = 'none';
 }
 
 document.getElementById('settingModal').addEventListener('hidden.bs.modal', resetModal);
@@ -845,12 +1022,5 @@ function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
-// Add routes for JavaScript
-window.promotionSettingsRoutes = {
-    subjectsByClass: '{{ route("promotion.settings.subjects-by-class") }}',
-    compulsoryByClass: '{{ route("promotion.settings.compulsory-by-class") }}',
-    store: '{{ route("promotion.settings.store") }}'
-};
 </script>
 @endsection
