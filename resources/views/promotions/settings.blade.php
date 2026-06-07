@@ -16,6 +16,7 @@
     --ps-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 
+/* Hero Section */
 .ps-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--ps-radius);
@@ -48,6 +49,7 @@
     position: relative;
 }
 
+/* Setting Card */
 .setting-card {
     background: #fff;
     border: 1px solid var(--ps-border);
@@ -66,6 +68,7 @@
     border-left: 4px solid var(--ps-success);
 }
 
+/* Modal Improvements */
 .modal-content {
     border-radius: 16px;
     overflow: hidden;
@@ -92,6 +95,7 @@
     padding: 1rem 1.5rem;
 }
 
+/* Form Sections */
 .form-section {
     background: var(--ps-bg);
     border-radius: 12px;
@@ -110,6 +114,7 @@
     justify-content: space-between;
 }
 
+/* Info Banner */
 .info-banner {
     background: #eff6ff;
     border: 1px solid #bfdbfe;
@@ -136,6 +141,7 @@
     font-size: 14px;
 }
 
+/* Rule Card */
 .rule-card {
     background: #fff;
     border: 2px solid var(--ps-border);
@@ -165,6 +171,16 @@
     padding: 4px 12px;
     border-radius: 20px;
 }
+.rule-status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+.rule-status-badge.promoted { background: #16a34a; color: #fff; }
+.rule-status-badge.trial { background: #ca8a04; color: #fff; }
+.rule-status-badge.principal { background: #0284c7; color: #fff; }
+.rule-status-badge.repeat { background: #dc2626; color: #fff; }
 .rule-name-input {
     flex: 1;
     max-width: 350px;
@@ -174,6 +190,7 @@
     padding: 20px;
 }
 
+/* Status Label Pills */
 .label-selector {
     display: flex;
     gap: 10px;
@@ -183,7 +200,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 16px;
+    padding: 8px 20px;
     border-radius: 30px;
     font-size: 13px;
     font-weight: 600;
@@ -197,6 +214,7 @@
 }
 .label-pill.active {
     box-shadow: 0 0 0 3px rgba(0,0,0,.15);
+    transform: scale(1.02);
 }
 .label-pill.lp-promoted {
     background: #dcfce7;
@@ -239,11 +257,42 @@
     border-color: #b91c1c;
 }
 
-.subjects-container {
-    max-height: 400px;
-    overflow-y: auto;
+/* Improved Subject Sections */
+.subjects-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.subject-group {
     border: 1px solid var(--ps-border);
     border-radius: 10px;
+    overflow: hidden;
+}
+.subject-group-header {
+    background: linear-gradient(90deg, #f0f7ff, #f8fafc);
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--ps-border);
+    font-weight: 700;
+    font-size: 14px;
+}
+.subject-group-header.compulsory {
+    background: linear-gradient(90deg, #fef3c7, #fffbeb);
+    color: #92400e;
+}
+.subject-group-header.other {
+    background: linear-gradient(90deg, #f0fdf4, #f0fdf4);
+    color: #166534;
+}
+.subject-group-header i {
+    margin-right: 8px;
+}
+.subject-group-header .badge {
+    margin-left: 10px;
+    font-size: 11px;
+}
+.subjects-container {
+    max-height: 300px;
+    overflow-y: auto;
 }
 .subj-table {
     width: 100%;
@@ -254,25 +303,36 @@
     position: sticky;
     top: 0;
     z-index: 10;
+    background: #fff;
 }
 .subj-table thead tr {
-    background: var(--ps-primary);
-    color: #fff;
+    background: #f1f5f9;
+    border-bottom: 2px solid var(--ps-border);
 }
 .subj-table th {
-    padding: 12px;
+    padding: 10px 12px;
     font-weight: 600;
-    text-align: left;
+    font-size: 12px;
+    color: var(--ps-primary);
 }
 .subj-table td {
     padding: 10px 12px;
-    border-bottom: 1px solid var(--ps-border);
+    border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
 }
 .subj-table tbody tr:hover {
-    background: #f0f9ff;
+    background: #f8fafc;
 }
-.subj-table .badge-compulsory {
+.subject-name-cell {
+    font-weight: 500;
+}
+.subject-code {
+    font-size: 11px;
+    color: var(--ps-muted);
+    font-family: monospace;
+    margin-left: 8px;
+}
+.badge-compulsory {
     background: #fef3c7;
     color: #92400e;
     padding: 2px 10px;
@@ -280,6 +340,17 @@
     font-size: 10px;
     font-weight: 700;
     display: inline-block;
+    margin-right: 8px;
+}
+.badge-optional {
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-block;
+    margin-right: 8px;
 }
 .grade-sel {
     border: 1.5px solid var(--ps-border);
@@ -289,20 +360,19 @@
     background: #fff;
     cursor: pointer;
     width: 100px;
+    font-weight: 500;
 }
 .grade-sel:focus {
     border-color: var(--ps-accent);
     outline: none;
     box-shadow: 0 0 0 2px rgba(37,99,235,.1);
 }
-
-.spin {
-    animation: spin .7s linear infinite;
-}
-@keyframes spin {
-    to { transform: rotate(360deg); }
+.grade-sel.has-value {
+    border-color: var(--ps-success);
+    background: #f0fdf4;
 }
 
+/* Empty State */
 .no-rules-placeholder {
     text-align: center;
     padding: 40px 20px;
@@ -310,6 +380,18 @@
     background: var(--ps-bg);
     border-radius: 12px;
     border: 2px dashed var(--ps-border);
+}
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;
+    border-top-color: #2563eb;
+    animation: spin .6s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 </style>
 
@@ -358,15 +440,29 @@
                                         <i class="ri-price-tag-3-line me-1"></i>
                                         {{ count($setting->promotion_rules) }} rule(s) configured
                                     </div>
-                                    <div class="d-flex flex-wrap gap-1">
+                                    <div class="rules-list" style="max-height: 200px; overflow-y: auto;">
                                         @foreach($setting->promotion_rules as $rule)
                                         @php
-                                            $lmap = ['promoted' => 'success', 'trial' => 'warning', 'see_principal' => 'info', 'repeat' => 'danger'];
-                                            $badge = $lmap[$rule['status_label'] ?? ''] ?? 'secondary';
+                                            $statusMap = [
+                                                'promoted' => ['class' => 'success', 'icon' => 'ri-checkbox-circle-line', 'label' => $setting->promoted_label],
+                                                'trial' => ['class' => 'warning', 'icon' => 'ri-time-line', 'label' => $setting->trial_label],
+                                                'see_principal' => ['class' => 'info', 'icon' => 'ri-user-star-line', 'label' => $setting->see_principal_label],
+                                                'repeat' => ['class' => 'danger', 'icon' => 'ri-repeat-line', 'label' => $setting->repeat_label]
+                                            ];
+                                            $status = $statusMap[$rule['status_label'] ?? 'repeat'] ?? $statusMap['repeat'];
                                         @endphp
-                                        <span class="badge bg-{{ $badge }} px-2 py-1">
-                                            {{ $rule['rule_name'] ?? 'Rule '.($loop->index+1) }}
-                                        </span>
+                                        <div class="border-bottom pb-2 mb-2">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="fw-semibold small">{{ $rule['rule_name'] ?? 'Unnamed Rule' }}</div>
+                                                <span class="badge bg-{{ $status['class'] }} px-2 py-1">
+                                                    <i class="{{ $status['icon'] }} me-1"></i>{{ $status['label'] }}
+                                                </span>
+                                            </div>
+                                            <div class="text-muted small mt-1">
+                                                <i class="ri-book-open-line me-1"></i>
+                                                {{ count($rule['subject_conditions'] ?? []) }} subject(s)
+                                            </div>
+                                        </div>
                                         @endforeach
                                     </div>
                                 </div>
@@ -422,6 +518,7 @@
     </div>
 </div>
 
+<!-- Modal -->
 <div class="modal fade" id="settingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
@@ -437,6 +534,7 @@
             </form>
 
             <div class="modal-body">
+                <!-- Class Selection -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-book-2-line me-2"></i>Class &amp; Scope</span>
@@ -472,13 +570,14 @@
                     </div>
                     <div id="subjectLoadStatus" class="mt-3" style="display: none;">
                         <div class="d-flex align-items-center gap-2 text-muted">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <div class="loading-spinner"></div>
                             <small>Loading subjects...</small>
                         </div>
                     </div>
                     <div id="subjectSummary" class="mt-2" style="display: none;"></div>
                 </div>
 
+                <!-- Promotion Rules -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-3-line me-2"></i>Promotion Rules</span>
@@ -505,6 +604,7 @@
                     </div>
                 </div>
 
+                <!-- Status Labels -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-line me-2"></i>Promotion Status Labels</span>
@@ -548,10 +648,10 @@ let promotionRules = [];
 let gradeScale = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
 
 const STATUS_LABELS = [
-    { key: 'promoted', label: 'Promoted', cls: 'lp-promoted' },
-    { key: 'trial', label: 'Promoted on Trial', cls: 'lp-trial' },
-    { key: 'see_principal', label: 'Advised to See Principal', cls: 'lp-principal' },
-    { key: 'repeat', label: 'Advice to Repeat', cls: 'lp-repeat' },
+    { key: 'promoted', label: 'Promoted', cls: 'lp-promoted', icon: 'ri-checkbox-circle-line' },
+    { key: 'trial', label: 'Promoted on Trial', cls: 'lp-trial', icon: 'ri-time-line' },
+    { key: 'see_principal', label: 'Advised to See Principal', cls: 'lp-principal', icon: 'ri-user-star-line' },
+    { key: 'repeat', label: 'Advice to Repeat', cls: 'lp-repeat', icon: 'ri-repeat-line' },
 ];
 
 function openModal() {
@@ -577,7 +677,7 @@ async function refreshSubjects() {
     if (!classId) {
         rerenderRules();
         addBtn.disabled = true;
-        summary.innerHTML = '<div class="alert alert-warning py-2">Please select a class first.</div>';
+        summary.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="ri-alert-line me-1"></i> Please select a class first.</div>';
         summary.style.display = 'block';
         return;
     }
@@ -633,8 +733,8 @@ async function refreshSubjects() {
             summary.innerHTML = `
                 <div class="alert alert-success py-2 mb-0">
                     <i class="ri-checkbox-circle-line me-1"></i>
-                    <strong>${compulsorySubjects.length}</strong> compulsory subject(s),
-                    <strong>${otherSubjects.length}</strong> other subject(s) loaded.
+                    <strong>📚 ${compulsorySubjects.length}</strong> Compulsory subject(s) &nbsp;|&nbsp;
+                    <strong>📖 ${otherSubjects.length}</strong> Other subject(s) loaded
                 </div>`;
         } else {
             summary.innerHTML = `
@@ -651,7 +751,7 @@ async function refreshSubjects() {
     } catch (e) {
         console.error('Error loading subjects:', e);
         loadStatus.style.display = 'none';
-        summary.innerHTML = `<div class="alert alert-danger py-2">Error loading subjects: ${e.message}</div>`;
+        summary.innerHTML = `<div class="alert alert-danger py-2 mb-0">Error loading subjects: ${e.message}</div>`;
         summary.style.display = 'block';
         addBtn.disabled = true;
     }
@@ -692,12 +792,14 @@ document.getElementById('addRuleBtn').addEventListener('click', () => {
             ...compulsorySubjects.map(s => ({
                 subject_id: s.id,
                 subject_name: s.subject,
+                subject_code: s.subject_code,
                 is_compulsory: true,
                 min_grade: ''
             })),
             ...otherSubjects.map(s => ({
                 subject_id: s.id,
                 subject_name: s.subject,
+                subject_code: s.subject_code,
                 is_compulsory: false,
                 min_grade: ''
             })),
@@ -721,6 +823,7 @@ function rerenderRules() {
 
     container.innerHTML = promotionRules.map((rule, idx) => buildRuleCard(rule, idx)).join('');
 
+    // Attach event listeners
     container.querySelectorAll('.rule-name-input').forEach(inp => {
         inp.addEventListener('input', e => {
             promotionRules[+e.target.dataset.idx].rule_name = e.target.value;
@@ -732,6 +835,15 @@ function rerenderRules() {
             const idx = +pill.dataset.idx;
             const stat = pill.dataset.status;
             promotionRules[idx].status_label = stat;
+            // Update UI
+            const ruleCard = pill.closest('.rule-card');
+            const statusBadge = ruleCard.querySelector('.rule-status-badge');
+            const selectedLabel = STATUS_LABELS.find(s => s.key === stat);
+            if (statusBadge && selectedLabel) {
+                statusBadge.className = `rule-status-badge ${stat}`;
+                statusBadge.innerHTML = `<i class="${selectedLabel.icon} me-1"></i>${selectedLabel.label}`;
+            }
+            // Update active state on pills
             pill.closest('.label-selector').querySelectorAll('.label-pill').forEach(p => {
                 p.classList.toggle('active', p.dataset.status === stat);
             });
@@ -743,7 +855,17 @@ function rerenderRules() {
             const rIdx = +e.target.dataset.ruleIdx;
             const sIdx = +e.target.dataset.subjIdx;
             promotionRules[rIdx].subject_conditions[sIdx].min_grade = e.target.value;
+            // Highlight if value is selected
+            if (e.target.value) {
+                e.target.classList.add('has-value');
+            } else {
+                e.target.classList.remove('has-value');
+            }
         });
+        // Initialize highlight
+        if (sel.value) {
+            sel.classList.add('has-value');
+        }
     });
 
     container.querySelectorAll('.remove-rule-btn').forEach(btn => {
@@ -775,31 +897,48 @@ function rerenderRules() {
 }
 
 function buildRuleCard(rule, idx) {
+    const selectedStatus = STATUS_LABELS.find(s => s.key === rule.status_label) || STATUS_LABELS[0];
+
     const labelPills = STATUS_LABELS.map(sl => {
         const active = rule.status_label === sl.key ? 'active' : '';
-        return `<span class="label-pill ${sl.cls} ${active}" data-idx="${idx}" data-status="${sl.key}">${sl.label}</span>`;
+        return `<span class="label-pill ${sl.cls} ${active}" data-idx="${idx}" data-status="${sl.key}">
+                    <i class="${sl.icon} me-1"></i>${sl.label}
+                </span>`;
     }).join('');
 
-    const tableRows = rule.subject_conditions.map((cond, sIdx) => `
-        <tr>
-            <td>
-                ${cond.is_compulsory ? '<span class="badge-compulsory me-2">Compulsory</span>' : ''}
-                <strong>${escapeHtml(cond.subject_name)}</strong>
-                ${cond.subject_code ? `<br><small class="text-muted">${escapeHtml(cond.subject_code)}</small>` : ''}
-            </td>
-            <td style="width: 120px;">
-                <select class="grade-sel form-select form-select-sm" data-rule-idx="${idx}" data-subj-idx="${sIdx}">
-                    <option value="">Any</option>
-                    ${gradeScale.map(g => `<option value="${g}" ${cond.min_grade === g ? 'selected' : ''}>${g}</option>`).join('')}
-                </select>
-             </td>
-        </table>
-    `).join('');
+    // Build compulsory subjects table
+    const compulsoryConditions = rule.subject_conditions.filter(c => c.is_compulsory);
+    const otherConditions = rule.subject_conditions.filter(c => !c.is_compulsory);
+
+    const buildSubjectRows = (conditions, isCompulsory) => {
+        if (conditions.length === 0) return '';
+        return conditions.map((cond, sIdx) => `
+            <tr>
+                <td class="subject-name-cell">
+                    ${isCompulsory ? '<span class="badge-compulsory"><i class="ri-star-fill me-1"></i>Compulsory</span>' : '<span class="badge-optional"><i class="ri-checkbox-line me-1"></i>Optional</span>'}
+                    <strong>${escapeHtml(cond.subject_name)}</strong>
+                    ${cond.subject_code ? `<span class="subject-code">(${escapeHtml(cond.subject_code)})</span>` : ''}
+                 </td>
+                <td style="width: 130px;">
+                    <select class="grade-sel form-select form-select-sm" data-rule-idx="${idx}" data-subj-idx="${sIdx}">
+                        <option value="">📌 Any</option>
+                        ${gradeScale.map(g => `<option value="${g}" ${cond.min_grade === g ? 'selected' : ''}>${g}</option>`).join('')}
+                    </select>
+                 </td>
+            </tr>
+        `).join('');
+    };
+
+    const compulsoryRows = buildSubjectRows(compulsoryConditions, true);
+    const otherRows = buildSubjectRows(otherConditions, false);
 
     return `
     <div class="rule-card">
         <div class="rule-card-header">
-            <span class="rule-num-badge">Rule ${idx + 1}</span>
+            <span class="rule-num-badge"><i class="ri-number-1 me-1"></i>Rule ${idx + 1}</span>
+            <span class="rule-status-badge ${rule.status_label}">
+                <i class="${selectedStatus.icon} me-1"></i>${selectedStatus.label}
+            </span>
             <input type="text" class="form-control form-control-sm rule-name-input"
                    data-idx="${idx}" value="${escapeHtml(rule.rule_name)}"
                    placeholder="Enter rule name (e.g., 'All A's - Top Performer')">
@@ -817,22 +956,56 @@ function buildRuleCard(rule, idx) {
         </div>
         <div class="rule-card-body">
             <div class="mb-3">
-                <label class="fw-semibold mb-2">Promotion Status Label</label>
+                <label class="fw-semibold mb-2">
+                    <i class="ri-award-line me-1"></i>Promotion Status Label
+                </label>
                 <div class="label-selector">${labelPills}</div>
             </div>
             <div>
-                <label class="fw-semibold mb-2">Minimum Grade Requirements</label>
-                <div class="subjects-container">
-                    <table class="subj-table">
-                        <thead>
-                            <tr><th>Subject</th><th style="width: 120px;">Minimum Grade</th></tr>
-                        </thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
+                <label class="fw-semibold mb-2">
+                    <i class="ri-graduation-cap-line me-1"></i>Minimum Grade Requirements
+                </label>
+                <div class="subjects-layout">
+                    ${compulsoryRows ? `
+                    <div class="subject-group">
+                        <div class="subject-group-header compulsory">
+                            <i class="ri-star-fill"></i> Compulsory Subjects
+                            <span class="badge bg-warning text-dark">${compulsoryConditions.length} subjects</span>
+                            <small class="text-muted ms-2">- Must meet these requirements</small>
+                        </div>
+                        <div class="subjects-container">
+                            <table class="subj-table">
+                                <thead>
+                                    <tr><th>Subject</th><th style="width: 130px;">Minimum Grade</th></tr>
+                                </thead>
+                                <tbody>${compulsoryRows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${otherRows ? `
+                    <div class="subject-group">
+                        <div class="subject-group-header other">
+                            <i class="ri-book-open-line"></i> Other Subjects
+                            <span class="badge bg-success">${otherConditions.length} subjects</span>
+                            <small class="text-muted ms-2">- Optional requirements</small>
+                        </div>
+                        <div class="subjects-container">
+                            <table class="subj-table">
+                                <thead>
+                                    <tr><th>Subject</th><th style="width: 130px;">Minimum Grade</th></tr>
+                                </thead>
+                                <tbody>${otherRows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
                 <small class="text-muted mt-2 d-block">
                     <i class="ri-information-line"></i>
-                    Leave as "Any" to exclude this subject from the rule evaluation.
+                    Leave as <strong>"Any"</strong> to exclude this subject from the rule evaluation.
+                    ${compulsorySubjects.length > 0 ? '<span class="text-warning ms-2"><i class="ri-alert-line"></i> Compulsory subjects require passing grades!</span>' : ''}
                 </small>
             </div>
         </div>
@@ -866,7 +1039,6 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
 
     const id = document.getElementById('setting_id').value;
     let url = '/promotion-settings';
-    let method = 'POST';
 
     if (id) {
         url = `/promotion-settings/${id}`;
@@ -902,10 +1074,11 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
         }
     } catch (error) {
         console.error('Save error:', error);
-        Swal.fire('Error', 'An error occurred while saving. Please check the console for details.', 'error');
+        Swal.fire('Error', 'An error occurred while saving.', 'error');
     }
 });
 
+// Edit and Delete handlers...
 document.querySelectorAll('.edit-setting').forEach(btn => {
     btn.addEventListener('click', async function() {
         const data = this.dataset;
