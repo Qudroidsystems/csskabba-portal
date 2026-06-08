@@ -31,14 +31,27 @@ class PromotionSettingController extends Controller
             ->orderBy('schoolclass_id')
             ->get();
 
-        // Fix: Properly get schoolclasses with arm names from schoolarm table
+        // Get schoolclasses with proper arm names using DB query
         $schoolclasses = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select('schoolclass.id', 'schoolclass.schoolclass', DB::raw('COALESCE(schoolarm.arm, schoolclass.arm) as arm_display'))
-            ->get();
+            ->select(
+                'schoolclass.id',
+                'schoolclass.schoolclass',
+                'schoolclass.arm as arm_id',
+                'schoolarm.arm as arm_name'
+            )
+            ->get()
+            ->map(function($class) {
+                // If arm_name exists from join, use it; otherwise use the arm_id
+                $class->display_name = trim($class->schoolclass . ' ' . ($class->arm_name ?: ''));
+                return $class;
+            });
 
         $sessions = Schoolsession::orderBy('session', 'desc')->get();
         $terms    = Schoolterm::orderBy('term')->get();
+
+        // Debug: Log what we have
+        \Log::info('Schoolclasses loaded:', $schoolclasses->toArray());
 
         return view('promotions.settings', compact(
             'settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'
