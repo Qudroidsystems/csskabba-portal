@@ -282,6 +282,32 @@
                 </div>
             </div>
 
+            {{-- Warning Banner for Missing Promotion Settings --}}
+            @php
+                $selectedClassId = request()->input('schoolclassid');
+                $hasPromotionSettings = false;
+                if ($selectedClassId && $selectedClassId !== 'ALL') {
+                    $hasPromotionSettings = \App\Models\PromotionSetting::where('schoolclass_id', $selectedClassId)
+                        ->where('is_active', true)
+                        ->exists();
+                }
+            @endphp
+
+            @if(request()->filled('schoolclassid') && request()->input('schoolclassid') !== 'ALL' && !$hasPromotionSettings)
+            <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert" style="border-left: 4px solid #d97706;">
+                <div class="d-flex align-items-center">
+                    <i class="ri-alert-line fs-4 me-3"></i>
+                    <div>
+                        <strong class="d-block mb-1">⚠️ No Promotion Rules Configured!</strong>
+                        <span>No active promotion settings found for this class. Please
+                        <a href="{{ route('promotion-settings.index') }}" class="alert-link fw-bold">configure promotion rules</a>
+                        to enable automatic recommendations. Until then, all students will show "Awaiting Decision".</span>
+                    </div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+            @endif
+
             {{-- Filters --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
@@ -765,16 +791,21 @@ function updateStats() {
         const recCell = cells[7];
         if (recCell) {
             const recStatus = recCell.getAttribute('data-rec-status') || '';
-            if (recStatus === 'promoted')                             promoted++;
-            else if (recStatus === 'trial')                           trial++;
-            else if (recStatus === 'repeated' || recStatus === 'repeat') repeat++;
+            if (recStatus === 'promoted') {
+                promoted++;
+            } else if (recStatus === 'trial') {
+                trial++;
+            } else if (recStatus === 'repeated' || recStatus === 'repeat') {
+                repeat++;
+            }
+            // 'awaiting' status is ignored in stats
         }
     });
 
-    document.getElementById('totalStudents').innerText  = total;
-    document.getElementById('promotedCount').innerText  = promoted;
-    document.getElementById('trialCount').innerText     = trial;
-    document.getElementById('repeatCount').innerText    = repeat;
+    document.getElementById('totalStudents').innerText = total;
+    document.getElementById('promotedCount').innerText = promoted;
+    document.getElementById('trialCount').innerText = trial;
+    document.getElementById('repeatCount').innerText = repeat;
 }
 
 // ── Pagination ─────────────────────────────────────────────────────────────────
@@ -1048,6 +1079,14 @@ async function openPromotionModal(
 
                 html += `</div>`;
                 recContent.innerHTML = html;
+            } else if (result && result.status === 'awaiting') {
+                recCard.style.display = 'block';
+                recContent.innerHTML = `<div class="alert alert-info mb-0">
+                    <i class="ri-information-line me-2"></i>
+                    <strong>No Promotion Rules Configured</strong><br>
+                    Please configure promotion rules in the <a href="{{ route('promotion-settings.index') }}" class="alert-link">Promotion Settings</a>
+                    to enable automatic recommendations.
+                </div>`;
             }
 
             // ── All subjects table ───────────────────────────────────────────
@@ -1103,8 +1142,8 @@ async function openPromotionModal(
                 });
 
                 html += `</tbody>
-                            </table>
-                        </div>`;
+                    </table>
+                </div>`;
                 document.getElementById('allSubjectsContent').innerHTML = html;
             }
 
