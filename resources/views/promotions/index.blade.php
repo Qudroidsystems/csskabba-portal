@@ -1,4 +1,3 @@
-{{-- resources/views/promotions/index.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -233,7 +232,7 @@
                         <p>Manage student promotion, repetition, and class assignments based on academic performance.</p>
                     </div>
                     <div>
-                        <a href="{{ route('promotion.settings.index') }}" class="btn btn-light">
+                        <a href="{{ route('promotion-settings.index') }}" class="btn btn-light">
                             <i class="ri-settings-4-line me-1"></i>Promotion Settings
                         </a>
                     </div>
@@ -279,7 +278,7 @@
                     <strong>Promotion Rules</strong>
                     Promotion decisions are based on compulsory subject performance and overall averages.
                     Only <strong>active</strong> rules are applied automatically.
-                    Configure rules in <a href="{{ route('promotion.settings.index') }}">Promotion Settings</a>.
+                    Configure rules in <a href="{{ route('promotion-settings.index') }}">Promotion Settings</a>.
                 </div>
             </div>
 
@@ -1103,7 +1102,9 @@ async function openPromotionModal(
                     </tr>`;
                 });
 
-                html += `</tbody></table></div>`;
+                html += `</tbody>
+                            </table>
+                        </div>`;
                 document.getElementById('allSubjectsContent').innerHTML = html;
             }
 
