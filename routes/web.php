@@ -1360,6 +1360,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         Route::post('/', [PromotionSettingController::class, 'store'])->name('promotion.settings.store');
         Route::put('/{id}', [PromotionSettingController::class, 'update'])->name('promotion.settings.update');
         Route::delete('/{id}', [PromotionSettingController::class, 'destroy'])->name('promotion.settings.destroy');
+        Route::get('/class-promotion-data', [PromotionSettingController::class, 'getClassPromotionData'])->name('promotion.settings.class-data');
     });
 
 

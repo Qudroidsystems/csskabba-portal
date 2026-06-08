@@ -351,7 +351,7 @@
     font-size: 12px;
     background: #fff;
     cursor: pointer;
-    width: 100px;
+    width: 130px;
     font-weight: 500;
 }
 .grade-sel:focus {
@@ -362,6 +362,10 @@
 .grade-sel.has-value {
     border-color: var(--ps-success);
     background: #f0fdf4;
+}
+.grade-sel option:disabled {
+    color: #999;
+    font-style: italic;
 }
 
 .no-rules-placeholder {
@@ -383,6 +387,14 @@
 }
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+.min-grade-warning {
+    font-size: 10px;
+    margin-top: 4px;
+}
+.min-grade-warning i {
+    font-size: 10px;
 }
 </style>
 
@@ -408,7 +420,6 @@
                     <div class="row">
                         @forelse ($settings as $setting)
                         @php
-                            // Get the correct arm name for the setting display
                             $armDisplay = '';
                             if ($setting->schoolclass && $setting->schoolclass->arm) {
                                 $armData = DB::table('schoolarm')->where('id', $setting->schoolclass->arm)->first();
@@ -427,6 +438,21 @@
                                             {{ $setting->session?->session ?? 'All Sessions' }}
                                             &mdash; {{ $setting->term?->term ?? 'All Terms' }}
                                         </small>
+                                        @if($setting->rule_logic && $setting->rule_logic != 'subject_only')
+                                        <div class="mt-1">
+                                            <span class="badge bg-info">
+                                                @if($setting->rule_logic == 'average_only') 📊 Average Score
+                                                @elseif($setting->rule_logic == 'both') 🎯 Grades + Average
+                                                @else 📚 Subject Grades
+                                                @endif
+                                            </span>
+                                            @if($setting->promotion_pass_average)
+                                            <span class="badge bg-secondary ms-1">
+                                                {{ $setting->promotion_pass_average }}% avg required
+                                            </span>
+                                            @endif
+                                        </div>
+                                        @endif
                                     </div>
                                     @if(!empty($setting->promotion_rules))
                                     <span class="badge bg-success">Active</span>
@@ -490,6 +516,8 @@
                                         data-trial_label="{{ $setting->trial_label }}"
                                         data-see_principal_label="{{ $setting->see_principal_label }}"
                                         data-repeat_label="{{ $setting->repeat_label }}"
+                                        data-rule_logic="{{ $setting->rule_logic ?? 'subject_only' }}"
+                                        data-promotion_pass_average="{{ $setting->promotion_pass_average ?? '' }}"
                                         data-promotion_rules="{{ json_encode($setting->promotion_rules ?? []) }}">
                                         <i class="ri-pencil-line"></i> Edit
                                     </button>
@@ -543,11 +571,8 @@
                             <select class="form-select" id="schoolclass_id" required>
                                 <option value="">-- Select Class --</option>
                                 @foreach ($schoolclasses as $class)
-                                @php
-                                    $displayName = trim($class->schoolclass . ' ' . ($class->arm_name ?? ''));
-                                @endphp
                                 <option value="{{ $class->id }}">
-                                    {{ $displayName }}
+                                    {{ trim($class->schoolclass . ' ' . ($class->arm_name ?? '')) }}
                                 </option>
                                 @endforeach
                             </select>
@@ -580,6 +605,43 @@
                     <div id="subjectSummary" class="mt-2" style="display: none;"></div>
                 </div>
 
+                <!-- Average Score Section -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span><i class="ri-percent-line me-2"></i>Promotion Criteria</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Rule Evaluation Logic</label>
+                        <select class="form-select" id="rule_logic">
+                            <option value="subject_only">📚 Subject Grades Only</option>
+                            <option value="average_only">📊 Average Score Only</option>
+                            <option value="both">🎯 Both Subject Grades AND Average Score</option>
+                        </select>
+                        <small class="text-muted">Choose how promotion rules are evaluated</small>
+                    </div>
+
+                    <div id="averageScoreSection" style="display: none;">
+                        <label class="form-label fw-semibold">
+                            <i class="ri-percent-line me-1"></i>Minimum Promotion Pass Average (%)
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <input type="range" class="form-range" id="avg_score_slider" min="0" max="100" step="1" value="50">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control" id="promotion_pass_average"
+                                       placeholder="Minimum average score" min="0" max="100" step="0.01">
+                            </div>
+                        </div>
+                        <div id="classAvgWarning" class="small text-muted mt-2">
+                            <i class="ri-information-line"></i>
+                            <span id="avgHelpText">Student must achieve at least this average score to be considered for promotion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Promotion Rules -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-3-line me-2"></i>Promotion Rules</span>
@@ -594,7 +656,8 @@
                             <strong>How rules work</strong>
                             Rules are evaluated in order from top to bottom. The first rule that matches all subject
                             requirements determines the student's promotion status. Leave a subject's grade as
-                            <strong>"Any"</strong> to skip that subject in the rule.
+                            <strong>"Any"</strong> to skip that subject in the rule.<br>
+                            <strong class="text-danger mt-1">⭐ Note:</strong> For compulsory subjects, only grades equal to or higher than the minimum required grade are selectable.
                         </div>
                     </div>
 
@@ -606,6 +669,7 @@
                     </div>
                 </div>
 
+                <!-- Status Labels -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <span><i class="ri-price-tag-line me-2"></i>Promotion Status Labels</span>
@@ -647,6 +711,8 @@ let compulsorySubjects = [];
 let otherSubjects = [];
 let promotionRules = [];
 let gradeScale = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
+let compulsoryMinGrades = {};
+let classPassAverage = null;
 
 const STATUS_LABELS = [
     { key: 'promoted', label: 'Promoted', cls: 'lp-promoted', icon: 'ri-checkbox-circle-line' },
@@ -674,6 +740,7 @@ async function refreshSubjects() {
     summary.style.display = 'none';
     compulsorySubjects = [];
     otherSubjects = [];
+    compulsoryMinGrades = {};
 
     if (!classId) {
         rerenderRules();
@@ -707,6 +774,13 @@ async function refreshSubjects() {
 
         const compIds = new Set(compSubs.map(s => s.id));
 
+        // Store minimum grades for compulsory subjects
+        compSubs.forEach(s => {
+            if (s.min_grade) {
+                compulsoryMinGrades[s.id] = s.min_grade;
+            }
+        });
+
         compulsorySubjects = compSubs.map(s => ({
             id: s.id,
             subject: s.subject,
@@ -720,23 +794,43 @@ async function refreshSubjects() {
             subject_code: s.subject_code
         }));
 
+        // Try to get class pass average from the compulsory subject endpoint or from stored value
+        if (compData.pass_average) {
+            classPassAverage = compData.pass_average;
+            document.getElementById('promotion_pass_average').value = classPassAverage;
+            document.getElementById('avg_score_slider').value = classPassAverage;
+            document.getElementById('avgHelpText').innerHTML = `Class default: ${classPassAverage}% minimum average required. You can override above.`;
+        }
+
+        // Adjust grade scale based on compulsory min_grade
         if (compSubs.length > 0 && compSubs[0].min_grade) {
             const sampleGrade = compSubs[0].min_grade;
-            gradeScale = /[0-9]/.test(sampleGrade)
-                ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9']
-                : ['A', 'B', 'C', 'D', 'F'];
+            if (/[0-9]/.test(sampleGrade)) {
+                gradeScale = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
+            } else {
+                gradeScale = ['A', 'B', 'C', 'D', 'F'];
+            }
         }
 
         addBtn.disabled = false;
         loadStatus.style.display = 'none';
 
         if (allSubs.length > 0) {
+            let warningHtml = '';
+            if (Object.keys(compulsoryMinGrades).length > 0) {
+                warningHtml = `<div class="alert alert-warning mt-2 py-1 mb-0 small">
+                    <i class="ri-alert-line"></i>
+                    <strong>${Object.keys(compulsoryMinGrades).length}</strong> compulsory subject(s) have minimum grade requirements.
+                    Only grades ≥ minimum will be selectable.
+                </div>`;
+            }
             summary.innerHTML = `
                 <div class="alert alert-success py-2 mb-0">
                     <i class="ri-checkbox-circle-line me-1"></i>
                     <strong>📚 ${compulsorySubjects.length}</strong> Compulsory subject(s) &nbsp;|&nbsp;
                     <strong>📖 ${otherSubjects.length}</strong> Other subject(s) loaded
-                </div>`;
+                </div>
+                ${warningHtml}`;
         } else {
             summary.innerHTML = `
                 <div class="alert alert-warning py-2 mb-0">
@@ -811,6 +905,46 @@ document.getElementById('addRuleBtn').addEventListener('click', () => {
     promotionRules.push(newRule);
     rerenderRules();
 });
+
+function getAvailableGrades(minRequiredGrade) {
+    if (!minRequiredGrade) return gradeScale;
+
+    const minIndex = gradeScale.indexOf(minRequiredGrade);
+    if (minIndex === -1) return gradeScale;
+
+    // Return grades that are >= minimum required (higher index means lower grade in typical scale)
+    // In standard grading, A1 is best, so we need to include grades from start to minIndex
+    return gradeScale.slice(0, minIndex + 1);
+}
+
+function buildGradeOptions(subjectId, currentMinGrade, isCompulsory) {
+    let minRequired = '';
+    if (isCompulsory && compulsoryMinGrades[subjectId]) {
+        minRequired = compulsoryMinGrades[subjectId];
+    }
+
+    let availableGrades = gradeScale;
+    if (minRequired) {
+        const minIndex = gradeScale.indexOf(minRequired);
+        if (minIndex !== -1) {
+            availableGrades = gradeScale.slice(0, minIndex + 1);
+        }
+    }
+
+    let options = '<option value="">📌 Any</option>';
+    for (const grade of availableGrades) {
+        const isMinGrade = (grade === minRequired);
+        const selected = currentMinGrade === grade ? 'selected' : '';
+        const minBadge = isMinGrade ? ' ⭐ (Minimum)' : '';
+        options += `<option value="${grade}" ${selected}>${grade}${minBadge}</option>`;
+    }
+
+    if (minRequired && availableGrades.length === 0) {
+        options = `<option value="${minRequired}" selected>${minRequired} (Minimum Required)</option>`;
+    }
+
+    return options;
+}
 
 function rerenderRules() {
     const container = document.getElementById('rulesContainer');
@@ -924,20 +1058,23 @@ function buildRuleCardHTML(rule, idx) {
     const compulsoryConditions = rule.subject_conditions.filter(c => c.is_compulsory);
     const otherConditions = rule.subject_conditions.filter(c => !c.is_compulsory);
 
-    const buildSubjectRows = (conditions) => {
+    const buildSubjectRows = (conditions, isCompulsoryGroup) => {
         if (conditions.length === 0) return '';
-        return conditions.map((cond, sIdx) => {
+        return conditions.map((cond) => {
             const globalSubjIdx = rule.subject_conditions.findIndex(c => c.subject_id === cond.subject_id);
+            const minRequired = isCompulsoryGroup && compulsoryMinGrades[cond.subject_id] ? compulsoryMinGrades[cond.subject_id] : '';
+            const gradeOptions = buildGradeOptions(cond.subject_id, cond.min_grade, isCompulsoryGroup);
+
             return `
             <tr>
                 <td class="subject-name-cell">
                     <strong>${escapeHtml(cond.subject_name)}</strong>
                     ${cond.subject_code ? `<span class="subject-code">(${escapeHtml(cond.subject_code)})</span>` : ''}
+                    ${minRequired ? `<div class="min-grade-warning text-danger"><i class="ri-alert-line"></i> Min required: ${minRequired}</div>` : ''}
                   </td>
-                <td style="width: 130px;">
+                <td style="width: 140px;">
                     <select class="grade-sel form-select form-select-sm" data-rule-idx="${idx}" data-subj-idx="${globalSubjIdx}">
-                        <option value="">📌 Any</option>
-                        ${gradeScale.map(g => `<option value="${g}" ${cond.min_grade === g ? 'selected' : ''}>${g}</option>`).join('')}
+                        ${gradeOptions}
                     </select>
                   </td>
               </tr>
@@ -945,8 +1082,8 @@ function buildRuleCardHTML(rule, idx) {
         }).join('');
     };
 
-    const compulsoryRows = buildSubjectRows(compulsoryConditions);
-    const otherRows = buildSubjectRows(otherConditions);
+    const compulsoryRows = buildSubjectRows(compulsoryConditions, true);
+    const otherRows = buildSubjectRows(otherConditions, false);
 
     return `
     <div class="rule-card">
@@ -992,7 +1129,7 @@ function buildRuleCardHTML(rule, idx) {
                         <div class="subjects-container">
                             <table class="subj-table">
                                 <thead>
-                                    <tr><th>Subject</th><th style="width: 130px;">Minimum Grade</th></tr>
+                                    <tr><th>Subject</th><th style="width: 140px;">Minimum Grade</th></tr>
                                 </thead>
                                 <tbody>${compulsoryRows}</tbody>
                             </table>
@@ -1010,7 +1147,7 @@ function buildRuleCardHTML(rule, idx) {
                         <div class="subjects-container">
                             <table class="subj-table">
                                 <thead>
-                                    <tr><th>Subject</th><th style="width: 130px;">Minimum Grade</th></tr>
+                                    <tr><th>Subject</th><th style="width: 140px;">Minimum Grade</th></tr>
                                 </thead>
                                 <tbody>${otherRows}</tbody>
                             </table>
@@ -1021,11 +1158,39 @@ function buildRuleCardHTML(rule, idx) {
                 <small class="text-muted mt-2 d-block">
                     <i class="ri-information-line"></i>
                     Leave as <strong>"Any"</strong> to exclude this subject from the rule evaluation.
-                    ${compulsorySubjects.length > 0 ? '<span class="text-warning ms-2"><i class="ri-alert-line"></i> Compulsory subjects require passing grades!</span>' : ''}
+                    ${Object.keys(compulsoryMinGrades).length > 0 ? '<span class="text-warning ms-2"><i class="ri-alert-line"></i> ⭐ marked grades are the minimum required for compulsory subjects!</span>' : ''}
                 </small>
             </div>
         </div>
     </div>`;
+}
+
+// Average score slider sync
+const avgSlider = document.getElementById('avg_score_slider');
+const avgInput = document.getElementById('promotion_pass_average');
+
+if (avgSlider && avgInput) {
+    avgSlider.addEventListener('input', function(e) {
+        avgInput.value = e.target.value;
+    });
+
+    avgInput.addEventListener('input', function(e) {
+        avgSlider.value = e.target.value;
+    });
+}
+
+// Show/hide average score section based on rule logic
+const ruleLogicSelect = document.getElementById('rule_logic');
+const avgSection = document.getElementById('averageScoreSection');
+
+if (ruleLogicSelect && avgSection) {
+    ruleLogicSelect.addEventListener('change', function(e) {
+        if (e.target.value === 'average_only' || e.target.value === 'both') {
+            avgSection.style.display = 'block';
+        } else {
+            avgSection.style.display = 'none';
+        }
+    });
 }
 
 document.getElementById('saveSettingBtn').addEventListener('click', async function() {
@@ -1052,6 +1217,8 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
     formData.set('trial_label', document.getElementById('trial_label').value || 'Promoted on Trial');
     formData.set('see_principal_label', document.getElementById('see_principal_label').value || 'Advised to See Principal');
     formData.set('repeat_label', document.getElementById('repeat_label').value || 'Advice to Repeat');
+    formData.set('rule_logic', document.getElementById('rule_logic').value || 'subject_only');
+    formData.set('promotion_pass_average', document.getElementById('promotion_pass_average').value || '');
 
     const id = document.getElementById('setting_id').value;
     let url = '/promotion-settings';
@@ -1113,6 +1280,12 @@ async function handleEditClick(e) {
     document.getElementById('trial_label').value = data.trial_label || 'Promoted on Trial';
     document.getElementById('see_principal_label').value = data.see_principal_label || 'Advised to See Principal';
     document.getElementById('repeat_label').value = data.repeat_label || 'Advice to Repeat';
+    document.getElementById('rule_logic').value = data.rule_logic || 'subject_only';
+    document.getElementById('promotion_pass_average').value = data.promotion_pass_average || '';
+
+    // Trigger rule logic change to show/hide average section
+    const ruleLogicEvent = new Event('change');
+    document.getElementById('rule_logic').dispatchEvent(ruleLogicEvent);
 
     try {
         promotionRules = JSON.parse(data.promotion_rules || '[]');
@@ -1175,11 +1348,20 @@ function resetModal() {
     document.getElementById('trial_label').value = 'Promoted on Trial';
     document.getElementById('see_principal_label').value = 'Advised to See Principal';
     document.getElementById('repeat_label').value = 'Advice to Repeat';
+    document.getElementById('rule_logic').value = 'subject_only';
+    document.getElementById('promotion_pass_average').value = '';
     promotionRules = [];
     compulsorySubjects = [];
     otherSubjects = [];
+    compulsoryMinGrades = {};
     rerenderRules();
     document.getElementById('addRuleBtn').disabled = true;
+
+    // Hide average section if not applicable
+    const avgSectionElem = document.getElementById('averageScoreSection');
+    if (avgSectionElem) {
+        avgSectionElem.style.display = 'none';
+    }
 }
 
 document.getElementById('settingModal').addEventListener('hidden.bs.modal', resetModal);
