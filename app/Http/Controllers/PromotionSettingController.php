@@ -8,6 +8,7 @@ use App\Models\PromotionRuleTemplate;
 use App\Models\CompulsorySubjectClass;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
+use App\Models\Schoolclass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
@@ -25,7 +26,8 @@ class PromotionSettingController extends Controller
     {
         $pagetitle = 'Promotion Settings';
 
-        $settings = PromotionSetting::with(['schoolclass.arm', 'session', 'term', 'template'])
+        // Remove 'template' from with() if the table doesn't exist yet, or add the relationship
+        $settings = PromotionSetting::with(['schoolclass.arm', 'session', 'term'])
             ->orderBy('schoolclass_id')
             ->get();
 
@@ -36,7 +38,12 @@ class PromotionSettingController extends Controller
 
         $sessions  = Schoolsession::orderBy('session', 'desc')->get();
         $terms     = Schoolterm::orderBy('term')->get();
-        $templates = PromotionRuleTemplate::select('id', 'name', 'grade_scale')->orderBy('name')->get();
+
+        // Only try to load templates if the table exists
+        $templates = [];
+        if (Schema::hasTable('promotion_rule_templates')) {
+            $templates = PromotionRuleTemplate::select('id', 'name', 'grade_scale')->orderBy('name')->get();
+        }
 
         return view('promotions.settings', compact(
             'settings', 'schoolclasses', 'sessions', 'terms', 'templates', 'pagetitle'
@@ -59,9 +66,9 @@ class PromotionSettingController extends Controller
             $gradeScale   = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
             $isSenior     = true;
             $categoryData = DB::table('schoolclass_classcategory')
-                ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
+                ->join('classcategory', 'classcategory.id', '=', 'schoolclass_classcategory.classcategory_id')
                 ->where('schoolclass_classcategory.schoolclass_id', $classId)
-                ->select('classcategories.is_senior', 'classcategories.category')
+                ->select('classcategory.is_senior', 'classcategory.category')
                 ->first();
 
             if ($categoryData && isset($categoryData->is_senior) && !$categoryData->is_senior) {
@@ -128,7 +135,7 @@ class PromotionSettingController extends Controller
                     'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
                     'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
                     'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
-                    'rule_logic'             => $request->rule_logic          ?? 'grade_count',
+                    'rule_logic'             => $request->rule_logic          ?? 'subject_only',
                     'promotion_pass_average' => $request->promotion_pass_average ?: null,
                     'is_active'              => $isActive,
                     'template_id'            => $request->template_id ?: null,
@@ -167,7 +174,7 @@ class PromotionSettingController extends Controller
                 'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
                 'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
                 'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
-                'rule_logic'             => $request->rule_logic          ?? 'grade_count',
+                'rule_logic'             => $request->rule_logic          ?? 'subject_only',
                 'promotion_pass_average' => $request->promotion_pass_average ?: null,
                 'is_active'              => $isActive,
                 'template_id'            => $request->template_id ?: null,
@@ -182,30 +189,106 @@ class PromotionSettingController extends Controller
         }
     }
 
-    // ── Toggle active ─────────────────────────────────────────────────────────
-    public function toggleActive(Request $request, $id)
-    {
-        try {
-            $setting            = PromotionSetting::findOrFail($id);
-            $setting->is_active = (bool) $request->input('is_active', false);
-            $setting->save();
-            return response()->json(['success' => true, 'is_active' => $setting->is_active]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
     // ── Delete ────────────────────────────────────────────────────────────────
     public function destroy($id)
     {
         try {
-            $setting = PromotionSetting::findOrFail($id);
+            $setting = PromotionSetting::find($id);
+
+            if (!$setting) {
+                return response()->json(['success' => false, 'message' => 'Promotion setting not found.'], 404);
+            }
+
             $setting->delete();
             Log::info('Promotion setting deleted', ['id' => $id]);
             return response()->json(['success' => true, 'message' => 'Deleted successfully.']);
         } catch (\Exception $e) {
             Log::error('Delete Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // ── Subjects by Class API ─────────────────────────────────────────────────
+    public function subjectsByClass(Request $request)
+    {
+        try {
+            $classId   = $request->query('classid');
+            $termId    = $request->query('termid');
+            $sessionId = $request->query('sessionid');
+
+            if (!$classId) {
+                return response()->json(['success' => false, 'message' => 'Class required'], 422);
+            }
+
+            $sql = "SELECT DISTINCT s.id, s.subject, s.subject_code
+                    FROM subjectclass sc
+                    INNER JOIN subjectteacher st ON st.id = sc.subjectteacherid
+                    INNER JOIN subject s ON s.id = sc.subjectid
+                    WHERE sc.schoolclassid = ?";
+
+            $params = [$classId];
+
+            if ($termId && $termId !== 'null' && $termId !== '') {
+                $sql .= " AND st.termid = ?";
+                $params[] = $termId;
+            }
+
+            if ($sessionId && $sessionId !== 'null' && $sessionId !== '') {
+                $sql .= " AND st.sessionid = ?";
+                $params[] = $sessionId;
+            }
+
+            $results = DB::select($sql, $params);
+
+            $subjects = array_map(function($row) {
+                return [
+                    'id' => (string)$row->id,
+                    'subject' => $row->subject,
+                    'subject_code' => $row->subject_code,
+                ];
+            }, $results);
+
+            return response()->json([
+                'success' => true,
+                'subjects' => $subjects,
+                'total' => count($subjects)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Subjects by Class Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading subjects: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ── Compulsory Subjects by Class API ──────────────────────────────────────
+    public function compulsoryByClass(Request $request)
+    {
+        try {
+            $classId   = $request->query('classid');
+            $termId    = $request->query('termid');
+            $sessionId = $request->query('sessionid');
+
+            if (!$classId) {
+                return response()->json(['success' => false, 'message' => 'Class required'], 422);
+            }
+
+            $compulsorySubjects = $this->getCompulsorySubjects($classId, $termId, $sessionId);
+
+            return response()->json([
+                'success' => true,
+                'subjects' => $compulsorySubjects,
+                'total' => count($compulsorySubjects)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Compulsory Subjects Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading compulsory subjects: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -220,7 +303,7 @@ class PromotionSettingController extends Controller
             'trial_label'            => 'nullable|string|max:100',
             'see_principal_label'    => 'nullable|string|max:100',
             'repeat_label'           => 'nullable|string|max:100',
-            'rule_logic'             => 'nullable|in:grade_count,average_only,both',
+            'rule_logic'             => 'nullable|in:subject_only,average_only,both',
             'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
             'is_active'              => 'nullable',
             'template_id'            => 'nullable|exists:promotion_rule_templates,id',
@@ -259,7 +342,7 @@ class PromotionSettingController extends Controller
 
     private function getCompulsorySubjects($classId, $termId = null, $sessionId = null): array
     {
-        $q = CompulsorySubjectClass::where('schoolclassid', $classId)
+        $query = CompulsorySubjectClass::where('schoolclassid', $classId)
             ->where(function ($q) use ($termId, $sessionId) {
                 $q->where(function ($q2) use ($termId, $sessionId) {
                     if ($termId)    $q2->where('termid', $termId);
@@ -268,14 +351,13 @@ class PromotionSettingController extends Controller
                     $q2->whereNull('termid')->whereNull('sessionid');
                 });
             })
-            ->with('subject')
-            ->get();
+            ->with('subject');
 
-        return $q->map(fn($cs) => [
-            'subject_id'        => (string) $cs->subjectId,
-            'subject_name'      => $cs->subject?->subject ?? 'N/A',
-            'subject_code'      => $cs->subject?->subject_code ?? '',
-            'default_min_grade' => $cs->min_grade ?? '',
-        ])->unique('subject_id')->values()->toArray();
+        return $query->get()->map(fn($cs) => [
+            'id'           => (string) $cs->subjectId,
+            'subject'      => $cs->subject?->subject ?? 'N/A',
+            'subject_code' => $cs->subject?->subject_code ?? '',
+            'min_grade'    => $cs->min_grade ?? '',
+        ])->unique('id')->values()->toArray();
     }
 }

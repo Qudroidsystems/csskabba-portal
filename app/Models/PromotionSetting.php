@@ -30,6 +30,7 @@ class PromotionSetting extends Model
         'promotion_rules',
         'rule_logic',
         'is_active',
+        'template_id',
     ];
 
     protected $casts = [
@@ -64,6 +65,12 @@ class PromotionSetting extends Model
     public function term()
     {
         return $this->belongsTo(Schoolterm::class, 'term_id');
+    }
+
+    // Add the missing template relationship
+    public function template()
+    {
+        return $this->belongsTo(PromotionRuleTemplate::class, 'template_id');
     }
 
     public function getPromotionRulesAttribute($value)
