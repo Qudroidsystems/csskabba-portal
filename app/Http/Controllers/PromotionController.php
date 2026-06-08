@@ -13,6 +13,7 @@ use App\Models\PromotionStatus;
 use App\Models\CompulsorySubjectClass;
 use App\Models\Broadsheets;
 use App\Models\Student;
+use App\Models\PromotionSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -148,6 +149,7 @@ class PromotionController extends Controller
                 ->select([
                     'subject.id as subject_id',
                     'subject.subject as subject_name',
+                    'subject.subject_code',
                     'broadsheets.total',
                     'broadsheets.grade',
                 ])
@@ -199,8 +201,23 @@ class PromotionController extends Controller
                 return response()->json(['success' => false, 'message' => 'Student not found'], 404);
             }
 
+            // Get ALL subjects with scores
             $scores = $this->getStudentScores($studentId, $schoolclassId, $sessionId, $termId);
             $overallAverage = $this->calculateOverallAverage($scores);
+
+            // Get promotion settings and evaluate
+            $settings = PromotionSetting::where('schoolclass_id', $schoolclassId)
+                ->where(function ($q) use ($sessionId, $termId) {
+                    $q->where(function ($q2) use ($sessionId, $termId) {
+                        $q2->where('session_id', $sessionId)->where('term_id', $termId);
+                    })->orWhere(function ($q2) use ($sessionId) {
+                        $q2->where('session_id', $sessionId)->whereNull('term_id');
+                    })->orWhere(function ($q2) {
+                        $q2->whereNull('session_id')->whereNull('term_id');
+                    });
+                })
+                ->where('is_active', true)
+                ->first();
 
             $promotionResult = $this->promotionEvaluator->evaluate(
                 studentId: $studentId,
@@ -211,8 +228,15 @@ class PromotionController extends Controller
                 overallAverage: $overallAverage
             );
 
+            // Add the applied rule to the result
+            if ($settings && !empty($settings->promotion_rules)) {
+                $promotionResult['applied_rule'] = $this->getAppliedRule($settings, $promotionResult);
+                $promotionResult['settings_id'] = $settings->id;
+            }
+
             $scoreMap = $scores->keyBy('subject_id');
 
+            // Get compulsory subjects with status
             $compulsoryQuery = CompulsorySubjectClass::where('schoolclassid', $schoolclassId)
                 ->where(function ($q) use ($termId, $sessionId) {
                     $q->where(function ($q2) use ($termId, $sessionId) {
@@ -246,18 +270,63 @@ class PromotionController extends Controller
                 ];
             });
 
+            // Get ALL subjects with their scores (for the table)
+            $allSubjectsWithScores = $scores->map(function ($score) use ($compulsoryQuery) {
+                $isCompulsory = $compulsoryQuery->contains('subjectId', $score->subject_id);
+                $minGrade = $isCompulsory ? $compulsoryQuery->where('subjectId', $score->subject_id)->first()?->min_grade : null;
+
+                return [
+                    'subject_id' => $score->subject_id,
+                    'subject_name' => $score->subject_name,
+                    'subject_code' => $score->subject_code,
+                    'grade' => $score->grade,
+                    'total' => $score->total,
+                    'is_compulsory' => $isCompulsory,
+                    'min_grade' => $minGrade,
+                ];
+            });
+
             return response()->json([
                 'success' => true,
                 'student' => $student,
                 'promotion_result' => $promotionResult,
                 'overall_average' => $overallAverage,
                 'compulsory_subjects' => $compulsorySubjectsWithStatus,
+                'all_subjects' => $allSubjectsWithScores,
                 'scores_count' => $scores->count(),
             ]);
         } catch (\Exception $e) {
             Log::error('Error getting student details', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Failed to get student details'], 500);
         }
+    }
+
+    private function getAppliedRule($settings, $promotionResult)
+    {
+        $rules = $settings->promotion_rules ?? [];
+        if (empty($rules)) return null;
+
+        // Find which rule matched based on the result
+        $matchedStatus = $promotionResult['status'] ?? null;
+
+        foreach ($rules as $index => $rule) {
+            if ($rule['status_label'] === $matchedStatus) {
+                return [
+                    'index' => $index + 1,
+                    'name' => $rule['rule_name'] ?? "Rule " . ($index + 1),
+                    'id' => $settings->id,
+                    'description' => $rule['description'] ?? null,
+                ];
+            }
+        }
+
+        // If no specific rule found, return the default based on status
+        return [
+            'index' => null,
+            'name' => ucfirst(str_replace('_', ' ', $matchedStatus ?? 'Unknown')),
+            'id' => $settings->id,
+            'description' => 'Default promotion rule',
+        ];
     }
 
     private function gradePassFail(?string $studentGrade, ?string $minGrade): bool

@@ -420,9 +420,32 @@
     gap: 4px;
 }
 
-.subject-pass { background-color: #d1fae5; }
-.subject-fail { background-color: #fee2e2; }
-.subject-not-sat { background-color: #fed7aa; }
+.subject-pass td:first-child { border-left: 3px solid #10b981; }
+.subject-fail td:first-child { border-left: 3px solid #ef4444; }
+.subject-not-sat td:first-child { border-left: 3px solid #f59e0b; }
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,.02);
+}
+
+.rule-link {
+    transition: all 0.2s ease;
+}
+
+.rule-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+
+.badge-compulsory {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 600;
+    display: inline-block;
+}
 </style>
 
 <div class="main-content">
@@ -661,14 +684,25 @@
                         </div>
                     </div>
 
-                    <!-- Compulsory Subjects Card -->
+                    <!-- Compulsory Subjects Summary Card -->
                     <div class="card border-0 shadow-sm mb-4" id="compulsoryCard" style="display: none;">
                         <div class="card-body">
                             <div class="d-flex align-items-center gap-2 mb-3">
-                                <i class="ri-book-open-line fs-4 text-warning"></i>
-                                <h6 class="mb-0 fw-bold">Compulsory Subjects Performance</h6>
+                                <i class="ri-star-fill fs-4 text-warning"></i>
+                                <h6 class="mb-0 fw-bold">Compulsory Subjects Summary</h6>
                             </div>
                             <div id="compulsoryContent"></div>
+                        </div>
+                    </div>
+
+                    <!-- All Subjects Card -->
+                    <div class="card border-0 shadow-sm mb-4" id="allSubjectsCard" style="display: none;">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <i class="ri-book-open-line fs-4 text-primary"></i>
+                                <h6 class="mb-0 fw-bold">All Subjects Performance</h6>
+                            </div>
+                            <div id="allSubjectsContent"></div>
                         </div>
                     </div>
 
@@ -882,6 +916,7 @@
     let currentSessionId = null;
     let currentTermId = null;
 
+    // Filter data function
     function filterData() {
         const classValue = document.getElementById("idclass").value;
         const sessionValue = document.getElementById("idsession").value;
@@ -971,7 +1006,7 @@
 
     function loadPage(url) {
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</tr></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</td></tr>';
 
         axios.get(url, {
             headers: {
@@ -1089,22 +1124,25 @@
         currentSessionId = document.getElementById("idsession").value;
         currentTermId = termid || document.getElementById("idterm").value;
 
+        // Set student basic info
         document.getElementById('modalStudentName').innerHTML = `<i class="ri-id-card-line me-2"></i>${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
         document.getElementById('modalStudentGender').innerHTML = `<i class="ri-gender-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i>${gender || 'N/A'}`;
         document.getElementById('modalCurrentClass').innerText = schoolclass;
         document.getElementById('modalCurrentArm').innerText = schoolarm || 'N/A';
         document.getElementById('modalCurrentSession').innerText = session;
 
+        // Set student image
         const imgElement = document.getElementById('modalStudentImage');
         if (picture && picture !== 'null' && picture !== '') {
             imgElement.src = `/storage/${picture}`;
         } else {
-            imgElement.src = gender === 'Male' ? '{{ asset("storage/student_avatars/male-default.png") }}' : '{{ asset("storage/student_avatars/female-default.png") }}';
+            imgElement.src = gender === 'Male' ? '/storage/student_avatars/male-default.png' : '/storage/student_avatars/female-default.png';
         }
         imgElement.onerror = function() {
-            this.src = '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+            this.src = '/storage/student_avatars/unnamed.jpg';
         };
 
+        // Reset form
         document.getElementById('promotionForm').reset();
         ['newClassSelect', 'newSessionSelect', 'newTermSelect'].forEach(id => {
             document.getElementById(id).value = '';
@@ -1114,6 +1152,7 @@
         });
         document.getElementById('recommendationCard').style.display = 'none';
         document.getElementById('compulsoryCard').style.display = 'none';
+        document.getElementById('allSubjectsCard').style.display = 'none';
 
         Swal.fire({ title: 'Loading student data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
@@ -1124,12 +1163,15 @@
             if (response.data.success) {
                 const result = response.data.promotion_result;
                 const avg = response.data.overall_average;
+                const allSubjects = response.data.all_subjects || [];
 
+                // Update overall average
                 const avgElement = document.getElementById('modalOverallAverage');
                 const avgValue = avg !== null ? `${avg}%` : 'N/A';
                 const avgColor = avg !== null ? (avg >= 50 ? 'text-success' : (avg >= 40 ? 'text-warning' : 'text-danger')) : 'text-muted';
                 avgElement.innerHTML = `<span class="${avgColor} fs-5">${avgValue}</span>`;
 
+                // Build recommendation card
                 const recCard = document.getElementById('recommendationCard');
                 const recContent = document.getElementById('recommendationContent');
 
@@ -1163,6 +1205,24 @@
                     }
                     html += `</div>`;
 
+                    // Display applied rule with link
+                    if (result.applied_rule) {
+                        const ruleUrl = `/promotion-settings?highlight=${result.settings_id}`;
+                        html += `<div class="mt-3 pt-3 border-top">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <i class="ri-price-tag-3-line text-primary me-1"></i>
+                                    <strong>Applied Rule:</strong>
+                                    <span class="badge bg-primary ms-2">${escapeHtml(result.applied_rule.name)}</span>
+                                </div>
+                                <a href="${ruleUrl}" target="_blank" class="btn btn-sm btn-outline-primary rule-link">
+                                    <i class="ri-settings-4-line me-1"></i>View Rule Settings
+                                </a>
+                            </div>
+                            ${result.applied_rule.description ? `<div class="small text-muted mt-2">${escapeHtml(result.applied_rule.description)}</div>` : ''}
+                        </div>`;
+                    }
+
                     if (result.compulsory_count > 0) {
                         const allPassed = result.passed_compulsory === result.compulsory_count;
                         html += `<div class="mt-3 pt-3 border-top">
@@ -1175,7 +1235,7 @@
 
                         if (result.failed_compulsory && result.failed_compulsory.length > 0) {
                             html += `<div class="mt-2 small text-danger">
-                                <i class="ri-close-circle-line me-1"></i>Failed subjects: `;
+                                <i class="ri-close-circle-line me-1"></i>Failed: `;
                             result.failed_compulsory.forEach(f => {
                                 html += `<span class="badge bg-danger me-1">${f.subject || `Subject #${f.subject_id}`}</span>`;
                             });
@@ -1188,15 +1248,15 @@
                         html += `<div class="mt-3 pt-3 border-top">
                             <div class="small text-muted mb-2">
                                 <i class="ri-price-tag-3-line me-1"></i>
-                                <strong>Applied Rules / Labels</strong>
+                                <strong>Matched Conditional Labels</strong>
                             </div>`;
                         result.matched_labels.forEach(ml => {
                             const colorMap = { danger:'#dc2626', success:'#16a34a', warning:'#d97706', info:'#2563eb', primary:'#1e3a5f' };
                             html += `<span class="badge me-2 mb-1" style="background:${colorMap[ml.color] || '#6c757d'}; font-size:12px; padding:5px 12px">
-                                <i class="ri-price-tag-3-line me-1"></i>${ml.label}
+                                <i class="ri-price-tag-3-line me-1"></i>${escapeHtml(ml.label)}
                             </span>`;
                             if (ml.description) {
-                                html += `<div class="small text-muted mt-1 ms-1 mb-2">${ml.description}</div>`;
+                                html += `<div class="small text-muted mt-1 ms-1 mb-2">${escapeHtml(ml.description)}</div>`;
                             }
                         });
                         html += `</div>`;
@@ -1208,6 +1268,68 @@
                     recCard.style.display = 'none';
                 }
 
+                // Build ALL subjects table
+                if (allSubjects && allSubjects.length > 0) {
+                    document.getElementById('allSubjectsCard').style.display = 'block';
+                    const allSubjectsContent = document.getElementById('allSubjectsContent');
+
+                    let html = `<div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Code</th>
+                                    <th class="text-center">Score</th>
+                                    <th class="text-center">Grade</th>
+                                    <th class="text-center">Min Required</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                    allSubjects.forEach(subject => {
+                        const isCompulsory = subject.is_compulsory;
+                        const minGrade = subject.min_grade;
+                        const studentGrade = subject.grade;
+
+                        let statusBadge, rowClass;
+                        if (isCompulsory) {
+                            if (!studentGrade) {
+                                statusBadge = `<span class="badge bg-secondary"><i class="ri-minus-line me-1"></i>Not Sat</span>`;
+                                rowClass = 'subject-not-sat';
+                            } else if (gradePassFail(studentGrade, minGrade)) {
+                                statusBadge = `<span class="badge bg-success"><i class="ri-checkbox-circle-line me-1"></i>Pass</span>`;
+                                rowClass = 'subject-pass';
+                            } else {
+                                statusBadge = `<span class="badge bg-danger"><i class="ri-close-circle-line me-1"></i>Fail</span>`;
+                                rowClass = 'subject-fail';
+                            }
+                        } else {
+                            statusBadge = `<span class="badge bg-info"><i class="ri-information-line me-1"></i>Optional</span>`;
+                            rowClass = '';
+                        }
+
+                        html += `<tr class="${rowClass}">
+                            <td>
+                                <strong>${escapeHtml(subject.subject_name)}</strong>
+                                ${isCompulsory ? '<span class="badge-compulsory ms-2">Compulsory</span>' : ''}
+                            </td>
+                            <td>${escapeHtml(subject.subject_code) || '—'}</td>
+                            <td class="text-center"><strong>${subject.total !== null ? subject.total : '—'}</strong></td>
+                            <td class="text-center"><strong>${studentGrade || '—'}</strong></td>
+                            <td class="text-center">${isCompulsory ? (minGrade || '—') : '—'}</td>
+                            <td class="text-center">${statusBadge}</td>
+                        </tr>`;
+                    });
+
+                    html += `</tbody>
+                        </table>
+                    </div>`;
+
+                    allSubjectsContent.innerHTML = html;
+                }
+
+                // Build compulsory subjects summary
                 const compSubjects = response.data.compulsory_subjects;
                 if (compSubjects && compSubjects.length > 0) {
                     const compCard = document.getElementById('compulsoryCard');
@@ -1229,49 +1351,9 @@
                             <i class="ri-minus-line me-1"></i>${notSatCount} Not Sat
                         </span>`;
                     }
-                    html += `</div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Subject</th>
-                                    <th class="text-center">Min Grade Required</th>
-                                    <th class="text-center">Grade Obtained</th>
-                                    <th class="text-center">Score</th>
-                                    <th class="text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-                    compSubjects.forEach(cs => {
-                        let statusBadge, rowClass;
-                        if (cs.pass_status === 'pass') {
-                            statusBadge = `<span class="badge bg-success"><i class="ri-checkbox-circle-line me-1"></i>Pass</span>`;
-                            rowClass = 'subject-pass';
-                        } else if (cs.pass_status === 'fail') {
-                            statusBadge = `<span class="badge bg-danger"><i class="ri-close-circle-line me-1"></i>Fail</span>`;
-                            rowClass = 'subject-fail';
-                        } else {
-                            statusBadge = `<span class="badge bg-secondary"><i class="ri-minus-line me-1"></i>Not Sat</span>`;
-                            rowClass = 'subject-not-sat';
-                        }
-
-                        html += `<tr class="${rowClass}">
-                            <td><strong>${cs.subject}</strong><br><small class="text-muted">${cs.subject_code || ''}</small></td>
-                            <td class="text-center">${cs.min_grade}</td>
-                            <td class="text-center"><strong>${cs.student_grade || '—'}</strong></td>
-                            <td class="text-center">${cs.student_total !== null ? cs.student_total : '—'}</td>
-                            <td class="text-center">${statusBadge}</td>
-                        </tr>`;
-                    });
-
-                    html += `</tbody>
-                        </table>
-                    </div>`;
+                    html += `</div>`;
                     compContent.innerHTML = html;
                     compCard.style.display = 'block';
-                } else {
-                    document.getElementById('compulsoryCard').style.display = 'none';
                 }
             }
         } catch (error) {
@@ -1281,6 +1363,28 @@
         }
 
         new bootstrap.Modal(document.getElementById('promotionModal')).show();
+    }
+
+    function gradePassFail(studentGrade, minGrade) {
+        if (!studentGrade) return false;
+
+        const gradeOrder = {
+            'F9': 0, 'E8': 1, 'D7': 2,
+            'C6': 3, 'C5': 4, 'C4': 5,
+            'B3': 6, 'B2': 7, 'A1': 8,
+            'F': 0, 'D': 2, 'C': 5,
+            'B': 7, 'A': 8,
+        };
+
+        const sg = studentGrade.toString().toUpperCase().trim();
+        if (minGrade) {
+            const mg = minGrade.toString().toUpperCase().trim();
+            const studentRank = gradeOrder[sg] ?? -1;
+            const minRank = gradeOrder[mg] ?? 0;
+            return studentRank >= minRank;
+        }
+
+        return !['F', 'F9'].includes(sg);
     }
 
     function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo, firstName, lastName) {
@@ -1386,6 +1490,11 @@
                 });
             }
         });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     document.addEventListener("DOMContentLoaded", function () {
