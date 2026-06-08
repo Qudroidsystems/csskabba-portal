@@ -1,6 +1,14 @@
 {{-- resources/views/promotions/partials/student_rows.blade.php --}}
 
 @forelse ($allstudents as $student)
+    @php
+        $rec           = $student->promotion_recommendation ?? null;
+        $recStatus     = $rec['status'] ?? 'awaiting';
+        $recLabel      = $rec['status_label'] ?? 'Awaiting';
+        $appliedRule   = $rec['applied_rule'] ?? null;
+        $appliedRuleName = $appliedRule['name'] ?? null;
+        $savedStatus   = strtolower($student->promotion_status ?? '');
+    @endphp
     <tr>
         {{-- Col 1: Checkbox --}}
         <td>
@@ -10,7 +18,7 @@
         {{-- Col 2: Admission No --}}
         <td class="fw-medium">{{ $student->admissionno }}</td>
 
-        {{-- Col 3: Student Name (photo + full name) --}}
+        {{-- Col 3: Student Name --}}
         <td>
             <div class="d-flex align-items-center gap-2">
                 @if ($student->picture)
@@ -41,29 +49,80 @@
         {{-- Col 7: Overall Avg --}}
         <td>
             @if(isset($student->overall_average) && $student->overall_average !== null)
-                <span class="fw-semibold">{{ number_format($student->overall_average, 1) }}%</span>
+                @php
+                    $avg = $student->overall_average;
+                    $avgClass = $avg >= 50 ? 'text-success' : ($avg >= 40 ? 'text-warning' : 'text-danger');
+                @endphp
+                <span class="fw-semibold {{ $avgClass }}">{{ number_format($avg, 1) }}%</span>
             @else
                 <span class="text-muted">—</span>
             @endif
         </td>
 
-        {{-- Col 8: Recommendation / Status --}}
-        <td>
-            @php $status = strtolower($student->promotion_status ?? ''); @endphp
-            @if($status === 'promoted')
-                <span class="promotion-badge-promoted"><i class="ri-arrow-up-circle-line"></i> Promoted</span>
-            @elseif($status === 'trial')
-                <span class="promotion-badge-trial"><i class="ri-time-line"></i> On Trial</span>
-            @elseif($status === 'see_principal')
-                <span class="promotion-badge-see_principal"><i class="ri-eye-line"></i> See Principal</span>
-            @elseif(in_array($status, ['repeat', 'repeated']))
-                <span class="promotion-badge-repeated"><i class="ri-repeat-line"></i> Repeated</span>
+        {{-- Col 8: System Recommendation --}}
+        <td data-rec-status="{{ $recStatus }}">
+            @if($recStatus === 'awaiting')
+                <span class="promotion-badge-pending">
+                    <i class="ri-time-line"></i> Not Evaluated
+                </span>
+            @elseif($recStatus === 'promoted')
+                <span class="promotion-badge-promoted">
+                    <i class="ri-arrow-up-circle-line"></i> {{ $recLabel }}
+                </span>
+            @elseif($recStatus === 'trial')
+                <span class="promotion-badge-trial">
+                    <i class="ri-time-line"></i> {{ $recLabel }}
+                </span>
+            @elseif($recStatus === 'see_principal')
+                <span class="promotion-badge-see_principal">
+                    <i class="ri-eye-line"></i> {{ $recLabel }}
+                </span>
+            @elseif(in_array($recStatus, ['repeated', 'repeat']))
+                <span class="promotion-badge-repeated">
+                    <i class="ri-repeat-line"></i> {{ $recLabel }}
+                </span>
             @else
-                <span class="promotion-badge-pending"><i class="ri-question-line"></i> Pending</span>
+                <span class="promotion-badge-pending">
+                    <i class="ri-question-line"></i> {{ $recLabel }}
+                </span>
+            @endif
+
+            {{-- Applied Rule Badge --}}
+            @if($appliedRuleName)
+                <div class="mt-1">
+                    <span style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;display:inline-block;white-space:nowrap;">
+                        <i class="ri-price-tag-3-line"></i> {{ $appliedRuleName }}
+                    </span>
+                </div>
             @endif
         </td>
 
-        {{-- Col 9: Actions --}}
+        {{-- Col 9: Promotion Status (saved decision) --}}
+        <td data-saved-status="{{ $savedStatus }}">
+            @if($savedStatus === 'promoted')
+                <span class="promotion-badge-promoted">
+                    <i class="ri-checkbox-circle-line"></i> Promoted
+                </span>
+            @elseif($savedStatus === 'trial')
+                <span class="promotion-badge-trial">
+                    <i class="ri-time-line"></i> On Trial
+                </span>
+            @elseif($savedStatus === 'see_principal')
+                <span class="promotion-badge-see_principal">
+                    <i class="ri-eye-line"></i> See Principal
+                </span>
+            @elseif(in_array($savedStatus, ['repeat', 'repeated']))
+                <span class="promotion-badge-repeated">
+                    <i class="ri-repeat-line"></i> Repeat
+                </span>
+            @else
+                <span class="promotion-badge-pending">
+                    <i class="ri-minus-circle-line"></i> Pending
+                </span>
+            @endif
+        </td>
+
+        {{-- Col 10: Actions --}}
         <td>
             <div class="d-flex gap-1">
                 <button type="button"
@@ -75,7 +134,8 @@
                             '{{ addslashes($student->firstname) }}',
                             '{{ addslashes($student->lastname) }}',
                             '{{ addslashes($student->othername ?? '') }}',
-                            '{{ $student->picture }}',
+                            '{{ $student->picture ?? '' }}',
+                            '{{ $student->gender ?? '' }}',
                             '{{ addslashes($student->schoolclass) }}',
                             '{{ addslashes($student->schoolarm ?? '') }}',
                             '{{ $student->session }}',
@@ -102,10 +162,10 @@
     </tr>
 @empty
     <tr>
-        <td colspan="9" class="text-center py-5">
+        <td colspan="10" class="text-center py-5">
             <div class="empty-state">
                 <i class="ri-inbox-line"></i>
-                <p class="mb-0">No students found</p>
+                <p class="mb-0">No students found. Select a class and session to load students.</p>
             </div>
         </td>
     </tr>
