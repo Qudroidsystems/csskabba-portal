@@ -387,6 +387,42 @@
     display: block;
     margin-bottom: 14px;
 }
+
+/* Modal Enhancements */
+.student-avatar-lg {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    background: #f8f9fa;
+}
+
+.status-badge-lg {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rule-badge {
+    background: #1e3a5f;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.subject-pass { background-color: #d1fae5; }
+.subject-fail { background-color: #fee2e2; }
+.subject-not-sat { background-color: #fed7aa; }
 </style>
 
 <div class="main-content">
@@ -498,18 +534,13 @@
                         <i class="ri-group-line me-2"></i>Students
                         <span class="badge bg-primary ms-2" id="studentcount">{{ $allstudents->total() }}</span>
                     </h5>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-primary" id="bulkPromoteBtn" style="display: none;">
-                            <i class="ri-group-line me-1"></i>Bulk Promote
-                        </button>
-                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Bulk Action Bar -->
                     <div class="bulk-action-bar" id="bulkActionBar">
                         <span class="bulk-count" id="bulkCount">0 selected</span>
                         <button type="button" class="btn btn-primary btn-sm" id="bulkPromoteActionBtn">
-                            <i class="ri-arrow-up-line me-1"></i>Promote Selected
+                            <i class="ri-group-line me-1"></i>Bulk Promote Selected
                         </button>
                         <button type="button" class="btn btn-light btn-sm" id="clearSelectionBtn">
                             <i class="ri-close-line me-1"></i>Clear
@@ -553,62 +584,63 @@
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ri-user-star-line me-2"></i>Student Promotion</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title text-white"><i class="ri-user-star-line me-2"></i>Student Promotion Management</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+
             <form id="promotionForm">
                 @csrf
-                <div class="modal-body p-4">
-                    <!-- Student Information Card -->
-                    <div class="card border shadow-sm mb-4">
-                        <div class="card-body">
-                            <h6 class="card-title text-muted mb-3">
-                                <i class="ri-user-line me-2"></i>Student Information
-                            </h6>
+                <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
+
+                    <!-- Student Profile Card -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
                             <div class="row align-items-center">
                                 <div class="col-md-3 text-center">
                                     <img id="modalStudentImage"
-                                         src=""
+                                         src="{{ asset('storage/student_avatars/unnamed.jpg') }}"
                                          alt="Student Picture"
-                                         class="img-fluid rounded-circle shadow"
-                                         style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #f0f0f0;">
+                                         class="student-avatar-lg rounded-circle">
+                                    <div class="mt-2">
+                                        <span class="badge bg-primary" id="modalStudentGender"></span>
+                                    </div>
                                 </div>
                                 <div class="col-md-9">
-                                    <h5 class="mb-3 text-primary" id="modalStudentName"></h5>
-                                    <div class="row g-3">
+                                    <h4 class="mb-2 text-primary" id="modalStudentName"></h4>
+                                    <div class="row g-3 mt-2">
                                         <div class="col-md-3">
-                                            <div class="d-flex align-items-center p-2 bg-light rounded">
-                                                <i class="ri-book-2-line text-primary fs-5 me-2"></i>
+                                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                                <i class="ri-book-2-line text-primary fs-4 me-3"></i>
                                                 <div>
-                                                    <small class="text-muted d-block">Class</small>
-                                                    <strong id="modalCurrentClass"></strong>
+                                                    <small class="text-muted d-block">Current Class</small>
+                                                    <strong id="modalCurrentClass" class="fs-5"></strong>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="d-flex align-items-center p-2 bg-light rounded">
-                                                <i class="ri-team-line text-primary fs-5 me-2"></i>
+                                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                                <i class="ri-team-line text-primary fs-4 me-3"></i>
                                                 <div>
                                                     <small class="text-muted d-block">Arm</small>
-                                                    <strong id="modalCurrentArm"></strong>
+                                                    <strong id="modalCurrentArm" class="fs-5"></strong>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="d-flex align-items-center p-2 bg-light rounded">
-                                                <i class="ri-calendar-line text-primary fs-5 me-2"></i>
+                                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                                <i class="ri-calendar-line text-primary fs-4 me-3"></i>
                                                 <div>
                                                     <small class="text-muted d-block">Session</small>
-                                                    <strong id="modalCurrentSession"></strong>
+                                                    <strong id="modalCurrentSession" class="fs-5"></strong>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
-                                            <div class="d-flex align-items-center p-2 bg-light rounded">
-                                                <i class="ri-percent-line text-primary fs-5 me-2"></i>
+                                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                                <i class="ri-percent-line text-primary fs-4 me-3"></i>
                                                 <div>
-                                                    <small class="text-muted d-block">Average</small>
-                                                    <strong id="modalOverallAverage"></strong>
+                                                    <small class="text-muted d-block">Overall Average</small>
+                                                    <strong id="modalOverallAverage" class="fs-5"></strong>
                                                 </div>
                                             </div>
                                         </div>
@@ -619,36 +651,38 @@
                     </div>
 
                     <!-- System Recommendation Card -->
-                    <div class="card border shadow-sm mb-4" id="recommendationCard" style="display: none;">
+                    <div class="card border-0 shadow-sm mb-4" id="recommendationCard" style="display: none;">
                         <div class="card-body">
-                            <h6 class="card-title text-muted mb-3">
-                                <i class="ri-question-line me-2"></i>System Recommendation
-                            </h6>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <i class="ri-robot-line fs-4 text-primary"></i>
+                                <h6 class="mb-0 fw-bold text-primary">System Recommendation</h6>
+                            </div>
                             <div id="recommendationContent"></div>
                         </div>
                     </div>
 
                     <!-- Compulsory Subjects Card -->
-                    <div class="card border shadow-sm mb-4" id="compulsoryCard" style="display: none;">
+                    <div class="card border-0 shadow-sm mb-4" id="compulsoryCard" style="display: none;">
                         <div class="card-body">
-                            <h6 class="card-title text-muted mb-3">
-                                <i class="ri-book-open-line me-2"></i>Compulsory Subjects Performance
-                            </h6>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <i class="ri-book-open-line fs-4 text-warning"></i>
+                                <h6 class="mb-0 fw-bold">Compulsory Subjects Performance</h6>
+                            </div>
                             <div id="compulsoryContent"></div>
                         </div>
                     </div>
 
                     <!-- Promotion Arrow -->
-                    <div class="text-center mb-4">
+                    <div class="text-center my-4">
                         <i class="ri-arrow-down-line text-primary fs-1 animate-bounce"></i>
                     </div>
 
                     <!-- New Assignment Card -->
-                    <div class="card border-primary shadow-sm">
+                    <div class="card border-2 border-primary shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <i class="ri-refresh-line me-2"></i>New Assignment
+                        </div>
                         <div class="card-body">
-                            <h6 class="card-title text-primary mb-3">
-                                <i class="ri-refresh-line me-2"></i>New Assignment
-                            </h6>
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">New Class <span class="text-danger">*</span></label>
@@ -681,12 +715,12 @@
                         </div>
                     </div>
 
-                    <!-- Promotion Decision -->
-                    <div class="card border-0 bg-light mt-4">
+                    <!-- Promotion Decision Card -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <i class="ri-checkbox-circle-line me-2 text-primary"></i>Promotion Decision <span class="text-danger">*</span>
+                        </div>
                         <div class="card-body">
-                            <h6 class="card-title text-muted mb-3">
-                                <i class="ri-checkbox-circle-line me-2"></i>Promotion Decision <span class="text-danger">*</span>
-                            </h6>
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <div class="form-check form-check-card">
@@ -790,7 +824,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ri-group-line me-2"></i>Bulk Promotion</h5>
+                <h5 class="modal-title text-white"><i class="ri-group-line me-2"></i>Bulk Promotion</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -848,7 +882,6 @@
     let currentSessionId = null;
     let currentTermId = null;
 
-    // Filter data function
     function filterData() {
         const classValue = document.getElementById("idclass").value;
         const sessionValue = document.getElementById("idsession").value;
@@ -882,7 +915,6 @@
             document.getElementById('pagination-container').innerHTML = response.data.pagination;
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
 
-            // Extract student data from response for stats
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = response.data.tableBody;
             const rows = tempDiv.querySelectorAll('tr');
@@ -951,7 +983,6 @@
             document.getElementById('pagination-container').innerHTML = response.data.pagination;
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
 
-            // Extract student data for stats
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = response.data.tableBody;
             const rows = tempDiv.querySelectorAll('tr');
@@ -1009,13 +1040,6 @@
     }
 
     document.getElementById('clearSelectionBtn')?.addEventListener('click', clearSelection);
-
-    document.getElementById('bulkPromoteBtn')?.addEventListener('click', () => {
-        const selected = document.querySelectorAll('.row-checkbox:checked');
-        document.getElementById('bulkSelectedCount').innerText = selected.length;
-        new bootstrap.Modal(document.getElementById('bulkPromotionModal')).show();
-    });
-
     document.getElementById('bulkPromoteActionBtn')?.addEventListener('click', () => {
         const selected = document.querySelectorAll('.row-checkbox:checked');
         document.getElementById('bulkSelectedCount').innerText = selected.length;
@@ -1059,201 +1083,191 @@
         }
     });
 
-
-
-
-    async function openPromotionModal(studentId, admissionNo, firstName, lastName, otherName, picture, schoolclass, schoolarm, session, termid) {
-        currentStudentId     = studentId;
+    async function openPromotionModal(studentId, admissionNo, firstName, lastName, otherName, picture, gender, schoolclass, schoolarm, session, termid) {
+        currentStudentId = studentId;
         currentSchoolclassId = document.getElementById("idclass").value;
-        currentSessionId     = document.getElementById("idsession").value;
-        currentTermId        = termid || document.getElementById("idterm").value;
+        currentSessionId = document.getElementById("idsession").value;
+        currentTermId = termid || document.getElementById("idterm").value;
 
-        document.getElementById('modalStudentName').innerHTML = `${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
-        document.getElementById('modalCurrentClass').innerText   = schoolclass;
-        document.getElementById('modalCurrentArm').innerText     = schoolarm || 'N/A';
+        document.getElementById('modalStudentName').innerHTML = `<i class="ri-id-card-line me-2"></i>${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
+        document.getElementById('modalStudentGender').innerHTML = `<i class="ri-gender-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i>${gender || 'N/A'}`;
+        document.getElementById('modalCurrentClass').innerText = schoolclass;
+        document.getElementById('modalCurrentArm').innerText = schoolarm || 'N/A';
         document.getElementById('modalCurrentSession').innerText = session;
-        document.getElementById('modalStudentImage').src = picture
-            ? `/storage/${picture}`
-            : '{{ asset("storage/student_avatars/unnamed.jpg") }}';
 
-        // Reset form
+        const imgElement = document.getElementById('modalStudentImage');
+        if (picture && picture !== 'null' && picture !== '') {
+            imgElement.src = `/storage/${picture}`;
+        } else {
+            imgElement.src = gender === 'Male' ? '{{ asset("storage/student_avatars/male-default.png") }}' : '{{ asset("storage/student_avatars/female-default.png") }}';
+        }
+        imgElement.onerror = function() {
+            this.src = '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+        };
+
         document.getElementById('promotionForm').reset();
-        ['newClassSelect','newSessionSelect','newTermSelect'].forEach(id => {
+        ['newClassSelect', 'newSessionSelect', 'newTermSelect'].forEach(id => {
             document.getElementById(id).value = '';
         });
-        ['promotionCheckbox','trialCheckbox','seePrincipalCheckbox','repeatCheckbox'].forEach(id => {
+        ['promotionCheckbox', 'trialCheckbox', 'seePrincipalCheckbox', 'repeatCheckbox'].forEach(id => {
             document.getElementById(id).checked = false;
         });
         document.getElementById('recommendationCard').style.display = 'none';
-        document.getElementById('compulsoryCard').style.display     = 'none';
+        document.getElementById('compulsoryCard').style.display = 'none';
 
-        Swal.fire({ title: 'Loading student data…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Loading student data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         try {
-            const response = await axios.get(
-                `/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`
-            );
-
+            const response = await axios.get(`/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`);
             Swal.close();
 
             if (response.data.success) {
                 const result = response.data.promotion_result;
-                const avg    = response.data.overall_average;
+                const avg = response.data.overall_average;
 
-                document.getElementById('modalOverallAverage').innerHTML =
-                    avg !== null ? `${avg}%` : 'N/A';
+                const avgElement = document.getElementById('modalOverallAverage');
+                const avgValue = avg !== null ? `${avg}%` : 'N/A';
+                const avgColor = avg !== null ? (avg >= 50 ? 'text-success' : (avg >= 40 ? 'text-warning' : 'text-danger')) : 'text-muted';
+                avgElement.innerHTML = `<span class="${avgColor} fs-5">${avgValue}</span>`;
 
-                // ── Recommendation card ──────────────────────────────────────────
-                const recCard    = document.getElementById('recommendationCard');
+                const recCard = document.getElementById('recommendationCard');
                 const recContent = document.getElementById('recommendationContent');
 
                 if (result && result.status !== 'awaiting') {
                     recCard.style.display = 'block';
                     const statusClass = result.status;
                     const statusLabel = result.status_label || result.status;
-                    const badgeClass  = {
-                        promoted:      'promotion-badge-promoted',
-                        trial:         'promotion-badge-trial',
-                        see_principal: 'promotion-badge-see_principal',
-                        repeated:      'promotion-badge-repeated'
-                    }[statusClass] || 'promotion-badge-pending';
 
-                    let html = `
-                        <div class="recommendation-card ${statusClass}">
-                            <div class="label">System Recommendation</div>
-                            <div class="value mt-1">
-                                <span class="${badgeClass}">${statusLabel}</span>
+                    let html = `<div class="recommendation-card ${statusClass}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="label text-muted mb-2">System Recommendation</div>
+                                <div class="value">
+                                    <span class="status-badge-lg ${result.status === 'promoted' ? 'bg-success' : (result.status === 'trial' ? 'bg-warning' : (result.status === 'see_principal' ? 'bg-info' : 'bg-danger'))} text-white">
+                                        <i class="${result.status === 'promoted' ? 'ri-checkbox-circle-line' : (result.status === 'trial' ? 'ri-time-line' : (result.status === 'see_principal' ? 'ri-eye-line' : 'ri-repeat-line'))} me-2"></i>
+                                        ${statusLabel}
+                                    </span>
+                                </div>
                             </div>`;
 
                     if (result.required_average !== null) {
-                        html += `<div class="mt-2 small">
-                                    Required Average: <strong>${result.required_average}%</strong>
-                                    &nbsp;|&nbsp; Actual: <strong>${result.actual_average ?? avg ?? 'N/A'}%</strong>
-                                 </div>`;
+                        const metAverage = result.actual_average >= result.required_average;
+                        html += `<div class="text-end">
+                            <div class="rule-badge">
+                                <i class="ri-percent-line"></i> Required: ${result.required_average}%
+                            </div>
+                            <div class="small mt-1 ${metAverage ? 'text-success' : 'text-danger'}">
+                                ${metAverage ? '✓' : '✗'} Actual: ${result.actual_average ?? avg ?? 'N/A'}%
+                            </div>
+                        </div>`;
                     }
+                    html += `</div>`;
+
                     if (result.compulsory_count > 0) {
                         const allPassed = result.passed_compulsory === result.compulsory_count;
-                        html += `<div class="mt-1 small">
-                                    Compulsory Subjects:
-                                    <strong class="${allPassed ? 'text-success' : 'text-danger'}">
-                                        ${result.passed_compulsory}/${result.compulsory_count} passed
-                                    </strong>
-                                 </div>`;
-                    }
-                    if (result.failed_compulsory && result.failed_compulsory.length > 0) {
-                        const names = result.failed_compulsory
-                            .map(f => f.subject || `Subject #${f.subject_id}`)
-                            .join(', ');
-                        html += `<div class="mt-1 small text-danger">
-                                    <i class="ri-close-circle-line me-1"></i>Failed: ${names}
-                                 </div>`;
+                        html += `<div class="mt-3 pt-3 border-top">
+                            <div class="d-flex justify-content-between">
+                                <span><i class="ri-book-open-line me-1"></i>Compulsory Subjects:</span>
+                                <span class="${allPassed ? 'text-success fw-bold' : 'text-danger fw-bold'}">
+                                    ${result.passed_compulsory}/${result.compulsory_count} passed
+                                </span>
+                            </div>`;
+
+                        if (result.failed_compulsory && result.failed_compulsory.length > 0) {
+                            html += `<div class="mt-2 small text-danger">
+                                <i class="ri-close-circle-line me-1"></i>Failed subjects: `;
+                            result.failed_compulsory.forEach(f => {
+                                html += `<span class="badge bg-danger me-1">${f.subject || `Subject #${f.subject_id}`}</span>`;
+                            });
+                            html += `</div>`;
+                        }
+                        html += `</div>`;
                     }
 
-                    // ── Conditional labels ───────────────────────────────────────
                     if (result.matched_labels && result.matched_labels.length > 0) {
-                        const colorMap = {
-                            danger:'#dc2626', success:'#16a34a',
-                            warning:'#d97706', info:'#2563eb', primary:'#1e3a5f'
-                        };
                         html += `<div class="mt-3 pt-3 border-top">
-                                    <div class="small text-muted mb-2">
-                                        <i class="ri-price-tag-3-line me-1"></i>
-                                        <strong>Admin Notes / Conditional Labels</strong>
-                                    </div><div>`;
+                            <div class="small text-muted mb-2">
+                                <i class="ri-price-tag-3-line me-1"></i>
+                                <strong>Applied Rules / Labels</strong>
+                            </div>`;
                         result.matched_labels.forEach(ml => {
-                            const bg = colorMap[ml.color] || '#d97706';
-                            html += `<span class="badge me-2 mb-1" style="background:${bg};font-size:12px;padding:5px 12px">
-                                        <i class="ri-price-tag-3-line me-1"></i>${ml.label}
-                                     </span>`;
+                            const colorMap = { danger:'#dc2626', success:'#16a34a', warning:'#d97706', info:'#2563eb', primary:'#1e3a5f' };
+                            html += `<span class="badge me-2 mb-1" style="background:${colorMap[ml.color] || '#6c757d'}; font-size:12px; padding:5px 12px">
+                                <i class="ri-price-tag-3-line me-1"></i>${ml.label}
+                            </span>`;
                             if (ml.description) {
-                                html += `<div class="small text-muted ms-1 mb-1">${ml.description}</div>`;
+                                html += `<div class="small text-muted mt-1 ms-1 mb-2">${ml.description}</div>`;
                             }
                         });
-                        html += '</div></div>';
+                        html += `</div>`;
                     }
 
-                    html += '</div>';
+                    html += `</div>`;
                     recContent.innerHTML = html;
                 } else {
                     recCard.style.display = 'none';
                 }
 
-                // ── Compulsory subjects (term-scoped with actual pass/fail) ──────
                 const compSubjects = response.data.compulsory_subjects;
                 if (compSubjects && compSubjects.length > 0) {
-                    const compCard    = document.getElementById('compulsoryCard');
+                    const compCard = document.getElementById('compulsoryCard');
                     const compContent = document.getElementById('compulsoryContent');
 
-                    const passCount   = compSubjects.filter(s => s.pass_status === 'pass').length;
-                    const failCount   = compSubjects.filter(s => s.pass_status === 'fail').length;
+                    const passCount = compSubjects.filter(s => s.pass_status === 'pass').length;
+                    const failCount = compSubjects.filter(s => s.pass_status === 'fail').length;
                     const notSatCount = compSubjects.filter(s => s.pass_status === 'not_sat').length;
 
-                    let html = `
-                        <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
-                            <span class="badge bg-success" style="font-size:12px">
-                                <i class="ri-checkbox-circle-line me-1"></i>${passCount} Passed
-                            </span>
-                            <span class="badge bg-danger" style="font-size:12px">
-                                <i class="ri-close-circle-line me-1"></i>${failCount} Failed
-                            </span>
-                            ${notSatCount > 0
-                                ? `<span class="badge bg-secondary" style="font-size:12px">
-                                        <i class="ri-minus-line me-1"></i>${notSatCount} Not Sat
-                                   </span>`
-                                : ''}
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Subject</th>
-                                        <th class="text-center">Min Grade Required</th>
-                                        <th class="text-center">Grade Obtained</th>
-                                        <th class="text-center">Score</th>
-                                        <th class="text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+                    let html = `<div class="d-flex gap-2 mb-3 flex-wrap">
+                        <span class="badge bg-success" style="font-size:13px; padding:6px 12px">
+                            <i class="ri-checkbox-circle-line me-1"></i>${passCount} Passed
+                        </span>
+                        <span class="badge bg-danger" style="font-size:13px; padding:6px 12px">
+                            <i class="ri-close-circle-line me-1"></i>${failCount} Failed
+                        </span>`;
+                    if (notSatCount > 0) {
+                        html += `<span class="badge bg-secondary" style="font-size:13px; padding:6px 12px">
+                            <i class="ri-minus-line me-1"></i>${notSatCount} Not Sat
+                        </span>`;
+                    }
+                    html += `</div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Subject</th>
+                                    <th class="text-center">Min Grade Required</th>
+                                    <th class="text-center">Grade Obtained</th>
+                                    <th class="text-center">Score</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
                     compSubjects.forEach(cs => {
-                        let statusBadge;
+                        let statusBadge, rowClass;
                         if (cs.pass_status === 'pass') {
-                            statusBadge = `<span class="badge bg-success">
-                                                <i class="ri-checkbox-circle-line me-1"></i>Pass
-                                           </span>`;
+                            statusBadge = `<span class="badge bg-success"><i class="ri-checkbox-circle-line me-1"></i>Pass</span>`;
+                            rowClass = 'subject-pass';
                         } else if (cs.pass_status === 'fail') {
-                            statusBadge = `<span class="badge bg-danger">
-                                                <i class="ri-close-circle-line me-1"></i>Fail
-                                           </span>`;
+                            statusBadge = `<span class="badge bg-danger"><i class="ri-close-circle-line me-1"></i>Fail</span>`;
+                            rowClass = 'subject-fail';
                         } else {
-                            statusBadge = `<span class="badge bg-secondary">
-                                                <i class="ri-minus-line me-1"></i>Not Sat
-                                           </span>`;
+                            statusBadge = `<span class="badge bg-secondary"><i class="ri-minus-line me-1"></i>Not Sat</span>`;
+                            rowClass = 'subject-not-sat';
                         }
 
-                        const rowClass = cs.pass_status === 'fail'    ? 'table-danger'  :
-                                         cs.pass_status === 'pass'    ? 'table-success' :
-                                         cs.pass_status === 'not_sat' ? 'table-warning' : '';
-
-                        html += `
-                            <tr class="${rowClass}">
-                                <td><strong>${cs.subject}</strong></td>
-                                <td class="text-center">${cs.min_grade}</td>
-                                <td class="text-center">
-                                    ${cs.student_grade
-                                        ? `<strong>${cs.student_grade}</strong>`
-                                        : '<span class="text-muted">—</span>'}
-                                </td>
-                                <td class="text-center">
-                                    ${cs.student_total !== null && cs.student_total !== undefined
-                                        ? cs.student_total
-                                        : '<span class="text-muted">—</span>'}
-                                </td>
-                                <td class="text-center">${statusBadge}</td>
-                            </tr>`;
+                        html += `<tr class="${rowClass}">
+                            <td><strong>${cs.subject}</strong><br><small class="text-muted">${cs.subject_code || ''}</small></td>
+                            <td class="text-center">${cs.min_grade}</td>
+                            <td class="text-center"><strong>${cs.student_grade || '—'}</strong></td>
+                            <td class="text-center">${cs.student_total !== null ? cs.student_total : '—'}</td>
+                            <td class="text-center">${statusBadge}</td>
+                        </tr>`;
                     });
 
-                    html += '</tbody></table></div>';
+                    html += `</tbody>
+                        </table>
+                    </div>`;
                     compContent.innerHTML = html;
                     compCard.style.display = 'block';
                 } else {
@@ -1263,13 +1277,11 @@
         } catch (error) {
             Swal.close();
             console.error('Error fetching student details:', error);
+            Swal.fire('Error', 'Failed to load student details', 'error');
         }
 
         new bootstrap.Modal(document.getElementById('promotionModal')).show();
     }
-
-
-    
 
     function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo, firstName, lastName) {
         const fullName = `${admissionNo} - ${firstName} ${lastName}`;
@@ -1389,7 +1401,6 @@
 
         setupCheckboxHandlers();
 
-        // Initial stats update if table has data
         const rows = document.querySelectorAll('#studentTableBody tr');
         const students = [];
         rows.forEach(row => {

@@ -1340,12 +1340,12 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     // =========================================================================
 
     // Promotion Management
-    Route::prefix('promotions')->group(function () {
-        Route::get('/', [PromotionController::class, 'index'])->name('promotions.index');
-        Route::put('/{studentId}', [PromotionController::class, 'update'])->name('promotions.update');
-        Route::delete('/{studentId}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
-        Route::post('/bulk-promote', [PromotionController::class, 'bulkPromote'])->name('promotions.bulk.promote');
-        Route::get('/student-details/{studentId}/{schoolclassId}/{sessionId}/{termId}',[PromotionController::class, 'getStudentDetails'])->name('promotions.student.details');
+    Route::prefix('promotions')->name('promotions.')->group(function () {
+        Route::get('/', [PromotionController::class, 'index'])->name('index');
+        Route::get('/student-details/{studentId}/{schoolclassId}/{sessionId}/{termId}', [PromotionController::class, 'getStudentDetails'])->name('student.details');
+        Route::put('/{studentId}', [PromotionController::class, 'update'])->name('update');
+        Route::delete('/{studentId}', [PromotionController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk/promote', [PromotionController::class, 'bulkPromote'])->name('bulk.promote');
     });
 
     // =========================================================================
