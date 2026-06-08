@@ -407,12 +407,27 @@
                 <div class="card-body">
                     <div class="row">
                         @forelse ($settings as $setting)
+                        @php
+                            // Get arm name from the relationship or direct attribute
+                            $armName = '';
+                            if ($setting->schoolclass && $setting->schoolclass->arm) {
+                                if (is_object($setting->schoolclass->arm) && method_exists($setting->schoolclass->arm, 'arm')) {
+                                    $armName = $setting->schoolclass->arm->arm;
+                                } elseif (is_numeric($setting->schoolclass->arm)) {
+                                    $arm = \App\Models\Schoolarm::find($setting->schoolclass->arm);
+                                    $armName = $arm ? $arm->arm : $setting->schoolclass->arm;
+                                } else {
+                                    $armName = $setting->schoolclass->arm;
+                                }
+                            }
+                            $fullClassName = trim($setting->schoolclass->schoolclass . ' ' . $armName);
+                        @endphp
                         <div class="col-md-6 col-lg-4">
                             <div class="setting-card {{ !empty($setting->promotion_rules) ? 'has-rules' : '' }}">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div>
                                         <h6 class="mb-0 fw-bold">
-                                            {{ trim($setting->schoolclass->schoolclass . ' ' . ($setting->schoolclass->arm ?? '')) }}
+                                            {{ $fullClassName }}
                                         </h6>
                                         <small class="text-muted">
                                             {{ $setting->session?->session ?? 'All Sessions' }}
@@ -486,7 +501,7 @@
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-setting"
                                         data-id="{{ $setting->id }}"
-                                        data-name="{{ $setting->schoolclass->schoolclass }}">
+                                        data-name="{{ $fullClassName }}">
                                         <i class="ri-delete-bin-line"></i>
                                     </button>
                                 </div>
@@ -535,7 +550,7 @@
                                 <option value="">-- Select Class --</option>
                                 @foreach ($schoolclasses as $class)
                                 <option value="{{ $class->id }}">
-                                    {{ trim($class->schoolclass . ' ' . ($class->arm ?? '')) }}
+                                    {{ trim($class->schoolclass . ' ' . ($class->arm_name ?? '')) }}
                                 </option>
                                 @endforeach
                             </select>
@@ -1151,4 +1166,3 @@ function escapeHtml(str) {
 }
 </script>
 @endsection
-
