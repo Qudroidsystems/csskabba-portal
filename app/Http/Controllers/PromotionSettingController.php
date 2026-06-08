@@ -26,12 +26,16 @@ class PromotionSettingController extends Controller
     {
         $pagetitle = "Promotion Settings Management";
 
+        // Get settings with relationships
         $settings = PromotionSetting::with(['schoolclass', 'session', 'term'])
             ->orderBy('schoolclass_id')
             ->get();
 
-        $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
+        // Fix: Properly get schoolclasses with arm names from schoolarm table
+        $schoolclasses = DB::table('schoolclass')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id', 'schoolclass.schoolclass', DB::raw('COALESCE(schoolarm.arm, schoolclass.arm) as arm_display'))
+            ->get();
 
         $sessions = Schoolsession::orderBy('session', 'desc')->get();
         $terms    = Schoolterm::orderBy('term')->get();
