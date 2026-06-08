@@ -1364,15 +1364,16 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         Route::get('/subjects-by-class', [PromotionSettingController::class, 'subjectsByClass'])->name('promotion-settings.subjects-by-class');
         Route::get('/compulsory-by-class', [PromotionSettingController::class, 'compulsoryByClass'])->name('promotion-settings.compulsory-by-class');
     });
-    // Promotion Templates Routes (Add these if you have templates)
-    Route::prefix('promotion-templates')->name('promotion.templates.')->group(function () {
-        Route::get('/', [PromotionRuleTemplateController::class, 'index'])->name('index');
-        Route::get('/create', [PromotionRuleTemplateController::class, 'create'])->name('create');
-        Route::post('/', [PromotionRuleTemplateController::class, 'store'])->name('store');
-        Route::get('/{id}', [PromotionRuleTemplateController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [PromotionRuleTemplateController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [PromotionRuleTemplateController::class, 'update'])->name('update');
-        Route::delete('/{id}', [PromotionRuleTemplateController::class, 'destroy'])->name('destroy');
+
+    Route::prefix('promotion-templates')->group(function () {
+        Route::get('/', [PromotionRuleTemplateController::class, 'index'])->name('promotion.templates.index');
+        Route::get('/create', [PromotionRuleTemplateController::class, 'create'])->name('promotion.templates.create');
+        Route::post('/', [PromotionRuleTemplateController::class, 'store'])->name('promotion.templates.store');
+        Route::get('/{id}/edit', [PromotionRuleTemplateController::class, 'edit'])->name('promotion.templates.edit');
+        Route::put('/{id}', [PromotionRuleTemplateController::class, 'update'])->name('promotion.templates.update');
+        Route::delete('/{id}', [PromotionRuleTemplateController::class, 'destroy'])->name('promotion.templates.destroy');
+        Route::post('/{id}/toggle-active', [PromotionRuleTemplateController::class, 'toggleActive'])->name('promotion.templates.toggle-active');
+        Route::get('/{id}/load-for-class', [PromotionRuleTemplateController::class, 'loadForClass'])->name('promotion.templates.load-for-class');
     });
 
 

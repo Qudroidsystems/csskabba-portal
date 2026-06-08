@@ -4,9 +4,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\PromotionRuleTemplate;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PromotionRuleTemplateController extends Controller
 {
@@ -16,18 +19,50 @@ class PromotionRuleTemplateController extends Controller
 
         // Get all templates
         $templates = PromotionRuleTemplate::orderBy('name')->get();
+        $settings = $templates; // Alias for the view
 
-        // For the card display, we need $settings variable to match the blade
-        // Either rename or pass as $templates
-        $settings = $templates; // This is the fix - alias templates as settings
+        // Get schoolclasses for the modal form
+        $schoolclasses = DB::table('schoolclass')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name')
+            ->get();
 
-        return view('promotions.templates', compact('templates', 'settings', 'pagetitle'));
+        // Get sessions and terms for the modal form
+        $sessions = Schoolsession::orderBy('session', 'desc')->get();
+        $terms = Schoolterm::orderBy('term')->get();
+
+        return view('promotions.templates', compact('templates', 'settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'));
     }
 
     public function create()
     {
         $pagetitle = 'Create Promotion Rule Template';
-        return view('promotions.templates-create', compact('pagetitle'));
+
+        $schoolclasses = DB::table('schoolclass')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name')
+            ->get();
+
+        $sessions = Schoolsession::orderBy('session', 'desc')->get();
+        $terms = Schoolterm::orderBy('term')->get();
+
+        return view('promotions.templates-create', compact('schoolclasses', 'sessions', 'terms', 'pagetitle'));
+    }
+
+    public function edit($id)
+    {
+        $pagetitle = 'Edit Promotion Rule Template';
+        $template = PromotionRuleTemplate::findOrFail($id);
+
+        $schoolclasses = DB::table('schoolclass')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name')
+            ->get();
+
+        $sessions = Schoolsession::orderBy('session', 'desc')->get();
+        $terms = Schoolterm::orderBy('term')->get();
+
+        return view('promotions.templates-edit', compact('template', 'schoolclasses', 'sessions', 'terms', 'pagetitle'));
     }
 
     public function store(Request $request)
@@ -58,13 +93,6 @@ class PromotionRuleTemplateController extends Controller
             Log::error('Template Store Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error creating template: ' . $e->getMessage()], 500);
         }
-    }
-
-    public function edit($id)
-    {
-        $pagetitle = 'Edit Promotion Rule Template';
-        $template = PromotionRuleTemplate::findOrFail($id);
-        return view('promotions.templates-edit', compact('template', 'pagetitle'));
     }
 
     public function update(Request $request, $id)
