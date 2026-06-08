@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;  // ADD THIS LINE
+use Illuminate\Support\Facades\Schema;
 
 class PromotionSettingController extends Controller
 {
@@ -65,10 +65,12 @@ class PromotionSettingController extends Controller
             // Grade scale from classcategories
             $gradeScale   = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
             $isSenior     = true;
+
+            // FIXED: Changed 'classcategory' to 'classcategories'
             $categoryData = DB::table('schoolclass_classcategory')
-                ->join('classcategory', 'classcategory.id', '=', 'schoolclass_classcategory.classcategory_id')
+                ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
                 ->where('schoolclass_classcategory.schoolclass_id', $classId)
-                ->select('classcategory.is_senior', 'classcategory.category')
+                ->select('classcategories.is_senior', 'classcategories.category')
                 ->first();
 
             if ($categoryData && isset($categoryData->is_senior) && !$categoryData->is_senior) {
@@ -288,6 +290,29 @@ class PromotionSettingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading compulsory subjects: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ── Toggle Active Status ──────────────────────────────────────────────────
+    public function toggleActive(Request $request, $id)
+    {
+        try {
+            $setting = PromotionSetting::findOrFail($id);
+            $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
+            $setting->is_active = $isActive;
+            $setting->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully.',
+                'is_active' => $setting->is_active
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Toggle Active Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage()
             ], 500);
         }
     }

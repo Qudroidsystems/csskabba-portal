@@ -22,9 +22,26 @@ class Schoolclass extends Model
 
     public function classcategories()
     {
-        return $this->belongsToMany(Classcategory::class, 'schoolclass_classcategory', 'schoolclass_id', 'classcategory_id')
-                    ->withPivot('promotion_pass_average')
-                    ->withTimestamps();
+        return $this->belongsToMany(
+            Classcategory::class,
+            'schoolclass_classcategory',
+            'schoolclass_id',
+            'classcategory_id'
+        )->withPivot('promotion_pass_average')
+         ->withTimestamps();
+    }
+
+    // Add this method to handle singular queries that might be looking for 'classcategory'
+    public function classcategory()
+    {
+        return $this->belongsToMany(
+            Classcategory::class,
+            'schoolclass_classcategory',
+            'schoolclass_id',
+            'classcategory_id'
+        )->withPivot('promotion_pass_average')
+         ->withTimestamps()
+         ->limit(1);
     }
 
     public function arm()
@@ -59,7 +76,6 @@ class Schoolclass extends Model
         )->where('student_current_term.is_current', true);
     }
 
-    // Get promotion pass average for this specific class
     public function getPromotionPassAverageAttribute()
     {
         $pivot = DB::table('schoolclass_classcategory')
@@ -69,7 +85,6 @@ class Schoolclass extends Model
         return $pivot ? $pivot->promotion_pass_average : null;
     }
 
-    // Set promotion pass average for this specific class
     public function setPromotionPassAverageAttribute($value)
     {
         DB::table('schoolclass_classcategory')

@@ -1,4 +1,5 @@
 <?php
+// app/Models/Classcategory.php
 
 namespace App\Models;
 
@@ -9,12 +10,13 @@ class Classcategory extends Model
 {
     use HasFactory;
 
+    // Explicitly define the table name (plural)
     protected $table = 'classcategories';
 
     protected $fillable = [
         'category',
         'is_senior',
-        'promotion_pass_average',   // ← NEW
+        'promotion_pass_average',
     ];
 
     protected $casts = [
@@ -75,9 +77,6 @@ class Classcategory extends Model
         return 'F9';
     }
 
-    /**
-     * Return the full grade scale for this category as an ordered array (best → worst).
-     */
     public function getGradeScaleAttribute(): array
     {
         return $this->is_senior
@@ -85,17 +84,12 @@ class Classcategory extends Model
             : ['A', 'B', 'C', 'D', 'F'];
     }
 
-    /**
-     * Return the passing grades (everything above F / F9).
-     */
     public function getPassingGradesAttribute(): array
     {
         return $this->is_senior
             ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8']
             : ['A', 'B', 'C', 'D'];
     }
-
-    // ── Accessors ────────────────────────────────────────────────────────────
 
     public function getGradeTypeAttribute(): string
     {
@@ -107,9 +101,6 @@ class Classcategory extends Model
         return $this->assessments->sum('max_score');
     }
 
-    /**
-     * Whether a promotion pass average threshold is configured.
-     */
     public function hasPassAverageThreshold(): bool
     {
         return $this->promotion_pass_average !== null;
