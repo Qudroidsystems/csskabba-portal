@@ -1355,15 +1355,15 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
     // Promotion Settings Routes
     Route::prefix('promotion-settings')->group(function () {
-        Route::get('/', [PromotionSettingController::class, 'index'])->name('promotion.settings.index');
-        Route::get('/subjects-by-class', [PromotionSettingController::class, 'subjectsByClass'])->name('promotion.settings.subjects-by-class');
-        Route::get('/compulsory-by-class', [PromotionSettingController::class, 'compulsoryByClass'])->name('promotion.settings.compulsory-by-class');
-        Route::post('/', [PromotionSettingController::class, 'store'])->name('promotion.settings.store');
-        Route::put('/{id}', [PromotionSettingController::class, 'update'])->name('promotion.settings.update');
-        Route::delete('/{id}', [PromotionSettingController::class, 'destroy'])->name('promotion.settings.destroy');
-        Route::get('/class-promotion-data', [PromotionSettingController::class, 'getClassPromotionData'])->name('promotion.settings.class-data');
+        Route::get('/', [PromotionSettingController::class, 'index'])->name('promotion-settings.index');
+        Route::post('/', [PromotionSettingController::class, 'store'])->name('promotion-settings.store');
+        Route::put('/{id}', [PromotionSettingController::class, 'update'])->name('promotion-settings.update');
+        Route::delete('/{id}', [PromotionSettingController::class, 'destroy'])->name('promotion-settings.destroy');
+        Route::post('/{id}/toggle-active', [PromotionSettingController::class, 'toggleActive'])->name('promotion-settings.toggle-active');
+        Route::get('/class-promotion-data', [PromotionSettingController::class, 'getClassPromotionData'])->name('promotion-settings.class-data');
+        Route::get('/subjects-by-class', [PromotionSettingController::class, 'subjectsByClass'])->name('promotion-settings.subjects-by-class');
+        Route::get('/compulsory-by-class', [PromotionSettingController::class, 'compulsoryByClass'])->name('promotion-settings.compulsory-by-class');
     });
-
     // Promotion Templates Routes (Add these if you have templates)
     Route::prefix('promotion-templates')->name('promotion.templates.')->group(function () {
         Route::get('/', [PromotionRuleTemplateController::class, 'index'])->name('index');

@@ -5,6 +5,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 
 class PromotionSetting extends Model
 {
@@ -16,42 +17,29 @@ class PromotionSetting extends Model
         'schoolclass_id',
         'session_id',
         'term_id',
-        'rule_type',
-        'min_compulsory_pass',
-        'compulsory_fail_action',
-        'promotion_pass_average',
-        'trial_pass_average',
-        'see_principal_average',
-        'combined_logic',
+        'rule_set_name',
+        'priority',
         'promoted_label',
         'trial_label',
         'see_principal_label',
         'repeat_label',
-        'promotion_rules',
         'rule_logic',
+        'promotion_pass_average',
+        'promotion_rules',
         'is_active',
-        'template_id',
+        'is_default',
+        'template_id'
     ];
 
     protected $casts = [
-        'promotion_pass_average' => 'decimal:2',
-        'trial_pass_average' => 'decimal:2',
-        'see_principal_average' => 'decimal:2',
-        'min_compulsory_pass' => 'integer',
-        'is_active' => 'boolean',
         'promotion_rules' => 'array',
+        'is_active' => 'boolean',
+        'is_default' => 'boolean',
+        'promotion_pass_average' => 'decimal:2',
+        'priority' => 'integer',
     ];
 
-    protected $attributes = [
-        'rule_type' => 'custom_rules',
-        'rule_logic' => 'subject_only',
-        'is_active' => true,
-        'promoted_label' => 'Promoted',
-        'trial_label' => 'Promoted on Trial',
-        'see_principal_label' => 'Advised to See Principal',
-        'repeat_label' => 'Advice to Repeat',
-    ];
-
+    // Relationships
     public function schoolclass()
     {
         return $this->belongsTo(Schoolclass::class, 'schoolclass_id');
@@ -67,34 +55,42 @@ class PromotionSetting extends Model
         return $this->belongsTo(Schoolterm::class, 'term_id');
     }
 
-    // Add the missing template relationship
     public function template()
     {
         return $this->belongsTo(PromotionRuleTemplate::class, 'template_id');
     }
 
-    public function getPromotionRulesAttribute($value)
+    // Scope for active rule sets
+    public function scopeActive($query)
     {
-        if (is_null($value)) {
-            return [];
-        }
-
-        if (is_array($value)) {
-            return $value;
-        }
-
-        $decoded = json_decode($value, true);
-        return is_array($decoded) ? $decoded : [];
+        return $query->where('is_active', true);
     }
 
-    public function setPromotionRulesAttribute($value)
+    // Scope for default rule set
+    public function scopeDefault($query)
     {
-        if (is_array($value)) {
-            $this->attributes['promotion_rules'] = json_encode($value);
-        } elseif (is_string($value)) {
-            $this->attributes['promotion_rules'] = $value;
-        } else {
-            $this->attributes['promotion_rules'] = json_encode([]);
+        return $query->where('is_default', true);
+    }
+
+    // Get rule sets for a specific class
+    public static function getRuleSetsForClass($classId, $sessionId = null, $termId = null)
+    {
+        $query = self::where('schoolclass_id', $classId)
+            ->orderBy('priority', 'asc')
+            ->orderBy('id', 'asc');
+
+        if ($sessionId) {
+            $query->where(function($q) use ($sessionId) {
+                $q->where('session_id', $sessionId)->orWhereNull('session_id');
+            });
         }
+
+        if ($termId) {
+            $query->where(function($q) use ($termId) {
+                $q->where('term_id', $termId)->orWhereNull('term_id');
+            });
+        }
+
+        return $query->get();
     }
 }

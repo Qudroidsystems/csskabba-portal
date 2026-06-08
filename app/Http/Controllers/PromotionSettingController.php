@@ -29,8 +29,8 @@ class PromotionSettingController extends Controller
 
         $settings = PromotionSetting::with(['schoolclass.arm', 'session', 'term'])
             ->orderBy('schoolclass_id')
-            ->orderBy('session_id')
-            ->orderBy('term_id')
+            ->orderBy('priority', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
 
         $schoolclasses = DB::table('schoolclass')
@@ -41,7 +41,6 @@ class PromotionSettingController extends Controller
         $sessions  = Schoolsession::orderBy('session', 'desc')->get();
         $terms     = Schoolterm::orderBy('term')->get();
 
-        // Only try to load templates if the table exists
         $templates = [];
         if (Schema::hasTable('promotion_rule_templates')) {
             $templates = PromotionRuleTemplate::select('id', 'name', 'grade_scale')->orderBy('name')->get();
@@ -64,7 +63,6 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => 'Class required'], 422);
             }
 
-            // Grade scale from classcategories (FIXED: changed 'classcategory' to 'classcategories')
             $gradeScale   = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
             $isSenior     = true;
 
@@ -83,7 +81,6 @@ class PromotionSettingController extends Controller
                 ->where('schoolclass_id', $classId)
                 ->value('promotion_pass_average');
 
-            // All subjects for this class
             $subjectParams = [$classId];
             $subjectSql    = "SELECT DISTINCT s.id, s.subject, s.subject_code
                               FROM subjectclass sc
@@ -94,11 +91,8 @@ class PromotionSettingController extends Controller
             if ($sessionId && $sessionId !== '') { $subjectSql .= " AND st.sessionid = ?"; $subjectParams[] = $sessionId; }
             $allSubjects = DB::select($subjectSql, $subjectParams);
 
-            // Compulsory subjects with their min_grade
             $compulsorySubjects = $this->getCompulsorySubjects($classId, $termId, $sessionId);
             $compIds = array_column($compulsorySubjects, 'id');
-
-            // Other subjects
             $otherSubjects = array_filter($allSubjects, fn($s) => !in_array((string)$s->id, array_map('strval', $compIds)));
 
             return response()->json([
@@ -135,69 +129,63 @@ class PromotionSettingController extends Controller
             $rules = $this->parseRules($request);
             if ($rules instanceof \Illuminate\Http\JsonResponse) return $rules;
 
-            // Validate that rules array is not empty
             if (empty($rules)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'At least one promotion rule is required.'
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'At least one promotion rule is required.'], 422);
             }
 
             $isActive = filter_var($request->input('is_active', true), FILTER_VALIDATE_BOOLEAN);
+            $isDefault = filter_var($request->input('is_default', false), FILTER_VALIDATE_BOOLEAN);
 
-            // Check if a setting already exists for this class/session/term combination
-            $existingSetting = PromotionSetting::where('schoolclass_id', $request->schoolclass_id)
+            // Generate a unique rule set name if not provided
+            $ruleSetName = $request->rule_set_name;
+            if (empty($ruleSetName)) {
+                $existingCount = PromotionSetting::where('schoolclass_id', $request->schoolclass_id)
+                    ->where('session_id', $sessionId)
+                    ->where('term_id', $termId)
+                    ->count();
+                $ruleSetName = "Rule Set " . ($existingCount + 1);
+            }
+
+            // Get the next priority
+            $maxPriority = PromotionSetting::where('schoolclass_id', $request->schoolclass_id)
                 ->where('session_id', $sessionId)
                 ->where('term_id', $termId)
-                ->first();
+                ->max('priority');
+            $priority = ($maxPriority !== null) ? $maxPriority + 1 : 1;
 
-            if ($existingSetting) {
-                // Update existing setting with merged or new rules
-                // Option 1: Replace rules (default behavior)
-                $existingSetting->update([
-                    'promoted_label'         => $request->promoted_label      ?? 'Promoted',
-                    'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
-                    'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
-                    'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
-                    'rule_logic'             => $request->rule_logic          ?? 'grade_count',
-                    'promotion_pass_average' => $request->promotion_pass_average ?: null,
-                    'is_active'              => $isActive,
-                    'template_id'            => $request->template_id ?: null,
-                ]);
-                $existingSetting->promotion_rules = $rules;
-                $existingSetting->save();
-
-                Log::info('Promotion setting updated', ['id' => $existingSetting->id]);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Promotion settings updated with ' . count($rules) . ' rules.',
-                    'data' => $existingSetting
-                ]);
-            } else {
-                // Create new setting
-                $setting = PromotionSetting::create([
-                    'schoolclass_id'         => $request->schoolclass_id,
-                    'session_id'             => $sessionId,
-                    'term_id'                => $termId,
-                    'promoted_label'         => $request->promoted_label      ?? 'Promoted',
-                    'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
-                    'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
-                    'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
-                    'rule_logic'             => $request->rule_logic          ?? 'grade_count',
-                    'promotion_pass_average' => $request->promotion_pass_average ?: null,
-                    'is_active'              => $isActive,
-                    'template_id'            => $request->template_id ?: null,
-                ]);
-                $setting->promotion_rules = $rules;
-                $setting->save();
-
-                Log::info('New promotion setting created', ['id' => $setting->id]);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'New promotion settings created with ' . count($rules) . ' rules.',
-                    'data' => $setting
-                ]);
+            // If this is set as default, remove default from other rule sets for this class
+            if ($isDefault) {
+                PromotionSetting::where('schoolclass_id', $request->schoolclass_id)
+                    ->where('session_id', $sessionId)
+                    ->where('term_id', $termId)
+                    ->update(['is_default' => false]);
             }
+
+            $setting = PromotionSetting::create([
+                'schoolclass_id'         => $request->schoolclass_id,
+                'session_id'             => $sessionId,
+                'term_id'                => $termId,
+                'rule_set_name'          => $ruleSetName,
+                'priority'               => $priority,
+                'promoted_label'         => $request->promoted_label      ?? 'Promoted',
+                'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
+                'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
+                'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
+                'rule_logic'             => $request->rule_logic          ?? 'grade_count',
+                'promotion_pass_average' => $request->promotion_pass_average ?: null,
+                'is_active'              => $isActive,
+                'is_default'             => $isDefault,
+                'template_id'            => $request->template_id ?: null,
+            ]);
+            $setting->promotion_rules = $rules;
+            $setting->save();
+
+            Log::info('New promotion rule set created', ['id' => $setting->id, 'name' => $ruleSetName]);
+            return response()->json([
+                'success' => true,
+                'message' => "Rule set '{$ruleSetName}' created with " . count($rules) . ' rules.',
+                'data' => $setting
+            ]);
         } catch (\Exception $e) {
             Log::error('Store Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error saving settings: ' . $e->getMessage()], 500);
@@ -222,20 +210,27 @@ class PromotionSettingController extends Controller
             $rules = $this->parseRules($request);
             if ($rules instanceof \Illuminate\Http\JsonResponse) return $rules;
 
-            // Validate that rules array is not empty
             if (empty($rules)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'At least one promotion rule is required.'
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'At least one promotion rule is required.'], 422);
             }
 
             $isActive = filter_var($request->input('is_active', $setting->is_active), FILTER_VALIDATE_BOOLEAN);
+            $isDefault = filter_var($request->input('is_default', $setting->is_default), FILTER_VALIDATE_BOOLEAN);
+
+            // If this is set as default, remove default from other rule sets for this class
+            if ($isDefault && !$setting->is_default) {
+                PromotionSetting::where('schoolclass_id', $setting->schoolclass_id)
+                    ->where('session_id', $sessionId)
+                    ->where('term_id', $termId)
+                    ->where('id', '!=', $id)
+                    ->update(['is_default' => false]);
+            }
 
             $setting->update([
                 'schoolclass_id'         => $request->schoolclass_id,
                 'session_id'             => $sessionId,
                 'term_id'                => $termId,
+                'rule_set_name'          => $request->rule_set_name ?? $setting->rule_set_name,
                 'promoted_label'         => $request->promoted_label      ?? 'Promoted',
                 'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
                 'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
@@ -243,6 +238,7 @@ class PromotionSettingController extends Controller
                 'rule_logic'             => $request->rule_logic          ?? 'grade_count',
                 'promotion_pass_average' => $request->promotion_pass_average ?: null,
                 'is_active'              => $isActive,
+                'is_default'             => $isDefault,
                 'template_id'            => $request->template_id ?: null,
             ]);
             $setting->promotion_rules = $rules;
@@ -250,7 +246,7 @@ class PromotionSettingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Settings updated with ' . count($rules) . ' rules.',
+                'message' => "Rule set '{$setting->rule_set_name}' updated with " . count($rules) . ' rules.',
                 'data' => $setting
             ]);
         } catch (\Exception $e) {
@@ -264,14 +260,15 @@ class PromotionSettingController extends Controller
     {
         try {
             $setting = PromotionSetting::find($id);
-
             if (!$setting) {
                 return response()->json(['success' => false, 'message' => 'Promotion setting not found.'], 404);
             }
 
+            $ruleSetName = $setting->rule_set_name;
             $setting->delete();
-            Log::info('Promotion setting deleted', ['id' => $id]);
-            return response()->json(['success' => true, 'message' => 'Deleted successfully.']);
+
+            Log::info('Promotion rule set deleted', ['id' => $id, 'name' => $ruleSetName]);
+            return response()->json(['success' => true, 'message' => "Rule set '{$ruleSetName}' deleted successfully."]);
         } catch (\Exception $e) {
             Log::error('Delete Error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error deleting: ' . $e->getMessage()], 500);
@@ -392,6 +389,7 @@ class PromotionSettingController extends Controller
             'schoolclass_id'         => 'required|exists:schoolclass,id',
             'session_id'             => 'nullable|exists:schoolsession,id',
             'term_id'                => 'nullable|exists:schoolterm,id',
+            'rule_set_name'          => 'nullable|string|max:255',
             'promoted_label'         => 'nullable|string|max:100',
             'trial_label'            => 'nullable|string|max:100',
             'see_principal_label'    => 'nullable|string|max:100',
@@ -399,6 +397,7 @@ class PromotionSettingController extends Controller
             'rule_logic'             => 'nullable|in:grade_count,average_only,both,subject_only',
             'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
             'is_active'              => 'nullable|boolean',
+            'is_default'             => 'nullable|boolean',
             'template_id'            => 'nullable|exists:promotion_rule_templates,id',
             'promotion_rules'        => 'nullable|json',
         ]);
@@ -435,7 +434,6 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => "Rule {$n}: invalid status."], 422);
             }
 
-            // Ensure each rule has required sections
             if (!isset($rule['compulsory_section'])) {
                 $rule['compulsory_section'] = ['subjects' => [], 'count_conditions' => []];
             }
@@ -450,20 +448,6 @@ class PromotionSettingController extends Controller
         }
 
         return $rules;
-    }
-
-    private function getGradeScaleForClass($classId)
-    {
-        $categoryData = DB::table('schoolclass_classcategory')
-            ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
-            ->where('schoolclass_classcategory.schoolclass_id', $classId)
-            ->select('classcategories.is_senior')
-            ->first();
-
-        if ($categoryData && isset($categoryData->is_senior) && !$categoryData->is_senior) {
-            return ['A', 'B', 'C', 'D', 'F'];
-        }
-        return ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
     }
 
     private function getCompulsorySubjects($classId, $termId = null, $sessionId = null): array
