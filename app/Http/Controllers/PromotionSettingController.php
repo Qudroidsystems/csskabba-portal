@@ -21,32 +21,27 @@ class PromotionSettingController extends Controller
     {
         $this->middleware('permission:View promotion|Update promotion');
     }
-public function index()
-{
-    $pagetitle = "Promotion Settings Management";
 
-    // Get settings with relationships
-    $settings = PromotionSetting::with(['schoolclass', 'session', 'term'])
-        ->orderBy('schoolclass_id')
-        ->get();
+    public function index()
+    {
+        $pagetitle = "Promotion Settings Management";
 
-    // Fix: Get schoolclasses with proper arm names using DB query with correct column aliases
-    $schoolclasses = DB::table('schoolclass')
-        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-        ->select(
-            'schoolclass.id',
-            'schoolclass.schoolclass',
-            'schoolarm.arm as arm_name'
-        )
-        ->get();
+        $settings = PromotionSetting::with(['schoolclass.arm', 'session', 'term'])
+            ->orderBy('schoolclass_id')
+            ->get();
 
-    $sessions = Schoolsession::orderBy('session', 'desc')->get();
-    $terms    = Schoolterm::orderBy('term')->get();
+        $schoolclasses = DB::table('schoolclass')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name')
+            ->get();
 
-    return view('promotions.settings', compact(
-        'settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'
-    ));
-}
+        $sessions = Schoolsession::orderBy('session', 'desc')->get();
+        $terms    = Schoolterm::orderBy('term')->get();
+
+        return view('promotions.settings', compact(
+            'settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'
+        ));
+    }
 
     public function subjectsByClass(Request $request)
     {
@@ -161,6 +156,53 @@ public function index()
         }
     }
 
+    public function getClassPromotionData(Request $request)
+    {
+        try {
+            $classId   = $request->query('classid');
+            $termId    = $request->query('termid');
+            $sessionId = $request->query('sessionid');
+
+            if (!$classId) {
+                return response()->json(['success' => false, 'message' => 'Class required'], 422);
+            }
+
+            $passAverage = DB::table('schoolclass_classcategory')
+                ->where('schoolclass_id', $classId)
+                ->value('promotion_pass_average');
+
+            $gradeScale = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
+            $categoryData = DB::table('schoolclass_classcategory')
+                ->join('classcategory', 'classcategory.id', '=', 'schoolclass_classcategory.classcategory_id')
+                ->where('schoolclass_classcategory.schoolclass_id', $classId)
+                ->first();
+
+            if ($categoryData && !$categoryData->is_senior) {
+                $gradeScale = ['A', 'B', 'C', 'D', 'F'];
+            }
+
+            $gradeValues = [];
+            foreach ($gradeScale as $index => $grade) {
+                $gradeValues[$grade] = count($gradeScale) - $index;
+            }
+
+            return response()->json([
+                'success' => true,
+                'pass_average' => $passAverage,
+                'grade_scale' => $gradeScale,
+                'grade_values' => $gradeValues,
+                'is_senior' => $categoryData ? $categoryData->is_senior : true
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Get Class Promotion Data Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading class data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -171,6 +213,8 @@ public function index()
             'trial_label'         => 'nullable|string|max:100',
             'see_principal_label' => 'nullable|string|max:100',
             'repeat_label'        => 'nullable|string|max:100',
+            'rule_logic'          => 'nullable|in:subject_only,average_only,both',
+            'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
             'promotion_rules'     => 'nullable|json',
         ]);
 
@@ -222,12 +266,16 @@ public function index()
                     'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
                     'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
                     'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
+                    'rule_logic'          => $request->rule_logic ?? 'subject_only',
+                    'promotion_pass_average' => $request->promotion_pass_average,
                     'is_active'           => true,
                 ]
             );
 
             $setting->promotion_rules = $promotionRules;
             $setting->save();
+
+            Log::info('Promotion setting saved successfully', ['id' => $setting->id]);
 
             return response()->json([
                 'success' => true,
@@ -254,6 +302,8 @@ public function index()
             'trial_label'         => 'nullable|string|max:100',
             'see_principal_label' => 'nullable|string|max:100',
             'repeat_label'        => 'nullable|string|max:100',
+            'rule_logic'          => 'nullable|in:subject_only,average_only,both',
+            'promotion_pass_average' => 'nullable|numeric|min:0|max:100',
             'promotion_rules'     => 'nullable|json',
         ]);
 
@@ -283,6 +333,8 @@ public function index()
                 'trial_label'         => $request->trial_label         ?? 'Promoted on Trial',
                 'see_principal_label' => $request->see_principal_label ?? 'Advised to See Principal',
                 'repeat_label'        => $request->repeat_label        ?? 'Advice to Repeat',
+                'rule_logic'          => $request->rule_logic ?? 'subject_only',
+                'promotion_pass_average' => $request->promotion_pass_average,
             ]);
 
             $setting->promotion_rules = $promotionRules;
@@ -303,17 +355,49 @@ public function index()
         }
     }
 
+    /**
+     * Delete a promotion setting.
+     */
     public function destroy($id)
     {
         try {
-            $setting = PromotionSetting::findOrFail($id);
+            // Find the setting
+            $setting = PromotionSetting::find($id);
+
+            if (!$setting) {
+                Log::warning('Promotion setting not found for deletion', ['id' => $id]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Promotion setting not found.'
+                ], 404);
+            }
+
+            // Delete the setting
             $setting->delete();
+
+            Log::info('Promotion setting deleted successfully', ['id' => $id, 'schoolclass_id' => $setting->schoolclass_id]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Promotion settings deleted successfully.'
             ]);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error deleting promotion setting', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error: Could not delete the promotion setting.'
+            ], 500);
         } catch (\Exception $e) {
+            Log::error('Unexpected error deleting promotion setting', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete: ' . $e->getMessage()
