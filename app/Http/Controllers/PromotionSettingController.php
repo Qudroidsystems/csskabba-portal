@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;  // ADD THIS LINE
 
 class PromotionSettingController extends Controller
 {
@@ -26,7 +27,6 @@ class PromotionSettingController extends Controller
     {
         $pagetitle = 'Promotion Settings';
 
-        // Remove 'template' from with() if the table doesn't exist yet, or add the relationship
         $settings = PromotionSetting::with(['schoolclass.arm', 'session', 'term'])
             ->orderBy('schoolclass_id')
             ->get();
@@ -93,7 +93,7 @@ class PromotionSettingController extends Controller
 
             // Compulsory subjects with their min_grade
             $compulsorySubjects = $this->getCompulsorySubjects($classId, $termId, $sessionId);
-            $compIds = array_column($compulsorySubjects, 'subject_id');
+            $compIds = array_column($compulsorySubjects, 'id');
 
             // Other subjects
             $otherSubjects = array_filter($allSubjects, fn($s) => !in_array((string)$s->id, array_map('strval', $compIds)));
