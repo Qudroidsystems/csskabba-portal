@@ -1,3 +1,4 @@
+{{-- resources/views/promotions/settings.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -363,10 +364,6 @@
     border-color: var(--ps-success);
     background: #f0fdf4;
 }
-.grade-sel option:disabled {
-    color: #999;
-    font-style: italic;
-}
 
 .no-rules-placeholder {
     text-align: center;
@@ -392,9 +389,6 @@
 .min-grade-warning {
     font-size: 10px;
     margin-top: 4px;
-}
-.min-grade-warning i {
-    font-size: 10px;
 }
 </style>
 
@@ -524,7 +518,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-setting"
                                         data-id="{{ $setting->id }}"
                                         data-name="{{ $fullClassName }}">
-                                        <i class="ri-delete-bin-line"></i>
+                                        <i class="ri-delete-bin-line"></i> Delete
                                     </button>
                                 </div>
                             </div>
@@ -755,26 +749,34 @@ async function refreshSubjects() {
     try {
         let subUrl = `/promotion-settings/subjects-by-class?classid=${classId}`;
         let compUrl = `/promotion-settings/compulsory-by-class?classid=${classId}`;
+        let classDataUrl = `/promotion-settings/class-promotion-data?classid=${classId}`;
 
         if (termId && termId !== '') {
             subUrl += `&termid=${termId}`;
             compUrl += `&termid=${termId}`;
+            classDataUrl += `&termid=${termId}`;
         }
         if (sessionId && sessionId !== '') {
             subUrl += `&sessionid=${sessionId}`;
             compUrl += `&sessionid=${sessionId}`;
+            classDataUrl += `&sessionid=${sessionId}`;
         }
 
-        const [subRes, compRes] = await Promise.all([fetch(subUrl), fetch(compUrl)]);
+        const [subRes, compRes, classDataRes] = await Promise.all([
+            fetch(subUrl),
+            fetch(compUrl),
+            fetch(classDataUrl)
+        ]);
+
         const subData = await subRes.json();
         const compData = await compRes.json();
+        const classData = await classDataRes.json();
 
         const allSubs = subData.success ? subData.subjects : [];
         const compSubs = compData.success ? compData.subjects : [];
 
         const compIds = new Set(compSubs.map(s => s.id));
 
-        // Store minimum grades for compulsory subjects
         compSubs.forEach(s => {
             if (s.min_grade) {
                 compulsoryMinGrades[s.id] = s.min_grade;
@@ -794,15 +796,13 @@ async function refreshSubjects() {
             subject_code: s.subject_code
         }));
 
-        // Try to get class pass average from the compulsory subject endpoint or from stored value
-        if (compData.pass_average) {
-            classPassAverage = compData.pass_average;
+        if (classData.success && classData.pass_average) {
+            classPassAverage = classData.pass_average;
             document.getElementById('promotion_pass_average').value = classPassAverage;
             document.getElementById('avg_score_slider').value = classPassAverage;
             document.getElementById('avgHelpText').innerHTML = `Class default: ${classPassAverage}% minimum average required. You can override above.`;
         }
 
-        // Adjust grade scale based on compulsory min_grade
         if (compSubs.length > 0 && compSubs[0].min_grade) {
             const sampleGrade = compSubs[0].min_grade;
             if (/[0-9]/.test(sampleGrade)) {
@@ -912,8 +912,6 @@ function getAvailableGrades(minRequiredGrade) {
     const minIndex = gradeScale.indexOf(minRequiredGrade);
     if (minIndex === -1) return gradeScale;
 
-    // Return grades that are >= minimum required (higher index means lower grade in typical scale)
-    // In standard grading, A1 is best, so we need to include grades from start to minIndex
     return gradeScale.slice(0, minIndex + 1);
 }
 
@@ -1179,7 +1177,7 @@ if (avgSlider && avgInput) {
     });
 }
 
-// Show/hide average score section based on rule logic
+// Show/hide average score section
 const ruleLogicSelect = document.getElementById('rule_logic');
 const avgSection = document.getElementById('averageScoreSection');
 
@@ -1261,6 +1259,7 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
     }
 });
 
+// Edit button handlers
 function bindEditButtons() {
     document.querySelectorAll('.edit-setting').forEach(btn => {
         btn.removeEventListener('click', handleEditClick);
@@ -1283,7 +1282,6 @@ async function handleEditClick(e) {
     document.getElementById('rule_logic').value = data.rule_logic || 'subject_only';
     document.getElementById('promotion_pass_average').value = data.promotion_pass_average || '';
 
-    // Trigger rule logic change to show/hide average section
     const ruleLogicEvent = new Event('change');
     document.getElementById('rule_logic').dispatchEvent(ruleLogicEvent);
 
@@ -1297,6 +1295,7 @@ async function handleEditClick(e) {
     await refreshSubjects();
 }
 
+// Delete button handlers - FIXED
 function bindDeleteButtons() {
     document.querySelectorAll('.delete-setting').forEach(btn => {
         btn.removeEventListener('click', handleDeleteClick);
@@ -1305,36 +1304,55 @@ function bindDeleteButtons() {
 }
 
 async function handleDeleteClick(e) {
+    const button = e.currentTarget;
+    const settingId = button.dataset.id;
+    const settingName = button.dataset.name || 'this setting';
+
     const result = await Swal.fire({
         title: 'Confirm Delete',
-        text: `Delete promotion rules for ${e.currentTarget.dataset.name}?`,
+        html: `Are you sure you want to delete promotion rules for <strong>${escapeHtml(settingName)}</strong>?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Yes, Delete'
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel'
     });
 
     if (result.isConfirmed) {
-        Swal.fire({ title: 'Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({
+            title: 'Deleting...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
 
         try {
-            const response = await fetch(`/promotion-settings/${e.currentTarget.dataset.id}`, {
+            const response = await fetch(`/promotion-settings/${settingId}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 }
             });
 
             const data = await response.json();
 
             if (data.success) {
-                Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                Swal.fire('Error', data.message, 'error');
+                Swal.fire('Error', data.message || 'Failed to delete.', 'error');
             }
         } catch (error) {
-            Swal.fire('Error', 'Failed to delete.', 'error');
+            console.error('Delete error:', error);
+            Swal.fire('Error', 'An error occurred while deleting. Please try again.', 'error');
         }
     }
 }
@@ -1357,7 +1375,6 @@ function resetModal() {
     rerenderRules();
     document.getElementById('addRuleBtn').disabled = true;
 
-    // Hide average section if not applicable
     const avgSectionElem = document.getElementById('averageScoreSection');
     if (avgSectionElem) {
         avgSectionElem.style.display = 'none';
@@ -1371,6 +1388,7 @@ function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// Initialize event listeners
 document.addEventListener('DOMContentLoaded', function() {
     bindEditButtons();
     bindDeleteButtons();

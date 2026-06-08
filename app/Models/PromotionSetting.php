@@ -28,6 +28,7 @@ class PromotionSetting extends Model
         'see_principal_label',
         'repeat_label',
         'promotion_rules',
+        'rule_logic',
         'is_active',
     ];
 
@@ -37,11 +38,12 @@ class PromotionSetting extends Model
         'see_principal_average' => 'decimal:2',
         'min_compulsory_pass' => 'integer',
         'is_active' => 'boolean',
-        'promotion_rules' => 'array',  // Cast JSON to array
+        'promotion_rules' => 'array',
     ];
 
     protected $attributes = [
-        'rule_type' => 'custom_rules',  // Default value
+        'rule_type' => 'custom_rules',
+        'rule_logic' => 'subject_only',
         'is_active' => true,
         'promoted_label' => 'Promoted',
         'trial_label' => 'Promoted on Trial',
@@ -64,7 +66,6 @@ class PromotionSetting extends Model
         return $this->belongsTo(Schoolterm::class, 'term_id');
     }
 
-    // Accessor for promotion_rules
     public function getPromotionRulesAttribute($value)
     {
         if (is_null($value)) {
@@ -79,7 +80,6 @@ class PromotionSetting extends Model
         return is_array($decoded) ? $decoded : [];
     }
 
-    // Mutator for promotion_rules
     public function setPromotionRulesAttribute($value)
     {
         if (is_array($value)) {
