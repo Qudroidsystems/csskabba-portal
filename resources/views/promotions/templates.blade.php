@@ -48,6 +48,25 @@
     position: relative;
 }
 
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.back-link:hover {
+    background: rgba(255,255,255,0.3);
+    color: #fff;
+    transform: translateX(-2px);
+}
+
 .setting-card {
     background: #fff;
     border: 1px solid var(--ps-border);
@@ -391,12 +410,22 @@
             <div class="ps-hero">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
+                        <div class="mb-2">
+                            <a href="{{ route('promotion-settings.index') }}" class="back-link">
+                                <i class="ri-arrow-left-line"></i> Back to Promotion Settings
+                            </a>
+                        </div>
                         <h1><i class="ri-file-copy-line me-2"></i>Promotion Rule Templates</h1>
                         <p>Create and manage reusable promotion rule templates that can be applied to multiple classes.</p>
                     </div>
-                    <a href="{{ route('promotion.templates.create') }}" class="btn btn-light">
-                        <i class="ri-add-line me-1"></i>Create Template
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('promotion-settings.index') }}" class="btn btn-light">
+                            <i class="ri-settings-4-line me-1"></i> Settings
+                        </a>
+                        <a href="{{ route('promotion.templates.create') }}" class="btn btn-light">
+                            <i class="ri-add-line me-1"></i>Create Template
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -409,6 +438,11 @@
                         <span class="badge bg-success ms-1">{{ $templates->where('is_active',true)->count() }} Active</span>
                         <span class="badge bg-secondary ms-1">{{ $templates->where('is_active',false)->count() }} Inactive</span>
                     </h5>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('promotion-settings.index') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="ri-arrow-left-line me-1"></i>Back to Settings
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -503,7 +537,14 @@
                         <div class="col-12 text-center py-5">
                             <i class="ri-file-copy-line" style="font-size:48px;opacity:.3;"></i>
                             <p class="mt-3 text-muted">No promotion templates created yet.</p>
-                            <a href="{{ route('promotion.templates.create') }}" class="btn btn-primary">Create First Template</a>
+                            <div class="d-flex gap-3 justify-content-center">
+                                <a href="{{ route('promotion.templates.create') }}" class="btn btn-primary">
+                                    <i class="ri-add-line me-1"></i>Create First Template
+                                </a>
+                                <a href="{{ route('promotion-settings.index') }}" class="btn btn-outline-secondary">
+                                    <i class="ri-arrow-left-line me-1"></i>Back to Settings
+                                </a>
+                            </div>
                         </div>
                         @endforelse
                     </div>
@@ -722,7 +763,7 @@ document.getElementById('applyTemplateBtn').addEventListener('click', async func
                 timer: 2000,
                 showConfirmButton: true
             }).then(() => {
-                window.location.href = '/promotion-settings';
+                window.location.href = '{{ route("promotion-settings.index") }}';
             });
         } else {
             statusEl.style.display = 'none';
