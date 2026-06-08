@@ -21,42 +21,32 @@ class PromotionSettingController extends Controller
     {
         $this->middleware('permission:View promotion|Update promotion');
     }
+public function index()
+{
+    $pagetitle = "Promotion Settings Management";
 
-    public function index()
-    {
-        $pagetitle = "Promotion Settings Management";
+    // Get settings with relationships
+    $settings = PromotionSetting::with(['schoolclass', 'session', 'term'])
+        ->orderBy('schoolclass_id')
+        ->get();
 
-        // Get settings with relationships
-        $settings = PromotionSetting::with(['schoolclass', 'session', 'term'])
-            ->orderBy('schoolclass_id')
-            ->get();
+    // Fix: Get schoolclasses with proper arm names using DB query with correct column aliases
+    $schoolclasses = DB::table('schoolclass')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select(
+            'schoolclass.id',
+            'schoolclass.schoolclass',
+            'schoolarm.arm as arm_name'
+        )
+        ->get();
 
-        // Get schoolclasses with proper arm names using DB query
-        $schoolclasses = DB::table('schoolclass')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(
-                'schoolclass.id',
-                'schoolclass.schoolclass',
-                'schoolclass.arm as arm_id',
-                'schoolarm.arm as arm_name'
-            )
-            ->get()
-            ->map(function($class) {
-                // If arm_name exists from join, use it; otherwise use the arm_id
-                $class->display_name = trim($class->schoolclass . ' ' . ($class->arm_name ?: ''));
-                return $class;
-            });
+    $sessions = Schoolsession::orderBy('session', 'desc')->get();
+    $terms    = Schoolterm::orderBy('term')->get();
 
-        $sessions = Schoolsession::orderBy('session', 'desc')->get();
-        $terms    = Schoolterm::orderBy('term')->get();
-
-        // Debug: Log what we have
-        \Log::info('Schoolclasses loaded:', $schoolclasses->toArray());
-
-        return view('promotions.settings', compact(
-            'settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'
-        ));
-    }
+    return view('promotions.settings', compact(
+        'settings', 'schoolclasses', 'sessions', 'terms', 'pagetitle'
+    ));
+}
 
     public function subjectsByClass(Request $request)
     {
