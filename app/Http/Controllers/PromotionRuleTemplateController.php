@@ -4,181 +4,174 @@
 namespace App\Http\Controllers;
 
 use App\Models\PromotionRuleTemplate;
-use App\Models\CompulsorySubjectClass;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class PromotionRuleTemplateController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:View promotion|Update promotion');
-    }
-
     public function index()
     {
         $pagetitle = 'Promotion Rule Templates';
-        $templates = PromotionRuleTemplate::withCount('settings')
-            ->orderByDesc('created_at')
-            ->get();
-        return view('promotions.templates', compact('templates', 'pagetitle'));
+
+        // Get all templates
+        $templates = PromotionRuleTemplate::orderBy('name')->get();
+
+        // For the card display, we need $settings variable to match the blade
+        // Either rename or pass as $templates
+        $settings = $templates; // This is the fix - alias templates as settings
+
+        return view('promotions.templates', compact('templates', 'settings', 'pagetitle'));
+    }
+
+    public function create()
+    {
+        $pagetitle = 'Create Promotion Rule Template';
+        return view('promotions.templates-create', compact('pagetitle'));
     }
 
     public function store(Request $request)
     {
-        $v = Validator::make($request->all(), [
-            'name'        => 'required|string|max:150',
-            'description' => 'nullable|string|max:500',
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:promotion_rule_templates',
+            'description' => 'nullable|string',
             'grade_scale' => 'required|in:senior,junior',
-            'rules'       => 'nullable|json',
+            'promotion_rules' => 'required|json',
+            'is_active' => 'nullable|boolean',
         ]);
-        if ($v->fails()) {
-            return response()->json(['success' => false, 'errors' => $v->errors()], 422);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         try {
-            $rules = $request->filled('rules') ? json_decode($request->rules, true) : [];
-            $tpl   = PromotionRuleTemplate::create([
-                'name'        => $request->name,
+            $template = PromotionRuleTemplate::create([
+                'name' => $request->name,
                 'description' => $request->description,
                 'grade_scale' => $request->grade_scale,
-                'rules'       => $rules,
-                'created_by'  => auth()->id(),
+                'promotion_rules' => json_decode($request->promotion_rules, true),
+                'is_active' => filter_var($request->input('is_active', true), FILTER_VALIDATE_BOOLEAN),
             ]);
-            return response()->json(['success' => true, 'message' => 'Template created.', 'data' => $tpl]);
+
+            return response()->json(['success' => true, 'message' => 'Template created successfully.', 'data' => $template]);
         } catch (\Exception $e) {
-            Log::error('Template store error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Template Store Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error creating template: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function edit($id)
+    {
+        $pagetitle = 'Edit Promotion Rule Template';
+        $template = PromotionRuleTemplate::findOrFail($id);
+        return view('promotions.templates-edit', compact('template', 'pagetitle'));
     }
 
     public function update(Request $request, $id)
     {
-        $v = Validator::make($request->all(), [
-            'name'        => 'required|string|max:150',
-            'description' => 'nullable|string|max:500',
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:promotion_rule_templates,name,' . $id,
+            'description' => 'nullable|string',
             'grade_scale' => 'required|in:senior,junior',
-            'rules'       => 'nullable|json',
+            'promotion_rules' => 'required|json',
+            'is_active' => 'nullable|boolean',
         ]);
-        if ($v->fails()) {
-            return response()->json(['success' => false, 'errors' => $v->errors()], 422);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         try {
-            $tpl = PromotionRuleTemplate::findOrFail($id);
-            $tpl->update([
-                'name'        => $request->name,
+            $template = PromotionRuleTemplate::findOrFail($id);
+            $template->update([
+                'name' => $request->name,
                 'description' => $request->description,
                 'grade_scale' => $request->grade_scale,
-                'rules'       => $request->filled('rules') ? json_decode($request->rules, true) : [],
+                'promotion_rules' => json_decode($request->promotion_rules, true),
+                'is_active' => filter_var($request->input('is_active', $template->is_active), FILTER_VALIDATE_BOOLEAN),
             ]);
-            return response()->json(['success' => true, 'message' => 'Template updated.', 'data' => $tpl]);
+
+            return response()->json(['success' => true, 'message' => 'Template updated successfully.', 'data' => $template]);
         } catch (\Exception $e) {
-            Log::error('Template update error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Template Update Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error updating template: ' . $e->getMessage()], 500);
         }
     }
 
     public function destroy($id)
     {
         try {
-            $tpl = PromotionRuleTemplate::findOrFail($id);
-            // Detach from settings
-            DB::table('promotion_settings')->where('template_id', $id)->update(['template_id' => null]);
-            $tpl->delete();
-            return response()->json(['success' => true, 'message' => 'Template deleted.']);
+            $template = PromotionRuleTemplate::findOrFail($id);
+            $template->delete();
+
+            return response()->json(['success' => true, 'message' => 'Template deleted successfully.']);
         } catch (\Exception $e) {
-            Log::error('Template delete error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Template Delete Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error deleting template: ' . $e->getMessage()], 500);
         }
     }
 
-    // ── Load template rules, merging class compulsory subjects ───────────────
-    public function loadForClass(Request $request, $templateId)
+    public function toggleActive(Request $request, $id)
     {
         try {
-            $tpl     = PromotionRuleTemplate::findOrFail($templateId);
-            $classId = $request->query('classid');
-
-            if (!$classId) {
-                return response()->json(['success' => false, 'message' => 'Class ID required.'], 422);
-            }
-
-            // Get class compulsory subjects
-            $compSubjects = $this->getClassCompulsorySubjects($classId,
-                $request->query('termid'), $request->query('sessionid'));
-
-            $compMap = collect($compSubjects)->keyBy('subject_id');
-
-            // Merge template rules with class compulsory subjects
-            $mergedRules = collect($tpl->rules ?? [])->map(function ($rule) use ($compSubjects, $compMap) {
-                // Always use class's actual compulsory subjects
-                // Pre-fill min_grade from compulsory_subject_classes, overridden by template if present
-                $tplSubjects = collect($rule['compulsory_section']['subjects'] ?? [])->keyBy('subject_id');
-
-                $mergedSubjects = collect($compSubjects)->map(function ($cs) use ($tplSubjects) {
-                    $tplSubj   = $tplSubjects->get($cs['subject_id']);
-                    return [
-                        'subject_id'   => $cs['subject_id'],
-                        'subject_name' => $cs['subject_name'],
-                        'subject_code' => $cs['subject_code'],
-                        'min_grade'    => $tplSubj['min_grade'] ?? $cs['default_min_grade'] ?? '',
-                        'override'     => isset($tplSubj['min_grade']),
-                        'default_min_grade' => $cs['default_min_grade'] ?? '',
-                    ];
-                })->values()->toArray();
-
-                $rule['compulsory_section']['subjects'] = $mergedSubjects;
-                return $rule;
-            })->toArray();
+            $template = PromotionRuleTemplate::findOrFail($id);
+            $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
+            $template->is_active = $isActive;
+            $template->save();
 
             return response()->json([
-                'success'          => true,
-                'template'         => $tpl,
-                'merged_rules'     => $mergedRules,
-                'comp_subjects'    => $compSubjects,
-                'grade_scale'      => $tpl->grade_scale,
+                'success' => true,
+                'message' => 'Status updated successfully.',
+                'is_active' => $template->is_active
             ]);
         } catch (\Exception $e) {
-            Log::error('Template load for class error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('Toggle Active Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage()
+            ], 500);
         }
     }
 
-    // ── List templates as JSON (for modal dropdown) ──────────────────────────
-    public function list(Request $request)
+    public function loadForClass(Request $request, $id)
     {
-        $gradeScale = $request->query('grade_scale');
-        $query      = PromotionRuleTemplate::select('id', 'name', 'description', 'grade_scale')
-            ->withCount('settings');
-        if ($gradeScale) $query->where('grade_scale', $gradeScale);
-        return response()->json(['success' => true, 'templates' => $query->orderBy('name')->get()]);
-    }
+        try {
+            $template = PromotionRuleTemplate::findOrFail($id);
+            $classId = $request->query('classid');
+            $termId = $request->query('termid');
+            $sessionId = $request->query('sessionid');
 
-    // ── Helper: get class compulsory subjects with defaults ──────────────────
-    private function getClassCompulsorySubjects($classId, $termId = null, $sessionId = null): array
-    {
-        $q = CompulsorySubjectClass::where('schoolclassid', $classId)
-            ->where(function ($q) use ($termId, $sessionId) {
-                $q->where(function ($q2) use ($termId, $sessionId) {
-                    if ($termId)    $q2->where('termid', $termId);
-                    if ($sessionId) $q2->where('sessionid', $sessionId);
-                    if ($termId || $sessionId) return;
-                    $q2->whereNull('termid')->whereNull('sessionid');
-                })->orWhere(function ($q2) {
-                    $q2->whereNull('termid')->whereNull('sessionid');
-                });
-            })
-            ->with('subject')
-            ->get();
+            // Get class grade scale
+            $categoryData = DB::table('schoolclass_classcategory')
+                ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
+                ->where('schoolclass_classcategory.schoolclass_id', $classId)
+                ->select('classcategories.is_senior')
+                ->first();
 
-        return $q->map(fn($cs) => [
-            'subject_id'        => (string) $cs->subjectId,
-            'subject_name'      => $cs->subject?->subject ?? 'N/A',
-            'subject_code'      => $cs->subject?->subject_code ?? '',
-            'default_min_grade' => $cs->min_grade ?? '',
-        ])->unique('subject_id')->values()->toArray();
+            $classIsSenior = $categoryData && $categoryData->is_senior;
+            $templateIsSenior = $template->grade_scale === 'senior';
+
+            if ($classIsSenior !== $templateIsSenior) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Grade scale mismatch. Template uses ' . $template->grade_scale . ' but class is ' . ($classIsSenior ? 'senior' : 'junior')
+                ], 422);
+            }
+
+            $rules = $template->promotion_rules;
+
+            return response()->json([
+                'success' => true,
+                'template' => $template,
+                'merged_rules' => $rules,
+                'message' => 'Template loaded successfully.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Load Template Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading template: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
