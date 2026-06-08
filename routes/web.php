@@ -42,6 +42,7 @@ use App\Http\Controllers\Payment\OnlinePaymentController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PrincipalsCommentController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\PromotionRuleTemplateController;
 use App\Http\Controllers\PromotionSettingController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\Reports\AnalysisReportController;
@@ -1361,6 +1362,17 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         Route::put('/{id}', [PromotionSettingController::class, 'update'])->name('promotion.settings.update');
         Route::delete('/{id}', [PromotionSettingController::class, 'destroy'])->name('promotion.settings.destroy');
         Route::get('/class-promotion-data', [PromotionSettingController::class, 'getClassPromotionData'])->name('promotion.settings.class-data');
+    });
+
+    // Promotion Templates Routes (Add these if you have templates)
+    Route::prefix('promotion-templates')->name('promotion.templates.')->group(function () {
+        Route::get('/', [PromotionRuleTemplateController::class, 'index'])->name('index');
+        Route::get('/create', [PromotionRuleTemplateController::class, 'create'])->name('create');
+        Route::post('/', [PromotionRuleTemplateController::class, 'store'])->name('store');
+        Route::get('/{id}', [PromotionRuleTemplateController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [PromotionRuleTemplateController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PromotionRuleTemplateController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PromotionRuleTemplateController::class, 'destroy'])->name('destroy');
     });
 
 
