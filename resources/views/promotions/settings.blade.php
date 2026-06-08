@@ -408,15 +408,15 @@
                     <div class="row">
                         @forelse ($settings as $setting)
                         @php
-                            // Get arm name from the relationship or direct attribute
+                            // Get arm name from the schoolclass relationship
                             $armName = '';
-                            if ($setting->schoolclass && $setting->schoolclass->arm) {
-                                if (is_object($setting->schoolclass->arm) && method_exists($setting->schoolclass->arm, 'arm')) {
-                                    $armName = $setting->schoolclass->arm->arm;
-                                } elseif (is_numeric($setting->schoolclass->arm)) {
-                                    $arm = \App\Models\Schoolarm::find($setting->schoolclass->arm);
-                                    $armName = $arm ? $arm->arm : $setting->schoolclass->arm;
-                                } else {
+                            if ($setting->schoolclass) {
+                                // Try to get arm name through relationship if it exists
+                                if (method_exists($setting->schoolclass, 'arm') && $setting->schoolclass->arm) {
+                                    $armName = $setting->schoolclass->arm->arm ?? '';
+                                }
+                                // If no relationship, check if arm is a direct value
+                                if (empty($armName) && isset($setting->schoolclass->arm)) {
                                     $armName = $setting->schoolclass->arm;
                                 }
                             }
@@ -820,15 +820,34 @@ function rerenderRules() {
     const noMsg = document.getElementById('noRulesMsg');
 
     if (promotionRules.length === 0) {
-        container.innerHTML = '';
+        // Clear container and re-append the no message element
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
         container.appendChild(noMsg);
         noMsg.style.display = 'block';
         return;
     }
     noMsg.style.display = 'none';
+    container.innerHTML = '';
 
-    container.innerHTML = promotionRules.map((rule, idx) => buildRuleCard(rule, idx)).join('');
+    promotionRules.forEach((rule, idx) => {
+        const ruleCard = createRuleCardElement(rule, idx);
+        container.appendChild(ruleCard);
+    });
 
+    // Attach event listeners
+    attachRuleEventListeners(container);
+}
+
+function createRuleCardElement(rule, idx) {
+    const div = document.createElement('div');
+    div.className = 'rule-card';
+    div.innerHTML = buildRuleCardHTML(rule, idx);
+    return div;
+}
+
+function attachRuleEventListeners(container) {
     container.querySelectorAll('.rule-name-input').forEach(inp => {
         inp.addEventListener('input', e => {
             promotionRules[+e.target.dataset.idx].rule_name = e.target.value;
@@ -897,7 +916,7 @@ function rerenderRules() {
     });
 }
 
-function buildRuleCard(rule, idx) {
+function buildRuleCardHTML(rule, idx) {
     const selectedStatus = STATUS_LABELS.find(s => s.key === rule.status_label) || STATUS_LABELS[0];
 
     const labelPills = STATUS_LABELS.map(sl => {
@@ -1080,67 +1099,78 @@ document.getElementById('saveSettingBtn').addEventListener('click', async functi
     }
 });
 
-document.querySelectorAll('.edit-setting').forEach(btn => {
-    btn.addEventListener('click', async function() {
-        const data = this.dataset;
-        resetModal();
+// Dynamic edit button handlers - need to re-bind after page load
+function bindEditButtons() {
+    document.querySelectorAll('.edit-setting').forEach(btn => {
+        btn.removeEventListener('click', handleEditClick);
+        btn.addEventListener('click', handleEditClick);
+    });
+}
 
-        document.getElementById('setting_id').value = data.id;
-        document.getElementById('schoolclass_id').value = data.schoolclass_id;
-        document.getElementById('session_id').value = data.session_id || '';
-        document.getElementById('term_id').value = data.term_id || '';
-        document.getElementById('promoted_label').value = data.promoted_label || 'Promoted';
-        document.getElementById('trial_label').value = data.trial_label || 'Promoted on Trial';
-        document.getElementById('see_principal_label').value = data.see_principal_label || 'Advised to See Principal';
-        document.getElementById('repeat_label').value = data.repeat_label || 'Advice to Repeat';
+async function handleEditClick(e) {
+    const data = e.currentTarget.dataset;
+    resetModal();
+
+    document.getElementById('setting_id').value = data.id;
+    document.getElementById('schoolclass_id').value = data.schoolclass_id;
+    document.getElementById('session_id').value = data.session_id || '';
+    document.getElementById('term_id').value = data.term_id || '';
+    document.getElementById('promoted_label').value = data.promoted_label || 'Promoted';
+    document.getElementById('trial_label').value = data.trial_label || 'Promoted on Trial';
+    document.getElementById('see_principal_label').value = data.see_principal_label || 'Advised to See Principal';
+    document.getElementById('repeat_label').value = data.repeat_label || 'Advice to Repeat';
+
+    try {
+        promotionRules = JSON.parse(data.promotion_rules || '[]');
+    } catch (e) {
+        promotionRules = [];
+    }
+
+    openModal();
+    await refreshSubjects();
+}
+
+function bindDeleteButtons() {
+    document.querySelectorAll('.delete-setting').forEach(btn => {
+        btn.removeEventListener('click', handleDeleteClick);
+        btn.addEventListener('click', handleDeleteClick);
+    });
+}
+
+async function handleDeleteClick(e) {
+    const result = await Swal.fire({
+        title: 'Confirm Delete',
+        text: `Delete promotion rules for ${e.currentTarget.dataset.name}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Yes, Delete'
+    });
+
+    if (result.isConfirmed) {
+        Swal.fire({ title: 'Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         try {
-            promotionRules = JSON.parse(data.promotion_rules || '[]');
-        } catch (e) {
-            promotionRules = [];
-        }
-
-        openModal();
-        await refreshSubjects();
-    });
-});
-
-document.querySelectorAll('.delete-setting').forEach(btn => {
-    btn.addEventListener('click', async function() {
-        const result = await Swal.fire({
-            title: 'Confirm Delete',
-            text: `Delete promotion rules for ${this.dataset.name}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Yes, Delete'
-        });
-
-        if (result.isConfirmed) {
-            Swal.fire({ title: 'Deleting...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            try {
-                const response = await fetch(`/promotion-settings/${this.dataset.id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
-                } else {
-                    Swal.fire('Error', data.message, 'error');
+            const response = await fetch(`/promotion-settings/${e.currentTarget.dataset.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
                 }
-            } catch (error) {
-                Swal.fire('Error', 'Failed to delete.', 'error');
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
+            } else {
+                Swal.fire('Error', data.message, 'error');
             }
+        } catch (error) {
+            Swal.fire('Error', 'Failed to delete.', 'error');
         }
-    });
-});
+    }
+}
 
 function resetModal() {
     document.getElementById('setting_id').value = '';
@@ -1164,5 +1194,11 @@ function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// Initialize event listeners after page load
+document.addEventListener('DOMContentLoaded', function() {
+    bindEditButtons();
+    bindDeleteButtons();
+});
 </script>
 @endsection
