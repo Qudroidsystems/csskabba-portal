@@ -1,5 +1,4 @@
 <?php
-// app/Services/PromotionEvaluator.php
 
 namespace App\Services;
 
@@ -63,15 +62,9 @@ class PromotionEvaluator
         // ------------------------------------------------------------------
         $settings = $this->findBestSettings($schoolclassid, $sessionid, $termid);
 
-        // No active setting → gate on is_promotional term, then legacy path
+        // No active setting → return awaiting status (do NOT use legacy logic)
         if (!$settings) {
-            $term = Schoolterm::find($termid);
-            if (!$term || !$term->is_promotional) {
-                return $this->awaitingResult($overallAverage);
-            }
-            return $this->legacyEvaluate(
-                $studentId, $schoolclassid, $termid, $sessionid, $scores, $overallAverage
-            );
+            return $this->awaitingResult($overallAverage);
         }
 
         // ------------------------------------------------------------------
@@ -218,19 +211,6 @@ class PromotionEvaluator
 
     /**
      * Test whether a single rule (as stored by the UI) passes for a student.
-     *
-     * Stored rule structure:
-     * {
-     *   rule_name, status_label, priority, grade_grouping,
-     *   compulsory_section: {
-     *     subjects: [{subject_id, min_grade, ...}],
-     *     count_conditions: [{grade, operator, count, scope}]
-     *   },
-     *   other_section: {
-     *     count_conditions: [{grade, operator, count, scope}]
-     *   },
-     *   average_condition: {enabled, min_average, logic}
-     * }
      */
     private function ruleMatches(
         array      $rule,
@@ -277,22 +257,6 @@ class PromotionEvaluator
             $otherCountConditions, $scoreMap, $compulsoryIds, $grouping, $isSenior
         )) {
             return false;
-        }
-
-        // ------------------------------------------------------------------
-        // Section 3: Per-rule average condition (optional)
-        // ------------------------------------------------------------------
-        // Note: this is separate from the global settings average_condition.
-        // It is checked here only when rule_logic is 'grade_count' (otherwise
-        // resolveFinalStatus handles the global average).
-        // We only block the rule match itself if the rule has its own average
-        // condition with logic=AND. OR logic means "average alone qualifies",
-        // which is handled at resolution time, not match time.
-        $avgCond = $rule['average_condition'] ?? [];
-        if (!empty($avgCond['enabled']) && ($avgCond['logic'] ?? 'AND') === 'AND') {
-            // We don't have overallAverage here, so we defer this to
-            // resolveFinalStatus. Mark a flag so the resolver knows.
-            // (We cannot filter here — pass through.)
         }
 
         return true;
@@ -475,8 +439,6 @@ class PromotionEvaluator
 
     /**
      * Count how many scores in $scopedScores match $grade under the given grouping.
-     * $grade may be a group letter (A/B/C…) when grouping=grouped,
-     * or an exact code (A1/B2…) when grouping=exact.
      */
     private function countMatchingGrade(
         Collection $scopedScores,
@@ -494,7 +456,6 @@ class PromotionEvaluator
 
             if ($grouping === 'grouped') {
                 // Condition grade is a group letter (A/B/C…)
-                // We need to resolve the student's exact grade to its group first
                 $studentGroup = $this->exactToGroup($studentGrade, $mapping);
                 if ($studentGroup === $grade) $count++;
             } else {
@@ -686,7 +647,7 @@ class PromotionEvaluator
     {
         return [
             'status'                    => self::STATUS_AWAITING,
-            'status_label'              => 'Awaiting Decision',
+            'status_label'              => 'Awaiting Decision - No Rules Configured',
             'is_promotional_term'       => false,
             'failed_compulsory'         => [],
             'compulsory_subject_detail' => [],
@@ -716,153 +677,6 @@ class PromotionEvaluator
             return (self::$gradeOrder[$sg] ?? -1) < (self::$gradeOrder[$mg] ?? 0);
         }
         return in_array($sg, ['F', 'F9'], true);
-    }
-
-    // =========================================================================
-    // LEGACY EVALUATION (no PromotionSetting configured)
-    // Mirrors the old ViewStudentReportController logic faithfully.
-    // =========================================================================
-
-    private function legacyEvaluate(
-        int    $studentId,
-        int    $schoolclassid,
-        int    $termid,
-        int    $sessionid,
-               $scores,
-        ?float $overallAverage
-    ): array {
-        $isSenior = $this->classIsSenior($schoolclassid);
-        $scoreCol = collect($scores);
-        $scoreMap = $this->buildScoreMap($scoreCol);
-
-        $compulsoryRules = CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
-            ->where(function ($q) use ($termid, $sessionid) {
-                $q->where(function ($q2) use ($termid, $sessionid) {
-                    $q2->where('termid', $termid)->where('sessionid', $sessionid);
-                })->orWhere(function ($q2) use ($sessionid) {
-                    $q2->whereNull('termid')->where('sessionid', $sessionid);
-                })->orWhere(function ($q2) {
-                    $q2->whereNull('termid')->whereNull('sessionid');
-                });
-            })
-            ->get(['subjectId', 'min_grade']);
-
-        $creditGrades = $isSenior
-            ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6']
-            : ['A', 'B', 'C'];
-        $failGrades   = $isSenior ? ['F9', 'E8'] : ['F'];
-        $dGrade       = $isSenior ? 'D7' : 'D';
-
-        $compulsorySubjectIds = $compulsoryRules->pluck('subjectId')->toArray();
-        $compulsoryCreditCount = 0;
-        $creditCount  = 0;
-        $failCount    = 0;
-        $missingCompulsorySubjects = [];
-        $failedComp   = [];
-        $detail       = [];
-        $passedComp   = 0;
-
-        foreach ($compulsoryRules as $rule) {
-            $subjectId   = $rule->subjectId;
-            $scoreEntry  = $scoreMap->get($subjectId);
-            $grade       = $scoreEntry
-                ? (is_object($scoreEntry) ? $scoreEntry->grade : $scoreEntry['grade'])
-                : null;
-            $subjectName = $scoreEntry
-                ? (is_object($scoreEntry) ? ($scoreEntry->subject_name ?? null) : null)
-                : null;
-
-            if (!$scoreEntry) {
-                $missingCompulsorySubjects[] = $subjectName ?? "Subject #{$subjectId}";
-            } elseif (in_array($grade, $creditGrades)) {
-                $compulsoryCreditCount++;
-            }
-
-            $didPass = $scoreEntry && in_array($grade, $creditGrades);
-            if (!$didPass) {
-                $failedComp[] = [
-                    'subject_id' => $subjectId, 'subject' => $subjectName,
-                    'grade' => $grade, 'min_grade' => 'C6', 'not_sat' => !$scoreEntry,
-                ];
-            } else {
-                $passedComp++;
-            }
-            $detail[] = [
-                'subject_id' => $subjectId, 'subject' => $subjectName,
-                'grade' => $grade, 'min_grade' => 'C6',
-                'passed' => $didPass, 'not_sat' => !$scoreEntry,
-            ];
-        }
-
-        foreach ($scoreCol as $score) {
-            $grade = is_object($score) ? $score->grade : $score['grade'];
-            if (in_array($grade, $creditGrades)) $creditCount++;
-            elseif (in_array($grade, $failGrades)) $failCount++;
-        }
-
-        $allDs       = $scoreCol->isNotEmpty() && $scoreCol->every(fn($s) => (is_object($s) ? $s->grade : $s['grade']) === $dGrade);
-        $mixOfDsAndFs = $scoreCol->isNotEmpty() && $scoreCol->every(function ($s) use ($dGrade, $failGrades) {
-            $g = is_object($s) ? $s->grade : $s['grade'];
-            return $g === $dGrade || in_array($g, $failGrades);
-        });
-        $failedNonCompulsory = $scoreCol->filter(function ($s) use ($compulsorySubjectIds, $failGrades) {
-            $sid = is_object($s) ? $s->subject_id : $s['subject_id'];
-            $g   = is_object($s) ? $s->grade : $s['grade'];
-            return !in_array($sid, $compulsorySubjectIds) && in_array($g, $failGrades);
-        })->count() === max(0, $scoreCol->count() - count($compulsorySubjectIds));
-
-        $compTotal = $compulsoryRules->count();
-
-        if (!empty($missingCompulsorySubjects)) {
-            $status = self::STATUS_SEE_PRINCIPAL;
-        } elseif ($compTotal > 0 && $compulsoryCreditCount === $compTotal && $creditCount >= 5) {
-            $status = self::STATUS_PROMOTED;
-        } elseif ($creditCount >= 4 && $compulsoryCreditCount > 0) {
-            $status = self::STATUS_TRIAL;
-        } elseif ($creditCount >= 4 && $compulsoryCreditCount === 0) {
-            $status = self::STATUS_SEE_PRINCIPAL;
-        } elseif ($failCount === $scoreCol->count() && $scoreCol->isNotEmpty()) {
-            $status = self::STATUS_REPEATED;
-        } elseif ($allDs || $mixOfDsAndFs) {
-            $status = self::STATUS_REPEATED;
-        } elseif ($compulsoryCreditCount === $compTotal && $failedNonCompulsory && $scoreCol->count() > count($compulsorySubjectIds)) {
-            $status = self::STATUS_SEE_PRINCIPAL;
-        } elseif ($creditCount < 4 && $compulsoryCreditCount < $compTotal) {
-            $status = self::STATUS_REPEATED;
-        } else {
-            $status = self::STATUS_SEE_PRINCIPAL;
-        }
-
-        $labelMap = [
-            self::STATUS_PROMOTED      => 'Promoted',
-            self::STATUS_TRIAL         => 'Promoted on Trial',
-            self::STATUS_SEE_PRINCIPAL => 'Parents to See Principal',
-            self::STATUS_REPEATED      => 'Advice to Repeat',
-        ];
-
-        $passAverage = DB::table('schoolclass_classcategory')
-            ->where('schoolclass_id', $schoolclassid)
-            ->value('promotion_pass_average');
-        $reqAvg  = $passAverage !== null ? (float) $passAverage : null;
-        $avgFail = $reqAvg !== null && $overallAverage !== null && $overallAverage < $reqAvg;
-
-        return [
-            'status'                    => $status,
-            'status_label'              => $labelMap[$status] ?? 'Awaiting Decision',
-            'is_promotional_term'       => true,
-            'failed_compulsory'         => $failedComp,
-            'compulsory_subject_detail' => $detail,
-            'average_failed'            => $avgFail,
-            'required_average'          => $reqAvg,
-            'actual_average'            => $overallAverage,
-            'compulsory_count'          => $compTotal,
-            'passed_compulsory'         => $passedComp,
-            'matched_labels'            => [],
-            'applied_rule'              => null,
-            'settings_id'               => null,
-            'rule_logic'                => 'legacy',
-            'settings'                  => null,
-        ];
     }
 
     // =========================================================================
