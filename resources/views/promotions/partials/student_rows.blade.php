@@ -1,8 +1,10 @@
+{{-- resources/views/promotions/partials/student_rows.blade.php --}}
+
 @forelse ($allstudents as $student)
     @php
         $rec           = $student->promotion_recommendation ?? null;
         $recStatus     = $rec['status'] ?? 'awaiting';
-        $recLabel      = $rec['status_label'] ?? 'Awaiting Decision';
+        $recLabel      = $rec['status_label'] ?? 'Awaiting';
         $appliedRule   = $rec['applied_rule'] ?? null;
         $appliedRuleName = $appliedRule['name'] ?? null;
         $savedStatus   = strtolower($student->promotion_status ?? '');
@@ -61,15 +63,8 @@
         <td data-rec-status="{{ $recStatus }}">
             @if($recStatus === 'awaiting')
                 <span class="promotion-badge-pending">
-                    <i class="ri-time-line"></i> {{ $recLabel }}
+                    <i class="ri-time-line"></i> Not Evaluated
                 </span>
-                @if(str_contains($recLabel, 'No Rules Configured'))
-                    <div class="mt-1">
-                        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;display:inline-block;white-space:nowrap;">
-                            <i class="ri-settings-4-line"></i> No rules configured
-                        </span>
-                    </div>
-                @endif
             @elseif($recStatus === 'promoted')
                 <span class="promotion-badge-promoted">
                     <i class="ri-arrow-up-circle-line"></i> {{ $recLabel }}
@@ -135,7 +130,7 @@
                         title="Manage Promotion"
                         onclick="openPromotionModal(
                             '{{ $student->stid }}',
-                            '{{ addslashes($student->admissionno) }}',
+                            '{{ $student->admissionno }}',
                             '{{ addslashes($student->firstname) }}',
                             '{{ addslashes($student->lastname) }}',
                             '{{ addslashes($student->othername ?? '') }}',
