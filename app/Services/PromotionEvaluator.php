@@ -1,4 +1,5 @@
 <?php
+// app/Services/PromotionEvaluator.php
 
 namespace App\Services;
 
@@ -56,6 +57,9 @@ class PromotionEvaluator
     ): array {
         // ------------------------------------------------------------------
         // 1. Find the best-matching active PromotionSetting for this class.
+        //    Priority order: (session+term) > (session only) > (global).
+        //    We fetch ALL active settings for the class and pick the most
+        //    specific one.
         // ------------------------------------------------------------------
         $settings = $this->findBestSettings($schoolclassid, $sessionid, $termid);
 
@@ -91,7 +95,7 @@ class PromotionEvaluator
             foreach ($rules as $idx => $rule) {
                 if (empty($rule['rule_name'])) continue;
 
-                if ($this->ruleMatches($rule, $scoreMap, $compulsoryIds, $isSenior, $overallAverage)) {
+                if ($this->ruleMatches($rule, $scoreMap, $compulsoryIds, $isSenior)) {
                     $matchedRule   = $rule;
                     $matchedStatus = $rule['status_label'] ?? self::STATUS_PROMOTED;
                     $matchedIndex  = $idx;
@@ -101,7 +105,7 @@ class PromotionEvaluator
         }
 
         // ------------------------------------------------------------------
-        // 4. Evaluate global average condition
+        // 4. Evaluate global average condition (used by average_only / both)
         // ------------------------------------------------------------------
         $requiredAverage = $this->resolveRequiredAverage($settings, $schoolclassid);
         [$averageConditionMet, $averageStatus] = $this->evaluateAverage(
@@ -120,7 +124,7 @@ class PromotionEvaluator
         }
 
         // ------------------------------------------------------------------
-        // 6. Build compulsory subject detail
+        // 6. Build compulsory subject detail for modal display
         // ------------------------------------------------------------------
         [$failedCompulsory, $compulsoryDetail, $passedCount, $totalCount]
             = $this->buildCompulsoryDetail($schoolclassid, $termid, $sessionid, $scoreMap);
@@ -163,15 +167,23 @@ class PromotionEvaluator
     // SETTINGS LOOKUP
     // =========================================================================
 
+    /**
+     * Find the most specific active PromotionSetting for the given class/session/term.
+     * Specificity: (session + term) beats (session only) beats (global/no scope).
+     * Within the same specificity tier, the lowest priority number wins.
+     */
     private function findBestSettings(int $schoolclassid, int $sessionid, int $termid): ?PromotionSetting
     {
         $candidates = PromotionSetting::where('schoolclass_id', $schoolclassid)
             ->where('is_active', true)
             ->where(function ($q) use ($sessionid, $termid) {
+                // Exact match
                 $q->where(function ($q2) use ($sessionid, $termid) {
                     $q2->where('session_id', $sessionid)->where('term_id', $termid);
+                // Session match, no term restriction
                 })->orWhere(function ($q2) use ($sessionid) {
                     $q2->where('session_id', $sessionid)->whereNull('term_id');
+                // Global (no session, no term)
                 })->orWhere(function ($q2) {
                     $q2->whereNull('session_id')->whereNull('term_id');
                 });
@@ -182,6 +194,7 @@ class PromotionEvaluator
 
         if ($candidates->isEmpty()) return null;
 
+        // Score specificity: exact=3, session-only=2, global=1
         $best = null;
         $bestScore = 0;
 
@@ -200,15 +213,30 @@ class PromotionEvaluator
     }
 
     // =========================================================================
-    // RULE MATCHING - FIXED VERSION
+    // RULE MATCHING
     // =========================================================================
 
+    /**
+     * Test whether a single rule (as stored by the UI) passes for a student.
+     *
+     * Stored rule structure:
+     * {
+     *   rule_name, status_label, priority, grade_grouping,
+     *   compulsory_section: {
+     *     subjects: [{subject_id, min_grade, ...}],
+     *     count_conditions: [{grade, operator, count, scope}]
+     *   },
+     *   other_section: {
+     *     count_conditions: [{grade, operator, count, scope}]
+     *   },
+     *   average_condition: {enabled, min_average, logic}
+     * }
+     */
     private function ruleMatches(
         array      $rule,
         Collection $scoreMap,
         array      $compulsoryIds,
-        bool       $isSenior,
-        ?float     $overallAverage = null
+        bool       $isSenior
     ): bool {
         $grouping = $rule['grade_grouping'] ?? 'grouped';
 
@@ -218,9 +246,7 @@ class PromotionEvaluator
         $compSubjects = $rule['compulsory_section']['subjects'] ?? [];
         foreach ($compSubjects as $subjectRule) {
             $minGrade = $subjectRule['min_grade'] ?? null;
-
-            // Skip if no minimum grade set for this subject
-            if (empty($minGrade)) continue;
+            if (!$minGrade) continue; // no minimum set → skip
 
             $subjectId   = $subjectRule['subject_id'] ?? null;
             $scoreEntry  = $subjectId ? $scoreMap->get($subjectId) : null;
@@ -229,12 +255,12 @@ class PromotionEvaluator
                 : null;
 
             if ($this->gradeFails($studentGrade, $minGrade)) {
-                return false;
+                return false; // compulsory minimum not met
             }
         }
 
         // ------------------------------------------------------------------
-        // Section 2: Count conditions on compulsory subjects
+        // Section 1 continued: Count conditions on compulsory subjects
         // ------------------------------------------------------------------
         $compCountConditions = $rule['compulsory_section']['count_conditions'] ?? [];
         if (!$this->evaluateCountConditions(
@@ -244,7 +270,7 @@ class PromotionEvaluator
         }
 
         // ------------------------------------------------------------------
-        // Section 3: Count conditions on other/all subjects
+        // Section 2: Count conditions on other/all subjects
         // ------------------------------------------------------------------
         $otherCountConditions = $rule['other_section']['count_conditions'] ?? [];
         if (!$this->evaluateCountConditions(
@@ -254,24 +280,29 @@ class PromotionEvaluator
         }
 
         // ------------------------------------------------------------------
-        // Section 4: Per-rule average condition
+        // Section 3: Per-rule average condition (optional)
         // ------------------------------------------------------------------
+        // Note: this is separate from the global settings average_condition.
+        // It is checked here only when rule_logic is 'grade_count' (otherwise
+        // resolveFinalStatus handles the global average).
+        // We only block the rule match itself if the rule has its own average
+        // condition with logic=AND. OR logic means "average alone qualifies",
+        // which is handled at resolution time, not match time.
         $avgCond = $rule['average_condition'] ?? [];
-        if (!empty($avgCond['enabled']) && $overallAverage !== null) {
-            $minAvg = $avgCond['min_average'] ?? 0;
-            $logic = strtoupper($avgCond['logic'] ?? 'AND');
-
-            if ($logic === 'AND') {
-                if ($overallAverage < $minAvg) {
-                    return false;
-                }
-            }
-            // For OR logic, average alone qualifies, but we don't filter here
+        if (!empty($avgCond['enabled']) && ($avgCond['logic'] ?? 'AND') === 'AND') {
+            // We don't have overallAverage here, so we defer this to
+            // resolveFinalStatus. Mark a flag so the resolver knows.
+            // (We cannot filter here — pass through.)
         }
 
         return true;
     }
 
+    /**
+     * Evaluate a list of count conditions against the student's scores.
+     * Each condition: { grade, operator, count, scope }
+     * scope: 'all' | 'compulsory_only' | 'other_only'
+     */
     private function evaluateCountConditions(
         array      $conditions,
         Collection $scoreMap,
@@ -289,7 +320,10 @@ class PromotionEvaluator
 
             if (!$grade) continue;
 
+            // Filter scores to scope
             $scopedScores = $this->filterByScope($scoreMap, $scope, $compulsoryIds);
+
+            // Count how many subjects match the grade criterion
             $actual = $this->countMatchingGrade($scopedScores, $grade, $grouping, $isSenior);
 
             if (!$this->compareCount($actual, $operator, $required)) {
@@ -315,6 +349,9 @@ class PromotionEvaluator
         return $val !== null ? (float) $val : null;
     }
 
+    /**
+     * Returns [conditionMet (bool), status (string|null)]
+     */
     private function evaluateAverage(
         string $ruleLogic,
         ?float $requiredAverage,
@@ -324,7 +361,7 @@ class PromotionEvaluator
             return [true, null];
         }
         if ($requiredAverage === null || $overallAverage === null) {
-            return [true, null];
+            return [true, null]; // cannot evaluate → don't penalise
         }
         $met = $overallAverage >= $requiredAverage;
         return [$met, $met ? self::STATUS_PROMOTED : self::STATUS_REPEATED];
@@ -347,8 +384,9 @@ class PromotionEvaluator
 
             case 'grade_count':
                 if ($matchedStatus === null) {
-                    return self::STATUS_REPEATED;
+                    return self::STATUS_REPEATED; // no rule matched → repeat
                 }
+                // Check if the matched rule also has its own average condition
                 return $this->applyRuleAverageCondition($matchedStatus, $matchedRule, $averageConditionMet);
 
             case 'both':
@@ -359,6 +397,10 @@ class PromotionEvaluator
         }
     }
 
+    /**
+     * If the individual rule has an average condition enabled, apply it.
+     * For grade_count logic this is the only place averages are considered.
+     */
     private function applyRuleAverageCondition(
         string  $matchedStatus,
         ?array  $rule,
@@ -372,13 +414,21 @@ class PromotionEvaluator
         $logic = strtoupper($avgCond['logic'] ?? 'AND');
 
         if ($logic === 'OR') {
+            // Average alone can qualify — if grade rule matched, status stands
             return $matchedStatus;
         }
 
+        // AND: average must also be met
         if ($avgMet) return $matchedStatus;
+
+        // Downgrade: grade conditions passed but average failed
         return self::STATUS_TRIAL;
     }
 
+    /**
+     * For rule_logic = 'both': grade count rules AND global average are
+     * evaluated together.
+     */
     private function resolveBothLogic(
         ?string $gradeStatus,
         ?array  $matchedRule,
@@ -387,10 +437,13 @@ class PromotionEvaluator
         $avgLogic = strtoupper($matchedRule['average_condition']['logic'] ?? 'AND');
 
         if ($avgLogic === 'OR') {
+            // Either grade rule matched OR average passed → use grade status
+            // (or promote if only average passed)
             if ($gradeStatus !== null) return $gradeStatus;
             return $avgOk ? self::STATUS_PROMOTED : self::STATUS_REPEATED;
         }
 
+        // AND: both must pass
         if ($gradeStatus !== null && $avgOk)  return $gradeStatus;
         if ($gradeStatus !== null && !$avgOk) return self::STATUS_TRIAL;
         if ($gradeStatus === null  && $avgOk) return self::STATUS_SEE_PRINCIPAL;
@@ -415,11 +468,16 @@ class PromotionEvaluator
             return match ($scope) {
                 'compulsory_only' => $isComp,
                 'other_only'      => !$isComp,
-                default           => true,
+                default           => true,   // 'all'
             };
         });
     }
 
+    /**
+     * Count how many scores in $scopedScores match $grade under the given grouping.
+     * $grade may be a group letter (A/B/C…) when grouping=grouped,
+     * or an exact code (A1/B2…) when grouping=exact.
+     */
     private function countMatchingGrade(
         Collection $scopedScores,
         string     $grade,
@@ -435,9 +493,12 @@ class PromotionEvaluator
             $studentGrade = strtoupper(trim($studentGrade));
 
             if ($grouping === 'grouped') {
+                // Condition grade is a group letter (A/B/C…)
+                // We need to resolve the student's exact grade to its group first
                 $studentGroup = $this->exactToGroup($studentGrade, $mapping);
                 if ($studentGroup === $grade) $count++;
             } else {
+                // Condition grade is an exact code (A1/B2…)
                 if ($studentGrade === $grade) $count++;
             }
         }
@@ -466,32 +527,7 @@ class PromotionEvaluator
     }
 
     // =========================================================================
-    // GRADE UTILITIES - FIXED VERSION
-    // =========================================================================
-
-    private function gradeFails(?string $studentGrade, ?string $minGrade): bool
-    {
-        if ($studentGrade === null) return true;
-
-        $sg = strtoupper(trim($studentGrade));
-
-        // If no minimum grade is specified, only F/F9 is failing
-        if (empty($minGrade)) {
-            return in_array($sg, ['F', 'F9'], true);
-        }
-
-        $mg = strtoupper(trim($minGrade));
-
-        // Get order values (higher is better)
-        $sgOrder = self::$gradeOrder[$sg] ?? -1;
-        $mgOrder = self::$gradeOrder[$mg] ?? 0;
-
-        // Student fails if their grade order is less than required minimum
-        return $sgOrder < $mgOrder;
-    }
-
-    // =========================================================================
-    // COMPULSORY SUBJECT DETAIL
+    // COMPULSORY SUBJECT DETAIL (for modal display)
     // =========================================================================
 
     private function buildCompulsoryDetail(
@@ -517,12 +553,6 @@ class PromotionEvaluator
         $passed = 0;
         $total  = $compulsoryRules->count();
 
-        // Determine credit grades based on senior/junior
-        $isSenior = $this->classIsSenior($schoolclassid);
-        $creditGrades = $isSenior
-            ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6']
-            : ['A', 'B', 'C'];
-
         foreach ($compulsoryRules as $rule) {
             $subjectId    = $rule->subjectId;
             $scoreEntry   = $scoreMap->get($subjectId);
@@ -532,10 +562,8 @@ class PromotionEvaluator
             $subjectName  = is_object($scoreEntry)
                 ? ($scoreEntry->subject_name ?? null)
                 : null;
-            $minGrade     = $rule->min_grade ?? 'C';
-
-            // Check if passed using grade order
-            $didPass = $scoreEntry && !$this->gradeFails($studentGrade, $minGrade);
+            $minGrade     = $rule->min_grade;
+            $didPass      = $scoreEntry && !$this->gradeFails($studentGrade, $minGrade);
 
             if (!$didPass) {
                 $failed[] = [
@@ -562,6 +590,10 @@ class PromotionEvaluator
         return [$failed, $detail, $passed, $total];
     }
 
+    // =========================================================================
+    // COMPULSORY ID LOOKUP
+    // =========================================================================
+
     private function getCompulsoryIds(int $schoolclassid, int $termid, int $sessionid): array
     {
         return CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
@@ -579,6 +611,10 @@ class PromotionEvaluator
             ->toArray();
     }
 
+    // =========================================================================
+    // CLASS CATEGORY
+    // =========================================================================
+
     private function classIsSenior(int $schoolclassid): bool
     {
         $row = DB::table('schoolclass_classcategory')
@@ -586,11 +622,11 @@ class PromotionEvaluator
             ->where('schoolclass_classcategory.schoolclass_id', $schoolclassid)
             ->select('classcategories.is_senior')
             ->first();
-        return $row ? (bool) $row->is_senior : false;
+        return $row ? (bool) $row->is_senior : true;
     }
 
     // =========================================================================
-    // LABEL HELPERS
+    // LABEL / DESCRIPTION HELPERS
     // =========================================================================
 
     private function mapStatusLabel(string $status, PromotionSetting $settings): string
@@ -608,12 +644,14 @@ class PromotionEvaluator
     {
         $parts = [];
 
+        // Per-subject minimums
         $subjects = $rule['compulsory_section']['subjects'] ?? [];
         $withMin  = array_filter($subjects, fn($s) => !empty($s['min_grade']));
         if ($withMin) {
             $parts[] = count($withMin) . ' compulsory subject min-grade requirement(s)';
         }
 
+        // Compulsory count conditions
         foreach ($rule['compulsory_section']['count_conditions'] ?? [] as $c) {
             $scope = match ($c['scope'] ?? 'all') {
                 'compulsory_only' => 'compulsory subj',
@@ -623,6 +661,7 @@ class PromotionEvaluator
             $parts[] = "{$c['operator']} {$c['count']} {$c['grade']} in {$scope}";
         }
 
+        // Other count conditions
         foreach ($rule['other_section']['count_conditions'] ?? [] as $c) {
             $scope = match ($c['scope'] ?? 'all') {
                 'compulsory_only' => 'compulsory subj',
@@ -632,6 +671,7 @@ class PromotionEvaluator
             $parts[] = "{$c['operator']} {$c['count']} {$c['grade']} in {$scope}";
         }
 
+        // Average condition
         $avgCond = $rule['average_condition'] ?? [];
         if (!empty($avgCond['enabled'])) {
             $logic   = $avgCond['logic'] ?? 'AND';
@@ -664,7 +704,23 @@ class PromotionEvaluator
     }
 
     // =========================================================================
-    // LEGACY EVALUATION
+    // GRADE UTILITIES
+    // =========================================================================
+
+    private function gradeFails(?string $studentGrade, ?string $minGrade): bool
+    {
+        if ($studentGrade === null) return true;
+        $sg = strtoupper(trim($studentGrade));
+        if ($minGrade) {
+            $mg = strtoupper(trim($minGrade));
+            return (self::$gradeOrder[$sg] ?? -1) < (self::$gradeOrder[$mg] ?? 0);
+        }
+        return in_array($sg, ['F', 'F9'], true);
+    }
+
+    // =========================================================================
+    // LEGACY EVALUATION (no PromotionSetting configured)
+    // Mirrors the old ViewStudentReportController logic faithfully.
     // =========================================================================
 
     private function legacyEvaluate(
@@ -810,7 +866,7 @@ class PromotionEvaluator
     }
 
     // =========================================================================
-    // PUBLIC HELPERS
+    // PUBLIC HELPERS (used by views/controllers)
     // =========================================================================
 
     public function getStatusBadgeClass(string $status): string
