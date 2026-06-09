@@ -223,6 +223,53 @@ input[name="repeat"]:checked ~ label .repeat-card { border-color: #dc3545 !impor
     padding: 2px 8px; border-radius: 12px;
     font-size: 9px; font-weight: 600; display: inline-block;
 }
+
+/* ── All-Subjects table ──────────────────────────────────────────────────── */
+.subjects-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.subjects-table thead th {
+    background: var(--pay-primary); color: #fff;
+    padding: 10px 14px; font-weight: 600; white-space: nowrap;
+    position: sticky; top: 0; z-index: 1;
+}
+.subjects-table tbody td {
+    padding: 10px 14px; vertical-align: middle;
+    border-bottom: 1px solid var(--pay-border);
+}
+.subjects-table tbody tr:hover td { background: #f0f9ff; }
+.subjects-table tr.row-pass    td:first-child { border-left: 4px solid #10b981; }
+.subjects-table tr.row-fail    td:first-child { border-left: 4px solid #ef4444; }
+.subjects-table tr.row-notsat  td:first-child { border-left: 4px solid #f59e0b; }
+.subjects-table tr.row-optional td:first-child { border-left: 4px solid #94a3b8; }
+.subjects-table tr.row-section td {
+    background: #f1f5f9; padding: 6px 14px;
+    font-size: 11px; font-weight: 700; color: #475569;
+    letter-spacing: .05em; text-transform: uppercase;
+    border-bottom: 1px solid var(--pay-border);
+}
+
+.score-bar-wrap {
+    background: #e2e8f0; border-radius: 4px;
+    height: 6px; width: 60px;
+    display: inline-block; vertical-align: middle; margin-left: 6px;
+}
+.score-bar-fill { height: 100%; border-radius: 4px; }
+
+.subject-summary-strip {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    background: #f8fafc; border: 1px solid var(--pay-border);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
+}
+.summary-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+}
+.pill-pass     { background: #dcfce7; color: #15803d; }
+.pill-fail     { background: #fee2e2; color: #b91c1c; }
+.pill-notsat   { background: #fef9c3; color: #92400e; }
+.pill-optional { background: #e0f2fe; color: #0369a1; }
+.pill-total    { background: #ede9fe; color: #6d28d9; }
+.pill-credit   { background: #fce7f3; color: #9d174d; }
 </style>
 
 <div class="main-content">
@@ -794,26 +841,18 @@ function filterData() {
 
 function updateStats() {
     const rows = document.querySelectorAll('#studentTableBody tr');
-    let total = 0,
-        promoted = 0,
-        trial = 0,
-        repeat = 0;
+    let total = 0, promoted = 0, trial = 0, repeat = 0;
 
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
         if (cells.length < 8) return;
         total++;
-
         const recCell = cells[7];
         if (recCell) {
             const recStatus = recCell.getAttribute('data-rec-status') || '';
-            if (recStatus === 'promoted') {
-                promoted++;
-            } else if (recStatus === 'trial') {
-                trial++;
-            } else if (recStatus === 'repeated' || recStatus === 'repeat') {
-                repeat++;
-            }
+            if (recStatus === 'promoted') promoted++;
+            else if (recStatus === 'trial') trial++;
+            else if (recStatus === 'repeated' || recStatus === 'repeat') repeat++;
         }
     });
 
@@ -862,9 +901,7 @@ function setupCheckboxHandlers() {
     const selectAll = document.getElementById('selectAll');
     if (selectAll) {
         selectAll.addEventListener('change', function() {
-            document.querySelectorAll('.row-checkbox').forEach(cb => {
-                cb.checked = this.checked;
-            });
+            document.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = this.checked; });
             updateBulkBar();
         });
     }
@@ -897,14 +934,14 @@ document.getElementById('bulkPromoteActionBtn')?.addEventListener('click', () =>
     new bootstrap.Modal(document.getElementById('bulkPromotionModal')).show();
 });
 
-document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', async() => {
+document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', async () => {
     const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
     if (!selectedIds.length) return;
 
     const promotionType = document.getElementById('bulkPromotionType').value;
-    const newClass = document.getElementById('bulkNewClass').value;
-    const newSession = document.getElementById('bulkNewSession').value;
-    const newTerm = document.getElementById('bulkNewTerm').value;
+    const newClass      = document.getElementById('bulkNewClass').value;
+    const newSession    = document.getElementById('bulkNewSession').value;
+    const newTerm       = document.getElementById('bulkNewTerm').value;
 
     if (!newClass || !newSession) {
         Swal.fire('Error', 'Please select new class and session', 'error');
@@ -924,7 +961,8 @@ document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', asyn
         });
 
         if (response.data.success) {
-            Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message, timer: 2000, showConfirmButton: false }).then(() => location.reload());
+            Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message, timer: 2000, showConfirmButton: false })
+                .then(() => location.reload());
         } else {
             Swal.fire('Error', response.data.message, 'error');
         }
@@ -945,27 +983,44 @@ function gradePassFail(studentGrade, minGrade) {
 
 function escapeHtml(str) {
     if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Grade colour helper ────────────────────────────────────────────────────────
+function gradeColor(grade) {
+    if (!grade || grade === '—') return '#94a3b8';
+    const g = grade.toUpperCase();
+    if (['A1', 'A'].includes(g))           return '#15803d';
+    if (['B2', 'B3', 'B'].includes(g))     return '#0369a1';
+    if (['C4', 'C5', 'C6', 'C'].includes(g)) return '#1d4ed8';
+    if (['D7', 'D'].includes(g))           return '#d97706';
+    return '#b91c1c'; // E8, F9, F
 }
 
 // ── Open promotion modal ───────────────────────────────────────────────────────
 async function openPromotionModal(studentId, admissionNo, firstName, lastName, otherName, picture, gender, schoolclass, schoolarm, session, termid) {
-    currentStudentId = studentId;
-    currentSchoolclassId = document.getElementById("idclass").value;
-    currentSessionId = document.getElementById("idsession").value;
-    currentTermId = termid || document.getElementById("idterm").value;
+    currentStudentId      = studentId;
+    currentSchoolclassId  = document.getElementById("idclass").value;
+    currentSessionId      = document.getElementById("idsession").value;
+    currentTermId         = termid || document.getElementById("idterm").value;
 
-    document.getElementById('modalStudentName').innerHTML = `<i class="ri-id-card-line me-2"></i>${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
-    document.getElementById('modalStudentGender').innerHTML = `<i class="ri-gender-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i>${gender || 'N/A'}`;
-    document.getElementById('modalCurrentClass').innerText = schoolclass;
-    document.getElementById('modalCurrentArm').innerText = schoolarm || 'N/A';
+    document.getElementById('modalStudentName').innerHTML =
+        `<i class="ri-id-card-line me-2"></i>${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
+    document.getElementById('modalStudentGender').innerHTML =
+        `<i class="ri-gender-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i>${gender || 'N/A'}`;
+    document.getElementById('modalCurrentClass').innerText   = schoolclass;
+    document.getElementById('modalCurrentArm').innerText     = schoolarm || 'N/A';
     document.getElementById('modalCurrentSession').innerText = session;
 
     const imgEl = document.getElementById('modalStudentImage');
     if (picture && picture !== 'null' && picture !== '') {
         imgEl.src = picture.startsWith('/storage/') ? picture : '/storage/' + picture;
     } else {
-        imgEl.src = gender === 'Male' ? '/storage/student_avatars/male-default.png' : '/storage/student_avatars/female-default.png';
+        imgEl.src = gender === 'Male'
+            ? '/storage/student_avatars/male-default.png'
+            : '/storage/student_avatars/female-default.png';
     }
     imgEl.onerror = function() { this.src = '/storage/student_avatars/unnamed.jpg'; };
 
@@ -977,63 +1032,64 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     ['promotionCheckbox', 'trialCheckbox', 'seePrincipalCheckbox', 'repeatCheckbox'].forEach(id => {
         document.getElementById(id).checked = false;
     });
-    document.getElementById('recommendationCard').style.display = 'none';
-    document.getElementById('compulsoryCard').style.display = 'none';
-    document.getElementById('allSubjectsCard').style.display = 'none';
+    document.getElementById('recommendationCard').style.display  = 'none';
+    document.getElementById('compulsoryCard').style.display      = 'none';
+    document.getElementById('allSubjectsCard').style.display     = 'none';
+    document.getElementById('allSubjectsContent').innerHTML      = '';
+    document.getElementById('compulsoryContent').innerHTML       = '';
+    document.getElementById('recommendationContent').innerHTML   = '';
 
     Swal.fire({ title: 'Loading student data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const response = await axios.get(`/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`);
+        const response = await axios.get(
+            `/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`
+        );
         Swal.close();
 
         if (response.data.success) {
             currentStudentData = response.data;
-            const result = response.data.promotion_result;
-            const avg = response.data.overall_average;
-            const allSubjects = response.data.all_subjects || [];
+            const result        = response.data.promotion_result;
+            const avg           = response.data.overall_average;
+            const allSubjects   = response.data.all_subjects   || [];
             const compulsoryData = response.data.compulsory_subjects || [];
-            const stats = response.data.statistics || {};
+            const stats         = response.data.statistics     || {};
 
-            // Overall average display
-            const avgEl = document.getElementById('modalOverallAverage');
+            // Overall average
+            const avgEl    = document.getElementById('modalOverallAverage');
             const avgValue = avg !== null ? `${avg}%` : 'N/A';
-            const avgColor = avg !== null ? (avg >= 50 ? 'text-success' : (avg >= 40 ? 'text-warning' : 'text-danger')) : 'text-muted';
-            avgEl.innerHTML = `<span class="${avgColor} fs-5">${avgValue}</span>`;
+            const avgClass = avg !== null
+                ? (avg >= 50 ? 'text-success' : avg >= 40 ? 'text-warning' : 'text-danger')
+                : 'text-muted';
+            avgEl.innerHTML = `<span class="${avgClass} fs-5">${avgValue}</span>`;
 
             // ── Recommendation card ──────────────────────────────────────────
-            const recCard = document.getElementById('recommendationCard');
-            const recContent = document.getElementById('recommendationContent');
-
             if (result && result.status !== 'awaiting') {
+                const recCard    = document.getElementById('recommendationCard');
+                const recContent = document.getElementById('recommendationContent');
                 recCard.style.display = 'block';
-                const statusClass = result.status;
-                const statusLabel = result.status_label || result.status;
 
-                let html = `<div class="recommendation-card ${statusClass}">
-                    <div class="d-flex justify-content-between align-items-start">
+                const statusColors = {
+                    promoted:      { bg: '#10b981', icon: 'ri-checkbox-circle-line' },
+                    trial:         { bg: '#f59e0b', icon: 'ri-time-line'            },
+                    see_principal: { bg: '#3b82f6', icon: 'ri-eye-line'             },
+                    repeated:      { bg: '#ef4444', icon: 'ri-repeat-line'          },
+                };
+                const sc = statusColors[result.status] || { bg: '#6b7280', icon: 'ri-question-line' };
+
+                let html = `<div class="recommendation-card ${result.status}">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                         <div>
                             <div class="label text-muted mb-2">System Recommendation</div>
-                            <div class="value">
-                                <span class="status-badge-lg ${
-                                    result.status === 'promoted' ? 'bg-success' :
-                                    result.status === 'trial' ? 'bg-warning' :
-                                    result.status === 'see_principal' ? 'bg-info' : 'bg-danger'
-                                } text-white">
-                                    <i class="${
-                                        result.status === 'promoted' ? 'ri-checkbox-circle-line' :
-                                        result.status === 'trial' ? 'ri-time-line' :
-                                        result.status === 'see_principal' ? 'ri-eye-line' : 'ri-repeat-line'
-                                    } me-2"></i>
-                                    ${statusLabel}
-                                </span>
-                            </div>
+                            <span class="status-badge-lg text-white" style="background:${sc.bg};">
+                                <i class="${sc.icon} me-1"></i>${result.status_label || result.status}
+                            </span>
                         </div>`;
 
                 if (result.required_average !== null) {
                     const metAvg = result.actual_average >= result.required_average;
                     html += `<div class="text-end">
-                        <div class="rule-badge"><i class="ri-percent-line"></i> Required: ${result.required_average}%</div>
+                        <div class="rule-badge"><i class="ri-percent-line me-1"></i>Required: ${result.required_average}%</div>
                         <div class="small mt-1 ${metAvg ? 'text-success' : 'text-danger'}">
                             ${metAvg ? '✓' : '✗'} Actual: ${result.actual_average ?? avg ?? 'N/A'}%
                         </div>
@@ -1042,15 +1098,13 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 html += `</div>`;
 
                 if (result.applied_rule) {
-                    html += `<div class="mt-3 pt-3 border-top">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                            <div>
-                                <i class="ri-price-tag-3-line text-primary me-1"></i>
-                                <strong>Applied Rule:</strong>
-                                <span class="badge bg-primary ms-2">${escapeHtml(result.applied_rule.name)}</span>
-                            </div>
-                        </div>
-                        ${result.applied_rule.description ? `<div class="small text-muted mt-2">${escapeHtml(result.applied_rule.description)}</div>` : ''}
+                    html += `<div class="mt-3 pt-3 border-top d-flex align-items-center flex-wrap gap-2">
+                        <i class="ri-price-tag-3-line text-primary"></i>
+                        <strong>Applied Rule:</strong>
+                        <span class="badge bg-primary">${escapeHtml(result.applied_rule.name)}</span>
+                        ${result.applied_rule.description
+                            ? `<span class="small text-muted ms-2">${escapeHtml(result.applied_rule.description)}</span>`
+                            : ''}
                     </div>`;
                 }
 
@@ -1058,13 +1112,14 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                     const allPassed = result.passed_compulsory === result.compulsory_count;
                     html += `<div class="mt-3 pt-3 border-top">
                         <div class="d-flex justify-content-between">
-                            <span><i class="ri-book-open-line me-1"></i>Compulsory Subjects:</span>
-                            <span class="${allPassed ? 'text-success fw-bold' : 'text-danger fw-bold'}">
+                            <span><i class="ri-book-open-line me-1"></i>Compulsory subjects:</span>
+                            <span class="${allPassed ? 'text-success' : 'text-danger'} fw-bold">
                                 ${result.passed_compulsory}/${result.compulsory_count} passed
                             </span>
                         </div>`;
-                    if (result.failed_compulsory && result.failed_compulsory.length > 0) {
-                        html += `<div class="mt-2 small text-danger"><i class="ri-close-circle-line me-1"></i>Failed: `;
+                    if (result.failed_compulsory?.length > 0) {
+                        html += `<div class="mt-2 small text-danger">
+                            <i class="ri-close-circle-line me-1"></i>Failed: `;
                         result.failed_compulsory.forEach(f => {
                             html += `<span class="badge bg-danger me-1">${f.subject || `Subject #${f.subject_id}`}</span>`;
                         });
@@ -1072,168 +1127,223 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                     }
                     html += `</div>`;
                 }
-
                 html += `</div>`;
                 recContent.innerHTML = html;
             }
 
-            // ── ALL SUBJECTS TABLE with pass/fail against rule ──────────────────────────
+            // ── ALL SUBJECTS TABLE ─────────────────────────────────────────
             if (allSubjects && allSubjects.length > 0) {
                 document.getElementById('allSubjectsCard').style.display = 'block';
-                let html = `<div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Subject</th>
-                                <th>Code</th>
-                                <th class="text-center">Score</th>
-                                <th class="text-center">Grade</th>
-                                <th class="text-center">Required Min</th>
-                                <th class="text-center">Status vs Rule</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
 
-                allSubjects.forEach(subject => {
-                    const isCompulsory = subject.is_compulsory || false;
-                    const requiredGrade = subject.required_min_grade || (isCompulsory ? 'C' : '—');
-                    const studentGrade = subject.grade || '—';
-                    const total = subject.total !== null && subject.total !== undefined ? subject.total : '—';
+                const compulsoryList = allSubjects.filter(s => s.is_compulsory);
+                const optionalList   = allSubjects.filter(s => !s.is_compulsory);
+                const passCount      = compulsoryList.filter(s => s.pass_status === 'pass').length;
+                const failCount      = compulsoryList.filter(s => s.pass_status === 'fail').length;
+                const notSatCount    = compulsoryList.filter(s => s.pass_status === 'not_sat').length;
 
-                    let statusBadge, statusText, rowClass;
-
-                    if (isCompulsory) {
-                        if (subject.pass_status === 'pass') {
-                            statusBadge = '<i class="ri-checkbox-circle-line"></i> Passed';
-                            statusText = 'Passed';
-                            rowClass = 'subject-pass';
-                        } else if (subject.pass_status === 'fail') {
-                            statusBadge = '<i class="ri-close-circle-line"></i> Failed';
-                            statusText = 'Failed';
-                            rowClass = 'subject-fail';
-                        } else {
-                            statusBadge = '<i class="ri-minus-line"></i> Not Sat';
-                            statusText = 'Not Attempted';
-                            rowClass = 'subject-not-sat';
-                        }
-
-                        const gradeMeetsRequirement = gradePassFail(studentGrade, requiredGrade);
-                        const gradeClass = gradeMeetsRequirement && studentGrade !== '—' ? 'text-success fw-bold' : (studentGrade !== '—' ? 'text-danger' : '');
-
-                        html += `<tr class="${rowClass}">
-                            <td>
-                                <strong>${escapeHtml(subject.subject_name)}</strong>
-                                <span class="badge-compulsory ms-2">Compulsory</span>
-                             </div>
-                            <td>${escapeHtml(subject.subject_code) || '—'}</div>
-                            <td class="text-center"><strong>${total}</strong></div>
-                            <td class="text-center"><strong class="${gradeClass}">${studentGrade}</strong></div>
-                            <td class="text-center"><span class="badge bg-secondary">≥ ${requiredGrade}</span></div>
-                            <td class="text-center">
-                                <span class="badge bg-${subject.pass_status_class || (subject.pass_status === 'pass' ? 'success' : subject.pass_status === 'fail' ? 'danger' : 'warning')}">${statusBadge}</span>
-                                ${!gradeMeetsRequirement && studentGrade !== '—' && subject.pass_status !== 'not_sat' ? `<div class="small text-muted mt-1">Student has ${studentGrade}, needs ${requiredGrade}</div>` : ''}
-                            </div>
-                         </tr>`;
-                    } else {
-                        // Optional subjects
-                        html += `<table>
-                            <td>
-                                <strong>${escapeHtml(subject.subject_name)}</strong>
-                                <span class="badge bg-info ms-2" style="font-size:9px;">Optional</span>
-                             </div>
-                            <td>${escapeHtml(subject.subject_code) || '—'}</div>
-                            <td class="text-center"><strong>${total}</strong></div>
-                            <td class="text-center"><strong>${studentGrade}</strong></div>
-                            <td class="text-center">—</div>
-                            <td class="text-center">
-                                <span class="badge bg-info"><i class="ri-information-line"></i> Optional Subject</span>
-                            </div>
-                         </table>`;
-                    }
-                });
-
-                html += `</tbody>
-                    </table>
-                </div>`;
-
-                // Add summary statistics
-                const compulsorySubjectsList = allSubjects.filter(s => s.is_compulsory);
-                const passedCount = compulsorySubjectsList.filter(s => s.pass_status === 'pass').length;
-                const failedCount = compulsorySubjectsList.filter(s => s.pass_status === 'fail').length;
-                const notSatCount = compulsorySubjectsList.filter(s => s.pass_status === 'not_sat').length;
-
-                html += `<div class="mt-3 p-3 bg-light rounded">
-                    <div class="row text-center">
-                        <div class="col-3">
-                            <div class="small text-muted">Total Subjects</div>
-                            <div class="h5 mb-0">${allSubjects.length}</div>
-                        </div>
-                        <div class="col-3">
-                            <div class="small text-muted">Compulsory Subjects</div>
-                            <div class="h5 mb-0">${compulsorySubjectsList.length}</div>
-                        </div>
-                        <div class="col-3">
-                            <div class="small text-muted">Passed/Failed</div>
-                            <div class="h5 mb-0"><span class="text-success">${passedCount}</span> / <span class="text-danger">${failedCount}</span></div>
-                        </div>
-                        <div class="col-3">
-                            <div class="small text-muted">Not Attempted</div>
-                            <div class="h5 mb-0 text-warning">${notSatCount}</div>
-                        </div>
-                    </div>
-                    ${stats.credit_count ? `<div class="row mt-2">
-                        <div class="col-12 text-center">
-                            <small class="text-muted">Credit Grades (C and above): <strong>${stats.credit_count}</strong> out of ${allSubjects.length}</small>
-                        </div>
-                    </div>` : ''}
-                </div>`;
-
-                document.getElementById('allSubjectsContent').innerHTML = html;
-            }
-
-            // ── Compulsory subjects summary ──────────────────────────────────
-            if (compulsoryData && compulsoryData.length > 0) {
-                const passCount = compulsoryData.filter(s => s.pass_status === 'pass').length;
-                const failCount = compulsoryData.filter(s => s.pass_status === 'fail').length;
-                const notSatCount = compulsoryData.filter(s => s.pass_status === 'not_sat').length;
-
-                let html = `<div class="d-flex gap-2 mb-3 flex-wrap">
-                    <span class="badge bg-success" style="font-size:13px;padding:6px 12px">
-                        <i class="ri-checkbox-circle-line me-1"></i>${passCount} Passed
+                // Summary strip
+                let html = `<div class="subject-summary-strip">
+                    <span class="summary-pill pill-total">
+                        <i class="ri-book-open-line"></i>${allSubjects.length} Total
                     </span>
-                    <span class="badge bg-danger" style="font-size:13px;padding:6px 12px">
-                        <i class="ri-close-circle-line me-1"></i>${failCount} Failed
+                    <span class="summary-pill pill-pass">
+                        <i class="ri-checkbox-circle-line"></i>${passCount} Passed
+                    </span>
+                    <span class="summary-pill pill-fail">
+                        <i class="ri-close-circle-line"></i>${failCount} Failed
                     </span>`;
                 if (notSatCount > 0) {
-                    html += `<span class="badge bg-secondary" style="font-size:13px;padding:6px 12px">
-                        <i class="ri-minus-line me-1"></i>${notSatCount} Not Sat
+                    html += `<span class="summary-pill pill-notsat">
+                        <i class="ri-minus-circle-line"></i>${notSatCount} Not Sat
+                    </span>`;
+                }
+                if (optionalList.length > 0) {
+                    html += `<span class="summary-pill pill-optional">
+                        <i class="ri-information-line"></i>${optionalList.length} Optional
+                    </span>`;
+                }
+                if (stats.credit_count) {
+                    html += `<span class="summary-pill pill-credit">
+                        <i class="ri-medal-line"></i>${stats.credit_count} Credits
                     </span>`;
                 }
                 html += `</div>`;
 
-                html += `<div class="table-responsive">
-                    <table class="table table-sm">
+                // Table wrapper (scrollable)
+                html += `<div class="table-responsive" style="max-height:420px;overflow-y:auto;border-radius:10px;border:1px solid var(--pay-border);">
+                    <table class="subjects-table">
                         <thead>
-                            <tr><th>Subject</th><th>Grade</th><th>Required</th><th>Rule Requirement</th><th>Status</th></tr>
+                            <tr>
+                                <th style="width:36px;">#</th>
+                                <th>Subject</th>
+                                <th style="width:64px;">Code</th>
+                                <th style="width:120px;" class="text-center">Score / 100</th>
+                                <th style="width:70px;"  class="text-center">Grade</th>
+                                <th style="width:100px;" class="text-center">Min Grade</th>
+                                <th style="width:140px;" class="text-center">Result vs Rule</th>
+                            </tr>
                         </thead>
                         <tbody>`;
-                compulsoryData.forEach(cs => {
-                    const statusClass = cs.pass_status === 'pass' ? 'success' : (cs.pass_status === 'fail' ? 'danger' : 'secondary');
-                    const statusIcon = cs.pass_status === 'pass' ? '✓' : (cs.pass_status === 'fail' ? '✗' : '○');
-                    html += `<tr>
-                        <td><strong>${escapeHtml(cs.subject)}</strong><br><small class="text-muted">${escapeHtml(cs.subject_code || '')}</small></div>
-                        <td><strong>${cs.student_grade || 'Not Sat'}</strong></div>
-                        <td>${cs.required_min_grade || '—'}</div>
-                        <td><small class="text-muted">${cs.rule_requirement || '—'}</small></div>
-                        <td><span class="badge bg-${statusClass}">${statusIcon} ${cs.pass_status_label || cs.pass_status}</span></div>
-                     </tr>`;
-                });
-                html += `</tbody><tr></div>`;
 
+                // ── Section header: Compulsory ──
+                if (compulsoryList.length > 0) {
+                    html += `<tr class="row-section">
+                        <td colspan="7">
+                            <i class="ri-star-fill text-warning me-1"></i>
+                            Compulsory Subjects &nbsp;(${compulsoryList.length})
+                        </td>
+                    </tr>`;
+
+                    compulsoryList.forEach((subject, idx) => {
+                        const score    = subject.total !== null && subject.total !== undefined ? subject.total : null;
+                        const grade    = subject.grade || '—';
+                        const minGrade = subject.required_min_grade || '—';
+                        const pct      = score !== null ? Math.min(100, Math.round((parseFloat(score) / 100) * 100)) : 0;
+
+                        const rowClass = subject.pass_status === 'pass'    ? 'row-pass'    :
+                                         subject.pass_status === 'fail'    ? 'row-fail'    :
+                                         subject.pass_status === 'not_sat' ? 'row-notsat'  : '';
+
+                        const barColor = subject.pass_status === 'pass'    ? '#10b981'     :
+                                         subject.pass_status === 'fail'    ? '#ef4444'     : '#f59e0b';
+
+                        const statusMap = {
+                            pass:    { icon: 'ri-checkbox-circle-fill', bg: '#dcfce7', color: '#15803d', label: 'Passed'   },
+                            fail:    { icon: 'ri-close-circle-fill',    bg: '#fee2e2', color: '#b91c1c', label: 'Failed'   },
+                            not_sat: { icon: 'ri-minus-circle-fill',    bg: '#fef9c3', color: '#92400e', label: 'Not Sat'  },
+                        };
+                        const sm = statusMap[subject.pass_status] || { icon: 'ri-question-line', bg: '#f1f5f9', color: '#64748b', label: '—' };
+
+                        html += `<tr class="${rowClass}">
+                            <td class="text-muted" style="font-size:11px;">${idx + 1}</td>
+                            <td>
+                                <strong>${escapeHtml(subject.subject_name)}</strong>
+                                <span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px;vertical-align:middle;">COMPULSORY</span>
+                            </td>
+                            <td style="color:var(--pay-muted);font-size:12px;">${escapeHtml(subject.subject_code) || '—'}</td>
+                            <td class="text-center">
+                                ${score !== null
+                                    ? `<strong>${score}</strong>
+                                       <span class="score-bar-wrap"><span class="score-bar-fill" style="width:${pct}%;background:${barColor};"></span></span>`
+                                    : `<span class="text-muted small">—</span>`}
+                            </td>
+                            <td class="text-center">
+                                <strong style="color:${gradeColor(grade)};font-size:15px;">${grade}</strong>
+                            </td>
+                            <td class="text-center">
+                                ${minGrade !== '—'
+                                    ? `<span style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;">≥ ${minGrade}</span>`
+                                    : `<span class="text-muted small">—</span>`}
+                            </td>
+                            <td class="text-center">
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:${sm.bg};color:${sm.color};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">
+                                    <i class="${sm.icon}"></i>${sm.label}
+                                </span>
+                                ${subject.pass_status === 'fail' && grade !== '—' && minGrade !== '—'
+                                    ? `<div style="font-size:10px;color:#ef4444;margin-top:3px;">Has ${grade}, needs ≥ ${minGrade}</div>`
+                                    : ''}
+                            </td>
+                        </tr>`;
+                    });
+                }
+
+                // ── Section header: Optional ──
+                if (optionalList.length > 0) {
+                    html += `<tr class="row-section">
+                        <td colspan="7">
+                            <i class="ri-book-line text-info me-1"></i>
+                            Optional Subjects &nbsp;(${optionalList.length})
+                        </td>
+                    </tr>`;
+
+                    optionalList.forEach((subject, idx) => {
+                        const score = subject.total !== null && subject.total !== undefined ? subject.total : null;
+                        const grade = subject.grade || '—';
+                        const pct   = score !== null ? Math.min(100, Math.round((parseFloat(score) / 100) * 100)) : 0;
+
+                        html += `<tr class="row-optional">
+                            <td class="text-muted" style="font-size:11px;">${compulsoryList.length + idx + 1}</td>
+                            <td>
+                                <strong>${escapeHtml(subject.subject_name)}</strong>
+                                <span style="background:#e0f2fe;color:#0369a1;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px;vertical-align:middle;">OPTIONAL</span>
+                            </td>
+                            <td style="color:var(--pay-muted);font-size:12px;">${escapeHtml(subject.subject_code) || '—'}</td>
+                            <td class="text-center">
+                                ${score !== null
+                                    ? `<strong>${score}</strong>
+                                       <span class="score-bar-wrap"><span class="score-bar-fill" style="width:${pct}%;background:#94a3b8;"></span></span>`
+                                    : `<span class="text-muted small">—</span>`}
+                            </td>
+                            <td class="text-center">
+                                <strong style="color:${gradeColor(grade)};font-size:15px;">${grade}</strong>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-muted small">Not evaluated</span>
+                            </td>
+                            <td class="text-center">
+                                <span style="background:#f1f5f9;color:#64748b;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;">
+                                    <i class="ri-information-line me-1"></i>Optional
+                                </span>
+                            </td>
+                        </tr>`;
+                    });
+                }
+
+                html += `</tbody></table></div>`;
+                document.getElementById('allSubjectsContent').innerHTML = html;
+            }
+
+            // ── Compulsory subjects summary card ────────────────────────────
+            if (compulsoryData && compulsoryData.length > 0) {
+                const passCount2   = compulsoryData.filter(s => s.pass_status === 'pass').length;
+                const failCount2   = compulsoryData.filter(s => s.pass_status === 'fail').length;
+                const notSatCount2 = compulsoryData.filter(s => s.pass_status === 'not_sat').length;
+
+                let html = `<div class="d-flex gap-2 mb-3 flex-wrap">
+                    <span class="badge bg-success" style="font-size:13px;padding:6px 12px;">
+                        <i class="ri-checkbox-circle-line me-1"></i>${passCount2} Passed
+                    </span>
+                    <span class="badge bg-danger" style="font-size:13px;padding:6px 12px;">
+                        <i class="ri-close-circle-line me-1"></i>${failCount2} Failed
+                    </span>`;
+                if (notSatCount2 > 0) {
+                    html += `<span class="badge bg-secondary" style="font-size:13px;padding:6px 12px;">
+                        <i class="ri-minus-line me-1"></i>${notSatCount2} Not Sat
+                    </span>`;
+                }
+                html += `</div>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Grade</th>
+                                <th>Required</th>
+                                <th>Rule Requirement</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                compulsoryData.forEach(cs => {
+                    const sc2 = cs.pass_status === 'pass' ? 'success' : (cs.pass_status === 'fail' ? 'danger' : 'secondary');
+                    const ico = cs.pass_status === 'pass' ? '✓' : (cs.pass_status === 'fail' ? '✗' : '○');
+                    html += `<tr>
+                        <td><strong>${escapeHtml(cs.subject)}</strong><br>
+                            <small class="text-muted">${escapeHtml(cs.subject_code || '')}</small></td>
+                        <td><strong style="color:${gradeColor(cs.student_grade || '')}">${cs.student_grade || 'Not Sat'}</strong></td>
+                        <td>${cs.required_min_grade || '—'}</td>
+                        <td><small class="text-muted">${cs.rule_requirement || '—'}</small></td>
+                        <td><span class="badge bg-${sc2}">${ico} ${cs.pass_status_label || cs.pass_status}</span></td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table></div>`;
                 document.getElementById('compulsoryContent').innerHTML = html;
                 document.getElementById('compulsoryCard').style.display = 'block';
             }
         }
+
     } catch (error) {
         Swal.close();
         console.error('Error fetching student details:', error);
@@ -1254,7 +1364,7 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
         confirmButtonColor: '#dc3545',
         confirmButtonText: 'Yes, Remove',
         cancelButtonText: 'Cancel'
-    }).then((result) => {
+    }).then(result => {
         if (!result.isConfirmed) return;
         Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
@@ -1289,43 +1399,35 @@ function submitPromotion() {
         return;
     }
 
-    const newClassSelect = document.getElementById('newClassSelect');
+    const newClassSelect   = document.getElementById('newClassSelect');
     const newSessionSelect = document.getElementById('newSessionSelect');
-    const newTermSelect = document.getElementById('newTermSelect');
+    const newTermSelect    = document.getElementById('newTermSelect');
 
-    if (!newClassSelect.value) {
-        Swal.fire('Error!', 'Please select a new class.', 'error');
-        return;
-    }
-    if (!newSessionSelect.value) {
-        Swal.fire('Error!', 'Please select a new session.', 'error');
-        return;
-    }
-    if (!newTermSelect.value) {
-        Swal.fire('Error!', 'Please select a new term.', 'error');
-        return;
-    }
+    if (!newClassSelect.value)   { Swal.fire('Error!', 'Please select a new class.',   'error'); return; }
+    if (!newSessionSelect.value) { Swal.fire('Error!', 'Please select a new session.', 'error'); return; }
+    if (!newTermSelect.value)    { Swal.fire('Error!', 'Please select a new term.',    'error'); return; }
 
-    const promotionCheckbox = document.getElementById('promotionCheckbox');
-    const trialCheckbox = document.getElementById('trialCheckbox');
+    const promotionCheckbox   = document.getElementById('promotionCheckbox');
+    const trialCheckbox       = document.getElementById('trialCheckbox');
     const seePrincipalCheckbox = document.getElementById('seePrincipalCheckbox');
-    const repeatCheckbox = document.getElementById('repeatCheckbox');
+    const repeatCheckbox      = document.getElementById('repeatCheckbox');
 
-    const selectedCount = [promotionCheckbox, trialCheckbox, seePrincipalCheckbox, repeatCheckbox].filter(cb => cb.checked).length;
+    const selectedCount = [promotionCheckbox, trialCheckbox, seePrincipalCheckbox, repeatCheckbox]
+        .filter(cb => cb.checked).length;
     if (selectedCount !== 1) {
         Swal.fire('Error!', 'Please select exactly one promotion decision.', 'error');
         return;
     }
 
     const fd = new FormData();
-    fd.append('_method', 'PUT');
+    fd.append('_method',          'PUT');
     fd.append('new_schoolclassid', newClassSelect.value);
-    fd.append('new_sessionid', newSessionSelect.value);
-    fd.append('new_termid', newTermSelect.value);
-    fd.append('promotion', promotionCheckbox.checked ? '1' : '0');
-    fd.append('trial', trialCheckbox.checked ? '1' : '0');
-    fd.append('see_principal', seePrincipalCheckbox.checked ? '1' : '0');
-    fd.append('repeat', repeatCheckbox.checked ? '1' : '0');
+    fd.append('new_sessionid',     newSessionSelect.value);
+    fd.append('new_termid',        newTermSelect.value);
+    fd.append('promotion',         promotionCheckbox.checked   ? '1' : '0');
+    fd.append('trial',             trialCheckbox.checked       ? '1' : '0');
+    fd.append('see_principal',     seePrincipalCheckbox.checked ? '1' : '0');
+    fd.append('repeat',            repeatCheckbox.checked      ? '1' : '0');
 
     Swal.fire({
         title: 'Confirm Update',
@@ -1334,14 +1436,12 @@ function submitPromotion() {
         showCancelButton: true,
         confirmButtonText: 'Yes, Update',
         cancelButtonText: 'Cancel'
-    }).then((result) => {
+    }).then(result => {
         if (!result.isConfirmed) return;
         Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         axios.post(`/promotions/${currentStudentId}`, fd, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         }).then(response => {
             if (response.data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('promotionModal')).hide();
@@ -1357,9 +1457,9 @@ function submitPromotion() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("idclass").addEventListener("change", filterData);
+    document.getElementById("idclass").addEventListener("change",  filterData);
     document.getElementById("idsession").addEventListener("change", filterData);
-    document.getElementById("idterm").addEventListener("change", filterData);
+    document.getElementById("idterm").addEventListener("change",    filterData);
 
     let searchTimeout;
     document.getElementById("searchInput").addEventListener("input", function() {
