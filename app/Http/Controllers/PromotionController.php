@@ -136,49 +136,9 @@ class PromotionController extends Controller
         return view('promotions.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'terms', 'pagetitle'));
     }
 
-    private function getStudentScores($studentId, $schoolclassId, $sessionId, $termId)
-    {
-        try {
-            $scores = Broadsheets::where('broadsheet_records.student_id', $studentId)
-                ->where('broadsheets.term_id', $termId)
-                ->where('broadsheet_records.session_id', $sessionId)
-                ->where('broadsheet_records.schoolclass_id', $schoolclassId)
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                ->select([
-                    'subject.id as subject_id',
-                    'subject.subject as subject_name',
-                    'broadsheets.total',
-                    'broadsheets.grade',
-                ])
-                ->get();
-
-            return $scores;
-        } catch (Exception $e) {
-            Log::error('Error getting student scores', ['student_id' => $studentId, 'error' => $e->getMessage()]);
-            return collect();
-        }
-    }
-
-    private function calculateOverallAverage($scores)
-    {
-        if ($scores->isEmpty()) {
-            return null;
-        }
-
-        $totalObtained = 0;
-        $totalObtainable = 0;
-
-        foreach ($scores as $score) {
-            if ($score->total !== null && is_numeric($score->total)) {
-                $totalObtained += (float) $score->total;
-            }
-            $totalObtainable += 100;
-        }
-
-        return $totalObtainable > 0 ? round(($totalObtained / $totalObtainable) * 100, 1) : 0;
-    }
-
+    /**
+     * Get complete student details including ALL subjects with pass/fail status against rules
+     */
     public function getStudentDetails($studentId, $schoolclassId, $sessionId, $termId)
     {
         try {
@@ -199,9 +159,11 @@ class PromotionController extends Controller
                 return response()->json(['success' => false, 'message' => 'Student not found'], 404);
             }
 
+            // Get ALL scores for this student
             $scores = $this->getStudentScores($studentId, $schoolclassId, $sessionId, $termId);
             $overallAverage = $this->calculateOverallAverage($scores);
 
+            // Get promotion evaluation with rules
             $promotionResult = $this->promotionEvaluator->evaluate(
                 studentId: $studentId,
                 schoolclassid: $schoolclassId,
@@ -211,8 +173,7 @@ class PromotionController extends Controller
                 overallAverage: $overallAverage
             );
 
-            $scoreMap = $scores->keyBy('subject_id');
-
+            // Get compulsory subjects with their min grades
             $compulsoryQuery = CompulsorySubjectClass::where('schoolclassid', $schoolclassId)
                 ->where(function ($q) use ($termId, $sessionId) {
                     $q->where(function ($q2) use ($termId, $sessionId) {
@@ -226,40 +187,247 @@ class PromotionController extends Controller
                 ->with('subject')
                 ->get();
 
-            $compulsorySubjectsWithStatus = $compulsoryQuery->map(function ($cs) use ($scoreMap) {
-                $entry = $scoreMap->get($cs->subjectId);
-                $studentGrade = $entry?->grade ?? null;
-                $studentTotal = $entry?->total ?? null;
-                $minGrade = $cs->min_grade;
+            $compulsorySubjectIds = $compulsoryQuery->pluck('subjectId')->toArray();
 
-                $passStatus = $entry === null ? 'not_sat' : ($this->gradePassFail($studentGrade, $minGrade) ? 'pass' : 'fail');
+            // Get the applied rule's subject requirements if any
+            $appliedRule = $promotionResult['applied_rule'] ?? null;
+            $ruleSubjects = [];
+            if ($appliedRule && isset($promotionResult['settings_id'])) {
+                $settings = \App\Models\PromotionSetting::find($promotionResult['settings_id']);
+                if ($settings && $settings->promotion_rules) {
+                    foreach ($settings->promotion_rules as $rule) {
+                        if ($rule['rule_name'] === $appliedRule['name']) {
+                            foreach ($rule['compulsory_section']['subjects'] ?? [] as $subject) {
+                                $ruleSubjects[$subject['subject_id']] = $subject['min_grade'] ?? null;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Build ALL subjects list with their scores and pass/fail status against the rule
+            $allSubjects = [];
+
+            // First, get all subjects the student has scores for
+            foreach ($scores as $score) {
+                $isCompulsory = in_array($score->subject_id, $compulsorySubjectIds);
+                $minGradeFromRule = $ruleSubjects[$score->subject_id] ?? null;
+                $minGradeFromCompulsory = $compulsoryQuery->firstWhere('subjectId', $score->subject_id)?->min_grade;
+                $requiredMinGrade = $minGradeFromRule ?? $minGradeFromCompulsory ?? null;
+
+                // Determine pass/fail against the promotion rule
+                $passStatus = $this->determinePassStatus($score->grade, $requiredMinGrade, $isCompulsory);
+
+                $allSubjects[] = [
+                    'subject_id' => $score->subject_id,
+                    'subject_name' => $score->subject_name,
+                    'subject_code' => $score->subject_code ?? '',
+                    'total' => $score->total,
+                    'grade' => $score->grade,
+                    'is_compulsory' => $isCompulsory,
+                    'required_min_grade' => $requiredMinGrade,
+                    'pass_status' => $passStatus,
+                    'pass_status_label' => $this->getPassStatusLabel($passStatus),
+                    'pass_status_class' => $this->getPassStatusClass($passStatus),
+                ];
+            }
+
+            // Add compulsory subjects that don't have scores (Not Sat)
+            foreach ($compulsoryQuery as $compulsory) {
+                $existingSubject = collect($allSubjects)->firstWhere('subject_id', $compulsory->subjectId);
+                if (!$existingSubject && $compulsory->subject) {
+                    $minGradeFromRule = $ruleSubjects[$compulsory->subjectId] ?? null;
+                    $requiredMinGrade = $minGradeFromRule ?? $compulsory->min_grade;
+
+                    $allSubjects[] = [
+                        'subject_id' => $compulsory->subjectId,
+                        'subject_name' => $compulsory->subject->subject ?? 'Unknown',
+                        'subject_code' => $compulsory->subject->subject_code ?? '',
+                        'total' => null,
+                        'grade' => null,
+                        'is_compulsory' => true,
+                        'required_min_grade' => $requiredMinGrade,
+                        'pass_status' => 'not_sat',
+                        'pass_status_label' => 'Not Attempted',
+                        'pass_status_class' => 'secondary',
+                    ];
+                }
+            }
+
+            // Sort subjects: compulsory first, then alphabetically
+            usort($allSubjects, function($a, $b) {
+                if ($a['is_compulsory'] != $b['is_compulsory']) {
+                    return $b['is_compulsory'] - $a['is_compulsory'];
+                }
+                return strcmp($a['subject_name'], $b['subject_name']);
+            });
+
+            // Build compulsory subjects summary with pass/fail against the rule
+            $compulsorySubjectsWithStatus = $compulsoryQuery->map(function ($cs) use ($scores, $ruleSubjects) {
+                $scoreEntry = $scores->firstWhere('subject_id', $cs->subjectId);
+                $studentGrade = $scoreEntry?->grade ?? null;
+                $studentTotal = $scoreEntry?->total ?? null;
+                $minGradeFromRule = $ruleSubjects[$cs->subjectId] ?? null;
+                $requiredMinGrade = $minGradeFromRule ?? $cs->min_grade;
+
+                $passStatus = $scoreEntry === null ? 'not_sat' : ($this->gradePassFail($studentGrade, $requiredMinGrade) ? 'pass' : 'fail');
+                $ruleRequirement = $minGradeFromRule ? "Rule requires: ≥ {$minGradeFromRule}" : ($cs->min_grade ? "Default: ≥ {$cs->min_grade}" : "No requirement");
 
                 return [
                     'csc_id' => $cs->id,
                     'subject_id' => $cs->subjectId,
                     'subject' => $cs->subject?->subject ?? 'N/A',
                     'subject_code' => $cs->subject?->subject_code ?? '',
-                    'min_grade' => $minGrade ?? '—',
+                    'required_min_grade' => $requiredMinGrade,
+                    'rule_requirement' => $ruleRequirement,
                     'student_grade' => $studentGrade,
                     'student_total' => $studentTotal,
                     'pass_status' => $passStatus,
+                    'pass_status_label' => $this->getPassStatusLabel($passStatus),
+                    'pass_status_class' => $this->getPassStatusClass($passStatus),
                 ];
             });
+
+            // Calculate statistics
+            $totalSubjects = count($allSubjects);
+            $compulsoryCount = $compulsoryQuery->count();
+            $passedCompulsory = $compulsorySubjectsWithStatus->where('pass_status', 'pass')->count();
+            $failedCompulsory = $compulsorySubjectsWithStatus->where('pass_status', 'fail')->count();
+            $notSatCompulsory = $compulsorySubjectsWithStatus->where('pass_status', 'not_sat')->count();
+
+            // Calculate credit counts (C and above)
+            $creditGrades = $this->getCreditGrades($schoolclassId);
+            $creditCount = 0;
+            foreach ($scores as $score) {
+                if (in_array($score->grade, $creditGrades)) {
+                    $creditCount++;
+                }
+            }
 
             return response()->json([
                 'success' => true,
                 'student' => $student,
                 'promotion_result' => $promotionResult,
                 'overall_average' => $overallAverage,
+                'all_subjects' => $allSubjects,
                 'compulsory_subjects' => $compulsorySubjectsWithStatus,
+                'statistics' => [
+                    'total_subjects' => $totalSubjects,
+                    'compulsory_count' => $compulsoryCount,
+                    'passed_compulsory' => $passedCompulsory,
+                    'failed_compulsory' => $failedCompulsory,
+                    'not_sat_compulsory' => $notSatCompulsory,
+                    'credit_count' => $creditCount,
+                ],
                 'scores_count' => $scores->count(),
             ]);
         } catch (\Exception $e) {
-            Log::error('Error getting student details', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => 'Failed to get student details'], 500);
+            Log::error('Error getting student details', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Failed to get student details: ' . $e->getMessage()], 500);
         }
     }
 
+    /**
+     * Get all student scores with complete subject information
+     */
+    private function getStudentScores($studentId, $schoolclassId, $sessionId, $termId)
+    {
+        try {
+            $scores = Broadsheets::where('broadsheet_records.student_id', $studentId)
+                ->where('broadsheets.term_id', $termId)
+                ->where('broadsheet_records.session_id', $sessionId)
+                ->where('broadsheet_records.schoolclass_id', $schoolclassId)
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+                ->select([
+                    'subject.id as subject_id',
+                    'subject.subject as subject_name',
+                    'subject.subject_code',
+                    'broadsheets.total',
+                    'broadsheets.grade',
+                ])
+                ->get();
+
+            Log::info('Student scores retrieved', [
+                'student_id' => $studentId,
+                'scores_count' => $scores->count(),
+                'subjects' => $scores->pluck('subject_name')->toArray()
+            ]);
+
+            return $scores;
+        } catch (Exception $e) {
+            Log::error('Error getting student scores', [
+                'student_id' => $studentId,
+                'error' => $e->getMessage()
+            ]);
+            return collect();
+        }
+    }
+
+    /**
+     * Calculate overall average from scores
+     */
+    private function calculateOverallAverage($scores)
+    {
+        if ($scores->isEmpty()) {
+            return null;
+        }
+
+        $totalObtained = 0;
+        $totalObtainable = 0;
+
+        foreach ($scores as $score) {
+            if ($score->total !== null && is_numeric($score->total)) {
+                $totalObtained += (float) $score->total;
+            }
+            $totalObtainable += 100;
+        }
+
+        return $totalObtainable > 0 ? round(($totalObtained / $totalObtainable) * 100, 1) : 0;
+    }
+
+    /**
+     * Determine pass/fail status for a subject based on grade and requirement
+     */
+    private function determinePassStatus($grade, $requiredMinGrade, $isCompulsory)
+    {
+        if (!$isCompulsory) return 'optional';
+        if (!$grade) return 'not_sat';
+        return $this->gradePassFail($grade, $requiredMinGrade) ? 'pass' : 'fail';
+    }
+
+    /**
+     * Get human-readable pass status label
+     */
+    private function getPassStatusLabel($status)
+    {
+        return match($status) {
+            'pass' => 'Passed',
+            'fail' => 'Failed',
+            'not_sat' => 'Not Attempted',
+            'optional' => 'Optional',
+            default => 'Unknown'
+        };
+    }
+
+    /**
+     * Get CSS class for pass status
+     */
+    private function getPassStatusClass($status)
+    {
+        return match($status) {
+            'pass' => 'success',
+            'fail' => 'danger',
+            'not_sat' => 'warning',
+            'optional' => 'info',
+            default => 'secondary'
+        };
+    }
+
+    /**
+     * Check if a grade passes the minimum requirement
+     */
     private function gradePassFail(?string $studentGrade, ?string $minGrade): bool
     {
         if ($studentGrade === null) return false;
@@ -273,6 +441,7 @@ class PromotionController extends Controller
         ];
 
         $sg = strtoupper(trim($studentGrade));
+
         if ($minGrade) {
             $mg = strtoupper(trim($minGrade));
             $studentRank = $gradeOrder[$sg] ?? -1;
@@ -283,6 +452,28 @@ class PromotionController extends Controller
         return !in_array($sg, ['F', 'F9'], true);
     }
 
+    /**
+     * Get credit grades based on class type (senior/junior)
+     */
+    private function getCreditGrades($schoolclassId)
+    {
+        // Get class category to determine grade scale
+        $classCategory = DB::table('schoolclass_classcategory')
+            ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
+            ->where('schoolclass_classcategory.schoolclass_id', $schoolclassId)
+            ->select('classcategories.is_senior')
+            ->first();
+
+        $isSenior = $classCategory ? (bool)$classCategory->is_senior : false;
+
+        return $isSenior
+            ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6']
+            : ['A', 'B', 'C'];
+    }
+
+    /**
+     * Update student promotion
+     */
     public function update(Request $request, $studentId): JsonResponse
     {
         $request->validate([
@@ -370,6 +561,9 @@ class PromotionController extends Controller
         }
     }
 
+    /**
+     * Remove student from class
+     */
     public function destroy(Request $request, $studentId): JsonResponse
     {
         $request->validate([
@@ -401,6 +595,9 @@ class PromotionController extends Controller
         }
     }
 
+    /**
+     * Bulk promote students
+     */
     public function bulkPromote(Request $request): JsonResponse
     {
         $request->validate([

@@ -287,6 +287,32 @@ input[name="repeat"]:checked ~ label .repeat-card { border-color: #dc3545 !impor
                 </div>
             </div>
 
+            {{-- Warning Banner for Missing Promotion Settings --}}
+            @php
+                $selectedClassId = request()->input('schoolclassid');
+                $hasPromotionSettings = false;
+                if ($selectedClassId && $selectedClassId !== 'ALL') {
+                    $hasPromotionSettings = \App\Models\PromotionSetting::where('schoolclass_id', $selectedClassId)
+                        ->where('is_active', true)
+                        ->exists();
+                }
+            @endphp
+
+            @if(request()->filled('schoolclassid') && request()->input('schoolclassid') !== 'ALL' && !$hasPromotionSettings)
+            <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert" style="border-left: 4px solid #d97706;">
+                <div class="d-flex align-items-center">
+                    <i class="ri-alert-line fs-4 me-3"></i>
+                    <div>
+                        <strong class="d-block mb-1">⚠️ No Promotion Rules Configured!</strong>
+                        <span>No active promotion settings found for this class. Please
+                        <a href="{{ route('promotion-settings.index') }}" class="alert-link fw-bold">configure promotion rules</a>
+                        to enable automatic recommendations. Until then, all students will show "Awaiting Decision".</span>
+                    </div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+            @endif
+
             {{-- Filters --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
@@ -489,7 +515,7 @@ input[name="repeat"]:checked ~ label .repeat-card { border-color: #dc3545 !impor
                         <div class="card-body">
                             <div class="d-flex align-items-center gap-2 mb-3">
                                 <i class="ri-book-open-line fs-4 text-primary"></i>
-                                <h6 class="mb-0 fw-bold">All Subjects Performance ({{ $totalSubjects ?? 0 }} Subjects)</h6>
+                                <h6 class="mb-0 fw-bold">All Subjects Performance</h6>
                             </div>
                             <div id="allSubjectsContent"></div>
                         </div>
@@ -967,6 +993,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
             const avg = response.data.overall_average;
             const allSubjects = response.data.all_subjects || [];
             const compulsoryData = response.data.compulsory_subjects || [];
+            const stats = response.data.statistics || {};
 
             // Overall average display
             const avgEl = document.getElementById('modalOverallAverage');
@@ -1050,7 +1077,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 recContent.innerHTML = html;
             }
 
-            // ── ALL SUBJECTS TABLE (Complete list) ──────────────────────────
+            // ── ALL SUBJECTS TABLE with pass/fail against rule ──────────────────────────
             if (allSubjects && allSubjects.length > 0) {
                 document.getElementById('allSubjectsCard').style.display = 'block';
                 let html = `<div class="table-responsive">
@@ -1061,48 +1088,68 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                                 <th>Code</th>
                                 <th class="text-center">Score</th>
                                 <th class="text-center">Grade</th>
-                                <th class="text-center">Min Required</th>
-                                <th class="text-center">Status</th>
+                                <th class="text-center">Required Min</th>
+                                <th class="text-center">Status vs Rule</th>
                             </tr>
                         </thead>
                         <tbody>`;
 
                 allSubjects.forEach(subject => {
                     const isCompulsory = subject.is_compulsory || false;
-                    const minGrade = subject.min_grade || (isCompulsory ? 'C' : null);
-                    const studentGrade = subject.grade;
-                    const total = subject.total;
+                    const requiredGrade = subject.required_min_grade || (isCompulsory ? 'C' : '—');
+                    const studentGrade = subject.grade || '—';
+                    const total = subject.total !== null && subject.total !== undefined ? subject.total : '—';
 
-                    let statusBadge, rowClass;
+                    let statusBadge, statusText, rowClass;
+
                     if (isCompulsory) {
-                        if (!studentGrade) {
-                            statusBadge = `<span class="badge bg-secondary"><i class="ri-minus-line me-1"></i>Not Sat</span>`;
-                            rowClass = 'subject-not-sat';
-                        } else if (gradePassFail(studentGrade, minGrade)) {
-                            statusBadge = `<span class="badge bg-success"><i class="ri-checkbox-circle-line me-1"></i>Pass</span>`;
+                        if (subject.pass_status === 'pass') {
+                            statusBadge = '<i class="ri-checkbox-circle-line"></i> Passed';
+                            statusText = 'Passed';
                             rowClass = 'subject-pass';
-                        } else {
-                            statusBadge = `<span class="badge bg-danger"><i class="ri-close-circle-line me-1"></i>Fail</span>`;
+                        } else if (subject.pass_status === 'fail') {
+                            statusBadge = '<i class="ri-close-circle-line"></i> Failed';
+                            statusText = 'Failed';
                             rowClass = 'subject-fail';
+                        } else {
+                            statusBadge = '<i class="ri-minus-line"></i> Not Sat';
+                            statusText = 'Not Attempted';
+                            rowClass = 'subject-not-sat';
                         }
-                    } else {
-                        statusBadge = studentGrade ?
-                            `<span class="badge bg-info"><i class="ri-information-line me-1"></i>${studentGrade}</span>` :
-                            `<span class="badge bg-secondary"><i class="ri-minus-line me-1"></i>No Grade</span>`;
-                        rowClass = '';
-                    }
 
-                    html += `<tr class="${rowClass}">
-                        <td>
-                            <strong>${escapeHtml(subject.subject_name)}</strong>
-                            ${isCompulsory ? '<span class="badge-compulsory ms-2">Compulsory</span>' : ''}
-                         </div>
-                        <td>${escapeHtml(subject.subject_code) || '—'}</div>
-                        <td class="text-center"><strong>${total !== null && total !== undefined ? total : '—'}</strong></div>
-                        <td class="text-center"><strong>${studentGrade || '—'}</strong></div>
-                        <td class="text-center">${isCompulsory ? (minGrade || '—') : '—'}</div>
-                        <td class="text-center">${statusBadge}</div>
-                     </tr>`;
+                        const gradeMeetsRequirement = gradePassFail(studentGrade, requiredGrade);
+                        const gradeClass = gradeMeetsRequirement && studentGrade !== '—' ? 'text-success fw-bold' : (studentGrade !== '—' ? 'text-danger' : '');
+
+                        html += `<tr class="${rowClass}">
+                            <td>
+                                <strong>${escapeHtml(subject.subject_name)}</strong>
+                                <span class="badge-compulsory ms-2">Compulsory</span>
+                             </div>
+                            <td>${escapeHtml(subject.subject_code) || '—'}</div>
+                            <td class="text-center"><strong>${total}</strong></div>
+                            <td class="text-center"><strong class="${gradeClass}">${studentGrade}</strong></div>
+                            <td class="text-center"><span class="badge bg-secondary">≥ ${requiredGrade}</span></div>
+                            <td class="text-center">
+                                <span class="badge bg-${subject.pass_status_class || (subject.pass_status === 'pass' ? 'success' : subject.pass_status === 'fail' ? 'danger' : 'warning')}">${statusBadge}</span>
+                                ${!gradeMeetsRequirement && studentGrade !== '—' && subject.pass_status !== 'not_sat' ? `<div class="small text-muted mt-1">Student has ${studentGrade}, needs ${requiredGrade}</div>` : ''}
+                            </div>
+                         </tr>`;
+                    } else {
+                        // Optional subjects
+                        html += `<table>
+                            <td>
+                                <strong>${escapeHtml(subject.subject_name)}</strong>
+                                <span class="badge bg-info ms-2" style="font-size:9px;">Optional</span>
+                             </div>
+                            <td>${escapeHtml(subject.subject_code) || '—'}</div>
+                            <td class="text-center"><strong>${total}</strong></div>
+                            <td class="text-center"><strong>${studentGrade}</strong></div>
+                            <td class="text-center">—</div>
+                            <td class="text-center">
+                                <span class="badge bg-info"><i class="ri-information-line"></i> Optional Subject</span>
+                            </div>
+                         </table>`;
+                    }
                 });
 
                 html += `</tbody>
@@ -1110,30 +1157,35 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 </div>`;
 
                 // Add summary statistics
-                const totalSubjects = allSubjects.length;
-                const compulsorySubjects = allSubjects.filter(s => s.is_compulsory).length;
-                const passedCompulsory = allSubjects.filter(s => s.is_compulsory && (s.pass_status === 'pass' || gradePassFail(s.grade, s.min_grade))).length;
-                const subjectsWithGrades = allSubjects.filter(s => s.grade).length;
+                const compulsorySubjectsList = allSubjects.filter(s => s.is_compulsory);
+                const passedCount = compulsorySubjectsList.filter(s => s.pass_status === 'pass').length;
+                const failedCount = compulsorySubjectsList.filter(s => s.pass_status === 'fail').length;
+                const notSatCount = compulsorySubjectsList.filter(s => s.pass_status === 'not_sat').length;
 
                 html += `<div class="mt-3 p-3 bg-light rounded">
                     <div class="row text-center">
                         <div class="col-3">
                             <div class="small text-muted">Total Subjects</div>
-                            <div class="h5 mb-0">${totalSubjects}</div>
+                            <div class="h5 mb-0">${allSubjects.length}</div>
                         </div>
                         <div class="col-3">
                             <div class="small text-muted">Compulsory Subjects</div>
-                            <div class="h5 mb-0">${compulsorySubjects}</div>
+                            <div class="h5 mb-0">${compulsorySubjectsList.length}</div>
                         </div>
                         <div class="col-3">
-                            <div class="small text-muted">Passed Compulsory</div>
-                            <div class="h5 mb-0 text-success">${passedCompulsory}/${compulsorySubjects}</div>
+                            <div class="small text-muted">Passed/Failed</div>
+                            <div class="h5 mb-0"><span class="text-success">${passedCount}</span> / <span class="text-danger">${failedCount}</span></div>
                         </div>
                         <div class="col-3">
-                            <div class="small text-muted">Subjects with Grades</div>
-                            <div class="h5 mb-0">${subjectsWithGrades}/${totalSubjects}</div>
+                            <div class="small text-muted">Not Attempted</div>
+                            <div class="h5 mb-0 text-warning">${notSatCount}</div>
                         </div>
                     </div>
+                    ${stats.credit_count ? `<div class="row mt-2">
+                        <div class="col-12 text-center">
+                            <small class="text-muted">Credit Grades (C and above): <strong>${stats.credit_count}</strong> out of ${allSubjects.length}</small>
+                        </div>
+                    </div>` : ''}
                 </div>`;
 
                 document.getElementById('allSubjectsContent').innerHTML = html;
@@ -1162,20 +1214,21 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 html += `<div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
-                            <tr><th>Subject</th><th>Grade</th><th>Required</th><th>Status</th></tr>
+                            <tr><th>Subject</th><th>Grade</th><th>Required</th><th>Rule Requirement</th><th>Status</th></tr>
                         </thead>
                         <tbody>`;
                 compulsoryData.forEach(cs => {
                     const statusClass = cs.pass_status === 'pass' ? 'success' : (cs.pass_status === 'fail' ? 'danger' : 'secondary');
                     const statusIcon = cs.pass_status === 'pass' ? '✓' : (cs.pass_status === 'fail' ? '✗' : '○');
                     html += `<tr>
-                        <td>${escapeHtml(cs.subject)}</td>
-                        <td><strong>${cs.student_grade || 'Not Sat'}</strong></td>
-                        <td>${cs.min_grade || '—'}</td>
-                        <td><span class="badge bg-${statusClass}">${statusIcon} ${cs.pass_status}</span></td>
+                        <td><strong>${escapeHtml(cs.subject)}</strong><br><small class="text-muted">${escapeHtml(cs.subject_code || '')}</small></div>
+                        <td><strong>${cs.student_grade || 'Not Sat'}</strong></div>
+                        <td>${cs.required_min_grade || '—'}</div>
+                        <td><small class="text-muted">${cs.rule_requirement || '—'}</small></div>
+                        <td><span class="badge bg-${statusClass}">${statusIcon} ${cs.pass_status_label || cs.pass_status}</span></div>
                      </tr>`;
                 });
-                html += `</tbody></table></div>`;
+                html += `</tbody><tr></div>`;
 
                 document.getElementById('compulsoryContent').innerHTML = html;
                 document.getElementById('compulsoryCard').style.display = 'block';
