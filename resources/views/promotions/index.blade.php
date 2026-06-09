@@ -832,7 +832,7 @@ function filterData() {
     }
 
     const tableBody = document.getElementById('studentTableBody');
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...<\/td><\/tr>';
+    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
 
     axios.get('{{ route("promotions.index") }}', {
         params: {
@@ -854,7 +854,7 @@ function filterData() {
         setupCheckboxHandlers();
     }).catch(function(error) {
         console.error('AJAX Error:', error);
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.<\/td><\/tr>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
         Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch student data." });
     });
 }
@@ -897,7 +897,7 @@ function setupPaginationLinks() {
 
 function loadPage(url) {
     const tableBody = document.getElementById('studentTableBody');
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...<\/td><\/tr>';
+    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
 
     axios.get(url, {
         headers: {
@@ -913,7 +913,7 @@ function loadPage(url) {
         setupCheckboxHandlers();
     }).catch(function(error) {
         console.error('Page load error:', error);
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data.<\/td><\/tr>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data.</td></tr>';
     });
 }
 
@@ -1140,7 +1140,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 recContent.innerHTML = html;
             }
 
-            // ── ALL SUBJECTS TABLE (improved, no min grade column) ─────────────────────────
+            // ── ALL SUBJECTS TABLE (improved) ─────────────────────────────────────────
             if (allSubjects && allSubjects.length > 0) {
                 document.getElementById('allSubjectsCard').style.display = 'block';
 
@@ -1337,7 +1337,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                     ${pill(optFailCount + ' failed', 'danger', 'close-circle-line')}
                 </div>`;
 
-                // Table (without Min Grade column)
+                // Table
                 html += `<div style="overflow-x:auto;border-radius:10px;border:0.5px solid var(--color-border-tertiary);">
                     <table style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead>
@@ -1347,13 +1347,14 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                             <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:50px;">Code</th>
                             <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:130px;">Score / 100</th>
                             <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:60px;">Grade</th>
+                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:100px;">Min grade</th>
                             <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">Rule evaluation</th>
                         </tr>
                     </thead><tbody>`;
 
                 // Compulsory section
                 if (compulsoryList.length > 0) {
-                    html += `<tr><td colspan="6" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
+                    html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
                         <i class="ri-star-fill" style="color:#d97706;margin-right:5px;"></i>Compulsory subjects — always rule-bound &nbsp;·&nbsp; ${compulsoryList.length} subject${compulsoryList.length !== 1 ? 's' : ''}
                     </td></tr>`;
 
@@ -1371,19 +1372,24 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                             <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}</td>
                             <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}</td>
                             <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
+                            <td style="padding:10px 12px;text-align:center;">
+                                ${s.required_min_grade && s.required_min_grade !== '—'
+                                    ? `<span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;">≥ ${s.required_min_grade}</span>`
+                                    : `<span style="color:var(--color-text-secondary);font-size:12px;">—</span>`}
+                            </td>
                             <td style="padding:10px 12px;">
                                 ${ruleTag(s)}
                                 ${subNote(s)}
-                             </td>
-                         </tr>`;
+                            </td>
+                        </tr>`;
                     });
                 }
 
                 // Optional section
                 if (optionalList.length > 0) {
-                    html += `<tr><td colspan="6" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
+                    html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
                         <i class="ri-book-line" style="color:#0891b2;margin-right:5px;"></i>Optional subjects — contribute to grade count conditions &nbsp;·&nbsp; ${otherCreditCount} credit${otherCreditCount !== 1 ? 's' : ''} of ${optionalList.length} subjects
-                     </td></tr>`;
+                    </td></tr>`;
 
                     optionalList.forEach((s, idx) => {
                         const grade    = s.grade || '—';
@@ -1403,15 +1409,16 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                             <td style="padding:10px 12px;">
                                 <strong style="color:var(--color-text-primary);">${escapeHtml(s.subject_name)}</strong>
                                 <span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;">OPTIONAL</span>
-                             </td>
+                            </td>
                             <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}</td>
                             <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}</td>
                             <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
+                            <td style="padding:10px 12px;text-align:center;"><span style="color:var(--color-text-secondary);font-size:11px;font-style:italic;">No min grade</span></td>
                             <td style="padding:10px 12px;">
                                 ${ruleTag(s)}
                                 ${subNote(s)}
-                             </td>
-                         </tr>`;
+                            </td>
+                        </tr>`;
                     });
                 }
 
