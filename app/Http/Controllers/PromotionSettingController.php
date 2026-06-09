@@ -95,6 +95,13 @@ class PromotionSettingController extends Controller
             $compIds = array_column($compulsorySubjects, 'id');
             $otherSubjects = array_filter($allSubjects, fn($s) => !in_array((string)$s->id, array_map('strval', $compIds)));
 
+            // Debug: Log compulsory subjects with their IDs
+            Log::info('Compulsory subjects loaded for class', [
+                'class_id' => $classId,
+                'compulsory_subjects' => $compulsorySubjects,
+                'subject_ids' => $compIds
+            ]);
+
             return response()->json([
                 'success'             => true,
                 'pass_average'        => $passAverage,
@@ -115,8 +122,22 @@ class PromotionSettingController extends Controller
     // ── Store ─────────────────────────────────────────────────────────────────
     public function store(Request $request)
     {
+        // DEBUG: Log incoming request
+        Log::info('========== STORE PROMOTION SETTINGS ==========');
+        Log::info('Raw request data', [
+            'schoolclass_id' => $request->schoolclass_id,
+            'session_id' => $request->session_id,
+            'term_id' => $request->term_id,
+            'rule_set_name' => $request->rule_set_name,
+            'rule_logic' => $request->rule_logic,
+            'promotion_pass_average' => $request->promotion_pass_average,
+            'is_active' => $request->is_active,
+            'promotion_rules_raw' => $request->promotion_rules
+        ]);
+
         $v = $this->validateRequest($request);
         if ($v->fails()) {
+            Log::error('Validation failed', ['errors' => $v->errors()]);
             return response()->json([
                 'success' => false,
                 'errors' => $v->errors(),
@@ -126,8 +147,26 @@ class PromotionSettingController extends Controller
 
         try {
             [$sessionId, $termId] = $this->cleanIds($request);
+
+            // Parse and validate rules
             $rules = $this->parseRules($request);
             if ($rules instanceof \Illuminate\Http\JsonResponse) return $rules;
+
+            // DEBUG: Log parsed rules before saving
+            Log::info('Parsed rules before save', [
+                'rules_count' => count($rules),
+                'rules_structure' => $rules
+            ]);
+
+            // Check for subject IDs in rules
+            foreach ($rules as $index => $rule) {
+                $subjects = $rule['compulsory_section']['subjects'] ?? [];
+                Log::info("Rule {$index} subjects", [
+                    'rule_name' => $rule['rule_name'],
+                    'subject_count' => count($subjects),
+                    'subject_ids' => array_column($subjects, 'subject_id')
+                ]);
+            }
 
             if (empty($rules)) {
                 return response()->json(['success' => false, 'message' => 'At least one promotion rule is required.'], 422);
@@ -177,8 +216,28 @@ class PromotionSettingController extends Controller
                 'is_default'             => $isDefault,
                 'template_id'            => $request->template_id ?: null,
             ]);
+
             $setting->promotion_rules = $rules;
             $setting->save();
+
+            // DEBUG: Verify what was saved
+            $savedSetting = PromotionSetting::find($setting->id);
+            Log::info('Setting saved successfully', [
+                'id' => $setting->id,
+                'rule_set_name' => $ruleSetName,
+                'rules_count' => count($savedSetting->promotion_rules),
+                'saved_rules_structure' => $savedSetting->promotion_rules
+            ]);
+
+            // Verify subject IDs in saved data
+            foreach ($savedSetting->promotion_rules as $idx => $savedRule) {
+                $subjects = $savedRule['compulsory_section']['subjects'] ?? [];
+                Log::info("VERIFICATION: Saved rule {$idx} subjects", [
+                    'rule_name' => $savedRule['rule_name'],
+                    'subject_ids' => array_column($subjects, 'subject_id'),
+                    'min_grades' => array_column($subjects, 'min_grade')
+                ]);
+            }
 
             Log::info('New promotion rule set created', ['id' => $setting->id, 'name' => $ruleSetName]);
             return response()->json([
@@ -188,6 +247,7 @@ class PromotionSettingController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Store Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json(['success' => false, 'message' => 'Error saving settings: ' . $e->getMessage()], 500);
         }
     }
@@ -195,8 +255,20 @@ class PromotionSettingController extends Controller
     // ── Update ────────────────────────────────────────────────────────────────
     public function update(Request $request, $id)
     {
+        // DEBUG: Log incoming update request
+        Log::info('========== UPDATE PROMOTION SETTINGS ==========');
+        Log::info('Update request data', [
+            'id' => $id,
+            'schoolclass_id' => $request->schoolclass_id,
+            'session_id' => $request->session_id,
+            'term_id' => $request->term_id,
+            'rule_set_name' => $request->rule_set_name,
+            'promotion_rules_raw' => $request->promotion_rules
+        ]);
+
         $v = $this->validateRequest($request);
         if ($v->fails()) {
+            Log::error('Validation failed', ['errors' => $v->errors()]);
             return response()->json([
                 'success' => false,
                 'errors' => $v->errors(),
@@ -207,8 +279,27 @@ class PromotionSettingController extends Controller
         try {
             $setting = PromotionSetting::findOrFail($id);
             [$sessionId, $termId] = $this->cleanIds($request);
+
+            // Parse and validate rules
             $rules = $this->parseRules($request);
             if ($rules instanceof \Illuminate\Http\JsonResponse) return $rules;
+
+            // DEBUG: Log parsed rules before update
+            Log::info('Parsed rules before update', [
+                'rules_count' => count($rules),
+                'rules_structure' => $rules
+            ]);
+
+            // Check for subject IDs in rules
+            foreach ($rules as $index => $rule) {
+                $subjects = $rule['compulsory_section']['subjects'] ?? [];
+                Log::info("Rule {$index} subjects in update", [
+                    'rule_name' => $rule['rule_name'],
+                    'subject_count' => count($subjects),
+                    'subject_ids' => array_column($subjects, 'subject_id'),
+                    'min_grades' => array_column($subjects, 'min_grade')
+                ]);
+            }
 
             if (empty($rules)) {
                 return response()->json(['success' => false, 'message' => 'At least one promotion rule is required.'], 422);
@@ -241,8 +332,28 @@ class PromotionSettingController extends Controller
                 'is_default'             => $isDefault,
                 'template_id'            => $request->template_id ?: null,
             ]);
+
             $setting->promotion_rules = $rules;
             $setting->save();
+
+            // DEBUG: Verify what was saved
+            $savedSetting = PromotionSetting::find($id);
+            Log::info('Setting updated successfully', [
+                'id' => $id,
+                'rule_set_name' => $setting->rule_set_name,
+                'rules_count' => count($savedSetting->promotion_rules),
+                'saved_rules_structure' => $savedSetting->promotion_rules
+            ]);
+
+            // Verify subject IDs in saved data
+            foreach ($savedSetting->promotion_rules as $idx => $savedRule) {
+                $subjects = $savedRule['compulsory_section']['subjects'] ?? [];
+                Log::info("VERIFICATION: Updated rule {$idx} subjects", [
+                    'rule_name' => $savedRule['rule_name'],
+                    'subject_ids' => array_column($subjects, 'subject_id'),
+                    'min_grades' => array_column($subjects, 'min_grade')
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -251,6 +362,7 @@ class PromotionSettingController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Update Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json(['success' => false, 'message' => 'Error updating settings: ' . $e->getMessage()], 500);
         }
     }
@@ -338,6 +450,12 @@ class PromotionSettingController extends Controller
                 ];
             }, $results);
 
+            Log::info('Subjects by class', [
+                'class_id' => $classId,
+                'subjects_count' => count($subjects),
+                'subjects' => $subjects
+            ]);
+
             return response()->json([
                 'success' => true,
                 'subjects' => $subjects,
@@ -366,6 +484,12 @@ class PromotionSettingController extends Controller
             }
 
             $compulsorySubjects = $this->getCompulsorySubjects($classId, $termId, $sessionId);
+
+            Log::info('Compulsory subjects by class', [
+                'class_id' => $classId,
+                'compulsory_count' => count($compulsorySubjects),
+                'compulsory_subjects' => $compulsorySubjects
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -418,8 +542,11 @@ class PromotionSettingController extends Controller
 
         $rules = json_decode($request->promotion_rules, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json(['success' => false, 'message' => 'Invalid JSON in promotion rules.'], 422);
+            Log::error('JSON decode error', ['error' => json_last_error_msg()]);
+            return response()->json(['success' => false, 'message' => 'Invalid JSON in promotion rules: ' . json_last_error_msg()], 422);
         }
+
+        Log::info('Raw JSON decoded rules', ['rules' => $rules]);
 
         $validStatuses = ['promoted', 'trial', 'see_principal', 'repeat'];
 
@@ -434,18 +561,74 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => "Rule {$n}: invalid status."], 422);
             }
 
+            // Ensure compulsory_section exists
             if (!isset($rule['compulsory_section'])) {
                 $rule['compulsory_section'] = ['subjects' => [], 'count_conditions' => []];
             }
+
+            // Ensure subjects array exists and validate subject_id
+            if (!isset($rule['compulsory_section']['subjects'])) {
+                $rule['compulsory_section']['subjects'] = [];
+            }
+
+            // Log subjects before filtering
+            Log::info("Rule {$n} subjects before validation", [
+                'rule_name' => $rule['rule_name'],
+                'subjects_raw' => $rule['compulsory_section']['subjects']
+            ]);
+
+            // Filter out subjects without valid subject_id
+            $validSubjects = [];
+            foreach ($rule['compulsory_section']['subjects'] as $subject) {
+                if (isset($subject['subject_id']) && !empty($subject['subject_id'])) {
+                    $validSubjects[] = $subject;
+                    Log::info("Valid subject found", [
+                        'subject_id' => $subject['subject_id'],
+                        'min_grade' => $subject['min_grade'] ?? 'not set'
+                    ]);
+                } else {
+                    Log::warning('Subject without ID found in rule', [
+                        'rule_index' => $i,
+                        'rule_name' => $rule['rule_name'],
+                        'subject' => $subject
+                    ]);
+                }
+            }
+            $rule['compulsory_section']['subjects'] = $validSubjects;
+
+            // Log subjects after filtering
+            Log::info("Rule {$n} subjects after validation", [
+                'rule_name' => $rule['rule_name'],
+                'valid_subjects_count' => count($validSubjects),
+                'subject_ids' => array_column($validSubjects, 'subject_id')
+            ]);
+
+            // Ensure other_section exists
             if (!isset($rule['other_section'])) {
                 $rule['other_section'] = ['count_conditions' => []];
             }
+
+            if (!isset($rule['other_section']['count_conditions'])) {
+                $rule['other_section']['count_conditions'] = [];
+            }
+
+            // Ensure average_condition exists
             if (!isset($rule['average_condition'])) {
                 $rule['average_condition'] = ['enabled' => false, 'min_average' => 50, 'logic' => 'AND'];
             }
 
             $rules[$i] = $rule;
         }
+
+        Log::info('Final processed rules', [
+            'rules_count' => count($rules),
+            'rules_summary' => array_map(function($rule) {
+                return [
+                    'name' => $rule['rule_name'],
+                    'subject_ids' => array_column($rule['compulsory_section']['subjects'] ?? [], 'subject_id')
+                ];
+            }, $rules)
+        ]);
 
         return $rules;
     }
@@ -463,11 +646,20 @@ class PromotionSettingController extends Controller
             })
             ->with('subject');
 
-        return $query->get()->map(fn($cs) => [
+        $results = $query->get()->map(fn($cs) => [
             'id'           => (string) $cs->subjectId,
             'subject'      => $cs->subject?->subject ?? 'N/A',
             'subject_code' => $cs->subject?->subject_code ?? '',
             'default_min_grade' => $cs->min_grade ?? '',
         ])->unique('id')->values()->toArray();
+
+        Log::info('getCompulsorySubjects result', [
+            'class_id' => $classId,
+            'term_id' => $termId,
+            'session_id' => $sessionId,
+            'subjects' => $results
+        ]);
+
+        return $results;
     }
 }
