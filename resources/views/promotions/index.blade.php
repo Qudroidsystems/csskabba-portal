@@ -14,6 +14,26 @@
     --pay-bg:      #f8fafc;
     --pay-radius:  12px;
     --pay-shadow:  0 2px 8px rgba(0,0,0,.08);
+
+    /* Additional semantic colors */
+    --color-background-success: #dcfce7;
+    --color-background-danger:  #fee2e2;
+    --color-background-warning: #fef9c3;
+    --color-background-info:    #dbeafe;
+    --color-background-secondary: #f1f5f9;
+
+    --color-text-success: #15803d;
+    --color-text-danger:  #b91c1c;
+    --color-text-warning: #92400e;
+    --color-text-info:    #1e40af;
+    --color-text-secondary: #475569;
+    --color-text-primary:   #1e293b;
+
+    --color-border-success: #86efac;
+    --color-border-danger:  #fecaca;
+    --color-border-warning: #fed7aa;
+    --color-border-info:    #bfdbfe;
+    --color-border-tertiary: #cbd5e1;
 }
 
 .pay-hero {
@@ -988,17 +1008,6 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ── Grade colour helper ────────────────────────────────────────────────────────
-function gradeColor(grade) {
-    if (!grade || grade === '—') return '#94a3b8';
-    const g = grade.toUpperCase();
-    if (['A1', 'A'].includes(g))           return '#15803d';
-    if (['B2', 'B3', 'B'].includes(g))     return '#0369a1';
-    if (['C4', 'C5', 'C6', 'C'].includes(g)) return '#1d4ed8';
-    if (['D7', 'D'].includes(g))           return '#d97706';
-    return '#b91c1c'; // E8, F9, F
-}
-
 // ── Open promotion modal ───────────────────────────────────────────────────────
 async function openPromotionModal(studentId, admissionNo, firstName, lastName, otherName, picture, gender, schoolclass, schoolarm, session, termid) {
     currentStudentId      = studentId;
@@ -1131,228 +1140,283 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 recContent.innerHTML = html;
             }
 
-            // ── ALL SUBJECTS TABLE ─────────────────────────────────────────
+            // ── ALL SUBJECTS TABLE (improved) ─────────────────────────────────────────
             if (allSubjects && allSubjects.length > 0) {
                 document.getElementById('allSubjectsCard').style.display = 'block';
 
+                const failGradeSet = new Set(['F', 'F9', 'E8']);
+
+                // Detect senior vs junior grading from actual grade values
+                const allGrades = allSubjects.map(s => (s.grade || '').toUpperCase());
+                const hasSeniorGrade = allGrades.some(g => /^[A-E][1-9]$|^F9$/.test(g));
+
+                const seniorGradeOrder = { F9:0, E8:1, D7:2, C6:3, C5:4, C4:5, B3:6, B2:7, A1:8 };
+                const juniorGradeOrder = { F:0, D:1, C:2, B:3, A:4 };
+
+                function gradeRank(g) {
+                    g = (g || '').toUpperCase();
+                    return hasSeniorGrade ? (seniorGradeOrder[g] ?? -1) : (juniorGradeOrder[g] ?? -1);
+                }
+                function isCreditGrade(g) {
+                    g = (g || '').toUpperCase();
+                    return hasSeniorGrade
+                        ? ['A1','B2','B3','C4','C5','C6'].includes(g)
+                        : ['A','B','C'].includes(g);
+                }
+                function isPassGrade(g) {
+                    g = (g || '').toUpperCase();
+                    return hasSeniorGrade ? !['F9','E8'].includes(g) && g !== '' : g !== 'F' && g !== '';
+                }
+                function gradeClr(g) {
+                    if (!g || g === '—') return 'var(--color-text-secondary)';
+                    const u = g.toUpperCase();
+                    if (['A1','A'].includes(u))                   return '#15803d';
+                    if (['B2','B3','B'].includes(u))              return '#1d4ed8';
+                    if (['C4','C5','C6','C'].includes(u))         return '#0369a1';
+                    if (['D7','D'].includes(u))                   return '#d97706';
+                    return '#b91c1c';
+                }
+
                 const compulsoryList = allSubjects.filter(s => s.is_compulsory);
                 const optionalList   = allSubjects.filter(s => !s.is_compulsory);
-                const passCount      = compulsoryList.filter(s => s.pass_status === 'pass').length;
-                const failCount      = compulsoryList.filter(s => s.pass_status === 'fail').length;
-                const notSatCount    = compulsoryList.filter(s => s.pass_status === 'not_sat').length;
 
-                // Derive optional pass/fail client-side (handles both new and legacy backend)
-                const failGradeSet = new Set(['F', 'F9', 'E8']);
+                const compCreditCount  = compulsoryList.filter(s => s.grade && isCreditGrade(s.grade)).length;
+                const otherCreditCount = optionalList.filter(s => s.grade && isCreditGrade(s.grade)).length;
+                const allCreditCount   = allSubjects.filter(s => s.grade && isCreditGrade(s.grade)).length;
+
+                const compPassCount   = compulsoryList.filter(s => s.pass_status === 'pass').length;
+                const compFailCount   = compulsoryList.filter(s => s.pass_status === 'fail').length;
+                const compNotSatCount = compulsoryList.filter(s => s.pass_status === 'not_sat').length;
+
                 const optPassCount = optionalList.filter(s => {
                     if (s.pass_status === 'optional_pass') return true;
                     if (s.pass_status === 'optional_fail' || s.pass_status === 'optional_not_sat') return false;
-                    // Legacy 'optional' — derive from grade
-                    return s.grade && !failGradeSet.has((s.grade).toUpperCase());
+                    return s.grade && !failGradeSet.has(s.grade.toUpperCase());
                 }).length;
                 const optFailCount = optionalList.filter(s => {
                     if (s.pass_status === 'optional_fail') return true;
                     if (s.pass_status === 'optional_pass' || s.pass_status === 'optional_not_sat') return false;
-                    return s.grade && failGradeSet.has((s.grade).toUpperCase());
+                    return s.grade && failGradeSet.has(s.grade.toUpperCase());
                 }).length;
 
-                // Summary strip
-                let html = `<div class="subject-summary-strip">
-                    <span class="summary-pill pill-total">
-                        <i class="ri-book-open-line"></i>${allSubjects.length} Total
-                    </span>`;
+                const appliedRuleName = result?.applied_rule?.name || null;
+                const appliedRuleDesc = result?.applied_rule?.description || null;
 
-                // Compulsory section (rule-bound)
-                if (compulsoryList.length > 0) {
-                    html += `<span style="width:1px;background:#e2e8f0;align-self:stretch;margin:0 2px;display:inline-block;"></span>
-                    <span class="summary-pill" style="background:#f8f0ff;color:#6d28d9;font-size:11px;gap:3px;">
-                        <i class="ri-star-fill" style="font-size:10px;"></i>Compulsory:
-                    </span>
-                    <span class="summary-pill pill-pass">
-                        <i class="ri-checkbox-circle-line"></i>${passCount} Passed
-                    </span>
-                    <span class="summary-pill pill-fail">
-                        <i class="ri-close-circle-line"></i>${failCount} Failed
-                    </span>`;
-                    if (notSatCount > 0) {
-                        html += `<span class="summary-pill pill-notsat">
-                            <i class="ri-minus-circle-line"></i>${notSatCount} Not Sat
-                        </span>`;
+                // ── tag() helper ──────────────────────────────────────────────────────
+                function tag(label, color, rimIcon, tooltip) {
+                    const cfg = {
+                        green: ['var(--color-background-success)','var(--color-text-success)','var(--color-border-success)'],
+                        red:   ['var(--color-background-danger)','var(--color-text-danger)','var(--color-border-danger)'],
+                        blue:  ['var(--color-background-info)','var(--color-text-info)','var(--color-border-info)'],
+                        amber: ['var(--color-background-warning)','var(--color-text-warning)','var(--color-border-warning)'],
+                        gray:  ['var(--color-background-secondary)','var(--color-text-secondary)','var(--color-border-tertiary)'],
+                    }[color] || ['var(--color-background-secondary)','var(--color-text-secondary)','var(--color-border-tertiary)'];
+                    return `<span title="${escapeHtml(tooltip || label)}" style="display:inline-flex;align-items:center;gap:4px;background:${cfg[0]};color:${cfg[1]};border:0.5px solid ${cfg[2]};font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;white-space:nowrap;cursor:default;"><i class="ri-${rimIcon}" style="font-size:12px;"></i>${escapeHtml(label)}</span>`;
+                }
+
+                // ── per-subject rule context tag ──────────────────────────────────────
+                function ruleTag(subject) {
+                    const grade = (subject.grade || '').toUpperCase();
+                    const ps    = subject.pass_status;
+                    if (subject.is_compulsory) {
+                        if (ps === 'not_sat')
+                            return tag('Not sat — compulsory subject', 'amber', 'alert-line', 'Absent. Compulsory subjects must be sat.');
+                        const min = subject.required_min_grade;
+                        if (min && min !== '—') {
+                            return ps === 'pass'
+                                ? tag(`Meets min grade (≥ ${min})`, 'green', 'checkbox-circle-line', `${grade} ≥ required ${min} ✓`)
+                                : tag(`Below min grade (needs ≥ ${min})`, 'red', 'close-circle-line', `${grade} < required ${min} ✗`);
+                        }
+                        return ps === 'pass'
+                            ? tag('Compulsory — passed', 'green', 'checkbox-circle-line', 'Meets pass threshold')
+                            : tag('Compulsory — failed', 'red', 'close-circle-line', 'Does not meet pass threshold');
                     }
+                    if (!grade || grade === '—')
+                        return tag('Not attempted', 'gray', 'subtract-line', 'No score — not counted in any condition');
+                    if (isCreditGrade(grade))
+                        return tag('Credit — counted in grade tally', 'blue', 'add-circle-line', `${grade} is a credit — contributes to grade count conditions`);
+                    if (isPassGrade(grade) && !isCreditGrade(grade))
+                        return tag('Pass — not a credit', 'amber', 'record-circle-line', `${grade} is a pass but not credit — does not count toward credit conditions`);
+                    return tag('Fail — not counted', 'red', 'close-circle-line', `${grade} is a failing grade — does not contribute to any condition`);
                 }
 
-                // Optional section (general performance)
-                if (optionalList.length > 0) {
-                    html += `<span style="width:1px;background:#e2e8f0;align-self:stretch;margin:0 2px;display:inline-block;"></span>
-                    <span class="summary-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;gap:3px;">
-                        <i class="ri-book-line" style="font-size:10px;"></i>Optional:
-                    </span>
-                    <span class="summary-pill" style="background:#f0fdf4;color:#15803d;">
-                        <i class="ri-checkbox-circle-line"></i>${optPassCount} Passed
-                    </span>
-                    <span class="summary-pill" style="background:#fff1f2;color:#be123c;">
-                        <i class="ri-close-circle-line"></i>${optFailCount} Failed
+                // ── sub-note line under the tag ───────────────────────────────────────
+                function subNote(subject) {
+                    const grade = (subject.grade || '').toUpperCase();
+                    const ps    = subject.pass_status;
+                    const min   = subject.required_min_grade;
+                    if (subject.is_compulsory) {
+                        if (ps === 'fail' && grade !== '—' && min && min !== '—')
+                            return `<span style="font-size:10.5px;color:var(--color-text-danger);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Has ${grade}, rule needs ≥ ${min} — blocks every rule requiring this subject</span>`;
+                        if (ps === 'pass' && min && min !== '—')
+                            return `<span style="font-size:10.5px;color:var(--color-text-success);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Satisfies compulsory min grade condition</span>`;
+                        if (ps === 'not_sat')
+                            return `<span style="font-size:10.5px;color:var(--color-text-warning);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>No score recorded — compulsory subject must be sat to qualify</span>`;
+                        return '';
+                    }
+                    if (!grade || grade === '—')
+                        return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Not counted in any condition</span>`;
+                    if (isCreditGrade(grade))
+                        return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Counted as 1 credit — contributes to grade count conditions</span>`;
+                    if (isPassGrade(grade) && !isCreditGrade(grade))
+                        return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Pass but below credit threshold — not counted in credit conditions</span>`;
+                    return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Fail grade — not counted in any condition</span>`;
+                }
+
+                // ── score bar ─────────────────────────────────────────────────────────
+                function scoreBar2(score, barBg) {
+                    if (score === null || score === undefined)
+                        return `<span style="color:var(--color-text-secondary);font-size:12px;">—</span>`;
+                    const pct = Math.min(100, Math.round((parseFloat(score) / 100) * 100));
+                    return `<span style="display:inline-flex;align-items:center;gap:6px;">
+                        <strong style="min-width:26px;text-align:right;">${score}</strong>
+                        <span style="background:var(--color-border-tertiary);border-radius:3px;height:5px;width:52px;display:inline-block;vertical-align:middle;overflow:hidden;">
+                            <span style="display:block;height:100%;width:${pct}%;background:${barBg};border-radius:3px;"></span>
+                        </span>
                     </span>`;
                 }
 
-                if (stats.credit_count) {
-                    html += `<span style="width:1px;background:#e2e8f0;align-self:stretch;margin:0 2px;display:inline-block;"></span>
-                    <span class="summary-pill pill-credit">
-                        <i class="ri-medal-line"></i>${stats.credit_count} Credits
-                    </span>`;
+                // ── shared pill helper ────────────────────────────────────────────────
+                function pill(label, color, icon) {
+                    return `<span style="background:var(--color-background-${color});color:var(--color-text-${color});border:0.5px solid var(--color-border-${color});font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;"><i class="ri-${icon}"></i>${label}</span>`;
                 }
-                html += `</div>`;
 
-                // Table wrapper (scrollable)
-                html += `<div class="table-responsive" style="max-height:420px;overflow-y:auto;border-radius:10px;border:1px solid var(--pay-border);">
-                    <table class="subjects-table">
-                        <thead>
-                            <tr>
-                                <th style="width:36px;">#</th>
-                                <th>Subject</th>
-                                <th style="width:64px;">Code</th>
-                                <th style="width:120px;" class="text-center">Score / 100</th>
-                                <th style="width:70px;"  class="text-center">Grade</th>
-                                <th style="width:100px;" class="text-center">Min Grade</th>
-                                <th style="width:140px;" class="text-center">Result vs Rule</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
+                // ── BUILD ─────────────────────────────────────────────────────────────
+                let html = '';
 
-                // ── Section header: Compulsory ──
+                // Rule match / no-match note
+                if (appliedRuleName) {
+                    const stBg  = { promoted:'success', trial:'warning', see_principal:'info', repeated:'danger' }[result?.status] || 'secondary';
+                    html += `<div style="background:var(--color-background-${stBg});border:0.5px solid var(--color-border-${stBg});border-radius:8px;padding:11px 14px;margin-bottom:13px;font-size:12.5px;color:var(--color-text-${stBg});">
+                        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                            <i class="ri-price-tag-3-line" style="font-size:15px;"></i>
+                            <strong>Matched rule: ${escapeHtml(appliedRuleName)}</strong>
+                            ${appliedRuleDesc ? `<span style="opacity:.75;font-size:11.5px;">— ${escapeHtml(appliedRuleDesc)}</span>` : ''}
+                        </div>
+                        <div style="margin-top:7px;font-size:11.5px;opacity:.85;">
+                            <i class="ri-information-line" style="margin-right:4px;"></i>
+                            Credit grades (${hasSeniorGrade ? 'C4–A1' : 'C–A'}) are tallied per scope to satisfy count conditions. Each subject's contribution is shown below.
+                        </div>
+                    </div>`;
+                } else {
+                    html += `<div style="background:var(--color-background-danger);border:0.5px solid var(--color-border-danger);border-radius:8px;padding:11px 14px;margin-bottom:13px;font-size:12.5px;color:var(--color-text-danger);">
+                        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                            <i class="ri-close-circle-line" style="font-size:15px;"></i>
+                            <strong>No rule matched.</strong> Student did not satisfy any promotion rule — result is Advice to Repeat.
+                        </div>
+                        <div style="margin-top:7px;font-size:11.5px;opacity:.85;">
+                            <i class="ri-information-line" style="margin-right:4px;"></i>
+                            Check each compulsory subject's min grade and whether the credit counts below reach the rule thresholds.
+                        </div>
+                    </div>`;
+                }
+
+                // Credit tally cards
+                html += `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    ${[
+                        { label:'Credits in compulsory', val:compCreditCount,  total:compulsoryList.length, clr:'var(--color-text-success)' },
+                        { label:'Credits in optional',   val:otherCreditCount, total:optionalList.length,   clr:'var(--color-text-info)'    },
+                        { label:'Total credits',          val:allCreditCount,   total:allSubjects.length,    clr:'var(--color-text-primary)' },
+                    ].map(it => `<div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:7px 13px;display:inline-flex;align-items:center;gap:8px;">
+                        <span style="font-size:18px;font-weight:500;color:${it.clr};">${it.val}</span>
+                        <span style="font-size:11px;color:var(--color-text-secondary);line-height:1.3;">${escapeHtml(it.label)}<br><span style="opacity:.7;">of ${it.total} subjects</span></span>
+                    </div>`).join('')}
+                </div>`;
+
+                // Summary strip
+                html += `<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:9px 13px;margin-bottom:13px;">
+                    ${pill(allSubjects.length + ' total subjects', 'secondary', 'book-open-line')}
+                    <span style="width:0.5px;background:var(--color-border-tertiary);align-self:stretch;display:inline-block;margin:0 2px;"></span>
+                    <span style="font-size:11px;color:var(--color-text-secondary);font-weight:500;">Compulsory:</span>
+                    ${pill(compPassCount + ' passed', 'success', 'checkbox-circle-line')}
+                    ${pill(compFailCount + ' failed', 'danger', 'close-circle-line')}
+                    ${compNotSatCount > 0 ? pill(compNotSatCount + ' not sat', 'warning', 'minus-circle-line') : ''}
+                    <span style="width:0.5px;background:var(--color-border-tertiary);align-self:stretch;display:inline-block;margin:0 2px;"></span>
+                    <span style="font-size:11px;color:var(--color-text-secondary);font-weight:500;">Optional:</span>
+                    ${pill(optPassCount + ' passed', 'success', 'checkbox-circle-line')}
+                    ${pill(optFailCount + ' failed', 'danger', 'close-circle-line')}
+                </div>`;
+
+                // Table
+                html += `<div style="overflow-x:auto;border-radius:10px;border:0.5px solid var(--color-border-tertiary);">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                        <tr style="background:var(--pay-primary,#1e3a5f);">
+                            <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;width:32px;">#</th>
+                            <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">Subject</th>
+                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:50px;">Code</th>
+                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:130px;">Score / 100</th>
+                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:60px;">Grade</th>
+                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:100px;">Min grade</th>
+                            <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">Rule evaluation</th>
+                        </tr>
+                    </thead><tbody>`;
+
+                // Compulsory section
                 if (compulsoryList.length > 0) {
-                    html += `<tr class="row-section">
-                        <td colspan="7">
-                            <i class="ri-star-fill text-warning me-1"></i>
-                            Compulsory Subjects &nbsp;(${compulsoryList.length})
-                        </td>
-                    </tr>`;
+                    html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
+                        <i class="ri-star-fill" style="color:#d97706;margin-right:5px;"></i>Compulsory subjects — always rule-bound &nbsp;·&nbsp; ${compulsoryList.length} subject${compulsoryList.length !== 1 ? 's' : ''}
+                    </td></tr>`;
 
-                    compulsoryList.forEach((subject, idx) => {
-                        const score    = subject.total !== null && subject.total !== undefined ? subject.total : null;
-                        const grade    = subject.grade || '—';
-                        const minGrade = subject.required_min_grade || '—';
-                        const pct      = score !== null ? Math.min(100, Math.round((parseFloat(score) / 100) * 100)) : 0;
-
-                        const rowClass = subject.pass_status === 'pass'    ? 'row-pass'    :
-                                         subject.pass_status === 'fail'    ? 'row-fail'    :
-                                         subject.pass_status === 'not_sat' ? 'row-notsat'  : '';
-
-                        const barColor = subject.pass_status === 'pass'    ? '#10b981'     :
-                                         subject.pass_status === 'fail'    ? '#ef4444'     : '#f59e0b';
-
-                        const statusMap = {
-                            pass:    { icon: 'ri-checkbox-circle-fill', bg: '#dcfce7', color: '#15803d', label: 'Passed'   },
-                            fail:    { icon: 'ri-close-circle-fill',    bg: '#fee2e2', color: '#b91c1c', label: 'Failed'   },
-                            not_sat: { icon: 'ri-minus-circle-fill',    bg: '#fef9c3', color: '#92400e', label: 'Not Sat'  },
-                        };
-                        const sm = statusMap[subject.pass_status] || { icon: 'ri-question-line', bg: '#f1f5f9', color: '#64748b', label: '—' };
-
-                        html += `<tr class="${rowClass}">
-                            <td class="text-muted" style="font-size:11px;">${idx + 1}</td>
-                            <td>
-                                <strong>${escapeHtml(subject.subject_name)}</strong>
-                                <span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px;vertical-align:middle;">COMPULSORY</span>
+                    compulsoryList.forEach((s, idx) => {
+                        const grade  = s.grade || '—';
+                        const ps     = s.pass_status;
+                        const rowBdr = ps === 'pass' ? '#10b981' : ps === 'fail' ? '#ef4444' : '#f59e0b';
+                        const barBg  = rowBdr;
+                        html += `<tr style="border-left:3px solid ${rowBdr};border-bottom:0.5px solid var(--color-border-tertiary);">
+                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${idx + 1}</td>
+                            <td style="padding:10px 12px;">
+                                <strong style="color:var(--color-text-primary);">${escapeHtml(s.subject_name)}</strong>
+                                <span style="background:var(--color-background-warning);color:var(--color-text-warning);border:0.5px solid var(--color-border-warning);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;">COMPULSORY</span>
                             </td>
-                            <td style="color:var(--pay-muted);font-size:12px;">${escapeHtml(subject.subject_code) || '—'}</td>
-                            <td class="text-center">
-                                ${score !== null
-                                    ? `<strong>${score}</strong>
-                                       <span class="score-bar-wrap"><span class="score-bar-fill" style="width:${pct}%;background:${barColor};"></span></span>`
-                                    : `<span class="text-muted small">—</span>`}
+                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}</td>
+                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}</td>
+                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
+                            <td style="padding:10px 12px;text-align:center;">
+                                ${s.required_min_grade && s.required_min_grade !== '—'
+                                    ? `<span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;">≥ ${s.required_min_grade}</span>`
+                                    : `<span style="color:var(--color-text-secondary);font-size:12px;">—</span>`}
                             </td>
-                            <td class="text-center">
-                                <strong style="color:${gradeColor(grade)};font-size:15px;">${grade}</strong>
-                            </td>
-                            <td class="text-center">
-                                ${minGrade !== '—'
-                                    ? `<span style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;">≥ ${minGrade}</span>`
-                                    : `<span class="text-muted small">—</span>`}
-                            </td>
-                            <td class="text-center">
-                                <span style="display:inline-flex;align-items:center;gap:4px;background:${sm.bg};color:${sm.color};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">
-                                    <i class="${sm.icon}"></i>${sm.label}
-                                </span>
-                                ${subject.pass_status === 'fail' && grade !== '—' && minGrade !== '—'
-                                    ? `<div style="font-size:10px;color:#ef4444;margin-top:3px;">Has ${grade}, needs ≥ ${minGrade}</div>`
-                                    : ''}
+                            <td style="padding:10px 12px;">
+                                ${ruleTag(s)}
+                                ${subNote(s)}
                             </td>
                         </tr>`;
                     });
                 }
 
-                // ── Section header: Optional ──
+                // Optional section
                 if (optionalList.length > 0) {
-                    // Count optional pass/fail for the strip
-                    const optPassCount   = optionalList.filter(s => s.pass_status === 'optional_pass').length;
-                    const optFailCount   = optionalList.filter(s => s.pass_status === 'optional_fail').length;
-                    const optNotSatCount = optionalList.filter(s => s.pass_status === 'optional_not_sat' || (!s.grade && s.total === null)).length;
+                    html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
+                        <i class="ri-book-line" style="color:#0891b2;margin-right:5px;"></i>Optional subjects — contribute to grade count conditions &nbsp;·&nbsp; ${otherCreditCount} credit${otherCreditCount !== 1 ? 's' : ''} of ${optionalList.length} subjects
+                    </td></tr>`;
 
-                    html += `<tr class="row-section">
-                        <td colspan="7">
-                            <i class="ri-book-line text-info me-1"></i>
-                            Optional Subjects &nbsp;(${optionalList.length})
-                            <span style="margin-left:10px;font-weight:400;color:#64748b;">
-                                — ${optPassCount} passed &nbsp;·&nbsp; ${optFailCount} failed
-                                ${optNotSatCount > 0 ? ` &nbsp;·&nbsp; ${optNotSatCount} not sat` : ''}
-                            </span>
-                        </td>
-                    </tr>`;
+                    optionalList.forEach((s, idx) => {
+                        const grade    = s.grade || '—';
+                        const isCredit = grade !== '—' && isCreditGrade(grade);
+                        const isFail   = grade !== '—' && !isPassGrade(grade);
+                        const rowBdr   = isCredit ? '#0891b2' : isFail ? '#ef4444' : '#d97706';
+                        const barBg    = rowBdr;
 
-                    // Status config for optional subjects — same shape as compulsory but with softer styling
-                    const optStatusMap = {
-                        optional_pass:    { icon: 'ri-checkbox-circle-line', bg: '#f0fdf4', color: '#15803d', label: 'Passed',   rowClass: 'row-pass'    },
-                        optional_fail:    { icon: 'ri-close-circle-line',    bg: '#fff1f2', color: '#be123c', label: 'Failed',   rowClass: 'row-fail'    },
-                        optional_not_sat: { icon: 'ri-minus-circle-line',    bg: '#fefce8', color: '#92400e', label: 'Not Sat',  rowClass: 'row-notsat'  },
-                        optional:         { icon: 'ri-information-line',     bg: '#f1f5f9', color: '#64748b', label: 'Optional', rowClass: 'row-optional' },
-                    };
-
-                    optionalList.forEach((subject, idx) => {
-                        const score    = subject.total !== null && subject.total !== undefined ? subject.total : null;
-                        const grade    = subject.grade || '—';
-                        const pct      = score !== null ? Math.min(100, Math.round((parseFloat(score) / 100) * 100)) : 0;
-
-                        // Resolve status — backend may send 'optional_pass'/'optional_fail'/'optional_not_sat'
-                        // or legacy 'optional'. Derive it client-side if needed.
-                        let resolvedStatus = subject.pass_status;
-                        if (resolvedStatus === 'optional' || !resolvedStatus) {
-                            // Derive from grade if backend didn't compute it
-                            if (score === null && grade === '—') {
-                                resolvedStatus = 'optional_not_sat';
-                            } else {
-                                const failGrades = ['F', 'F9', 'E8'];
-                                resolvedStatus = failGrades.includes((grade).toUpperCase()) ? 'optional_fail' : 'optional_pass';
-                            }
+                        let resolvedStatus = s.pass_status;
+                        if (!resolvedStatus || resolvedStatus === 'optional') {
+                            if (s.total === null && grade === '—') resolvedStatus = 'optional_not_sat';
+                            else resolvedStatus = failGradeSet.has(grade.toUpperCase()) ? 'optional_fail' : 'optional_pass';
                         }
 
-                        const sm = optStatusMap[resolvedStatus] || optStatusMap['optional'];
-
-                        // Bar color matches actual performance, not a static grey
-                        const barColor = resolvedStatus === 'optional_pass' ? '#10b981' :
-                                         resolvedStatus === 'optional_fail' ? '#ef4444' : '#f59e0b';
-
-                        html += `<tr class="${sm.rowClass}">
-                            <td class="text-muted" style="font-size:11px;">${compulsoryList.length + idx + 1}</td>
-                            <td>
-                                <strong>${escapeHtml(subject.subject_name)}</strong>
-                                <span style="background:#e0f2fe;color:#0369a1;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px;vertical-align:middle;">OPTIONAL</span>
+                        html += `<tr style="border-left:3px solid ${rowBdr};border-bottom:0.5px solid var(--color-border-tertiary);">
+                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${compulsoryList.length + idx + 1}</td>
+                            <td style="padding:10px 12px;">
+                                <strong style="color:var(--color-text-primary);">${escapeHtml(s.subject_name)}</strong>
+                                <span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;">OPTIONAL</span>
                             </td>
-                            <td style="color:var(--pay-muted);font-size:12px;">${escapeHtml(subject.subject_code) || '—'}</td>
-                            <td class="text-center">
-                                ${score !== null
-                                    ? `<strong>${score}</strong>
-                                       <span class="score-bar-wrap"><span class="score-bar-fill" style="width:${pct}%;background:${barColor};"></span></span>`
-                                    : `<span class="text-muted small">—</span>`}
-                            </td>
-                            <td class="text-center">
-                                <strong style="color:${gradeColor(grade)};font-size:15px;">${grade}</strong>
-                            </td>
-                            <td class="text-center">
-                                <span class="text-muted small" style="font-size:11px;">No rule</span>
-                            </td>
-                            <td class="text-center">
-                                <span style="display:inline-flex;align-items:center;gap:4px;background:${sm.bg};color:${sm.color};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;border:1px solid ${sm.bg === '#f1f5f9' ? '#e2e8f0' : 'transparent'};">
-                                    <i class="${sm.icon}"></i>${sm.label}
-                                </span>
+                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}</td>
+                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}</td>
+                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
+                            <td style="padding:10px 12px;text-align:center;"><span style="color:var(--color-text-secondary);font-size:11px;font-style:italic;">No min grade</span></td>
+                            <td style="padding:10px 12px;">
+                                ${ruleTag(s)}
+                                ${subNote(s)}
                             </td>
                         </tr>`;
                     });
@@ -1400,11 +1464,11 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                     html += `<tr>
                         <td><strong>${escapeHtml(cs.subject)}</strong><br>
                             <small class="text-muted">${escapeHtml(cs.subject_code || '')}</small></td>
-                        <td><strong style="color:${gradeColor(cs.student_grade || '')}">${cs.student_grade || 'Not Sat'}</strong></td>
+                        <td><strong style="color:${gradeClr(cs.student_grade || '')}">${cs.student_grade || 'Not Sat'}</strong></td>
                         <td>${cs.required_min_grade || '—'}</td>
                         <td><small class="text-muted">${cs.rule_requirement || '—'}</small></td>
                         <td><span class="badge bg-${sc2}">${ico} ${cs.pass_status_label || cs.pass_status}</span></td>
-                    </tr>`;
+                     </tr>`;
                 });
 
                 html += `</tbody></table></div>`;
