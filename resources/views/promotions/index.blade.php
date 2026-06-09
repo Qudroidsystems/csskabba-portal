@@ -233,7 +233,7 @@
                         <p>Manage student promotion, repetition, and class assignments based on academic performance.</p>
                     </div>
                     <div>
-                        <a href="{{ route('promotion.settings.index') }}" class="btn btn-light">
+                        <a href="{{ route('promotion-settings.index') }}" class="btn btn-light">
                             <i class="ri-settings-4-line me-1"></i>Promotion Settings
                         </a>
                     </div>
@@ -279,7 +279,7 @@
                     <strong>Promotion Rules</strong>
                     Promotion decisions are based on compulsory subject performance and overall averages.
                     Only <strong>active</strong> rules are applied automatically.
-                    Configure rules in <a href="{{ route('promotion.settings.index') }}">Promotion Settings</a>.
+                    Configure rules in <a href="{{ route('promotion-settings.index') }}">Promotion Settings</a>.
                 </div>
             </div>
 
@@ -407,7 +407,8 @@
                                     <img id="modalStudentImage"
                                          src="{{ asset('storage/student_avatars/unnamed.jpg') }}"
                                          alt="Student Picture"
-                                         class="student-avatar-lg rounded-circle">
+                                         class="student-avatar-lg rounded-circle"
+                                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
                                     <div class="mt-2">
                                         <span class="badge bg-primary" id="modalStudentGender"></span>
                                     </div>
@@ -473,13 +474,13 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center gap-2 mb-3">
                                 <i class="ri-star-fill fs-4 text-warning"></i>
-                                <h6 class="mb-0 fw-bold">Compulsory Subjects Summary</h6>
+                                <h6 class="mb-0 fw-bold">Compulsory Subjects Performance</h6>
                             </div>
                             <div id="compulsoryContent"></div>
                         </div>
                     </div>
 
-                    {{-- All Subjects --}}
+                    {{-- All Subjects Table --}}
                     <div class="card border-0 shadow-sm mb-4" id="allSubjectsCard" style="display:none;">
                         <div class="card-body">
                             <div class="d-flex align-items-center gap-2 mb-3">
@@ -706,6 +707,7 @@ let currentStudentId     = null;
 let currentSchoolclassId = null;
 let currentSessionId     = null;
 let currentTermId        = null;
+let currentStudentData   = null;
 
 // ── Filter & load ──────────────────────────────────────────────────────────────
 function filterData() {
@@ -752,30 +754,33 @@ function filterData() {
     });
 }
 
-// ── Stats — reads directly from rendered badges ────────────────────────────────
+// ── Stats ────────────────────────────────────────────────────────────────
 function updateStats() {
     const rows = document.querySelectorAll('#studentTableBody tr');
     let total = 0, promoted = 0, trial = 0, repeat = 0;
 
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length < 8) return;   // skip empty / loading rows
+        if (cells.length < 8) return;
         total++;
 
-        // Col index 7 = Recommendation column (data-rec-status attribute)
         const recCell = cells[7];
         if (recCell) {
             const recStatus = recCell.getAttribute('data-rec-status') || '';
-            if (recStatus === 'promoted')                             promoted++;
-            else if (recStatus === 'trial')                           trial++;
-            else if (recStatus === 'repeated' || recStatus === 'repeat') repeat++;
+            if (recStatus === 'promoted') {
+                promoted++;
+            } else if (recStatus === 'trial') {
+                trial++;
+            } else if (recStatus === 'repeated' || recStatus === 'repeat') {
+                repeat++;
+            }
         }
     });
 
-    document.getElementById('totalStudents').innerText  = total;
-    document.getElementById('promotedCount').innerText  = promoted;
-    document.getElementById('trialCount').innerText     = trial;
-    document.getElementById('repeatCount').innerText    = repeat;
+    document.getElementById('totalStudents').innerText = total;
+    document.getElementById('promotedCount').innerText = promoted;
+    document.getElementById('trialCount').innerText = trial;
+    document.getElementById('repeatCount').innerText = repeat;
 }
 
 // ── Pagination ─────────────────────────────────────────────────────────────────
@@ -940,9 +945,11 @@ async function openPromotionModal(
         Swal.close();
 
         if (response.data.success) {
+            currentStudentData = response.data;
             const result      = response.data.promotion_result;
             const avg         = response.data.overall_average;
-            const allSubjects = response.data.all_subjects || [];
+            const allSubjects = response.data.all_subjects || response.data.scores || [];
+            const compulsoryData = response.data.compulsory_subjects || [];
 
             // Overall average display
             const avgEl    = document.getElementById('modalOverallAverage');
@@ -1030,25 +1037,16 @@ async function openPromotionModal(
                     html += `</div>`;
                 }
 
-                if (result.matched_labels && result.matched_labels.length > 0) {
-                    html += `<div class="mt-3 pt-3 border-top">
-                        <div class="small text-muted mb-2">
-                            <i class="ri-price-tag-3-line me-1"></i><strong>Matched Conditional Labels</strong>
-                        </div>`;
-                    const colorMap = { danger:'#dc2626', success:'#16a34a', warning:'#d97706', info:'#2563eb', primary:'#1e3a5f' };
-                    result.matched_labels.forEach(ml => {
-                        html += `<span class="badge me-2 mb-1" style="background:${colorMap[ml.color] || '#6c757d'};font-size:12px;padding:5px 12px">
-                            <i class="ri-price-tag-3-line me-1"></i>${escapeHtml(ml.label)}
-                        </span>`;
-                        if (ml.description) {
-                            html += `<div class="small text-muted mt-1 ms-1 mb-2">${escapeHtml(ml.description)}</div>`;
-                        }
-                    });
-                    html += `</div>`;
-                }
-
                 html += `</div>`;
                 recContent.innerHTML = html;
+            } else if (result && result.status === 'awaiting') {
+                recCard.style.display = 'block';
+                recContent.innerHTML = `<div class="alert alert-info mb-0">
+                    <i class="ri-information-line me-2"></i>
+                    <strong>No Promotion Rules Configured</strong><br>
+                    Please configure promotion rules in the <a href="{{ route('promotion-settings.index') }}" class="alert-link">Promotion Settings</a>
+                    to enable automatic recommendations.
+                </div>`;
             }
 
             // ── All subjects table ───────────────────────────────────────────
@@ -1069,10 +1067,11 @@ async function openPromotionModal(
                         <tbody>`;
 
                 allSubjects.forEach(subject => {
-                    const isCompulsory  = subject.is_compulsory;
-                    const minGrade      = subject.min_grade;
+                    const isCompulsory  = subject.is_compulsory || compulsoryData.some(c => c.subject_id == subject.subject_id);
+                    const minGrade      = subject.min_grade || (isCompulsory ? 'C' : null);
                     const studentGrade  = subject.grade;
 
+                    // Determine if the grade is a pass/fail for compulsory subjects
                     let statusBadge, rowClass;
                     if (isCompulsory) {
                         if (!studentGrade) {
@@ -1092,7 +1091,7 @@ async function openPromotionModal(
 
                     html += `<tr class="${rowClass}">
                         <td>
-                            <strong>${escapeHtml(subject.subject_name)}</strong>
+                            <strong>${escapeHtml(subject.subject_name || subject.subject)}</strong>
                             ${isCompulsory ? '<span class="badge-compulsory ms-2">Compulsory</span>' : ''}
                         </td>
                         <td>${escapeHtml(subject.subject_code) || '—'}</td>
@@ -1103,16 +1102,17 @@ async function openPromotionModal(
                     </tr>`;
                 });
 
-                html += `</tbody></table></div>`;
+                html += `</tbody>
+                    </table>
+                </div>`;
                 document.getElementById('allSubjectsContent').innerHTML = html;
             }
 
             // ── Compulsory subjects summary ──────────────────────────────────
-            const compSubjects = response.data.compulsory_subjects;
-            if (compSubjects && compSubjects.length > 0) {
-                const passCount   = compSubjects.filter(s => s.pass_status === 'pass').length;
-                const failCount   = compSubjects.filter(s => s.pass_status === 'fail').length;
-                const notSatCount = compSubjects.filter(s => s.pass_status === 'not_sat').length;
+            if (compulsoryData && compulsoryData.length > 0) {
+                const passCount   = compulsoryData.filter(s => s.pass_status === 'pass').length;
+                const failCount   = compulsoryData.filter(s => s.pass_status === 'fail').length;
+                const notSatCount = compulsoryData.filter(s => s.pass_status === 'not_sat').length;
 
                 let html = `<div class="d-flex gap-2 mb-3 flex-wrap">
                     <span class="badge bg-success" style="font-size:13px;padding:6px 12px">
@@ -1127,6 +1127,26 @@ async function openPromotionModal(
                     </span>`;
                 }
                 html += `</div>`;
+
+                // Add detailed table for compulsory subjects
+                html += `<div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>Subject</th><th>Grade</th><th>Required</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>`;
+                compulsoryData.forEach(cs => {
+                    const statusClass = cs.pass_status === 'pass' ? 'success' : (cs.pass_status === 'fail' ? 'danger' : 'secondary');
+                    const statusIcon = cs.pass_status === 'pass' ? '✓' : (cs.pass_status === 'fail' ? '✗' : '○');
+                    html += `<tr>
+                        <td>${escapeHtml(cs.subject)}</td>
+                        <td><strong>${cs.student_grade || 'Not Sat'}</strong></td>
+                        <td>${cs.min_grade || '—'}</td>
+                        <td><span class="badge bg-${statusClass}">${statusIcon} ${cs.pass_status}</span></td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+
                 document.getElementById('compulsoryContent').innerHTML = html;
                 document.getElementById('compulsoryCard').style.display = 'block';
             }
@@ -1142,10 +1162,17 @@ async function openPromotionModal(
 
 function gradePassFail(studentGrade, minGrade) {
     if (!studentGrade) return false;
+
+    // Grade order mapping
     const gradeOrder = {
-        'F9':0,'E8':1,'D7':2,'C6':3,'C5':4,'C4':5,'B3':6,'B2':7,'A1':8,
-        'F':0,'D':2,'C':5,'B':7,'A':8,
+        'A1': 8, 'A': 4,
+        'B2': 7, 'B3': 6, 'B': 3,
+        'C4': 5, 'C5': 4, 'C6': 3, 'C': 2,
+        'D7': 2, 'D': 1,
+        'E8': 1,
+        'F9': 0, 'F': 0,
     };
+
     const sg = studentGrade.toString().toUpperCase().trim();
     if (minGrade) {
         const mg = minGrade.toString().toUpperCase().trim();
