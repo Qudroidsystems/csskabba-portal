@@ -134,10 +134,14 @@
 .principal-card:hover { border-color: #0dcaf0 !important; box-shadow: 0 0 0 0.2rem rgba(13,202,240,.1); }
 .repeat-card:hover    { border-color: #dc3545 !important; box-shadow: 0 0 0 0.2rem rgba(220,53,69,.1); }
 
-#promotionCheckbox:checked   ~ label .promotion-card { border-color: #198754 !important; background-color: #d1e7dd !important; }
-#trialCheckbox:checked        ~ label .trial-card     { border-color: #ffc107 !important; background-color: #fff3cd !important; }
-#seePrincipalCheckbox:checked ~ label .principal-card { border-color: #0dcaf0 !important; background-color: #cff4fc !important; }
-#repeatCheckbox:checked       ~ label .repeat-card    { border-color: #dc3545 !important; background-color: #f8d7da !important; }
+#promotionCheckbox:checked ~ label .promotion-card,
+input[name="promotion"]:checked ~ label .promotion-card { border-color: #198754 !important; background-color: #d1e7dd !important; }
+#trialCheckbox:checked ~ label .trial-card,
+input[name="trial"]:checked ~ label .trial-card { border-color: #ffc107 !important; background-color: #fff3cd !important; }
+#seePrincipalCheckbox:checked ~ label .principal-card,
+input[name="see_principal"]:checked ~ label .principal-card { border-color: #0dcaf0 !important; background-color: #cff4fc !important; }
+#repeatCheckbox:checked ~ label .repeat-card,
+input[name="repeat"]:checked ~ label .repeat-card { border-color: #dc3545 !important; background-color: #f8d7da !important; }
 
 .animate-bounce { animation: bounce 2s infinite; }
 @keyframes bounce {
@@ -208,10 +212,10 @@
     font-size: 11px; font-weight: 500;
     display: inline-flex; align-items: center; gap: 4px;
 }
-.subject-pass td:first-child     { border-left: 3px solid #10b981; }
-.subject-fail td:first-child     { border-left: 3px solid #ef4444; }
-.subject-not-sat td:first-child  { border-left: 3px solid #f59e0b; }
-.table-hover tbody tr:hover      { background-color: rgba(0,0,0,.02); }
+.subject-pass td:first-child { border-left: 3px solid #10b981; }
+.subject-fail td:first-child { border-left: 3px solid #ef4444; }
+.subject-not-sat td:first-child { border-left: 3px solid #f59e0b; }
+.table-hover tbody tr:hover { background-color: rgba(0,0,0,.02); }
 .rule-link { transition: all 0.2s ease; }
 .rule-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
 .badge-compulsory {
@@ -485,7 +489,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center gap-2 mb-3">
                                 <i class="ri-book-open-line fs-4 text-primary"></i>
-                                <h6 class="mb-0 fw-bold">All Subjects Performance</h6>
+                                <h6 class="mb-0 fw-bold">All Subjects Performance ({{ $totalSubjects ?? 0 }} Subjects)</h6>
                             </div>
                             <div id="allSubjectsContent"></div>
                         </div>
@@ -544,7 +548,7 @@
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <div class="form-check form-check-card">
-                                        <input class="form-check-input" type="checkbox" name="promotion" id="promotionCheckbox">
+                                        <input class="form-check-input" type="checkbox" name="promotion" id="promotionCheckbox" value="promoted">
                                         <label class="form-check-label w-100" for="promotionCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer promotion-card">
                                                 <div class="flex-shrink-0">
@@ -564,7 +568,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-check form-check-card">
-                                        <input class="form-check-input" type="checkbox" name="trial" id="trialCheckbox">
+                                        <input class="form-check-input" type="checkbox" name="trial" id="trialCheckbox" value="trial">
                                         <label class="form-check-label w-100" for="trialCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer trial-card">
                                                 <div class="flex-shrink-0">
@@ -584,7 +588,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-check form-check-card">
-                                        <input class="form-check-input" type="checkbox" name="see_principal" id="seePrincipalCheckbox">
+                                        <input class="form-check-input" type="checkbox" name="see_principal" id="seePrincipalCheckbox" value="see_principal">
                                         <label class="form-check-label w-100" for="seePrincipalCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer principal-card">
                                                 <div class="flex-shrink-0">
@@ -604,7 +608,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-check form-check-card">
-                                        <input class="form-check-input" type="checkbox" name="repeat" id="repeatCheckbox">
+                                        <input class="form-check-input" type="checkbox" name="repeat" id="repeatCheckbox" value="repeat">
                                         <label class="form-check-label w-100" for="repeatCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer repeat-card">
                                                 <div class="flex-shrink-0">
@@ -703,22 +707,31 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-let currentStudentId     = null;
+let currentStudentId = null;
 let currentSchoolclassId = null;
-let currentSessionId     = null;
-let currentTermId        = null;
-let currentStudentData   = null;
+let currentSessionId = null;
+let currentTermId = null;
+let currentStudentData = null;
+
+// Grade order mapping for comparisons
+const gradeOrder = {
+    'A1': 8, 'A': 4,
+    'B2': 7, 'B3': 6, 'B': 3,
+    'C4': 5, 'C5': 4, 'C6': 3, 'C': 2,
+    'D7': 2, 'D': 1,
+    'E8': 1,
+    'F9': 0, 'F': 0,
+};
 
 // ── Filter & load ──────────────────────────────────────────────────────────────
 function filterData() {
-    const classValue   = document.getElementById("idclass").value;
+    const classValue = document.getElementById("idclass").value;
     const sessionValue = document.getElementById("idsession").value;
-    const termValue    = document.getElementById("idterm").value;
-    const searchValue  = document.getElementById("searchInput").value.trim();
+    const termValue = document.getElementById("idterm").value;
+    const searchValue = document.getElementById("searchInput").value.trim();
 
     if (classValue === 'ALL' || sessionValue === 'ALL') {
-        document.getElementById('studentTableBody').innerHTML =
-            '<tr><td colspan="10" class="text-center">Select class and session to view students.</td></tr>';
+        document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="10" class="text-center">Select class and session to view students.</td></tr>';
         document.getElementById('pagination-container').innerHTML = '';
         document.getElementById('studentcount').innerText = '0';
         updateStats();
@@ -739,25 +752,26 @@ function filterData() {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'X-Requested-With': 'XMLHttpRequest'
         }
-    }).then(function (response) {
-        document.getElementById('studentTableBody').innerHTML  = response.data.tableBody;
+    }).then(function(response) {
+        document.getElementById('studentTableBody').innerHTML = response.data.tableBody;
         document.getElementById('pagination-container').innerHTML = response.data.pagination;
-        document.getElementById('studentcount').innerText      = response.data.studentCount || '0';
+        document.getElementById('studentcount').innerText = response.data.studentCount || '0';
         updateStats();
         setupPaginationLinks();
         setupCheckboxHandlers();
-    }).catch(function (error) {
+    }).catch(function(error) {
         console.error('AJAX Error:', error);
         tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
-        Swal.fire({ icon: "error", title: "Error",
-            text: error.response?.data?.message || "Failed to fetch student data." });
+        Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch student data." });
     });
 }
 
-// ── Stats ────────────────────────────────────────────────────────────────
 function updateStats() {
     const rows = document.querySelectorAll('#studentTableBody tr');
-    let total = 0, promoted = 0, trial = 0, repeat = 0;
+    let total = 0,
+        promoted = 0,
+        trial = 0,
+        repeat = 0;
 
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
@@ -783,15 +797,14 @@ function updateStats() {
     document.getElementById('repeatCount').innerText = repeat;
 }
 
-// ── Pagination ─────────────────────────────────────────────────────────────────
 function setupPaginationLinks() {
     document.querySelectorAll('#pagination-container a').forEach(link => {
-        link.addEventListener('click', function (e) {
+        link.addEventListener('click', function(e) {
             e.preventDefault();
             const url = new URL(this.href);
             url.searchParams.set('schoolclassid', document.getElementById("idclass").value);
-            url.searchParams.set('sessionid',     document.getElementById("idsession").value);
-            url.searchParams.set('termid',        document.getElementById("idterm").value);
+            url.searchParams.set('sessionid', document.getElementById("idsession").value);
+            url.searchParams.set('termid', document.getElementById("idterm").value);
             loadPage(url.toString());
         });
     });
@@ -806,25 +819,26 @@ function loadPage(url) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'X-Requested-With': 'XMLHttpRequest'
         }
-    }).then(function (response) {
-        document.getElementById('studentTableBody').innerHTML      = response.data.tableBody;
-        document.getElementById('pagination-container').innerHTML  = response.data.pagination;
-        document.getElementById('studentcount').innerText          = response.data.studentCount || '0';
+    }).then(function(response) {
+        document.getElementById('studentTableBody').innerHTML = response.data.tableBody;
+        document.getElementById('pagination-container').innerHTML = response.data.pagination;
+        document.getElementById('studentcount').innerText = response.data.studentCount || '0';
         updateStats();
         setupPaginationLinks();
         setupCheckboxHandlers();
-    }).catch(function (error) {
+    }).catch(function(error) {
         console.error('Page load error:', error);
         tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data.</td></tr>';
     });
 }
 
-// ── Checkbox / bulk ────────────────────────────────────────────────────────────
 function setupCheckboxHandlers() {
     const selectAll = document.getElementById('selectAll');
     if (selectAll) {
-        selectAll.addEventListener('change', function () {
-            document.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = this.checked; });
+        selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.checked = this.checked;
+            });
             updateBulkBar();
         });
     }
@@ -834,7 +848,7 @@ function setupCheckboxHandlers() {
 }
 
 function updateBulkBar() {
-    const count   = document.querySelectorAll('.row-checkbox:checked').length;
+    const count = document.querySelectorAll('.row-checkbox:checked').length;
     const bulkBar = document.getElementById('bulkActionBar');
     if (count > 0) {
         bulkBar.classList.add('visible');
@@ -851,21 +865,20 @@ function clearSelection() {
 }
 
 document.getElementById('clearSelectionBtn')?.addEventListener('click', clearSelection);
-
 document.getElementById('bulkPromoteActionBtn')?.addEventListener('click', () => {
     const selected = document.querySelectorAll('.row-checkbox:checked');
     document.getElementById('bulkSelectedCount').innerText = selected.length;
     new bootstrap.Modal(document.getElementById('bulkPromotionModal')).show();
 });
 
-document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', async () => {
+document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', async() => {
     const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
     if (!selectedIds.length) return;
 
     const promotionType = document.getElementById('bulkPromotionType').value;
-    const newClass      = document.getElementById('bulkNewClass').value;
-    const newSession    = document.getElementById('bulkNewSession').value;
-    const newTerm       = document.getElementById('bulkNewTerm').value;
+    const newClass = document.getElementById('bulkNewClass').value;
+    const newSession = document.getElementById('bulkNewSession').value;
+    const newTerm = document.getElementById('bulkNewTerm').value;
 
     if (!newClass || !newSession) {
         Swal.fire('Error', 'Please select new class and session', 'error');
@@ -876,17 +889,16 @@ document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', asyn
 
     try {
         const response = await axios.post('{{ route("promotions.bulk.promote") }}', {
-            student_ids:       selectedIds,
+            student_ids: selectedIds,
             new_schoolclassid: newClass,
-            new_sessionid:     newSession,
-            new_termid:        newTerm,
-            promotion_type:    promotionType,
+            new_sessionid: newSession,
+            new_termid: newTerm,
+            promotion_type: promotionType,
             _token: document.querySelector('meta[name="csrf-token"]').content
         });
 
         if (response.data.success) {
-            Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message,
-                timer: 2000, showConfirmButton: false }).then(() => location.reload());
+            Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message, timer: 2000, showConfirmButton: false }).then(() => location.reload());
         } else {
             Swal.fire('Error', response.data.message, 'error');
         }
@@ -895,72 +907,75 @@ document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', asyn
     }
 });
 
-// ── Open promotion modal ───────────────────────────────────────────────────────
-async function openPromotionModal(
-    studentId, admissionNo, firstName, lastName, otherName,
-    picture, gender, schoolclass, schoolarm, session, termid
-) {
-    currentStudentId     = studentId;
-    currentSchoolclassId = document.getElementById("idclass").value;
-    currentSessionId     = document.getElementById("idsession").value;
-    currentTermId        = termid || document.getElementById("idterm").value;
+function gradePassFail(studentGrade, minGrade) {
+    if (!studentGrade) return false;
+    const sg = studentGrade.toString().toUpperCase().trim();
+    if (minGrade) {
+        const mg = minGrade.toString().toUpperCase().trim();
+        return (gradeOrder[sg] ?? -1) >= (gradeOrder[mg] ?? 0);
+    }
+    return !['F', 'F9'].includes(sg);
+}
 
-    document.getElementById('modalStudentName').innerHTML =
-        `<i class="ri-id-card-line me-2"></i>${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
-    document.getElementById('modalStudentGender').innerHTML =
-        `<i class="ri-gender-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i>${gender || 'N/A'}`;
-    document.getElementById('modalCurrentClass').innerText   = schoolclass;
-    document.getElementById('modalCurrentArm').innerText     = schoolarm || 'N/A';
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Open promotion modal ───────────────────────────────────────────────────────
+async function openPromotionModal(studentId, admissionNo, firstName, lastName, otherName, picture, gender, schoolclass, schoolarm, session, termid) {
+    currentStudentId = studentId;
+    currentSchoolclassId = document.getElementById("idclass").value;
+    currentSessionId = document.getElementById("idsession").value;
+    currentTermId = termid || document.getElementById("idterm").value;
+
+    document.getElementById('modalStudentName').innerHTML = `<i class="ri-id-card-line me-2"></i>${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
+    document.getElementById('modalStudentGender').innerHTML = `<i class="ri-gender-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i>${gender || 'N/A'}`;
+    document.getElementById('modalCurrentClass').innerText = schoolclass;
+    document.getElementById('modalCurrentArm').innerText = schoolarm || 'N/A';
     document.getElementById('modalCurrentSession').innerText = session;
 
     const imgEl = document.getElementById('modalStudentImage');
     if (picture && picture !== 'null' && picture !== '') {
-        imgEl.src = `/storage/${picture}`;
+        imgEl.src = picture.startsWith('/storage/') ? picture : '/storage/' + picture;
     } else {
-        imgEl.src = gender === 'Male'
-            ? '/storage/student_avatars/male-default.png'
-            : '/storage/student_avatars/female-default.png';
+        imgEl.src = gender === 'Male' ? '/storage/student_avatars/male-default.png' : '/storage/student_avatars/female-default.png';
     }
-    imgEl.onerror = function () { this.src = '/storage/student_avatars/unnamed.jpg'; };
+    imgEl.onerror = function() { this.src = '/storage/student_avatars/unnamed.jpg'; };
 
     // Reset form
     document.getElementById('promotionForm').reset();
-    ['newClassSelect','newSessionSelect','newTermSelect'].forEach(id => {
+    ['newClassSelect', 'newSessionSelect', 'newTermSelect'].forEach(id => {
         document.getElementById(id).value = '';
     });
-    ['promotionCheckbox','trialCheckbox','seePrincipalCheckbox','repeatCheckbox'].forEach(id => {
+    ['promotionCheckbox', 'trialCheckbox', 'seePrincipalCheckbox', 'repeatCheckbox'].forEach(id => {
         document.getElementById(id).checked = false;
     });
-    document.getElementById('recommendationCard').style.display  = 'none';
-    document.getElementById('compulsoryCard').style.display      = 'none';
-    document.getElementById('allSubjectsCard').style.display     = 'none';
+    document.getElementById('recommendationCard').style.display = 'none';
+    document.getElementById('compulsoryCard').style.display = 'none';
+    document.getElementById('allSubjectsCard').style.display = 'none';
 
-    Swal.fire({ title: 'Loading student data...', allowOutsideClick: false,
-        didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: 'Loading student data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const response = await axios.get(
-            `/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`
-        );
+        const response = await axios.get(`/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`);
         Swal.close();
 
         if (response.data.success) {
             currentStudentData = response.data;
-            const result      = response.data.promotion_result;
-            const avg         = response.data.overall_average;
-            const allSubjects = response.data.all_subjects || response.data.scores || [];
+            const result = response.data.promotion_result;
+            const avg = response.data.overall_average;
+            const allSubjects = response.data.all_subjects || [];
             const compulsoryData = response.data.compulsory_subjects || [];
 
             // Overall average display
-            const avgEl    = document.getElementById('modalOverallAverage');
+            const avgEl = document.getElementById('modalOverallAverage');
             const avgValue = avg !== null ? `${avg}%` : 'N/A';
-            const avgColor = avg !== null
-                ? (avg >= 50 ? 'text-success' : (avg >= 40 ? 'text-warning' : 'text-danger'))
-                : 'text-muted';
+            const avgColor = avg !== null ? (avg >= 50 ? 'text-success' : (avg >= 40 ? 'text-warning' : 'text-danger')) : 'text-muted';
             avgEl.innerHTML = `<span class="${avgColor} fs-5">${avgValue}</span>`;
 
             // ── Recommendation card ──────────────────────────────────────────
-            const recCard    = document.getElementById('recommendationCard');
+            const recCard = document.getElementById('recommendationCard');
             const recContent = document.getElementById('recommendationContent');
 
             if (result && result.status !== 'awaiting') {
@@ -974,14 +989,14 @@ async function openPromotionModal(
                             <div class="label text-muted mb-2">System Recommendation</div>
                             <div class="value">
                                 <span class="status-badge-lg ${
-                                    result.status === 'promoted'      ? 'bg-success' :
-                                    result.status === 'trial'         ? 'bg-warning' :
-                                    result.status === 'see_principal' ? 'bg-info'    : 'bg-danger'
+                                    result.status === 'promoted' ? 'bg-success' :
+                                    result.status === 'trial' ? 'bg-warning' :
+                                    result.status === 'see_principal' ? 'bg-info' : 'bg-danger'
                                 } text-white">
                                     <i class="${
-                                        result.status === 'promoted'      ? 'ri-checkbox-circle-line' :
-                                        result.status === 'trial'         ? 'ri-time-line'             :
-                                        result.status === 'see_principal' ? 'ri-eye-line'              : 'ri-repeat-line'
+                                        result.status === 'promoted' ? 'ri-checkbox-circle-line' :
+                                        result.status === 'trial' ? 'ri-time-line' :
+                                        result.status === 'see_principal' ? 'ri-eye-line' : 'ri-repeat-line'
                                     } me-2"></i>
                                     ${statusLabel}
                                 </span>
@@ -1000,7 +1015,6 @@ async function openPromotionModal(
                 html += `</div>`;
 
                 if (result.applied_rule) {
-                    const ruleUrl = `/promotion-settings?highlight=${result.settings_id}`;
                     html += `<div class="mt-3 pt-3 border-top">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <div>
@@ -1008,13 +1022,8 @@ async function openPromotionModal(
                                 <strong>Applied Rule:</strong>
                                 <span class="badge bg-primary ms-2">${escapeHtml(result.applied_rule.name)}</span>
                             </div>
-                            <a href="${ruleUrl}" target="_blank" class="btn btn-sm btn-outline-primary rule-link">
-                                <i class="ri-settings-4-line me-1"></i>View Rule Settings
-                            </a>
                         </div>
-                        ${result.applied_rule.description
-                            ? `<div class="small text-muted mt-2">${escapeHtml(result.applied_rule.description)}</div>`
-                            : ''}
+                        ${result.applied_rule.description ? `<div class="small text-muted mt-2">${escapeHtml(result.applied_rule.description)}</div>` : ''}
                     </div>`;
                 }
 
@@ -1039,17 +1048,9 @@ async function openPromotionModal(
 
                 html += `</div>`;
                 recContent.innerHTML = html;
-            } else if (result && result.status === 'awaiting') {
-                recCard.style.display = 'block';
-                recContent.innerHTML = `<div class="alert alert-info mb-0">
-                    <i class="ri-information-line me-2"></i>
-                    <strong>No Promotion Rules Configured</strong><br>
-                    Please configure promotion rules in the <a href="{{ route('promotion-settings.index') }}" class="alert-link">Promotion Settings</a>
-                    to enable automatic recommendations.
-                </div>`;
             }
 
-            // ── All subjects table ───────────────────────────────────────────
+            // ── ALL SUBJECTS TABLE (Complete list) ──────────────────────────
             if (allSubjects && allSubjects.length > 0) {
                 document.getElementById('allSubjectsCard').style.display = 'block';
                 let html = `<div class="table-responsive">
@@ -1067,51 +1068,81 @@ async function openPromotionModal(
                         <tbody>`;
 
                 allSubjects.forEach(subject => {
-                    const isCompulsory  = subject.is_compulsory || compulsoryData.some(c => c.subject_id == subject.subject_id);
-                    const minGrade      = subject.min_grade || (isCompulsory ? 'C' : null);
-                    const studentGrade  = subject.grade;
+                    const isCompulsory = subject.is_compulsory || false;
+                    const minGrade = subject.min_grade || (isCompulsory ? 'C' : null);
+                    const studentGrade = subject.grade;
+                    const total = subject.total;
 
-                    // Determine if the grade is a pass/fail for compulsory subjects
                     let statusBadge, rowClass;
                     if (isCompulsory) {
                         if (!studentGrade) {
                             statusBadge = `<span class="badge bg-secondary"><i class="ri-minus-line me-1"></i>Not Sat</span>`;
-                            rowClass    = 'subject-not-sat';
+                            rowClass = 'subject-not-sat';
                         } else if (gradePassFail(studentGrade, minGrade)) {
                             statusBadge = `<span class="badge bg-success"><i class="ri-checkbox-circle-line me-1"></i>Pass</span>`;
-                            rowClass    = 'subject-pass';
+                            rowClass = 'subject-pass';
                         } else {
                             statusBadge = `<span class="badge bg-danger"><i class="ri-close-circle-line me-1"></i>Fail</span>`;
-                            rowClass    = 'subject-fail';
+                            rowClass = 'subject-fail';
                         }
                     } else {
-                        statusBadge = `<span class="badge bg-info"><i class="ri-information-line me-1"></i>Optional</span>`;
-                        rowClass    = '';
+                        statusBadge = studentGrade ?
+                            `<span class="badge bg-info"><i class="ri-information-line me-1"></i>${studentGrade}</span>` :
+                            `<span class="badge bg-secondary"><i class="ri-minus-line me-1"></i>No Grade</span>`;
+                        rowClass = '';
                     }
 
                     html += `<tr class="${rowClass}">
                         <td>
-                            <strong>${escapeHtml(subject.subject_name || subject.subject)}</strong>
+                            <strong>${escapeHtml(subject.subject_name)}</strong>
                             ${isCompulsory ? '<span class="badge-compulsory ms-2">Compulsory</span>' : ''}
-                        </td>
-                        <td>${escapeHtml(subject.subject_code) || '—'}</td>
-                        <td class="text-center"><strong>${subject.total !== null ? subject.total : '—'}</strong></td>
-                        <td class="text-center"><strong>${studentGrade || '—'}</strong></td>
-                        <td class="text-center">${isCompulsory ? (minGrade || '—') : '—'}</td>
-                        <td class="text-center">${statusBadge}</td>
-                    </tr>`;
+                         </div>
+                        <td>${escapeHtml(subject.subject_code) || '—'}</div>
+                        <td class="text-center"><strong>${total !== null && total !== undefined ? total : '—'}</strong></div>
+                        <td class="text-center"><strong>${studentGrade || '—'}</strong></div>
+                        <td class="text-center">${isCompulsory ? (minGrade || '—') : '—'}</div>
+                        <td class="text-center">${statusBadge}</div>
+                     </tr>`;
                 });
 
                 html += `</tbody>
                     </table>
                 </div>`;
+
+                // Add summary statistics
+                const totalSubjects = allSubjects.length;
+                const compulsorySubjects = allSubjects.filter(s => s.is_compulsory).length;
+                const passedCompulsory = allSubjects.filter(s => s.is_compulsory && (s.pass_status === 'pass' || gradePassFail(s.grade, s.min_grade))).length;
+                const subjectsWithGrades = allSubjects.filter(s => s.grade).length;
+
+                html += `<div class="mt-3 p-3 bg-light rounded">
+                    <div class="row text-center">
+                        <div class="col-3">
+                            <div class="small text-muted">Total Subjects</div>
+                            <div class="h5 mb-0">${totalSubjects}</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small text-muted">Compulsory Subjects</div>
+                            <div class="h5 mb-0">${compulsorySubjects}</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small text-muted">Passed Compulsory</div>
+                            <div class="h5 mb-0 text-success">${passedCompulsory}/${compulsorySubjects}</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small text-muted">Subjects with Grades</div>
+                            <div class="h5 mb-0">${subjectsWithGrades}/${totalSubjects}</div>
+                        </div>
+                    </div>
+                </div>`;
+
                 document.getElementById('allSubjectsContent').innerHTML = html;
             }
 
             // ── Compulsory subjects summary ──────────────────────────────────
             if (compulsoryData && compulsoryData.length > 0) {
-                const passCount   = compulsoryData.filter(s => s.pass_status === 'pass').length;
-                const failCount   = compulsoryData.filter(s => s.pass_status === 'fail').length;
+                const passCount = compulsoryData.filter(s => s.pass_status === 'pass').length;
+                const failCount = compulsoryData.filter(s => s.pass_status === 'fail').length;
                 const notSatCount = compulsoryData.filter(s => s.pass_status === 'not_sat').length;
 
                 let html = `<div class="d-flex gap-2 mb-3 flex-wrap">
@@ -1128,7 +1159,6 @@ async function openPromotionModal(
                 }
                 html += `</div>`;
 
-                // Add detailed table for compulsory subjects
                 html += `<div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -1143,7 +1173,7 @@ async function openPromotionModal(
                         <td><strong>${cs.student_grade || 'Not Sat'}</strong></td>
                         <td>${cs.min_grade || '—'}</td>
                         <td><span class="badge bg-${statusClass}">${statusIcon} ${cs.pass_status}</span></td>
-                    </tr>`;
+                     </tr>`;
                 });
                 html += `</tbody></table></div>`;
 
@@ -1154,40 +1184,23 @@ async function openPromotionModal(
     } catch (error) {
         Swal.close();
         console.error('Error fetching student details:', error);
-        Swal.fire('Error', 'Failed to load student details', 'error');
+        Swal.fire('Error', 'Failed to load student details: ' + (error.response?.data?.message || error.message), 'error');
     }
 
     new bootstrap.Modal(document.getElementById('promotionModal')).show();
-}
-
-function gradePassFail(studentGrade, minGrade) {
-    if (!studentGrade) return false;
-
-    // Grade order mapping
-    const gradeOrder = {
-        'A1': 8, 'A': 4,
-        'B2': 7, 'B3': 6, 'B': 3,
-        'C4': 5, 'C5': 4, 'C6': 3, 'C': 2,
-        'D7': 2, 'D': 1,
-        'E8': 1,
-        'F9': 0, 'F': 0,
-    };
-
-    const sg = studentGrade.toString().toUpperCase().trim();
-    if (minGrade) {
-        const mg = minGrade.toString().toUpperCase().trim();
-        return (gradeOrder[sg] ?? -1) >= (gradeOrder[mg] ?? 0);
-    }
-    return !['F','F9'].includes(sg);
 }
 
 // ── Remove student ─────────────────────────────────────────────────────────────
 function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo, firstName, lastName) {
     const fullName = `${admissionNo} - ${firstName} ${lastName}`;
     Swal.fire({
-        title: 'Confirm Removal', text: `Remove ${fullName} from this class?`,
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, Remove', cancelButtonText: 'Cancel'
+        title: 'Confirm Removal',
+        text: `Remove ${fullName} from this class?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Remove',
+        cancelButtonText: 'Cancel'
     }).then((result) => {
         if (!result.isConfirmed) return;
         Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -1205,8 +1218,7 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
             }
         }).then(response => {
             if (response.data.success) {
-                Swal.fire({ icon: 'success', title: 'Removed!', text: response.data.message,
-                    timer: 2000, showConfirmButton: false });
+                Swal.fire({ icon: 'success', title: 'Removed!', text: response.data.message, timer: 2000, showConfirmButton: false });
                 filterData();
             } else {
                 Swal.fire('Error!', response.data.message || 'Failed to remove.', 'error');
@@ -1219,22 +1231,34 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
 
 // ── Submit promotion ───────────────────────────────────────────────────────────
 function submitPromotion() {
-    if (!currentStudentId) { Swal.fire('Error!', 'Student ID not found.', 'error'); return; }
+    if (!currentStudentId) {
+        Swal.fire('Error!', 'Student ID not found.', 'error');
+        return;
+    }
 
-    const newClassSelect       = document.getElementById('newClassSelect');
-    const newSessionSelect     = document.getElementById('newSessionSelect');
-    const newTermSelect        = document.getElementById('newTermSelect');
-    const promotionCheckbox    = document.getElementById('promotionCheckbox');
-    const trialCheckbox        = document.getElementById('trialCheckbox');
+    const newClassSelect = document.getElementById('newClassSelect');
+    const newSessionSelect = document.getElementById('newSessionSelect');
+    const newTermSelect = document.getElementById('newTermSelect');
+
+    if (!newClassSelect.value) {
+        Swal.fire('Error!', 'Please select a new class.', 'error');
+        return;
+    }
+    if (!newSessionSelect.value) {
+        Swal.fire('Error!', 'Please select a new session.', 'error');
+        return;
+    }
+    if (!newTermSelect.value) {
+        Swal.fire('Error!', 'Please select a new term.', 'error');
+        return;
+    }
+
+    const promotionCheckbox = document.getElementById('promotionCheckbox');
+    const trialCheckbox = document.getElementById('trialCheckbox');
     const seePrincipalCheckbox = document.getElementById('seePrincipalCheckbox');
-    const repeatCheckbox       = document.getElementById('repeatCheckbox');
+    const repeatCheckbox = document.getElementById('repeatCheckbox');
 
-    if (!newClassSelect.value)   { Swal.fire('Error!', 'Please select a new class.',   'error'); return; }
-    if (!newSessionSelect.value) { Swal.fire('Error!', 'Please select a new session.', 'error'); return; }
-    if (!newTermSelect.value)    { Swal.fire('Error!', 'Please select a new term.',    'error'); return; }
-
-    const selectedCount = [promotionCheckbox, trialCheckbox, seePrincipalCheckbox, repeatCheckbox]
-        .filter(cb => cb.checked).length;
+    const selectedCount = [promotionCheckbox, trialCheckbox, seePrincipalCheckbox, repeatCheckbox].filter(cb => cb.checked).length;
     if (selectedCount !== 1) {
         Swal.fire('Error!', 'Please select exactly one promotion decision.', 'error');
         return;
@@ -1243,28 +1267,32 @@ function submitPromotion() {
     const fd = new FormData();
     fd.append('_method', 'PUT');
     fd.append('new_schoolclassid', newClassSelect.value);
-    fd.append('new_sessionid',     newSessionSelect.value);
-    fd.append('new_termid',        newTermSelect.value);
-    fd.append('promotion',    promotionCheckbox.checked    ? '1' : '0');
-    fd.append('trial',        trialCheckbox.checked        ? '1' : '0');
-    fd.append('see_principal',seePrincipalCheckbox.checked ? '1' : '0');
-    fd.append('repeat',       repeatCheckbox.checked       ? '1' : '0');
+    fd.append('new_sessionid', newSessionSelect.value);
+    fd.append('new_termid', newTermSelect.value);
+    fd.append('promotion', promotionCheckbox.checked ? '1' : '0');
+    fd.append('trial', trialCheckbox.checked ? '1' : '0');
+    fd.append('see_principal', seePrincipalCheckbox.checked ? '1' : '0');
+    fd.append('repeat', repeatCheckbox.checked ? '1' : '0');
 
     Swal.fire({
-        title: 'Confirm Update', text: "Update this student's promotion?",
-        icon: 'question', showCancelButton: true,
-        confirmButtonText: 'Yes, Update', cancelButtonText: 'Cancel'
+        title: 'Confirm Update',
+        text: "Update this student's promotion?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Update',
+        cancelButtonText: 'Cancel'
     }).then((result) => {
         if (!result.isConfirmed) return;
         Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         axios.post(`/promotions/${currentStudentId}`, fd, {
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
         }).then(response => {
             if (response.data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('promotionModal')).hide();
-                Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message,
-                    timer: 2000, showConfirmButton: false });
+                Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message, timer: 2000, showConfirmButton: false });
                 filterData();
             } else {
                 Swal.fire('Error!', response.data.message || 'Failed to update.', 'error');
@@ -1275,18 +1303,13 @@ function submitPromotion() {
     });
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("idclass").addEventListener("change",   filterData);
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("idclass").addEventListener("change", filterData);
     document.getElementById("idsession").addEventListener("change", filterData);
-    document.getElementById("idterm").addEventListener("change",    filterData);
+    document.getElementById("idterm").addEventListener("change", filterData);
 
     let searchTimeout;
-    document.getElementById("searchInput").addEventListener("input", function () {
+    document.getElementById("searchInput").addEventListener("input", function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(filterData, 500);
     });
