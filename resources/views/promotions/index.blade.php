@@ -1141,10 +1141,31 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 const failCount      = compulsoryList.filter(s => s.pass_status === 'fail').length;
                 const notSatCount    = compulsoryList.filter(s => s.pass_status === 'not_sat').length;
 
+                // Derive optional pass/fail client-side (handles both new and legacy backend)
+                const failGradeSet = new Set(['F', 'F9', 'E8']);
+                const optPassCount = optionalList.filter(s => {
+                    if (s.pass_status === 'optional_pass') return true;
+                    if (s.pass_status === 'optional_fail' || s.pass_status === 'optional_not_sat') return false;
+                    // Legacy 'optional' — derive from grade
+                    return s.grade && !failGradeSet.has((s.grade).toUpperCase());
+                }).length;
+                const optFailCount = optionalList.filter(s => {
+                    if (s.pass_status === 'optional_fail') return true;
+                    if (s.pass_status === 'optional_pass' || s.pass_status === 'optional_not_sat') return false;
+                    return s.grade && failGradeSet.has((s.grade).toUpperCase());
+                }).length;
+
                 // Summary strip
                 let html = `<div class="subject-summary-strip">
                     <span class="summary-pill pill-total">
                         <i class="ri-book-open-line"></i>${allSubjects.length} Total
+                    </span>`;
+
+                // Compulsory section (rule-bound)
+                if (compulsoryList.length > 0) {
+                    html += `<span style="width:1px;background:#e2e8f0;align-self:stretch;margin:0 2px;display:inline-block;"></span>
+                    <span class="summary-pill" style="background:#f8f0ff;color:#6d28d9;font-size:11px;gap:3px;">
+                        <i class="ri-star-fill" style="font-size:10px;"></i>Compulsory:
                     </span>
                     <span class="summary-pill pill-pass">
                         <i class="ri-checkbox-circle-line"></i>${passCount} Passed
@@ -1152,18 +1173,30 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                     <span class="summary-pill pill-fail">
                         <i class="ri-close-circle-line"></i>${failCount} Failed
                     </span>`;
-                if (notSatCount > 0) {
-                    html += `<span class="summary-pill pill-notsat">
-                        <i class="ri-minus-circle-line"></i>${notSatCount} Not Sat
-                    </span>`;
+                    if (notSatCount > 0) {
+                        html += `<span class="summary-pill pill-notsat">
+                            <i class="ri-minus-circle-line"></i>${notSatCount} Not Sat
+                        </span>`;
+                    }
                 }
+
+                // Optional section (general performance)
                 if (optionalList.length > 0) {
-                    html += `<span class="summary-pill pill-optional">
-                        <i class="ri-information-line"></i>${optionalList.length} Optional
+                    html += `<span style="width:1px;background:#e2e8f0;align-self:stretch;margin:0 2px;display:inline-block;"></span>
+                    <span class="summary-pill" style="background:#e0f2fe;color:#0369a1;font-size:11px;gap:3px;">
+                        <i class="ri-book-line" style="font-size:10px;"></i>Optional:
+                    </span>
+                    <span class="summary-pill" style="background:#f0fdf4;color:#15803d;">
+                        <i class="ri-checkbox-circle-line"></i>${optPassCount} Passed
+                    </span>
+                    <span class="summary-pill" style="background:#fff1f2;color:#be123c;">
+                        <i class="ri-close-circle-line"></i>${optFailCount} Failed
                     </span>`;
                 }
+
                 if (stats.credit_count) {
-                    html += `<span class="summary-pill pill-credit">
+                    html += `<span style="width:1px;background:#e2e8f0;align-self:stretch;margin:0 2px;display:inline-block;"></span>
+                    <span class="summary-pill pill-credit">
                         <i class="ri-medal-line"></i>${stats.credit_count} Credits
                     </span>`;
                 }
@@ -1249,19 +1282,55 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
 
                 // ── Section header: Optional ──
                 if (optionalList.length > 0) {
+                    // Count optional pass/fail for the strip
+                    const optPassCount   = optionalList.filter(s => s.pass_status === 'optional_pass').length;
+                    const optFailCount   = optionalList.filter(s => s.pass_status === 'optional_fail').length;
+                    const optNotSatCount = optionalList.filter(s => s.pass_status === 'optional_not_sat' || (!s.grade && s.total === null)).length;
+
                     html += `<tr class="row-section">
                         <td colspan="7">
                             <i class="ri-book-line text-info me-1"></i>
                             Optional Subjects &nbsp;(${optionalList.length})
+                            <span style="margin-left:10px;font-weight:400;color:#64748b;">
+                                — ${optPassCount} passed &nbsp;·&nbsp; ${optFailCount} failed
+                                ${optNotSatCount > 0 ? ` &nbsp;·&nbsp; ${optNotSatCount} not sat` : ''}
+                            </span>
                         </td>
                     </tr>`;
 
-                    optionalList.forEach((subject, idx) => {
-                        const score = subject.total !== null && subject.total !== undefined ? subject.total : null;
-                        const grade = subject.grade || '—';
-                        const pct   = score !== null ? Math.min(100, Math.round((parseFloat(score) / 100) * 100)) : 0;
+                    // Status config for optional subjects — same shape as compulsory but with softer styling
+                    const optStatusMap = {
+                        optional_pass:    { icon: 'ri-checkbox-circle-line', bg: '#f0fdf4', color: '#15803d', label: 'Passed',   rowClass: 'row-pass'    },
+                        optional_fail:    { icon: 'ri-close-circle-line',    bg: '#fff1f2', color: '#be123c', label: 'Failed',   rowClass: 'row-fail'    },
+                        optional_not_sat: { icon: 'ri-minus-circle-line',    bg: '#fefce8', color: '#92400e', label: 'Not Sat',  rowClass: 'row-notsat'  },
+                        optional:         { icon: 'ri-information-line',     bg: '#f1f5f9', color: '#64748b', label: 'Optional', rowClass: 'row-optional' },
+                    };
 
-                        html += `<tr class="row-optional">
+                    optionalList.forEach((subject, idx) => {
+                        const score    = subject.total !== null && subject.total !== undefined ? subject.total : null;
+                        const grade    = subject.grade || '—';
+                        const pct      = score !== null ? Math.min(100, Math.round((parseFloat(score) / 100) * 100)) : 0;
+
+                        // Resolve status — backend may send 'optional_pass'/'optional_fail'/'optional_not_sat'
+                        // or legacy 'optional'. Derive it client-side if needed.
+                        let resolvedStatus = subject.pass_status;
+                        if (resolvedStatus === 'optional' || !resolvedStatus) {
+                            // Derive from grade if backend didn't compute it
+                            if (score === null && grade === '—') {
+                                resolvedStatus = 'optional_not_sat';
+                            } else {
+                                const failGrades = ['F', 'F9', 'E8'];
+                                resolvedStatus = failGrades.includes((grade).toUpperCase()) ? 'optional_fail' : 'optional_pass';
+                            }
+                        }
+
+                        const sm = optStatusMap[resolvedStatus] || optStatusMap['optional'];
+
+                        // Bar color matches actual performance, not a static grey
+                        const barColor = resolvedStatus === 'optional_pass' ? '#10b981' :
+                                         resolvedStatus === 'optional_fail' ? '#ef4444' : '#f59e0b';
+
+                        html += `<tr class="${sm.rowClass}">
                             <td class="text-muted" style="font-size:11px;">${compulsoryList.length + idx + 1}</td>
                             <td>
                                 <strong>${escapeHtml(subject.subject_name)}</strong>
@@ -1271,18 +1340,18 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                             <td class="text-center">
                                 ${score !== null
                                     ? `<strong>${score}</strong>
-                                       <span class="score-bar-wrap"><span class="score-bar-fill" style="width:${pct}%;background:#94a3b8;"></span></span>`
+                                       <span class="score-bar-wrap"><span class="score-bar-fill" style="width:${pct}%;background:${barColor};"></span></span>`
                                     : `<span class="text-muted small">—</span>`}
                             </td>
                             <td class="text-center">
                                 <strong style="color:${gradeColor(grade)};font-size:15px;">${grade}</strong>
                             </td>
                             <td class="text-center">
-                                <span class="text-muted small">Not evaluated</span>
+                                <span class="text-muted small" style="font-size:11px;">No rule</span>
                             </td>
                             <td class="text-center">
-                                <span style="background:#f1f5f9;color:#64748b;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;">
-                                    <i class="ri-information-line me-1"></i>Optional
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:${sm.bg};color:${sm.color};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;border:1px solid ${sm.bg === '#f1f5f9' ? '#e2e8f0' : 'transparent'};">
+                                    <i class="${sm.icon}"></i>${sm.label}
                                 </span>
                             </td>
                         </tr>`;

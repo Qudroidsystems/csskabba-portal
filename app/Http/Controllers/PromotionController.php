@@ -388,11 +388,26 @@ class PromotionController extends Controller
     }
 
     /**
-     * Determine pass/fail status for a subject based on grade and requirement
+     * Determine pass/fail status for a subject based on grade and requirement.
+     *
+     * Optional subjects are evaluated against a general passing threshold (F/F9/E8 = fail)
+     * but are NOT rule-bound — no min_grade from promotion rules is applied to them.
+     *
+     * Returns one of: 'pass', 'fail', 'not_sat' (compulsory)
+     *              or 'optional_pass', 'optional_fail', 'optional_not_sat' (optional)
      */
     private function determinePassStatus($grade, $requiredMinGrade, $isCompulsory)
     {
-        if (!$isCompulsory) return 'optional';
+        if (!$isCompulsory) {
+            if ($grade === null || $grade === '') {
+                return 'optional_not_sat';
+            }
+            $failGrades = ['F', 'F9', 'E8'];
+            return in_array(strtoupper(trim($grade)), $failGrades, true)
+                ? 'optional_fail'
+                : 'optional_pass';
+        }
+
         if (!$grade) return 'not_sat';
         return $this->gradePassFail($grade, $requiredMinGrade) ? 'pass' : 'fail';
     }
@@ -403,11 +418,14 @@ class PromotionController extends Controller
     private function getPassStatusLabel($status)
     {
         return match($status) {
-            'pass' => 'Passed',
-            'fail' => 'Failed',
-            'not_sat' => 'Not Attempted',
-            'optional' => 'Optional',
-            default => 'Unknown'
+            'pass'             => 'Passed',
+            'fail'             => 'Failed',
+            'not_sat'          => 'Not Attempted',
+            'optional_pass'    => 'Passed',
+            'optional_fail'    => 'Failed',
+            'optional_not_sat' => 'Not Attempted',
+            'optional'         => 'Optional',
+            default            => 'Unknown'
         };
     }
 
@@ -417,11 +435,11 @@ class PromotionController extends Controller
     private function getPassStatusClass($status)
     {
         return match($status) {
-            'pass' => 'success',
-            'fail' => 'danger',
-            'not_sat' => 'warning',
-            'optional' => 'info',
-            default => 'secondary'
+            'pass', 'optional_pass'       => 'success',
+            'fail', 'optional_fail'       => 'danger',
+            'not_sat', 'optional_not_sat' => 'warning',
+            'optional'                    => 'info',
+            default                       => 'secondary'
         };
     }
 
@@ -457,7 +475,6 @@ class PromotionController extends Controller
      */
     private function getCreditGrades($schoolclassId)
     {
-        // Get class category to determine grade scale
         $classCategory = DB::table('schoolclass_classcategory')
             ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
             ->where('schoolclass_classcategory.schoolclass_id', $schoolclassId)
