@@ -412,7 +412,7 @@
             </div>
           </div>
 
-          {{-- Global interpretation panel (shows evaluation flow across all rules) --}}
+          {{-- Global interpretation panel --}}
           <div id="globalInterpPanel"></div>
 
           <div id="rulesContainer">
@@ -453,19 +453,13 @@
 <script>
 // ============================================================
 // RULE INTERPRETATION ENGINE
-// Generates plain-English "fires when" explanations from a
-// stored rule object. Mirrors PromotionEvaluator logic exactly.
 // ============================================================
 
 const RuleInterpreter = (() => {
-
     const GRADE_LABELS_SENIOR = {
-        A1: 'A1 (Distinction)',
-        B2: 'B2 (Very Good)', B3: 'B3 (Good)',
+        A1: 'A1 (Distinction)', B2: 'B2 (Very Good)', B3: 'B3 (Good)',
         C4: 'C4 (Credit)', C5: 'C5 (Credit)', C6: 'C6 (Credit)',
-        D7: 'D7 (Pass)',
-        E8: 'E8 (Below Pass)',
-        F9: 'F9 (Fail)',
+        D7: 'D7 (Pass)', E8: 'E8 (Below Pass)', F9: 'F9 (Fail)',
     };
 
     const GRADE_LABELS_JUNIOR = {
@@ -474,20 +468,14 @@ const RuleInterpreter = (() => {
     };
 
     const GROUP_LABELS_SENIOR = {
-        A: 'distinctions (A1)',
-        B: 'very-good/good grades (B2–B3)',
-        C: 'credit grades (C4–C6)',
-        D: 'pass grades (D7)',
-        E: 'below-pass grades (E8)',
-        F: 'fail grades (F9)',
+        A: 'distinctions (A1)', B: 'very-good/good grades (B2–B3)',
+        C: 'credit grades (C4–C6)', D: 'pass grades (D7)',
+        E: 'below-pass grades (E8)', F: 'fail grades (F9)',
     };
 
     const GROUP_LABELS_JUNIOR = {
-        A: 'A grades (Excellent)',
-        B: 'B grades (Good)',
-        C: 'C grades (Credit)',
-        D: 'D grades (Pass)',
-        F: 'F grades (Fail)',
+        A: 'A grades (Excellent)', B: 'B grades (Good)',
+        C: 'C grades (Credit)', D: 'D grades (Pass)', F: 'F grades (Fail)',
     };
 
     function gradeLabel(g, grouping, senior) {
@@ -523,8 +511,7 @@ const RuleInterpreter = (() => {
         if (!withMin.length) return null;
 
         if (withMin.every(s => s.min_grade === withMin[0].min_grade)) {
-            const label = (senior ? GRADE_LABELS_SENIOR : GRADE_LABELS_JUNIOR)[withMin[0].min_grade.toUpperCase()]
-                || withMin[0].min_grade;
+            const label = (senior ? GRADE_LABELS_SENIOR : GRADE_LABELS_JUNIOR)[withMin[0].min_grade.toUpperCase()] || withMin[0].min_grade;
             if (withMin.length === subjects.length && subjects.length > 0) {
                 return `every compulsory subject scores at least <strong>${label}</strong>`;
             }
@@ -540,30 +527,24 @@ const RuleInterpreter = (() => {
     }
 
     function describeCountCond(cond, grouping, senior) {
-        const g     = (cond.grade || '').toUpperCase();
-        const op    = cond.operator || '>=';
+        const g = (cond.grade || '').toUpperCase();
+        const op = cond.operator || '>=';
         const count = cond.count ?? 1;
         const scope = cond.scope || 'all';
         const gradeTxt = gradeLabel(g, grouping, senior);
         const scopeTxt = scopePhrase(scope);
-        const noun     = `${gradeTxt} in ${scopeTxt}`;
+        const noun = `${gradeTxt} in ${scopeTxt}`;
         return opPhrase(op, count, noun);
     }
 
     function describeAvgCond(avgCond) {
         if (!avgCond || !avgCond.enabled) return null;
-        const min   = avgCond.min_average ?? '?';
+        const min = avgCond.min_average ?? '?';
         const logic = (avgCond.logic || 'AND').toUpperCase();
-        const base  = `overall average ≥ <strong>${min}%</strong>`;
+        const base = `overall average ≥ <strong>${min}%</strong>`;
         return logic === 'OR'
             ? `${base} <em>(OR — this alone can qualify the student)</em>`
             : `${base} <em>(AND — must also be met)</em>`;
-    }
-
-    function isZeroCondition(cond) {
-        const op = cond.operator || '>=';
-        const n  = parseInt(cond.count ?? 0, 10);
-        return (op === '<=' && n === 0) || (op === '=' && n === 0) || (op === '<' && n === 1);
     }
 
     function interpret(rule, snr, ruleIndex) {
@@ -571,11 +552,11 @@ const RuleInterpreter = (() => {
             return { summary: '', bullets: [], firesWhen: 'Rule has no name yet.', neverFires: false, isCatchAll: false, outcomeKey: 'repeat' };
         }
 
-        const grouping   = rule.grade_grouping || 'grouped';
-        const compSubj   = rule.compulsory_section?.subjects         || [];
-        const compConds  = rule.compulsory_section?.count_conditions || [];
-        const otherConds = rule.other_section?.count_conditions      || [];
-        const avgCond    = rule.average_condition;
+        const grouping = rule.grade_grouping || 'grouped';
+        const compSubj = rule.compulsory_section?.subjects || [];
+        const compConds = rule.compulsory_section?.count_conditions || [];
+        const otherConds = rule.other_section?.count_conditions || [];
+        const avgCond = rule.average_condition;
 
         const clauses = [];
 
@@ -600,7 +581,6 @@ const RuleInterpreter = (() => {
             || otherConds.some(c => c.grade)
             || (avgCond && avgCond.enabled));
 
-        // Contradiction detection
         let neverFires = false;
         const allConds = [...compConds, ...otherConds];
         const byScopeGrade = {};
@@ -617,13 +597,10 @@ const RuleInterpreter = (() => {
                 const maxMin = Math.max(...mins);
                 const minMax = Math.min(...maxs);
                 if (maxMin > minMax) neverFires = true;
-                if (conds.some(c => c.operator === '>=' && parseInt(c.count) > 0) && conds.some(c => isZeroCondition(c))) {
-                    neverFires = true;
-                }
             }
         }
 
-        const outcome    = rule.status_label || 'promoted';
+        const outcome = rule.status_label || 'promoted';
         const outcomeMap = { promoted: 'Promoted', trial: 'Promoted on Trial', see_principal: 'See Principal', repeat: 'Repeat' };
         const outcomeTxt = outcomeMap[outcome] || outcome;
 
@@ -631,7 +608,7 @@ const RuleInterpreter = (() => {
         if (!hasRealConditions) {
             firesWhen = `<strong>Always matches (catch-all)</strong> — no conditions set. Every student who reaches this rule gets <em>${outcomeTxt}</em>.`;
         } else if (neverFires) {
-            firesWhen = `<span style="color:#dc2626;font-weight:700;">⚠ Contradictory conditions</span> — this rule can never match any student. Check for conflicting operators on the same grade/scope (e.g. C ≥ 5 AND C ≤ 0).`;
+            firesWhen = `<span style="color:#dc2626;font-weight:700;">⚠ Contradictory conditions</span> — this rule can never match any student.`;
         } else {
             const joined = clauses.map((c, i) => i === 0 ? c : `<span class="ri-interp-and">AND</span> ${c}`).join(' ');
             firesWhen = `<strong>Fires when:</strong> ${joined} → <strong>${outcomeTxt}</strong>`;
@@ -642,12 +619,12 @@ const RuleInterpreter = (() => {
 
     function interpretAll(rules, snr, ruleLogic, requiredAverage) {
         const results = rules.map((r, i) => interpret(r, snr, i + 1));
-        const catchAllIdx    = results.findIndex(r => r.isCatchAll);
+        const catchAllIdx = results.findIndex(r => r.isCatchAll);
         const hasUnreachable = catchAllIdx >= 0 && catchAllIdx < rules.length - 1;
         const logicLabels = {
-            grade_count:  'Grade count rules only — checked top-to-bottom, first match wins. If no rule matches → Advice to Repeat.',
+            grade_count: 'Grade count rules only — checked top-to-bottom, first match wins. If no rule matches → Advice to Repeat.',
             average_only: `Minimum average only — student passes if overall average ≥ ${requiredAverage || '?'}%.`,
-            both:         'Grade count AND average — both evaluated together. Average logic (AND/OR) is set per-rule.',
+            both: 'Grade count AND average — both evaluated together. Average logic (AND/OR) is set per-rule.',
         };
         return { rules: results, logicDescription: logicLabels[ruleLogic] || '', hasUnreachable, unreachableFrom: catchAllIdx >= 0 ? catchAllIdx + 2 : null };
     }
@@ -655,11 +632,11 @@ const RuleInterpreter = (() => {
     function renderPanel(interp) {
         if (!interp) return '';
         const { firesWhen, neverFires, isCatchAll, bullets, outcomeKey } = interp;
-        const colorMap  = { promoted: '#dcfce7', trial: '#fef9c3', see_principal: '#e0f2fe', repeat: '#fee2e2' };
+        const colorMap = { promoted: '#dcfce7', trial: '#fef9c3', see_principal: '#e0f2fe', repeat: '#fee2e2' };
         const borderMap = { promoted: '#16a34a', trial: '#ca8a04', see_principal: '#0284c7', repeat: '#dc2626' };
-        const bg     = neverFires ? '#fff1f2' : (colorMap[outcomeKey]  || '#f8fafc');
+        const bg = neverFires ? '#fff1f2' : (colorMap[outcomeKey] || '#f8fafc');
         const border = neverFires ? '#dc2626' : (borderMap[outcomeKey] || '#cbd5e1');
-        const icon   = neverFires ? 'ri-error-warning-line' : isCatchAll ? 'ri-git-branch-line' : 'ri-lightbulb-line';
+        const icon = neverFires ? 'ri-error-warning-line' : isCatchAll ? 'ri-git-branch-line' : 'ri-lightbulb-line';
 
         let html = `<div class="rule-interp-panel" style="background:${bg};border:1.5px solid ${border};border-radius:10px;padding:12px 16px;margin-top:14px;font-size:12.5px;line-height:1.7;">
             <div style="display:flex;align-items:flex-start;gap:8px;">
@@ -680,64 +657,14 @@ const RuleInterpreter = (() => {
     return { interpret, interpretAll, renderPanel };
 })();
 
-// ── Trigger interpretations update ───────────────────────────────────────────
-function updateRuleInterpretations() {
-    promotionRules.forEach((rule, idx) => {
-        const container = document.getElementById(`ruleInterp_${idx}`);
-        if (!container) return;
-        const interp = RuleInterpreter.interpret(rule, isSenior, idx + 1);
-        container.innerHTML = RuleInterpreter.renderPanel(interp);
-    });
-    updateGlobalInterpPanel();
-}
-
-function updateGlobalInterpPanel() {
-    const panel = document.getElementById('globalInterpPanel');
-    if (!panel) return;
-    if (!promotionRules.length) { panel.innerHTML = ''; return; }
-
-    const ruleLogic = document.getElementById('rule_logic')?.value || 'grade_count';
-    const reqAvg    = document.getElementById('promotion_pass_average')?.value;
-    const { rules, logicDescription, hasUnreachable, unreachableFrom }
-        = RuleInterpreter.interpretAll(promotionRules, isSenior, ruleLogic, reqAvg);
-
-    let html = `<div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12.5px;line-height:1.7;">
-        <div style="font-weight:700;color:#0c4a6e;margin-bottom:6px;"><i class="ri-route-line me-1"></i>Evaluation flow — ${rules.length} rule${rules.length > 1 ? 's' : ''}</div>
-        <div style="color:#075985;">${logicDescription}</div>`;
-
-    if (hasUnreachable) {
-        html += `<div style="margin-top:8px;color:#b45309;font-weight:600;background:#fef9c3;padding:6px 10px;border-radius:8px;">
-            <i class="ri-alert-line me-1"></i>Rule ${unreachableFrom} onwards is unreachable — Rule ${unreachableFrom - 1} has no conditions and always matches first.
-        </div>`;
-    }
-
-    // Flow pills
-    const colorMap = { promoted:'#16a34a', trial:'#ca8a04', see_principal:'#0284c7', repeat:'#dc2626' };
-    html += `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">`;
-    rules.forEach((r, i) => {
-        const c = r.neverFires ? '#dc2626' : (colorMap[r.outcomeKey] || '#6b7280');
-        const name = r.summary.replace(/^Rule \d+: /, '') || `Rule ${i+1}`;
-        html += `<span title="${escH(name)}" style="background:${c};color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block;">
-            ${i+1}. ${escH(name.length > 16 ? name.slice(0,14)+'…' : name)}
-            ${r.neverFires ? ' ⚠' : ''}
-        </span>`;
-        if (i < rules.length - 1) html += `<i class="ri-arrow-right-s-line" style="color:#94a3b8;font-size:16px;"></i>`;
-    });
-    html += `<i class="ri-arrow-right-s-line" style="color:#94a3b8;font-size:16px;"></i>`;
-    html += `<span style="background:#6b7280;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">No match → Repeat</span>`;
-    html += `</div></div>`;
-
-    panel.innerHTML = html;
-}
-
 // ── State ──────────────────────────────────────────────────────────────────────
-let promotionRules     = [];
-let gradeScale         = ['A1','B2','B3','C4','C5','C6','D7','E8','F9'];
-let isSenior           = true;
-let totalSubjects      = 0;
-let compulsoryCount    = 0;
-let otherCount         = 0;
-let classPassAvg       = null;
+let promotionRules = [];
+let gradeScale = ['A1','B2','B3','C4','C5','C6','D7','E8','F9'];
+let isSenior = true;
+let totalSubjects = 0;
+let compulsoryCount = 0;
+let otherCount = 0;
+let classPassAvg = null;
 let compulsorySubjects = [];
 
 const GRADE_SCALES = {
@@ -749,20 +676,20 @@ const GROUPED_SENIOR = { A:['A1'], B:['B2','B3'], C:['C4','C5','C6'], D:['D7'], 
 const GROUPED_JUNIOR = { A:['A'], B:['B'], C:['C'], D:['D'], F:['F'] };
 
 const STATUS_LABELS = [
-    {key:'promoted',      label:'Promoted',                cls:'lp-promoted',  icon:'ri-checkbox-circle-line'},
-    {key:'trial',         label:'Promoted on Trial',       cls:'lp-trial',     icon:'ri-time-line'},
+    {key:'promoted', label:'Promoted', cls:'lp-promoted', icon:'ri-checkbox-circle-line'},
+    {key:'trial', label:'Promoted on Trial', cls:'lp-trial', icon:'ri-time-line'},
     {key:'see_principal', label:'Advised to See Principal', cls:'lp-principal', icon:'ri-user-star-line'},
-    {key:'repeat',        label:'Advice to Repeat',        cls:'lp-repeat',    icon:'ri-repeat-line'},
+    {key:'repeat', label:'Advice to Repeat', cls:'lp-repeat', icon:'ri-repeat-line'},
 ];
 
 const SCOPE_OPTIONS = [
-    ['all',             '📚 All Subjects'],
+    ['all', '📚 All Subjects'],
     ['compulsory_only', '⭐ Compulsory Only'],
-    ['other_only',      '📖 Other Only'],
+    ['other_only', '📖 Other Only'],
 ];
 
 function getGroupedGrades() { return isSenior ? Object.keys(GROUPED_SENIOR) : Object.keys(GROUPED_JUNIOR); }
-function getExactGrades()   { return gradeScale; }
+function getExactGrades() { return gradeScale; }
 function getGradesForGrouping(grouping) { return grouping === 'grouped' ? getGroupedGrades() : getExactGrades(); }
 
 function _getConds(ruleIdx, sec) {
@@ -776,7 +703,7 @@ function buildCondRows(conds, ruleIdx, section, availGrades) {
     if (!conds.length) return '';
     return conds.map((cond, ci) => {
         const operators = ['>=', '<=', '=', '>', '<'];
-        const opOpts    = operators.map(op => `<option value="${op}" ${cond.operator === op ? 'selected' : ''}>${op}</option>`).join('');
+        const opOpts = operators.map(op => `<option value="${op}" ${cond.operator === op ? 'selected' : ''}>${op}</option>`).join('');
         const gradeOpts = availGrades.map(g => `<option value="${g}" ${cond.grade === g ? 'selected' : ''}>${g}</option>`).join('');
         const scopeOpts = SCOPE_OPTIONS.map(([v, l]) => `<option value="${v}" ${(cond.scope ?? 'all') === v ? 'selected' : ''}>${l}</option>`).join('');
         const pillClass = `gp-${cond.grade || 'F'}`;
@@ -794,32 +721,35 @@ function buildCondRows(conds, ruleIdx, section, availGrades) {
 }
 
 function buildRuleHTML(rule, idx) {
-    const selSt    = STATUS_LABELS.find(s => s.key === rule.status_label) || STATUS_LABELS[0];
+    const selSt = STATUS_LABELS.find(s => s.key === rule.status_label) || STATUS_LABELS[0];
     const grouping = rule.grade_grouping ?? 'grouped';
-    const availGrades  = getGradesForGrouping(grouping);
-    const labelPills   = STATUS_LABELS.map(sl => `<span class="label-pill ${sl.cls} ${rule.status_label === sl.key ? 'active' : ''}" data-idx="${idx}" data-status="${sl.key}"><i class="${sl.icon} me-1"></i>${sl.label}</span>`).join('');
+    const availGrades = getGradesForGrouping(grouping);
+    const labelPills = STATUS_LABELS.map(sl => `<span class="label-pill ${sl.cls} ${rule.status_label === sl.key ? 'active' : ''}" data-idx="${idx}" data-status="${sl.key}"><i class="${sl.icon} me-1"></i>${sl.label}</span>`).join('');
     const groupingOpts = [
         ['grouped', isSenior ? 'Grouped (A=A1, B=B2+B3…)' : 'Grouped (A, B, C…)'],
-        ['exact',   isSenior ? 'Exact (A1, B2, B3 separately)' : 'Exact (A, B, C separately)']
+        ['exact', isSenior ? 'Exact (A1, B2, B3 separately)' : 'Exact (A, B, C separately)']
     ].map(([v, l]) => `<option value="${v}" ${grouping === v ? 'selected' : ''}>${l}</option>`).join('');
 
     const subjects = rule.compulsory_section?.subjects ?? [];
     const compSubjRowsHtml = !subjects.length
         ? `<div class="text-muted small p-3"><i class="ri-information-line me-1"></i>No compulsory subjects assigned to this class.</div>`
-        : subjects.map((subj, si) => `<div class="comp-subj-row"><div>
+        : subjects.map((subj, si) => `<div class="comp-subj-row">
+            <input type="hidden" class="subject-id-field" data-idx="${idx}" data-si="${si}" value="${subj.subject_id || ''}">
+            <div>
                 <span class="subj-name">${escH(subj.subject_name)}</span>
                 ${subj.subject_code ? `<span class="subj-code ms-1">(${escH(subj.subject_code)})</span>` : ''}
                 ${subj.default_min_grade ? `<span class="default-badge ms-2"><i class="ri-information-line"></i> default: ${subj.default_min_grade}</span>` : ''}
                 ${subj.override && subj.min_grade && subj.min_grade !== subj.default_min_grade ? `<span class="badge bg-warning text-dark ms-1">overridden</span>` : ''}
-              </div>
-              <select class="grade-sel comp-subj-grade-sel" data-idx="${idx}" data-si="${si}">
+            </div>
+            <select class="grade-sel comp-subj-grade-sel" data-idx="${idx}" data-si="${si}">
                 ${['', ...gradeScale].map(g => `<option value="${g}" ${subj.min_grade === g ? 'selected' : ''}>${g === '' ? '— Any (default pass/fail)' : g}</option>`).join('')}
-              </select></div>`).join('');
+            </select>
+        </div>`).join('');
 
-    const gradeOptsComp  = availGrades.map(g => `<option>${g}</option>`).join('');
+    const gradeOptsComp = availGrades.map(g => `<option>${g}</option>`).join('');
     const gradeOptsOther = availGrades.map(g => `<option>${g}</option>`).join('');
-    const compCondRows   = buildCondRows(rule.compulsory_section?.count_conditions ?? [], idx, 'comp', availGrades);
-    const otherCondRows  = buildCondRows(rule.other_section?.count_conditions ?? [], idx, 'other', availGrades);
+    const compCondRows = buildCondRows(rule.compulsory_section?.count_conditions ?? [], idx, 'comp', availGrades);
+    const otherCondRows = buildCondRows(rule.other_section?.count_conditions ?? [], idx, 'other', availGrades);
     const avg = rule.average_condition ?? { enabled: false, min_average: classPassAvg ?? 50, logic: 'AND' };
     const statusBadgeClass = selSt.key === 'promoted' ? 'success' : selSt.key === 'trial' ? 'warning' : selSt.key === 'see_principal' ? 'info' : 'danger';
 
@@ -831,9 +761,9 @@ function buildRuleHTML(rule, idx) {
         <div class="d-flex gap-1 align-items-center ms-auto">
           <span class="text-muted small me-1">Priority:</span>
           <input type="number" class="form-control form-control-sm priority-input" data-idx="${idx}" value="${rule.priority ?? idx + 1}" min="1" style="width:65px;">
-          <button class="btn btn-sm btn-outline-secondary move-up-btn"   data-idx="${idx}" title="Move up"><i class="ri-arrow-up-line"></i></button>
+          <button class="btn btn-sm btn-outline-secondary move-up-btn" data-idx="${idx}" title="Move up"><i class="ri-arrow-up-line"></i></button>
           <button class="btn btn-sm btn-outline-secondary move-down-btn" data-idx="${idx}" title="Move down"><i class="ri-arrow-down-line"></i></button>
-          <button class="btn btn-sm btn-outline-danger remove-rule-btn"  data-idx="${idx}" title="Remove rule"><i class="ri-delete-bin-line"></i></button>
+          <button class="btn btn-sm btn-outline-danger remove-rule-btn" data-idx="${idx}" title="Remove rule"><i class="ri-delete-bin-line"></i></button>
         </div>
       </div>
       <div class="rule-card-body">
@@ -900,23 +830,21 @@ function buildRuleHTML(rule, idx) {
                 <label class="form-label small fw-semibold mb-1">Logic with Sections 1+2</label>
                 <select class="form-select form-select-sm avg-logic-sel" data-idx="${idx}">
                   <option value="AND" ${avg.logic === 'AND' ? 'selected' : ''}>AND (all sections must pass)</option>
-                  <option value="OR"  ${avg.logic === 'OR'  ? 'selected' : ''}>OR (average alone qualifies)</option>
+                  <option value="OR" ${avg.logic === 'OR' ? 'selected' : ''}>OR (average alone qualifies)</option>
                 </select>
               </div>
             </div>
           </div>
         </div>
 
-        {{-- ✦ Interpretation panel — injected/updated by JS ✦ --}}
         <div id="ruleInterp_${idx}"></div>
-
       </div>
     </div>`;
 }
 
 function rerenderRules() {
     const container = document.getElementById('rulesContainer');
-    const noMsg     = document.getElementById('noRulesMsg');
+    const noMsg = document.getElementById('noRulesMsg');
     if (!promotionRules.length) {
         if (container) { container.innerHTML = ''; if (noMsg) { container.appendChild(noMsg); noMsg.style.display = 'block'; } }
         updateGlobalInterpPanel();
@@ -931,27 +859,73 @@ function rerenderRules() {
             container.appendChild(div.firstElementChild);
         });
     }
-    // Render interpretations after DOM is built
     updateRuleInterpretations();
+}
+
+function updateRuleInterpretations() {
+    promotionRules.forEach((rule, idx) => {
+        const container = document.getElementById(`ruleInterp_${idx}`);
+        if (!container) return;
+        const interp = RuleInterpreter.interpret(rule, isSenior, idx + 1);
+        container.innerHTML = RuleInterpreter.renderPanel(interp);
+    });
+    updateGlobalInterpPanel();
+}
+
+function updateGlobalInterpPanel() {
+    const panel = document.getElementById('globalInterpPanel');
+    if (!panel) return;
+    if (!promotionRules.length) { panel.innerHTML = ''; return; }
+
+    const ruleLogic = document.getElementById('rule_logic')?.value || 'grade_count';
+    const reqAvg = document.getElementById('promotion_pass_average')?.value;
+    const { rules, logicDescription, hasUnreachable, unreachableFrom } = RuleInterpreter.interpretAll(promotionRules, isSenior, ruleLogic, reqAvg);
+
+    let html = `<div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12.5px;line-height:1.7;">
+        <div style="font-weight:700;color:#0c4a6e;margin-bottom:6px;"><i class="ri-route-line me-1"></i>Evaluation flow — ${rules.length} rule${rules.length > 1 ? 's' : ''}</div>
+        <div style="color:#075985;">${logicDescription}</div>`;
+
+    if (hasUnreachable) {
+        html += `<div style="margin-top:8px;color:#b45309;font-weight:600;background:#fef9c3;padding:6px 10px;border-radius:8px;">
+            <i class="ri-alert-line me-1"></i>Rule ${unreachableFrom} onwards is unreachable — Rule ${unreachableFrom - 1} has no conditions and always matches first.
+        </div>`;
+    }
+
+    const colorMap = { promoted:'#16a34a', trial:'#ca8a04', see_principal:'#0284c7', repeat:'#dc2626' };
+    html += `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">`;
+    rules.forEach((r, i) => {
+        const c = r.neverFires ? '#dc2626' : (colorMap[r.outcomeKey] || '#6b7280');
+        const name = r.summary.replace(/^Rule \d+: /, '') || `Rule ${i+1}`;
+        html += `<span title="${escH(name)}" style="background:${c};color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;display:inline-block;">
+            ${i+1}. ${escH(name.length > 16 ? name.slice(0,14)+'…' : name)}
+            ${r.neverFires ? ' ⚠' : ''}
+        </span>`;
+        if (i < rules.length - 1) html += `<i class="ri-arrow-right-s-line" style="color:#94a3b8;font-size:16px;"></i>`;
+    });
+    html += `<i class="ri-arrow-right-s-line" style="color:#94a3b8;font-size:16px;"></i>`;
+    html += `<span style="background:#6b7280;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">No match → Repeat</span>`;
+    html += `</div></div>`;
+
+    panel.innerHTML = html;
 }
 
 // ── Event Delegation ──────────────────────────────────────────────────────────
 function setupEventDelegation() {
     const container = document.getElementById('rulesContainer');
     if (!container) return;
-    container.removeEventListener('click',  handleContainerClick);
-    container.addEventListener('click',     handleContainerClick);
+    container.removeEventListener('click', handleContainerClick);
+    container.addEventListener('click', handleContainerClick);
     container.removeEventListener('change', handleContainerChange);
-    container.addEventListener('change',    handleContainerChange);
-    container.removeEventListener('input',  handleContainerInput);
-    container.addEventListener('input',     handleContainerInput);
+    container.addEventListener('change', handleContainerChange);
+    container.removeEventListener('input', handleContainerInput);
+    container.addEventListener('input', handleContainerInput);
 }
 
 function handleContainerClick(e) {
     const addCompBtn = e.target.closest('.add-comp-cond-btn');
     if (addCompBtn) {
         e.preventDefault();
-        const idx         = parseInt(addCompBtn.dataset.idx);
+        const idx = parseInt(addCompBtn.dataset.idx);
         const gradeSelect = document.getElementById(`addCompGrade_${idx}`);
         if (gradeSelect && gradeSelect.value) {
             if (!promotionRules[idx].compulsory_section.count_conditions) promotionRules[idx].compulsory_section.count_conditions = [];
@@ -964,7 +938,7 @@ function handleContainerClick(e) {
     const addOtherBtn = e.target.closest('.add-other-cond-btn');
     if (addOtherBtn) {
         e.preventDefault();
-        const idx         = parseInt(addOtherBtn.dataset.idx);
+        const idx = parseInt(addOtherBtn.dataset.idx);
         const gradeSelect = document.getElementById(`addOtherGrade_${idx}`);
         if (gradeSelect && gradeSelect.value) {
             if (!promotionRules[idx].other_section.count_conditions) promotionRules[idx].other_section.count_conditions = [];
@@ -1003,11 +977,11 @@ function handleContainerClick(e) {
     const statusPill = e.target.closest('.label-pill');
     if (statusPill) {
         e.preventDefault();
-        const idx  = parseInt(statusPill.dataset.idx);
+        const idx = parseInt(statusPill.dataset.idx);
         const stat = statusPill.dataset.status;
         promotionRules[idx].status_label = stat;
         statusPill.closest('.label-selector').querySelectorAll('.label-pill').forEach(p => p.classList.toggle('active', p.dataset.status === stat));
-        const selSt   = STATUS_LABELS.find(s => s.key === stat);
+        const selSt = STATUS_LABELS.find(s => s.key === stat);
         const badgeEl = document.getElementById(`statusBadge_${idx}`);
         if (badgeEl && selSt) {
             const cls = stat === 'promoted' ? 'success' : stat === 'trial' ? 'warning' : stat === 'see_principal' ? 'info' : 'danger';
@@ -1024,7 +998,7 @@ function handleContainerChange(e) {
     if (compGradeSel) {
         const idx = parseInt(compGradeSel.dataset.idx), si = parseInt(compGradeSel.dataset.si);
         promotionRules[idx].compulsory_section.subjects[si].min_grade = compGradeSel.value;
-        promotionRules[idx].compulsory_section.subjects[si].override  = !!compGradeSel.value;
+        promotionRules[idx].compulsory_section.subjects[si].override = !!compGradeSel.value;
         updateRuleInterpretations(); return;
     }
     const groupingSel = e.target.closest('.grouping-sel');
@@ -1032,7 +1006,7 @@ function handleContainerChange(e) {
         const idx = parseInt(groupingSel.dataset.idx);
         promotionRules[idx].grade_grouping = groupingSel.value;
         promotionRules[idx].compulsory_section.count_conditions = [];
-        promotionRules[idx].other_section.count_conditions      = [];
+        promotionRules[idx].other_section.count_conditions = [];
         rerenderRules(); return;
     }
     const condGradeSel = e.target.closest('.cond-grade-sel');
@@ -1107,13 +1081,13 @@ function escH(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Class Info Loading ─────────────────────────────────────────────────────────
+// ── Class Info Loading (FIXED: includes subject_id mapping) ───────────────────
 async function refreshClassInfo() {
-    const classId   = document.getElementById('schoolclass_id').value;
-    const termId    = document.getElementById('term_id').value;
+    const classId = document.getElementById('schoolclass_id').value;
+    const termId = document.getElementById('term_id').value;
     const sessionId = document.getElementById('session_id').value;
-    const addBtn    = document.getElementById('addRuleBtn');
-    const loadEl    = document.getElementById('subjectLoadStatus');
+    const addBtn = document.getElementById('addRuleBtn');
+    const loadEl = document.getElementById('subjectLoadStatus');
     const summaryEl = document.getElementById('subjectSummary');
     const scopeInfo = document.getElementById('ruleScopeInfo');
     addBtn.disabled = true;
@@ -1122,19 +1096,32 @@ async function refreshClassInfo() {
     loadEl.style.display = 'block';
     try {
         let url = `/promotion-settings/class-promotion-data?classid=${classId}`;
-        if (termId    && termId    !== '') url += `&termid=${termId}`;
+        if (termId && termId !== '') url += `&termid=${termId}`;
         if (sessionId && sessionId !== '') url += `&sessionid=${sessionId}`;
-        const res  = await fetch(url);
+        const res = await fetch(url);
         const data = await res.json();
         loadEl.style.display = 'none';
         if (data.success) {
-            isSenior        = data.is_senior;
-            totalSubjects   = data.total_subjects  ?? 0;
+            isSenior = data.is_senior;
+            totalSubjects = data.total_subjects ?? 0;
             compulsoryCount = data.compulsory_count ?? 0;
-            otherCount      = data.other_count      ?? 0;
-            classPassAvg    = data.pass_average     ?? null;
-            gradeScale      = (data.grade_scale && data.grade_scale.length) ? data.grade_scale : GRADE_SCALES[isSenior ? 'senior' : 'junior'];
-            compulsorySubjects = data.compulsory_subjects ?? [];
+            otherCount = data.other_count ?? 0;
+            classPassAvg = data.pass_average ?? null;
+            gradeScale = (data.grade_scale && data.grade_scale.length) ? data.grade_scale : GRADE_SCALES[isSenior ? 'senior' : 'junior'];
+
+            // FIX: Map compulsory subjects with correct property names including subject_id
+            compulsorySubjects = (data.compulsory_subjects ?? []).map(cs => ({
+                subject_id: cs.id,  // ← CRITICAL FIX: Map 'id' from server to 'subject_id'
+                subject_name: cs.subject,
+                subject_code: cs.subject_code,
+                default_min_grade: cs.default_min_grade || '',
+                min_grade: cs.default_min_grade || '',
+                override: false
+            }));
+
+            // Debug log to verify subject_ids
+            console.log('Compulsory subjects loaded:', compulsorySubjects);
+            console.log('Subject IDs:', compulsorySubjects.map(cs => cs.subject_id));
 
             if (classPassAvg) {
                 document.getElementById('promotion_pass_average').value = classPassAvg;
@@ -1151,14 +1138,20 @@ async function refreshClassInfo() {
             summaryEl.style.display = 'block';
             addBtn.disabled = false;
 
+            // Update existing rules with fresh subject data
             if (promotionRules.length > 0) {
                 promotionRules = promotionRules.map(rule => {
                     if (!rule.compulsory_section) rule.compulsory_section = { subjects: [], count_conditions: [] };
-                    if (!rule.other_section)      rule.other_section      = { count_conditions: [] };
-                    const existing = (rule.compulsory_section.subjects).reduce((m, s) => { m[String(s.subject_id)] = s; return m; }, {});
+                    if (!rule.other_section) rule.other_section = { count_conditions: [] };
+                    const existing = (rule.compulsory_section.subjects || []).reduce((m, s) => {
+                        if (s.subject_id) m[String(s.subject_id)] = s;
+                        return m;
+                    }, {});
                     rule.compulsory_section.subjects = compulsorySubjects.map(cs => ({
-                        subject_id: cs.subject_id, subject_name: cs.subject_name,
-                        subject_code: cs.subject_code, default_min_grade: cs.default_min_grade ?? '',
+                        subject_id: cs.subject_id,
+                        subject_name: cs.subject_name,
+                        subject_code: cs.subject_code,
+                        default_min_grade: cs.default_min_grade ?? '',
                         min_grade: existing[String(cs.subject_id)]?.min_grade ?? cs.default_min_grade ?? '',
                         override: !!(existing[String(cs.subject_id)]?.min_grade),
                     }));
@@ -1174,39 +1167,41 @@ async function refreshClassInfo() {
         loadEl.style.display = 'none';
         summaryEl.innerHTML = `<div class="alert alert-danger py-2 mb-0"><i class="ri-error-warning-line me-1"></i>Error: ${err.message}</div>`;
         summaryEl.style.display = 'block';
+        console.error('Error loading class info:', err);
     }
 }
 
 // ── Modal Functions ───────────────────────────────────────────────────────────
-function openModal()  { new bootstrap.Modal(document.getElementById('settingModal')).show(); }
+function openModal() { new bootstrap.Modal(document.getElementById('settingModal')).show(); }
+
 function resetModal() {
     ['setting_id','session_id','term_id','template_id_input','promotion_pass_average'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-    document.getElementById('schoolclass_id').value       = '';
-    document.getElementById('promoted_label').value       = 'Promoted';
-    document.getElementById('trial_label').value          = 'Promoted on Trial';
-    document.getElementById('see_principal_label').value  = 'Advised to See Principal';
-    document.getElementById('repeat_label').value         = 'Advice to Repeat';
-    document.getElementById('rule_logic').value           = 'grade_count';
-    document.getElementById('avg_slider').value           = 50;
-    document.getElementById('modal_is_active').checked    = true;
+    document.getElementById('schoolclass_id').value = '';
+    document.getElementById('promoted_label').value = 'Promoted';
+    document.getElementById('trial_label').value = 'Promoted on Trial';
+    document.getElementById('see_principal_label').value = 'Advised to See Principal';
+    document.getElementById('repeat_label').value = 'Advice to Repeat';
+    document.getElementById('rule_logic').value = 'grade_count';
+    document.getElementById('avg_slider').value = 50;
+    document.getElementById('modal_is_active').checked = true;
     document.getElementById('globalAvgSection').style.display = 'none';
-    document.getElementById('subjectSummary').style.display   = 'none';
-    document.getElementById('subjectSummary').innerHTML        = '';
+    document.getElementById('subjectSummary').style.display = 'none';
+    document.getElementById('subjectSummary').innerHTML = '';
     document.getElementById('subjectLoadStatus').style.display = 'none';
-    document.getElementById('addRuleBtn').disabled             = true;
-    document.getElementById('templateSelect').value            = '';
-    document.getElementById('loadTemplateBtn').disabled        = true;
-    document.getElementById('templateStatus').textContent      = '';
-    document.getElementById('ruleScopeInfo').textContent       = '';
+    document.getElementById('addRuleBtn').disabled = true;
+    document.getElementById('templateSelect').value = '';
+    document.getElementById('loadTemplateBtn').disabled = true;
+    document.getElementById('templateStatus').textContent = '';
+    document.getElementById('ruleScopeInfo').textContent = '';
     const badge = document.getElementById('modalActiveBadge');
     if (badge) { badge.className = 'active-badge is-active'; badge.innerHTML = '<i class="ri-checkbox-circle-line"></i> Active'; }
-    promotionRules  = [];
-    gradeScale      = GRADE_SCALES.senior;
-    isSenior        = true;
-    totalSubjects   = 0;
+    promotionRules = [];
+    gradeScale = GRADE_SCALES.senior;
+    isSenior = true;
+    totalSubjects = 0;
     compulsoryCount = 0;
-    otherCount      = 0;
-    classPassAvg    = null;
+    otherCount = 0;
+    classPassAvg = null;
     compulsorySubjects = [];
     rerenderRules();
 }
@@ -1218,32 +1213,32 @@ document.getElementById('saveSettingBtn')?.addEventListener('click', async funct
     for (const [i, rule] of promotionRules.entries()) {
         if (!rule.rule_name?.trim()) { Swal.fire('Validation', `Rule ${i + 1} needs a name.`, 'warning'); return; }
         const hasCompSubjGrades = (rule.compulsory_section?.subjects ?? []).some(s => s.min_grade);
-        const hasCompConds      = (rule.compulsory_section?.count_conditions ?? []).length > 0;
-        const hasOtherConds     = (rule.other_section?.count_conditions ?? []).length > 0;
-        const hasAvg            = rule.average_condition?.enabled;
+        const hasCompConds = (rule.compulsory_section?.count_conditions ?? []).length > 0;
+        const hasOtherConds = (rule.other_section?.count_conditions ?? []).length > 0;
+        const hasAvg = rule.average_condition?.enabled;
         if (!hasCompSubjGrades && !hasCompConds && !hasOtherConds && !hasAvg) {
             Swal.fire('Validation', `Rule ${i + 1} has no conditions.`, 'warning'); return;
         }
     }
     document.getElementById('promotion_rules_input').value = JSON.stringify(promotionRules);
     const fd = new FormData(document.getElementById('settingForm'));
-    fd.set('schoolclass_id',         classId);
-    fd.set('session_id',             document.getElementById('session_id').value             || '');
-    fd.set('term_id',                document.getElementById('term_id').value                || '');
-    fd.set('promoted_label',         document.getElementById('promoted_label').value);
-    fd.set('trial_label',            document.getElementById('trial_label').value);
-    fd.set('see_principal_label',    document.getElementById('see_principal_label').value);
-    fd.set('repeat_label',           document.getElementById('repeat_label').value);
-    fd.set('rule_logic',             document.getElementById('rule_logic').value             || 'grade_count');
+    fd.set('schoolclass_id', classId);
+    fd.set('session_id', document.getElementById('session_id').value || '');
+    fd.set('term_id', document.getElementById('term_id').value || '');
+    fd.set('promoted_label', document.getElementById('promoted_label').value);
+    fd.set('trial_label', document.getElementById('trial_label').value);
+    fd.set('see_principal_label', document.getElementById('see_principal_label').value);
+    fd.set('repeat_label', document.getElementById('repeat_label').value);
+    fd.set('rule_logic', document.getElementById('rule_logic').value || 'grade_count');
     fd.set('promotion_pass_average', document.getElementById('promotion_pass_average').value || '');
-    fd.set('is_active',              document.getElementById('modal_is_active').checked      ? '1' : '0');
-    fd.set('template_id',            document.getElementById('template_id_input').value      || '');
-    const id  = document.getElementById('setting_id').value;
-    let   url = '/promotion-settings';
+    fd.set('is_active', document.getElementById('modal_is_active').checked ? '1' : '0');
+    fd.set('template_id', document.getElementById('template_id_input').value || '');
+    const id = document.getElementById('setting_id').value;
+    let url = '/promotion-settings';
     if (id) { url = `/promotion-settings/${id}`; fd.append('_method', 'PUT'); }
     Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     try {
-        const res  = await fetch(url, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+        const res = await fetch(url, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
         const data = await res.json();
         if (data.success) Swal.fire({ icon: 'success', title: 'Saved!', text: data.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
         else Swal.fire('Error', data.message || 'Failed.', 'error');
@@ -1257,21 +1252,22 @@ function bindEditButtons() {
         btn.addEventListener('click', handleEditClick);
     });
 }
+
 async function handleEditClick(e) {
     const d = e.currentTarget.dataset;
     resetModal();
-    document.getElementById('setting_id').value                  = d.id;
-    document.getElementById('schoolclass_id').value              = d.schoolclass_id;
-    document.getElementById('session_id').value                  = d.session_id             || '';
-    document.getElementById('term_id').value                     = d.term_id                || '';
-    document.getElementById('promoted_label').value              = d.promoted_label;
-    document.getElementById('trial_label').value                 = d.trial_label;
-    document.getElementById('see_principal_label').value         = d.see_principal_label;
-    document.getElementById('repeat_label').value                = d.repeat_label;
-    document.getElementById('rule_logic').value                  = d.rule_logic             || 'grade_count';
-    document.getElementById('promotion_pass_average').value      = d.promotion_pass_average || '';
-    document.getElementById('avg_slider').value                  = d.promotion_pass_average || 50;
-    document.getElementById('template_id_input').value           = d.template_id            || '';
+    document.getElementById('setting_id').value = d.id;
+    document.getElementById('schoolclass_id').value = d.schoolclass_id;
+    document.getElementById('session_id').value = d.session_id || '';
+    document.getElementById('term_id').value = d.term_id || '';
+    document.getElementById('promoted_label').value = d.promoted_label;
+    document.getElementById('trial_label').value = d.trial_label;
+    document.getElementById('see_principal_label').value = d.see_principal_label;
+    document.getElementById('repeat_label').value = d.repeat_label;
+    document.getElementById('rule_logic').value = d.rule_logic || 'grade_count';
+    document.getElementById('promotion_pass_average').value = d.promotion_pass_average || '';
+    document.getElementById('avg_slider').value = d.promotion_pass_average || 50;
+    document.getElementById('template_id_input').value = d.template_id || '';
     if (d.template_id) document.getElementById('templateSelect').value = d.template_id;
     const isActive = d.is_active === '1';
     document.getElementById('modal_is_active').checked = isActive;
@@ -1289,13 +1285,14 @@ function bindDeleteButtons() {
         btn.addEventListener('click', handleDeleteClick);
     });
 }
+
 async function handleDeleteClick(e) {
-    const btn    = e.currentTarget;
+    const btn = e.currentTarget;
     const result = await Swal.fire({ title: 'Confirm Delete', icon: 'warning', html: `Delete rules for <strong>${escH(btn.dataset.name)}</strong>?`, showCancelButton: true, confirmButtonColor: '#dc2626', confirmButtonText: 'Yes, Delete' });
     if (!result.isConfirmed) return;
     Swal.fire({ title: 'Deleting…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     try {
-        const res  = await fetch(`/promotion-settings/${btn.dataset.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json', 'Content-Type': 'application/json' } });
+        const res = await fetch(`/promotion-settings/${btn.dataset.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json', 'Content-Type': 'application/json' } });
         const data = await res.json();
         if (data.success) Swal.fire({ icon: 'success', title: 'Deleted!', text: data.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
         else Swal.fire('Error', data.message || 'Failed.', 'error');
@@ -1306,10 +1303,10 @@ async function handleDeleteClick(e) {
 document.addEventListener('change', async function(e) {
     if (!e.target.classList.contains('toggle-active-switch')) return;
     const toggle = e.target, sid = toggle.dataset.id, isActive = toggle.checked;
-    const badge  = document.getElementById('ab' + sid);
-    const card   = toggle.closest('.setting-card');
+    const badge = document.getElementById('ab' + sid);
+    const card = toggle.closest('.setting-card');
     try {
-        const res  = await fetch(`/promotion-settings/${sid}/toggle-active`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: isActive }) });
+        const res = await fetch(`/promotion-settings/${sid}/toggle-active`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: isActive }) });
         const data = await res.json();
         if (data.success) {
             if (badge) { badge.className = isActive ? 'active-badge is-active' : 'active-badge is-inactive'; badge.innerHTML = isActive ? '<i class="ri-checkbox-circle-line"></i> Active' : '<i class="ri-close-circle-line"></i> Inactive'; }
@@ -1319,7 +1316,7 @@ document.addEventListener('change', async function(e) {
 });
 
 // ── Event Listeners ───────────────────────────────────────────────────────────
-document.getElementById('openAddBtn')?.addEventListener('click',  openModal);
+document.getElementById('openAddBtn')?.addEventListener('click', openModal);
 document.getElementById('openAddBtn2')?.addEventListener('click', openModal);
 document.getElementById('settingModal')?.addEventListener('hidden.bs.modal', resetModal);
 document.getElementById('modal_is_active')?.addEventListener('change', function() {
@@ -1344,9 +1341,12 @@ document.getElementById('addRuleBtn')?.addEventListener('click', () => {
         grade_grouping: 'grouped',
         compulsory_section: {
             subjects: compulsorySubjects.map(cs => ({
-                subject_id: cs.subject_id, subject_name: cs.subject_name,
-                subject_code: cs.subject_code, default_min_grade: cs.default_min_grade ?? '',
-                min_grade: cs.default_min_grade ?? '', override: false,
+                subject_id: cs.subject_id,
+                subject_name: cs.subject_name,
+                subject_code: cs.subject_code,
+                default_min_grade: cs.default_min_grade ?? '',
+                min_grade: cs.default_min_grade ?? '',
+                override: false,
             })),
             count_conditions: [],
         },
@@ -1356,23 +1356,23 @@ document.getElementById('addRuleBtn')?.addEventListener('click', () => {
     rerenderRules();
 });
 document.getElementById('templateSelect')?.addEventListener('change', function() {
-    document.getElementById('loadTemplateBtn').disabled      = !this.value;
-    document.getElementById('template_id_input').value       = this.value;
+    document.getElementById('loadTemplateBtn').disabled = !this.value;
+    document.getElementById('template_id_input').value = this.value;
 });
 document.getElementById('loadTemplateBtn')?.addEventListener('click', async function() {
-    const tplId   = document.getElementById('templateSelect').value;
+    const tplId = document.getElementById('templateSelect').value;
     const classId = document.getElementById('schoolclass_id').value;
-    if (!tplId)   { Swal.fire('', 'Select a template first.', 'info'); return; }
+    if (!tplId) { Swal.fire('', 'Select a template first.', 'info'); return; }
     if (!classId) { Swal.fire('', 'Select a class first.', 'info'); return; }
-    const termId    = document.getElementById('term_id').value;
+    const termId = document.getElementById('term_id').value;
     const sessionId = document.getElementById('session_id').value;
-    const status    = document.getElementById('templateStatus');
+    const status = document.getElementById('templateStatus');
     status.textContent = 'Loading…';
     try {
         let url = `/promotion-templates/${tplId}/load-for-class?classid=${classId}`;
-        if (termId)    url += `&termid=${termId}`;
+        if (termId) url += `&termid=${termId}`;
         if (sessionId) url += `&sessionid=${sessionId}`;
-        const res  = await fetch(url);
+        const res = await fetch(url);
         const data = await res.json();
         if (data.success) {
             promotionRules = data.merged_rules ?? [];
