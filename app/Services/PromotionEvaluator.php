@@ -6,7 +6,6 @@ namespace App\Services;
 use App\Models\CompulsorySubjectClass;
 use App\Models\PromotionSetting;
 use App\Models\Schoolterm;
-use App\Models\Classcategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,9 +36,13 @@ class PromotionEvaluator
         'F' => 0, 'D' => 1, 'C' => 2, 'B' => 3, 'A' => 4,
     ];
 
-    // Junior grouped mapping (letter -> numeric value for comparison)
-    private static array $juniorGroupOrder = [
-        'F' => 0, 'D' => 1, 'C' => 2, 'B' => 3, 'A' => 4,
+    // Grade conversion map (senior-style to junior letter grades)
+    private static array $gradeConversionMap = [
+        'A1' => 'A',
+        'B2' => 'B', 'B3' => 'B',
+        'C4' => 'C', 'C5' => 'C', 'C6' => 'C',
+        'D7' => 'D',
+        'E8' => 'F', 'F9' => 'F',
     ];
 
     public function evaluate(
@@ -61,14 +64,17 @@ class PromotionEvaluator
 
         // Get class category info (senior/junior)
         $classCategory = $this->getClassCategory($schoolclassid);
-        $isSenior = $classCategory ? $classCategory->is_senior : true;
-        $gradeScale = $isSenior ? self::$seniorGrades : self::$juniorGrades;
+        $isSenior = $classCategory ? (bool)$classCategory->is_senior : false;
+
+        // Determine if class uses senior or junior grading
+        $usesSeniorGrading = $this->detectGradingType($schoolclassid, $scores);
 
         Log::info('Class category info', [
             'class_id' => $schoolclassid,
-            'is_senior' => $isSenior,
-            'grade_scale' => $gradeScale,
-            'category' => $classCategory ? $classCategory->category : 'unknown'
+            'db_is_senior' => $isSenior,
+            'detected_grading_type' => $usesSeniorGrading ? 'senior' : 'junior',
+            'category' => $classCategory ? $classCategory->category : 'unknown',
+            'promotion_pass_average' => $classCategory ? $classCategory->promotion_pass_average : null
         ]);
 
         $settings = $this->findBestSettings($schoolclassid, $sessionid, $termid);
@@ -88,7 +94,7 @@ class PromotionEvaluator
                 return $this->awaitingResult($overallAverage);
             }
             return $this->legacyEvaluate(
-                $studentId, $schoolclassid, $termid, $sessionid, $scores, $overallAverage, $isSenior
+                $studentId, $schoolclassid, $termid, $sessionid, $scores, $overallAverage, $usesSeniorGrading
             );
         }
 
@@ -97,7 +103,7 @@ class PromotionEvaluator
         $ruleLogic     = $settings->rule_logic ?? 'grade_count';
 
         Log::info('Class info', [
-            'is_senior' => $isSenior,
+            'uses_senior_grading' => $usesSeniorGrading,
             'compulsory_subjects_count' => count($compulsoryIds),
             'compulsory_ids' => $compulsoryIds,
             'scores_in_map' => $scoreMap->count()
@@ -128,7 +134,7 @@ class PromotionEvaluator
                     continue;
                 }
 
-                $matches = $this->ruleMatches($rule, $scoreMap, $compulsoryIds, $isSenior, $gradeScale);
+                $matches = $this->ruleMatches($rule, $scoreMap, $compulsoryIds, $usesSeniorGrading);
 
                 Log::info("Rule evaluation result", [
                     'rule_name' => $ruleName,
@@ -169,13 +175,13 @@ class PromotionEvaluator
         ]);
 
         [$failedCompulsory, $compulsoryDetail, $passedCount, $totalCount]
-            = $this->buildCompulsoryDetail($schoolclassid, $termid, $sessionid, $scoreMap, $isSenior);
+            = $this->buildCompulsoryDetail($schoolclassid, $termid, $sessionid, $scoreMap, $usesSeniorGrading);
 
         $appliedRuleSummary = null;
         if ($matchedRule !== null) {
             $appliedRuleSummary = [
                 'name'        => $matchedRule['rule_name'],
-                'description' => $this->describeRule($matchedRule, $isSenior),
+                'description' => $this->describeRule($matchedRule, $usesSeniorGrading),
                 'index'       => $matchedIndex + 1,
             ];
         }
@@ -214,6 +220,81 @@ class PromotionEvaluator
             ->where('schoolclass_classcategory.schoolclass_id', $schoolclassid)
             ->select('classcategories.id', 'classcategories.category', 'classcategories.is_senior', 'classcategories.promotion_pass_average')
             ->first();
+    }
+
+    /**
+     * Detect whether a class uses senior or junior grading by analyzing student grades
+     */
+    private function detectGradingType(int $schoolclassid, $scores): bool
+    {
+        // First check database setting
+        $classCategory = $this->getClassCategory($schoolclassid);
+        if ($classCategory && isset($classCategory->is_senior)) {
+            return (bool)$classCategory->is_senior;
+        }
+
+        // If no scores, default to junior
+        if (!$scores || (is_countable($scores) && count($scores) === 0)) {
+            return false;
+        }
+
+        // Analyze sample of grades to detect format
+        $sampleGrades = [];
+        $sampleCount = 0;
+
+        foreach ($scores as $score) {
+            $grade = is_object($score) ? ($score->grade ?? null) : ($score['grade'] ?? null);
+            if ($grade && $sampleCount < 10) {
+                $sampleGrades[] = strtoupper(trim($grade));
+                $sampleCount++;
+            }
+        }
+
+        // Check if grades match senior pattern (contains numbers like A1, B2, C4, etc.)
+        $seniorPattern = '/^[A-E][1-9]$|^F9$/';
+        $seniorCount = 0;
+
+        foreach ($sampleGrades as $grade) {
+            if (preg_match($seniorPattern, $grade)) {
+                $seniorCount++;
+            }
+        }
+
+        // If more than 50% of sample grades are senior-style, treat as senior
+        $isSenior = $seniorCount > ($sampleCount / 2);
+
+        Log::info('Grade type detection', [
+            'sample_grades' => $sampleGrades,
+            'senior_count' => $seniorCount,
+            'total_sample' => $sampleCount,
+            'detected_as_senior' => $isSenior
+        ]);
+
+        return $isSenior;
+    }
+
+    /**
+     * Normalize grade based on class type
+     * Convert senior-style grades to junior letters when needed
+     */
+    private function normalizeGrade(?string $grade, bool $isSenior): ?string
+    {
+        if ($grade === null) return null;
+
+        $grade = strtoupper(trim($grade));
+
+        // If class is junior but grade is senior-style, convert it
+        if (!$isSenior && isset(self::$gradeConversionMap[$grade])) {
+            $normalized = self::$gradeConversionMap[$grade];
+            Log::debug('Grade normalized', [
+                'original' => $grade,
+                'normalized' => $normalized,
+                'is_senior' => $isSenior
+            ]);
+            return $normalized;
+        }
+
+        return $grade;
     }
 
     private function findBestSettings(int $schoolclassid, int $sessionid, int $termid): ?PromotionSetting
@@ -316,12 +397,11 @@ class PromotionEvaluator
         array      $rule,
         Collection $scoreMap,
         array      $compulsoryIds,
-        bool       $isSenior,
-        array      $gradeScale
+        bool       $isSenior
     ): bool {
         $grouping = $rule['grade_grouping'] ?? 'grouped';
 
-        // For senior classes, force exact grouping if not specified
+        // For senior classes, force exact grouping for accurate comparison
         if ($isSenior && $grouping === 'grouped') {
             $grouping = 'exact';
             Log::debug('Senior class detected - forcing exact grade grouping');
@@ -349,11 +429,17 @@ class PromotionEvaluator
                 ? (is_object($scoreEntry) ? ($scoreEntry->grade ?? null) : ($scoreEntry['grade'] ?? null))
                 : null;
 
-            if ($this->gradeFails($studentGrade, $minGrade, $isSenior, $grouping)) {
+            // Normalize grades for comparison
+            $normalizedStudentGrade = $this->normalizeGrade($studentGrade, $isSenior);
+            $normalizedMinGrade = $this->normalizeGrade($minGrade, $isSenior);
+
+            if ($this->gradeFails($normalizedStudentGrade, $normalizedMinGrade, $isSenior, $grouping)) {
                 Log::debug('Rule failed: compulsory subject min grade not met', [
                     'subject_id' => $subjectId,
+                    'original_student_grade' => $studentGrade,
+                    'normalized_student_grade' => $normalizedStudentGrade,
                     'required_min_grade' => $minGrade,
-                    'student_grade' => $studentGrade
+                    'normalized_min_grade' => $normalizedMinGrade
                 ]);
                 return false;
             }
@@ -450,29 +536,12 @@ class PromotionEvaluator
             return $result;
         }
 
-        // For junior classes with grouped grading
-        if ($grouping === 'grouped') {
-            $studentRank = self::$juniorGroupOrder[$sg] ?? -1;
-            $minRank = self::$juniorGroupOrder[$mg] ?? 0;
-            $result = $studentRank < $minRank;
-
-            Log::debug('Junior grouped grade comparison', [
-                'student_grade' => $sg,
-                'min_grade' => $mg,
-                'student_order' => $studentRank,
-                'min_order' => $minRank,
-                'fails' => $result
-            ]);
-
-            return $result;
-        }
-
-        // Junior exact grading
+        // For junior classes
         $studentRank = self::$juniorGradeOrder[$sg] ?? -1;
         $minRank = self::$juniorGradeOrder[$mg] ?? 0;
         $result = $studentRank < $minRank;
 
-        Log::debug('Junior exact grade comparison', [
+        Log::debug('Junior grade comparison', [
             'student_grade' => $sg,
             'min_grade' => $mg,
             'student_order' => $studentRank,
@@ -490,20 +559,29 @@ class PromotionEvaluator
         bool       $isSenior
     ): int {
         $count = 0;
+        $requiredGrade = strtoupper(trim($grade));
 
         foreach ($scopedScores as $score) {
             $studentGrade = is_object($score) ? ($score->grade ?? null) : ($score['grade'] ?? null);
             if (!$studentGrade) continue;
-            $studentGrade = strtoupper(trim($studentGrade));
+
+            $normalizedGrade = $this->normalizeGrade($studentGrade, $isSenior);
+            if (!$normalizedGrade) continue;
+
+            $normalizedGrade = strtoupper(trim($normalizedGrade));
 
             if ($isSenior) {
                 // Senior classes: exact grade matching
-                if ($studentGrade === $grade) $count++;
+                if ($normalizedGrade === $requiredGrade) {
+                    $count++;
+                }
             } else {
                 // Junior classes: check if grade meets or exceeds requirement
-                $studentRank = self::$juniorGradeOrder[$studentGrade] ?? -1;
-                $requiredRank = self::$juniorGradeOrder[$grade] ?? 0;
-                if ($studentRank >= $requiredRank) $count++;
+                $studentRank = self::$juniorGradeOrder[$normalizedGrade] ?? -1;
+                $requiredRank = self::$juniorGradeOrder[$requiredGrade] ?? 0;
+                if ($studentRank >= $requiredRank) {
+                    $count++;
+                }
             }
         }
 
@@ -576,16 +654,20 @@ class PromotionEvaluator
                 : null;
             $minGrade     = $rule->min_grade;
 
+            // Normalize grades for comparison
+            $normalizedStudentGrade = $this->normalizeGrade($studentGrade, $isSenior);
+            $normalizedMinGrade = $this->normalizeGrade($minGrade, $isSenior);
+
             // Determine if passed based on senior/junior
             $didPass = false;
-            if ($scoreEntry) {
+            if ($scoreEntry && $normalizedStudentGrade) {
                 if ($isSenior) {
-                    $studentRank = self::$seniorGradeOrder[$studentGrade] ?? -1;
-                    $minRank = self::$seniorGradeOrder[$minGrade] ?? 0;
+                    $studentRank = self::$seniorGradeOrder[$normalizedStudentGrade] ?? -1;
+                    $minRank = self::$seniorGradeOrder[$normalizedMinGrade] ?? 0;
                     $didPass = $studentRank >= $minRank;
                 } else {
-                    $studentRank = self::$juniorGradeOrder[$studentGrade] ?? -1;
-                    $minRank = self::$juniorGradeOrder[$minGrade] ?? 0;
+                    $studentRank = self::$juniorGradeOrder[$normalizedStudentGrade] ?? -1;
+                    $minRank = self::$juniorGradeOrder[$normalizedMinGrade] ?? 0;
                     $didPass = $studentRank >= $minRank;
                 }
             }
@@ -595,7 +677,9 @@ class PromotionEvaluator
                     'subject_id' => $subjectId,
                     'subject'    => $subjectName,
                     'grade'      => $studentGrade,
+                    'normalized_grade' => $normalizedStudentGrade,
                     'min_grade'  => $minGrade,
+                    'normalized_min_grade' => $normalizedMinGrade,
                     'not_sat'    => !$scoreEntry,
                 ];
             } else {
@@ -606,7 +690,9 @@ class PromotionEvaluator
                 'subject_id' => $subjectId,
                 'subject'    => $subjectName,
                 'grade'      => $studentGrade,
+                'normalized_grade' => $normalizedStudentGrade,
                 'min_grade'  => $minGrade,
+                'normalized_min_grade' => $normalizedMinGrade,
                 'passed'     => $didPass,
                 'not_sat'    => !$scoreEntry,
             ];
@@ -817,43 +903,58 @@ class PromotionEvaluator
                 ? (is_object($scoreEntry) ? ($scoreEntry->subject_name ?? null) : null)
                 : null;
 
+            // Normalize grade for junior classes
+            $normalizedGrade = $this->normalizeGrade($grade, $isSenior);
+
             if (!$scoreEntry) {
                 $missingCompulsorySubjects[] = $subjectName ?? "Subject #{$subjectId}";
-            } elseif (in_array($grade, $creditGrades)) {
+            } elseif (in_array($normalizedGrade, $creditGrades)) {
                 $compulsoryCreditCount++;
             }
 
-            $didPass = $scoreEntry && in_array($grade, $creditGrades);
+            $didPass = $scoreEntry && in_array($normalizedGrade, $creditGrades);
             if (!$didPass) {
                 $failedComp[] = [
-                    'subject_id' => $subjectId, 'subject' => $subjectName,
-                    'grade' => $grade, 'min_grade' => 'C6', 'not_sat' => !$scoreEntry,
+                    'subject_id' => $subjectId,
+                    'subject'    => $subjectName,
+                    'grade'      => $grade,
+                    'normalized_grade' => $normalizedGrade,
+                    'min_grade'  => $isSenior ? 'C6' : 'C',
+                    'not_sat'    => !$scoreEntry,
                 ];
             } else {
                 $passedComp++;
             }
             $detail[] = [
-                'subject_id' => $subjectId, 'subject' => $subjectName,
-                'grade' => $grade, 'min_grade' => 'C6',
-                'passed' => $didPass, 'not_sat' => !$scoreEntry,
+                'subject_id' => $subjectId,
+                'subject'    => $subjectName,
+                'grade'      => $grade,
+                'normalized_grade' => $normalizedGrade,
+                'min_grade'  => $isSenior ? 'C6' : 'C',
+                'passed'     => $didPass,
+                'not_sat'    => !$scoreEntry,
             ];
         }
 
         foreach ($scoreCol as $score) {
             $grade = is_object($score) ? $score->grade : $score['grade'];
-            if (in_array($grade, $creditGrades)) $creditCount++;
-            elseif (in_array($grade, $failGrades)) $failCount++;
+            $normalizedGrade = $this->normalizeGrade($grade, $isSenior);
+            if (in_array($normalizedGrade, $creditGrades)) $creditCount++;
+            elseif (in_array($normalizedGrade, $failGrades)) $failCount++;
         }
 
-        $allDs       = $scoreCol->isNotEmpty() && $scoreCol->every(fn($s) => (is_object($s) ? $s->grade : $s['grade']) === $dGrade);
-        $mixOfDsAndFs = $scoreCol->isNotEmpty() && $scoreCol->every(function ($s) use ($dGrade, $failGrades) {
+        $allDs       = $scoreCol->isNotEmpty() && $scoreCol->every(fn($s) => $this->normalizeGrade(is_object($s) ? $s->grade : $s['grade'], $isSenior) === $dGrade);
+        $mixOfDsAndFs = $scoreCol->isNotEmpty() && $scoreCol->every(function ($s) use ($dGrade, $failGrades, $isSenior) {
             $g = is_object($s) ? $s->grade : $s['grade'];
-            return $g === $dGrade || in_array($g, $failGrades);
+            $normalized = $this->normalizeGrade($g, $isSenior);
+            return $normalized === $dGrade || in_array($normalized, $failGrades);
         });
-        $failedNonCompulsory = $scoreCol->filter(function ($s) use ($compulsorySubjectIds, $failGrades) {
+
+        $failedNonCompulsory = $scoreCol->filter(function ($s) use ($compulsorySubjectIds, $failGrades, $isSenior) {
             $sid = is_object($s) ? $s->subject_id : $s['subject_id'];
             $g   = is_object($s) ? $s->grade : $s['grade'];
-            return !in_array($sid, $compulsorySubjectIds) && in_array($g, $failGrades);
+            $normalized = $this->normalizeGrade($g, $isSenior);
+            return !in_array($sid, $compulsorySubjectIds) && in_array($normalized, $failGrades);
         })->count() === max(0, $scoreCol->count() - count($compulsorySubjectIds));
 
         $compTotal = $compulsoryRules->count();
