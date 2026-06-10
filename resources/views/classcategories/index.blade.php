@@ -48,6 +48,45 @@
 .pay-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
 .pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
+/* Navigation Tabs */
+.nav-tabs-custom {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--pay-border);
+    padding-bottom: 0;
+}
+.nav-tabs-custom .nav-link {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pay-muted);
+    background: transparent;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    transition: all .15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.nav-tabs-custom .nav-link i {
+    font-size: 16px;
+}
+.nav-tabs-custom .nav-link:hover {
+    color: var(--pay-accent);
+    background: rgba(37,99,235,.05);
+}
+.nav-tabs-custom .nav-link.active {
+    color: var(--pay-accent);
+    border-bottom: 2px solid var(--pay-accent);
+    background: transparent;
+}
+.nav-tabs-custom .nav-link.active i {
+    color: var(--pay-accent);
+}
+
 .stat-card {
     background: #fff;
     border: 1px solid var(--pay-border);
@@ -337,6 +376,16 @@ textarea.form-control {
     <div class="pay-hero">
         <h1><i class="ri-bookmark-line me-2"></i>Class Category Management</h1>
         <p>Manage class categories and their assessment configurations for grading systems.</p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs-custom">
+        <a href="{{ route('classcategories.index') }}" class="nav-link active">
+            <i class="ri-bookmark-line"></i> Class Categories
+        </a>
+        <a href="{{ route('compulsorysubjectclass.index') }}" class="nav-link">
+            <i class="ri-star-line"></i> Compulsory Subjects
+        </a>
     </div>
 
     <div class="row g-3 mb-4">
