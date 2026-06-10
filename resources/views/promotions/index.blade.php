@@ -35,59 +35,49 @@
     --color-border-tertiary:  #cbd5e1;
 }
 
-/* ── Animations ─────────────────────────────────────────────────────────────── */
 @keyframes slideIn {
     from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes modalZoomIn {
     from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
-
 @keyframes toastSlideIn {
     from { opacity: 0; transform: translateX(100px); }
-    to { opacity: 1; transform: translateX(0); }
+    to   { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes toastSlideOut {
     from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(100px); }
+    to   { opacity: 0; transform: translateX(100px); }
 }
-
 @keyframes skeletonLoading {
-    0% { transform: translateX(-100%); }
+    0%   { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
 }
-
 @keyframes btnPulse {
-    0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
-    70% { box-shadow: 0 0 0 8px rgba(37,99,235,0); }
-    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+    0%   { box-shadow: 0 0 0 0   rgba(37,99,235,0.4); }
+    70%  { box-shadow: 0 0 0 8px rgba(37,99,235,0);   }
+    100% { box-shadow: 0 0 0 0   rgba(37,99,235,0);   }
 }
-
 @keyframes statFlash {
     0%   { transform: scale(1);    color: inherit; }
     40%  { transform: scale(1.18); color: #2563eb; }
     100% { transform: scale(1);    color: inherit; }
 }
-
 @keyframes badgePop {
-    0%   { transform: scale(1); }
+    0%   { transform: scale(1);    }
     40%  { transform: scale(1.22); }
     70%  { transform: scale(0.94); }
-    100% { transform: scale(1); }
+    100% { transform: scale(1);    }
 }
-
-@keyframes rowFlash {
-    0%   { background: rgba(37,99,235,0.1); }
-    100% { background: transparent; }
+@keyframes bounce {
+    0%, 100% { transform: translateY(0);     }
+    50%       { transform: translateY(-10px); }
 }
 
 /* ── Hero ───────────────────────────────────────────────────────────────────── */
@@ -102,8 +92,7 @@
 }
 .pay-hero::before {
     content: '';
-    position: absolute;
-    top: -60px; right: -60px;
+    position: absolute; top: -60px; right: -60px;
     width: 220px; height: 220px;
     background: rgba(255,255,255,.06);
     border-radius: 50%;
@@ -120,38 +109,13 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
 }
-.stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-.stat-card::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-8px);
-    background: #1e293b;
-    color: white;
-    font-size: 11px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s, transform 0.2s;
-    z-index: 100;
-}
-.stat-card:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-4px);
-}
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
 .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--pay-primary); }
 .stat-card .stat-label { font-size: 12px; color: var(--pay-muted); margin-top: 4px; }
 .stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
-
 .stat-flash { animation: statFlash .45s cubic-bezier(.34,1.4,.64,1); }
 
-/* ── Info / warning banners ─────────────────────────────────────────────────── */
+/* ── Info banner ────────────────────────────────────────────────────────────── */
 .info-banner {
     background: #eff6ff; border: 1px solid #bfdbfe;
     border-radius: 10px; padding: 12px 16px;
@@ -178,7 +142,6 @@
 .promotion-badge-see_principal { background: #3b82f6; color: white; }
 .promotion-badge-repeated    { background: #ef4444; color: white; }
 .promotion-badge-pending     { background: #6b7280; color: white; }
-
 .badge-pop { animation: badgePop .4s cubic-bezier(.34,1.4,.64,1); }
 
 /* ── Bulk action bar ────────────────────────────────────────────────────────── */
@@ -193,8 +156,7 @@
 
 /* ── Modal chrome ───────────────────────────────────────────────────────────── */
 .modal-content {
-    border-radius: 16px;
-    overflow: hidden;
+    border-radius: 16px; overflow: hidden;
     animation: modalZoomIn 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
 }
 .modal-header {
@@ -210,15 +172,6 @@
     margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--pay-border);
 }
 
-/* ── Recommendation cards ───────────────────────────────────────────────────── */
-.recommendation-card { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-.recommendation-card.promoted      { border-left: 4px solid #10b981; }
-.recommendation-card.trial         { border-left: 4px solid #f59e0b; }
-.recommendation-card.see_principal { border-left: 4px solid #3b82f6; }
-.recommendation-card.repeated      { border-left: 4px solid #ef4444; }
-.recommendation-card .label { font-size: 12px; color: var(--pay-muted); margin-bottom: 4px; }
-.recommendation-card .value { font-size: 16px; font-weight: 700; }
-
 /* ── Decision cards ─────────────────────────────────────────────────────────── */
 .form-check-card .form-check-input { display: none; }
 .promotion-card, .trial-card, .principal-card, .repeat-card {
@@ -229,278 +182,205 @@
 .principal-card:hover { border-color: #0dcaf0 !important; box-shadow: 0 0 0 0.2rem rgba(13,202,240,.1); }
 .repeat-card:hover    { border-color: #dc3545 !important; box-shadow: 0 0 0 0.2rem rgba(220,53,69,.1); }
 
-#promotionCheckbox:checked ~ label .promotion-card   { border-color: #198754 !important; background-color: #d1e7dd !important; }
-#trialCheckbox:checked ~ label .trial-card           { border-color: #ffc107 !important; background-color: #fff3cd !important; }
-#seePrincipalCheckbox:checked ~ label .principal-card{ border-color: #0dcaf0 !important; background-color: #cff4fc !important; }
-#repeatCheckbox:checked ~ label .repeat-card         { border-color: #dc3545 !important; background-color: #f8d7da !important; }
+#promotionCheckbox:checked ~ label .promotion-card    { border-color: #198754 !important; background-color: #d1e7dd !important; }
+#trialCheckbox:checked ~ label .trial-card            { border-color: #ffc107 !important; background-color: #fff3cd !important; }
+#seePrincipalCheckbox:checked ~ label .principal-card { border-color: #0dcaf0 !important; background-color: #cff4fc !important; }
+#repeatCheckbox:checked ~ label .repeat-card          { border-color: #dc3545 !important; background-color: #f8d7da !important; }
 
-/* ── Row entrance animation ─────────────────────────────────────────────────── */
+/* ── Row entrance ───────────────────────────────────────────────────────────── */
 #studentTableBody tr[data-student-id] {
-    opacity: 0;
-    transform: translateY(14px);
+    opacity: 0; transform: translateY(14px);
     transition: opacity .38s cubic-bezier(.25,.46,.45,.94),
                 transform .38s cubic-bezier(.25,.46,.45,.94),
                 background .18s ease;
     will-change: opacity, transform;
 }
-#studentTableBody tr[data-student-id].row-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* ── Row hover ──────────────────────────────────────────────────────────────── */
+#studentTableBody tr[data-student-id].row-visible { opacity: 1; transform: translateY(0); }
 #studentTableBody tr[data-student-id]:hover {
     background: #f0f6ff !important;
     box-shadow: inset 3px 0 0 #2563eb;
     transform: translateY(-1px) !important;
-    transition: background .14s ease,
-                box-shadow .18s ease,
-                transform .18s cubic-bezier(.34,1.4,.64,1);
-    position: relative;
-    z-index: 1;
+    transition: background .14s ease, box-shadow .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1);
+    position: relative; z-index: 1;
 }
-
-/* ── Row selection ─────────────────────────────────────────────────────────── */
-#studentTableBody tr[data-student-id].selected {
-    background: #e0f2fe !important;
-    transition: background 0.15s ease;
-}
-#studentTableBody tr[data-student-id].selected:hover {
-    background: #d9ebf7 !important;
-}
-
-/* ── Avatar hover scale ─────────────────────────────────────────────────────── */
-#studentTableBody tr[data-student-id] .student-row-avatar {
-    transition: transform .18s ease, box-shadow .18s ease;
-}
-#studentTableBody tr[data-student-id]:hover .student-row-avatar {
-    transform: scale(1.12);
-    box-shadow: 0 2px 8px rgba(0,0,0,.15);
-}
-
-/* ── Badge hover scale ──────────────────────────────────────────────────────── */
+#studentTableBody tr[data-student-id].selected             { background: #e0f2fe !important; }
+#studentTableBody tr[data-student-id].selected:hover       { background: #d9ebf7 !important; }
+#studentTableBody tr[data-student-id] .student-row-avatar  { transition: transform .18s ease, box-shadow .18s ease; }
+#studentTableBody tr[data-student-id]:hover .student-row-avatar { transform: scale(1.12); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
 #studentTableBody tr[data-student-id]:hover .badge,
-#studentTableBody tr[data-student-id]:hover [class*="promotion-badge-"] {
-    transition: transform .18s cubic-bezier(.34,1.4,.64,1);
-    transform: scale(1.06);
-}
-
-/* ── Checkbox fade ─────────────────────────────────────────────────────────── */
-#studentTableBody tr[data-student-id] .row-checkbox {
-    opacity: .35;
-    transform: scale(.85);
-    transition: opacity .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1);
-}
+#studentTableBody tr[data-student-id]:hover [class*="promotion-badge-"] { transition: transform .18s cubic-bezier(.34,1.4,.64,1); transform: scale(1.06); }
+#studentTableBody tr[data-student-id] .row-checkbox { opacity: .35; transform: scale(.85); transition: opacity .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1); }
 #studentTableBody tr[data-student-id]:hover .row-checkbox,
-#studentTableBody tr[data-student-id] .row-checkbox:checked {
-    opacity: 1;
-    transform: scale(1);
-}
+#studentTableBody tr[data-student-id] .row-checkbox:checked { opacity: 1; transform: scale(1); }
 
-/* ── Score bar ─────────────────────────────────────────────────────────────── */
-.score-bar-wrap {
-    background: #e2e8f0; border-radius: 4px;
-    height: 6px; width: 60px;
-    display: inline-block; vertical-align: middle; margin-left: 6px;
-}
+/* ── Score bar ──────────────────────────────────────────────────────────────── */
+.score-bar-wrap { background: #e2e8f0; border-radius: 4px; height: 6px; width: 60px; display: inline-block; vertical-align: middle; margin-left: 6px; }
 .score-bar-fill { height: 100%; border-radius: 4px; }
 
-/* ── Summary pills ─────────────────────────────────────────────────────────── */
-.subject-summary-strip {
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-    background: #f8fafc; border: 1px solid var(--pay-border);
-    border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
-}
-.summary-pill {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 600;
-}
-.pill-pass     { background: #dcfce7; color: #15803d; }
-.pill-fail     { background: #fee2e2; color: #b91c1c; }
-.pill-notsat   { background: #fef9c3; color: #92400e; }
-.pill-optional { background: #e0f2fe; color: #0369a1; }
-.pill-total    { background: #ede9fe; color: #6d28d9; }
-.pill-credit   { background: #fce7f3; color: #9d174d; }
-
-/* ── Table chrome ──────────────────────────────────────────────────────────── */
+/* ── Table chrome ───────────────────────────────────────────────────────────── */
 .compulsory-table { width: 100%; border-collapse: collapse; }
-.compulsory-table th {
+.compulsory-table th { background: var(--pay-primary); color: #fff; padding: 12px 16px; font-weight: 600; font-size: 13px; white-space: nowrap; text-align: left; }
+.compulsory-table td { padding: 11px 16px; vertical-align: middle; border-bottom: 1px solid var(--pay-border); font-size: 13px; }
+
+/* ── Subjects table (modal) ─────────────────────────────────────────────────── */
+.subj-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.subj-table thead th {
     background: var(--pay-primary); color: #fff;
-    padding: 12px 16px; font-weight: 600; font-size: 13px;
-    white-space: nowrap; text-align: left;
+    padding: 10px 12px; font-weight: 600; font-size: 11.5px; white-space: nowrap;
+    position: sticky; top: 0; z-index: 2;
+    border-right: 1px solid rgba(255,255,255,.08);
 }
-.compulsory-table td {
-    padding: 11px 16px; vertical-align: middle;
-    border-bottom: 1px solid var(--pay-border); font-size: 13px;
+.subj-table thead th:last-child { border-right: none; }
+.subj-table tbody td { padding: 9px 12px; vertical-align: middle; border-bottom: 1px solid var(--pay-border); }
+.subj-table tbody tr:hover td { background: #f8fafc; }
+.subj-table .section-row td {
+    background: #f1f5f9; padding: 6px 12px;
+    font-size: 10.5px; font-weight: 700; color: #475569;
+    letter-spacing: .05em; text-transform: uppercase;
+    border-bottom: 1px solid var(--pay-border);
+    border-top: 2px solid #e2e8f0;
 }
 
-/* ── Empty state ───────────────────────────────────────────────────────────── */
+/* grade colors */
+.gc-a  { color: #15803d; }
+.gc-b  { color: #1d4ed8; }
+.gc-c  { color: #0369a1; }
+.gc-d  { color: #d97706; }
+.gc-f  { color: #b91c1c; }
+.gc-na { color: #9ca3af; }
+
+/* row left-border status */
+.subj-table .row-pass    { border-left: 3px solid #10b981; }
+.subj-table .row-fail    { border-left: 3px solid #ef4444; }
+.subj-table .row-notsat  { border-left: 3px solid #f59e0b; }
+.subj-table .row-credit  { border-left: 3px solid #3b82f6; }
+.subj-table .row-passonly{ border-left: 3px solid #d97706; }
+.subj-table .row-optfail { border-left: 3px solid #ef4444; }
+.subj-table .row-optns   { border-left: 3px solid #9ca3af; }
+
+/* inline mini-bar */
+.mini-bar { display:inline-flex; align-items:center; gap:6px; }
+.mini-bar-track { width:44px; height:4px; background:#e2e8f0; border-radius:2px; display:inline-block; vertical-align:middle; overflow:hidden; }
+.mini-bar-fill  { height:100%; border-radius:2px; }
+
+/* eval tag */
+.eval-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 500; padding: 2px 8px;
+    border-radius: 5px; white-space: nowrap;
+    border: 0.5px solid transparent;
+}
+.eval-green  { background: #dcfce7; color: #15803d; border-color: #86efac; }
+.eval-red    { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.eval-amber  { background: #fef9c3; color: #92400e; border-color: #fde68a; }
+.eval-blue   { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+.eval-gray   { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.eval-sub { display: block; font-size: 10.5px; color: #64748b; margin-top: 2px; line-height: 1.35; }
+
+/* stat summary row */
+.subj-stat-row {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 10px 14px; background: #f8fafc;
+    border: 1px solid var(--pay-border); border-radius: 8px; margin-bottom: 12px;
+}
+.subj-stat-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11.5px; font-weight: 500; padding: 3px 10px;
+    border-radius: 20px;
+}
+.chip-total   { background: #ede9fe; color: #6d28d9; }
+.chip-pass    { background: #dcfce7; color: #15803d; }
+.chip-fail    { background: #fee2e2; color: #b91c1c; }
+.chip-notsat  { background: #fef9c3; color: #92400e; }
+.chip-credit  { background: #dbeafe; color: #1e40af; }
+
+/* credit tally cards */
+.credit-tally {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.credit-tally-card {
+    flex: 1; min-width: 120px;
+    background: #fff; border: 1px solid var(--pay-border);
+    border-radius: 8px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+}
+.credit-tally-card .num { font-size: 22px; font-weight: 700; line-height: 1; }
+.credit-tally-card .lbl { font-size: 11px; color: #64748b; line-height: 1.4; }
+.credit-tally-card .lbl small { display: block; opacity: .75; }
+
+/* rule match banner */
+.rule-match-banner {
+    padding: 10px 14px; border-radius: 8px;
+    font-size: 12.5px; margin-bottom: 12px;
+    display: flex; flex-direction: column; gap: 5px;
+    border: 0.5px solid transparent;
+}
+.rule-match-banner.matched   { background: #dcfce7; color: #15803d; border-color: #86efac; }
+.rule-match-banner.unmatched { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.rule-match-banner .top      { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-weight: 600; }
+.rule-match-banner .sub      { font-size: 11.5px; opacity: .85; }
+
+/* ── Empty state ────────────────────────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 52px 24px; color: var(--pay-muted); }
 .empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
 
-/* ── Search box ────────────────────────────────────────────────────────────── */
+/* ── Search box ─────────────────────────────────────────────────────────────── */
 .search-box { position: relative; }
-.search-box .form-control {
-    border: 1.5px solid var(--pay-border); border-radius: 8px;
-    padding: 9px 14px; padding-right: 36px; font-size: 13px; width: 100%;
-}
-.search-box .form-control:focus {
-    border-color: var(--pay-accent); outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
-}
-.search-box .search-icon {
-    position: absolute; right: 12px; top: 50%;
-    transform: translateY(-50%); color: var(--pay-muted); pointer-events: none;
-}
+.search-box .form-control { border: 1.5px solid var(--pay-border); border-radius: 8px; padding: 9px 14px; padding-right: 36px; font-size: 13px; width: 100%; }
+.search-box .form-control:focus { border-color: var(--pay-accent); outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.search-box .search-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--pay-muted); pointer-events: none; }
 
 /* ── Modal student profile ──────────────────────────────────────────────────── */
-.student-avatar-lg {
-    width: 120px; height: 120px; object-fit: cover;
-    border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.15); background: #f8f9fa;
-}
-.status-badge-lg {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border-radius: 30px; font-size: 14px; font-weight: 600;
-}
+.student-avatar-lg { width: 120px; height: 120px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.15); background: #f8f9fa; }
+.status-badge-lg   { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 30px; font-size: 14px; font-weight: 600; }
 
-/* ── Rule badge / subject table accents ────────────────────────────────────── */
-.rule-badge {
-    background: #1e3a5f; color: white;
-    padding: 4px 12px; border-radius: 20px;
-    font-size: 11px; font-weight: 500;
-    display: inline-flex; align-items: center; gap: 4px;
-}
-.subject-pass td:first-child    { border-left: 3px solid #10b981; }
-.subject-fail td:first-child    { border-left: 3px solid #ef4444; }
-.subject-not-sat td:first-child { border-left: 3px solid #f59e0b; }
-.badge-compulsory {
-    background: #fef3c7; color: #92400e;
-    padding: 2px 8px; border-radius: 12px;
-    font-size: 9px; font-weight: 600; display: inline-block;
-}
+/* ── Rule badge ─────────────────────────────────────────────────────────────── */
+.rule-badge { background: #1e3a5f; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
 
-/* ── All-subjects table ────────────────────────────────────────────────────── */
-.subjects-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.subjects-table thead th {
-    background: var(--pay-primary); color: #fff;
-    padding: 10px 14px; font-weight: 600; white-space: nowrap;
-    position: sticky; top: 0; z-index: 1;
-}
-.subjects-table tbody td {
-    padding: 10px 14px; vertical-align: middle;
-    border-bottom: 1px solid var(--pay-border);
-}
-.subjects-table tbody tr:hover td { background: #f0f9ff; }
-.subjects-table tr.row-pass    td:first-child { border-left: 4px solid #10b981; }
-.subjects-table tr.row-fail    td:first-child { border-left: 4px solid #ef4444; }
-.subjects-table tr.row-notsat  td:first-child { border-left: 4px solid #f59e0b; }
-.subjects-table tr.row-optional td:first-child { border-left: 4px solid #94a3b8; }
-.subjects-table tr.row-section td {
-    background: #f1f5f9; padding: 6px 14px;
-    font-size: 11px; font-weight: 700; color: #475569;
-    letter-spacing: .05em; text-transform: uppercase;
-    border-bottom: 1px solid var(--pay-border);
-}
-
-/* ── Button icons ──────────────────────────────────────────────────────────── */
-.btn-icon {
-    width: 32px; height: 32px; padding: 0;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 8px; transition: all .15s; border: none; cursor: pointer;
-}
+/* ── Button icons ───────────────────────────────────────────────────────────── */
+.btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all .15s; border: none; cursor: pointer; }
 .btn-subtle-primary { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
 .btn-subtle-primary:hover { background: #dbeafe; color: #1d4ed8; transform: translateY(-1px); }
 .btn-subtle-danger  { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .btn-subtle-danger:hover  { background: #fee2e2; color: #b91c1c; transform: translateY(-1px); }
 
-/* ── Toast Notifications ───────────────────────────────────────────────────── */
-.toast-notification {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 10000;
-    animation: toastSlideIn 0.3s ease-out;
-}
-.toast-notification.closing {
-    animation: toastSlideOut 0.3s ease-out forwards;
-}
+/* ── Toast ──────────────────────────────────────────────────────────────────── */
+.toast-notification { position: fixed; bottom: 20px; right: 20px; z-index: 10000; animation: toastSlideIn 0.3s ease-out; }
+.toast-notification.closing { animation: toastSlideOut 0.3s ease-out forwards; }
 
-/* ── Loading Overlay ───────────────────────────────────────────────────────── */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    backdrop-filter: blur(3px);
-}
-.loading-spinner {
-    background: white;
-    padding: 20px 30px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-}
+/* ── Loading overlay ────────────────────────────────────────────────────────── */
+.loading-overlay  { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(3px); }
+.loading-spinner  { background: white; padding: 20px 30px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
 
-/* ── Skeleton loading ──────────────────────────────────────────────────────── */
-.skeleton-row td {
-    position: relative;
-    overflow: hidden;
-}
-.skeleton-row td::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    animation: skeletonLoading 1.5s infinite;
-}
+/* ── Skeleton ───────────────────────────────────────────────────────────────── */
+.skeleton-row td { position: relative; overflow: hidden; }
+.skeleton-row td::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); animation: skeletonLoading 1.5s infinite; }
 
-/* ── Pulse animation ───────────────────────────────────────────────────────── */
-.btn-pulse {
-    animation: btnPulse 2s infinite;
-}
-
-/* ── Misc ─────────────────────────────────────────────────────────────────── */
+/* ── Misc ───────────────────────────────────────────────────────────────────── */
+.btn-pulse { animation: btnPulse 2s infinite; }
 .animate-bounce { animation: bounce 2s infinite; }
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-10px); }
-}
 .avatar-sm { height: 3rem; width: 3rem; }
-.avatar-title {
-    align-items: center; display: flex;
-    height: 100%; justify-content: center; width: 100%;
-}
+.avatar-title { align-items: center; display: flex; height: 100%; justify-content: center; width: 100%; }
 .bg-success-subtle { background-color: rgba(25,135,84,.1)  !important; }
 .bg-warning-subtle { background-color: rgba(255,193,7,.1)  !important; }
 .bg-info-subtle    { background-color: rgba(13,202,240,.1) !important; }
 .bg-danger-subtle  { background-color: rgba(220,53,69,.1)  !important; }
-.rule-link { transition: all 0.2s ease; }
-.rule-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
 .table-hover tbody tr:hover { background-color: rgba(0,0,0,.02); }
 
-/* ── Reduced motion ───────────────────────────────────────────────────────── */
+/* ── Recommendation card ────────────────────────────────────────────────────── */
+.recommendation-card { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.recommendation-card.promoted      { border-left: 4px solid #10b981; }
+.recommendation-card.trial         { border-left: 4px solid #f59e0b; }
+.recommendation-card.see_principal { border-left: 4px solid #3b82f6; }
+.recommendation-card.repeated      { border-left: 4px solid #ef4444; }
+.recommendation-card .label { font-size: 12px; color: var(--pay-muted); margin-bottom: 4px; }
+.recommendation-card .value { font-size: 16px; font-weight: 700; }
+
 @media (prefers-reduced-motion: reduce) {
     #studentTableBody tr[data-student-id],
-    #studentTableBody tr[data-student-id]:hover {
-        transition: background .15s ease !important;
-        transform: none !important;
-        opacity: 1 !important;
-    }
+    #studentTableBody tr[data-student-id]:hover { transition: background .15s ease !important; transform: none !important; opacity: 1 !important; }
     .stat-flash, .badge-pop { animation: none !important; }
-    .toast-notification { animation: none !important; }
-    .modal-content { animation: none !important; }
+    .toast-notification, .modal-content { animation: none !important; }
 }
 </style>
 
@@ -533,21 +413,21 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card" data-tooltip="Students recommended for promotion based on rules">
+                    <div class="stat-card" data-tooltip="Students recommended for promotion">
                         <div class="stat-icon"><i class="ri-arrow-up-circle-line"></i></div>
                         <div class="stat-value text-success" id="promotedCount">0</div>
                         <div class="stat-label">Recommended Promoted</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card" data-tooltip="Students recommended for conditional promotion on trial">
+                    <div class="stat-card" data-tooltip="Students recommended for conditional promotion">
                         <div class="stat-icon"><i class="ri-time-line"></i></div>
                         <div class="stat-value text-warning" id="trialCount">0</div>
                         <div class="stat-label">On Trial</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card" data-tooltip="Students recommended to repeat the current class">
+                    <div class="stat-card" data-tooltip="Students recommended to repeat current class">
                         <div class="stat-icon"><i class="ri-repeat-line"></i></div>
                         <div class="stat-value text-danger" id="repeatCount">0</div>
                         <div class="stat-label">To Repeat</div>
@@ -566,14 +446,13 @@
                 </div>
             </div>
 
-            {{-- Warning Banner for Missing Promotion Settings --}}
+            {{-- Warning Banner --}}
             @php
                 $selectedClassId = request()->input('schoolclassid');
                 $hasPromotionSettings = false;
                 if ($selectedClassId && $selectedClassId !== 'ALL') {
                     $hasPromotionSettings = \App\Models\PromotionSetting::where('schoolclass_id', $selectedClassId)
-                        ->where('is_active', true)
-                        ->exists();
+                        ->where('is_active', true)->exists();
                 }
             @endphp
 
@@ -585,7 +464,7 @@
                         <strong class="d-block mb-1">⚠️ No Promotion Rules Configured!</strong>
                         <span>No active promotion settings found for this class. Please
                         <a href="{{ route('promotion-settings.index') }}" class="alert-link fw-bold">configure promotion rules</a>
-                        to enable automatic recommendations. Until then, all students will show "Awaiting Decision".</span>
+                        to enable automatic recommendations.</span>
                     </div>
                     <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
                 </div>
@@ -640,22 +519,16 @@
 
             {{-- Students Table --}}
             <div class="card border-0 shadow-sm">
-                <div class="card-header d-flex align-items-center justify-content-between flex-wrap"
-                     style="padding:16px 20px">
+                <div class="card-header d-flex align-items-center justify-content-between flex-wrap" style="padding:16px 20px">
                     <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
                         <i class="ri-group-line me-2"></i>Students
                         <span class="badge bg-primary ms-2" id="studentcount">{{ $allstudents->total() }}</span>
                     </h5>
                     <div class="d-flex gap-2">
-                        <small class="text-muted">
-                            <i class="ri-keyboard-line me-1"></i>
-                            <kbd>Ctrl+A</kbd> Select all
-                        </small>
+                        <small class="text-muted"><i class="ri-keyboard-line me-1"></i><kbd>Ctrl+A</kbd> Select all</small>
                     </div>
                 </div>
                 <div class="card-body">
-
-                    {{-- Bulk Action Bar --}}
                     <div class="bulk-action-bar" id="bulkActionBar">
                         <span class="bulk-count" id="bulkCount">0 selected</span>
                         <button type="button" class="btn btn-primary btn-sm" id="bulkPromoteActionBtn">
@@ -670,9 +543,7 @@
                         <table class="compulsory-table">
                             <thead>
                                 <tr>
-                                    <th width="40">
-                                        <input type="checkbox" class="select-all-checkbox" id="selectAll">
-                                    </th>
+                                    <th width="40"><input type="checkbox" class="select-all-checkbox" id="selectAll"></th>
                                     <th>Admission No</th>
                                     <th>Student Name</th>
                                     <th>Class</th>
@@ -700,9 +571,9 @@
     </div>
 </div>
 
-{{-- ============================================================
+{{-- ================================================================
      Promotion Modal
-     ============================================================ --}}
+     ================================================================ --}}
 <div class="modal fade" id="promotionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -715,7 +586,7 @@
 
             <form id="promotionForm">
                 @csrf
-                <div class="modal-body p-4" style="max-height:80vh;overflow-y:auto;">
+                <div class="modal-body p-4" style="max-height:82vh;overflow-y:auto;">
 
                     {{-- Student Profile --}}
                     <div class="card border-0 shadow-sm mb-4">
@@ -725,8 +596,7 @@
                                     <img id="modalStudentImage"
                                          src="{{ asset('storage/student_avatars/unnamed.jpg') }}"
                                          alt="Student Picture"
-                                         class="student-avatar-lg rounded-circle"
-                                         style="object-fit: cover; width: 120px; height: 120px;">
+                                         class="student-avatar-lg rounded-circle">
                                     <div class="mt-2">
                                         <span class="badge bg-primary" id="modalStudentGender"></span>
                                     </div>
@@ -809,7 +679,6 @@
                         </div>
                     </div>
 
-                    {{-- Arrow --}}
                     <div class="text-center my-4">
                         <i class="ri-arrow-down-line text-primary fs-1 animate-bounce"></i>
                     </div>
@@ -866,11 +735,7 @@
                                         <label class="form-check-label w-100" for="promotionCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer promotion-card">
                                                 <div class="flex-shrink-0">
-                                                    <div class="avatar-sm">
-                                                        <div class="avatar-title bg-success-subtle text-success rounded-circle fs-2">
-                                                            <i class="ri-arrow-up-circle-line"></i>
-                                                        </div>
-                                                    </div>
+                                                    <div class="avatar-sm"><div class="avatar-title bg-success-subtle text-success rounded-circle fs-2"><i class="ri-arrow-up-circle-line"></i></div></div>
                                                 </div>
                                                 <div class="flex-grow-1 ms-3">
                                                     <h6 class="mb-1">Promote</h6>
@@ -886,11 +751,7 @@
                                         <label class="form-check-label w-100" for="trialCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer trial-card">
                                                 <div class="flex-shrink-0">
-                                                    <div class="avatar-sm">
-                                                        <div class="avatar-title bg-warning-subtle text-warning rounded-circle fs-2">
-                                                            <i class="ri-time-line"></i>
-                                                        </div>
-                                                    </div>
+                                                    <div class="avatar-sm"><div class="avatar-title bg-warning-subtle text-warning rounded-circle fs-2"><i class="ri-time-line"></i></div></div>
                                                 </div>
                                                 <div class="flex-grow-1 ms-3">
                                                     <h6 class="mb-1">Promote on Trial</h6>
@@ -906,11 +767,7 @@
                                         <label class="form-check-label w-100" for="seePrincipalCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer principal-card">
                                                 <div class="flex-shrink-0">
-                                                    <div class="avatar-sm">
-                                                        <div class="avatar-title bg-info-subtle text-info rounded-circle fs-2">
-                                                            <i class="ri-eye-line"></i>
-                                                        </div>
-                                                    </div>
+                                                    <div class="avatar-sm"><div class="avatar-title bg-info-subtle text-info rounded-circle fs-2"><i class="ri-eye-line"></i></div></div>
                                                 </div>
                                                 <div class="flex-grow-1 ms-3">
                                                     <h6 class="mb-1">See Principal</h6>
@@ -926,11 +783,7 @@
                                         <label class="form-check-label w-100" for="repeatCheckbox">
                                             <div class="d-flex align-items-center p-3 border rounded cursor-pointer repeat-card">
                                                 <div class="flex-shrink-0">
-                                                    <div class="avatar-sm">
-                                                        <div class="avatar-title bg-danger-subtle text-danger rounded-circle fs-2">
-                                                            <i class="ri-repeat-line"></i>
-                                                        </div>
-                                                    </div>
+                                                    <div class="avatar-sm"><div class="avatar-title bg-danger-subtle text-danger rounded-circle fs-2"><i class="ri-repeat-line"></i></div></div>
                                                 </div>
                                                 <div class="flex-grow-1 ms-3">
                                                     <h6 class="mb-1">Repeat Class</h6>
@@ -958,16 +811,14 @@
     </div>
 </div>
 
-{{-- ============================================================
+{{-- ================================================================
      Bulk Promotion Modal
-     ============================================================ --}}
+     ================================================================ --}}
 <div class="modal fade" id="bulkPromotionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="ri-group-line me-2"></i>Bulk Promotion
-                </h5>
+                <h5 class="modal-title text-white"><i class="ri-group-line me-2"></i>Bulk Promotion</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -1010,9 +861,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmBulkPromoteBtn">
-                    Process Bulk Promotion
-                </button>
+                <button type="button" class="btn btn-primary" id="confirmBulkPromoteBtn">Process Bulk Promotion</button>
             </div>
         </div>
     </div>
@@ -1021,144 +870,42 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-let currentStudentId      = null;
-let currentSchoolclassId  = null;
-let currentSessionId      = null;
-let currentTermId         = null;
-let currentStudentData    = null;
+let currentStudentId     = null;
+let currentSchoolclassId = null;
+let currentSessionId     = null;
+let currentTermId        = null;
+let currentStudentData   = null;
 
-const gradeOrder = {
-    'A1': 8, 'A': 4,
-    'B2': 7, 'B3': 6, 'B': 3,
-    'C4': 5, 'C5': 4, 'C6': 3, 'C': 2,
-    'D7': 2, 'D': 1,
-    'E8': 1,
-    'F9': 0, 'F': 0,
-};
+/* ── Grade helpers ─────────────────────────────────────────────────────────── */
+const SENIOR_GO = { F9:0, E8:1, D7:2, C6:3, C5:4, C4:5, B3:6, B2:7, A1:8 };
+const JUNIOR_GO = { F:0, D:1, C:2, B:3, A:4 };
 
-// ── Toast notification system ─────────────────────────────────────────────────
-function showToast(message, type = 'info') {
-    const colors = {
-        success: '#16a34a',
-        warning: '#d97706',
-        danger: '#dc2626',
-        info: '#2563eb'
-    };
-
-    const icons = {
-        success: 'ri-checkbox-circle-line',
-        warning: 'ri-alert-line',
-        danger: 'ri-error-warning-line',
-        info: 'ri-information-line'
-    };
-
-    const toastId = 'toast_' + Date.now();
-    const toastHtml = `
-        <div id="${toastId}" class="toast-notification" style="background: ${colors[type]}; color: white; padding: 12px 20px; border-radius: 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-            <i class="${icons[type]} fs-5"></i>
-            <span>${message}</span>
-            <button onclick="document.getElementById('${toastId}').classList.add('closing'); setTimeout(() => document.getElementById('${toastId}')?.remove(), 300)" style="background: none; border: none; color: white; margin-left: 10px; cursor: pointer; font-size: 18px;">&times;</button>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', toastHtml);
-    setTimeout(() => {
-        const toast = document.getElementById(toastId);
-        if (toast) {
-            toast.classList.add('closing');
-            setTimeout(() => toast.remove(), 300);
-        }
-    }, 4000);
+function detectScale(grades) {
+    return grades.some(g => /^[A-E][1-9]$|^F9$/.test((g||'').toUpperCase()));
+}
+function gradeRank(g, senior) {
+    const u = (g||'').toUpperCase();
+    return senior ? (SENIOR_GO[u] ?? -1) : (JUNIOR_GO[u] ?? -1);
+}
+function isCreditGrade(g, senior) {
+    const u = (g||'').toUpperCase();
+    return senior ? ['A1','B2','B3','C4','C5','C6'].includes(u) : ['A','B','C'].includes(u);
+}
+function isPassGrade(g, senior) {
+    const u = (g||'').toUpperCase();
+    return senior ? !['F9','E8'].includes(u) && u !== '' : u !== 'F' && u !== '';
+}
+function gradeColorClass(g) {
+    const u = (g||'').toUpperCase();
+    if (['A1','A'].includes(u))           return 'gc-a';
+    if (['B2','B3','B'].includes(u))      return 'gc-b';
+    if (['C4','C5','C6','C'].includes(u)) return 'gc-c';
+    if (['D7','D'].includes(u))           return 'gc-d';
+    if (['F9','E8','F'].includes(u))      return 'gc-f';
+    return 'gc-na';
 }
 
-// ── Loading overlay ──────────────────────────────────────────────────────────
-function showLoading(message = 'Loading...') {
-    let overlay = document.getElementById('globalLoadingOverlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'globalLoadingOverlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="loading-spinner">
-                <div class="spinner-border text-primary" role="status"></div>
-                <span id="loadingMessage">${message}</span>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    } else {
-        overlay.style.display = 'flex';
-        const msgSpan = overlay.querySelector('#loadingMessage');
-        if (msgSpan) msgSpan.textContent = message;
-    }
-}
-
-function hideLoading() {
-    const overlay = document.getElementById('globalLoadingOverlay');
-    if (overlay) overlay.style.display = 'none';
-}
-
-// ── Animate counter numbers ──
-function easeOutCubic(x) {
-    return 1 - Math.pow(1 - x, 3);
-}
-
-function animateCounter(element, start, end, duration = 500) {
-    if (!element) return;
-    const startTime = performance.now();
-    const updateCounter = (currentTime) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const current = Math.floor(start + (end - start) * easeOutCubic(progress));
-        element.textContent = current;
-        if (progress < 1) {
-            requestAnimationFrame(updateCounter);
-        } else {
-            element.textContent = end;
-        }
-    };
-    requestAnimationFrame(updateCounter);
-}
-
-// ── Image helpers ──────────────────────────────────────────────────────────────
-function normalizeImagePath(picture, gender) {
-    if (!picture || picture === 'null' || picture === 'undefined' || picture.trim() === '') {
-        return gender === 'Male'
-            ? '/storage/student_avatars/male-default.png'
-            : '/storage/student_avatars/female-default.png';
-    }
-    let clean = picture.replace(/^\/+/, '').replace(/^storage\//, '');
-    if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
-    return '/storage/' + clean;
-}
-
-function setStudentImage(imgEl, primarySrc, gender) {
-    const fallbacks = [
-        primarySrc,
-        gender === 'Male'
-            ? '/storage/student_avatars/male-default.png'
-            : '/storage/student_avatars/female-default.png',
-        '/storage/student_avatars/unnamed.jpg'
-    ];
-    let idx = 0;
-    imgEl.onerror = null;
-    imgEl.src = '';
-    imgEl.onerror = function () {
-        idx++;
-        if (idx < fallbacks.length) { this.src = fallbacks[idx]; }
-        else { this.onerror = null; }
-    };
-    imgEl.src = fallbacks[0];
-}
-
-// ── Formatting helpers ─────────────────────────────────────────────────────────
-function formatRuleDescription(description) {
-    if (!description) return '';
-    let f = description
-        .replace(/subj\b/g, 'subjects').replace(/subj\.\b/g, 'subjects')
-        .replace(/;\s*>=/g, '; ≥');
-    return f.charAt(0).toUpperCase() + f.slice(1);
-}
-
+/* ── escapeHtml ────────────────────────────────────────────────────────────── */
 function escapeHtml(str) {
     if (!str) return '';
     return String(str)
@@ -1166,119 +913,164 @@ function escapeHtml(str) {
         .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function gradePassFail(studentGrade, minGrade) {
-    if (!studentGrade) return false;
-    const sg = studentGrade.toString().toUpperCase().trim();
-    if (minGrade) {
-        const mg = minGrade.toString().toUpperCase().trim();
-        return (gradeOrder[sg] ?? -1) >= (gradeOrder[mg] ?? 0);
+/* ── Image helpers ─────────────────────────────────────────────────────────── */
+function normalizeImagePath(picture, gender) {
+    if (!picture || ['null','undefined',''].includes(String(picture).trim())) {
+        return gender === 'Male'
+            ? '/storage/student_avatars/male-default.png'
+            : '/storage/student_avatars/female-default.png';
     }
-    return !['F','F9'].includes(sg);
+    if (picture.startsWith('http://') || picture.startsWith('https://')) return picture;
+    let clean = picture.replace(/^\/+/, '').replace(/^storage\//, '');
+    if (!clean) return gender === 'Male'
+        ? '/storage/student_avatars/male-default.png'
+        : '/storage/student_avatars/female-default.png';
+    return '/storage/' + clean;
 }
 
-// ── Stats with flash animation and counter ────────────────────────────────────
+function setStudentImage(imgEl, primarySrc, gender) {
+    const fallback1 = gender === 'Male'
+        ? '/storage/student_avatars/male-default.png'
+        : '/storage/student_avatars/female-default.png';
+    const fallback2 = '/storage/student_avatars/unnamed.jpg';
+
+    const tries = [primarySrc, fallback1, fallback2]
+        .filter(s => s && s !== '/storage/' && s !== '/storage/null');
+
+    let attempt = 0;
+    imgEl.onerror = null;
+    imgEl.onerror = function () {
+        attempt++;
+        if (attempt < tries.length) { this.src = tries[attempt]; }
+        else { this.onerror = null; }
+    };
+    imgEl.src = tries[0] || fallback2;
+}
+
+/* ── Toast ─────────────────────────────────────────────────────────────────── */
+function showToast(message, type = 'info') {
+    const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
+    const icons  = { success:'ri-checkbox-circle-line', warning:'ri-alert-line', danger:'ri-error-warning-line', info:'ri-information-line' };
+    const id = 'toast_' + Date.now();
+    document.body.insertAdjacentHTML('beforeend', `
+        <div id="${id}" class="toast-notification" style="background:${colors[type]};color:white;padding:12px 20px;border-radius:10px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+            <i class="${icons[type]} fs-5"></i>
+            <span>${message}</span>
+            <button onclick="document.getElementById('${id}').classList.add('closing');setTimeout(()=>document.getElementById('${id}')?.remove(),300)" style="background:none;border:none;color:white;margin-left:10px;cursor:pointer;font-size:18px;">&times;</button>
+        </div>`);
+    setTimeout(() => {
+        const t = document.getElementById(id);
+        if (t) { t.classList.add('closing'); setTimeout(() => t.remove(), 300); }
+    }, 4000);
+}
+
+/* ── Loading ───────────────────────────────────────────────────────────────── */
+function showLoading(msg = 'Loading...') {
+    let ov = document.getElementById('globalLoadingOverlay');
+    if (!ov) {
+        ov = document.createElement('div');
+        ov.id = 'globalLoadingOverlay';
+        ov.className = 'loading-overlay';
+        ov.innerHTML = `<div class="loading-spinner"><div class="spinner-border text-primary" role="status"></div><span id="loadingMessage">${msg}</span></div>`;
+        document.body.appendChild(ov);
+    } else {
+        ov.style.display = 'flex';
+        const s = ov.querySelector('#loadingMessage');
+        if (s) s.textContent = msg;
+    }
+}
+function hideLoading() {
+    const ov = document.getElementById('globalLoadingOverlay');
+    if (ov) ov.style.display = 'none';
+}
+
+/* ── Counter animation ─────────────────────────────────────────────────────── */
+function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+function animateCounter(el, start, end, dur = 500) {
+    if (!el) return;
+    const t0 = performance.now();
+    const tick = (t) => {
+        const p = Math.min((t - t0) / dur, 1);
+        el.textContent = Math.floor(start + (end - start) * easeOutCubic(p));
+        if (p < 1) requestAnimationFrame(tick);
+        else el.textContent = end;
+    };
+    requestAnimationFrame(tick);
+}
+
+/* ── Stats ─────────────────────────────────────────────────────────────────── */
 function updateStats() {
     const rows = document.querySelectorAll('#studentTableBody tr[data-student-id]');
     let total = 0, promoted = 0, trial = 0, repeat = 0;
-
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
         if (cells.length < 8) return;
         total++;
-        const recCell = cells[7];
-        if (recCell) {
-            const recStatus = recCell.getAttribute('data-rec-status') || '';
-            if (recStatus === 'promoted') promoted++;
-            else if (recStatus === 'trial') trial++;
-            else if (recStatus === 'repeated' || recStatus === 'repeat') repeat++;
-        }
+        const s = (cells[7].getAttribute('data-rec-status') || '').toLowerCase();
+        if (s === 'promoted') promoted++;
+        else if (s === 'trial') trial++;
+        else if (s === 'repeated' || s === 'repeat') repeat++;
     });
-
-    const totalEl = document.getElementById('totalStudents');
-    const promotedEl = document.getElementById('promotedCount');
-    const trialEl = document.getElementById('trialCount');
-    const repeatEl = document.getElementById('repeatCount');
-
-    const oldTotal = parseInt(totalEl?.innerText) || 0;
-    const oldPromoted = parseInt(promotedEl?.innerText) || 0;
-    const oldTrial = parseInt(trialEl?.innerText) || 0;
-    const oldRepeat = parseInt(repeatEl?.innerText) || 0;
-
-    animateCounter(totalEl, oldTotal, total);
-    animateCounter(promotedEl, oldPromoted, promoted);
-    animateCounter(trialEl, oldTrial, trial);
-    animateCounter(repeatEl, oldRepeat, repeat);
-
-    // Flash animation on stat cards
-    document.querySelectorAll('.stat-card').forEach(card => {
-        card.classList.add('stat-flash');
-        setTimeout(() => card.classList.remove('stat-flash'), 450);
+    animateCounter(document.getElementById('totalStudents'),  parseInt(document.getElementById('totalStudents')?.innerText)  || 0, total);
+    animateCounter(document.getElementById('promotedCount'),  parseInt(document.getElementById('promotedCount')?.innerText)  || 0, promoted);
+    animateCounter(document.getElementById('trialCount'),     parseInt(document.getElementById('trialCount')?.innerText)     || 0, trial);
+    animateCounter(document.getElementById('repeatCount'),    parseInt(document.getElementById('repeatCount')?.innerText)    || 0, repeat);
+    document.querySelectorAll('.stat-card').forEach(c => {
+        c.classList.add('stat-flash');
+        setTimeout(() => c.classList.remove('stat-flash'), 450);
     });
 }
 
-// ── Staggered row entrance ─────────────────────────────────────────────────────
+/* ── Row animations ────────────────────────────────────────────────────────── */
 function triggerRowEntrance() {
-    const rows = document.querySelectorAll('#studentTableBody tr[data-student-id]');
-    rows.forEach((row, index) => {
+    document.querySelectorAll('#studentTableBody tr[data-student-id]').forEach((row, i) => {
         row.classList.remove('row-visible');
-        setTimeout(() => row.classList.add('row-visible'), index * 20);
+        setTimeout(() => row.classList.add('row-visible'), i * 20);
     });
 }
-
-// ── Badge pop on newly loaded rows ────────────────────────────────────────────
 function popPromotionBadges() {
-    document.querySelectorAll('#studentTableBody [class*="promotion-badge-"]').forEach(badge => {
-        badge.classList.remove('badge-pop');
-        void badge.offsetWidth;
-        badge.classList.add('badge-pop');
-        badge.addEventListener('animationend', () => badge.classList.remove('badge-pop'), { once: true });
+    document.querySelectorAll('#studentTableBody [class*="promotion-badge-"]').forEach(b => {
+        b.classList.remove('badge-pop');
+        void b.offsetWidth;
+        b.classList.add('badge-pop');
+        b.addEventListener('animationend', () => b.classList.remove('badge-pop'), { once: true });
     });
 }
 
-// ── Filter & load ──────────────────────────────────────────────────────────────
+/* ── Filter & load ─────────────────────────────────────────────────────────── */
 function filterData() {
-    const classValue   = document.getElementById("idclass").value;
-    const sessionValue = document.getElementById("idsession").value;
-    const termValue    = document.getElementById("idterm").value;
-    const searchValue  = document.getElementById("searchInput").value.trim();
+    const cls  = document.getElementById('idclass').value;
+    const sess = document.getElementById('idsession').value;
+    const term = document.getElementById('idterm').value;
+    const srch = document.getElementById('searchInput').value.trim();
 
-    if (classValue === 'ALL' || sessionValue === 'ALL') {
+    if (cls === 'ALL' || sess === 'ALL') {
         document.getElementById('studentTableBody').innerHTML =
-            '<tr><td colspan="10" class="text-center">Select class and session to view students.</td></tr>';
+            '<tr><td colspan="10" class="text-center py-4 text-muted">Select class and session to view students.</td></tr>';
         document.getElementById('pagination-container').innerHTML = '';
         document.getElementById('studentcount').innerText = '0';
         updateStats();
         return;
     }
 
-    const tableBody = document.getElementById('studentTableBody');
-
-    // Show skeleton loading
-    tableBody.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height: 400px;"></div></td></tr>';
+    const tb = document.getElementById('studentTableBody');
+    tb.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height:300px;"></div></td></tr>';
     showLoading('Loading students...');
 
     axios.get('{{ route("promotions.index") }}', {
-        params: { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue },
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    }).then(function(response) {
+        params: { search: srch, schoolclassid: cls, sessionid: sess, termid: term },
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(res => {
         hideLoading();
-        document.getElementById('studentTableBody').innerHTML = response.data.tableBody;
-        document.getElementById('pagination-container').innerHTML = response.data.pagination;
-        document.getElementById('studentcount').innerText = response.data.studentCount || '0';
-        updateStats();
-        setupPaginationLinks();
-        setupCheckboxHandlers();
-        triggerRowEntrance();
-        popPromotionBadges();
-        setupRowSelection();
-        showToast(`${response.data.studentCount || 0} students loaded`, 'success');
-    }).catch(function(error) {
+        document.getElementById('studentTableBody').innerHTML       = res.data.tableBody;
+        document.getElementById('pagination-container').innerHTML   = res.data.pagination;
+        document.getElementById('studentcount').innerText           = res.data.studentCount || '0';
+        updateStats(); setupPaginationLinks(); setupCheckboxHandlers();
+        triggerRowEntrance(); popPromotionBadges(); setupRowSelection();
+        showToast(`${res.data.studentCount || 0} students loaded`, 'success');
+    }).catch(err => {
         hideLoading();
-        console.error('AJAX Error:', error);
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">Error loading data. Please try again.</td></tr>';
         showToast('Failed to fetch student data', 'danger');
     });
 }
@@ -1288,73 +1080,54 @@ function setupPaginationLinks() {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const url = new URL(this.href);
-            url.searchParams.set('schoolclassid', document.getElementById("idclass").value);
-            url.searchParams.set('sessionid',     document.getElementById("idsession").value);
-            url.searchParams.set('termid',        document.getElementById("idterm").value);
+            url.searchParams.set('schoolclassid', document.getElementById('idclass').value);
+            url.searchParams.set('sessionid',     document.getElementById('idsession').value);
+            url.searchParams.set('termid',        document.getElementById('idterm').value);
             loadPage(url.toString());
         });
     });
 }
 
 function loadPage(url) {
-    const tableBody = document.getElementById('studentTableBody');
-    tableBody.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height: 400px;"></div></td></tr>';
+    const tb = document.getElementById('studentTableBody');
+    tb.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height:300px;"></div></td></tr>';
     showLoading('Loading page...');
-
     axios.get(url, {
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    }).then(function(response) {
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(res => {
         hideLoading();
-        document.getElementById('studentTableBody').innerHTML = response.data.tableBody;
-        document.getElementById('pagination-container').innerHTML = response.data.pagination;
-        document.getElementById('studentcount').innerText = response.data.studentCount || '0';
-        updateStats();
-        setupPaginationLinks();
-        setupCheckboxHandlers();
-        triggerRowEntrance();
-        popPromotionBadges();
-        setupRowSelection();
-    }).catch(function(error) {
+        document.getElementById('studentTableBody').innerHTML     = res.data.tableBody;
+        document.getElementById('pagination-container').innerHTML = res.data.pagination;
+        document.getElementById('studentcount').innerText         = res.data.studentCount || '0';
+        updateStats(); setupPaginationLinks(); setupCheckboxHandlers();
+        triggerRowEntrance(); popPromotionBadges(); setupRowSelection();
+    }).catch(() => {
         hideLoading();
-        console.error('Page load error:', error);
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">Error loading data.</td></tr>';
     });
 }
 
-// ── Row selection highlight ──
+/* ── Row selection ─────────────────────────────────────────────────────────── */
 function setupRowSelection() {
     document.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.removeEventListener('change', handleRowSelectionChange);
         cb.addEventListener('change', handleRowSelectionChange);
     });
 }
-
 function handleRowSelectionChange() {
     const row = this.closest('tr');
-    if (this.checked) {
-        row.classList.add('selected');
-    } else {
-        row.classList.remove('selected');
-    }
+    row?.classList.toggle('selected', this.checked);
     updateBulkBar();
 }
-
 function setupCheckboxHandlers() {
-    const selectAll = document.getElementById('selectAll');
-    if (selectAll) {
-        const fresh = selectAll.cloneNode(true);
-        selectAll.parentNode.replaceChild(fresh, selectAll);
+    const sa = document.getElementById('selectAll');
+    if (sa) {
+        const fresh = sa.cloneNode(true);
+        sa.parentNode.replaceChild(fresh, sa);
         fresh.addEventListener('change', function() {
             document.querySelectorAll('.row-checkbox').forEach(cb => {
                 cb.checked = this.checked;
-                const row = cb.closest('tr');
-                if (row) {
-                    if (this.checked) row.classList.add('selected');
-                    else row.classList.remove('selected');
-                }
+                cb.closest('tr')?.classList.toggle('selected', this.checked);
             });
             updateBulkBar();
         });
@@ -1364,106 +1137,324 @@ function setupCheckboxHandlers() {
         cb.addEventListener('change', handleRowSelectionChange);
     });
 }
-
 function updateBulkBar() {
-    const count  = document.querySelectorAll('.row-checkbox:checked').length;
-    const bulkBar = document.getElementById('bulkActionBar');
-    if (count > 0) {
-        bulkBar.classList.add('visible');
-        document.getElementById('bulkCount').innerText = count + ' selected';
-    } else {
-        bulkBar.classList.remove('visible');
-    }
+    const count = document.querySelectorAll('.row-checkbox:checked').length;
+    const bar   = document.getElementById('bulkActionBar');
+    bar.classList.toggle('visible', count > 0);
+    document.getElementById('bulkCount').innerText = count + ' selected';
 }
-
 function clearSelection() {
     document.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.checked = false;
-        const row = cb.closest('tr');
-        if (row) row.classList.remove('selected');
+        cb.closest('tr')?.classList.remove('selected');
     });
     const sa = document.getElementById('selectAll');
     if (sa) sa.checked = false;
     updateBulkBar();
     showToast('Selection cleared', 'info');
 }
-
 document.getElementById('clearSelectionBtn')?.addEventListener('click', clearSelection);
 
 document.getElementById('bulkPromoteActionBtn')?.addEventListener('click', () => {
     const selected = document.querySelectorAll('.row-checkbox:checked');
-    if (selected.length === 0) {
-        showToast('No students selected', 'warning');
-        return;
-    }
+    if (!selected.length) { showToast('No students selected', 'warning'); return; }
     document.getElementById('bulkSelectedCount').innerText = selected.length;
     new bootstrap.Modal(document.getElementById('bulkPromotionModal')).show();
 });
 
 document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', async () => {
-    const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-    if (!selectedIds.length) {
-        showToast('No students selected', 'warning');
-        return;
-    }
+    const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+    if (!ids.length) { showToast('No students selected', 'warning'); return; }
+    const newClass   = document.getElementById('bulkNewClass').value;
+    const newSession = document.getElementById('bulkNewSession').value;
+    if (!newClass || !newSession) { showToast('Please select new class and session', 'warning'); return; }
 
-    const promotionType = document.getElementById('bulkPromotionType').value;
-    const newClass      = document.getElementById('bulkNewClass').value;
-    const newSession    = document.getElementById('bulkNewSession').value;
-    const newTerm       = document.getElementById('bulkNewTerm').value;
-
-    if (!newClass || !newSession) {
-        showToast('Please select new class and session', 'warning');
-        return;
-    }
-
-    showLoading(`Processing ${selectedIds.length} students...`);
+    showLoading(`Processing ${ids.length} students...`);
     bootstrap.Modal.getInstance(document.getElementById('bulkPromotionModal'))?.hide();
 
     try {
-        const response = await axios.post('{{ route("promotions.bulk.promote") }}', {
-            student_ids: selectedIds,
+        const res = await axios.post('{{ route("promotions.bulk.promote") }}', {
+            student_ids: ids,
             new_schoolclassid: newClass,
             new_sessionid: newSession,
-            new_termid: newTerm,
-            promotion_type: promotionType,
+            new_termid: document.getElementById('bulkNewTerm').value,
+            promotion_type: document.getElementById('bulkPromotionType').value,
             _token: document.querySelector('meta[name="csrf-token"]').content
         });
-
         hideLoading();
-        if (response.data.success) {
-            showToast(response.data.message, 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast(response.data.message, 'danger');
-        }
-    } catch (error) {
+        showToast(res.data.message, res.data.success ? 'success' : 'danger');
+        if (res.data.success) setTimeout(() => location.reload(), 1500);
+    } catch (err) {
         hideLoading();
-        showToast(error.response?.data?.message || 'Bulk promotion failed', 'danger');
+        showToast(err.response?.data?.message || 'Bulk promotion failed', 'danger');
     }
 });
 
-// ── Open promotion modal ───────────────────────────────────────────────────────
+/* ── formatRuleDescription ─────────────────────────────────────────────────── */
+function formatRuleDescription(d) {
+    if (!d) return '';
+    let f = d.replace(/subj\b/g,'subjects').replace(/subj\.\b/g,'subjects').replace(/;\s*>=/g,'; ≥');
+    return f.charAt(0).toUpperCase() + f.slice(1);
+}
+
+/* ── Build subjects table ───────────────────────────────────────────────────── */
+function buildSubjectsTable(allSubjects, result) {
+    if (!allSubjects || !allSubjects.length) return '';
+
+    const senior      = detectScale(allSubjects.map(s => s.grade));
+    const creditLabel = senior ? 'C4–A1' : 'C–A';
+    const FAIL_SET    = new Set(senior ? ['F9','E8'] : ['F']);
+
+    function isCredit(g)  { return g && g !== '—' && isCreditGrade(g, senior); }
+    function isPass(g)    { return g && g !== '—' && isPassGrade(g, senior); }
+    function isFail(g)    { return g && g !== '—' && FAIL_SET.has(g.toUpperCase()); }
+
+    const compList  = allSubjects.filter(s =>  s.is_compulsory);
+    const optList   = allSubjects.filter(s => !s.is_compulsory);
+
+    // Tallies
+    const compCred  = compList.filter(s => isCredit(s.grade)).length;
+    const optCred   = optList.filter(s  => isCredit(s.grade)).length;
+    const allCred   = allSubjects.filter(s => isCredit(s.grade)).length;
+    const compPass  = compList.filter(s => s.pass_status === 'pass').length;
+    const compFail  = compList.filter(s => s.pass_status === 'fail').length;
+    const compNS    = compList.filter(s => s.pass_status === 'not_sat').length;
+    const optPass   = optList.filter(s  => isPass(s.grade) || s.pass_status === 'optional_pass').length;
+    const optFail   = optList.filter(s  => isFail(s.grade) || s.pass_status === 'optional_fail').length;
+
+    const appliedRule = result?.applied_rule || null;
+    const ruleStatus  = result?.status || null;
+
+    // ── Rule match banner
+    let html = '';
+    if (appliedRule) {
+        const statusBg = { promoted:'matched', trial:'matched', see_principal:'matched', repeated:'unmatched' }[ruleStatus] || 'matched';
+        html += `<div class="rule-match-banner ${statusBg}">
+            <div class="top">
+                <i class="ri-price-tag-3-line"></i>
+                Matched rule: <strong>${escapeHtml(appliedRule.name)}</strong>
+                ${appliedRule.description ? `<span style="font-weight:400;opacity:.8;">— ${escapeHtml(formatRuleDescription(appliedRule.description))}</span>` : ''}
+            </div>
+            <div class="sub"><i class="ri-information-line me-1"></i>Credit grades (${creditLabel}) contribute to grade-count conditions. Each subject's contribution is shown below.</div>
+        </div>`;
+    } else {
+        html += `<div class="rule-match-banner unmatched">
+            <div class="top"><i class="ri-close-circle-line"></i>No rule matched — result is Advice to Repeat.</div>
+            <div class="sub"><i class="ri-information-line me-1"></i>Check compulsory subject min grades and whether credit counts reach rule thresholds.</div>
+        </div>`;
+    }
+
+    // ── Credit tally cards
+    html += `<div class="credit-tally">
+        <div class="credit-tally-card">
+            <div class="num" style="color:#15803d;">${compCred}</div>
+            <div class="lbl">Credits — compulsory<small>of ${compList.length} subjects</small></div>
+        </div>
+        <div class="credit-tally-card">
+            <div class="num" style="color:#1e40af;">${optCred}</div>
+            <div class="lbl">Credits — optional<small>of ${optList.length} subjects</small></div>
+        </div>
+        <div class="credit-tally-card">
+            <div class="num" style="color:#1e293b;">${allCred}</div>
+            <div class="lbl">Total credits<small>of ${allSubjects.length} subjects</small></div>
+        </div>
+    </div>`;
+
+    // ── Summary strip
+    html += `<div class="subj-stat-row">
+        <span class="subj-stat-chip chip-total"><i class="ri-book-open-line me-1"></i>${allSubjects.length} subjects</span>
+        <span style="color:#cbd5e1;font-size:11px;">|</span>
+        <span style="font-size:11px;color:#64748b;font-weight:600;">Compulsory:</span>
+        <span class="subj-stat-chip chip-pass"><i class="ri-checkbox-circle-line me-1"></i>${compPass} passed</span>
+        <span class="subj-stat-chip chip-fail"><i class="ri-close-circle-line me-1"></i>${compFail} failed</span>
+        ${compNS ? `<span class="subj-stat-chip chip-notsat"><i class="ri-minus-circle-line me-1"></i>${compNS} not sat</span>` : ''}
+        <span style="color:#cbd5e1;font-size:11px;">|</span>
+        <span style="font-size:11px;color:#64748b;font-weight:600;">Optional:</span>
+        <span class="subj-stat-chip chip-pass"><i class="ri-checkbox-circle-line me-1"></i>${optPass} passed</span>
+        <span class="subj-stat-chip chip-fail"><i class="ri-close-circle-line me-1"></i>${optFail} failed</span>
+        <span class="subj-stat-chip chip-credit ms-auto"><i class="ri-add-circle-line me-1"></i>${allCred} total credits</span>
+    </div>`;
+
+    // ── Table
+    // col widths: # 36 | Subject ~auto | Code 60 | Score 110 | Grade 56 | Min 70 | Eval ~auto
+    html += `<div style="overflow-x:auto;border-radius:10px;border:1px solid var(--pay-border);">
+    <table class="subj-table">
+    <colgroup>
+        <col style="width:36px">
+        <col>
+        <col style="width:62px">
+        <col style="width:120px">
+        <col style="width:58px">
+        <col style="width:76px">
+        <col>
+    </colgroup>
+    <thead><tr>
+        <th style="text-align:center;">#</th>
+        <th>Subject</th>
+        <th style="text-align:center;">Code</th>
+        <th style="text-align:center;">Score / 100</th>
+        <th style="text-align:center;">Grade</th>
+        <th style="text-align:center;">Min grade</th>
+        <th>Rule evaluation</th>
+    </tr></thead>
+    <tbody>`;
+
+    /* ── Eval tag builder ── */
+    function evalTag(cls, icon, label) {
+        return `<span class="eval-tag eval-${cls}"><i class="${icon}"></i> ${label}</span>`;
+    }
+    function evalNote(text) {
+        return `<span class="eval-sub">${text}</span>`;
+    }
+    function buildEval(s) {
+        const grade = (s.grade || '').toUpperCase();
+        const ps    = s.pass_status;
+        const min   = s.required_min_grade;
+
+        if (s.is_compulsory) {
+            if (ps === 'not_sat')
+                return evalTag('amber','ri-alert-line','Not sat') +
+                       evalNote('Absent — compulsory subjects must be sat to qualify');
+            if (min && min !== '—') {
+                return ps === 'pass'
+                    ? evalTag('green','ri-checkbox-circle-line',`Meets min grade (≥ ${min})`) +
+                      evalNote(`${grade} ≥ required ${min} ✓`)
+                    : evalTag('red','ri-close-circle-line',`Below min grade (needs ≥ ${min})`) +
+                      evalNote(`${grade} < required ${min} — blocks promotion`);
+            }
+            return ps === 'pass'
+                ? evalTag('green','ri-checkbox-circle-line','Compulsory — passed') + evalNote('Meets pass threshold')
+                : evalTag('red','ri-close-circle-line','Compulsory — failed') + evalNote('Does not meet pass threshold');
+        }
+
+        // Optional
+        if (!grade || grade === '—')
+            return evalTag('gray','ri-subtract-line','Not attempted') + evalNote('No score — not counted in any condition');
+        if (isCredit(s.grade))
+            return evalTag('blue','ri-add-circle-line','Credit') + evalNote(`${grade} = credit (${creditLabel}) — counts toward credit conditions`);
+        if (isPass(s.grade))
+            return evalTag('amber','ri-record-circle-line','Pass — not a credit') + evalNote(`${grade} is a pass but below credit threshold`);
+        return evalTag('red','ri-close-circle-line','Fail') + evalNote(`${grade} is a failing grade — not counted`);
+    }
+
+    /* ── Score mini-bar ── */
+    function scoreBar(score, color) {
+        if (score === null || score === undefined)
+            return `<span class="gc-na" style="font-size:12px;">—</span>`;
+        const pct = Math.min(100, Math.round((parseFloat(score) / 100) * 100));
+        return `<span class="mini-bar">
+            <strong style="min-width:26px;text-align:right;display:inline-block;">${score}</strong>
+            <span class="mini-bar-track"><span class="mini-bar-fill" style="width:${pct}%;background:${color};"></span></span>
+        </span>`;
+    }
+
+    /* ── Row class ── */
+    function rowCls(s) {
+        if (s.is_compulsory) {
+            if (s.pass_status === 'pass')    return 'row-pass';
+            if (s.pass_status === 'not_sat') return 'row-notsat';
+            return 'row-fail';
+        }
+        const g = (s.grade || '').toUpperCase();
+        if (!g || g === '—') return 'row-optns';
+        if (isCredit(s.grade)) return 'row-credit';
+        if (isPass(s.grade))   return 'row-passonly';
+        return 'row-optfail';
+    }
+
+    /* ── Bar color per row status ── */
+    function barColor(s) {
+        if (s.is_compulsory) {
+            if (s.pass_status === 'pass')    return '#10b981';
+            if (s.pass_status === 'not_sat') return '#f59e0b';
+            return '#ef4444';
+        }
+        if (isCredit(s.grade)) return '#3b82f6';
+        if (isPass(s.grade))   return '#d97706';
+        return '#ef4444';
+    }
+
+    /* ── Compulsory section ── */
+    if (compList.length) {
+        html += `<tr class="section-row"><td colspan="7">
+            <i class="ri-star-fill" style="color:#d97706;margin-right:5px;"></i>
+            Compulsory subjects — always rule-bound &nbsp;·&nbsp; ${compList.length} subject${compList.length !== 1 ? 's' : ''}
+        </td></tr>`;
+
+        compList.forEach((s, i) => {
+            const grade = s.grade || '—';
+            const min   = s.required_min_grade;
+            html += `<tr class="${rowCls(s)}">
+                <td style="text-align:center;color:#94a3b8;font-size:11px;">${i + 1}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                        <strong style="font-size:13px;">${escapeHtml(s.subject_name)}</strong>
+                        <span style="background:#fef3c7;color:#92400e;border:0.5px solid #fde68a;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:.03em;">COMPULSORY</span>
+                    </div>
+                </td>
+                <td style="text-align:center;font-family:monospace;font-size:11px;color:#64748b;">${escapeHtml(s.subject_code || '—')}</td>
+                <td style="text-align:center;">${scoreBar(s.total, barColor(s))}</td>
+                <td style="text-align:center;"><strong class="${gradeColorClass(grade)}" style="font-size:17px;letter-spacing:.02em;">${grade}</strong></td>
+                <td style="text-align:center;">
+                    ${min && min !== '—'
+                        ? `<span style="background:#dbeafe;color:#1e40af;border:0.5px solid #bfdbfe;font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;">≥ ${min}</span>`
+                        : `<span style="color:#94a3b8;font-size:12px;">—</span>`}
+                </td>
+                <td>${buildEval(s)}</td>
+            </tr>`;
+        });
+    }
+
+    /* ── Optional section ── */
+    if (optList.length) {
+        html += `<tr class="section-row"><td colspan="7">
+            <i class="ri-book-line" style="color:#0891b2;margin-right:5px;"></i>
+            Optional subjects — credits count toward grade conditions &nbsp;·&nbsp; ${optCred} credit${optCred !== 1 ? 's' : ''} from ${optList.length} subject${optList.length !== 1 ? 's' : ''}
+        </td></tr>`;
+
+        optList.forEach((s, i) => {
+            const grade = s.grade || '—';
+            html += `<tr class="${rowCls(s)}">
+                <td style="text-align:center;color:#94a3b8;font-size:11px;">${compList.length + i + 1}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                        <strong style="font-size:13px;">${escapeHtml(s.subject_name)}</strong>
+                        <span style="background:#e0f2fe;color:#0369a1;border:0.5px solid #bae6fd;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:.03em;">OPTIONAL</span>
+                    </div>
+                </td>
+                <td style="text-align:center;font-family:monospace;font-size:11px;color:#64748b;">${escapeHtml(s.subject_code || '—')}</td>
+                <td style="text-align:center;">${scoreBar(s.total, barColor(s))}</td>
+                <td style="text-align:center;"><strong class="${gradeColorClass(grade)}" style="font-size:17px;letter-spacing:.02em;">${grade}</strong></td>
+                <td style="text-align:center;"><span style="color:#94a3b8;font-size:11px;font-style:italic;">No min grade</span></td>
+                <td>${buildEval(s)}</td>
+            </tr>`;
+        });
+    }
+
+    html += `</tbody></table></div>`;
+    return html;
+}
+
+/* ── Open promotion modal ───────────────────────────────────────────────────── */
 async function openPromotionModal(studentId, admissionNo, firstName, lastName, otherName, picture, gender, schoolclass, schoolarm, session, termid) {
     currentStudentId     = studentId;
-    currentSchoolclassId = document.getElementById("idclass").value;
-    currentSessionId     = document.getElementById("idsession").value;
-    currentTermId        = termid || document.getElementById("idterm").value;
+    currentSchoolclassId = document.getElementById('idclass').value;
+    currentSessionId     = document.getElementById('idsession').value;
+    currentTermId        = termid || document.getElementById('idterm').value;
 
     document.getElementById('modalStudentName').innerHTML =
-        `<i class="ri-id-card-line me-2"></i>${admissionNo} - ${firstName} ${lastName} ${otherName || ''}`;
+        `<i class="ri-id-card-line me-2"></i>${admissionNo} — ${firstName} ${lastName}${otherName ? ' ' + otherName : ''}`;
     document.getElementById('modalStudentGender').innerHTML =
         `<i class="ri-gender-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i>${gender || 'N/A'}`;
     document.getElementById('modalCurrentClass').innerText   = schoolclass;
     document.getElementById('modalCurrentArm').innerText     = schoolarm || 'N/A';
     document.getElementById('modalCurrentSession').innerText = session;
 
-    // Set placeholder immediately; real image loaded from AJAX response below
+    // Show picture immediately from what the table already has (no blank flash)
     const imgEl = document.getElementById('modalStudentImage');
-    imgEl.src = '/storage/student_avatars/unnamed.jpg';
-    imgEl.onerror = null;
+    setStudentImage(imgEl, normalizeImagePath(picture, gender), gender);
 
-    // Reset form
+    // Reset form state
     document.getElementById('promotionForm').reset();
     ['newClassSelect','newSessionSelect','newTermSelect'].forEach(id => {
         document.getElementById(id).value = '';
@@ -1477,6 +1468,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     document.getElementById('allSubjectsContent').innerHTML      = '';
     document.getElementById('compulsoryContent').innerHTML       = '';
     document.getElementById('recommendationContent').innerHTML   = '';
+    document.getElementById('modalOverallAverage').innerHTML     = '<span class="text-muted">Loading…</span>';
 
     showLoading('Loading student data...');
 
@@ -1486,379 +1478,131 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
         );
         hideLoading();
 
-        if (response.data.success) {
-            currentStudentData = response.data;
+        if (!response.data.success) {
+            showToast(response.data.message || 'Failed to load student details', 'danger');
+            return;
+        }
 
-            // ── Set image from server response ────────────────────────────────
-            const picFromServer = response.data.student?.picture || picture;
-            const primarySrc    = normalizeImagePath(picFromServer, gender);
-            setStudentImage(imgEl, primarySrc, gender);
+        currentStudentData = response.data;
 
-            const result         = response.data.promotion_result;
-            const avg            = response.data.overall_average;
-            const allSubjects    = response.data.all_subjects    || [];
-            const compulsoryData = response.data.compulsory_subjects || [];
+        // Refresh picture from server response (more authoritative)
+        const serverPic = response.data.student?.picture || picture;
+        setStudentImage(imgEl, normalizeImagePath(serverPic, gender), gender);
 
-            // Overall average
-            const avgEl    = document.getElementById('modalOverallAverage');
-            const avgValue = avg !== null ? `${avg}%` : 'N/A';
-            const avgClass = avg !== null
-                ? (avg >= 50 ? 'text-success' : avg >= 40 ? 'text-warning' : 'text-danger')
-                : 'text-muted';
-            avgEl.innerHTML = `<span class="${avgClass} fs-5">${avgValue}</span>`;
+        const result      = response.data.promotion_result;
+        const avg         = response.data.overall_average;
+        const allSubjects = response.data.all_subjects        || [];
+        const compData    = response.data.compulsory_subjects || [];
 
-            // ── Recommendation card ───────────────────────────────────────────
-            if (result && result.status !== 'awaiting') {
-                const recCard    = document.getElementById('recommendationCard');
-                const recContent = document.getElementById('recommendationContent');
-                recCard.style.display = 'block';
+        // Overall average
+        const avgEl    = document.getElementById('modalOverallAverage');
+        const avgValue = avg !== null && avg !== undefined ? `${avg}%` : 'N/A';
+        const avgCls   = avg !== null
+            ? (avg >= 50 ? 'text-success' : avg >= 40 ? 'text-warning' : 'text-danger')
+            : 'text-muted';
+        avgEl.innerHTML = `<span class="${avgCls} fs-5 fw-bold">${avgValue}</span>`;
 
-                const statusColors = {
-                    promoted:      { bg: '#10b981', icon: 'ri-checkbox-circle-line' },
-                    trial:         { bg: '#f59e0b', icon: 'ri-time-line'            },
-                    see_principal: { bg: '#3b82f6', icon: 'ri-eye-line'             },
-                    repeated:      { bg: '#ef4444', icon: 'ri-repeat-line'          },
-                };
-                const sc = statusColors[result.status] || { bg: '#6b7280', icon: 'ri-question-line' };
-
-                let html = `<div class="recommendation-card ${result.status}">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-                        <div>
-                            <div class="label text-muted mb-2">System Recommendation</div>
-                            <span class="status-badge-lg text-white" style="background:${sc.bg};">
-                                <i class="${sc.icon} me-1"></i>${result.status_label || result.status}
-                            </span>
-                        </div>`;
-
-                if (result.required_average !== null) {
-                    const metAvg = result.actual_average >= result.required_average;
-                    html += `<div class="text-end">
-                        <div class="rule-badge"><i class="ri-percent-line me-1"></i>Required: ${result.required_average}%</div>
-                        <div class="small mt-1 ${metAvg ? 'text-success' : 'text-danger'}">
-                            ${metAvg ? '✓' : '✗'} Actual: ${result.actual_average ?? avg ?? 'N/A'}%
-                        </div>
+        // ── Recommendation card
+        if (result && result.status !== 'awaiting') {
+            const recCard = document.getElementById('recommendationCard');
+            recCard.style.display = 'block';
+            const statusColors = {
+                promoted:      { bg: '#10b981', icon: 'ri-checkbox-circle-line' },
+                trial:         { bg: '#f59e0b', icon: 'ri-time-line'            },
+                see_principal: { bg: '#3b82f6', icon: 'ri-eye-line'             },
+                repeated:      { bg: '#ef4444', icon: 'ri-repeat-line'          },
+            };
+            const sc = statusColors[result.status] || { bg: '#6b7280', icon: 'ri-question-line' };
+            let html = `<div class="recommendation-card ${result.status}">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <div class="label text-muted mb-2">System Recommendation</div>
+                        <span class="status-badge-lg text-white" style="background:${sc.bg};">
+                            <i class="${sc.icon} me-1"></i>${result.status_label || result.status}
+                        </span>
                     </div>`;
-                }
-                html += `</div>`;
-
-                if (result.applied_rule) {
-                    const formattedDesc = formatRuleDescription(result.applied_rule.description);
-                    html += `<div class="mt-3 pt-3 border-top d-flex align-items-center flex-wrap gap-2">
-                        <i class="ri-price-tag-3-line text-primary"></i>
-                        <strong>Matched rule:</strong>
-                        <span class="badge bg-primary">${escapeHtml(result.applied_rule.name)}</span>
-                        ${formattedDesc ? `<span class="small text-muted ms-2">— ${escapeHtml(formattedDesc)}</span>` : ''}
+            if (result.required_average !== null) {
+                const metAvg = result.actual_average >= result.required_average;
+                html += `<div class="text-end">
+                    <div class="rule-badge"><i class="ri-percent-line me-1"></i>Required: ${result.required_average}%</div>
+                    <div class="small mt-1 ${metAvg ? 'text-success' : 'text-danger'}">
+                        ${metAvg ? '✓' : '✗'} Actual: ${result.actual_average ?? avg ?? 'N/A'}%
+                    </div>
+                </div>`;
+            }
+            html += `</div>`;
+            if (result.applied_rule) {
+                html += `<div class="mt-3 pt-3 border-top d-flex align-items-center flex-wrap gap-2">
+                    <i class="ri-price-tag-3-line text-primary"></i>
+                    <strong>Matched rule:</strong>
+                    <span class="badge bg-primary">${escapeHtml(result.applied_rule.name)}</span>
+                    ${result.applied_rule.description ? `<span class="small text-muted">— ${escapeHtml(formatRuleDescription(result.applied_rule.description))}</span>` : ''}
+                </div>`;
+            }
+            if (result.compulsory_count > 0) {
+                const allPassed = result.passed_compulsory === result.compulsory_count;
+                html += `<div class="mt-3 pt-3 border-top">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="ri-book-open-line me-1"></i>Compulsory subjects:</span>
+                        <span class="${allPassed ? 'text-success' : 'text-danger'} fw-bold">
+                            ${result.passed_compulsory}/${result.compulsory_count} passed
+                        </span>
                     </div>`;
-                }
-
-                if (result.compulsory_count > 0) {
-                    const allPassed = result.passed_compulsory === result.compulsory_count;
-                    html += `<div class="mt-3 pt-3 border-top">
-                        <div class="d-flex justify-content-between">
-                            <span><i class="ri-book-open-line me-1"></i>Compulsory subjects:</span>
-                            <span class="${allPassed ? 'text-success' : 'text-danger'} fw-bold">
-                                ${result.passed_compulsory}/${result.compulsory_count} passed
-                            </span>
-                        </div>`;
-                    if (result.failed_compulsory?.length > 0) {
-                        html += `<div class="mt-2 small text-danger"><i class="ri-close-circle-line me-1"></i>Failed: `;
-                        result.failed_compulsory.forEach(f => {
-                            html += `<span class="badge bg-danger me-1">${f.subject || `Subject #${f.subject_id}`}</span>`;
-                        });
-                        html += `</div>`;
-                    }
+                if (result.failed_compulsory?.length) {
+                    html += `<div class="mt-2 small text-danger"><i class="ri-close-circle-line me-1"></i>Failed: `;
+                    result.failed_compulsory.forEach(f => {
+                        html += `<span class="badge bg-danger me-1">${f.subject || `Subject #${f.subject_id}`}</span>`;
+                    });
                     html += `</div>`;
                 }
                 html += `</div>`;
-                recContent.innerHTML = html;
             }
+            html += `</div>`;
+            document.getElementById('recommendationContent').innerHTML = html;
+        }
 
-            // ── All Subjects table ────────────────────────────────────────────
-            if (allSubjects && allSubjects.length > 0) {
-                document.getElementById('allSubjectsCard').style.display = 'block';
+        // ── All Subjects table
+        if (allSubjects.length) {
+            document.getElementById('allSubjectsCard').style.display = 'block';
+            document.getElementById('allSubjectsContent').innerHTML = buildSubjectsTable(allSubjects, result);
+        }
 
-                const failGradeSet    = new Set(['F','F9','E8']);
-                const allGrades       = allSubjects.map(s => (s.grade || '').toUpperCase());
-                const hasSeniorGrade  = allGrades.some(g => /^[A-E][1-9]$|^F9$/.test(g));
-
-                const seniorGO = { F9:0,E8:1,D7:2,C6:3,C5:4,C4:5,B3:6,B2:7,A1:8 };
-                const juniorGO = { F:0,D:1,C:2,B:3,A:4 };
-
-                function gradeRank(g) { g=(g||'').toUpperCase(); return hasSeniorGrade?(seniorGO[g]??-1):(juniorGO[g]??-1); }
-                function isCreditGrade(g) {
-                    g=(g||'').toUpperCase();
-                    return hasSeniorGrade?['A1','B2','B3','C4','C5','C6'].includes(g):['A','B','C'].includes(g);
-                }
-                function isPassGrade(g) {
-                    g=(g||'').toUpperCase();
-                    return hasSeniorGrade?!['F9','E8'].includes(g)&&g!=='':g!=='F'&&g!=='';
-                }
-                function gradeClr(g) {
-                    if(!g||g==='—') return 'var(--color-text-secondary)';
-                    const u=g.toUpperCase();
-                    if(['A1','A'].includes(u)) return '#15803d';
-                    if(['B2','B3','B'].includes(u)) return '#1d4ed8';
-                    if(['C4','C5','C6','C'].includes(u)) return '#0369a1';
-                    if(['D7','D'].includes(u)) return '#d97706';
-                    return '#b91c1c';
-                }
-
-                const compList   = allSubjects.filter(s =>  s.is_compulsory);
-                const optList    = allSubjects.filter(s => !s.is_compulsory);
-                const compCred   = compList.filter(s => s.grade && isCreditGrade(s.grade)).length;
-                const otherCred  = optList.filter(s => s.grade && isCreditGrade(s.grade)).length;
-                const allCred    = allSubjects.filter(s => s.grade && isCreditGrade(s.grade)).length;
-                const compPass   = compList.filter(s => s.pass_status==='pass').length;
-                const compFail   = compList.filter(s => s.pass_status==='fail').length;
-                const compNotSat = compList.filter(s => s.pass_status==='not_sat').length;
-                const optPass    = optList.filter(s => {
-                    if(s.pass_status==='optional_pass') return true;
-                    if(s.pass_status==='optional_fail'||s.pass_status==='optional_not_sat') return false;
-                    return s.grade && !failGradeSet.has(s.grade.toUpperCase());
-                }).length;
-                const optFail    = optList.filter(s => {
-                    if(s.pass_status==='optional_fail') return true;
-                    if(s.pass_status==='optional_pass'||s.pass_status==='optional_not_sat') return false;
-                    return s.grade && failGradeSet.has(s.grade.toUpperCase());
-                }).length;
-
-                const appliedRuleName = result?.applied_rule?.name || null;
-                const appliedRuleDesc = result?.applied_rule?.description ? formatRuleDescription(result.applied_rule.description) : null;
-
-                function tag(label, color, rimIcon, tooltip) {
-                    const cfg = {
-                        green: ['var(--color-background-success)','var(--color-text-success)','var(--color-border-success)'],
-                        red:   ['var(--color-background-danger)','var(--color-text-danger)','var(--color-border-danger)'],
-                        blue:  ['var(--color-background-info)','var(--color-text-info)','var(--color-border-info)'],
-                        amber: ['var(--color-background-warning)','var(--color-text-warning)','var(--color-border-warning)'],
-                        gray:  ['var(--color-background-secondary)','var(--color-text-secondary)','var(--color-border-tertiary)'],
-                    }[color] || ['var(--color-background-secondary)','var(--color-text-secondary)','var(--color-border-tertiary)'];
-                    return `<span title="${escapeHtml(tooltip||label)}" style="display:inline-flex;align-items:center;gap:4px;background:${cfg[0]};color:${cfg[1]};border:0.5px solid ${cfg[2]};font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;white-space:nowrap;cursor:default;"><i class="ri-${rimIcon}" style="font-size:12px;"></i>${escapeHtml(label)}</span>`;
-                }
-
-                function ruleTag(subject) {
-                    const grade = (subject.grade||'').toUpperCase();
-                    const ps    = subject.pass_status;
-                    if (subject.is_compulsory) {
-                        if (ps==='not_sat') return tag('Not sat — compulsory subject','amber','alert-line','Absent. Compulsory subjects must be sat.');
-                        const min = subject.required_min_grade;
-                        if (min && min!=='—') {
-                            return ps==='pass'
-                                ? tag(`Meets min grade (≥ ${min})`,'green','checkbox-circle-line',`${grade} ≥ required ${min} ✓`)
-                                : tag(`Below min grade (needs ≥ ${min})`,'red','close-circle-line',`${grade} < required ${min} ✗`);
-                        }
-                        return ps==='pass'
-                            ? tag('Compulsory — passed','green','checkbox-circle-line','Meets pass threshold')
-                            : tag('Compulsory — failed','red','close-circle-line','Does not meet pass threshold');
-                    }
-                    if (!grade||grade==='—') return tag('Not attempted','gray','subtract-line','No score — not counted in any condition');
-                    if (isCreditGrade(grade)) return tag('Credit — counted in grade tally','blue','add-circle-line',`${grade} is a credit — contributes to grade count conditions`);
-                    if (isPassGrade(grade)&&!isCreditGrade(grade)) return tag('Pass — not a credit','amber','record-circle-line',`${grade} is a pass but not credit — does not count toward credit conditions`);
-                    return tag('Fail — not counted','red','close-circle-line',`${grade} is a failing grade — does not contribute to any condition`);
-                }
-
-                function subNote(subject) {
-                    const grade = (subject.grade||'').toUpperCase();
-                    const ps    = subject.pass_status;
-                    const min   = subject.required_min_grade;
-                    if (subject.is_compulsory) {
-                        if (ps==='fail'&&grade!=='—'&&min&&min!=='—') return `<span style="font-size:10.5px;color:var(--color-text-danger);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Has ${grade}, rule needs ≥ ${min} — blocks every rule requiring this subject</span>`;
-                        if (ps==='pass'&&min&&min!=='—') return `<span style="font-size:10.5px;color:var(--color-text-success);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Satisfies compulsory min grade condition</span>`;
-                        if (ps==='not_sat') return `<span style="font-size:10.5px;color:var(--color-text-warning);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>No score recorded — compulsory subject must be sat to qualify</span>`;
-                        return '';
-                    }
-                    if (!grade||grade==='—') return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Not counted in any condition</span>`;
-                    if (isCreditGrade(grade)) return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Counted as 1 credit — contributes to grade count conditions</span>`;
-                    if (isPassGrade(grade)&&!isCreditGrade(grade)) return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Pass but below credit threshold — not counted in credit conditions</span>`;
-                    return `<span style="font-size:10.5px;color:var(--color-text-secondary);margin-top:2px;display:block;"><i class="ri-arrow-right-line me-1"></i>Fail grade — not counted in any condition</span>`;
-                }
-
-                function scoreBar2(score, barBg) {
-                    if (score===null||score===undefined) return `<span style="color:var(--color-text-secondary);font-size:12px;">—</span>`;
-                    const pct = Math.min(100,Math.round((parseFloat(score)/100)*100));
-                    return `<span style="display:inline-flex;align-items:center;gap:6px;">
-                        <strong style="min-width:26px;text-align:right;">${score}</strong>
-                        <span style="background:var(--color-border-tertiary);border-radius:3px;height:5px;width:52px;display:inline-block;vertical-align:middle;overflow:hidden;">
-                            <span style="display:block;height:100%;width:${pct}%;background:${barBg};border-radius:3px;"></span>
-                        </span>
-                    </span>`;
-                }
-
-                function pill(label, color, icon) {
-                    return `<span style="background:var(--color-background-${color});color:var(--color-text-${color});border:0.5px solid var(--color-border-${color});font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;"><i class="ri-${icon}"></i>${label}</span>`;
-                }
-
-                let html = '';
-
-                // Rule match note
-                if (appliedRuleName) {
-                    const stBg = { promoted:'success',trial:'warning',see_principal:'info',repeated:'danger' }[result?.status] || 'secondary';
-                    html += `<div style="background:var(--color-background-${stBg});border:0.5px solid var(--color-border-${stBg});border-radius:8px;padding:11px 14px;margin-bottom:13px;font-size:12.5px;color:var(--color-text-${stBg});">
-                        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-                            <i class="ri-price-tag-3-line" style="font-size:15px;"></i>
-                            <strong>Matched rule: ${escapeHtml(appliedRuleName)}</strong>
-                            ${appliedRuleDesc?`<span style="opacity:.75;font-size:11.5px;">— ${escapeHtml(appliedRuleDesc)}</span>`:''}
-                        </div>
-                        <div style="margin-top:7px;font-size:11.5px;opacity:.85;">
-                            <i class="ri-information-line" style="margin-right:4px;"></i>
-                            Credit grades (${hasSeniorGrade?'C4–A1':'C–A'}) are tallied per scope to satisfy count conditions. Each subject's contribution is shown below.
-                        </div>
-                    </div>`;
-                } else {
-                    html += `<div style="background:var(--color-background-danger);border:0.5px solid var(--color-border-danger);border-radius:8px;padding:11px 14px;margin-bottom:13px;font-size:12.5px;color:var(--color-text-danger);">
-                        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-                            <i class="ri-close-circle-line" style="font-size:15px;"></i>
-                            <strong>No rule matched.</strong> Student did not satisfy any promotion rule — result is Advice to Repeat.
-                        </div>
-                        <div style="margin-top:7px;font-size:11.5px;opacity:.85;">
-                            <i class="ri-information-line" style="margin-right:4px;"></i>
-                            Check each compulsory subject's min grade and whether the credit counts below reach the rule thresholds.
-                        </div>
-                    </div>`;
-                }
-
-                // Credit tally cards
-                html += `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-                    ${[
-                        { label:'Credits in compulsory', val:compCred,  total:compList.length,  clr:'var(--color-text-success)' },
-                        { label:'Credits in optional',   val:otherCred, total:optList.length,   clr:'var(--color-text-info)'    },
-                        { label:'Total credits',         val:allCred,   total:allSubjects.length,clr:'var(--color-text-primary)'},
-                    ].map(it=>`<div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:7px 13px;display:inline-flex;align-items:center;gap:8px;">
-                        <span style="font-size:18px;font-weight:500;color:${it.clr};">${it.val}</span>
-                        <span style="font-size:11px;color:var(--color-text-secondary);line-height:1.3;">${escapeHtml(it.label)}<br><span style="opacity:.7;">of ${it.total} subjects</span></span>
-                    </div>`).join('')}
-                </div>`;
-
-                // Summary strip
-                html += `<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:9px 13px;margin-bottom:13px;">
-                    ${pill(allSubjects.length+' total subjects','secondary','book-open-line')}
-                    <span style="width:0.5px;background:var(--color-border-tertiary);align-self:stretch;display:inline-block;margin:0 2px;"></span>
-                    <span style="font-size:11px;color:var(--color-text-secondary);font-weight:500;">Compulsory:</span>
-                    ${pill(compPass+' passed','success','checkbox-circle-line')}
-                    ${pill(compFail+' failed','danger','close-circle-line')}
-                    ${compNotSat>0?pill(compNotSat+' not sat','warning','minus-circle-line'):''}
-                    <span style="width:0.5px;background:var(--color-border-tertiary);align-self:stretch;display:inline-block;margin:0 2px;"></span>
-                    <span style="font-size:11px;color:var(--color-text-secondary);font-weight:500;">Optional:</span>
-                    ${pill(optPass+' passed','success','checkbox-circle-line')}
-                    ${pill(optFail+' failed','danger','close-circle-line')}
-                </div>`;
-
-                // Table
-                html += `<div style="overflow-x:auto;border-radius:10px;border:0.5px solid var(--color-border-tertiary);">
-                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                    <thead>
-                        <tr style="background:var(--pay-primary,#1e3a5f);">
-                            <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;width:32px;">#</th>
-                            <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">Subject</th>
-                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:50px;">Code</th>
-                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:130px;">Score / 100</th>
-                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:60px;">Grade</th>
-                            <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:100px;">Min grade</th>
-                            <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">Rule evaluation</th>
-                        </table>
-                    </thead><tbody>`;
-
-                if (compList.length > 0) {
-                    html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
-                        <i class="ri-star-fill" style="color:#d97706;margin-right:5px;"></i>Compulsory subjects — always rule-bound &nbsp;·&nbsp; ${compList.length} subject${compList.length!==1?'s':''}
-                    </tr>`;
-                    compList.forEach((s,idx) => {
-                        const grade  = s.grade||'—';
-                        const ps     = s.pass_status;
-                        const rowBdr = ps==='pass'?'#10b981':ps==='fail'?'#ef4444':'#f59e0b';
-                        html += `<tr style="border-left:3px solid ${rowBdr};border-bottom:0.5px solid var(--color-border-tertiary);">
-                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${idx+1}</td>
-                            <td style="padding:10px 12px;">
-                                <strong style="color:var(--color-text-primary);">${escapeHtml(s.subject_name)}</strong>
-                                <span style="background:var(--color-background-warning);color:var(--color-text-warning);border:0.5px solid var(--color-border-warning);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;">COMPULSORY</span>
-                            </td>
-                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code)||'—'}</td>
-                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total,rowBdr)}</td>
-                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
-                            <td style="padding:10px 12px;text-align:center;">
-                                ${s.required_min_grade&&s.required_min_grade!=='—'
-                                    ?`<span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;">≥ ${s.required_min_grade}</span>`
-                                    :`<span style="color:var(--color-text-secondary);font-size:12px;">—</span>`}
-                            </td>
-                            <td style="padding:10px 12px;">${ruleTag(s)}${subNote(s)}</td>
-                        </tr>`;
-                    });
-                }
-
-                if (optList.length > 0) {
-                    html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
-                        <i class="ri-book-line" style="color:#0891b2;margin-right:5px;"></i>Optional subjects — contribute to grade count conditions &nbsp;·&nbsp; ${otherCred} credit${otherCred!==1?'s':''} of ${optList.length} subjects
-                    </tr>`;
-                    optList.forEach((s,idx) => {
-                        const grade    = s.grade||'—';
-                        const isCredit = grade!=='—'&&isCreditGrade(grade);
-                        const isFail   = grade!=='—'&&!isPassGrade(grade);
-                        const rowBdr   = isCredit?'#0891b2':isFail?'#ef4444':'#d97706';
-                        let rps = s.pass_status;
-                        if (!rps||rps==='optional') {
-                            if (s.total===null&&grade==='—') rps='optional_not_sat';
-                            else rps=failGradeSet.has(grade.toUpperCase())?'optional_fail':'optional_pass';
-                        }
-                        html += `<tr style="border-left:3px solid ${rowBdr};border-bottom:0.5px solid var(--color-border-tertiary);">
-                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${compList.length+idx+1}</td>
-                            <td style="padding:10px 12px;">
-                                <strong style="color:var(--color-text-primary);">${escapeHtml(s.subject_name)}</strong>
-                                <span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;">OPTIONAL</span>
-                            </td>
-                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code)||'—'}</td>
-                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total,rowBdr)}</td>
-                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
-                            <td style="padding:10px 12px;text-align:center;"><span style="color:var(--color-text-secondary);font-size:11px;font-style:italic;">No min grade</span></td>
-                            <td style="padding:10px 12px;">${ruleTag(s)}${subNote(s)}</td>
-                        </tr>`;
-                    });
-                }
-
-                html += `</tbody></table></div>`;
-                document.getElementById('allSubjectsContent').innerHTML = html;
+        // ── Compulsory subjects summary card
+        if (compData.length) {
+            const passCount  = compData.filter(s => s.pass_status === 'pass').length;
+            const failCount  = compData.filter(s => s.pass_status === 'fail').length;
+            const nsCount    = compData.filter(s => s.pass_status === 'not_sat').length;
+            function gc2(g) {
+                if (!g) return '#6b7280'; const u = g.toUpperCase();
+                if (['A1','A'].includes(u)) return '#15803d';
+                if (['B2','B3','B'].includes(u)) return '#1d4ed8';
+                if (['C4','C5','C6','C'].includes(u)) return '#0369a1';
+                if (['D7','D'].includes(u)) return '#d97706';
+                return '#b91c1c';
             }
-
-            // ── Compulsory subjects summary card ──────────────────────────────
-            if (compulsoryData && compulsoryData.length > 0) {
-                const passCount2   = compulsoryData.filter(s => s.pass_status==='pass').length;
-                const failCount2   = compulsoryData.filter(s => s.pass_status==='fail').length;
-                const notSatCount2 = compulsoryData.filter(s => s.pass_status==='not_sat').length;
-
-                function gradeClr2(g) {
-                    if(!g) return '#6b7280'; const u=g.toUpperCase();
-                    if(['A1','A'].includes(u)) return '#15803d';
-                    if(['B2','B3','B'].includes(u)) return '#1d4ed8';
-                    if(['C4','C5','C6','C'].includes(u)) return '#0369a1';
-                    if(['D7','D'].includes(u)) return '#d97706';
-                    return '#b91c1c';
-                }
-
-                let chtml = `<div class="d-flex gap-2 mb-3 flex-wrap">
-                    <span class="badge bg-success" style="font-size:13px;padding:6px 12px;"><i class="ri-checkbox-circle-line me-1"></i>${passCount2} Passed</span>
-                    <span class="badge bg-danger"  style="font-size:13px;padding:6px 12px;"><i class="ri-close-circle-line me-1"></i>${failCount2} Failed</span>`;
-                if (notSatCount2 > 0) {
-                    chtml += `<span class="badge bg-secondary" style="font-size:13px;padding:6px 12px;"><i class="ri-minus-line me-1"></i>${notSatCount2} Not Sat</span>`;
-                }
-                chtml += `</div>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead><tr><th>Subject</th><th>Grade</th><th>Required</th><th>Rule Requirement</th><th>Status</th></tr></thead>
-                        <tbody>`;
-                compulsoryData.forEach(cs => {
-                    const sc2 = cs.pass_status==='pass'?'success':(cs.pass_status==='fail'?'danger':'secondary');
-                    const ico = cs.pass_status==='pass'?'✓':(cs.pass_status==='fail'?'✗':'○');
-                    chtml += `<tr>
-                        <td><strong>${escapeHtml(cs.subject)}</strong><br><small class="text-muted">${escapeHtml(cs.subject_code||'')}</small></td>
-                        <td><strong style="color:${gradeClr2(cs.student_grade||'')}">${cs.student_grade||'Not Sat'}</strong></td>
-                        <td>${cs.required_min_grade||'—'}</td>
-                        <td><small class="text-muted">${cs.rule_requirement||'—'}</small></td>
-                        <td><span class="badge bg-${sc2}">${ico} ${cs.pass_status_label||cs.pass_status}</span></td>
-                    </tr>`;
-                });
-                chtml += `</tbody></table></div>`;
-                document.getElementById('compulsoryContent').innerHTML = chtml;
-                document.getElementById('compulsoryCard').style.display = 'block';
-            }
+            let chtml = `<div class="d-flex gap-2 mb-3 flex-wrap">
+                <span class="badge bg-success" style="font-size:13px;padding:6px 12px;"><i class="ri-checkbox-circle-line me-1"></i>${passCount} Passed</span>
+                <span class="badge bg-danger"  style="font-size:13px;padding:6px 12px;"><i class="ri-close-circle-line me-1"></i>${failCount} Failed</span>
+                ${nsCount ? `<span class="badge bg-secondary" style="font-size:13px;padding:6px 12px;"><i class="ri-minus-line me-1"></i>${nsCount} Not Sat</span>` : ''}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Subject</th><th>Grade</th><th>Required</th><th>Rule Requirement</th><th>Status</th></tr></thead>
+                    <tbody>`;
+            compData.forEach(cs => {
+                const sc2 = cs.pass_status === 'pass' ? 'success' : (cs.pass_status === 'fail' ? 'danger' : 'secondary');
+                const ico = cs.pass_status === 'pass' ? '✓' : (cs.pass_status === 'fail' ? '✗' : '○');
+                chtml += `<tr>
+                    <td><strong>${escapeHtml(cs.subject)}</strong><br><small class="text-muted">${escapeHtml(cs.subject_code || '')}</small></td>
+                    <td><strong style="color:${gc2(cs.student_grade || '')}">${cs.student_grade || 'Not Sat'}</strong></td>
+                    <td>${cs.required_min_grade || '—'}</td>
+                    <td><small class="text-muted">${cs.rule_requirement || '—'}</small></td>
+                    <td><span class="badge bg-${sc2}">${ico} ${cs.pass_status_label || cs.pass_status}</span></td>
+                </tr>`;
+            });
+            chtml += `</tbody></table></div>`;
+            document.getElementById('compulsoryContent').innerHTML = chtml;
+            document.getElementById('compulsoryCard').style.display = 'block';
         }
 
     } catch (error) {
@@ -1870,7 +1614,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     new bootstrap.Modal(document.getElementById('promotionModal')).show();
 }
 
-// ── Remove student ─────────────────────────────────────────────────────────────
+/* ── Remove student ─────────────────────────────────────────────────────────── */
 function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo, firstName, lastName) {
     Swal.fire({
         title: 'Confirm Removal',
@@ -1882,28 +1626,18 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
         cancelButtonText: 'Cancel'
     }).then(result => {
         if (!result.isConfirmed) return;
-
         showLoading('Removing student...');
-
         const fd = new FormData();
         fd.append('_method', 'DELETE');
         fd.append('schoolclassid', schoolclassId);
         fd.append('sessionid', sessionId);
         fd.append('termid', termId);
-
         axios.post(`/promotions/${studentId}`, fd, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'multipart/form-data'
-            }
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Content-Type': 'multipart/form-data' }
         }).then(response => {
             hideLoading();
-            if (response.data.success) {
-                showToast(response.data.message, 'success');
-                filterData();
-            } else {
-                showToast(response.data.message || 'Failed to remove', 'danger');
-            }
+            showToast(response.data.success ? response.data.message : (response.data.message || 'Failed to remove'), response.data.success ? 'success' : 'danger');
+            if (response.data.success) filterData();
         }).catch(error => {
             hideLoading();
             showToast(error.response?.data?.message || 'Failed to remove student', 'danger');
@@ -1911,42 +1645,32 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
     });
 }
 
-// ── Submit promotion ───────────────────────────────────────────────────────────
+/* ── Submit promotion ───────────────────────────────────────────────────────── */
 function submitPromotion() {
-    if (!currentStudentId) {
-        showToast('Student ID not found', 'danger');
-        return;
-    }
+    if (!currentStudentId) { showToast('Student ID not found', 'danger'); return; }
 
-    const newClassSelect    = document.getElementById('newClassSelect');
-    const newSessionSelect  = document.getElementById('newSessionSelect');
-    const newTermSelect     = document.getElementById('newTermSelect');
+    const nc = document.getElementById('newClassSelect');
+    const ns = document.getElementById('newSessionSelect');
+    const nt = document.getElementById('newTermSelect');
+    if (!nc.value)  { showToast('Please select a new class',   'warning'); return; }
+    if (!ns.value)  { showToast('Please select a new session', 'warning'); return; }
+    if (!nt.value)  { showToast('Please select a new term',    'warning'); return; }
 
-    if (!newClassSelect.value)   { showToast('Please select a new class', 'warning'); return; }
-    if (!newSessionSelect.value) { showToast('Please select a new session', 'warning'); return; }
-    if (!newTermSelect.value)    { showToast('Please select a new term', 'warning'); return; }
-
-    const promotionCheckbox    = document.getElementById('promotionCheckbox');
-    const trialCheckbox        = document.getElementById('trialCheckbox');
-    const seePrincipalCheckbox = document.getElementById('seePrincipalCheckbox');
-    const repeatCheckbox       = document.getElementById('repeatCheckbox');
-
-    const selectedCount = [promotionCheckbox, trialCheckbox, seePrincipalCheckbox, repeatCheckbox]
-        .filter(cb => cb.checked).length;
-    if (selectedCount !== 1) {
-        showToast('Please select exactly one promotion decision', 'warning');
-        return;
+    const cbs = ['promotionCheckbox','trialCheckbox','seePrincipalCheckbox','repeatCheckbox']
+        .map(id => document.getElementById(id));
+    if (cbs.filter(cb => cb.checked).length !== 1) {
+        showToast('Please select exactly one promotion decision', 'warning'); return;
     }
 
     const fd = new FormData();
     fd.append('_method',           'PUT');
-    fd.append('new_schoolclassid', newClassSelect.value);
-    fd.append('new_sessionid',     newSessionSelect.value);
-    fd.append('new_termid',        newTermSelect.value);
-    fd.append('promotion',         promotionCheckbox.checked    ? '1' : '0');
-    fd.append('trial',             trialCheckbox.checked        ? '1' : '0');
-    fd.append('see_principal',     seePrincipalCheckbox.checked ? '1' : '0');
-    fd.append('repeat',            repeatCheckbox.checked       ? '1' : '0');
+    fd.append('new_schoolclassid', nc.value);
+    fd.append('new_sessionid',     ns.value);
+    fd.append('new_termid',        nt.value);
+    fd.append('promotion',         document.getElementById('promotionCheckbox').checked    ? '1' : '0');
+    fd.append('trial',             document.getElementById('trialCheckbox').checked        ? '1' : '0');
+    fd.append('see_principal',     document.getElementById('seePrincipalCheckbox').checked ? '1' : '0');
+    fd.append('repeat',            document.getElementById('repeatCheckbox').checked       ? '1' : '0');
 
     Swal.fire({
         title: 'Confirm Update',
@@ -1957,20 +1681,14 @@ function submitPromotion() {
         cancelButtonText: 'Cancel'
     }).then(result => {
         if (!result.isConfirmed) return;
-
         showLoading('Updating promotion...');
         bootstrap.Modal.getInstance(document.getElementById('promotionModal'))?.hide();
-
         axios.post(`/promotions/${currentStudentId}`, fd, {
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         }).then(response => {
             hideLoading();
-            if (response.data.success) {
-                showToast(response.data.message, 'success');
-                filterData();
-            } else {
-                showToast(response.data.message || 'Failed to update', 'danger');
-            }
+            showToast(response.data.success ? response.data.message : (response.data.message || 'Failed to update'), response.data.success ? 'success' : 'danger');
+            if (response.data.success) filterData();
         }).catch(error => {
             hideLoading();
             showToast(error.response?.data?.message || 'Failed to update promotion', 'danger');
@@ -1978,35 +1696,30 @@ function submitPromotion() {
     });
 }
 
-// ── Keyboard shortcuts ──
+/* ── Keyboard shortcuts ─────────────────────────────────────────────────────── */
 document.addEventListener('keydown', function(e) {
-    // Ctrl+F to focus search
     if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
         document.getElementById('searchInput')?.focus();
-        showToast('Search focused - type to filter students', 'info');
+        showToast('Search focused — type to filter students', 'info');
     }
-    // Escape to clear search
     if (e.key === 'Escape') {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput && document.activeElement === searchInput) {
-            searchInput.value = '';
-            filterData();
+        const si = document.getElementById('searchInput');
+        if (si && document.activeElement === si) {
+            si.value = ''; filterData();
             showToast('Search cleared', 'info');
         }
     }
-    // Ctrl+A to select all (when not in input)
     if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-        const activeEl = document.activeElement;
-        if (activeEl && !['INPUT', 'TEXTAREA'].includes(activeEl.tagName)) {
+        const ae = document.activeElement;
+        if (ae && !['INPUT','TEXTAREA'].includes(ae.tagName)) {
             e.preventDefault();
-            const selectAll = document.getElementById('selectAll');
-            if (selectAll) {
-                selectAll.checked = true;
+            const sa = document.getElementById('selectAll');
+            if (sa) {
+                sa.checked = true;
                 document.querySelectorAll('.row-checkbox').forEach(cb => {
                     cb.checked = true;
-                    const row = cb.closest('tr');
-                    if (row) row.classList.add('selected');
+                    cb.closest('tr')?.classList.add('selected');
                 });
                 updateBulkBar();
                 showToast('All students selected', 'info');
@@ -2015,19 +1728,14 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// ── Add tooltips to stat cards ──
-function addStatTooltips() {
-    // Tooltips already added via data-tooltip attribute in HTML
-}
-
-// ── DOM ready ──────────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("idclass").addEventListener("change", filterData);
-    document.getElementById("idsession").addEventListener("change", filterData);
-    document.getElementById("idterm").addEventListener("change", filterData);
+/* ── DOMContentLoaded ───────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('idclass').addEventListener('change', filterData);
+    document.getElementById('idsession').addEventListener('change', filterData);
+    document.getElementById('idterm').addEventListener('change', filterData);
 
     let searchTimeout;
-    document.getElementById("searchInput").addEventListener("input", function() {
+    document.getElementById('searchInput').addEventListener('input', function () {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(filterData, 500);
     });
@@ -2036,28 +1744,15 @@ document.addEventListener("DOMContentLoaded", function() {
     updateStats();
     triggerRowEntrance();
     popPromotionBadges();
-    addStatTooltips();
     setupRowSelection();
 
-    // Add pulse animation to bulk action button when selection exists
+    // Pulse bulk button when bar is visible
     const bulkBtn = document.getElementById('bulkPromoteActionBtn');
-    if (bulkBtn) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.attributeName === 'class') {
-                    const bar = document.getElementById('bulkActionBar');
-                    if (bar.classList.contains('visible')) {
-                        bulkBtn.classList.add('btn-pulse');
-                    } else {
-                        bulkBtn.classList.remove('btn-pulse');
-                    }
-                }
-            });
-        });
-        const bulkBar = document.getElementById('bulkActionBar');
-        if (bulkBar) {
-            observer.observe(bulkBar, { attributes: true });
-        }
+    const bulkBar = document.getElementById('bulkActionBar');
+    if (bulkBtn && bulkBar) {
+        new MutationObserver(() => {
+            bulkBtn.classList.toggle('btn-pulse', bulkBar.classList.contains('visible'));
+        }).observe(bulkBar, { attributes: true });
     }
 });
 </script>
