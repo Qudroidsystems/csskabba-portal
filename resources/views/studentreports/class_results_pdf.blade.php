@@ -351,7 +351,7 @@
 
         /* PROMOTION BADGE */
         .promo-card {
-            width: calc(100% - 16px);
+            width: calc(96% - 16px);
             margin: 6px 8px 8px 8px;
             padding: 8px 12px;
             border-radius: 6px;
