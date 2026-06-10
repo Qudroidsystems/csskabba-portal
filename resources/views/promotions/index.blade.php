@@ -259,9 +259,9 @@
 .subj-table .row-optns   { border-left: 3px solid #9ca3af; }
 
 /* inline mini-bar */
-.mini-bar { display:inline-flex; align-items:center; gap:6px; }
-.mini-bar-track { width:44px; height:4px; background:#e2e8f0; border-radius:2px; display:inline-block; vertical-align:middle; overflow:hidden; }
-.mini-bar-fill  { height:100%; border-radius:2px; }
+.mini-bar { display:inline-flex; align-items:center; gap:7px; }
+.mini-bar-track { height:6px; background:#e2e8f0; border-radius:3px; display:inline-block; vertical-align:middle; overflow:hidden; flex-shrink:0; }
+.mini-bar-fill  { height:100%; border-radius:3px; display:block; }
 
 /* eval tag */
 .eval-tag {
@@ -915,16 +915,26 @@ function escapeHtml(str) {
 
 /* ── Image helpers ─────────────────────────────────────────────────────────── */
 function normalizeImagePath(picture, gender) {
-    if (!picture || ['null','undefined',''].includes(String(picture).trim())) {
-        return gender === 'Male'
-            ? '/storage/student_avatars/male-default.png'
-            : '/storage/student_avatars/female-default.png';
-    }
-    if (picture.startsWith('http://') || picture.startsWith('https://')) return picture;
-    let clean = picture.replace(/^\/+/, '').replace(/^storage\//, '');
-    if (!clean) return gender === 'Male'
+    const defaultImg = gender === 'Male'
         ? '/storage/student_avatars/male-default.png'
         : '/storage/student_avatars/female-default.png';
+
+    if (!picture) return defaultImg;
+    const raw = String(picture).trim();
+    if (!raw || ['null','undefined','false'].includes(raw)) return defaultImg;
+
+    // Already absolute URL
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+
+    // Strip all known leading segments to get the bare filename/path
+    let clean = raw
+        .replace(/^\/+/, '')          // leading slashes
+        .replace(/^storage\//, '')    // storage/
+        .replace(/^public\//, '')     // public/
+        .replace(/^app\/public\//, '') // app/public/
+        .replace(/^\/+/, '');         // any remaining leading slashes
+
+    if (!clean) return defaultImg;
     return '/storage/' + clean;
 }
 
@@ -935,11 +945,14 @@ function setStudentImage(imgEl, primarySrc, gender) {
     const fallback2 = '/storage/student_avatars/unnamed.jpg';
 
     const tries = [primarySrc, fallback1, fallback2]
-        .filter(s => s && s !== '/storage/' && s !== '/storage/null');
+        .filter(s => s && s !== '/storage/' && s !== '/storage/null' && s !== '/storage/undefined');
+
+    console.log('[StudentImage] trying paths:', tries);
 
     let attempt = 0;
     imgEl.onerror = null;
     imgEl.onerror = function () {
+        console.warn('[StudentImage] failed:', this.src, '— trying next fallback');
         attempt++;
         if (attempt < tries.length) { this.src = tries[attempt]; }
         else { this.onerror = null; }
@@ -1337,14 +1350,30 @@ function buildSubjectsTable(allSubjects, result) {
         return evalTag('red','ri-close-circle-line','Fail') + evalNote(`${grade} is a failing grade — not counted`);
     }
 
-    /* ── Score mini-bar ── */
-    function scoreBar(score, color) {
-        if (score === null || score === undefined)
-            return `<span class="gc-na" style="font-size:12px;">—</span>`;
-        const pct = Math.min(100, Math.round((parseFloat(score) / 100) * 100));
+    /* ── Grade → bar/text color (always grade-based, not status-based) ── */
+    function gradeHexColor(g) {
+        const u = (g || '').toUpperCase();
+        if (['A1','A'].includes(u))           return { bar: '#10b981', text: '#15803d' }; // emerald
+        if (['B2','B3','B'].includes(u))      return { bar: '#3b82f6', text: '#1d4ed8' }; // blue
+        if (['C4','C5','C6','C'].includes(u)) return { bar: '#0891b2', text: '#0369a1' }; // cyan
+        if (['D7','D'].includes(u))           return { bar: '#f59e0b', text: '#d97706' }; // amber
+        if (['E8'].includes(u))               return { bar: '#f97316', text: '#c2410c' }; // orange
+        if (['F9','F'].includes(u))           return { bar: '#ef4444', text: '#b91c1c' }; // red
+        return { bar: '#94a3b8', text: '#64748b' };                                        // gray (not sat)
+    }
+
+    /* ── Score mini-bar — color driven by grade ── */
+    function scoreBar(score, grade) {
+        if (score === null || score === undefined || score === '')
+            return `<span style="color:#94a3b8;font-size:12px;">—</span>`;
+        const num = parseFloat(score);
+        const pct = Math.min(100, Math.round((num / 100) * 100));
+        const clr = gradeHexColor(grade);
         return `<span class="mini-bar">
-            <strong style="min-width:26px;text-align:right;display:inline-block;">${score}</strong>
-            <span class="mini-bar-track"><span class="mini-bar-fill" style="width:${pct}%;background:${color};"></span></span>
+            <strong style="min-width:28px;text-align:right;display:inline-block;color:${clr.text};font-size:13px;">${score}</strong>
+            <span class="mini-bar-track" style="width:52px;height:5px;">
+                <span class="mini-bar-fill" style="width:${pct}%;background:${clr.bar};"></span>
+            </span>
         </span>`;
     }
 
@@ -1360,18 +1389,6 @@ function buildSubjectsTable(allSubjects, result) {
         if (isCredit(s.grade)) return 'row-credit';
         if (isPass(s.grade))   return 'row-passonly';
         return 'row-optfail';
-    }
-
-    /* ── Bar color per row status ── */
-    function barColor(s) {
-        if (s.is_compulsory) {
-            if (s.pass_status === 'pass')    return '#10b981';
-            if (s.pass_status === 'not_sat') return '#f59e0b';
-            return '#ef4444';
-        }
-        if (isCredit(s.grade)) return '#3b82f6';
-        if (isPass(s.grade))   return '#d97706';
-        return '#ef4444';
     }
 
     /* ── Compulsory section ── */
@@ -1393,7 +1410,7 @@ function buildSubjectsTable(allSubjects, result) {
                     </div>
                 </td>
                 <td style="text-align:center;font-family:monospace;font-size:11px;color:#64748b;">${escapeHtml(s.subject_code || '—')}</td>
-                <td style="text-align:center;">${scoreBar(s.total, barColor(s))}</td>
+                <td style="text-align:center;">${scoreBar(s.total, grade)}</td>
                 <td style="text-align:center;"><strong class="${gradeColorClass(grade)}" style="font-size:17px;letter-spacing:.02em;">${grade}</strong></td>
                 <td style="text-align:center;">
                     ${min && min !== '—'
@@ -1423,7 +1440,7 @@ function buildSubjectsTable(allSubjects, result) {
                     </div>
                 </td>
                 <td style="text-align:center;font-family:monospace;font-size:11px;color:#64748b;">${escapeHtml(s.subject_code || '—')}</td>
-                <td style="text-align:center;">${scoreBar(s.total, barColor(s))}</td>
+                <td style="text-align:center;">${scoreBar(s.total, grade)}</td>
                 <td style="text-align:center;"><strong class="${gradeColorClass(grade)}" style="font-size:17px;letter-spacing:.02em;">${grade}</strong></td>
                 <td style="text-align:center;"><span style="color:#94a3b8;font-size:11px;font-style:italic;">No min grade</span></td>
                 <td>${buildEval(s)}</td>
