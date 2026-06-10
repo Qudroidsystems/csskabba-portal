@@ -10,6 +10,7 @@ class Kernel extends ConsoleKernel
 {
     protected $commands = [
         \App\Console\Commands\CleanupExpiredLocks::class,
+         \App\Console\Commands\FixJuniorGrades::class,
     ];
 
     protected function schedule(Schedule $schedule)
