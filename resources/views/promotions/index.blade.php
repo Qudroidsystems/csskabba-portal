@@ -35,7 +35,62 @@
     --color-border-tertiary:  #cbd5e1;
 }
 
-/* ── Hero ───────────────────────────────────────────────────────── */
+/* ── Animations ─────────────────────────────────────────────────────────────── */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modalZoomIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastSlideOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(100px); }
+}
+
+@keyframes skeletonLoading {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes btnPulse {
+    0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(37,99,235,0); }
+    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+}
+
+@keyframes statFlash {
+    0%   { transform: scale(1);    color: inherit; }
+    40%  { transform: scale(1.18); color: #2563eb; }
+    100% { transform: scale(1);    color: inherit; }
+}
+
+@keyframes badgePop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.22); }
+    70%  { transform: scale(0.94); }
+    100% { transform: scale(1); }
+}
+
+@keyframes rowFlash {
+    0%   { background: rgba(37,99,235,0.1); }
+    100% { background: transparent; }
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────────────── */
 .pay-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--pay-radius);
@@ -43,6 +98,7 @@
     margin-bottom: 24px;
     position: relative;
     overflow: hidden;
+    animation: slideIn 0.5s ease-out;
 }
 .pay-hero::before {
     content: '';
@@ -55,39 +111,59 @@
 .pay-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
 .pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
-/* ── Stat cards ─────────────────────────────────────────────────── */
+/* ── Stat cards ─────────────────────────────────────────────────────────────── */
 .stat-card {
     background: #fff;
     border: 1px solid var(--pay-border);
     border-radius: var(--pay-radius);
     padding: 18px 20px;
-    transition: transform .15s, box-shadow .15s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
 }
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--pay-shadow); }
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.stat-card::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: #1e293b;
+    color: white;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 100;
+}
+.stat-card:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
+}
 .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--pay-primary); }
 .stat-card .stat-label { font-size: 12px; color: var(--pay-muted); margin-top: 4px; }
 .stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
 
-/* ── Stat flash animation ───────────────────────────────────────── */
-@keyframes statFlash {
-    0%   { transform: scale(1);    color: inherit; }
-    40%  { transform: scale(1.18); color: #2563eb; }
-    100% { transform: scale(1);    color: inherit; }
-}
 .stat-flash { animation: statFlash .45s cubic-bezier(.34,1.4,.64,1); }
 
-/* ── Info / warning banners ─────────────────────────────────────── */
+/* ── Info / warning banners ─────────────────────────────────────────────────── */
 .info-banner {
     background: #eff6ff; border: 1px solid #bfdbfe;
     border-radius: 10px; padding: 12px 16px;
     margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+    animation: fadeInUp 0.4s ease-out;
 }
 .info-banner i { font-size: 20px; color: #2563eb; }
 .info-banner .text { font-size: 13px; color: #1e40af; }
 .info-banner .text strong { display: block; margin-bottom: 4px; }
 .info-banner .text a { color: #1e40af; font-weight: 600; text-decoration: underline; }
 
-/* ── Promotion badges ───────────────────────────────────────────── */
+/* ── Promotion badges ───────────────────────────────────────────────────────── */
 .promotion-badge-promoted,
 .promotion-badge-trial,
 .promotion-badge-see_principal,
@@ -103,15 +179,9 @@
 .promotion-badge-repeated    { background: #ef4444; color: white; }
 .promotion-badge-pending     { background: #6b7280; color: white; }
 
-@keyframes badgePop {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(1.22); }
-    70%  { transform: scale(0.94); }
-    100% { transform: scale(1); }
-}
 .badge-pop { animation: badgePop .4s cubic-bezier(.34,1.4,.64,1); }
 
-/* ── Bulk action bar ────────────────────────────────────────────── */
+/* ── Bulk action bar ────────────────────────────────────────────────────────── */
 .bulk-action-bar {
     display: none; align-items: center; gap: 12px;
     background: #fff7ed; border: 1px solid #fed7aa;
@@ -121,8 +191,12 @@
 .bulk-action-bar .bulk-count { font-size: 13px; font-weight: 600; color: #92400e; }
 .select-all-checkbox { width: 16px; height: 16px; cursor: pointer; }
 
-/* ── Modal chrome ───────────────────────────────────────────────── */
-.modal-content { border-radius: 16px; overflow: hidden; }
+/* ── Modal chrome ───────────────────────────────────────────────────────────── */
+.modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+    animation: modalZoomIn 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
 .modal-header {
     background: linear-gradient(135deg, #1e3a5f, #2563eb);
     padding: 20px 28px; border-bottom: none;
@@ -136,7 +210,7 @@
     margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--pay-border);
 }
 
-/* ── Recommendation cards ───────────────────────────────────────── */
+/* ── Recommendation cards ───────────────────────────────────────────────────── */
 .recommendation-card { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
 .recommendation-card.promoted      { border-left: 4px solid #10b981; }
 .recommendation-card.trial         { border-left: 4px solid #f59e0b; }
@@ -145,7 +219,7 @@
 .recommendation-card .label { font-size: 12px; color: var(--pay-muted); margin-bottom: 4px; }
 .recommendation-card .value { font-size: 16px; font-weight: 700; }
 
-/* ── Decision cards ─────────────────────────────────────────────── */
+/* ── Decision cards ─────────────────────────────────────────────────────────── */
 .form-check-card .form-check-input { display: none; }
 .promotion-card, .trial-card, .principal-card, .repeat-card {
     transition: all 0.3s ease; background-color: #fff;
@@ -160,7 +234,7 @@
 #seePrincipalCheckbox:checked ~ label .principal-card{ border-color: #0dcaf0 !important; background-color: #cff4fc !important; }
 #repeatCheckbox:checked ~ label .repeat-card         { border-color: #dc3545 !important; background-color: #f8d7da !important; }
 
-/* ── Row entrance animation ─────────────────────────────────────── */
+/* ── Row entrance animation ─────────────────────────────────────────────────── */
 #studentTableBody tr[data-student-id] {
     opacity: 0;
     transform: translateY(14px);
@@ -174,7 +248,7 @@
     transform: translateY(0);
 }
 
-/* ── Row hover ──────────────────────────────────────────────────── */
+/* ── Row hover ──────────────────────────────────────────────────────────────── */
 #studentTableBody tr[data-student-id]:hover {
     background: #f0f6ff !important;
     box-shadow: inset 3px 0 0 #2563eb;
@@ -186,7 +260,16 @@
     z-index: 1;
 }
 
-/* ── Avatar hover scale ─────────────────────────────────────────── */
+/* ── Row selection ─────────────────────────────────────────────────────────── */
+#studentTableBody tr[data-student-id].selected {
+    background: #e0f2fe !important;
+    transition: background 0.15s ease;
+}
+#studentTableBody tr[data-student-id].selected:hover {
+    background: #d9ebf7 !important;
+}
+
+/* ── Avatar hover scale ─────────────────────────────────────────────────────── */
 #studentTableBody tr[data-student-id] .student-row-avatar {
     transition: transform .18s ease, box-shadow .18s ease;
 }
@@ -195,14 +278,14 @@
     box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
 
-/* ── Badge hover scale ──────────────────────────────────────────── */
+/* ── Badge hover scale ──────────────────────────────────────────────────────── */
 #studentTableBody tr[data-student-id]:hover .badge,
 #studentTableBody tr[data-student-id]:hover [class*="promotion-badge-"] {
     transition: transform .18s cubic-bezier(.34,1.4,.64,1);
     transform: scale(1.06);
 }
 
-/* ── Checkbox fade ──────────────────────────────────────────────── */
+/* ── Checkbox fade ─────────────────────────────────────────────────────────── */
 #studentTableBody tr[data-student-id] .row-checkbox {
     opacity: .35;
     transform: scale(.85);
@@ -214,7 +297,7 @@
     transform: scale(1);
 }
 
-/* ── Score bar ──────────────────────────────────────────────────── */
+/* ── Score bar ─────────────────────────────────────────────────────────────── */
 .score-bar-wrap {
     background: #e2e8f0; border-radius: 4px;
     height: 6px; width: 60px;
@@ -222,7 +305,7 @@
 }
 .score-bar-fill { height: 100%; border-radius: 4px; }
 
-/* ── Summary pills ──────────────────────────────────────────────── */
+/* ── Summary pills ─────────────────────────────────────────────────────────── */
 .subject-summary-strip {
     display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
     background: #f8fafc; border: 1px solid var(--pay-border);
@@ -240,7 +323,7 @@
 .pill-total    { background: #ede9fe; color: #6d28d9; }
 .pill-credit   { background: #fce7f3; color: #9d174d; }
 
-/* ── Table chrome ───────────────────────────────────────────────── */
+/* ── Table chrome ──────────────────────────────────────────────────────────── */
 .compulsory-table { width: 100%; border-collapse: collapse; }
 .compulsory-table th {
     background: var(--pay-primary); color: #fff;
@@ -252,11 +335,11 @@
     border-bottom: 1px solid var(--pay-border); font-size: 13px;
 }
 
-/* ── Empty state ────────────────────────────────────────────────── */
+/* ── Empty state ───────────────────────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 52px 24px; color: var(--pay-muted); }
 .empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
 
-/* ── Search box ─────────────────────────────────────────────────── */
+/* ── Search box ────────────────────────────────────────────────────────────── */
 .search-box { position: relative; }
 .search-box .form-control {
     border: 1.5px solid var(--pay-border); border-radius: 8px;
@@ -271,7 +354,7 @@
     transform: translateY(-50%); color: var(--pay-muted); pointer-events: none;
 }
 
-/* ── Modal student profile ──────────────────────────────────────── */
+/* ── Modal student profile ──────────────────────────────────────────────────── */
 .student-avatar-lg {
     width: 120px; height: 120px; object-fit: cover;
     border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.15); background: #f8f9fa;
@@ -281,7 +364,7 @@
     padding: 8px 16px; border-radius: 30px; font-size: 14px; font-weight: 600;
 }
 
-/* ── Rule badge / subject table accents ─────────────────────────── */
+/* ── Rule badge / subject table accents ────────────────────────────────────── */
 .rule-badge {
     background: #1e3a5f; color: white;
     padding: 4px 12px; border-radius: 20px;
@@ -297,7 +380,7 @@
     font-size: 9px; font-weight: 600; display: inline-block;
 }
 
-/* ── All-subjects table ─────────────────────────────────────────── */
+/* ── All-subjects table ────────────────────────────────────────────────────── */
 .subjects-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .subjects-table thead th {
     background: var(--pay-primary); color: #fff;
@@ -320,7 +403,7 @@
     border-bottom: 1px solid var(--pay-border);
 }
 
-/* ── Button icons ───────────────────────────────────────────────── */
+/* ── Button icons ──────────────────────────────────────────────────────────── */
 .btn-icon {
     width: 32px; height: 32px; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
@@ -331,7 +414,64 @@
 .btn-subtle-danger  { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .btn-subtle-danger:hover  { background: #fee2e2; color: #b91c1c; transform: translateY(-1px); }
 
-/* ── Misc ───────────────────────────────────────────────────────── */
+/* ── Toast Notifications ───────────────────────────────────────────────────── */
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+    animation: toastSlideIn 0.3s ease-out;
+}
+.toast-notification.closing {
+    animation: toastSlideOut 0.3s ease-out forwards;
+}
+
+/* ── Loading Overlay ───────────────────────────────────────────────────────── */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
+}
+.loading-spinner {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+/* ── Skeleton loading ──────────────────────────────────────────────────────── */
+.skeleton-row td {
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-row td::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    animation: skeletonLoading 1.5s infinite;
+}
+
+/* ── Pulse animation ───────────────────────────────────────────────────────── */
+.btn-pulse {
+    animation: btnPulse 2s infinite;
+}
+
+/* ── Misc ─────────────────────────────────────────────────────────────────── */
 .animate-bounce { animation: bounce 2s infinite; }
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
@@ -350,7 +490,7 @@
 .rule-link:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
 .table-hover tbody tr:hover { background-color: rgba(0,0,0,.02); }
 
-/* ── Reduced motion ─────────────────────────────────────────────── */
+/* ── Reduced motion ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
     #studentTableBody tr[data-student-id],
     #studentTableBody tr[data-student-id]:hover {
@@ -359,6 +499,8 @@
         opacity: 1 !important;
     }
     .stat-flash, .badge-pop { animation: none !important; }
+    .toast-notification { animation: none !important; }
+    .modal-content { animation: none !important; }
 }
 </style>
 
@@ -384,28 +526,28 @@
             {{-- Stats --}}
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card" data-tooltip="Total number of students in this class">
                         <div class="stat-icon"><i class="ri-user-line"></i></div>
                         <div class="stat-value" id="totalStudents">0</div>
                         <div class="stat-label">Total Students</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card" data-tooltip="Students recommended for promotion based on rules">
                         <div class="stat-icon"><i class="ri-arrow-up-circle-line"></i></div>
                         <div class="stat-value text-success" id="promotedCount">0</div>
                         <div class="stat-label">Recommended Promoted</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card" data-tooltip="Students recommended for conditional promotion on trial">
                         <div class="stat-icon"><i class="ri-time-line"></i></div>
                         <div class="stat-value text-warning" id="trialCount">0</div>
                         <div class="stat-label">On Trial</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card" data-tooltip="Students recommended to repeat the current class">
                         <div class="stat-icon"><i class="ri-repeat-line"></i></div>
                         <div class="stat-value text-danger" id="repeatCount">0</div>
                         <div class="stat-label">To Repeat</div>
@@ -488,6 +630,9 @@
                                        placeholder="Search by name or admission number...">
                                 <i class="ri-search-line search-icon"></i>
                             </div>
+                            <small class="text-muted mt-1 d-block">
+                                <i class="ri-keyboard-line me-1"></i>Tip: Press <kbd>Ctrl+F</kbd> to focus search
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -501,6 +646,12 @@
                         <i class="ri-group-line me-2"></i>Students
                         <span class="badge bg-primary ms-2" id="studentcount">{{ $allstudents->total() }}</span>
                     </h5>
+                    <div class="d-flex gap-2">
+                        <small class="text-muted">
+                            <i class="ri-keyboard-line me-1"></i>
+                            <kbd>Ctrl+A</kbd> Select all
+                        </small>
+                    </div>
                 </div>
                 <div class="card-body">
 
@@ -885,6 +1036,89 @@ const gradeOrder = {
     'F9': 0, 'F': 0,
 };
 
+// ── Toast notification system ─────────────────────────────────────────────────
+function showToast(message, type = 'info') {
+    const colors = {
+        success: '#16a34a',
+        warning: '#d97706',
+        danger: '#dc2626',
+        info: '#2563eb'
+    };
+
+    const icons = {
+        success: 'ri-checkbox-circle-line',
+        warning: 'ri-alert-line',
+        danger: 'ri-error-warning-line',
+        info: 'ri-information-line'
+    };
+
+    const toastId = 'toast_' + Date.now();
+    const toastHtml = `
+        <div id="${toastId}" class="toast-notification" style="background: ${colors[type]}; color: white; padding: 12px 20px; border-radius: 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <i class="${icons[type]} fs-5"></i>
+            <span>${message}</span>
+            <button onclick="document.getElementById('${toastId}').classList.add('closing'); setTimeout(() => document.getElementById('${toastId}')?.remove(), 300)" style="background: none; border: none; color: white; margin-left: 10px; cursor: pointer; font-size: 18px;">&times;</button>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', toastHtml);
+    setTimeout(() => {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.classList.add('closing');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 4000);
+}
+
+// ── Loading overlay ──────────────────────────────────────────────────────────
+function showLoading(message = 'Loading...') {
+    let overlay = document.getElementById('globalLoadingOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'globalLoadingOverlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner-border text-primary" role="status"></div>
+                <span id="loadingMessage">${message}</span>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    } else {
+        overlay.style.display = 'flex';
+        const msgSpan = overlay.querySelector('#loadingMessage');
+        if (msgSpan) msgSpan.textContent = message;
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('globalLoadingOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+// ── Animate counter numbers ──
+function easeOutCubic(x) {
+    return 1 - Math.pow(1 - x, 3);
+}
+
+function animateCounter(element, start, end, duration = 500) {
+    if (!element) return;
+    const startTime = performance.now();
+    const updateCounter = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(start + (end - start) * easeOutCubic(progress));
+        element.textContent = current;
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        } else {
+            element.textContent = end;
+        }
+    };
+    requestAnimationFrame(updateCounter);
+}
+
 // ── Image helpers ──────────────────────────────────────────────────────────────
 function normalizeImagePath(picture, gender) {
     if (!picture || picture === 'null' || picture === 'undefined' || picture.trim() === '') {
@@ -942,21 +1176,9 @@ function gradePassFail(studentGrade, minGrade) {
     return !['F','F9'].includes(sg);
 }
 
-// ── Stats with flash animation ─────────────────────────────────────────────────
-function animateStatTo(elId, newVal) {
-    const el = document.getElementById(elId);
-    if (!el) return;
-    const old = parseInt(el.innerText) || 0;
-    if (old === newVal) return;
-    el.innerText = newVal;
-    el.classList.remove('stat-flash');
-    void el.offsetWidth; // force reflow
-    el.classList.add('stat-flash');
-    el.addEventListener('animationend', () => el.classList.remove('stat-flash'), { once: true });
-}
-
+// ── Stats with flash animation and counter ────────────────────────────────────
 function updateStats() {
-    const rows = document.querySelectorAll('#studentTableBody tr');
+    const rows = document.querySelectorAll('#studentTableBody tr[data-student-id]');
     let total = 0, promoted = 0, trial = 0, repeat = 0;
 
     rows.forEach(row => {
@@ -972,17 +1194,34 @@ function updateStats() {
         }
     });
 
-    animateStatTo('totalStudents', total);
-    animateStatTo('promotedCount', promoted);
-    animateStatTo('trialCount', trial);
-    animateStatTo('repeatCount', repeat);
+    const totalEl = document.getElementById('totalStudents');
+    const promotedEl = document.getElementById('promotedCount');
+    const trialEl = document.getElementById('trialCount');
+    const repeatEl = document.getElementById('repeatCount');
+
+    const oldTotal = parseInt(totalEl?.innerText) || 0;
+    const oldPromoted = parseInt(promotedEl?.innerText) || 0;
+    const oldTrial = parseInt(trialEl?.innerText) || 0;
+    const oldRepeat = parseInt(repeatEl?.innerText) || 0;
+
+    animateCounter(totalEl, oldTotal, total);
+    animateCounter(promotedEl, oldPromoted, promoted);
+    animateCounter(trialEl, oldTrial, trial);
+    animateCounter(repeatEl, oldRepeat, repeat);
+
+    // Flash animation on stat cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.classList.add('stat-flash');
+        setTimeout(() => card.classList.remove('stat-flash'), 450);
+    });
 }
 
 // ── Staggered row entrance ─────────────────────────────────────────────────────
 function triggerRowEntrance() {
-    document.querySelectorAll('#studentTableBody tr[data-student-id]').forEach((row, index) => {
+    const rows = document.querySelectorAll('#studentTableBody tr[data-student-id]');
+    rows.forEach((row, index) => {
         row.classList.remove('row-visible');
-        setTimeout(() => row.classList.add('row-visible'), index * 28);
+        setTimeout(() => row.classList.add('row-visible'), index * 20);
     });
 }
 
@@ -1013,7 +1252,10 @@ function filterData() {
     }
 
     const tableBody = document.getElementById('studentTableBody');
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading…</td></tr>';
+
+    // Show skeleton loading
+    tableBody.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height: 400px;"></div></td></tr>';
+    showLoading('Loading students...');
 
     axios.get('{{ route("promotions.index") }}', {
         params: { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue },
@@ -1022,6 +1264,7 @@ function filterData() {
             'X-Requested-With': 'XMLHttpRequest'
         }
     }).then(function(response) {
+        hideLoading();
         document.getElementById('studentTableBody').innerHTML = response.data.tableBody;
         document.getElementById('pagination-container').innerHTML = response.data.pagination;
         document.getElementById('studentcount').innerText = response.data.studentCount || '0';
@@ -1030,10 +1273,13 @@ function filterData() {
         setupCheckboxHandlers();
         triggerRowEntrance();
         popPromotionBadges();
+        setupRowSelection();
+        showToast(`${response.data.studentCount || 0} students loaded`, 'success');
     }).catch(function(error) {
+        hideLoading();
         console.error('AJAX Error:', error);
         tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
-        Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch student data." });
+        showToast('Failed to fetch student data', 'danger');
     });
 }
 
@@ -1052,7 +1298,8 @@ function setupPaginationLinks() {
 
 function loadPage(url) {
     const tableBody = document.getElementById('studentTableBody');
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading…</td></tr>';
+    tableBody.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height: 400px;"></div></td></tr>';
+    showLoading('Loading page...');
 
     axios.get(url, {
         headers: {
@@ -1060,6 +1307,7 @@ function loadPage(url) {
             'X-Requested-With': 'XMLHttpRequest'
         }
     }).then(function(response) {
+        hideLoading();
         document.getElementById('studentTableBody').innerHTML = response.data.tableBody;
         document.getElementById('pagination-container').innerHTML = response.data.pagination;
         document.getElementById('studentcount').innerText = response.data.studentCount || '0';
@@ -1068,25 +1316,52 @@ function loadPage(url) {
         setupCheckboxHandlers();
         triggerRowEntrance();
         popPromotionBadges();
+        setupRowSelection();
     }).catch(function(error) {
+        hideLoading();
         console.error('Page load error:', error);
         tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data.</td></tr>';
     });
 }
 
+// ── Row selection highlight ──
+function setupRowSelection() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.removeEventListener('change', handleRowSelectionChange);
+        cb.addEventListener('change', handleRowSelectionChange);
+    });
+}
+
+function handleRowSelectionChange() {
+    const row = this.closest('tr');
+    if (this.checked) {
+        row.classList.add('selected');
+    } else {
+        row.classList.remove('selected');
+    }
+    updateBulkBar();
+}
+
 function setupCheckboxHandlers() {
     const selectAll = document.getElementById('selectAll');
     if (selectAll) {
-        // Re-attach by cloning to avoid duplicate listeners
         const fresh = selectAll.cloneNode(true);
         selectAll.parentNode.replaceChild(fresh, selectAll);
         fresh.addEventListener('change', function() {
-            document.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = this.checked; });
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.checked = this.checked;
+                const row = cb.closest('tr');
+                if (row) {
+                    if (this.checked) row.classList.add('selected');
+                    else row.classList.remove('selected');
+                }
+            });
             updateBulkBar();
         });
     }
     document.querySelectorAll('.row-checkbox').forEach(cb => {
-        cb.addEventListener('change', updateBulkBar);
+        cb.removeEventListener('change', handleRowSelectionChange);
+        cb.addEventListener('change', handleRowSelectionChange);
     });
 }
 
@@ -1102,23 +1377,35 @@ function updateBulkBar() {
 }
 
 function clearSelection() {
-    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = false;
+        const row = cb.closest('tr');
+        if (row) row.classList.remove('selected');
+    });
     const sa = document.getElementById('selectAll');
     if (sa) sa.checked = false;
     updateBulkBar();
+    showToast('Selection cleared', 'info');
 }
 
 document.getElementById('clearSelectionBtn')?.addEventListener('click', clearSelection);
 
 document.getElementById('bulkPromoteActionBtn')?.addEventListener('click', () => {
     const selected = document.querySelectorAll('.row-checkbox:checked');
+    if (selected.length === 0) {
+        showToast('No students selected', 'warning');
+        return;
+    }
     document.getElementById('bulkSelectedCount').innerText = selected.length;
     new bootstrap.Modal(document.getElementById('bulkPromotionModal')).show();
 });
 
 document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', async () => {
     const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-    if (!selectedIds.length) return;
+    if (!selectedIds.length) {
+        showToast('No students selected', 'warning');
+        return;
+    }
 
     const promotionType = document.getElementById('bulkPromotionType').value;
     const newClass      = document.getElementById('bulkNewClass').value;
@@ -1126,11 +1413,12 @@ document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', asyn
     const newTerm       = document.getElementById('bulkNewTerm').value;
 
     if (!newClass || !newSession) {
-        Swal.fire('Error', 'Please select new class and session', 'error');
+        showToast('Please select new class and session', 'warning');
         return;
     }
 
-    Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    showLoading(`Processing ${selectedIds.length} students...`);
+    bootstrap.Modal.getInstance(document.getElementById('bulkPromotionModal'))?.hide();
 
     try {
         const response = await axios.post('{{ route("promotions.bulk.promote") }}', {
@@ -1142,14 +1430,16 @@ document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', asyn
             _token: document.querySelector('meta[name="csrf-token"]').content
         });
 
+        hideLoading();
         if (response.data.success) {
-            Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message, timer: 2000, showConfirmButton: false })
-                .then(() => location.reload());
+            showToast(response.data.message, 'success');
+            setTimeout(() => location.reload(), 1500);
         } else {
-            Swal.fire('Error', response.data.message, 'error');
+            showToast(response.data.message, 'danger');
         }
     } catch (error) {
-        Swal.fire('Error', error.response?.data?.message || 'Bulk promotion failed', 'error');
+        hideLoading();
+        showToast(error.response?.data?.message || 'Bulk promotion failed', 'danger');
     }
 });
 
@@ -1188,13 +1478,13 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     document.getElementById('compulsoryContent').innerHTML       = '';
     document.getElementById('recommendationContent').innerHTML   = '';
 
-    Swal.fire({ title: 'Loading student data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    showLoading('Loading student data...');
 
     try {
         const response = await axios.get(
             `/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`
         );
-        Swal.close();
+        hideLoading();
 
         if (response.data.success) {
             currentStudentData = response.data;
@@ -1465,13 +1755,13 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                             <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:60px;">Grade</th>
                             <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;width:100px;">Min grade</th>
                             <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">Rule evaluation</th>
-                        </tr>
+                        </table>
                     </thead><tbody>`;
 
                 if (compList.length > 0) {
                     html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
                         <i class="ri-star-fill" style="color:#d97706;margin-right:5px;"></i>Compulsory subjects — always rule-bound &nbsp;·&nbsp; ${compList.length} subject${compList.length!==1?'s':''}
-                    </td></tr>`;
+                    </tr>`;
                     compList.forEach((s,idx) => {
                         const grade  = s.grade||'—';
                         const ps     = s.pass_status;
@@ -1498,7 +1788,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 if (optList.length > 0) {
                     html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
                         <i class="ri-book-line" style="color:#0891b2;margin-right:5px;"></i>Optional subjects — contribute to grade count conditions &nbsp;·&nbsp; ${otherCred} credit${otherCred!==1?'s':''} of ${optList.length} subjects
-                    </td></tr>`;
+                    </tr>`;
                     optList.forEach((s,idx) => {
                         const grade    = s.grade||'—';
                         const isCredit = grade!=='—'&&isCreditGrade(grade);
@@ -1572,9 +1862,9 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
         }
 
     } catch (error) {
-        Swal.close();
+        hideLoading();
         console.error('Error fetching student details:', error);
-        Swal.fire('Error', 'Failed to load student details: ' + (error.response?.data?.message || error.message), 'error');
+        showToast('Failed to load student details: ' + (error.response?.data?.message || error.message), 'danger');
     }
 
     new bootstrap.Modal(document.getElementById('promotionModal')).show();
@@ -1592,7 +1882,8 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
         cancelButtonText: 'Cancel'
     }).then(result => {
         if (!result.isConfirmed) return;
-        Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        showLoading('Removing student...');
 
         const fd = new FormData();
         fd.append('_method', 'DELETE');
@@ -1606,29 +1897,34 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
                 'Content-Type': 'multipart/form-data'
             }
         }).then(response => {
+            hideLoading();
             if (response.data.success) {
-                Swal.fire({ icon: 'success', title: 'Removed!', text: response.data.message, timer: 2000, showConfirmButton: false });
+                showToast(response.data.message, 'success');
                 filterData();
             } else {
-                Swal.fire('Error!', response.data.message || 'Failed to remove.', 'error');
+                showToast(response.data.message || 'Failed to remove', 'danger');
             }
         }).catch(error => {
-            Swal.fire('Error!', error.response?.data?.message || 'Failed to remove student.', 'error');
+            hideLoading();
+            showToast(error.response?.data?.message || 'Failed to remove student', 'danger');
         });
     });
 }
 
 // ── Submit promotion ───────────────────────────────────────────────────────────
 function submitPromotion() {
-    if (!currentStudentId) { Swal.fire('Error!', 'Student ID not found.', 'error'); return; }
+    if (!currentStudentId) {
+        showToast('Student ID not found', 'danger');
+        return;
+    }
 
     const newClassSelect    = document.getElementById('newClassSelect');
     const newSessionSelect  = document.getElementById('newSessionSelect');
     const newTermSelect     = document.getElementById('newTermSelect');
 
-    if (!newClassSelect.value)   { Swal.fire('Error!', 'Please select a new class.',   'error'); return; }
-    if (!newSessionSelect.value) { Swal.fire('Error!', 'Please select a new session.', 'error'); return; }
-    if (!newTermSelect.value)    { Swal.fire('Error!', 'Please select a new term.',    'error'); return; }
+    if (!newClassSelect.value)   { showToast('Please select a new class', 'warning'); return; }
+    if (!newSessionSelect.value) { showToast('Please select a new session', 'warning'); return; }
+    if (!newTermSelect.value)    { showToast('Please select a new term', 'warning'); return; }
 
     const promotionCheckbox    = document.getElementById('promotionCheckbox');
     const trialCheckbox        = document.getElementById('trialCheckbox');
@@ -1637,7 +1933,10 @@ function submitPromotion() {
 
     const selectedCount = [promotionCheckbox, trialCheckbox, seePrincipalCheckbox, repeatCheckbox]
         .filter(cb => cb.checked).length;
-    if (selectedCount !== 1) { Swal.fire('Error!', 'Please select exactly one promotion decision.', 'error'); return; }
+    if (selectedCount !== 1) {
+        showToast('Please select exactly one promotion decision', 'warning');
+        return;
+    }
 
     const fd = new FormData();
     fd.append('_method',           'PUT');
@@ -1658,29 +1957,74 @@ function submitPromotion() {
         cancelButtonText: 'Cancel'
     }).then(result => {
         if (!result.isConfirmed) return;
-        Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        showLoading('Updating promotion...');
+        bootstrap.Modal.getInstance(document.getElementById('promotionModal'))?.hide();
 
         axios.post(`/promotions/${currentStudentId}`, fd, {
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         }).then(response => {
+            hideLoading();
             if (response.data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('promotionModal')).hide();
-                Swal.fire({ icon: 'success', title: 'Success!', text: response.data.message, timer: 2000, showConfirmButton: false });
+                showToast(response.data.message, 'success');
                 filterData();
             } else {
-                Swal.fire('Error!', response.data.message || 'Failed to update.', 'error');
+                showToast(response.data.message || 'Failed to update', 'danger');
             }
         }).catch(error => {
-            Swal.fire('Error!', error.response?.data?.message || 'Failed to update promotion.', 'error');
+            hideLoading();
+            showToast(error.response?.data?.message || 'Failed to update promotion', 'danger');
         });
     });
 }
 
+// ── Keyboard shortcuts ──
+document.addEventListener('keydown', function(e) {
+    // Ctrl+F to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('searchInput')?.focus();
+        showToast('Search focused - type to filter students', 'info');
+    }
+    // Escape to clear search
+    if (e.key === 'Escape') {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput && document.activeElement === searchInput) {
+            searchInput.value = '';
+            filterData();
+            showToast('Search cleared', 'info');
+        }
+    }
+    // Ctrl+A to select all (when not in input)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        const activeEl = document.activeElement;
+        if (activeEl && !['INPUT', 'TEXTAREA'].includes(activeEl.tagName)) {
+            e.preventDefault();
+            const selectAll = document.getElementById('selectAll');
+            if (selectAll) {
+                selectAll.checked = true;
+                document.querySelectorAll('.row-checkbox').forEach(cb => {
+                    cb.checked = true;
+                    const row = cb.closest('tr');
+                    if (row) row.classList.add('selected');
+                });
+                updateBulkBar();
+                showToast('All students selected', 'info');
+            }
+        }
+    }
+});
+
+// ── Add tooltips to stat cards ──
+function addStatTooltips() {
+    // Tooltips already added via data-tooltip attribute in HTML
+}
+
 // ── DOM ready ──────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
-    document.getElementById("idclass").addEventListener("change",  filterData);
+    document.getElementById("idclass").addEventListener("change", filterData);
     document.getElementById("idsession").addEventListener("change", filterData);
-    document.getElementById("idterm").addEventListener("change",    filterData);
+    document.getElementById("idterm").addEventListener("change", filterData);
 
     let searchTimeout;
     document.getElementById("searchInput").addEventListener("input", function() {
@@ -1690,12 +2034,31 @@ document.addEventListener("DOMContentLoaded", function() {
 
     setupCheckboxHandlers();
     updateStats();
-
-    // Staggered entrance for server-rendered rows on initial page load
     triggerRowEntrance();
-
-    // Pop badges that were server-rendered on initial load
     popPromotionBadges();
+    addStatTooltips();
+    setupRowSelection();
+
+    // Add pulse animation to bulk action button when selection exists
+    const bulkBtn = document.getElementById('bulkPromoteActionBtn');
+    if (bulkBtn) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    const bar = document.getElementById('bulkActionBar');
+                    if (bar.classList.contains('visible')) {
+                        bulkBtn.classList.add('btn-pulse');
+                    } else {
+                        bulkBtn.classList.remove('btn-pulse');
+                    }
+                }
+            });
+        });
+        const bulkBar = document.getElementById('bulkActionBar');
+        if (bulkBar) {
+            observer.observe(bulkBar, { attributes: true });
+        }
+    }
 });
 </script>
 @endsection
