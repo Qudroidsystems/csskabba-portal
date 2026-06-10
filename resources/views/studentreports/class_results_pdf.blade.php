@@ -351,7 +351,7 @@
 
         /* PROMOTION BADGE */
         .promo-card {
-            width: calc(96% - 16px);
+            width: calc(100% - 16px);
             margin: 6px 8px 8px 8px;
             padding: 8px 12px;
             border-radius: 6px;
@@ -503,10 +503,13 @@
             $attWarn  = $attPct < 75;
             $attFound = $attendance['found'] ?? false;
 
+            // Get school term to check if promotional
+            $schoolTerm = $studentData['schoolterm'] ?? null;
+            $isTermPromotional = $schoolTerm && $schoolTerm->is_promotional;
+
             // Promotion data
             $pr           = $studentData['promotion_result'] ?? [];
             $promoStatus  = $pr['status']              ?? 'awaiting';
-            $isPromoTerm  = $pr['is_promotional_term'] ?? false;
             $promoFailed  = $pr['failed_compulsory']   ?? [];
             $reqAvg       = $pr['required_average']    ?? null;
             $actAvg       = $pr['actual_average']      ?? null;
@@ -529,14 +532,8 @@
                 }
             }
 
-            // Badge styling
-            $badgeClass = match($promoStatus) {
-                'promoted'     => 'promo-promoted',
-                'trial'        => 'promo-trial',
-                'see_principal' => 'promo-principal',
-                'repeated', 'repeat' => 'promo-repeated',
-                default        => 'promo-awaiting',
-            };
+            // Determine if we should show promotion badge (only for promotional terms)
+            $showPromotionBadge = $isTermPromotional && $promoStatus !== 'awaiting';
         @endphp
 
         <div class="student-section">
@@ -805,21 +802,14 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            {{-- PROMOTION BADGE --}}
-            @if (!$isPromoTerm)
-                <div class="promo-card promo-awaiting">
-                    <div class="promo-title">Awaiting Final Term</div>
-                    <div class="promo-message">Promotion will be assessed at the end of the academic year.</div>
-                </div>
-            @else
-                <div class="promo-card {{ $badgeClass }}">
-                    <div class="promo-title">{{ $statusLabel }}</div>
-
-                    @if($ruleDisplay && $ruleDisplay !== 'null' && $ruleDisplay !== '')
-                        <div class="promo-rule">{{ $ruleDisplay }}</div>
-                    @endif
-
-                    @if($promoStatus === 'promoted')
+            {{-- PROMOTION BADGE - Only show for promotional terms --}}
+            @if($showPromotionBadge)
+                @if($promoStatus === 'promoted')
+                    <div class="promo-card promo-promoted">
+                        <div class="promo-title">{{ $statusLabel }}</div>
+                        @if($ruleDisplay && $ruleDisplay !== 'null' && $ruleDisplay !== '')
+                            <div class="promo-rule">{{ $ruleDisplay }}</div>
+                        @endif
                         <div class="promo-message">
                             @if($promoTotal > 0)
                                 Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s)
@@ -827,29 +817,66 @@
                                 Met all promotion requirements
                             @endif
                         </div>
-                    @endif
-
-                    @if($promoStatus === 'trial')
+                        @if($reqAvg !== null && $actAvg !== null)
+                            <div class="promo-average">
+                                Average: {{ number_format($actAvg, 1) }}%
+                                (Required: {{ number_format($reqAvg, 1) }}%) ✓
+                            </div>
+                        @endif
+                    </div>
+                @elseif($promoStatus === 'trial')
+                    <div class="promo-card promo-trial">
+                        <div class="promo-title">{{ $statusLabel }}</div>
+                        @if($ruleDisplay && $ruleDisplay !== 'null' && $ruleDisplay !== '')
+                            <div class="promo-rule">{{ $ruleDisplay }}</div>
+                        @endif
                         <div class="promo-message">Promoted conditionally - needs improvement</div>
-                    @endif
-
-                    @if($promoStatus === 'see_principal')
+                        @if($reqAvg !== null && $actAvg !== null)
+                            <div class="promo-average">
+                                Average: {{ number_format($actAvg, 1) }}%
+                                (Required: {{ number_format($reqAvg, 1) }}%)
+                            </div>
+                        @endif
+                    </div>
+                @elseif($promoStatus === 'see_principal')
+                    <div class="promo-card promo-principal">
+                        <div class="promo-title">{{ $statusLabel }}</div>
+                        @if($ruleDisplay && $ruleDisplay !== 'null' && $ruleDisplay !== '')
+                            <div class="promo-rule">{{ $ruleDisplay }}</div>
+                        @endif
                         <div class="promo-message">Parents must see the Principal for discussion</div>
-                    @endif
-
-                    @if(($promoStatus === 'repeated' || $promoStatus === 'repeat') && !empty($promoFailed))
-                        <div class="promo-message">
-                            Failed: {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') }}
-                        </div>
-                    @endif
-
-                    @if($reqAvg !== null && $actAvg !== null)
-                        <div class="promo-average">
-                            Average: {{ number_format($actAvg, 1) }}%
-                            @if($reqAvg) (Required: {{ number_format($reqAvg, 1) }}%) @endif
-                            @if($promoStatus === 'promoted') ✓ @endif
-                        </div>
-                    @endif
+                        @if($reqAvg !== null && $actAvg !== null)
+                            <div class="promo-average">
+                                Average: {{ number_format($actAvg, 1) }}%
+                                (Required: {{ number_format($reqAvg, 1) }}%)
+                            </div>
+                        @endif
+                    </div>
+                @elseif($promoStatus === 'repeated' || $promoStatus === 'repeat')
+                    <div class="promo-card promo-repeated">
+                        <div class="promo-title">{{ $statusLabel }}</div>
+                        @if(!empty($promoFailed))
+                            <div class="promo-message">
+                                Failed: {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') }}
+                            </div>
+                        @endif
+                        @if($reqAvg !== null && $actAvg !== null)
+                            <div class="promo-average">
+                                Average: {{ number_format($actAvg, 1) }}%
+                                (Required: {{ number_format($reqAvg, 1) }}%)
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="promo-card promo-awaiting">
+                        <div class="promo-title">AWAITING DECISION</div>
+                        <div class="promo-message">Promotion decision pending further review</div>
+                    </div>
+                @endif
+            @elseif($isTermPromotional && $promoStatus === 'awaiting')
+                <div class="promo-card promo-awaiting">
+                    <div class="promo-title">PROMOTION PENDING</div>
+                    <div class="promo-message">Promotion evaluation in progress</div>
                 </div>
             @endif
 
