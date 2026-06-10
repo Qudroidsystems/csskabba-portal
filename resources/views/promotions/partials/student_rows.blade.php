@@ -2,21 +2,21 @@
 
 @forelse ($allstudents as $student)
     @php
-        $rec           = $student->promotion_recommendation ?? null;
-        $recStatus     = $rec['status'] ?? 'awaiting';
-        $recLabel      = $rec['status_label'] ?? 'Awaiting';
-        $appliedRule   = $rec['applied_rule'] ?? null;
+        $rec             = $student->promotion_recommendation ?? null;
+        $recStatus       = $rec['status'] ?? 'awaiting';
+        $recLabel        = $rec['status_label'] ?? 'Awaiting';
+        $appliedRule     = $rec['applied_rule'] ?? null;
         $appliedRuleName = $appliedRule['name'] ?? null;
-        $savedStatus   = strtolower($student->promotion_status ?? '');
+        $savedStatus     = strtolower($student->promotion_status ?? '');
 
-        // Determine avatar URL for the hover effect
         $avatarUrl = $student->picture
             ? asset('storage/student_avatars/' . $student->picture)
             : asset('storage/student_avatars/unnamed.jpg');
     @endphp
     <tr data-student-id="{{ $student->stid }}">
+
         {{-- Col 1: Checkbox --}}
-        <td style="width: 40px;">
+        <td style="width:40px;">
             <input type="checkbox" class="row-checkbox" value="{{ $student->stid }}">
         </td>
 
@@ -31,7 +31,7 @@
                          alt="Student Picture"
                          width="36" height="36"
                          class="student-row-avatar rounded-circle flex-shrink-0"
-                         style="object-fit: cover;"
+                         style="object-fit:cover;"
                          onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
                 @else
                     <span class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center flex-shrink-0 student-row-avatar"
@@ -56,7 +56,7 @@
         <td>
             @if(isset($student->overall_average) && $student->overall_average !== null)
                 @php
-                    $avg = $student->overall_average;
+                    $avg      = $student->overall_average;
                     $avgClass = $avg >= 50 ? 'text-success' : ($avg >= 40 ? 'text-warning' : 'text-danger');
                 @endphp
                 <span class="fw-semibold {{ $avgClass }}">{{ number_format($avg, 1) }}%</span>
@@ -68,42 +68,60 @@
         {{-- Col 8: System Recommendation --}}
         <td data-rec-status="{{ $recStatus }}">
             @if($recStatus === 'awaiting')
-                <span class="promotion-badge-pending">
-                    <i class="ri-time-line"></i> Not Evaluated
-                </span>
+                {{--
+                    Two distinct sub-states under 'awaiting':
+                    1. No promotion settings configured at all for this class → "Not Configured"
+                    2. Settings exist but term is non-promotional or no data yet → "Awaiting"
+                    Both share status=awaiting; we distinguish via the label set by the evaluator.
+                --}}
+                @if(isset($rec['settings_id']) === false && isset($rec['rule_logic']) === false)
+                    <span class="promotion-badge-pending" title="No promotion rules have been configured for this class">
+                        <i class="ri-settings-4-line"></i> Not Configured
+                    </span>
+                @else
+                    <span class="promotion-badge-pending">
+                        <i class="ri-time-line"></i> Awaiting
+                    </span>
+                @endif
+
             @elseif($recStatus === 'promoted')
                 <span class="promotion-badge-promoted">
                     <i class="ri-arrow-up-circle-line"></i> {{ $recLabel }}
                 </span>
+
             @elseif($recStatus === 'trial')
                 <span class="promotion-badge-trial">
                     <i class="ri-time-line"></i> {{ $recLabel }}
                 </span>
+
             @elseif($recStatus === 'see_principal')
                 <span class="promotion-badge-see_principal">
                     <i class="ri-eye-line"></i> {{ $recLabel }}
                 </span>
+
             @elseif(in_array($recStatus, ['repeated', 'repeat']))
                 <span class="promotion-badge-repeated">
                     <i class="ri-repeat-line"></i> {{ $recLabel }}
                 </span>
+
             @else
                 <span class="promotion-badge-pending">
                     <i class="ri-question-line"></i> {{ $recLabel }}
                 </span>
             @endif
 
-            {{-- Applied Rule Badge --}}
+            {{-- Applied Rule Badge — only shown when a rule actually fired --}}
             @if($appliedRuleName)
                 <div class="mt-1">
-                    <span class="rule-badge" style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;display:inline-block;white-space:nowrap;">
+                    <span class="rule-badge"
+                          style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;display:inline-block;white-space:nowrap;">
                         <i class="ri-price-tag-3-line"></i> {{ $appliedRuleName }}
                     </span>
                 </div>
             @endif
         </td>
 
-        {{-- Col 9: Promotion Status (saved decision) --}}
+        {{-- Col 9: Promotion Status (saved admin decision) --}}
         <td data-saved-status="{{ $savedStatus }}">
             @if($savedStatus === 'promoted')
                 <span class="promotion-badge-promoted">
@@ -129,7 +147,7 @@
         </td>
 
         {{-- Col 10: Actions --}}
-        <td style="width: 90px;">
+        <td style="width:90px;">
             <div class="d-flex gap-1">
                 <button type="button"
                         class="btn btn-icon btn-subtle-primary"

@@ -18,25 +18,19 @@ class PromotionEvaluator
     const STATUS_REPEATED      = 'repeated';
     const STATUS_AWAITING      = 'awaiting';
 
-    // Senior grade mapping (exact)
     private static array $seniorGrades = ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'];
-
-    // Junior grade mapping (grouped)
     private static array $juniorGrades = ['A', 'B', 'C', 'D', 'F'];
 
-    // Senior grade order for comparison
     private static array $seniorGradeOrder = [
         'F9' => 0, 'E8' => 1, 'D7' => 2,
         'C6' => 3, 'C5' => 4, 'C4' => 5,
         'B3' => 6, 'B2' => 7, 'A1' => 8,
     ];
 
-    // Junior grade order for comparison
     private static array $juniorGradeOrder = [
         'F' => 0, 'D' => 1, 'C' => 2, 'B' => 3, 'A' => 4,
     ];
 
-    // Grade conversion map (senior-style to junior letter grades)
     private static array $gradeConversionMap = [
         'A1' => 'A',
         'B2' => 'B', 'B3' => 'B',
@@ -54,41 +48,48 @@ class PromotionEvaluator
         ?float $overallAverage = null
     ): array {
         Log::info('========== PROMOTION EVALUATION START ==========', [
-            'student_id' => $studentId,
-            'class_id' => $schoolclassid,
-            'session_id' => $sessionid,
-            'term_id' => $termid,
-            'overall_average' => $overallAverage,
-            'scores_count' => is_countable($scores) ? count($scores) : 0
+            'student_id'     => $studentId,
+            'class_id'       => $schoolclassid,
+            'session_id'     => $sessionid,
+            'term_id'        => $termid,
+            'overall_average'=> $overallAverage,
+            'scores_count'   => is_countable($scores) ? count($scores) : 0,
         ]);
 
-        // Get class category info (senior/junior)
-        $classCategory = $this->getClassCategory($schoolclassid);
-        $isSenior = $classCategory ? (bool)$classCategory->is_senior : false;
-
-        // Determine if class uses senior or junior grading
+        $classCategory    = $this->getClassCategory($schoolclassid);
+        $isSenior         = $classCategory ? (bool)$classCategory->is_senior : false;
         $usesSeniorGrading = $this->detectGradingType($schoolclassid, $scores);
 
         Log::info('Class category info', [
-            'class_id' => $schoolclassid,
-            'db_is_senior' => $isSenior,
-            'detected_grading_type' => $usesSeniorGrading ? 'senior' : 'junior',
-            'category' => $classCategory ? $classCategory->category : 'unknown',
-            'promotion_pass_average' => $classCategory ? $classCategory->promotion_pass_average : null
+            'class_id'               => $schoolclassid,
+            'db_is_senior'           => $isSenior,
+            'detected_grading_type'  => $usesSeniorGrading ? 'senior' : 'junior',
+            'category'               => $classCategory ? $classCategory->category : 'unknown',
+            'promotion_pass_average' => $classCategory ? $classCategory->promotion_pass_average : null,
         ]);
+
+        // ── FIX 1: No settings configured for class at all → awaiting ──────────
+        $anySettingsExist = PromotionSetting::where('schoolclass_id', $schoolclassid)->exists();
+
+        if (!$anySettingsExist) {
+            Log::warning('No promotion settings configured for this class — returning awaiting', [
+                'class_id' => $schoolclassid,
+            ]);
+            return $this->awaitingResult($overallAverage);
+        }
 
         $settings = $this->findBestSettings($schoolclassid, $sessionid, $termid);
 
         Log::info('Settings lookup result', [
-            'found' => $settings ? 'yes' : 'no',
+            'found'       => $settings ? 'yes' : 'no',
             'settings_id' => $settings ? $settings->id : null,
-            'is_active' => $settings ? $settings->is_active : null,
-            'rule_logic' => $settings ? $settings->rule_logic : null,
+            'is_active'   => $settings ? $settings->is_active : null,
+            'rule_logic'  => $settings ? $settings->rule_logic : null,
             'rules_count' => $settings && $settings->promotion_rules ? count($settings->promotion_rules) : 0,
         ]);
 
         if (!$settings) {
-            Log::warning('No active promotion setting found, using legacy evaluation');
+            Log::warning('No active/matching promotion setting found, falling back to term check');
             $term = Schoolterm::find($termid);
             if (!$term || !$term->is_promotional) {
                 return $this->awaitingResult($overallAverage);
@@ -102,52 +103,60 @@ class PromotionEvaluator
         $compulsoryIds = $this->getCompulsoryIds($schoolclassid, $termid, $sessionid);
         $ruleLogic     = $settings->rule_logic ?? 'grade_count';
 
+        // ── FIX 2: Settings exist but have zero rules → awaiting ───────────────
+        $rules = $settings->promotion_rules ?? [];
+
+        if (empty($rules)) {
+            Log::warning('Promotion settings found but contain no rules — returning awaiting', [
+                'settings_id' => $settings->id,
+            ]);
+            return $this->awaitingResult($overallAverage);
+        }
+
         Log::info('Class info', [
-            'uses_senior_grading' => $usesSeniorGrading,
+            'uses_senior_grading'    => $usesSeniorGrading,
             'compulsory_subjects_count' => count($compulsoryIds),
-            'compulsory_ids' => $compulsoryIds,
-            'scores_in_map' => $scoreMap->count()
+            'compulsory_ids'         => $compulsoryIds,
+            'scores_in_map'          => $scoreMap->count(),
         ]);
 
         $matchedRule   = null;
         $matchedStatus = null;
         $matchedIndex  = null;
 
-        $rules = $settings->promotion_rules ?? [];
-
         Log::info('Evaluating rules', [
             'total_rules' => count($rules),
-            'rule_logic' => $ruleLogic
+            'rule_logic'  => $ruleLogic,
         ]);
 
         if (in_array($ruleLogic, ['grade_count', 'both']) && !empty($rules)) {
             foreach ($rules as $idx => $rule) {
                 $ruleName = $rule['rule_name'] ?? 'Unnamed';
-                Log::info("Checking rule " . ($idx + 1), [
-                    'rule_name' => $ruleName,
-                    'status_label' => $rule['status_label'] ?? 'unknown',
-                    'grade_grouping' => $rule['grade_grouping'] ?? 'grouped'
+                Log::info('Checking rule ' . ($idx + 1), [
+                    'rule_name'     => $ruleName,
+                    'status_label'  => $rule['status_label'] ?? 'unknown',
+                    'grade_grouping'=> $rule['grade_grouping'] ?? 'grouped',
                 ]);
 
                 if (empty($rule['rule_name'])) {
-                    Log::warning("Rule " . ($idx + 1) . " has no name, skipping");
+                    Log::warning('Rule ' . ($idx + 1) . ' has no name, skipping');
                     continue;
                 }
 
                 $matches = $this->ruleMatches($rule, $scoreMap, $compulsoryIds, $usesSeniorGrading);
 
-                Log::info("Rule evaluation result", [
+                Log::info('Rule evaluation result', [
                     'rule_name' => $ruleName,
-                    'matches' => $matches
+                    'matches'   => $matches,
                 ]);
 
                 if ($matches) {
                     $matchedRule   = $rule;
                     $matchedStatus = $rule['status_label'] ?? self::STATUS_PROMOTED;
                     $matchedIndex  = $idx;
-                    Log::info("Rule MATCHED!", [
+                    Log::info('Rule MATCHED!', [
                         'rule_name' => $ruleName,
-                        'status' => $matchedStatus
+                        'status'    => $matchedStatus,
                     ]);
                     break;
                 }
@@ -157,8 +166,8 @@ class PromotionEvaluator
         $requiredAverage = $this->resolveRequiredAverage($settings, $schoolclassid);
         Log::info('Average condition', [
             'required_average' => $requiredAverage,
-            'actual_average' => $overallAverage,
-            'rule_logic' => $ruleLogic
+            'actual_average'   => $overallAverage,
+            'rule_logic'       => $ruleLogic,
         ]);
 
         [$averageConditionMet, $averageStatus] = $this->evaluateAverage(
@@ -170,8 +179,8 @@ class PromotionEvaluator
         );
 
         Log::info('Final status resolved', [
-            'final_status' => $finalStatus,
-            'matched_rule_name' => $matchedRule['rule_name'] ?? null
+            'final_status'      => $finalStatus,
+            'matched_rule_name' => $matchedRule['rule_name'] ?? null,
         ]);
 
         [$failedCompulsory, $compulsoryDetail, $passedCount, $totalCount]
@@ -210,37 +219,55 @@ class PromotionEvaluator
         ];
     }
 
-    /**
-     * Get class category (senior/junior) for a class
-     */
+    // ── Public helper so PromotionController can call without duplicate logic ──
+    public function awaitingResult(?float $overallAverage): array
+    {
+        return [
+            'status'                    => self::STATUS_AWAITING,
+            'status_label'              => 'Awaiting Decision',
+            'is_promotional_term'       => false,
+            'failed_compulsory'         => [],
+            'compulsory_subject_detail' => [],
+            'average_failed'            => false,
+            'required_average'          => null,
+            'actual_average'            => $overallAverage,
+            'compulsory_count'          => 0,
+            'passed_compulsory'         => 0,
+            'matched_labels'            => [],
+            'applied_rule'              => null,
+            'settings_id'               => null,
+            'rule_logic'                => null,
+            'settings'                  => null,
+        ];
+    }
+
     private function getClassCategory(int $schoolclassid): ?object
     {
         return DB::table('schoolclass_classcategory')
             ->join('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
             ->where('schoolclass_classcategory.schoolclass_id', $schoolclassid)
-            ->select('classcategories.id', 'classcategories.category', 'classcategories.is_senior', 'classcategories.promotion_pass_average')
+            ->select(
+                'classcategories.id',
+                'classcategories.category',
+                'classcategories.is_senior',
+                'classcategories.promotion_pass_average'
+            )
             ->first();
     }
 
-    /**
-     * Detect whether a class uses senior or junior grading by analyzing student grades
-     */
     private function detectGradingType(int $schoolclassid, $scores): bool
     {
-        // First check database setting
         $classCategory = $this->getClassCategory($schoolclassid);
         if ($classCategory && isset($classCategory->is_senior)) {
             return (bool)$classCategory->is_senior;
         }
 
-        // If no scores, default to junior
         if (!$scores || (is_countable($scores) && count($scores) === 0)) {
             return false;
         }
 
-        // Analyze sample of grades to detect format
         $sampleGrades = [];
-        $sampleCount = 0;
+        $sampleCount  = 0;
 
         foreach ($scores as $score) {
             $grade = is_object($score) ? ($score->grade ?? null) : ($score['grade'] ?? null);
@@ -250,9 +277,8 @@ class PromotionEvaluator
             }
         }
 
-        // Check if grades match senior pattern (contains numbers like A1, B2, C4, etc.)
         $seniorPattern = '/^[A-E][1-9]$|^F9$/';
-        $seniorCount = 0;
+        $seniorCount   = 0;
 
         foreach ($sampleGrades as $grade) {
             if (preg_match($seniorPattern, $grade)) {
@@ -260,36 +286,30 @@ class PromotionEvaluator
             }
         }
 
-        // If more than 50% of sample grades are senior-style, treat as senior
         $isSenior = $seniorCount > ($sampleCount / 2);
 
         Log::info('Grade type detection', [
-            'sample_grades' => $sampleGrades,
-            'senior_count' => $seniorCount,
-            'total_sample' => $sampleCount,
-            'detected_as_senior' => $isSenior
+            'sample_grades'     => $sampleGrades,
+            'senior_count'      => $seniorCount,
+            'total_sample'      => $sampleCount,
+            'detected_as_senior'=> $isSenior,
         ]);
 
         return $isSenior;
     }
 
-    /**
-     * Normalize grade based on class type
-     * Convert senior-style grades to junior letters when needed
-     */
     private function normalizeGrade(?string $grade, bool $isSenior): ?string
     {
         if ($grade === null) return null;
 
         $grade = strtoupper(trim($grade));
 
-        // If class is junior but grade is senior-style, convert it
         if (!$isSenior && isset(self::$gradeConversionMap[$grade])) {
             $normalized = self::$gradeConversionMap[$grade];
             Log::debug('Grade normalized', [
-                'original' => $grade,
+                'original'   => $grade,
                 'normalized' => $normalized,
-                'is_senior' => $isSenior
+                'is_senior'  => $isSenior,
             ]);
             return $normalized;
         }
@@ -300,9 +320,9 @@ class PromotionEvaluator
     private function findBestSettings(int $schoolclassid, int $sessionid, int $termid): ?PromotionSetting
     {
         Log::info('Finding best settings', [
-            'class_id' => $schoolclassid,
+            'class_id'   => $schoolclassid,
             'session_id' => $sessionid,
-            'term_id' => $termid
+            'term_id'    => $termid,
         ]);
 
         $allSettings = PromotionSetting::where('schoolclass_id', $schoolclassid)
@@ -310,14 +330,14 @@ class PromotionEvaluator
             ->get();
 
         Log::info('All active settings for class', [
-            'count' => $allSettings->count(),
+            'count'    => $allSettings->count(),
             'settings' => $allSettings->map(fn($s) => [
-                'id' => $s->id,
-                'session_id' => $s->session_id,
-                'term_id' => $s->term_id,
-                'priority' => $s->priority,
-                'rules_count' => count($s->promotion_rules ?? [])
-            ])->toArray()
+                'id'          => $s->id,
+                'session_id'  => $s->session_id,
+                'term_id'     => $s->term_id,
+                'priority'    => $s->priority,
+                'rules_count' => count($s->promotion_rules ?? []),
+            ])->toArray(),
         ]);
 
         if ($allSettings->isEmpty()) {
@@ -325,45 +345,33 @@ class PromotionEvaluator
         }
 
         $scoredSettings = [];
+
         foreach ($allSettings as $setting) {
-            $score = 0;
+            $score     = 0;
             $matchType = '';
 
             if ($setting->session_id == $sessionid && $setting->term_id == $termid) {
-                $score = 100;
-                $matchType = 'exact_session_term';
-            }
-            elseif ($setting->session_id == $sessionid && $setting->term_id === null) {
-                $score = 90;
-                $matchType = 'session_only_null_term';
-            }
-            elseif ($setting->session_id == $sessionid && $setting->term_id !== null && $setting->term_id != $termid) {
-                $score = 0;
-                $matchType = 'wrong_term';
-            }
-            elseif ($setting->session_id === null && $setting->term_id == $termid) {
-                $score = 80;
-                $matchType = 'term_only';
-            }
-            elseif ($setting->session_id === null && $setting->term_id === null) {
-                $score = 70;
-                $matchType = 'global';
-            }
-            elseif ($setting->session_id !== null && $setting->term_id === null) {
-                $score = 60;
-                $matchType = 'session_only_different';
-            }
-            elseif ($setting->session_id === null && $setting->term_id !== null) {
-                $score = 50;
-                $matchType = 'term_only_different';
+                $score = 100; $matchType = 'exact_session_term';
+            } elseif ($setting->session_id == $sessionid && $setting->term_id === null) {
+                $score = 90;  $matchType = 'session_only_null_term';
+            } elseif ($setting->session_id == $sessionid && $setting->term_id !== null && $setting->term_id != $termid) {
+                $score = 0;   $matchType = 'wrong_term';
+            } elseif ($setting->session_id === null && $setting->term_id == $termid) {
+                $score = 80;  $matchType = 'term_only';
+            } elseif ($setting->session_id === null && $setting->term_id === null) {
+                $score = 70;  $matchType = 'global';
+            } elseif ($setting->session_id !== null && $setting->term_id === null) {
+                $score = 60;  $matchType = 'session_only_different';
+            } elseif ($setting->session_id === null && $setting->term_id !== null) {
+                $score = 50;  $matchType = 'term_only_different';
             }
 
             if ($score > 0) {
                 $scoredSettings[] = [
-                    'setting' => $setting,
-                    'score' => $score,
+                    'setting'    => $setting,
+                    'score'      => $score,
                     'match_type' => $matchType,
-                    'priority' => $setting->priority ?? 999
+                    'priority'   => $setting->priority ?? 999,
                 ];
             }
         }
@@ -373,7 +381,7 @@ class PromotionEvaluator
             return null;
         }
 
-        usort($scoredSettings, function($a, $b) {
+        usort($scoredSettings, function ($a, $b) {
             if ($a['score'] != $b['score']) {
                 return $b['score'] - $a['score'];
             }
@@ -385,9 +393,9 @@ class PromotionEvaluator
         Log::info('Selected best setting', [
             'setting_id' => $best->id,
             'match_type' => $scoredSettings[0]['match_type'],
-            'score' => $scoredSettings[0]['score'],
+            'score'      => $scoredSettings[0]['score'],
             'session_id' => $best->session_id,
-            'term_id' => $best->term_id
+            'term_id'    => $best->term_id,
         ]);
 
         return $best;
@@ -401,19 +409,18 @@ class PromotionEvaluator
     ): bool {
         $grouping = $rule['grade_grouping'] ?? 'grouped';
 
-        // For senior classes, force exact grouping for accurate comparison
         if ($isSenior && $grouping === 'grouped') {
             $grouping = 'exact';
             Log::debug('Senior class detected - forcing exact grade grouping');
         }
 
         Log::debug('Checking rule conditions', [
-            'rule_name' => $rule['rule_name'] ?? 'Unnamed',
-            'grouping' => $grouping,
-            'is_senior' => $isSenior,
-            'has_comp_subjects' => isset($rule['compulsory_section']['subjects']),
-            'comp_subjects_count' => count($rule['compulsory_section']['subjects'] ?? []),
-            'comp_conditions_count' => count($rule['compulsory_section']['count_conditions'] ?? []),
+            'rule_name'              => $rule['rule_name'] ?? 'Unnamed',
+            'grouping'               => $grouping,
+            'is_senior'              => $isSenior,
+            'has_comp_subjects'      => isset($rule['compulsory_section']['subjects']),
+            'comp_subjects_count'    => count($rule['compulsory_section']['subjects'] ?? []),
+            'comp_conditions_count'  => count($rule['compulsory_section']['count_conditions'] ?? []),
             'other_conditions_count' => count($rule['other_section']['count_conditions'] ?? []),
         ]);
 
@@ -423,23 +430,22 @@ class PromotionEvaluator
             $minGrade = $subjectRule['min_grade'] ?? null;
             if (!$minGrade) continue;
 
-            $subjectId   = $subjectRule['subject_id'] ?? null;
-            $scoreEntry  = $subjectId ? $scoreMap->get($subjectId) : null;
+            $subjectId    = $subjectRule['subject_id'] ?? null;
+            $scoreEntry   = $subjectId ? $scoreMap->get($subjectId) : null;
             $studentGrade = $scoreEntry
                 ? (is_object($scoreEntry) ? ($scoreEntry->grade ?? null) : ($scoreEntry['grade'] ?? null))
                 : null;
 
-            // Normalize grades for comparison
             $normalizedStudentGrade = $this->normalizeGrade($studentGrade, $isSenior);
-            $normalizedMinGrade = $this->normalizeGrade($minGrade, $isSenior);
+            $normalizedMinGrade     = $this->normalizeGrade($minGrade, $isSenior);
 
             if ($this->gradeFails($normalizedStudentGrade, $normalizedMinGrade, $isSenior, $grouping)) {
                 Log::debug('Rule failed: compulsory subject min grade not met', [
-                    'subject_id' => $subjectId,
-                    'original_student_grade' => $studentGrade,
-                    'normalized_student_grade' => $normalizedStudentGrade,
-                    'required_min_grade' => $minGrade,
-                    'normalized_min_grade' => $normalizedMinGrade
+                    'subject_id'              => $subjectId,
+                    'original_student_grade'  => $studentGrade,
+                    'normalized_student_grade'=> $normalizedStudentGrade,
+                    'required_min_grade'      => $minGrade,
+                    'normalized_min_grade'    => $normalizedMinGrade,
                 ]);
                 return false;
             }
@@ -479,23 +485,22 @@ class PromotionEvaluator
         foreach ($conditions as $cond) {
             $grade    = strtoupper(trim($cond['grade'] ?? ''));
             $operator = $cond['operator'] ?? '>=';
-            $required = (int) ($cond['count'] ?? 0);
+            $required = (int)($cond['count'] ?? 0);
             $scope    = $cond['scope'] ?? 'all';
 
             if (!$grade) continue;
 
             $scopedScores = $this->filterByScope($scoreMap, $scope, $compulsoryIds);
-            $actual = $this->countMatchingGrade($scopedScores, $grade, $grouping, $isSenior);
-
-            $result = $this->compareCount($actual, $operator, $required);
+            $actual       = $this->countMatchingGrade($scopedScores, $grade, $grouping, $isSenior);
+            $result       = $this->compareCount($actual, $operator, $required);
 
             Log::debug('Count condition evaluation', [
-                'grade' => $grade,
+                'grade'    => $grade,
                 'operator' => $operator,
                 'required' => $required,
-                'actual' => $actual,
-                'scope' => $scope,
-                'result' => $result
+                'actual'   => $actual,
+                'scope'    => $scope,
+                'result'   => $result,
             ]);
 
             if (!$result) {
@@ -519,34 +524,32 @@ class PromotionEvaluator
 
         $mg = strtoupper(trim($minGrade));
 
-        // For senior classes, use exact grade comparison
         if ($isSenior) {
             $studentRank = self::$seniorGradeOrder[$sg] ?? -1;
-            $minRank = self::$seniorGradeOrder[$mg] ?? 0;
-            $result = $studentRank < $minRank;
+            $minRank     = self::$seniorGradeOrder[$mg] ?? 0;
+            $result      = $studentRank < $minRank;
 
             Log::debug('Senior grade comparison', [
                 'student_grade' => $sg,
-                'min_grade' => $mg,
+                'min_grade'     => $mg,
                 'student_order' => $studentRank,
-                'min_order' => $minRank,
-                'fails' => $result
+                'min_order'     => $minRank,
+                'fails'         => $result,
             ]);
 
             return $result;
         }
 
-        // For junior classes
         $studentRank = self::$juniorGradeOrder[$sg] ?? -1;
-        $minRank = self::$juniorGradeOrder[$mg] ?? 0;
-        $result = $studentRank < $minRank;
+        $minRank     = self::$juniorGradeOrder[$mg] ?? 0;
+        $result      = $studentRank < $minRank;
 
         Log::debug('Junior grade comparison', [
             'student_grade' => $sg,
-            'min_grade' => $mg,
+            'min_grade'     => $mg,
             'student_order' => $studentRank,
-            'min_order' => $minRank,
-            'fails' => $result
+            'min_order'     => $minRank,
+            'fails'         => $result,
         ]);
 
         return $result;
@@ -558,7 +561,7 @@ class PromotionEvaluator
         string     $grouping,
         bool       $isSenior
     ): int {
-        $count = 0;
+        $count         = 0;
         $requiredGrade = strtoupper(trim($grade));
 
         foreach ($scopedScores as $score) {
@@ -571,13 +574,11 @@ class PromotionEvaluator
             $normalizedGrade = strtoupper(trim($normalizedGrade));
 
             if ($isSenior) {
-                // Senior classes: exact grade matching
                 if ($normalizedGrade === $requiredGrade) {
                     $count++;
                 }
             } else {
-                // Junior classes: check if grade meets or exceeds requirement
-                $studentRank = self::$juniorGradeOrder[$normalizedGrade] ?? -1;
+                $studentRank  = self::$juniorGradeOrder[$normalizedGrade] ?? -1;
                 $requiredRank = self::$juniorGradeOrder[$requiredGrade] ?? 0;
                 if ($studentRank >= $requiredRank) {
                     $count++;
@@ -598,7 +599,7 @@ class PromotionEvaluator
     private function filterByScope(Collection $scoreMap, string $scope, array $compulsoryIds): Collection
     {
         return $scoreMap->filter(function ($score, $subjectId) use ($scope, $compulsoryIds) {
-            $isComp = in_array((string) $subjectId, array_map('strval', $compulsoryIds), true);
+            $isComp = in_array((string)$subjectId, array_map('strval', $compulsoryIds), true);
             return match ($scope) {
                 'compulsory_only' => $isComp,
                 'other_only'      => !$isComp,
@@ -646,55 +647,49 @@ class PromotionEvaluator
         foreach ($compulsoryRules as $rule) {
             $subjectId    = $rule->subjectId;
             $scoreEntry   = $scoreMap->get($subjectId);
-            $studentGrade = is_object($scoreEntry)
-                ? ($scoreEntry->grade ?? null)
-                : ($scoreEntry['grade'] ?? null);
-            $subjectName  = is_object($scoreEntry)
-                ? ($scoreEntry->subject_name ?? null)
-                : null;
+            $studentGrade = is_object($scoreEntry) ? ($scoreEntry->grade ?? null) : ($scoreEntry['grade'] ?? null);
+            $subjectName  = is_object($scoreEntry) ? ($scoreEntry->subject_name ?? null) : null;
             $minGrade     = $rule->min_grade;
 
-            // Normalize grades for comparison
             $normalizedStudentGrade = $this->normalizeGrade($studentGrade, $isSenior);
-            $normalizedMinGrade = $this->normalizeGrade($minGrade, $isSenior);
+            $normalizedMinGrade     = $this->normalizeGrade($minGrade, $isSenior);
 
-            // Determine if passed based on senior/junior
             $didPass = false;
             if ($scoreEntry && $normalizedStudentGrade) {
                 if ($isSenior) {
                     $studentRank = self::$seniorGradeOrder[$normalizedStudentGrade] ?? -1;
-                    $minRank = self::$seniorGradeOrder[$normalizedMinGrade] ?? 0;
-                    $didPass = $studentRank >= $minRank;
+                    $minRank     = self::$seniorGradeOrder[$normalizedMinGrade] ?? 0;
+                    $didPass     = $studentRank >= $minRank;
                 } else {
                     $studentRank = self::$juniorGradeOrder[$normalizedStudentGrade] ?? -1;
-                    $minRank = self::$juniorGradeOrder[$normalizedMinGrade] ?? 0;
-                    $didPass = $studentRank >= $minRank;
+                    $minRank     = self::$juniorGradeOrder[$normalizedMinGrade] ?? 0;
+                    $didPass     = $studentRank >= $minRank;
                 }
             }
 
             if (!$didPass) {
                 $failed[] = [
-                    'subject_id' => $subjectId,
-                    'subject'    => $subjectName,
-                    'grade'      => $studentGrade,
-                    'normalized_grade' => $normalizedStudentGrade,
-                    'min_grade'  => $minGrade,
+                    'subject_id'           => $subjectId,
+                    'subject'              => $subjectName,
+                    'grade'                => $studentGrade,
+                    'normalized_grade'     => $normalizedStudentGrade,
+                    'min_grade'            => $minGrade,
                     'normalized_min_grade' => $normalizedMinGrade,
-                    'not_sat'    => !$scoreEntry,
+                    'not_sat'              => !$scoreEntry,
                 ];
             } else {
                 $passed++;
             }
 
             $detail[] = [
-                'subject_id' => $subjectId,
-                'subject'    => $subjectName,
-                'grade'      => $studentGrade,
-                'normalized_grade' => $normalizedStudentGrade,
-                'min_grade'  => $minGrade,
+                'subject_id'           => $subjectId,
+                'subject'              => $subjectName,
+                'grade'                => $studentGrade,
+                'normalized_grade'     => $normalizedStudentGrade,
+                'min_grade'            => $minGrade,
                 'normalized_min_grade' => $normalizedMinGrade,
-                'passed'     => $didPass,
-                'not_sat'    => !$scoreEntry,
+                'passed'               => $didPass,
+                'not_sat'              => !$scoreEntry,
             ];
         }
 
@@ -714,7 +709,7 @@ class PromotionEvaluator
                 });
             })
             ->pluck('subjectId')
-            ->map(fn($id) => (string) $id)
+            ->map(fn($id) => (string)$id)
             ->toArray();
 
         Log::debug('Compulsory subject IDs', ['ids' => $ids]);
@@ -725,7 +720,7 @@ class PromotionEvaluator
     {
         if ($settings->promotion_pass_average !== null && $settings->promotion_pass_average !== '') {
             Log::debug('Using average from settings', ['average' => $settings->promotion_pass_average]);
-            return (float) $settings->promotion_pass_average;
+            return (float)$settings->promotion_pass_average;
         }
 
         $val = DB::table('schoolclass_classcategory')
@@ -735,7 +730,7 @@ class PromotionEvaluator
 
         Log::debug('Average from class category', ['average' => $val]);
 
-        return $val !== null ? (float) $val : null;
+        return $val !== null ? (float)$val : null;
     }
 
     private function evaluateAverage(
@@ -749,15 +744,15 @@ class PromotionEvaluator
         if ($requiredAverage === null || $overallAverage === null) {
             Log::debug('Cannot evaluate average - missing data', [
                 'required' => $requiredAverage,
-                'actual' => $overallAverage
+                'actual'   => $overallAverage,
             ]);
             return [true, null];
         }
         $met = $overallAverage >= $requiredAverage;
         Log::debug('Average evaluation', [
             'required' => $requiredAverage,
-            'actual' => $overallAverage,
-            'met' => $met
+            'actual'   => $overallAverage,
+            'met'      => $met,
         ]);
         return [$met, $met ? self::STATUS_PROMOTED : self::STATUS_REPEATED];
     }
@@ -770,10 +765,10 @@ class PromotionEvaluator
         ?string $averageStatus
     ): string {
         Log::debug('Resolving final status', [
-            'rule_logic' => $ruleLogic,
-            'matched_status' => $matchedStatus,
+            'rule_logic'            => $ruleLogic,
+            'matched_status'        => $matchedStatus,
             'average_condition_met' => $averageConditionMet,
-            'average_status' => $averageStatus
+            'average_status'        => $averageStatus,
         ]);
 
         switch ($ruleLogic) {
@@ -817,7 +812,7 @@ class PromotionEvaluator
 
     private function describeRule(array $rule, bool $isSenior): string
     {
-        $parts = [];
+        $parts    = [];
         $subjects = $rule['compulsory_section']['subjects'] ?? [];
         $withMin  = array_filter($subjects, fn($s) => !empty($s['min_grade']));
         if ($withMin) {
@@ -825,7 +820,7 @@ class PromotionEvaluator
         }
 
         foreach ($rule['compulsory_section']['count_conditions'] ?? [] as $c) {
-            $scope = match ($c['scope'] ?? 'all') {
+            $scope   = match ($c['scope'] ?? 'all') {
                 'compulsory_only' => 'compulsory subj',
                 'other_only'      => 'other subj',
                 default           => 'all subj',
@@ -834,7 +829,7 @@ class PromotionEvaluator
         }
 
         foreach ($rule['other_section']['count_conditions'] ?? [] as $c) {
-            $scope = match ($c['scope'] ?? 'all') {
+            $scope   = match ($c['scope'] ?? 'all') {
                 'compulsory_only' => 'compulsory subj',
                 'other_only'      => 'other subj',
                 default           => 'all subj',
@@ -844,7 +839,7 @@ class PromotionEvaluator
 
         $avgCond = $rule['average_condition'] ?? [];
         if (!empty($avgCond['enabled'])) {
-            $logic   = $avgCond['logic'] ?? 'AND';
+            $logic   = $avgCond['logic']       ?? 'AND';
             $minAvg  = $avgCond['min_average'] ?? '?';
             $parts[] = "avg {$logic} ≥{$minAvg}%";
         }
@@ -878,20 +873,27 @@ class PromotionEvaluator
             })
             ->get(['subjectId', 'min_grade']);
 
+        // If no compulsory subjects configured in legacy mode, return awaiting
+        // rather than guessing a status with no reference data
+        if ($compulsoryRules->isEmpty() && $scoreCol->isEmpty()) {
+            Log::warning('Legacy evaluation: no compulsory rules and no scores — returning awaiting');
+            return $this->awaitingResult($overallAverage);
+        }
+
         $creditGrades = $isSenior
             ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6']
             : ['A', 'B', 'C'];
         $failGrades   = $isSenior ? ['F9', 'E8'] : ['F'];
         $dGrade       = $isSenior ? 'D7' : 'D';
 
-        $compulsorySubjectIds = $compulsoryRules->pluck('subjectId')->toArray();
-        $compulsoryCreditCount = 0;
-        $creditCount  = 0;
-        $failCount    = 0;
+        $compulsorySubjectIds    = $compulsoryRules->pluck('subjectId')->toArray();
+        $compulsoryCreditCount   = 0;
+        $creditCount             = 0;
+        $failCount               = 0;
         $missingCompulsorySubjects = [];
-        $failedComp   = [];
-        $detail       = [];
-        $passedComp   = 0;
+        $failedComp              = [];
+        $detail                  = [];
+        $passedComp              = 0;
 
         foreach ($compulsoryRules as $rule) {
             $subjectId   = $rule->subjectId;
@@ -903,7 +905,6 @@ class PromotionEvaluator
                 ? (is_object($scoreEntry) ? ($scoreEntry->subject_name ?? null) : null)
                 : null;
 
-            // Normalize grade for junior classes
             $normalizedGrade = $this->normalizeGrade($grade, $isSenior);
 
             if (!$scoreEntry) {
@@ -915,44 +916,47 @@ class PromotionEvaluator
             $didPass = $scoreEntry && in_array($normalizedGrade, $creditGrades);
             if (!$didPass) {
                 $failedComp[] = [
-                    'subject_id' => $subjectId,
-                    'subject'    => $subjectName,
-                    'grade'      => $grade,
+                    'subject_id'       => $subjectId,
+                    'subject'          => $subjectName,
+                    'grade'            => $grade,
                     'normalized_grade' => $normalizedGrade,
-                    'min_grade'  => $isSenior ? 'C6' : 'C',
-                    'not_sat'    => !$scoreEntry,
+                    'min_grade'        => $isSenior ? 'C6' : 'C',
+                    'not_sat'          => !$scoreEntry,
                 ];
             } else {
                 $passedComp++;
             }
             $detail[] = [
-                'subject_id' => $subjectId,
-                'subject'    => $subjectName,
-                'grade'      => $grade,
+                'subject_id'       => $subjectId,
+                'subject'          => $subjectName,
+                'grade'            => $grade,
                 'normalized_grade' => $normalizedGrade,
-                'min_grade'  => $isSenior ? 'C6' : 'C',
-                'passed'     => $didPass,
-                'not_sat'    => !$scoreEntry,
+                'min_grade'        => $isSenior ? 'C6' : 'C',
+                'passed'           => $didPass,
+                'not_sat'          => !$scoreEntry,
             ];
         }
 
         foreach ($scoreCol as $score) {
-            $grade = is_object($score) ? $score->grade : $score['grade'];
+            $grade           = is_object($score) ? $score->grade : $score['grade'];
             $normalizedGrade = $this->normalizeGrade($grade, $isSenior);
-            if (in_array($normalizedGrade, $creditGrades)) $creditCount++;
-            elseif (in_array($normalizedGrade, $failGrades)) $failCount++;
+            if (in_array($normalizedGrade, $creditGrades))      $creditCount++;
+            elseif (in_array($normalizedGrade, $failGrades))    $failCount++;
         }
 
-        $allDs       = $scoreCol->isNotEmpty() && $scoreCol->every(fn($s) => $this->normalizeGrade(is_object($s) ? $s->grade : $s['grade'], $isSenior) === $dGrade);
+        $allDs = $scoreCol->isNotEmpty() && $scoreCol->every(
+            fn($s) => $this->normalizeGrade(is_object($s) ? $s->grade : $s['grade'], $isSenior) === $dGrade
+        );
+
         $mixOfDsAndFs = $scoreCol->isNotEmpty() && $scoreCol->every(function ($s) use ($dGrade, $failGrades, $isSenior) {
-            $g = is_object($s) ? $s->grade : $s['grade'];
+            $g          = is_object($s) ? $s->grade : $s['grade'];
             $normalized = $this->normalizeGrade($g, $isSenior);
             return $normalized === $dGrade || in_array($normalized, $failGrades);
         });
 
         $failedNonCompulsory = $scoreCol->filter(function ($s) use ($compulsorySubjectIds, $failGrades, $isSenior) {
-            $sid = is_object($s) ? $s->subject_id : $s['subject_id'];
-            $g   = is_object($s) ? $s->grade : $s['grade'];
+            $sid        = is_object($s) ? $s->subject_id : $s['subject_id'];
+            $g          = is_object($s) ? $s->grade : $s['grade'];
             $normalized = $this->normalizeGrade($g, $isSenior);
             return !in_array($sid, $compulsorySubjectIds) && in_array($normalized, $failGrades);
         })->count() === max(0, $scoreCol->count() - count($compulsorySubjectIds));
@@ -986,15 +990,15 @@ class PromotionEvaluator
             self::STATUS_REPEATED      => 'Advice to Repeat',
         ];
 
-        $reqAvg = $this->getClassCategory($schoolclassid)?->promotion_pass_average;
+        $reqAvg  = $this->getClassCategory($schoolclassid)?->promotion_pass_average;
         $avgFail = $reqAvg !== null && $overallAverage !== null && $overallAverage < $reqAvg;
 
         Log::info('Legacy evaluation result', [
-            'status' => $status,
-            'credit_count' => $creditCount,
+            'status'                  => $status,
+            'credit_count'            => $creditCount,
             'compulsory_credit_count' => $compulsoryCreditCount,
-            'fail_count' => $failCount,
-            'comp_total' => $compTotal
+            'fail_count'              => $failCount,
+            'comp_total'              => $compTotal,
         ]);
 
         return [
@@ -1012,27 +1016,6 @@ class PromotionEvaluator
             'applied_rule'              => null,
             'settings_id'               => null,
             'rule_logic'                => 'legacy',
-            'settings'                  => null,
-        ];
-    }
-
-    private function awaitingResult(?float $overallAverage): array
-    {
-        return [
-            'status'                    => self::STATUS_AWAITING,
-            'status_label'              => 'Awaiting Decision',
-            'is_promotional_term'       => false,
-            'failed_compulsory'         => [],
-            'compulsory_subject_detail' => [],
-            'average_failed'            => false,
-            'required_average'          => null,
-            'actual_average'            => $overallAverage,
-            'compulsory_count'          => 0,
-            'passed_compulsory'         => 0,
-            'matched_labels'            => [],
-            'applied_rule'              => null,
-            'settings_id'               => null,
-            'rule_logic'                => null,
             'settings'                  => null,
         ];
     }
