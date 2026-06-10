@@ -8,11 +8,16 @@
         $appliedRule   = $rec['applied_rule'] ?? null;
         $appliedRuleName = $appliedRule['name'] ?? null;
         $savedStatus   = strtolower($student->promotion_status ?? '');
+
+        // Determine avatar URL for the hover effect
+        $avatarUrl = $student->picture
+            ? asset('storage/student_avatars/' . $student->picture)
+            : asset('storage/student_avatars/unnamed.jpg');
     @endphp
-    <tr>
+    <tr data-student-id="{{ $student->stid }}">
         {{-- Col 1: Checkbox --}}
-        <td>
-            <input type="checkbox" class="row-checkbox select-all-checkbox" value="{{ $student->stid }}">
+        <td style="width: 40px;">
+            <input type="checkbox" class="row-checkbox" value="{{ $student->stid }}">
         </td>
 
         {{-- Col 2: Admission No --}}
@@ -22,13 +27,14 @@
         <td>
             <div class="d-flex align-items-center gap-2">
                 @if ($student->picture)
-                    <img src="{{ asset('storage/student_avatars/' . $student->picture) }}"
+                    <img src="{{ $avatarUrl }}"
                          alt="Student Picture"
                          width="36" height="36"
-                         class="rounded-circle flex-shrink-0"
+                         class="student-row-avatar rounded-circle flex-shrink-0"
+                         style="object-fit: cover;"
                          onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
                 @else
-                    <span class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                    <span class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center flex-shrink-0 student-row-avatar"
                           style="width:36px;height:36px;font-size:13px;color:#fff;">
                         {{ strtoupper(substr($student->firstname, 0, 1)) }}
                     </span>
@@ -90,7 +96,7 @@
             {{-- Applied Rule Badge --}}
             @if($appliedRuleName)
                 <div class="mt-1">
-                    <span style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;display:inline-block;white-space:nowrap;">
+                    <span class="rule-badge" style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;display:inline-block;white-space:nowrap;">
                         <i class="ri-price-tag-3-line"></i> {{ $appliedRuleName }}
                     </span>
                 </div>
@@ -123,22 +129,22 @@
         </td>
 
         {{-- Col 10: Actions --}}
-        <td>
+        <td style="width: 90px;">
             <div class="d-flex gap-1">
                 <button type="button"
                         class="btn btn-icon btn-subtle-primary"
                         title="Manage Promotion"
                         onclick="openPromotionModal(
                             '{{ $student->stid }}',
-                            '{{ $student->admissionno }}',
+                            '{{ addslashes($student->admissionno) }}',
                             '{{ addslashes($student->firstname) }}',
                             '{{ addslashes($student->lastname) }}',
                             '{{ addslashes($student->othername ?? '') }}',
-                            '{{ $student->picture ?? '' }}',
-                            '{{ $student->gender ?? '' }}',
+                            '{{ addslashes($student->picture ?? '') }}',
+                            '{{ addslashes($student->gender ?? '') }}',
                             '{{ addslashes($student->schoolclass) }}',
                             '{{ addslashes($student->schoolarm ?? '') }}',
-                            '{{ $student->session }}',
+                            '{{ addslashes($student->session) }}',
                             '{{ $student->termid }}'
                         )">
                     <i class="ri-edit-line"></i>
@@ -151,7 +157,7 @@
                             {{ $student->schoolclassID }},
                             {{ $student->sessionid }},
                             {{ $student->termid }},
-                            '{{ $student->admissionno }}',
+                            '{{ addslashes($student->admissionno) }}',
                             '{{ addslashes($student->firstname) }}',
                             '{{ addslashes($student->lastname) }}'
                         )">
