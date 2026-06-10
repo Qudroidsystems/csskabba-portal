@@ -349,64 +349,117 @@
         .grade-D { color: #ea580c; font-weight: 900; }
         .grade-F { color: #dc2626; font-weight: 900; }
 
-        /* PROMOTION BADGE STYLES */
-        .promo-pdf-badge {
+        /* ============================================ */
+        /* PROMOTION BADGE - Clean Centralized Card Design */
+        /* ============================================ */
+        .promo-card {
             width: calc(100% - 20px);
-            margin: 4px 10px 8px 10px;
-            padding: 7px 10px;
-            border-radius: 6px;
-            border-left: 4px solid #000;
-            display: table;
+            margin: 6px 10px 8px 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .promo-pdf-icon {
-            display: table-cell;
-            font-size: 16px;
-            width: 32px;
-            vertical-align: middle;
-            padding-right: 8px;
-            text-align: center;
-        }
-        .promo-pdf-badge > div:last-child {
-            display: table-cell;
-            vertical-align: middle;
-        }
-        .promo-pdf-title {
-            display: block;
-            font-size: 11px;
+
+        .promo-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
             font-weight: 900;
-            letter-spacing: .3px;
+            flex-shrink: 0;
         }
-        .promo-pdf-sub {
-            display: block;
+
+        .promo-content {
+            flex: 1;
+        }
+
+        .promo-title {
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .promo-rule {
+            font-size: 9px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            opacity: 0.85;
+        }
+
+        .promo-message {
+            font-size: 8.5px;
+            font-weight: 500;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        .promo-average {
             font-size: 8.5px;
             font-weight: 600;
-            margin-top: 3px;
-            opacity: .9;
+            margin-top: 4px;
+            padding-top: 3px;
+            border-top: 1px dashed rgba(0,0,0,0.1);
         }
-        .promo-pdf-promoted {
-            background: #f0fdf4;
-            border-left-color: #16a34a;
+
+        /* Status-specific colors */
+        .promo-promoted {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-left: 4px solid #16a34a;
             color: #14532d;
         }
-        .promo-pdf-trial {
-            background: #fefce8;
-            border-left-color: #ca8a04;
+        .promo-promoted .promo-icon {
+            background: #16a34a;
+            color: white;
+        }
+
+        .promo-trial {
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            border-left: 4px solid #ca8a04;
             color: #854d0e;
         }
-        .promo-pdf-principal {
-            background: #eff6ff;
-            border-left-color: #3b82f6;
+        .promo-trial .promo-icon {
+            background: #ca8a04;
+            color: white;
+        }
+
+        .promo-principal {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 4px solid #3b82f6;
             color: #1e3a8a;
         }
-        .promo-pdf-repeated {
-            background: #fef2f2;
-            border-left-color: #dc2626;
+        .promo-principal .promo-icon {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .promo-repeated {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left: 4px solid #dc2626;
             color: #7f1d1d;
         }
-        .promo-pdf-awaiting {
-            background: #f8fafc;
-            border-left-color: #94a3b8;
+        .promo-repeated .promo-icon {
+            background: #dc2626;
+            color: white;
+        }
+
+        .promo-awaiting {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-left: 4px solid #94a3b8;
             color: #475569;
+        }
+        .promo-awaiting .promo-icon {
+            background: #94a3b8;
+            color: white;
         }
 
         @media print {
@@ -487,12 +540,13 @@
             $attWarn  = $attPct < 75;
             $attFound = $attendance['found'] ?? false;
 
-            // Promotion data - using the actual evaluation result
+            // ============================================
+            // PROMOTION DATA - Clean and centralized
+            // ============================================
             $pr           = $studentData['promotion_result'] ?? [];
             $promoStatus  = $pr['status']              ?? 'awaiting';
             $isPromoTerm  = $pr['is_promotional_term'] ?? false;
             $promoFailed  = $pr['failed_compulsory']   ?? [];
-            $promoAvgFail = $pr['average_failed']      ?? false;
             $reqAvg       = $pr['required_average']    ?? null;
             $actAvg       = $pr['actual_average']      ?? null;
             $promoTotal   = $pr['compulsory_count']    ?? 0;
@@ -500,21 +554,38 @@
             $statusLabel  = $pr['status_label']        ?? 'Awaiting Decision';
             $appliedRule  = $pr['applied_rule']['name'] ?? null;
 
-            // Determine badge styling based on actual status
+            // Clean rule display - remove "Rule X" prefix if present
+            $ruleDisplay = '';
+            if ($appliedRule) {
+                // Remove patterns like "Rule 1", "Rule 2:", "Rule 3 - ", etc.
+                $ruleDisplay = preg_replace('/^Rule\s+\d+\s*[-:.]?\s*/i', '', $appliedRule);
+                $ruleDisplay = trim($ruleDisplay);
+                // If after cleaning it's empty, keep original but without "Rule" prefix
+                if (empty($ruleDisplay)) {
+                    $ruleDisplay = preg_replace('/^Rule\s+\d+\s*/i', '', $appliedRule);
+                    $ruleDisplay = trim($ruleDisplay);
+                }
+                // If still empty, don't show anything
+                if (empty($ruleDisplay) || $ruleDisplay === 'null') {
+                    $ruleDisplay = '';
+                }
+            }
+
+            // Badge styling based on status
             $badgeClass = match($promoStatus) {
-                'promoted'     => 'promo-pdf-promoted',
-                'trial'        => 'promo-pdf-trial',
-                'see_principal' => 'promo-pdf-principal',
-                'repeated', 'repeat' => 'promo-pdf-repeated',
-                default        => 'promo-pdf-awaiting',
+                'promoted'     => 'promo-promoted',
+                'trial'        => 'promo-trial',
+                'see_principal' => 'promo-principal',
+                'repeated', 'repeat' => 'promo-repeated',
+                default        => 'promo-awaiting',
             };
 
             $badgeIcon = match($promoStatus) {
-                'promoted'     => '🎓',
-                'trial'        => '📘',
-                'see_principal' => '👨‍🏫',
-                'repeated', 'repeat' => '⚠️',
-                default        => '⏳',
+                'promoted'     => '✓',
+                'trial'        => '⟳',
+                'see_principal' => '!',
+                'repeated', 'repeat' => '✗',
+                default        => '⋯',
             };
         @endphp
 
@@ -563,7 +634,7 @@
                                 <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_website ?? '—' }}</td>
                             </tr>
-                        建成
+                        </table>
                     </td>
 
                     <td width="20%" style="text-align:right; padding: 4px 6px 4px 0; vertical-align:middle;">
@@ -772,7 +843,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="30" style="text-align:center; padding:8px;">No scores available.</td>
+                            <td colspan="30" style="text-align:center; padding:8px;">No scores available.</div>
                         </tr>
                         @endforelse
                     </tbody>
@@ -788,58 +859,57 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            {{-- PROMOTION BADGE - USING ACTUAL EVALUATION RESULT --}}
+            {{-- ============================================ --}}
+            {{-- PROMOTION BADGE - Clean Centralized Display --}}
+            {{-- ============================================ --}}
             @if (!$isPromoTerm)
-                <div class="promo-pdf-badge promo-pdf-awaiting">
-                    <div class="promo-pdf-icon">⏳</div>
-                    <div>
-                        <span class="promo-pdf-title">Awaiting Final Term</span>
-                        <span class="promo-pdf-sub">Promotion will be assessed at the end of the academic year.</span>
+                <div class="promo-card promo-awaiting">
+                    <div class="promo-icon">📋</div>
+                    <div class="promo-content">
+                        <div class="promo-title">Awaiting Final Term</div>
+                        <div class="promo-message">Promotion will be assessed at the end of the academic year.</div>
                     </div>
                 </div>
             @else
-                <div class="promo-pdf-badge {{ $badgeClass }}">
-                    <div class="promo-pdf-icon">{{ $badgeIcon }}</div>
-                    <div>
-                        <span class="promo-pdf-title">{{ $statusLabel }}</span>
+                <div class="promo-card {{ $badgeClass }}">
+                    <div class="promo-icon">{{ $badgeIcon }}</div>
+                    <div class="promo-content">
+                        <div class="promo-title">{{ $statusLabel }}</div>
 
-                        @if($appliedRule)
-                            <span class="promo-pdf-sub">Based on: {{ $appliedRule }}</span>
+                        @if($ruleDisplay && $ruleDisplay !== 'null' && $ruleDisplay !== '')
+                            <div class="promo-rule">Based on: {{ $ruleDisplay }}</div>
                         @endif
 
-                        @if($promoStatus === 'promoted' && $promoTotal > 0)
-                            <span class="promo-pdf-sub">Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s).</span>
+                        @if($promoStatus === 'promoted')
+                            <div class="promo-message">
+                                @if($promoTotal > 0)
+                                    Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s).
+                                @else
+                                    Met all promotion requirements.
+                                @endif
+                            </div>
                         @endif
 
                         @if($promoStatus === 'trial')
-                            <span class="promo-pdf-sub">Needs improvement in weak areas. Promoted conditionally.</span>
+                            <div class="promo-message">Promoted conditionally. Needs improvement in weak areas.</div>
                         @endif
 
                         @if($promoStatus === 'see_principal')
-                            <span class="promo-pdf-sub">Parents are required to see the Principal for discussion.</span>
+                            <div class="promo-message">Parents must see the Principal for discussion and guidance.</div>
                         @endif
 
-                        @if($promoStatus === 'repeated' || $promoStatus === 'repeat')
-                            @if(!empty($promoFailed))
-                                <span class="promo-pdf-sub">
-                                    Failed compulsory subject(s):
-                                    {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') }}
-                                </span>
-                            @endif
+                        @if(($promoStatus === 'repeated' || $promoStatus === 'repeat') && !empty($promoFailed))
+                            <div class="promo-message">
+                                Failed: {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') }}
+                            </div>
                         @endif
 
-                        @if($reqAvg !== null && $actAvg !== null && $promoStatus !== 'promoted')
-                            <span class="promo-pdf-sub">
-                                Overall average: {{ number_format($actAvg, 1) }}%
-                                (Required: {{ number_format($reqAvg, 1) }}%)
-                            </span>
-                        @endif
-
-                        @if($promoStatus === 'promoted' && $reqAvg !== null && $actAvg !== null)
-                            <span class="promo-pdf-sub">
-                                Overall average: {{ number_format($actAvg, 1) }}%
-                                (Required: {{ number_format($reqAvg, 1) }}%) ✓
-                            </span>
+                        @if($reqAvg !== null && $actAvg !== null)
+                            <div class="promo-average">
+                                Average: {{ number_format($actAvg, 1) }}%
+                                @if($reqAvg) (Required: {{ number_format($reqAvg, 1) }}%) @endif
+                                @if($promoStatus === 'promoted') ✓ @endif
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -964,11 +1034,11 @@
                                 </span>
                             </div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
-                        \n                    </td>
+                        </td>
                         <td class="cell-stamp">
                             <img src="{{ $stampSrc }}" alt="School Stamp">
                         </td>
-                    \n                </tr>
+                    </tr>
                 </table>
             </div>
         </div>
