@@ -531,9 +531,6 @@
                     $ruleDisplay = '';
                 }
             }
-
-            // Determine if we should show promotion badge (only for promotional terms)
-            $showPromotionBadge = $isTermPromotional && $promoStatus !== 'awaiting';
         @endphp
 
         <div class="student-section">
@@ -802,8 +799,9 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            {{-- PROMOTION BADGE - Only show for promotional terms --}}
-            @if($showPromotionBadge)
+            {{-- PROMOTION BADGE - Only show promotion results for promotional terms --}}
+            @if($isTermPromotional)
+                {{-- This IS a promotional term - show promotion results --}}
                 @if($promoStatus === 'promoted')
                     <div class="promo-card promo-promoted">
                         <div class="promo-title">{{ $statusLabel }}</div>
@@ -873,10 +871,11 @@
                         <div class="promo-message">Promotion decision pending further review</div>
                     </div>
                 @endif
-            @elseif($isTermPromotional && $promoStatus === 'awaiting')
+            @else
+                {{-- This is NOT a promotional term - show clear message --}}
                 <div class="promo-card promo-awaiting">
-                    <div class="promo-title">PROMOTION PENDING</div>
-                    <div class="promo-message">Promotion evaluation in progress</div>
+                    <div class="promo-title">NON-PROMOTIONAL TERM</div>
+                    <div class="promo-message">This term is not a promotional term. Promotion is only assessed at the end of the academic year (Third Term).</div>
                 </div>
             @endif
 
@@ -969,7 +968,7 @@
 
             {{-- BOTTOM STRIP --}}
             <div class="bottom-strip">
-                <table>
+                </table>
                     <tr>
                         <td class="cell-qr">
                             <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
