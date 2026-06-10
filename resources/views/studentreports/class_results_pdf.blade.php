@@ -350,49 +350,29 @@
         .grade-F { color: #dc2626; font-weight: 900; }
 
         /* ============================================ */
-        /* PROMOTION BADGE - Clean Centralized Card Design */
+        /* PROMOTION BADGE - Clean Card Design (No Icon) */
         /* ============================================ */
         .promo-card {
             width: calc(100% - 20px);
             margin: 6px 10px 8px 10px;
             padding: 10px 12px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-align: left;
+            border-radius: 8px;
+            text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        .promo-icon {
-            width: 36px;
-            height: 36px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 900;
-            flex-shrink: 0;
-        }
-
-        .promo-content {
-            flex: 1;
-        }
-
         .promo-title {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 900;
             letter-spacing: 0.5px;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
             text-transform: uppercase;
         }
 
         .promo-rule {
             font-size: 9px;
             font-weight: 600;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             opacity: 0.85;
         }
 
@@ -406,8 +386,8 @@
         .promo-average {
             font-size: 8.5px;
             font-weight: 600;
-            margin-top: 4px;
-            padding-top: 3px;
+            margin-top: 5px;
+            padding-top: 4px;
             border-top: 1px dashed rgba(0,0,0,0.1);
         }
 
@@ -415,51 +395,36 @@
         .promo-promoted {
             background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
             border-left: 4px solid #16a34a;
+            border-right: 4px solid #16a34a;
             color: #14532d;
-        }
-        .promo-promoted .promo-icon {
-            background: #16a34a;
-            color: white;
         }
 
         .promo-trial {
             background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
             border-left: 4px solid #ca8a04;
+            border-right: 4px solid #ca8a04;
             color: #854d0e;
-        }
-        .promo-trial .promo-icon {
-            background: #ca8a04;
-            color: white;
         }
 
         .promo-principal {
             background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
             border-left: 4px solid #3b82f6;
+            border-right: 4px solid #3b82f6;
             color: #1e3a8a;
-        }
-        .promo-principal .promo-icon {
-            background: #3b82f6;
-            color: white;
         }
 
         .promo-repeated {
             background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
             border-left: 4px solid #dc2626;
+            border-right: 4px solid #dc2626;
             color: #7f1d1d;
-        }
-        .promo-repeated .promo-icon {
-            background: #dc2626;
-            color: white;
         }
 
         .promo-awaiting {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             border-left: 4px solid #94a3b8;
+            border-right: 4px solid #94a3b8;
             color: #475569;
-        }
-        .promo-awaiting .promo-icon {
-            background: #94a3b8;
-            color: white;
         }
 
         @media print {
@@ -578,14 +543,6 @@
                 'see_principal' => 'promo-principal',
                 'repeated', 'repeat' => 'promo-repeated',
                 default        => 'promo-awaiting',
-            };
-
-            $badgeIcon = match($promoStatus) {
-                'promoted'     => '✓',
-                'trial'        => '⟳',
-                'see_principal' => '!',
-                'repeated', 'repeat' => '✗',
-                default        => '⋯',
             };
         @endphp
 
@@ -843,7 +800,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="30" style="text-align:center; padding:8px;">No scores available.</div>
+                            <td colspan="30" style="text-align:center; padding:8px;">No scores available.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -860,58 +817,52 @@
             </div>
 
             {{-- ============================================ --}}
-            {{-- PROMOTION BADGE - Clean Centralized Display --}}
+            {{-- PROMOTION BADGE - Clean Card Display (No Icon) --}}
             {{-- ============================================ --}}
             @if (!$isPromoTerm)
                 <div class="promo-card promo-awaiting">
-                    <div class="promo-icon">📋</div>
-                    <div class="promo-content">
-                        <div class="promo-title">Awaiting Final Term</div>
-                        <div class="promo-message">Promotion will be assessed at the end of the academic year.</div>
-                    </div>
+                    <div class="promo-title">Awaiting Final Term</div>
+                    <div class="promo-message">Promotion will be assessed at the end of the academic year.</div>
                 </div>
             @else
                 <div class="promo-card {{ $badgeClass }}">
-                    <div class="promo-icon"></div>
-                    <div class="promo-content">
-                        <div class="promo-title">{{ $statusLabel }}</div>
+                    <div class="promo-title">{{ $statusLabel }}</div>
 
-                        @if($ruleDisplay && $ruleDisplay !== 'null' && $ruleDisplay !== '')
-                            <div class="promo-rule">Based on: {{ $ruleDisplay }}</div>
-                        @endif
+                    @if($ruleDisplay && $ruleDisplay !== 'null' && $ruleDisplay !== '')
+                        <div class="promo-rule">Based on: {{ $ruleDisplay }}</div>
+                    @endif
 
-                        @if($promoStatus === 'promoted')
-                            <div class="promo-message">
-                                @if($promoTotal > 0)
-                                    Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s).
-                                @else
-                                    Met all promotion requirements.
-                                @endif
-                            </div>
-                        @endif
+                    @if($promoStatus === 'promoted')
+                        <div class="promo-message">
+                            @if($promoTotal > 0)
+                                Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s).
+                            @else
+                                Met all promotion requirements.
+                            @endif
+                        </div>
+                    @endif
 
-                        @if($promoStatus === 'trial')
-                            <div class="promo-message">Promoted conditionally. Needs improvement in weak areas.</div>
-                        @endif
+                    @if($promoStatus === 'trial')
+                        <div class="promo-message">Promoted conditionally. Needs improvement in weak areas.</div>
+                    @endif
 
-                        @if($promoStatus === 'see_principal')
-                            <div class="promo-message">Parents must see the Principal for discussion and guidance.</div>
-                        @endif
+                    @if($promoStatus === 'see_principal')
+                        <div class="promo-message">Parents must see the Principal for discussion and guidance.</div>
+                    @endif
 
-                        @if(($promoStatus === 'repeated' || $promoStatus === 'repeat') && !empty($promoFailed))
-                            <div class="promo-message">
-                                Failed: {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') }}
-                            </div>
-                        @endif
+                    @if(($promoStatus === 'repeated' || $promoStatus === 'repeat') && !empty($promoFailed))
+                        <div class="promo-message">
+                            Failed: {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') }}
+                        </div>
+                    @endif
 
-                        @if($reqAvg !== null && $actAvg !== null)
-                            <div class="promo-average">
-                                Average: {{ number_format($actAvg, 1) }}%
-                                @if($reqAvg) (Required: {{ number_format($reqAvg, 1) }}%) @endif
-                                @if($promoStatus === 'promoted') ✓ @endif
-                            </div>
-                        @endif
-                    </div>
+                    @if($reqAvg !== null && $actAvg !== null)
+                        <div class="promo-average">
+                            Average: {{ number_format($actAvg, 1) }}%
+                            @if($reqAvg) (Required: {{ number_format($reqAvg, 1) }}%) @endif
+                            @if($promoStatus === 'promoted') ✓ @endif
+                        </div>
+                    @endif
                 </div>
             @endif
 
