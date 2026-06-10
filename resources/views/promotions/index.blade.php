@@ -505,7 +505,7 @@ input[name="repeat"]:checked ~ label .repeat-card { border-color: #dc3545 !impor
                                          src="{{ asset('storage/student_avatars/unnamed.jpg') }}"
                                          alt="Student Picture"
                                          class="student-avatar-lg rounded-circle"
-                                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+                                         style="object-fit: cover; width: 120px; height: 120px;">
                                     <div class="mt-2">
                                         <span class="badge bg-primary" id="modalStudentGender"></span>
                                     </div>
@@ -816,6 +816,26 @@ const gradeOrder = {
     'F9': 0, 'F': 0,
 };
 
+// Helper function to normalize image path
+function normalizeImagePath(picture, gender) {
+    if (!picture || picture === 'null' || picture === 'undefined' || picture === '') {
+        return gender === 'Male'
+            ? '/storage/student_avatars/male-default.png'
+            : '/storage/student_avatars/female-default.png';
+    }
+
+    // Remove any leading slashes and 'storage/' prefixes to normalize
+    let cleanPath = picture.replace(/^\/+/, '').replace(/^storage\//, '');
+
+    // If it's already a full URL, return as is
+    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+        return cleanPath;
+    }
+
+    // Ensure proper storage path
+    return '/storage/' + cleanPath;
+}
+
 // ── Filter & load ──────────────────────────────────────────────────────────────
 function filterData() {
     const classValue = document.getElementById("idclass").value;
@@ -832,7 +852,7 @@ function filterData() {
     }
 
     const tableBody = document.getElementById('studentTableBody');
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...<\/td><\/tr>';
 
     axios.get('{{ route("promotions.index") }}', {
         params: {
@@ -854,7 +874,7 @@ function filterData() {
         setupCheckboxHandlers();
     }).catch(function(error) {
         console.error('AJAX Error:', error);
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.<\/td><\/tr>';
         Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch student data." });
     });
 }
@@ -897,7 +917,7 @@ function setupPaginationLinks() {
 
 function loadPage(url) {
     const tableBody = document.getElementById('studentTableBody');
-    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...<\/td><\/tr>';
 
     axios.get(url, {
         headers: {
@@ -913,7 +933,7 @@ function loadPage(url) {
         setupCheckboxHandlers();
     }).catch(function(error) {
         console.error('Page load error:', error);
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data.<\/td><\/tr>';
     });
 }
 
@@ -1023,15 +1043,27 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     document.getElementById('modalCurrentArm').innerText     = schoolarm || 'N/A';
     document.getElementById('modalCurrentSession').innerText = session;
 
+    // FIXED: Better image path handling
     const imgEl = document.getElementById('modalStudentImage');
-    if (picture && picture !== 'null' && picture !== '') {
-        imgEl.src = picture.startsWith('/storage/') ? picture : '/storage/' + picture;
-    } else {
-        imgEl.src = gender === 'Male'
+    const imagePath = normalizeImagePath(picture, gender);
+
+    console.log('Loading image:', imagePath); // Debug: see what path is being used
+    imgEl.src = imagePath;
+
+    // Handle image load errors
+    imgEl.onerror = function() {
+        console.error('Failed to load image:', imagePath);
+        // Fallback to gender-specific default
+        const fallbackPath = gender === 'Male'
             ? '/storage/student_avatars/male-default.png'
             : '/storage/student_avatars/female-default.png';
-    }
-    imgEl.onerror = function() { this.src = '/storage/student_avatars/unnamed.jpg'; };
+        this.src = fallbackPath;
+
+        // If even that fails, use ultimate fallback
+        this.onerror = function() {
+            this.src = '/storage/student_avatars/unnamed.jpg';
+        };
+    };
 
     // Reset form
     document.getElementById('promotionForm').reset();
@@ -1356,7 +1388,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 if (compulsoryList.length > 0) {
                     html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
                         <i class="ri-star-fill" style="color:#d97706;margin-right:5px;"></i>Compulsory subjects — always rule-bound &nbsp;·&nbsp; ${compulsoryList.length} subject${compulsoryList.length !== 1 ? 's' : ''}
-                    </td></tr>`;
+                    <\/td><\/tr>`;
 
                     compulsoryList.forEach((s, idx) => {
                         const grade  = s.grade || '—';
@@ -1364,24 +1396,24 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                         const rowBdr = ps === 'pass' ? '#10b981' : ps === 'fail' ? '#ef4444' : '#f59e0b';
                         const barBg  = rowBdr;
                         html += `<tr style="border-left:3px solid ${rowBdr};border-bottom:0.5px solid var(--color-border-tertiary);">
-                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${idx + 1}</td>
+                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${idx + 1}<\/td>
                             <td style="padding:10px 12px;">
                                 <strong style="color:var(--color-text-primary);">${escapeHtml(s.subject_name)}</strong>
                                 <span style="background:var(--color-background-warning);color:var(--color-text-warning);border:0.5px solid var(--color-border-warning);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;">COMPULSORY</span>
-                            </td>
-                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}</td>
-                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}</td>
-                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
+                             <\/td>
+                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}<\/td>
+                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}<\/td>
+                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong><\/td>
                             <td style="padding:10px 12px;text-align:center;">
                                 ${s.required_min_grade && s.required_min_grade !== '—'
                                     ? `<span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;">≥ ${s.required_min_grade}</span>`
                                     : `<span style="color:var(--color-text-secondary);font-size:12px;">—</span>`}
-                            </td>
+                             <\/td>
                             <td style="padding:10px 12px;">
                                 ${ruleTag(s)}
                                 ${subNote(s)}
-                            </td>
-                        </tr>`;
+                             <\/td>
+                        <\/tr>`;
                     });
                 }
 
@@ -1389,7 +1421,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 if (optionalList.length > 0) {
                     html += `<tr><td colspan="7" style="background:var(--color-background-secondary);padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-border-tertiary);border-top:0.5px solid var(--color-border-tertiary);">
                         <i class="ri-book-line" style="color:#0891b2;margin-right:5px;"></i>Optional subjects — contribute to grade count conditions &nbsp;·&nbsp; ${otherCreditCount} credit${otherCreditCount !== 1 ? 's' : ''} of ${optionalList.length} subjects
-                    </td></tr>`;
+                    <\/td><\/tr>`;
 
                     optionalList.forEach((s, idx) => {
                         const grade    = s.grade || '—';
@@ -1405,24 +1437,24 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                         }
 
                         html += `<tr style="border-left:3px solid ${rowBdr};border-bottom:0.5px solid var(--color-border-tertiary);">
-                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${compulsoryList.length + idx + 1}</td>
+                            <td style="padding:10px 12px;color:var(--color-text-secondary);font-size:11px;">${compulsoryList.length + idx + 1}<\/td>
                             <td style="padding:10px 12px;">
                                 <strong style="color:var(--color-text-primary);">${escapeHtml(s.subject_name)}</strong>
                                 <span style="background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:6px;vertical-align:middle;">OPTIONAL</span>
-                            </td>
-                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}</td>
-                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}</td>
-                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong></td>
-                            <td style="padding:10px 12px;text-align:center;"><span style="color:var(--color-text-secondary);font-size:11px;font-style:italic;">No min grade</span></td>
+                             <\/td>
+                            <td style="padding:10px 12px;text-align:center;color:var(--color-text-secondary);font-family:monospace;font-size:12px;">${escapeHtml(s.subject_code) || '—'}<\/td>
+                            <td style="padding:10px 12px;text-align:center;">${scoreBar2(s.total, barBg)}<\/td>
+                            <td style="padding:10px 12px;text-align:center;"><strong style="color:${gradeClr(grade)};font-size:16px;">${grade}</strong><\/td>
+                            <td style="padding:10px 12px;text-align:center;"><span style="color:var(--color-text-secondary);font-size:11px;font-style:italic;">No min grade</span><\/td>
                             <td style="padding:10px 12px;">
                                 ${ruleTag(s)}
                                 ${subNote(s)}
-                            </td>
-                        </tr>`;
+                             <\/td>
+                        <\/tr>`;
                     });
                 }
 
-                html += `</tbody></table></div>`;
+                html += `<\/tbody><\/table><\/div>`;
                 document.getElementById('allSubjectsContent').innerHTML = html;
             }
 
