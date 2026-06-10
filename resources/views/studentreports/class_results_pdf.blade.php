@@ -872,7 +872,7 @@
                 </div>
             @else
                 <div class="promo-card {{ $badgeClass }}">
-                    <div class="promo-icon">{{ $badgeIcon }}</div>
+                    <div class="promo-icon"></div>
                     <div class="promo-content">
                         <div class="promo-title">{{ $statusLabel }}</div>
 
