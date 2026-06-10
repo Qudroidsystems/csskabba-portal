@@ -836,6 +836,30 @@ function normalizeImagePath(picture, gender) {
     return '/storage/' + cleanPath;
 }
 
+// Helper function to format rule description with proper grammar
+function formatRuleDescription(description) {
+    if (!description) return '';
+
+    // Fix common grammar issues
+    let formatted = description
+        .replace(/subj\b/g, 'subjects')
+        .replace(/subj\.\b/g, 'subjects')
+        .replace(/(\d+)\s+C\b/g, (match, num) => {
+            return `${num} ${num == 1 ? 'C' : 'Cs'}`;
+        })
+        .replace(/;\s*>=/g, '; ≥')
+        .replace(/;\s*(\d+)\s+(\w+)/g, (match, num, word) => {
+            return `; ${num} ${word}${num == 1 ? '' : 's'}`;
+        });
+
+    // Ensure proper capitalization of first letter
+    if (formatted.length > 0) {
+        formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    }
+
+    return formatted;
+}
+
 // ── Filter & load ──────────────────────────────────────────────────────────────
 function filterData() {
     const classValue = document.getElementById("idclass").value;
@@ -1043,25 +1067,33 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     document.getElementById('modalCurrentArm').innerText     = schoolarm || 'N/A';
     document.getElementById('modalCurrentSession').innerText = session;
 
-    // FIXED: Better image path handling
+    // FIXED: Better image path handling with cache busting
     const imgEl = document.getElementById('modalStudentImage');
     const imagePath = normalizeImagePath(picture, gender);
 
-    console.log('Loading image:', imagePath); // Debug: see what path is being used
-    imgEl.src = imagePath;
+    // Add timestamp to force refresh and avoid cache issues
+    const finalPath = imagePath + '?t=' + new Date().getTime();
+    imgEl.src = finalPath;
 
-    // Handle image load errors
+    // Handle image load errors with multiple fallbacks
     imgEl.onerror = function() {
-        console.error('Failed to load image:', imagePath);
-        // Fallback to gender-specific default
-        const fallbackPath = gender === 'Male'
-            ? '/storage/student_avatars/male-default.png'
-            : '/storage/student_avatars/female-default.png';
-        this.src = fallbackPath;
+        console.error('Failed to load image:', finalPath);
+        // First fallback: try without cache busting
+        this.src = imagePath;
 
-        // If even that fails, use ultimate fallback
         this.onerror = function() {
-            this.src = '/storage/student_avatars/unnamed.jpg';
+            console.error('Still failed, trying gender default');
+            // Second fallback: gender-specific default
+            const fallbackPath = gender === 'Male'
+                ? '/storage/student_avatars/male-default.png'
+                : '/storage/student_avatars/female-default.png';
+            this.src = fallbackPath + '?t=' + new Date().getTime();
+
+            this.onerror = function() {
+                console.error('Using ultimate fallback');
+                // Ultimate fallback
+                this.src = '/storage/student_avatars/unnamed.jpg';
+            };
         };
     };
 
@@ -1104,7 +1136,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 : 'text-muted';
             avgEl.innerHTML = `<span class="${avgClass} fs-5">${avgValue}</span>`;
 
-            // ── Recommendation card ──────────────────────────────────────────
+            // ── Recommendation card with fixed grammar ──────────────────────────
             if (result && result.status !== 'awaiting') {
                 const recCard    = document.getElementById('recommendationCard');
                 const recContent = document.getElementById('recommendationContent');
@@ -1139,12 +1171,14 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 html += `</div>`;
 
                 if (result.applied_rule) {
+                    // Format the description with proper grammar
+                    const formattedDesc = formatRuleDescription(result.applied_rule.description);
                     html += `<div class="mt-3 pt-3 border-top d-flex align-items-center flex-wrap gap-2">
                         <i class="ri-price-tag-3-line text-primary"></i>
-                        <strong>Applied Rule:</strong>
+                        <strong>Matched rule:</strong>
                         <span class="badge bg-primary">${escapeHtml(result.applied_rule.name)}</span>
-                        ${result.applied_rule.description
-                            ? `<span class="small text-muted ms-2">${escapeHtml(result.applied_rule.description)}</span>`
+                        ${formattedDesc
+                            ? `<span class="small text-muted ms-2">— ${escapeHtml(formattedDesc)}</span>`
                             : ''}
                     </div>`;
                 }
@@ -1172,7 +1206,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 recContent.innerHTML = html;
             }
 
-            // ── ALL SUBJECTS TABLE (improved) ─────────────────────────────────────────
+            // ── ALL SUBJECTS TABLE (improved with fixed grammar) ─────────────────────────
             if (allSubjects && allSubjects.length > 0) {
                 document.getElementById('allSubjectsCard').style.display = 'block';
 
@@ -1232,7 +1266,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 }).length;
 
                 const appliedRuleName = result?.applied_rule?.name || null;
-                const appliedRuleDesc = result?.applied_rule?.description || null;
+                const appliedRuleDesc = result?.applied_rule?.description ? formatRuleDescription(result.applied_rule.description) : null;
 
                 // ── tag() helper ──────────────────────────────────────────────────────
                 function tag(label, color, rimIcon, tooltip) {
@@ -1316,7 +1350,7 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                 // ── BUILD ─────────────────────────────────────────────────────────────
                 let html = '';
 
-                // Rule match / no-match note
+                // Rule match / no-match note with fixed grammar
                 if (appliedRuleName) {
                     const stBg  = { promoted:'success', trial:'warning', see_principal:'info', repeated:'danger' }[result?.status] || 'secondary';
                     html += `<div style="background:var(--color-background-${stBg});border:0.5px solid var(--color-border-${stBg});border-radius:8px;padding:11px 14px;margin-bottom:13px;font-size:12.5px;color:var(--color-text-${stBg});">
