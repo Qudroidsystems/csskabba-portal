@@ -829,6 +829,8 @@
                                 <ul class="nav nav-sm flex-column">
                                     @can('View myresult-room')
                                         <li class="nav-item"><a href="{{ route('promotions.index') }}" class="nav-link">Student Promotion</a></li>
+                                        <li class="nav-item"><a href="{{ route('promotion-settings.index') }}" class="nav-link">Promotion Settings</a></li>
+                                        <li class="nav-item"><a href="{{ route('promotion.templates.index') }}" class="nav-link">Rule Templates</a></li>
                                     @endcan
                                 </ul>
                             </div>
@@ -852,6 +854,7 @@
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link">Student Bill</a></li>
                                     <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link">Payment Portal</a></li>
+                                    <li class="nav-item"><a href="{{ route('payment.online.index') }}" class="nav-link">Online Payments</a></li>
                                 </ul>
                             </div>
                         </li>
@@ -1107,6 +1110,23 @@
                             </div>
                         </li>
                     @endif
+
+                    {{-- ADMIN TOOLS --}}
+                    @can('View admin-score-entry')
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>ADMIN TOOLS</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarAdminTools" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAdminTools">
+                                <i class="ph-wrench"></i> <span>Score Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAdminTools">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('admin.score-entry.index') }}" class="nav-link">Admin Score Entry</a></li>
+                                    <li class="nav-item"><a href="{{ route('admin.score-entry.lock-management') }}" class="nav-link">Lock Management</a></li>
+                                    <li class="nav-item"><a href="{{ route('admin.score-entry.student-result-manager') }}" class="nav-link">Student Result Manager</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
 
                 </ul>
             </div>
@@ -1638,116 +1658,148 @@
 </script>
 
 <!-- =====================================================
-     SPOTLIGHT SEARCH — with suggestions & fuzzy matching
+     SPOTLIGHT SEARCH — full registry with all routes
      ===================================================== -->
 <script>
 (function(){
     'use strict';
 
-    /* ── COMPLETE page registry (all routes from both blades) ── */
+    /* ─────────────────────────────────────────────────────────────────
+       COMPLETE PAGE REGISTRY — every navigable route in the system
+       ───────────────────────────────────────────────────────────────── */
     var STATIC_PAGES = [
-        /* Dashboards */
-        {title:'Administration Dashboard',              url:'{{ route("dashboard") }}',                                      icon:'mdi-gauge',                  category:'Dashboards',        keywords:['home','analytics','overview','admin']},
-        /* Users & Privileges */
-        {title:'User Management',                       url:'{{ route("users.index") }}',                                    icon:'mdi-account-group',           category:'Users & Privileges', keywords:['staff','accounts','login','users']},
-        {title:'Roles',                                 url:'{{ route("roles.index") }}',                                    icon:'mdi-shield-account',          category:'Users & Privileges', keywords:['permissions','access','roles']},
-        {title:'Permissions',                           url:'{{ route("permissions.index") }}',                              icon:'mdi-lock',                    category:'Users & Privileges', keywords:['access','rights','permissions']},
-        /* My Account */
-        {title:'My Profile',                            url:'{{ route("users.overview", ["id" => Auth::id()]) }}',           icon:'mdi-account-circle',          category:'My Account',         keywords:['profile','bio','account']},
-        {title:'Account Settings',                      url:'{{ route("profile.settings", ["id" => Auth::id()]) }}',         icon:'mdi-cog',                     category:'My Account',         keywords:['settings','password','avatar']},
-        /* Students */
-        {title:'All Students',                          url:'{{ route("student.index") }}',                                  icon:'mdi-school',                  category:'Students',           keywords:['pupils','learners','students','list']},
-        {title:'Batch Student Registration',            url:'{{ route("studentbatchindex") }}',                              icon:'mdi-account-multiple-plus',   category:'Students',           keywords:['bulk','import','upload','register','batch']},
-        {title:'ID Card Generator',                     url:'{{ route("student-id-cards.index") }}',                         icon:'mdi-card-account-details',    category:'Students',           keywords:['id','card','identity','print']},
-        /* Student Portal */
-        {title:'My Assessments',                        url:'{{ route("assessments") }}',                                    icon:'mdi-clipboard-list',          category:'Student Portal',     keywords:['test','quiz','cbt','assessment']},
-        {title:'My Payments',                           url:'{{ route("student.payments") }}',                               icon:'mdi-cash-multiple',           category:'Student Portal',     keywords:['fees','invoice','payment','student']},
-        /* Parents */
-        {title:'All Parents',                           url:'{{ route("parent.index") }}',                                   icon:'mdi-account-group',           category:'Parents',            keywords:['guardian','parent','family']},
-        /* Subject Registration */
+        /* ── Dashboards ── */
+        {title:'Administration Dashboard',              url:'{{ route("dashboard") }}',                                      icon:'mdi-gauge',                  category:'Dashboards',          keywords:['home','analytics','overview','admin']},
+
+        /* ── Users & Privileges ── */
+        {title:'User Management',                       url:'{{ route("users.index") }}',                                    icon:'mdi-account-group',           category:'Users & Privileges',  keywords:['staff','accounts','login','users']},
+        {title:'Roles',                                 url:'{{ route("roles.index") }}',                                    icon:'mdi-shield-account',          category:'Users & Privileges',  keywords:['permissions','access','roles']},
+        {title:'Permissions',                           url:'{{ route("permissions.index") }}',                              icon:'mdi-lock',                    category:'Users & Privileges',  keywords:['access','rights','permissions']},
+
+        /* ── My Account ── */
+        {title:'My Profile',                            url:'{{ route("users.overview", ["id" => Auth::id()]) }}',           icon:'mdi-account-circle',          category:'My Account',          keywords:['profile','bio','account']},
+        {title:'Account Settings',                      url:'{{ route("profile.settings", ["id" => Auth::id()]) }}',         icon:'mdi-cog',                     category:'My Account',          keywords:['settings','password','avatar']},
+
+        /* ── Students ── */
+        {title:'All Students',                          url:'{{ route("student.index") }}',                                  icon:'mdi-school',                  category:'Students',            keywords:['pupils','learners','students','list']},
+        {title:'Batch Student Registration',            url:'{{ route("studentbatchindex") }}',                              icon:'mdi-account-multiple-plus',   category:'Students',            keywords:['bulk','import','upload','register','batch']},
+        {title:'ID Card Generator',                     url:'{{ route("student-id-cards.index") }}',                         icon:'mdi-card-account-details',    category:'Students',            keywords:['id','card','identity','print']},
+
+        /* ── Parents ── */
+        {title:'All Parents',                           url:'{{ route("parent.index") }}',                                   icon:'mdi-account-group',           category:'Parents',             keywords:['guardian','parent','family','mother','father']},
+
+        /* ── Student Portal ── */
+        {title:'My Assessments',                        url:'{{ route("assessments") }}',                                    icon:'mdi-clipboard-list',          category:'Student Portal',      keywords:['test','quiz','cbt','assessment']},
+        {title:'My Payments',                           url:'{{ route("student.payments") }}',                               icon:'mdi-cash-multiple',           category:'Student Portal',      keywords:['fees','invoice','payment','student']},
+
+        /* ── Subject Registration ── */
         {title:'Student Subject Registration',          url:'{{ route("subjectoperation.index") }}',                         icon:'mdi-book-plus',               category:'Subject Registration',keywords:['register','subject','enroll','course']},
-        /* Exams & CBT */
-        {title:'All Examinations',                      url:'{{ route("exams.index") }}',                                    icon:'mdi-clipboard-text',          category:'Exams & CBT',        keywords:['exam','test','examination']},
-        {title:'Questions Management',                  url:'{{ route("questions.all") }}',                                  icon:'mdi-help-circle',             category:'Exams & CBT',        keywords:['questions','bank','quiz']},
-        {title:'CBT Exercise',                          url:'{{ route("cbt.index") }}',                                      icon:'mdi-monitor',                 category:'Exams & CBT',        keywords:['cbt','computer','online','test']},
-        /* Timetable */
-        {title:'Admin Timetable',                       url:'{{ route("timetable.index") }}',                                icon:'mdi-table-clock',             category:'Timetable',          keywords:['schedule','timetable','period','admin']},
-        {title:'My Timetable',                          url:'{{ route("timetable.teacher") }}',                              icon:'mdi-calendar-clock',          category:'Timetable',          keywords:['schedule','timetable','teacher','my']},
-        {title:'Room Management',                       url:'{{ route("rooms.index") }}',                                    icon:'mdi-door',                    category:'Timetable',          keywords:['room','hall','venue','classroom']},
-        {title:'Exam Timetable',                        url:'{{ route("exam-timetable.index") }}',                           icon:'mdi-calendar-text',           category:'Timetable',          keywords:['exam','schedule','timetable']},
-        {title:'Holidays',                              url:'{{ route("holidays.index") }}',                                 icon:'mdi-beach',                   category:'Timetable',          keywords:['holiday','break','vacation','leave']},
-        /* Classes & Records */
-        {title:'My Class',                              url:'{{ route("myclass.index") }}',                                  icon:'mdi-google-classroom',        category:'Classes & Records',  keywords:['class','register','students','my']},
-        {title:'My Subject',                            url:'{{ route("mysubject.index") }}',                                icon:'mdi-book-open',               category:'Classes & Records',  keywords:['subject','teach','course','my']},
-        {title:'Subjects to Vet',                       url:'{{ route("mysubjectvettings.index") }}',                        icon:'mdi-check-decagram',          category:'Classes & Records',  keywords:['vet','verify','approve','subject']},
-        {title:'Mock Subjects to Vet',                  url:'{{ route("mymocksubjectvettings.index") }}',                    icon:'mdi-check-decagram',          category:'Classes & Records',  keywords:['mock','vet','verify','approve']},
-        {title:'Principal\'s Comment',                  url:'{{ route("myprincipalscomment.index") }}',                      icon:'mdi-comment-text',            category:'Classes & Records',  keywords:['principal','comment','remark','report']},
-        /* Attendance */
-        {title:'Mark Attendance',                       url:'{{ route("attendance.my-classes") }}',                          icon:'mdi-clipboard-check',         category:'Attendance',         keywords:['attendance','present','absent','mark']},
-        {title:'Attendance Term Settings',              url:'{{ route("attendance.settings") }}',                            icon:'mdi-cog',                     category:'Attendance',         keywords:['attendance','settings','term','configure']},
-        {title:'Attendance Holidays & Breaks',          url:'{{ route("attendance.holidays") }}',                            icon:'mdi-calendar-remove',         category:'Attendance',         keywords:['attendance','holiday','break']},
-        {title:'Attendance School Report',              url:'{{ route("attendance.school-report") }}',                       icon:'mdi-chart-bar',               category:'Attendance',         keywords:['attendance','report','school','summary']},
-        /* Records & Results */
-        {title:'Terminal Records',                      url:'{{ route("myresultroom.index") }}',                             icon:'mdi-file-chart',              category:'Records & Results',  keywords:['result','terminal','record','scores']},
-        {title:'Terminal Result Reports',               url:'{{ route("studentreports.index") }}',                           icon:'mdi-file-document',           category:'Records & Results',  keywords:['report','result','terminal','card']},
-        {title:'Terminal Result Broadsheet',            url:'{{ route("broadsheet.index") }}',                               icon:'mdi-table-large',             category:'Records & Results',  keywords:['broadsheet','class','result','terminal']},
-        {title:'Mock Result Reports',                   url:'{{ route("studentmockreports.index") }}',                       icon:'mdi-file-document-outline',   category:'Records & Results',  keywords:['mock','result','report']},
-        {title:'Admin Score Entry',                     url:'{{ route("admin.score-entry.index") }}',                        icon:'mdi-clipboard-edit',          category:'Records & Results',  keywords:['score','entry','admin','marks','results']},
-        /* Transcripts */
-        {title:'Generate Transcript',                   url:'{{ route("transcript.index") }}',                               icon:'mdi-file-account',            category:'Transcripts',        keywords:['transcript','certificate','generate','print']},
-        /* Promotions */
-        {title:'Student Promotion',                     url:'{{ route("promotions.index") }}',                               icon:'mdi-arrow-up-circle',         category:'Promotions',         keywords:['promote','promotion','class','next']},
-        /* Finance */
-        {title:'Student Bill',                          url:'{{ route("schoolpayment.index") }}',                            icon:'mdi-receipt',                 category:'Finance',            keywords:['bill','fees','invoice','payment','student']},
-        {title:'Payment Portal',                        url:'{{ route("payment.index") }}',                                  icon:'mdi-wallet',                  category:'Finance',            keywords:['pay','portal','fees','transaction']},
-        {title:'All Scholarships',                      url:'{{ route("admin.scholarship.index") }}',                        icon:'mdi-medal',                   category:'Finance',            keywords:['scholarship','award','bursary','fund']},
-        {title:'Create Scholarship',                    url:'{{ route("admin.scholarship.create") }}',                       icon:'mdi-medal-outline',           category:'Finance',            keywords:['scholarship','create','new','add']},
-        {title:'Scholarship Assignments',               url:'{{ route("admin.scholarship.assignments") }}',                  icon:'mdi-account-star',            category:'Finance',            keywords:['scholarship','assign','student']},
-        {title:'Scholarship Applications',              url:'{{ route("admin.scholarship.applications") }}',                 icon:'mdi-file-check',              category:'Finance',            keywords:['scholarship','application','apply']},
-        {title:'All Discounts',                         url:'{{ route("admin.discount.index") }}',                           icon:'mdi-tag-multiple',            category:'Finance',            keywords:['discount','reduction','fee','concession']},
-        {title:'Create Discount',                       url:'{{ route("admin.discount.create") }}',                          icon:'mdi-tag-plus',                category:'Finance',            keywords:['discount','create','new','add']},
-        {title:'Discount Assignments',                  url:'{{ route("admin.discount.assignments") }}',                     icon:'mdi-account-tag',             category:'Finance',            keywords:['discount','assign','student']},
-        {title:'All Family Groups (Sibling)',           url:'{{ route("sibling.index") }}',                                  icon:'mdi-account-group',           category:'Finance',            keywords:['sibling','family','group','discount']},
-        {title:'Create Family Group',                   url:'{{ route("sibling.create") }}',                                 icon:'mdi-account-multiple-plus',   category:'Finance',            keywords:['sibling','family','group','create']},
-        {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',            keywords:['gateway','paystack','flutterwave','online']},
-        /* Accounting & Reports */
-        {title:'Balance Sheet',                         url:'{{ route("reports.financial.balance-sheet") }}',                icon:'mdi-scale-balance',           category:'Accounting',         keywords:['balance','sheet','financial','report']},
-        {title:'Income Statement',                      url:'{{ route("reports.financial.income-statement") }}',             icon:'mdi-chart-line',              category:'Accounting',         keywords:['income','profit','loss','statement','p&l']},
-        {title:'Trial Balance',                         url:'{{ route("reports.financial.trial-balance") }}',                icon:'mdi-calculator',              category:'Accounting',         keywords:['trial','balance','ledger','accounts']},
-        {title:'Cash Flow',                             url:'{{ route("reports.financial.cash-flow") }}',                    icon:'mdi-cash-sync',               category:'Accounting',         keywords:['cash','flow','liquidity','report']},
-        {title:'Student Debtors List',                  url:'{{ route("reports.financial.debtors") }}',                      icon:'mdi-account-alert',           category:'Accounting',         keywords:['debtor','outstanding','arrears','owe','unpaid']},
-        {title:'Collection Summary',                    url:'{{ route("reports.financial.collection-summary") }}',           icon:'mdi-cash-register',           category:'Accounting',         keywords:['collection','summary','receipts','income']},
-        {title:'Class Payment Analysis',                url:'{{ route("reports.analysis.index") }}',                         icon:'mdi-chart-bar',               category:'Accounting',         keywords:['analysis','class','payment','report']},
-        {title:'School-Wide Payment Analysis',          url:'{{ route("reports.analysis.school-wide") }}',                   icon:'mdi-chart-donut',             category:'Accounting',         keywords:['analysis','school','wide','payment','report']},
-        /* Payroll */
-        {title:'Payroll Periods',                       url:'{{ route("payroll.periods") }}',                                icon:'mdi-calendar-clock',          category:'Payroll',            keywords:['payroll','period','month','salary']},
-        {title:'Payroll Summary',                       url:'{{ route("payroll.summary") }}',                                icon:'mdi-cash-multiple',           category:'Payroll',            keywords:['payroll','summary','total','staff']},
-        {title:'Statutory Report',                      url:'{{ route("payroll.statutory") }}',                              icon:'mdi-file-certificate',        category:'Payroll',            keywords:['statutory','tax','pension','nhis','paye']},
-        {title:'Salary Structures',                     url:'{{ route("payroll.salary-structures") }}',                      icon:'mdi-bank',                    category:'Payroll',            keywords:['salary','structure','grade','pay']},
-        /* Staff Payments */
-        {title:'All Staff Payments',                    url:'{{ route("staff.payments.index") }}',                           icon:'mdi-cash-check',              category:'Staff Payments',     keywords:['staff','payment','salary','payslip']},
-        {title:'My Staff Payments',                     url:'{{ route("staff.payments.dashboard") }}',                       icon:'mdi-wallet-outline',          category:'Staff Payments',     keywords:['my','payment','salary','payslip']},
-        /* School Settings */
-        {title:'School Information',                    url:'{{ route("school-information.index") }}',                       icon:'mdi-domain',                  category:'School Settings',    keywords:['school','info','name','address','logo']},
-        {title:'School Session',                        url:'{{ route("session.index") }}',                                  icon:'mdi-calendar-range',          category:'School Settings',    keywords:['session','year','academic']},
-        {title:'School Term',                           url:'{{ route("term.index") }}',                                     icon:'mdi-calendar',                category:'School Settings',    keywords:['term','semester','period']},
-        {title:'School House',                          url:'{{ route("schoolhouse.index") }}',                              icon:'mdi-home-group',              category:'School Settings',    keywords:['house','group','dormitory']},
-        {title:'Class Arm',                             url:'{{ route("schoolarm.index") }}',                                icon:'mdi-table-chair',             category:'School Settings',    keywords:['arm','stream','class','division']},
-        {title:'Class Category',                        url:'{{ route("classcategories.index") }}',                          icon:'mdi-format-list-bulleted',    category:'School Settings',    keywords:['category','class','type','level']},
-        {title:'Class Name',                            url:'{{ route("schoolclass.index") }}',                              icon:'mdi-google-classroom',        category:'School Settings',    keywords:['class','name','jss','sss','primary']},
-        {title:'Class Teacher',                         url:'{{ route("classteacher.index") }}',                             icon:'mdi-human-male-board',        category:'School Settings',    keywords:['class','teacher','form','tutor']},
-        /* Subjects */
-        {title:'Subjects',                              url:'{{ route("subject.index") }}',                                  icon:'mdi-book-open-variant',       category:'Subjects',           keywords:['subject','course','topic','list']},
-        {title:'Assign Subject Teacher',                url:'{{ route("subjectteacher.index") }}',                           icon:'mdi-account-tie',             category:'Subjects',           keywords:['assign','subject','teacher','staff']},
-        {title:'Assign Class Subject',                  url:'{{ route("subjectclass.index") }}',                             icon:'mdi-book-plus',               category:'Subjects',           keywords:['assign','class','subject','course']},
-        {title:'Assign Compulsory Subjects',            url:'{{ route("compulsorysubjectclass.index") }}',                   icon:'mdi-book-lock',               category:'Subjects',           keywords:['compulsory','subject','class','assign','mandatory']},
-        /* Vettings & Comments */
-        {title:'Terminal Subject Vettings',             url:'{{ route("subjectvetting.index") }}',                           icon:'mdi-check-decagram',          category:'Vettings',           keywords:['vet','verify','terminal','subject','approve']},
-        {title:'Mock Subject Vettings',                 url:'{{ route("mocksubjectvetting.index") }}',                       icon:'mdi-check-decagram',          category:'Vettings',           keywords:['mock','vet','verify','subject','approve']},
-        {title:'Principal\'s Comments (Admin)',         url:'{{ route("principalscomment.index") }}',                        icon:'mdi-comment-text-multiple',   category:'Vettings',           keywords:['principal','comment','remark','assign','staff']},
-        /* School Bills */
-        {title:'School Bills',                          url:'{{ route("schoolbill.index") }}',                               icon:'mdi-file-document-outline',   category:'School Bills',       keywords:['bill','fee','levy','school','charge']},
-        {title:'Apply Bills to Term/Session',           url:'{{ route("schoolbilltermsession.index") }}',                    icon:'mdi-file-check',              category:'School Bills',       keywords:['apply','bill','term','session','assign']},
+
+        /* ── Exams & CBT ── */
+        {title:'All Examinations',                      url:'{{ route("exams.index") }}',                                    icon:'mdi-clipboard-text',          category:'Exams & CBT',         keywords:['exam','test','examination']},
+        {title:'Questions Management',                  url:'{{ route("questions.all") }}',                                  icon:'mdi-help-circle',             category:'Exams & CBT',         keywords:['questions','bank','quiz']},
+        {title:'CBT Exercise',                          url:'{{ route("cbt.index") }}',                                      icon:'mdi-monitor',                 category:'Exams & CBT',         keywords:['cbt','computer','online','test']},
+
+        /* ── Timetable ── */
+        {title:'Admin Timetable',                       url:'{{ route("timetable.index") }}',                                icon:'mdi-table-clock',             category:'Timetable',           keywords:['schedule','timetable','period','admin']},
+        {title:'My Timetable',                          url:'{{ route("timetable.teacher") }}',                              icon:'mdi-calendar-clock',          category:'Timetable',           keywords:['schedule','timetable','teacher','my']},
+        {title:'Room Management',                       url:'{{ route("rooms.index") }}',                                    icon:'mdi-door',                    category:'Timetable',           keywords:['room','hall','venue','classroom']},
+        {title:'Exam Timetable',                        url:'{{ route("exam-timetable.index") }}',                           icon:'mdi-calendar-text',           category:'Timetable',           keywords:['exam','schedule','timetable']},
+        {title:'Holidays',                              url:'{{ route("holidays.index") }}',                                 icon:'mdi-beach',                   category:'Timetable',           keywords:['holiday','break','vacation','leave']},
+
+        /* ── Classes & Records ── */
+        {title:'My Class',                              url:'{{ route("myclass.index") }}',                                  icon:'mdi-google-classroom',        category:'Classes & Records',   keywords:['class','register','students','my']},
+        {title:'My Subject',                            url:'{{ route("mysubject.index") }}',                                icon:'mdi-book-open',               category:'Classes & Records',   keywords:['subject','teach','course','my']},
+        {title:'Subjects to Vet',                       url:'{{ route("mysubjectvettings.index") }}',                        icon:'mdi-check-decagram',          category:'Classes & Records',   keywords:['vet','verify','approve','subject']},
+        {title:'Mock Subjects to Vet',                  url:'{{ route("mymocksubjectvettings.index") }}',                    icon:'mdi-check-decagram',          category:'Classes & Records',   keywords:['mock','vet','verify','approve']},
+        {title:'Principal\'s Comment',                  url:'{{ route("myprincipalscomment.index") }}',                      icon:'mdi-comment-text',            category:'Classes & Records',   keywords:['principal','comment','remark','report']},
+
+        /* ── Attendance ── */
+        {title:'Mark Attendance',                       url:'{{ route("attendance.my-classes") }}',                          icon:'mdi-clipboard-check',         category:'Attendance',          keywords:['attendance','present','absent','mark']},
+        {title:'Attendance Term Settings',              url:'{{ route("attendance.settings") }}',                            icon:'mdi-cog',                     category:'Attendance',          keywords:['attendance','settings','term','configure']},
+        {title:'Attendance Holidays & Breaks',          url:'{{ route("attendance.holidays") }}',                            icon:'mdi-calendar-remove',         category:'Attendance',          keywords:['attendance','holiday','break']},
+        {title:'Attendance School Report',              url:'{{ route("attendance.school-report") }}',                       icon:'mdi-chart-bar',               category:'Attendance',          keywords:['attendance','report','school','summary']},
+
+        /* ── Records & Results ── */
+        {title:'Terminal Records',                      url:'{{ route("myresultroom.index") }}',                             icon:'mdi-file-chart',              category:'Records & Results',   keywords:['result','terminal','record','scores']},
+        {title:'Terminal Result Reports',               url:'{{ route("studentreports.index") }}',                           icon:'mdi-file-document',           category:'Records & Results',   keywords:['report','result','terminal','card']},
+        {title:'Terminal Result Broadsheet',            url:'{{ route("broadsheet.index") }}',                               icon:'mdi-table-large',             category:'Records & Results',   keywords:['broadsheet','class','result','terminal']},
+        {title:'Broadsheet Web View',                   url:'{{ route("broadsheet.web-view") }}',                            icon:'mdi-table-eye',               category:'Records & Results',   keywords:['broadsheet','view','class','result','web']},
+        {title:'Mock Result Reports',                   url:'{{ route("studentmockreports.index") }}',                       icon:'mdi-file-document-outline',   category:'Records & Results',   keywords:['mock','result','report']},
+        {title:'Admin Score Entry',                     url:'{{ route("admin.score-entry.index") }}',                        icon:'mdi-clipboard-edit',          category:'Records & Results',   keywords:['score','entry','admin','marks','results']},
+
+        /* ── Admin Tools (Score Management) ── */
+        {title:'Score Lock Management',                 url:'{{ route("admin.score-entry.lock-management") }}',              icon:'mdi-lock-open-check',         category:'Admin Tools',         keywords:['lock','unlock','scoresheet','security','admin']},
+        {title:'Student Result Manager',                url:'{{ route("admin.score-entry.student-result-manager") }}',       icon:'mdi-account-edit',            category:'Admin Tools',         keywords:['student','result','edit','admin','manage','scores']},
+
+        /* ── Transcripts ── */
+        {title:'Generate Transcript',                   url:'{{ route("transcript.index") }}',                               icon:'mdi-file-account',            category:'Transcripts',         keywords:['transcript','certificate','generate','print']},
+
+        /* ── Promotions ── */
+        {title:'Student Promotion',                     url:'{{ route("promotions.index") }}',                               icon:'mdi-arrow-up-circle',         category:'Promotions',          keywords:['promote','promotion','class','next','move']},
+        {title:'Promotion Settings',                    url:'{{ route("promotion-settings.index") }}',                       icon:'mdi-tune',                    category:'Promotions',          keywords:['promotion','settings','rules','criteria','configure']},
+        {title:'Promotion Rule Templates',              url:'{{ route("promotion.templates.index") }}',                      icon:'mdi-content-copy',            category:'Promotions',          keywords:['promotion','template','rules','preset']},
+
+        /* ── Finance ── */
+        {title:'Student Bill',                          url:'{{ route("schoolpayment.index") }}',                            icon:'mdi-receipt',                 category:'Finance',             keywords:['bill','fees','invoice','payment','student']},
+        {title:'Payment Portal',                        url:'{{ route("payment.index") }}',                                  icon:'mdi-wallet',                  category:'Finance',             keywords:['pay','portal','fees','transaction']},
+        {title:'Online Payments',                       url:'{{ route("payment.online.index") }}',                           icon:'mdi-web',                     category:'Finance',             keywords:['online','pay','paystack','flutterwave','internet']},
+        {title:'Payment Analysis',                      url:'{{ route("analysis.index") }}',                                 icon:'mdi-chart-donut',             category:'Finance',             keywords:['analysis','payment','chart','statistics','finance']},
+        {title:'All Scholarships',                      url:'{{ route("admin.scholarship.index") }}',                        icon:'mdi-medal',                   category:'Finance',             keywords:['scholarship','award','bursary','fund']},
+        {title:'Create Scholarship',                    url:'{{ route("admin.scholarship.create") }}',                       icon:'mdi-medal-outline',           category:'Finance',             keywords:['scholarship','create','new','add']},
+        {title:'Scholarship Assignments',               url:'{{ route("admin.scholarship.assignments") }}',                  icon:'mdi-account-star',            category:'Finance',             keywords:['scholarship','assign','student']},
+        {title:'Scholarship Applications',              url:'{{ route("admin.scholarship.applications") }}',                 icon:'mdi-file-check',              category:'Finance',             keywords:['scholarship','application','apply']},
+        {title:'All Discounts',                         url:'{{ route("admin.discount.index") }}',                           icon:'mdi-tag-multiple',            category:'Finance',             keywords:['discount','reduction','fee','concession']},
+        {title:'Create Discount',                       url:'{{ route("admin.discount.create") }}',                          icon:'mdi-tag-plus',                category:'Finance',             keywords:['discount','create','new','add']},
+        {title:'Discount Assignments',                  url:'{{ route("admin.discount.assignments") }}',                     icon:'mdi-account-tag',             category:'Finance',             keywords:['discount','assign','student']},
+        {title:'All Family Groups (Sibling)',           url:'{{ route("sibling.index") }}',                                  icon:'mdi-account-group',           category:'Finance',             keywords:['sibling','family','group','discount']},
+        {title:'Create Family Group',                   url:'{{ route("sibling.create") }}',                                 icon:'mdi-account-multiple-plus',   category:'Finance',             keywords:['sibling','family','group','create']},
+        {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',             keywords:['gateway','paystack','flutterwave','online','configure']},
+
+        /* ── Accounting & Reports ── */
+        {title:'Balance Sheet',                         url:'{{ route("reports.financial.balance-sheet") }}',                icon:'mdi-scale-balance',           category:'Accounting',          keywords:['balance','sheet','financial','report']},
+        {title:'Income Statement',                      url:'{{ route("reports.financial.income-statement") }}',             icon:'mdi-chart-line',              category:'Accounting',          keywords:['income','profit','loss','statement','p&l']},
+        {title:'Trial Balance',                         url:'{{ route("reports.financial.trial-balance") }}',                icon:'mdi-calculator',              category:'Accounting',          keywords:['trial','balance','ledger','accounts']},
+        {title:'Cash Flow',                             url:'{{ route("reports.financial.cash-flow") }}',                    icon:'mdi-cash-sync',               category:'Accounting',          keywords:['cash','flow','liquidity','report']},
+        {title:'Student Debtors List',                  url:'{{ route("reports.financial.debtors") }}',                      icon:'mdi-account-alert',           category:'Accounting',          keywords:['debtor','outstanding','arrears','owe','unpaid']},
+        {title:'Collection Summary',                    url:'{{ route("reports.financial.collection-summary") }}',           icon:'mdi-cash-register',           category:'Accounting',          keywords:['collection','summary','receipts','income']},
+        {title:'Class Payment Analysis',                url:'{{ route("reports.analysis.index") }}',                         icon:'mdi-chart-bar',               category:'Accounting',          keywords:['analysis','class','payment','report']},
+        {title:'School-Wide Payment Analysis',          url:'{{ route("reports.analysis.school-wide") }}',                   icon:'mdi-chart-donut',             category:'Accounting',          keywords:['analysis','school','wide','payment','report']},
+
+        /* ── Payroll ── */
+        {title:'Payroll Periods',                       url:'{{ route("payroll.periods") }}',                                icon:'mdi-calendar-clock',          category:'Payroll',             keywords:['payroll','period','month','salary']},
+        {title:'Payroll Summary',                       url:'{{ route("payroll.summary") }}',                                icon:'mdi-cash-multiple',           category:'Payroll',             keywords:['payroll','summary','total','staff']},
+        {title:'Statutory Report',                      url:'{{ route("payroll.statutory") }}',                              icon:'mdi-file-certificate',        category:'Payroll',             keywords:['statutory','tax','pension','nhis','paye']},
+        {title:'Salary Structures',                     url:'{{ route("payroll.salary-structures") }}',                      icon:'mdi-bank',                    category:'Payroll',             keywords:['salary','structure','grade','pay']},
+
+        /* ── Staff Payments ── */
+        {title:'All Staff Payments',                    url:'{{ route("staff.payments.index") }}',                           icon:'mdi-cash-check',              category:'Staff Payments',      keywords:['staff','payment','salary','payslip']},
+        {title:'My Staff Payments',                     url:'{{ route("staff.payments.dashboard") }}',                       icon:'mdi-wallet-outline',          category:'Staff Payments',      keywords:['my','payment','salary','payslip']},
+
+        /* ── School Settings ── */
+        {title:'School Information',                    url:'{{ route("school-information.index") }}',                       icon:'mdi-domain',                  category:'School Settings',     keywords:['school','info','name','address','logo']},
+        {title:'School Session',                        url:'{{ route("session.index") }}',                                  icon:'mdi-calendar-range',          category:'School Settings',     keywords:['session','year','academic']},
+        {title:'School Term',                           url:'{{ route("term.index") }}',                                     icon:'mdi-calendar',                category:'School Settings',     keywords:['term','semester','period']},
+        {title:'School House',                          url:'{{ route("schoolhouse.index") }}',                              icon:'mdi-home-group',              category:'School Settings',     keywords:['house','group','dormitory']},
+        {title:'Class Arm',                             url:'{{ route("schoolarm.index") }}',                                icon:'mdi-table-chair',             category:'School Settings',     keywords:['arm','stream','class','division']},
+        {title:'Class Category',                        url:'{{ route("classcategories.index") }}',                          icon:'mdi-format-list-bulleted',    category:'School Settings',     keywords:['category','class','type','level']},
+        {title:'Class Name',                            url:'{{ route("schoolclass.index") }}',                              icon:'mdi-google-classroom',        category:'School Settings',     keywords:['class','name','jss','sss','primary']},
+        {title:'Class Teacher',                         url:'{{ route("classteacher.index") }}',                             icon:'mdi-human-male-board',        category:'School Settings',     keywords:['class','teacher','form','tutor']},
+
+        /* ── Subjects ── */
+        {title:'Subjects',                              url:'{{ route("subject.index") }}',                                  icon:'mdi-book-open-variant',       category:'Subjects',            keywords:['subject','course','topic','list']},
+        {title:'Assign Subject Teacher',                url:'{{ route("subjectteacher.index") }}',                           icon:'mdi-account-tie',             category:'Subjects',            keywords:['assign','subject','teacher','staff']},
+        {title:'Assign Class Subject',                  url:'{{ route("subjectclass.index") }}',                             icon:'mdi-book-plus',               category:'Subjects',            keywords:['assign','class','subject','course']},
+        {title:'Assign Compulsory Subjects',            url:'{{ route("compulsorysubjectclass.index") }}',                   icon:'mdi-book-lock',               category:'Subjects',            keywords:['compulsory','subject','class','assign','mandatory']},
+
+        /* ── Vettings & Comments ── */
+        {title:'Terminal Subject Vettings',             url:'{{ route("subjectvetting.index") }}',                           icon:'mdi-check-decagram',          category:'Vettings',            keywords:['vet','verify','terminal','subject','approve']},
+        {title:'Mock Subject Vettings',                 url:'{{ route("mocksubjectvetting.index") }}',                       icon:'mdi-check-decagram',          category:'Vettings',            keywords:['mock','vet','verify','subject','approve']},
+        {title:'Principal\'s Comments (Admin)',         url:'{{ route("principalscomment.index") }}',                        icon:'mdi-comment-text-multiple',   category:'Vettings',            keywords:['principal','comment','remark','assign','staff']},
+
+        /* ── School Bills ── */
+        {title:'School Bills',                          url:'{{ route("schoolbill.index") }}',                               icon:'mdi-file-document-outline',   category:'School Bills',        keywords:['bill','fee','levy','school','charge']},
+        {title:'Apply Bills to Term/Session',           url:'{{ route("schoolbilltermsession.index") }}',                    icon:'mdi-file-check',              category:'School Bills',        keywords:['apply','bill','term','session','assign']},
     ];
 
     /* ── category colours ── */
@@ -1762,14 +1814,16 @@
 
     /* ── popular / suggestion chips ── */
     var POPULAR = [
-        {label:'Students',  q:'students'},
-        {label:'Payments',  q:'payment'},
-        {label:'Results',   q:'results'},
-        {label:'Exams',     q:'exam'},
-        {label:'Timetable', q:'timetable'},
-        {label:'Attendance',q:'attendance'},
-        {label:'Payroll',   q:'payroll'},
-        {label:'Reports',   q:'report'},
+        {label:'Students',   q:'students'},
+        {label:'Payments',   q:'payment'},
+        {label:'Results',    q:'results'},
+        {label:'Exams',      q:'exam'},
+        {label:'Timetable',  q:'timetable'},
+        {label:'Attendance', q:'attendance'},
+        {label:'Promotions', q:'promotion'},
+        {label:'Payroll',    q:'payroll'},
+        {label:'Reports',    q:'report'},
+        {label:'Broadsheet', q:'broadsheet'},
     ];
 
     /* ── history helpers ── */
@@ -1831,7 +1885,6 @@
     function getSuggestions(q) {
         if (!q || q.length < 1) return POPULAR;
         var lq = q.toLowerCase();
-        /* find categories that partially match */
         var matchedCats = {};
         STATIC_PAGES.forEach(function(p){
             var lt = p.title.toLowerCase(), lk = (p.keywords||[]).join(' ').toLowerCase();
@@ -1839,7 +1892,6 @@
                 matchedCats[p.category] = (matchedCats[p.category]||0) + 1;
             }
         });
-        /* also suggest popular if nothing matched */
         var cats = Object.keys(matchedCats).sort(function(a,b){ return matchedCats[b]-matchedCats[a]; }).slice(0,6);
         if (cats.length === 0) return POPULAR.slice(0,5);
         return cats.map(function(c){ return {label:c, q:c}; });
@@ -2035,7 +2087,7 @@
             hdr.textContent = cat;
             list.appendChild(hdr);
 
-            groups[cat].forEach(function(r, gi){
+            groups[cat].forEach(function(r){
                 var li = document.createElement('li');
                 var isTop = (globalIdx === 0);
                 li.className = 'spotlight-result-item' + (isTop ? ' top-match' : '');
@@ -2157,7 +2209,7 @@
 @if (Route::is('studentresults*'))         @include('layouts.pages-assets.js.studentresults-list-js') @endif
 @if (Route::is('schoolbill*'))             @include('layouts.pages-assets.js.schoolbill-list-js') @endif
 @if (Route::is('schoolpayment*'))          @include('layouts.pages-assets.js.schoolpayment-list-js') @endif
-@if (Route::is('analysis*'))              @include('layouts.pages-assets.js.analysis-list-js') @endif
+@if (Route::is('analysis*'))               @include('layouts.pages-assets.js.analysis-list-js') @endif
 @if (Route::is('exams*'))                  @include('layouts.pages-assets.js.exams-list-js') @endif
 @if (Route::is('questions*'))              @include('layouts.pages-assets.js.questions-list-js') @endif
 @if (Route::is('cbt*'))                    @include('layouts.pages-assets.js.cbt-list-js') @endif
