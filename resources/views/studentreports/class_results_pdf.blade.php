@@ -323,15 +323,62 @@
             display: inline-block;
         }
 
-        .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 4px; }
-        .bottom-strip table { width: 100%; border-collapse: collapse; }
-        .bottom-strip td { padding: 5px 8px; vertical-align: middle; }
-        .bottom-strip .cell-qr    { width: 80px;  text-align: center; vertical-align: middle; }
-        .bottom-strip .cell-footer{ text-align: center; font-size: 9.5px; vertical-align: middle; }
-        .bottom-strip .cell-stamp { width: 110px; text-align: center; vertical-align: middle; }
-        .bottom-strip .cell-qr img { width: 65px; height: 65px; display: block; margin: 0 auto 2px; }
-        .qr-label { font-size: 7.5px; color: #333; font-weight: 600; text-align: center; }
-        .bottom-strip .cell-stamp img { width: 95px; height: 95px; transform: rotate(-8deg); display: block; margin: 0 auto; }
+        .bottom-strip {
+            width: 100%;
+            border-top: 1px solid #cbd5e1;
+            background: #f1f5f9;
+            margin-top: 4px;
+        }
+
+        .bottom-strip table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bottom-strip td {
+            padding: 5px 8px;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-qr {
+            width: 80px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-footer {
+            text-align: center;
+            font-size: 9.5px;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-stamp {
+            width: 110px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-qr img {
+            width: 65px;
+            height: 65px;
+            display: block;
+            margin: 0 auto 2px;
+        }
+
+        .qr-label {
+            font-size: 7.5px;
+            color: #333;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .bottom-strip .cell-stamp img {
+            width: 95px;
+            height: 95px;
+            transform: rotate(-8deg);
+            display: block;
+            margin: 0 auto;
+        }
 
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
@@ -799,9 +846,8 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            {{-- PROMOTION BADGE - Only show promotion results for promotional terms --}}
+            {{-- PROMOTION BADGE --}}
             @if($isTermPromotional)
-                {{-- This IS a promotional term - show promotion results --}}
                 @if($promoStatus === 'promoted')
                     <div class="promo-card promo-promoted">
                         <div class="promo-title">{{ $statusLabel }}</div>
@@ -872,7 +918,6 @@
                     </div>
                 @endif
             @else
-                {{-- This is NOT a promotional term - show clear message --}}
                 <div class="promo-card promo-awaiting">
                     <div class="promo-title">NON-PROMOTIONAL TERM</div>
                     <div class="promo-message">This term is not a promotional term. Promotion is only assessed at the end of the academic year (Third Term).</div>
@@ -968,7 +1013,7 @@
 
             {{-- BOTTOM STRIP --}}
             <div class="bottom-strip">
-                </table>
+                <table>
                     <tr>
                         <td class="cell-qr">
                             <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
@@ -985,7 +1030,9 @@
                             </span></div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
-                        <td class="cell-stamp"><img src="{{ $stampSrc }}" alt="School Stamp"></td>
+                        <td class="cell-stamp">
+                            <img src="{{ $stampSrc }}" alt="School Stamp">
+                        </td>
                     </tr>
                 </table>
             </div>
