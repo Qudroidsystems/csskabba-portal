@@ -250,7 +250,7 @@
                             data-see_principal_label="{{ $setting->see_principal_label }}"
                             data-repeat_label="{{ $setting->repeat_label }}"
                             data-rule_logic="{{ $setting->rule_logic ?? 'grade_count' }}"
-                            data-promotion_pass_average="{{ $setting->promotion_pass_average ?? '' }}"
+                            data-promotion_pass_average="{{ $setting->promotion_pass_average !== null ? $setting->promotion_pass_average : '' }}"
                             data-is_active="{{ $isActive ? '1' : '0' }}"
                             data-template_id="{{ $setting->template_id ?? '' }}"
                             data-promotion_rules="{{ json_encode($rules) }}">
@@ -622,7 +622,7 @@ const RuleInterpreter = (() => {
         const hasUnreachable = catchAllIdx >= 0 && catchAllIdx < rules.length - 1;
         const logicLabels = {
             grade_count: 'Grade count rules only — checked top-to-bottom, first match wins. If no rule matches → Advice to Repeat.',
-            average_only: `Minimum average only — student passes if overall average ≥ ${requiredAverage || '?'}%.`,
+            average_only: `Minimum average only — student passes if overall average ≥ ${requiredAverage !== undefined && requiredAverage !== null && requiredAverage !== '' ? requiredAverage : '?'}%.`,
             both: 'Grade count AND average — both evaluated together. Average logic (AND/OR) is set per-rule.',
         };
         return { rules: results, logicDescription: logicLabels[ruleLogic] || '', hasUnreachable, unreachableFrom: catchAllIdx >= 0 ? catchAllIdx + 2 : null };
@@ -1090,8 +1090,9 @@ async function refreshClassInfo() {
     const summaryEl = document.getElementById('subjectSummary');
     const scopeInfo = document.getElementById('ruleScopeInfo');
 
-    // Store current average value before refreshing
+    // Store current average value - IMPORTANT: preserve 0 as a valid value
     const currentAvg = document.getElementById('promotion_pass_average').value;
+    const hasCurrentAvg = currentAvg !== '' && currentAvg !== null && currentAvg !== undefined;
 
     addBtn.disabled = true;
     summaryEl.style.display = 'none';
@@ -1121,10 +1122,14 @@ async function refreshClassInfo() {
                 override: false
             }));
 
-            // Only set default if no value is currently set
-            if (classPassAvg && (!currentAvg || currentAvg === '')) {
+            // FIX: Only set default if no value is currently set (including checking for 0)
+            if (classPassAvg !== null && !hasCurrentAvg) {
                 document.getElementById('promotion_pass_average').value = classPassAvg;
                 document.getElementById('avg_slider').value = classPassAvg;
+            } else if (hasCurrentAvg) {
+                // Preserve the existing value (including 0)
+                document.getElementById('promotion_pass_average').value = currentAvg;
+                document.getElementById('avg_slider').value = currentAvg;
             }
 
             const scaleLabel = isSenior ? 'Senior (A1–F9)' : 'Junior (A–F)';
@@ -1220,10 +1225,13 @@ async function handleEditClick(e) {
     const ruleLogic = d.rule_logic || 'grade_count';
     document.getElementById('rule_logic').value = ruleLogic;
 
-    // Set average value BEFORE triggering change event
-    const avgValue = d.promotion_pass_average !== undefined && d.promotion_pass_average !== '' ? d.promotion_pass_average : '';
+    // FIX: Handle 0 correctly - check if property exists and is not undefined/null
+    // Use d.promotion_pass_average !== undefined && d.promotion_pass_average !== null
+    const avgValue = (d.promotion_pass_average !== undefined && d.promotion_pass_average !== null && d.promotion_pass_average !== '')
+        ? d.promotion_pass_average
+        : '';
     document.getElementById('promotion_pass_average').value = avgValue;
-    document.getElementById('avg_slider').value = avgValue || 50;
+    document.getElementById('avg_slider').value = (avgValue !== '' ? avgValue : 50);
 
     document.getElementById('template_id_input').value = d.template_id || '';
     if (d.template_id) document.getElementById('templateSelect').value = d.template_id;
@@ -1280,11 +1288,20 @@ document.getElementById('saveSettingBtn')?.addEventListener('click', async funct
 
     // Validate average based on rule logic
     const ruleLogic = document.getElementById('rule_logic').value;
-    const avgValue = document.getElementById('promotion_pass_average').value;
+    let avgValue = document.getElementById('promotion_pass_average').value;
 
-    if ((ruleLogic === 'average_only' || ruleLogic === 'both') && (!avgValue || avgValue === '')) {
-        Swal.fire('Validation', 'Minimum average is required for Average Only or Both evaluation modes.', 'warning');
-        return;
+    // FIX: For average_only and both, require a numeric value (0 is valid)
+    if (ruleLogic === 'average_only' || ruleLogic === 'both') {
+        if (avgValue === '' || avgValue === null || avgValue === undefined) {
+            Swal.fire('Validation', 'Minimum average is required for Average Only or Both evaluation modes.', 'warning');
+            return;
+        }
+        // Ensure it's a number
+        avgValue = parseFloat(avgValue);
+        if (isNaN(avgValue)) {
+            Swal.fire('Validation', 'Minimum average must be a valid number.', 'warning');
+            return;
+        }
     }
 
     for (const [i, rule] of promotionRules.entries()) {
@@ -1310,14 +1327,25 @@ document.getElementById('saveSettingBtn')?.addEventListener('click', async funct
     fd.set('repeat_label', document.getElementById('repeat_label').value);
     fd.set('rule_logic', ruleLogic);
 
-    // Ensure average is included even if 0
-    fd.set('promotion_pass_average', avgValue !== '' ? avgValue : '');
+    // FIX: Send 0 as a valid value, not empty string
+    if (ruleLogic === 'average_only' || ruleLogic === 'both') {
+        fd.set('promotion_pass_average', avgValue.toString());
+    } else {
+        fd.set('promotion_pass_average', '');
+    }
 
     fd.set('is_active', document.getElementById('modal_is_active').checked ? '1' : '0');
     fd.set('template_id', document.getElementById('template_id_input').value || '');
     const id = document.getElementById('setting_id').value;
     let url = '/promotion-settings';
     if (id) { url = `/promotion-settings/${id}`; fd.append('_method', 'PUT'); }
+
+    // Debug log to verify what's being sent
+    console.log('Saving with values:', {
+        rule_logic: ruleLogic,
+        promotion_pass_average: avgValue,
+        class_id: classId
+    });
 
     Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     try {

@@ -193,6 +193,17 @@ class PromotionSettingController extends Controller
                     ->update(['is_default' => false]);
             }
 
+            // FIX: Handle promotion_pass_average - preserve 0 as a valid value
+            $avgValue = null;
+            if ($request->has('promotion_pass_average') && $request->promotion_pass_average !== '' && $request->promotion_pass_average !== null) {
+                $avgValue = (float) $request->promotion_pass_average;
+                // Log to verify
+                Log::info('Storing promotion setting with average', [
+                    'raw_value' => $request->promotion_pass_average,
+                    'converted_value' => $avgValue,
+                ]);
+            }
+
             $setting = PromotionSetting::create([
                 'schoolclass_id'         => $request->schoolclass_id,
                 'session_id'             => $sessionId,
@@ -204,7 +215,7 @@ class PromotionSettingController extends Controller
                 'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
                 'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
                 'rule_logic'             => $request->rule_logic          ?? 'grade_count',
-                'promotion_pass_average' => $request->promotion_pass_average ?: null,
+                'promotion_pass_average' => $avgValue,  // FIXED: Don't use ?: null operator
                 'is_active'              => $isActive,
                 'is_default'             => $isDefault,
                 'template_id'            => $request->template_id ?: null,
@@ -216,6 +227,7 @@ class PromotionSettingController extends Controller
             Log::info('Setting saved successfully', [
                 'id' => $setting->id,
                 'rule_set_name' => $ruleSetName,
+                'promotion_pass_average' => $setting->promotion_pass_average,
                 'rules_count' => count($setting->promotion_rules),
             ]);
 
@@ -242,6 +254,7 @@ class PromotionSettingController extends Controller
             'session_id' => $request->session_id,
             'term_id' => $request->term_id,
             'rule_set_name' => $request->rule_set_name,
+            'promotion_pass_average' => $request->promotion_pass_average,
             'promotion_rules_raw' => $request->promotion_rules
         ]);
 
@@ -289,6 +302,21 @@ class PromotionSettingController extends Controller
                     ->update(['is_default' => false]);
             }
 
+            // FIX: Handle promotion_pass_average - preserve 0 as a valid value
+            $avgValue = $setting->promotion_pass_average; // Keep existing by default
+            if ($request->has('promotion_pass_average')) {
+                if ($request->promotion_pass_average !== '' && $request->promotion_pass_average !== null) {
+                    $avgValue = (float) $request->promotion_pass_average;
+                    Log::info('Updating promotion setting with average', [
+                        'setting_id' => $id,
+                        'raw_value' => $request->promotion_pass_average,
+                        'converted_value' => $avgValue,
+                    ]);
+                } else {
+                    $avgValue = null;
+                }
+            }
+
             $setting->update([
                 'schoolclass_id'         => $request->schoolclass_id ?? $setting->schoolclass_id,
                 'session_id'             => $sessionId,
@@ -299,7 +327,7 @@ class PromotionSettingController extends Controller
                 'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
                 'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
                 'rule_logic'             => $request->rule_logic          ?? 'grade_count',
-                'promotion_pass_average' => $request->promotion_pass_average ?: null,
+                'promotion_pass_average' => $avgValue,  // FIXED: Don't use ?: null operator
                 'is_active'              => $isActive,
                 'is_default'             => $isDefault,
                 'template_id'            => $request->template_id ?: null,
@@ -311,6 +339,7 @@ class PromotionSettingController extends Controller
             Log::info('Setting updated successfully', [
                 'id' => $id,
                 'rule_set_name' => $setting->rule_set_name,
+                'promotion_pass_average' => $setting->promotion_pass_average,
                 'rules_count' => count($setting->promotion_rules),
             ]);
 
@@ -451,6 +480,45 @@ class PromotionSettingController extends Controller
                 'message' => 'Error loading compulsory subjects: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // ── Debug method to check saved rules ─────────────────────────────────────
+    public function debugRules($id)
+    {
+        $setting = PromotionSetting::find($id);
+        if (!$setting) {
+            return response()->json(['error' => 'Setting not found'], 404);
+        }
+
+        $classCategory = $this->getClassCategory($setting->schoolclass_id);
+
+        $result = [
+            'id' => $setting->id,
+            'rule_set_name' => $setting->rule_set_name,
+            'schoolclass_id' => $setting->schoolclass_id,
+            'class_category' => $classCategory,
+            'session_id' => $setting->session_id,
+            'term_id' => $setting->term_id,
+            'is_active' => $setting->is_active,
+            'rule_logic' => $setting->rule_logic,
+            'promotion_pass_average' => $setting->promotion_pass_average,
+            'rules_count' => count($setting->promotion_rules ?? []),
+            'rules' => []
+        ];
+
+        foreach ($setting->promotion_rules as $index => $rule) {
+            $result['rules'][] = [
+                'index' => $index,
+                'rule_name' => $rule['rule_name'] ?? 'Unnamed',
+                'status_label' => $rule['status_label'] ?? 'unknown',
+                'grade_grouping' => $rule['grade_grouping'] ?? 'not set',
+                'subjects' => $rule['compulsory_section']['subjects'] ?? [],
+                'subject_ids' => array_column($rule['compulsory_section']['subjects'] ?? [], 'subject_id'),
+                'min_grades' => array_column($rule['compulsory_section']['subjects'] ?? [], 'min_grade')
+            ];
+        }
+
+        return response()->json($result);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -641,44 +709,5 @@ class PromotionSettingController extends Controller
         ]);
 
         return $results;
-    }
-
-    // Debug method to check saved rules
-    public function debugRules($id)
-    {
-        $setting = PromotionSetting::find($id);
-        if (!$setting) {
-            return response()->json(['error' => 'Setting not found'], 404);
-        }
-
-        $classCategory = $this->getClassCategory($setting->schoolclass_id);
-
-        $result = [
-            'id' => $setting->id,
-            'rule_set_name' => $setting->rule_set_name,
-            'schoolclass_id' => $setting->schoolclass_id,
-            'class_category' => $classCategory,
-            'session_id' => $setting->session_id,
-            'term_id' => $setting->term_id,
-            'is_active' => $setting->is_active,
-            'rule_logic' => $setting->rule_logic,
-            'promotion_pass_average' => $setting->promotion_pass_average,
-            'rules_count' => count($setting->promotion_rules ?? []),
-            'rules' => []
-        ];
-
-        foreach ($setting->promotion_rules as $index => $rule) {
-            $result['rules'][] = [
-                'index' => $index,
-                'rule_name' => $rule['rule_name'] ?? 'Unnamed',
-                'status_label' => $rule['status_label'] ?? 'unknown',
-                'grade_grouping' => $rule['grade_grouping'] ?? 'not set',
-                'subjects' => $rule['compulsory_section']['subjects'] ?? [],
-                'subject_ids' => array_column($rule['compulsory_section']['subjects'] ?? [], 'subject_id'),
-                'min_grades' => array_column($rule['compulsory_section']['subjects'] ?? [], 'min_grade')
-            ];
-        }
-
-        return response()->json($result);
     }
 }

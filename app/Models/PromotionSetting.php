@@ -35,7 +35,7 @@ class PromotionSetting extends Model
         'promotion_rules' => 'array',
         'is_active' => 'boolean',
         'is_default' => 'boolean',
-        'promotion_pass_average' => 'decimal:2',
+        'promotion_pass_average' => 'float',  // FIXED: Changed from 'decimal:2' to 'float' to properly handle 0
         'priority' => 'integer',
     ];
 
