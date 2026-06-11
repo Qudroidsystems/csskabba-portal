@@ -410,66 +410,134 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 /* ── Performance (grade) popup ── */
 #cbGradePopup {
-    display:none; position:fixed; z-index:99999;
-    background:var(--cb-white); border:2px solid var(--cb-teal);
-    border-radius:16px; box-shadow:0 20px 60px rgba(15,35,66,.22);
-    width:520px; max-height:620px; overflow:hidden; flex-direction:column;
+    display: none; position: fixed; z-index: 99999;
+    background: var(--cb-white); border: 2px solid var(--cb-teal);
+    border-radius: 16px; box-shadow: 0 20px 60px rgba(15,35,66,.22);
+    width: 560px; max-width: 90vw;
+    max-height: 80vh; overflow: hidden;
+    flex-direction: column;
 }
-#cbGradePopup.is-open { display:flex; animation:popIn .28s cubic-bezier(.22,1,.36,1); }
+#cbGradePopup.is-open {
+    display: flex;
+    animation: popIn .28s cubic-bezier(.22,1,.36,1);
+}
 .gpop-hdr {
-    background:linear-gradient(135deg,var(--cb-navy),var(--cb-teal));
-    color:#fff; padding:14px 18px; border-radius:14px 14px 0 0;
-    font-weight:700; font-size:14px;
-    display:flex; justify-content:space-between; align-items:center; flex-shrink:0;
+    background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal));
+    color: #fff; padding: 14px 18px; border-radius: 14px 14px 0 0;
+    font-weight: 700; font-size: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
 }
-.gpop-close-btn { background:rgba(255,255,255,.18); border:none; color:#fff; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .25s ease; }
-.gpop-close-btn:hover { background:rgba(255,255,255,.4); transform:rotate(90deg) scale(1.1); }
-.gpop-body { padding:16px; overflow-y:auto; flex:1; }
+.gpop-close-btn {
+    background: rgba(255,255,255,.18); border: none; color: #fff;
+    border-radius: 50%; width: 28px; height: 28px; cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: all .25s ease;
+}
+.gpop-close-btn:hover {
+    background: rgba(255,255,255,.4); transform: rotate(90deg) scale(1.1);
+}
+.gpop-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+    max-height: calc(80vh - 60px);
+}
 
 /* ── Performance summary card inside popup ── */
 .gpop-perf-strip {
-    background:linear-gradient(135deg,var(--cb-navy),#1e5f74);
-    border-radius:10px; padding:12px 16px; color:#fff; margin-bottom:14px;
+    background: linear-gradient(135deg, var(--cb-navy), #1e5f74);
+    border-radius: 10px; padding: 12px 16px; color: #fff; margin-bottom: 14px;
 }
-.gpop-perf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
-.gpop-perf-item { text-align:center; background:rgba(255,255,255,.1); border-radius:8px; padding:8px; transition:all .2s ease; }
-.gpop-perf-item:hover { background:rgba(255,255,255,.2); transform:scale(1.03); }
-.gpop-perf-lbl { font-size:9px; opacity:.8; text-transform:uppercase; letter-spacing:.4px; }
-.gpop-perf-val { font-size:15px; font-weight:700; margin-top:2px; }
+.gpop-perf-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 8px; }
+.gpop-perf-item { text-align: center; background: rgba(255,255,255,.1); border-radius: 8px; padding: 8px; transition: all .2s ease; }
+.gpop-perf-item:hover { background: rgba(255,255,255,.2); transform: scale(1.03); }
+.gpop-perf-lbl { font-size: 9px; opacity: .8; text-transform: uppercase; letter-spacing: .4px; }
+.gpop-perf-val { font-size: 15px; font-weight: 700; margin-top: 2px; }
 
-.gpop-legend { display:flex; align-items:center; gap:12px; margin-bottom:10px; padding:6px 10px; background:var(--cb-surface); border-radius:8px; border:1px solid var(--cb-border); flex-wrap:wrap; }
-.gpop-legend-item { display:flex; align-items:center; gap:4px; font-size:10px; font-weight:700; color:var(--cb-muted); }
-.gpop-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.gpop-legend-dot.t { background:#0ea5e9; }
-.gpop-legend-dot.c { background:var(--cb-navy); }
+.gpop-legend {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    padding: 6px 10px; background: var(--cb-surface); border-radius: 8px;
+    border: 1px solid var(--cb-border); flex-wrap: wrap;
+}
+.gpop-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: var(--cb-muted); }
+.gpop-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.gpop-legend-dot.t { background: #0ea5e9; }
+.gpop-legend-dot.c { background: var(--cb-navy); }
 
-.gpop-scroll { max-height:260px; overflow-y:auto; border:1px solid var(--cb-border); border-radius:10px; }
-.gpop-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
-.gpop-table thead th { background:var(--cb-navy); color:#fff; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; padding:9px 8px; border-right:1px solid rgba(255,255,255,.08); text-align:center; position:sticky; top:0; z-index:2; }
-.gpop-table thead th:first-child { text-align:left; padding-left:12px; width:32%; }
-.gpop-table tbody td { padding:8px 6px; border-bottom:1px solid #f1f5f9; font-weight:500; text-align:center; vertical-align:middle; }
-.gpop-table tbody td:first-child { text-align:left; font-weight:600; color:var(--cb-navy); padding-left:12px; }
-.gpop-table tbody tr:hover td { background:#f0fdf9; }
+.gpop-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--cb-border);
+    border-radius: 10px;
+}
+.gpop-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    table-layout: fixed;
+}
+.gpop-table thead th {
+    background: var(--cb-navy); color: #fff; font-size: 10px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
+    padding: 8px 6px; border-right: 1px solid rgba(255,255,255,.08);
+    text-align: center; position: sticky; top: 0; z-index: 2;
+}
+.gpop-table thead th:first-child { text-align: left; padding-left: 12px; width: 30%; }
+.gpop-table tbody td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    font-weight: 500;
+    text-align: center;
+    vertical-align: middle;
+}
+.gpop-table tbody td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: var(--cb-navy);
+    padding-left: 12px;
+}
+.gpop-table tbody tr:hover td { background: #f0fdf9; }
 
-.score-pair { display:flex; flex-direction:column; gap:2px; }
-.score-cell-inner { display:flex; align-items:center; justify-content:center; gap:3px; padding:2px 4px; border-radius:4px; font-size:11px; font-weight:700; }
-.score-cell-inner.term { background:rgba(14,165,233,.08); border-left:2px solid #0ea5e9; }
-.score-cell-inner.cum  { background:rgba(15,35,66,.06);   border-left:2px solid var(--cb-navy); }
+.score-pair { display: flex; flex-direction: column; gap: 2px; }
+.score-cell-inner {
+    display: flex; align-items: center; justify-content: center;
+    gap: 3px; padding: 2px 4px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+}
+.score-cell-inner.term { background: rgba(14,165,233,.08); border-left: 2px solid #0ea5e9; }
+.score-cell-inner.cum  { background: rgba(15,35,66,.06); border-left: 2px solid var(--cb-navy); }
 
-.gpop-summary { background:linear-gradient(135deg,#f8fafc,#f0fdf9); border-radius:12px; padding:12px; margin-top:14px; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.gpop-sum-item { text-align:center; padding:10px 6px; border-radius:10px; background:white; transition:all .2s ease; border:1px solid #e2e8f0; }
-.gpop-sum-item:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.09); border-color:var(--cb-teal); }
-.gpop-sum-lbl { font-size:9px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; font-weight:600; line-height:1.4; }
-.gpop-sum-val { font-size:16px; font-weight:800; color:var(--cb-navy); }
-.gpop-sum-val.score-red   { color:#dc2626; }
-.gpop-sum-val.score-amber { color:#d97706; }
-.gpop-sum-val.score-green { color:#16a34a; }
+.gpop-summary {
+    background: linear-gradient(135deg,#f8fafc,#f0fdf9);
+    border-radius: 12px; padding: 12px; margin-top: 14px;
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 8px;
+}
+.gpop-sum-item {
+    text-align: center; padding: 8px 4px; border-radius: 10px;
+    background: white; transition: all .2s ease; border: 1px solid #e2e8f0;
+}
+.gpop-sum-item:hover {
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.09);
+    border-color: var(--cb-teal);
+}
+.gpop-sum-lbl {
+    font-size: 9px; color: var(--cb-muted); text-transform: uppercase;
+    letter-spacing: .4px; margin-bottom: 4px; font-weight: 600; line-height: 1.3;
+}
+.gpop-sum-val { font-size: 14px; font-weight: 800; color: var(--cb-navy); }
+.gpop-sum-val.score-red   { color: #dc2626; }
+.gpop-sum-val.score-amber { color: #d97706; }
+.gpop-sum-val.score-green { color: #16a34a; }
 
 /* ── Progress bars inside popup ── */
-.pct-bar-wrap { background:rgba(255,255,255,.15); border-radius:4px; height:6px; overflow:hidden; }
-.pct-bar { height:100%; border-radius:4px; background:#22c55e; transition:background .8s ease; animation:progressFill .8s ease both; }
+.pct-bar-wrap { background: rgba(255,255,255,.15); border-radius: 4px; height: 6px; overflow: hidden; }
+.pct-bar { height: 100%; border-radius: 4px; background: #22c55e; transition: background .8s ease; animation: progressFill .8s ease both; }
 
-#cbPopupBackdrop { display:none; position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.3); animation:backdropIn .2s ease; }
+#cbPopupBackdrop {
+    display: none; position: fixed; inset: 0; z-index: 99998;
+    background: rgba(0,0,0,.3); animation: backdropIn .2s ease;
+}
 
 /* ── Tooltips ── */
 [data-tooltip] { position:relative; cursor:pointer; }
@@ -658,12 +726,18 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <i class="ri-search-line"></i>
                 <input type="text" id="searchStudent" placeholder="Search name or admission no…">
             </div>
-            <select class="form-select form-select-sm" id="locateStudent" style="max-width:220px;border-radius:8px;border:1.5px solid var(--cb-border);font-size:12px;">
+            <select class="form-select form-select-sm" id="locateStudent" style="max-width:260px;border-radius:8px;border:1.5px solid var(--cb-border);font-size:12px;">
                 <option value="">🔍 Quick Locate…</option>
                 <option value="top5">🏆 Top 5 (by Cum)</option>
                 <option value="top10">⭐ Top 10</option>
                 <option value="failures">⚠️ Students with F9</option>
                 <option value="below_avg">📉 Below Class Average</option>
+                <option disabled>──────────</option>
+                <option value="promoted">✅ Promoted Students</option>
+                <option value="trial">⚠️ On Trial</option>
+                <option value="see_principal">👤 See Principal</option>
+                <option value="repeated">🔁 Repeat Students</option>
+                <option value="awaiting">⏳ Awaiting Decision</option>
                 <option disabled>──────────</option>
                 @foreach($studentRows as $student)
                     <option value="student_{{ $student['id'] }}">👤 {{ $student['lastname'] }}, {{ $student['firstname'] }} ({{ $student['admissionno'] }})</option>
@@ -887,7 +961,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     @if($showPromoRule)
                         <th style="background:#3b0764;color:#d8b4fe;min-width:100px;">Rule</th>
                     @endif
-                </tr>
+                </table>
             </thead>
             <tbody>
                 @foreach($studentRows as $idx => $stu)
@@ -1186,7 +1260,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         @if($showGPAGrade)   <td>—</td> @endif
                         @if($showNumSub)     <td>—</td> @endif
                         @if($showTotalGP)    <td>—</td> @endif
-                        {{-- Promotion stats cells (must match header count) --}}
                         @if($showPromoStatus) <td>—</td> @endif
                         @if($showPromoLabel)  <td>—</td> @endif
                         @if($showPromoRule)   <td>—</td> @endif
@@ -1329,7 +1402,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <div>
                 <div class="slist-section-title">
                     <i class="ri-drag-move-line"></i> Recommendation Order
-                    <span style="font-size:10px;font-weight:400;color:#64748b;">— drag to reorder</span>
+                    <span style="font-size:10px;font-weight:400;color:#64748b;">— drag to reorder, uncheck to exclude</span>
                 </div>
                 <ul class="promo-order-list" id="promoOrderList">
                     @php
@@ -1348,6 +1421,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             $label = ucfirst(str_replace('_', ' ', $so['key']));
                         @endphp
                         <li class="promo-order-item" data-status="{{ $so['key'] }}" draggable="true">
+                            <input type="checkbox" class="promo-group-checkbox" data-status="{{ $so['key'] }}" checked style="margin-right: 8px;">
                             <span class="drag-handle" title="Drag to reorder">⠿</span>
                             <span style="font-size:16px;">{{ $so['icon'] }}</span>
                             <span style="font-weight:600;color:{{ $so['text'] }};flex:1;">
@@ -1362,7 +1436,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 </ul>
                 <p style="font-size:11px;color:#94a3b8;margin-top:8px;">
                     <i class="ri-information-line me-1"></i>
-                    Groups with zero students will be omitted from the printed list.
+                    Groups with zero students or unchecked groups will be omitted from the printed list.
                 </p>
             </div>
         </div>
@@ -1514,7 +1588,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         '<td><div class="score-cell-inner cum" style="justify-content:center;"><span style="font-size:8px;opacity:.7;">C</span><span class="' + cC + '">' + cS + '</span></div></td>' +
                         '<td>' + grBadge + '</td>' +
                         '<td>' + subPos + '</td>' +
-                        '</table>';
+                        '</tr>';
             });
         } else {
             rows = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94a3b8;">No subject records</td></tr>';
@@ -1557,7 +1631,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             '<th style="width:14%;">Cum</th>' +
             '<th style="width:12%;">Grade</th>' +
             '<th style="width:26%;">Positions<br><small style="opacity:.65;font-weight:400;font-size:8px;">CC · CT · AC · AK</small></th>' +
-            '<tr></thead><tbody>' + rows + '</tbody></table>' +
+            '</tr></thead><tbody>' + rows + '</tbody></table>' +
             '</div>' +
             '<div class="gpop-summary">' +
             '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + termObtained.toFixed(1) + '</div></div>' +
@@ -1628,32 +1702,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         }
     }
 
-    function initLocate() {
-        var el = document.getElementById('locateStudent');
-        if (!el) return;
-        el.addEventListener('change', function () {
-            var val = this.value;
-            if (!val) return;
-            tableRows.forEach(function (r) { r.style.outline = ''; r.style.backgroundColor = ''; });
-            if (val === 'top5') { highlightTop(5); }
-            else if (val === 'top10') { highlightTop(10); }
-            else if (val === 'failures') { highlightFailures(); }
-            else if (val === 'below_avg') { highlightBelowAvg(); }
-            else if (val.indexOf('student_') === 0) {
-                var id = val.replace('student_', '');
-                var row = document.querySelector('tr[data-student-id="' + id + '"]');
-                if (row) {
-                    row.style.outline = '3px solid var(--cb-teal)';
-                    row.style.backgroundColor = '#f0fdf9';
-                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    toast('Located: ' + (row.getAttribute('data-student-name') || ''), 'success');
-                }
-            }
-            var self = this;
-            setTimeout(function () { self.value = ''; }, 200);
-        });
-    }
-
     function highlightTop(n) {
         var visible = tableRows.filter(function (r) { return r.style.display !== 'none'; });
         visible.sort(function (a, b) { return parseFloat(b.getAttribute('data-total-cum') || 0) - parseFloat(a.getAttribute('data-total-cum') || 0); });
@@ -1680,6 +1728,103 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         toast(c + ' student(s) below class average', 'info');
     }
 
+    function highlightPromoted() {
+        var c = 0;
+        tableRows.forEach(function (r) {
+            var status = r.querySelector('.promo-badge')?.textContent || '';
+            if (status.includes('Promoted')) {
+                r.style.backgroundColor = '#d1fae5';
+                r.style.outline = '2px solid #10b981';
+                c++;
+            }
+        });
+        toast(c + ' promoted student(s) highlighted', 'success');
+    }
+
+    function highlightTrial() {
+        var c = 0;
+        tableRows.forEach(function (r) {
+            var status = r.querySelector('.promo-badge')?.textContent || '';
+            if (status.includes('Trial')) {
+                r.style.backgroundColor = '#fef3c7';
+                r.style.outline = '2px solid #f59e0b';
+                c++;
+            }
+        });
+        toast(c + ' student(s) on trial highlighted', 'warning');
+    }
+
+    function highlightSeePrincipal() {
+        var c = 0;
+        tableRows.forEach(function (r) {
+            var status = r.querySelector('.promo-badge')?.textContent || '';
+            if (status.includes('See Principal') || status.includes('see_principal')) {
+                r.style.backgroundColor = '#dbeafe';
+                r.style.outline = '2px solid #3b82f6';
+                c++;
+            }
+        });
+        toast(c + ' student(s) to see principal highlighted', 'info');
+    }
+
+    function highlightRepeated() {
+        var c = 0;
+        tableRows.forEach(function (r) {
+            var status = r.querySelector('.promo-badge')?.textContent || '';
+            if (status.includes('Repeat')) {
+                r.style.backgroundColor = '#fee2e2';
+                r.style.outline = '2px solid #ef4444';
+                c++;
+            }
+        });
+        toast(c + ' repeat student(s) highlighted', 'error');
+    }
+
+    function highlightAwaiting() {
+        var c = 0;
+        tableRows.forEach(function (r) {
+            var status = r.querySelector('.promo-badge')?.textContent || '';
+            if (status.includes('Awaiting')) {
+                r.style.backgroundColor = '#f1f5f9';
+                r.style.outline = '2px solid #94a3b8';
+                c++;
+            }
+        });
+        toast(c + ' student(s) awaiting decision highlighted', 'info');
+    }
+
+    function initLocate() {
+        var el = document.getElementById('locateStudent');
+        if (!el) return;
+        el.addEventListener('change', function () {
+            var val = this.value;
+            if (!val) return;
+            tableRows.forEach(function (r) { r.style.outline = ''; r.style.backgroundColor = ''; });
+
+            if (val === 'top5') { highlightTop(5); }
+            else if (val === 'top10') { highlightTop(10); }
+            else if (val === 'failures') { highlightFailures(); }
+            else if (val === 'below_avg') { highlightBelowAvg(); }
+            else if (val === 'promoted') { highlightPromoted(); }
+            else if (val === 'trial') { highlightTrial(); }
+            else if (val === 'see_principal') { highlightSeePrincipal(); }
+            else if (val === 'repeated') { highlightRepeated(); }
+            else if (val === 'awaiting') { highlightAwaiting(); }
+            else if (val.indexOf('student_') === 0) {
+                var id = val.replace('student_', '');
+                var row = document.querySelector('tr[data-student-id="' + id + '"]');
+                if (row) {
+                    row.style.outline = '3px solid var(--cb-teal)';
+                    row.style.backgroundColor = '#f0fdf9';
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    toast('Located: ' + (row.getAttribute('data-student-name') || ''), 'success');
+                }
+            }
+            var self = this;
+            setTimeout(function () { self.value = ''; }, 200);
+        });
+    }
+
     window.scrollToTop = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
     window.closeSlistModal = function() { document.getElementById('slistModalOverlay').classList.remove('open'); };
     window.openStudentListModal = function() { document.getElementById('slistModalOverlay').classList.add('open'); };
@@ -1688,6 +1833,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (!btn) return;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Opening…';
+
         var fieldDivEl = document.getElementById('sf_fields');
         if (fieldDivEl) {
             fieldDivEl.innerHTML = '';
@@ -1699,25 +1845,32 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 fieldDivEl.appendChild(inp);
             });
         }
+
         var orderDivEl = document.getElementById('sf_order');
         if (orderDivEl) {
             orderDivEl.innerHTML = '';
             document.querySelectorAll('#promoOrderList .promo-order-item').forEach(function(item, i) {
-                var inp = document.createElement('input');
-                inp.type = 'hidden';
-                inp.name = 'recommendation_order[' + i + ']';
-                inp.value = item.getAttribute('data-status');
-                orderDivEl.appendChild(inp);
+                var checkbox = item.querySelector('.promo-group-checkbox');
+                if (checkbox && checkbox.checked) {
+                    var inp = document.createElement('input');
+                    inp.type = 'hidden';
+                    inp.name = 'recommendation_order[' + i + ']';
+                    inp.value = item.getAttribute('data-status');
+                    orderDivEl.appendChild(inp);
+                }
             });
         }
+
         var showPhotos = document.getElementById('slistShowPhotos');
         var showSn = document.getElementById('slistShowSn');
         var sfShowPhotos = document.getElementById('sf_show_photos');
         var sfShowSn = document.getElementById('sf_show_sn');
         if (sfShowPhotos) sfShowPhotos.value = (showPhotos && showPhotos.checked) ? '1' : '0';
         if (sfShowSn) sfShowSn.value = (showSn && showSn.checked) ? '1' : '0';
+
         var slistForm = document.getElementById('slistForm');
         if (slistForm) slistForm.submit();
+
         setTimeout(function() {
             btn.disabled = false;
             btn.innerHTML = '<i class="ri-file-list-line me-1"></i>Generate List';
