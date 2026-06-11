@@ -980,7 +980,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                     @endif
                                 </div>
                             </div>
-                        </tr>
+                        </td>
 
                         @if($showGender)
                             <td style="font-size:10px;">{{ substr($stu['gender']??'',0,1) }}</td>
@@ -1180,15 +1180,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             @if($showAvg)               <td>{{ $key==='avg' ? ($st['avg']??'—') : '—' }}</td> @endif
                             @if($showRemark)            <td>—</td> @endif
                         @endforeach
-                        <td>—</td>
-                        @if($showGPA)       <td>—</td> @endif
-                        @if($showCGPA)      <td>—</td> @endif
-                        @if($showGPAGrade)  <td>—</td> @endif
-                        @if($showNumSub)    <td>—</td> @endif
-                        @if($showTotalGP)   <td>—</td> @endif
-                        @if($showPromoStatus)  <td>—</td> @endif
-                        @if($showPromoLabel)   <td>—</td> @endif
-                        @if($showPromoRule)    <td>—</td> @endif
+                        <td>—</td> {{-- Analytics column --}}
+                        @if($showGPA)        <td>—</td> @endif
+                        @if($showCGPA)       <td>—</td> @endif
+                        @if($showGPAGrade)   <td>—</td> @endif
+                        @if($showNumSub)     <td>—</td> @endif
+                        @if($showTotalGP)    <td>—</td> @endif
+                        {{-- Promotion stats cells (must match header count) --}}
+                        @if($showPromoStatus) <td>—</td> @endif
+                        @if($showPromoLabel)  <td>—</td> @endif
+                        @if($showPromoRule)   <td>—</td> @endif
                     </tr>
                 @endforeach
             </tbody>
@@ -1513,7 +1514,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         '<td><div class="score-cell-inner cum" style="justify-content:center;"><span style="font-size:8px;opacity:.7;">C</span><span class="' + cC + '">' + cS + '</span></div></td>' +
                         '<td>' + grBadge + '</td>' +
                         '<td>' + subPos + '</td>' +
-                        '</tr>';
+                        '</table>';
             });
         } else {
             rows = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94a3b8;">No subject records</td></tr>';
@@ -1556,7 +1557,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             '<th style="width:14%;">Cum</th>' +
             '<th style="width:12%;">Grade</th>' +
             '<th style="width:26%;">Positions<br><small style="opacity:.65;font-weight:400;font-size:8px;">CC · CT · AC · AK</small></th>' +
-            '</table></thead><tbody>' + rows + '</tbody></table>' +
+            '<tr></thead><tbody>' + rows + '</tbody></table>' +
             '</div>' +
             '<div class="gpop-summary">' +
             '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + termObtained.toFixed(1) + '</div></div>' +
