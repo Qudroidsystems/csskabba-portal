@@ -11,16 +11,71 @@
 <title>Student Promotion List — {{ ($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arm_name ?? '') }}</title>
 <style>
 /* ═══════════════════════════════════════════════════════════
-   BASE
+   BASE & ANIMATIONS
 ═══════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+
+@keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(13,148,136,.4); }
+    50% { box-shadow: 0 0 0 8px rgba(13,148,136,0); }
+}
+
+@keyframes rowSlide {
+    from { opacity: 0; transform: translateX(-15px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes countUp {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
 body {
     font-family: 'Segoe UI', 'Arial', sans-serif;
     font-size: 13px;
-    background: #f1f5f9;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
     color: #0f2342;
     line-height: 1.5;
+    min-height: 100vh;
 }
 
 /* ── Print resets ── */
@@ -37,6 +92,15 @@ body {
         page-break-after: auto;
     }
     @page { margin: 1.4cm 1.2cm; }
+    .btn-print, .btn-pdf, .btn-close-tab, .btn-settings, .toolbar, .settings-panel {
+        display: none !important;
+    }
+    .student-table tbody tr {
+        animation: none !important;
+    }
+    .group-header {
+        animation: none !important;
+    }
 }
 
 /* Paper size overrides for print */
@@ -47,21 +111,15 @@ body {
 @media print and (size: Legal) { @page { size: Legal; } }
 @media print and (size: Letter) { @page { size: Letter; } }
 
-/* Portrait orientation */
-@media print and (orientation: portrait) {
-    @page { orientation: portrait; }
-}
-
-/* Landscape orientation */
-@media print and (orientation: landscape) {
-    @page { orientation: landscape; }
-}
+@media print and (orientation: portrait) { @page { orientation: portrait; } }
+@media print and (orientation: landscape) { @page { orientation: landscape; } }
 
 /* ── Layout ── */
 .page-wrap {
     max-width: 1400px;
     margin: 0 auto;
     padding: 24px 20px;
+    animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -69,79 +127,189 @@ body {
 ═══════════════════════════════════════════════════════════ */
 .school-header {
     background: linear-gradient(135deg, #0f2342 0%, #1e3a5f 55%, #0d9488 100%);
-    border-radius: 12px;
-    padding: 24px 28px;
-    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     color: white;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInDown 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.school-header::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: floatUp 6s ease-in-out infinite;
+}
+
+.school-header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: -40px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255,255,255,.05) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: floatUp 8s ease-in-out infinite reverse;
+}
+
+@keyframes floatUp {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 .school-logo {
-    width: 80px; height: 80px;
+    width: 85px;
+    height: 85px;
     border-radius: 50%;
     object-fit: contain;
-    border: 3px solid rgba(255,255,255,.35);
+    border: 3px solid rgba(255,255,255,.4);
     background: white;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+    animation: pulse 3s ease-in-out infinite;
+}
+
+.school-logo:hover {
+    transform: scale(1.05);
+    border-color: #0d9488;
 }
 
 .school-logo-placeholder {
-    width: 80px; height: 80px;
+    width: 85px;
+    height: 85px;
     border-radius: 50%;
     background: rgba(255,255,255,.15);
     border: 3px solid rgba(255,255,255,.35);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 800; color: white; flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
 }
 
 .school-info { flex: 1; text-align: center; }
-.school-name    { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; line-height: 1.2; }
-.school-address { font-size: 11.5px; opacity: .8; margin-top: 4px; }
-.school-motto   { font-size: 11px; font-style: italic; opacity: .7; margin-top: 3px; }
+.school-name {
+    font-size: 22px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.1s;
+}
+.school-address {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 6px;
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.2s;
+}
+.school-motto {
+    font-size: 11.5px;
+    font-style: italic;
+    opacity: 0.7;
+    margin-top: 4px;
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.3s;
+}
 
 .list-title-bar {
-    background: #0f2342;
+    background: linear-gradient(135deg, #0f2342, #1e4a7e);
     color: white;
     text-align: center;
-    padding: 10px 20px;
-    font-size: 15px;
+    padding: 12px 24px;
+    font-size: 16px;
     font-weight: 700;
-    letter-spacing: 1.5px;
-    border-radius: 8px;
-    margin-bottom: 16px;
+    letter-spacing: 2px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.15s;
+}
+
+.list-title-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 /* ── Meta strip ── */
 .meta-strip {
     display: flex;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f8fafc;
-    margin-bottom: 18px;
+    border-radius: 12px;
+    background: white;
+    margin-bottom: 24px;
     overflow: hidden;
     flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.2s;
 }
 
 .meta-cell {
     flex: 1;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-right: 1px solid #e2e8f0;
     text-align: center;
     min-width: 100px;
+    transition: all 0.3s ease;
 }
 .meta-cell:last-child { border-right: none; }
-.meta-label { font-size: 9.5px; color: #64748b; text-transform: uppercase; letter-spacing: .4px; display: block; }
-.meta-value { font-size: 13px; font-weight: 700; color: #0f2342; display: block; margin-top: 2px; }
+.meta-cell:hover {
+    background: #f0fdf9;
+    transform: translateY(-2px);
+}
+
+.meta-label {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+}
+.meta-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f2342;
+    display: block;
+    margin-top: 4px;
+}
 
 /* ═══════════════════════════════════════════════════════════
    PROMOTION GROUP HEADER
 ═══════════════════════════════════════════════════════════ */
 .group-section {
-    margin-bottom: 28px;
+    margin-bottom: 32px;
     page-break-after: always;
     page-break-inside: avoid;
+    animation: fadeInUp 0.5s ease both;
 }
 .group-section:last-child {
     page-break-after: auto;
@@ -151,36 +319,71 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 16px;
-    border-radius: 8px 8px 0 0;
+    padding: 12px 20px;
+    border-radius: 12px 12px 0 0;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 15px;
     border-bottom: 2px solid rgba(0,0,0,.08);
+    transition: all 0.3s ease;
+    animation: slideIn 0.4s ease both;
+}
+
+.group-header:hover {
+    transform: translateX(5px);
 }
 
 .group-header .count-badge {
     margin-left: auto;
-    padding: 3px 12px;
-    border-radius: 20px;
+    padding: 4px 14px;
+    border-radius: 30px;
     font-size: 12px;
     font-weight: 700;
-    background: rgba(255,255,255,.3);
+    background: rgba(255,255,255,.4);
+    transition: all 0.3s ease;
 }
 
-/* Status colours */
-.status-promoted      { background: linear-gradient(90deg, #d1fae5, #ecfdf5); color: #065f46; border-left: 5px solid #10b981; }
-.status-trial         { background: linear-gradient(90deg, #fef3c7, #fffbeb); color: #92400e; border-left: 5px solid #f59e0b; }
-.status-see_principal { background: linear-gradient(90deg, #dbeafe, #eff6ff); color: #1e40af; border-left: 5px solid #3b82f6; }
-.status-repeated      { background: linear-gradient(90deg, #fee2e2, #fff1f2); color: #991b1b; border-left: 5px solid #ef4444; }
-.status-awaiting      { background: linear-gradient(90deg, #f1f5f9, #f8fafc);  color: #475569; border-left: 5px solid #94a3b8; }
-.status-other         { background: linear-gradient(90deg, #f5f3ff, #ede9fe);  color: #5b21b6; border-left: 5px solid #7c3aed; }
+.group-header:hover .count-badge {
+    transform: scale(1.05);
+}
+
+/* Status colours with animations */
+.status-promoted {
+    background: linear-gradient(90deg, #d1fae5, #ecfdf5);
+    color: #065f46;
+    border-left: 5px solid #10b981;
+}
+.status-trial {
+    background: linear-gradient(90deg, #fef3c7, #fffbeb);
+    color: #92400e;
+    border-left: 5px solid #f59e0b;
+}
+.status-see_principal {
+    background: linear-gradient(90deg, #dbeafe, #eff6ff);
+    color: #1e40af;
+    border-left: 5px solid #3b82f6;
+}
+.status-repeated {
+    background: linear-gradient(90deg, #fee2e2, #fff1f2);
+    color: #991b1b;
+    border-left: 5px solid #ef4444;
+}
+.status-awaiting {
+    background: linear-gradient(90deg, #f1f5f9, #f8fafc);
+    color: #475569;
+    border-left: 5px solid #94a3b8;
+}
+.status-other {
+    background: linear-gradient(90deg, #f5f3ff, #ede9fe);
+    color: #5b21b6;
+    border-left: 5px solid #7c3aed;
+}
 
 /* ═══════════════════════════════════════════════════════════
-   STUDENT TABLE - Responsive with horizontal scroll
+   STUDENT TABLE
 ═══════════════════════════════════════════════════════════ */
 .table-responsive-wrapper {
     overflow-x: auto;
-    border-radius: 0 0 8px 8px;
+    border-radius: 0 0 12px 12px;
 }
 
 .student-table {
@@ -194,162 +397,359 @@ body {
 }
 
 .student-table thead th {
-    background: #1e3a5f;
+    background: linear-gradient(135deg, #1e3a5f, #0f2342);
     color: #a8d4ef;
-    padding: 10px 12px;
+    padding: 12px 14px;
     text-align: left;
     font-weight: 600;
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: .4px;
-    border-right: 1px solid rgba(255,255,255,.07);
+    letter-spacing: 0.5px;
+    border-right: 1px solid rgba(255,255,255,.1);
     white-space: nowrap;
+    position: sticky;
+    top: 0;
 }
 .student-table thead th:last-child { border-right: none; }
 
+.student-table tbody tr {
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: rowSlide 0.4s ease both;
+}
 .student-table tbody tr:nth-child(odd)  { background: #ffffff; }
 .student-table tbody tr:nth-child(even) { background: #f8fafc; }
-.student-table tbody tr:hover           { background: #f0f9ff !important; }
+.student-table tbody tr:hover {
+    background: linear-gradient(90deg, #f0fdf9, #e8f0fe) !important;
+    transform: translateX(4px);
+    box-shadow: -4px 0 0 #0d9488;
+}
 
 .student-table tbody td {
-    padding: 10px 12px;
+    padding: 10px 14px;
     border-bottom: 1px solid #e2e8f0;
     border-right: 1px solid #f1f5f9;
     vertical-align: middle;
     white-space: nowrap;
+    transition: all 0.2s ease;
 }
-.student-table tbody td:last-child          { border-right: none; }
-.student-table tbody tr:last-child td       { border-bottom: none; }
+.student-table tbody td:last-child { border-right: none; }
+.student-table tbody tr:last-child td { border-bottom: none; }
 
-td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; font-weight: 600; }
+td.sn-cell {
+    width: 40px;
+    text-align: center;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    background: linear-gradient(135deg, #f8fafc, #fff);
+}
 
 /* Avatar */
 .student-avatar {
-    width: 34px; height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #e2e8f0;
     flex-shrink: 0;
+    transition: all 0.3s ease;
 }
+.student-avatar:hover {
+    transform: scale(1.1);
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13,148,136,.2);
+}
+
 .avatar-initials {
-    width: 34px; height: 34px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, #0d9488, #0ea5e9);
     color: white;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+.avatar-initials:hover {
+    transform: scale(1.1);
+    animation: glowPulse 0.8s ease infinite;
 }
 
-.name-cell   { font-weight: 600; color: #0f2342; }
-.adm-cell    { font-family: 'Courier New', monospace; font-size: 11px; color: #475569; }
+.name-cell {
+    font-weight: 600;
+    color: #0f2342;
+    transition: color 0.3s ease;
+}
+.name-cell:hover {
+    color: #0d9488;
+}
+
+.adm-cell {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #475569;
+    letter-spacing: 0.5px;
+}
 .gender-cell { text-align: center; font-size: 11px; }
-.arm-cell    { font-size: 11px; color: #0f2342; }
+.arm-cell {
+    font-size: 11px;
+    color: #0f2342;
+    font-weight: 500;
+}
 
 /* ── Summary footer ── */
 .summary-footer {
     background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-top: 24px;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-top: 28px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.05);
+    animation: fadeInUp 0.5s ease both;
+    animation-delay: 0.3s;
 }
-.summary-footer h4 { font-size: 14px; font-weight: 700; color: #0f2342; margin-bottom: 14px; }
+.summary-footer h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f2342;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 .summary-grid { display: flex; gap: 12px; flex-wrap: wrap; }
-.summary-item { flex: 1; min-width: 120px; text-align: center; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
-.summary-count { font-size: 26px; font-weight: 800; display: block; }
-.summary-lbl   { font-size: 11px; font-weight: 600; display: block; margin-top: 4px; }
+.summary-item {
+    flex: 1;
+    min-width: 110px;
+    text-align: center;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: scaleIn 0.4s ease both;
+}
+.summary-item:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0,0,0,.1);
+}
+.summary-count {
+    font-size: 28px;
+    font-weight: 800;
+    display: block;
+    animation: countUp 0.6s ease both;
+}
+.summary-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    display: block;
+    margin-top: 6px;
+}
 
 /* ── No-print toolbar ── */
 .toolbar {
     background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 14px 20px;
-    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    box-shadow: 0 4px 12px rgba(0,0,0,.07);
+    animation: fadeInUp 0.5s ease both;
 }
 
-.toolbar-title   { font-size: 15px; font-weight: 700; color: #0f2342; display: flex; align-items: center; gap: 8px; }
-.toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.toolbar-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f2342;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.toolbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .btn-print, .btn-pdf {
     background: linear-gradient(135deg, #0f2342, #1e3a5f);
-    color: white; border: none; border-radius: 8px;
-    padding: 9px 20px; font-size: 13px; font-weight: 600;
-    cursor: pointer; display: flex; align-items: center; gap: 8px;
-    transition: all .2s ease;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+    overflow: hidden;
 }
+.btn-print::before, .btn-pdf::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+.btn-print:hover::before, .btn-pdf:hover::before {
+    width: 200px;
+    height: 200px;
+}
+
 .btn-pdf {
     background: linear-gradient(135deg, #dc2626, #ef4444);
 }
-.btn-print:hover, .btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,35,66,.3); }
+.btn-print:hover, .btn-pdf:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.2);
+}
 
 .btn-close-tab {
-    background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
-    border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600;
-    cursor: pointer; display: flex; align-items: center; gap: 7px;
-    text-decoration: none; transition: all .2s ease;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
 }
-.btn-close-tab:hover { background: #e2e8f0; }
+.btn-close-tab:hover {
+    background: #e2e8f0;
+    transform: translateY(-2px);
+}
 
 /* Settings panel */
 .settings-panel {
-    background: #f8fafc;
+    background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
     display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    animation: scaleIn 0.3s ease;
 }
 .settings-panel.open { display: block; }
-.settings-panel h4 { font-size: 13px; font-weight: 700; color: #0f2342; margin-bottom: 12px; }
-.settings-group { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
-.settings-group label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.settings-group select, .settings-group input { padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
-.btn-settings {
-    background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
-    border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600;
-    cursor: pointer; display: flex; align-items: center; gap: 7px;
+.settings-panel h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f2342;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.btn-settings.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+.settings-group { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+.settings-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.settings-group label:hover {
+    color: #0d9488;
+}
+.settings-group select, .settings-group input {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.settings-group select:hover, .settings-group input:hover {
+    border-color: #0d9488;
+}
+.settings-group select:focus, .settings-group input:focus {
+    outline: none;
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13,148,136,.1);
+}
+
+.btn-settings {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+.btn-settings:hover {
+    background: #e2e8f0;
+    transform: translateY(-2px);
+}
+.btn-settings.active {
+    background: #7c3aed;
+    color: white;
+    border-color: #7c3aed;
+}
 
 /* Column checkboxes grid */
 .columns-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 8px;
-    margin-top: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
 }
 .columns-grid label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-size: 12px;
-    padding: 6px 10px;
+    padding: 8px 12px;
     background: white;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.columns-grid label:hover {
+    background: #f0fdf9;
+    border-color: #0d9488;
+    transform: translateX(4px);
+}
+.columns-grid input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #7c3aed;
     cursor: pointer;
 }
-.columns-grid label:hover { background: #f0fdf9; border-color: #0d9488; }
 
 /* ── Generated at line ── */
 .generated-line {
     text-align: center;
     font-size: 10.5px;
     color: #94a3b8;
-    margin-top: 20px;
-    padding-top: 14px;
+    margin-top: 24px;
+    padding-top: 16px;
     border-top: 1px dashed #e2e8f0;
+    animation: fadeInUp 0.5s ease both;
 }
 
 /* Loading overlay for PDF generation */
@@ -359,27 +759,42 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,.8);
+    background: rgba(0,0,0,.85);
     z-index: 99999;
     display: none;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     color: white;
+    backdrop-filter: blur(4px);
 }
 .pdf-loading.active { display: flex; }
 .pdf-loading .spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid rgba(255,255,255,.3);
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255,255,255,.2);
     border-top-color: white;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
-@keyframes spin {
-    to { transform: rotate(360deg); }
+.pdf-loading p {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
+
+/* Animations delay for rows */
+.student-table tbody tr:nth-child(1) { animation-delay: 0.02s; }
+.student-table tbody tr:nth-child(2) { animation-delay: 0.04s; }
+.student-table tbody tr:nth-child(3) { animation-delay: 0.06s; }
+.student-table tbody tr:nth-child(4) { animation-delay: 0.08s; }
+.student-table tbody tr:nth-child(5) { animation-delay: 0.10s; }
+.student-table tbody tr:nth-child(6) { animation-delay: 0.12s; }
+.student-table tbody tr:nth-child(7) { animation-delay: 0.14s; }
+.student-table tbody tr:nth-child(8) { animation-delay: 0.16s; }
+.student-table tbody tr:nth-child(9) { animation-delay: 0.18s; }
+.student-table tbody tr:nth-child(10) { animation-delay: 0.20s; }
 </style>
 </head>
 <body>
@@ -388,13 +803,13 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     {{-- PDF Loading Overlay --}}
     <div id="pdfLoading" class="pdf-loading">
         <div class="spinner"></div>
-        <div>Generating PDF, please wait...</div>
+        <p>Generating PDF, please wait...</p>
     </div>
 
     {{-- ── TOOLBAR (no-print) ── --}}
     <div class="toolbar no-print">
         <div class="toolbar-title">
-            <span style="font-size:20px;">📋</span>
+            <span style="font-size:22px;">📋</span>
             Promotion Student List
             <span style="font-size:12px;font-weight:400;color:#64748b;">
                 — {{ ($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arm_name ?? '') }}
@@ -438,7 +853,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
 
     {{-- ── SETTINGS PANEL ── --}}
     <div id="settingsPanel" class="settings-panel no-print">
-        <h4>⚙️ Print & Display Settings</h4>
+        <h4><span>⚙️</span> Print & Display Settings</h4>
 
         <div class="settings-group">
             <label>
@@ -480,7 +895,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
         </div>
 
         <div>
-            <h4 style="font-size:12px; margin-bottom:8px;">📋 Columns to Display:</h4>
+            <h4 style="font-size:12px; margin-bottom:10px;">📋 Columns to Display:</h4>
             <div class="columns-grid" id="columnsGrid">
                 @php
                 $columnOptions = [
@@ -507,8 +922,8 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
             </div>
         </div>
 
-        <div class="settings-group" style="margin-top: 15px;">
-            <button class="btn-print" onclick="applySettingsAndRefresh()" style="padding: 6px 16px; background: #7c3aed;">
+        <div class="settings-group" style="margin-top: 20px;">
+            <button class="btn-print" onclick="applySettingsAndRefresh()" style="padding: 8px 20px; background: #7c3aed;">
                 Apply Settings & Refresh
             </button>
         </div>
@@ -563,7 +978,6 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     </div>
 
     @php
-    /* ── Field display label map ── */
     $allFields = [
         'admissionno'   => 'Admission No',
         'firstname'     => 'First Name',
@@ -578,17 +992,15 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
         'gpa'           => 'GPA',
     ];
 
-    /* ── Status meta (fallback labels / icons / CSS classes) ── */
     $statusMeta = [
-        'promoted'      => ['label' => 'Promoted',            'icon' => '✅', 'class' => 'status-promoted'],
-        'trial'         => ['label' => 'Promoted on Trial',   'icon' => '⚠️', 'class' => 'status-trial'],
-        'see_principal' => ['label' => 'See Principal',       'icon' => '👤', 'class' => 'status-see_principal'],
-        'repeated'      => ['label' => 'Repeat',              'icon' => '🔁', 'class' => 'status-repeated'],
-        'awaiting'      => ['label' => 'Awaiting Decision',   'icon' => '⏳', 'class' => 'status-awaiting'],
-        '__other'       => ['label' => 'Other',               'icon' => '📌', 'class' => 'status-other'],
+        'promoted'      => ['label' => 'Promoted', 'icon' => '✅', 'class' => 'status-promoted'],
+        'trial'         => ['label' => 'Promoted on Trial', 'icon' => '⚠️', 'class' => 'status-trial'],
+        'see_principal' => ['label' => 'Advised to See Principal', 'icon' => '👤', 'class' => 'status-see_principal'],
+        'repeated'      => ['label' => 'Advice to Repeat', 'icon' => '🔁', 'class' => 'status-repeated'],
+        'awaiting'      => ['label' => 'Awaiting Decision', 'icon' => '⏳', 'class' => 'status-awaiting'],
+        '__other'       => ['label' => 'Other', 'icon' => '📌', 'class' => 'status-other'],
     ];
 
-    /* ── Ordinal helper ── */
     function listOrdinal($n) {
         if (!$n) return '—';
         $n = (int)$n;
@@ -600,23 +1012,21 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     $globalSn = 0;
     @endphp
 
-    {{-- ══════════════════════════════════════════════════════════
-         GROUPED STUDENT SECTIONS
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- Grouped student sections --}}
     <div id="studentListContent">
         @foreach($grouped_students as $statusKey => $students)
             @php
                 $meta = $statusMeta[$statusKey] ?? $statusMeta['__other'];
                 $groupLabel = $students[0]['promotion_label'] ?? $meta['label'];
                 $groupCount = count($students);
-                $hasArm = !empty($students[0]['arm']);
+                $hasArm = !empty($students[0]['arm']) && $students[0]['arm'] !== '—';
             @endphp
             <div class="group-section" data-status="{{ $statusKey }}">
                 <div class="group-header {{ $meta['class'] }}">
-                    <span style="font-size:18px;">{{ $meta['icon'] }}</span>
+                    <span style="font-size:20px;">{{ $meta['icon'] }}</span>
                     <span>{{ $groupLabel }}</span>
                     @if($hasArm)
-                        <span style="font-size:12px; font-weight:normal; margin-left:8px;">
+                        <span style="font-size:12px; font-weight:normal; margin-left:8px; background:rgba(0,0,0,.05); padding:2px 10px; border-radius:20px;">
                             📍 Arm: {{ $students[0]['arm'] }}
                         </span>
                     @endif
@@ -628,13 +1038,12 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                         <thead>
                             <tr>
                                 @if($show_sn)
-                                    <th style="width:40px;text-align:center;">#</th>
+                                    <th style="width:45px;text-align:center;">#</th>
                                 @endif
                                 @if($show_photos)
-                                    <th style="width:44px;"></th>
+                                    <th style="width:50px;"></th>
                                 @endif
 
-                                {{-- Name columns header ── handle combined vs separate --}}
                                 @if(in_array('firstname', $list_fields) && in_array('lastname', $list_fields))
                                     <th>Student Name</th>
                                 @elseif(in_array('firstname', $list_fields))
@@ -643,7 +1052,6 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                                     <th>Last Name</th>
                                 @endif
 
-                                {{-- All other fields --}}
                                 @foreach($list_fields as $field)
                                     @if(in_array($field, ['firstname','lastname','name'])) @continue @endif
                                     @if(isset($allFields[$field]))
@@ -666,7 +1074,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                                     @endif
 
                                     @if($show_photos)
-                                        <td style="padding:6px 10px;width:44px;">
+                                        <td style="padding:6px 10px;width:50px;">
                                             @if($imgSrc)
                                                 <img src="{{ $imgSrc }}" class="student-avatar" alt="{{ $stu['firstname'] }}"
                                                      onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'">
@@ -677,68 +1085,53 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                                         </td>
                                     @endif
 
-                                    {{-- Name column(s) ── always render name first --}}
                                     @if(in_array('firstname', $list_fields) && in_array('lastname', $list_fields))
                                         <td class="name-cell">
                                             {{ strtoupper($stu['lastname'] ?? '') }}, {{ $stu['firstname'] ?? '' }}
-                                            @if(!empty($stu['arm']) && !in_array('arm', $list_fields))
-                                                <span style="font-size:10px; color:#64748b; margin-left:8px;">[{{ $stu['arm'] }}]</span>
+                                            @if(!empty($stu['arm']) && $stu['arm'] !== '—' && !in_array('arm', $list_fields))
+                                                <span style="font-size:10px; color:#64748b; margin-left:8px; background:#f1f5f9; padding:2px 8px; border-radius:12px;">{{ $stu['arm'] }}</span>
                                             @endif
-                                        </td>
+                                         </td>
                                     @elseif(in_array('firstname', $list_fields))
                                         <td class="name-cell">
                                             {{ $stu['firstname'] ?? '' }}
-                                            @if(!empty($stu['arm']) && !in_array('arm', $list_fields))
-                                                <span style="font-size:10px; color:#64748b; margin-left:8px;">[{{ $stu['arm'] }}]</span>
+                                            @if(!empty($stu['arm']) && $stu['arm'] !== '—' && !in_array('arm', $list_fields))
+                                                <span style="font-size:10px; color:#64748b; margin-left:8px; background:#f1f5f9; padding:2px 8px; border-radius:12px;">{{ $stu['arm'] }}</span>
                                             @endif
-                                        </td>
+                                         </td>
                                     @elseif(in_array('lastname', $list_fields))
                                         <td class="name-cell">
                                             {{ strtoupper($stu['lastname'] ?? '') }}
-                                            @if(!empty($stu['arm']) && !in_array('arm', $list_fields))
-                                                <span style="font-size:10px; color:#64748b; margin-left:8px;">[{{ $stu['arm'] }}]</span>
+                                            @if(!empty($stu['arm']) && $stu['arm'] !== '—' && !in_array('arm', $list_fields))
+                                                <span style="font-size:10px; color:#64748b; margin-left:8px; background:#f1f5f9; padding:2px 8px; border-radius:12px;">{{ $stu['arm'] }}</span>
                                             @endif
-                                        </td>
+                                         </td>
                                     @endif
 
-                                    {{-- All other selected fields --}}
                                     @foreach($list_fields as $field)
                                         @if(in_array($field, ['firstname','lastname','name'])) @continue @endif
 
                                         @if($field === 'admissionno')
                                             <td class="adm-cell">{{ $stu['admissionno'] ?? '—' }}</td>
-
                                         @elseif($field === 'gender')
                                             <td class="gender-cell">{{ $stu['gender'] ?? '—' }}</td>
-
                                         @elseif($field === 'dateofbirth')
                                             <td>{{ !empty($stu['dateofbirth']) ? \Carbon\Carbon::parse($stu['dateofbirth'])->format('d M Y') : '—' }}</td>
-
                                         @elseif($field === 'arm')
                                             <td class="arm-cell">{{ $stu['arm'] ?: '—' }}</td>
-
                                         @elseif($field === 'total_cum')
                                             <td style="text-align:center;font-weight:700;">{{ $stu['total_cum'] ?? '—' }}</td>
-
                                         @elseif($field === 'total_term')
                                             <td style="text-align:center;font-weight:700;">{{ $stu['total_term'] ?? '—' }}</td>
-
                                         @elseif($field === 'position_cum')
-                                            <td style="text-align:center;font-weight:700;color:#1e40af;">
-                                                {{ listOrdinal($stu['position_cum'] ?? null) }}
-                                            </td>
-
+                                            <td style="text-align:center;font-weight:700;color:#1e40af;">{{ listOrdinal($stu['position_cum'] ?? null) }}</td>
                                         @elseif($field === 'position_term')
-                                            <td style="text-align:center;font-weight:700;color:#92400e;">
-                                                {{ listOrdinal($stu['position_term'] ?? null) }}
-                                            </td>
-
+                                            <td style="text-align:center;font-weight:700;color:#92400e;">{{ listOrdinal($stu['position_term'] ?? null) }}</td>
                                         @elseif($field === 'gpa')
                                             <td style="text-align:center;">{{ number_format($stu['gpa'] ?? 0, 2) }}</td>
-
                                         @endif
                                     @endforeach
-                                </td>
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -747,9 +1140,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
         @endforeach
     </div>
 
-    {{-- ══════════════════════════════════════════════════════════
-         SUMMARY FOOTER
-    ══════════════════════════════════════════════════════════ --}}
+    {{-- Summary footer --}}
     @php
         $summaryGroups = [];
         foreach($grouped_students as $statusKey => $students) {
@@ -776,7 +1167,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
         }
     @endphp
     <div class="summary-footer">
-        <h4>📊 Summary by Recommendation</h4>
+        <h4><span>📊</span> Summary by Recommendation</h4>
         <div class="summary-grid">
             @foreach($summaryGroups as $sg)
                 <div class="summary-item" style="background:{{ $sg['bgColor'] }};border-color:{{ $sg['bgColor'] }};">
@@ -784,9 +1175,9 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                     <span class="summary-lbl" style="color:{{ $sg['textColor'] }};">{{ $sg['label'] }}</span>
                 </div>
             @endforeach
-            <div class="summary-item" style="background:#0f2342;border-color:#0f2342;">
+            <div class="summary-item" style="background:linear-gradient(135deg,#0f2342,#1e3a5f);border-color:#0f2342;">
                 <span class="summary-count" style="color:white;">{{ $totalStudents }}</span>
-                <span class="summary-lbl" style="color:rgba(255,255,255,.75);">Total Students</span>
+                <span class="summary-lbl" style="color:rgba(255,255,255,.8);">Total Students</span>
             </div>
         </div>
     </div>
@@ -811,7 +1202,7 @@ function toggleSettings() {
 
 // Apply page break based on setting
 function applyPageBreaks() {
-    var newPagePerGroup = localStorage.getItem('new_page_per_group') || 'yes';
+    var newPagePerGroup = localStorage.getItem('new_page_per_group') || document.getElementById('newPagePerGroup')?.value || 'yes';
     var groups = document.querySelectorAll('.group-section');
 
     groups.forEach(function(group, index) {
@@ -855,20 +1246,18 @@ function printStudentList() {
 
     setTimeout(function() {
         document.head.removeChild(style);
-        // Reset page breaks
         groups.forEach(function(group) {
             group.style.pageBreakAfter = '';
         });
     }, 100);
 }
 
-// Export to PDF using browser print with PDF target
+// Export to PDF
 function exportToPDF() {
     var orientation = document.getElementById('printOrientation').value;
     var paperSize = document.getElementById('paperSize').value;
     var newPagePerGroup = document.getElementById('newPagePerGroup').value;
 
-    // Apply page breaks
     var groups = document.querySelectorAll('.group-section');
     groups.forEach(function(group, index) {
         if (newPagePerGroup === 'yes') {
@@ -894,7 +1283,6 @@ function exportToPDF() {
         loading.classList.remove('active');
         setTimeout(function() {
             if (style.parentNode) document.head.removeChild(style);
-            // Reset page breaks
             groups.forEach(function(group) {
                 group.style.pageBreakAfter = '';
             });
@@ -902,7 +1290,7 @@ function exportToPDF() {
     }, 500);
 }
 
-// Apply settings and refresh page with new column selection
+// Apply settings and refresh
 function applySettingsAndRefresh() {
     var selectedColumns = [];
     document.querySelectorAll('.column-checkbox:checked').forEach(function(cb) {
@@ -915,7 +1303,6 @@ function applySettingsAndRefresh() {
     var paperSize = document.getElementById('paperSize').value;
     var newPagePerGroup = document.getElementById('newPagePerGroup').value;
 
-    // Store preferences
     localStorage.setItem('student_list_columns', JSON.stringify(selectedColumns));
     localStorage.setItem('student_list_show_photos', showPhotos);
     localStorage.setItem('student_list_show_sn', showSn);
@@ -923,14 +1310,12 @@ function applySettingsAndRefresh() {
     localStorage.setItem('student_list_paper_size', paperSize);
     localStorage.setItem('new_page_per_group', newPagePerGroup);
 
-    // Build URL with parameters
     var url = window.location.pathname;
     var params = new URLSearchParams();
     params.set('list_fields', selectedColumns.join(','));
     params.set('show_photos', showPhotos ? '1' : '0');
     params.set('show_sn', showSn ? '1' : '0');
 
-    // Also preserve existing parameters
     var existingParams = new URLSearchParams(window.location.search);
     for (var pair of existingParams.entries()) {
         if (!params.has(pair[0]) && pair[0] !== 'list_fields' && pair[0] !== 'show_photos' && pair[0] !== 'show_sn') {
@@ -941,7 +1326,7 @@ function applySettingsAndRefresh() {
     window.location.href = url + '?' + params.toString();
 }
 
-// Load saved preferences on page load
+// Load saved preferences
 document.addEventListener('DOMContentLoaded', function() {
     var savedColumns = localStorage.getItem('student_list_columns');
     if (savedColumns) {
@@ -976,11 +1361,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('newPagePerGroup').value = savedNewPage;
     }
 
-    // Apply page breaks based on saved setting
     applyPageBreaks();
 });
 
-// Prevent Settings panel from printing
 window.onbeforeprint = function() {
     var panel = document.getElementById('settingsPanel');
     if (panel && panel.classList.contains('open')) {
