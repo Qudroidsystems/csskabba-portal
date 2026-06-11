@@ -1,3 +1,8 @@
+{{--
+    resources/views/broadsheet/student_list.blade.php
+    Standalone printable student list grouped by promotion recommendation.
+    Opened in a new tab via POST from the broadsheet web view.
+--}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +10,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Promotion List — {{ ($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arm_name ?? '') }}</title>
 <style>
+/* ═══════════════════════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -15,6 +23,7 @@ body {
     line-height: 1.5;
 }
 
+/* ── Print resets ── */
 @media print {
     body { background: #fff !important; font-size: 11px; }
     .no-print { display: none !important; }
@@ -24,12 +33,16 @@ body {
     @page { margin: 1.4cm 1.2cm; }
 }
 
+/* ── Layout ── */
 .page-wrap {
     max-width: 960px;
     margin: 0 auto;
     padding: 24px 20px;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   SCHOOL HEADER
+═══════════════════════════════════════════════════════════ */
 .school-header {
     background: linear-gradient(135deg, #0f2342 0%, #1e3a5f 55%, #0d9488 100%);
     border-radius: 12px;
@@ -60,9 +73,9 @@ body {
 }
 
 .school-info { flex: 1; text-align: center; }
-.school-name { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; line-height: 1.2; }
+.school-name    { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; line-height: 1.2; }
 .school-address { font-size: 11.5px; opacity: .8; margin-top: 4px; }
-.school-motto { font-size: 11px; font-style: italic; opacity: .7; margin-top: 3px; }
+.school-motto   { font-size: 11px; font-style: italic; opacity: .7; margin-top: 3px; }
 
 .list-title-bar {
     background: #0f2342;
@@ -76,6 +89,7 @@ body {
     margin-bottom: 16px;
 }
 
+/* ── Meta strip ── */
 .meta-strip {
     display: flex;
     border: 1px solid #e2e8f0;
@@ -90,6 +104,9 @@ body {
 .meta-label { font-size: 9.5px; color: #64748b; text-transform: uppercase; letter-spacing: .4px; display: block; }
 .meta-value { font-size: 13px; font-weight: 700; color: #0f2342; display: block; margin-top: 2px; }
 
+/* ═══════════════════════════════════════════════════════════
+   PROMOTION GROUP HEADER
+═══════════════════════════════════════════════════════════ */
 .group-section { margin-bottom: 28px; }
 
 .group-header {
@@ -112,13 +129,17 @@ body {
     background: rgba(255,255,255,.3);
 }
 
-.status-promoted { background: linear-gradient(90deg, #d1fae5, #ecfdf5); color: #065f46; border-left: 5px solid #10b981; }
-.status-trial { background: linear-gradient(90deg, #fef3c7, #fffbeb); color: #92400e; border-left: 5px solid #f59e0b; }
+/* Status colours */
+.status-promoted      { background: linear-gradient(90deg, #d1fae5, #ecfdf5); color: #065f46; border-left: 5px solid #10b981; }
+.status-trial         { background: linear-gradient(90deg, #fef3c7, #fffbeb); color: #92400e; border-left: 5px solid #f59e0b; }
 .status-see_principal { background: linear-gradient(90deg, #dbeafe, #eff6ff); color: #1e40af; border-left: 5px solid #3b82f6; }
-.status-repeated { background: linear-gradient(90deg, #fee2e2, #fff1f2); color: #991b1b; border-left: 5px solid #ef4444; }
-.status-awaiting { background: linear-gradient(90deg, #f1f5f9, #f8fafc); color: #475569; border-left: 5px solid #94a3b8; }
-.status-other { background: linear-gradient(90deg, #f5f3ff, #ede9fe); color: #5b21b6; border-left: 5px solid #7c3aed; }
+.status-repeated      { background: linear-gradient(90deg, #fee2e2, #fff1f2); color: #991b1b; border-left: 5px solid #ef4444; }
+.status-awaiting      { background: linear-gradient(90deg, #f1f5f9, #f8fafc);  color: #475569; border-left: 5px solid #94a3b8; }
+.status-other         { background: linear-gradient(90deg, #f5f3ff, #ede9fe);  color: #5b21b6; border-left: 5px solid #7c3aed; }
 
+/* ═══════════════════════════════════════════════════════════
+   STUDENT TABLE
+═══════════════════════════════════════════════════════════ */
 .student-table {
     width: 100%;
     border-collapse: collapse;
@@ -142,12 +163,11 @@ body {
     border-right: 1px solid rgba(255,255,255,.07);
     white-space: nowrap;
 }
-
 .student-table thead th:last-child { border-right: none; }
 
-.student-table tbody tr:nth-child(odd) { background: #ffffff; }
+.student-table tbody tr:nth-child(odd)  { background: #ffffff; }
 .student-table tbody tr:nth-child(even) { background: #f8fafc; }
-.student-table tbody tr:hover { background: #f0f9ff !important; }
+.student-table tbody tr:hover           { background: #f0f9ff !important; }
 
 .student-table tbody td {
     padding: 9px 12px;
@@ -155,12 +175,12 @@ body {
     border-right: 1px solid #f1f5f9;
     vertical-align: middle;
 }
-
-.student-table tbody td:last-child { border-right: none; }
-.student-table tbody tr:last-child td { border-bottom: none; }
+.student-table tbody td:last-child          { border-right: none; }
+.student-table tbody tr:last-child td       { border-bottom: none; }
 
 td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; font-weight: 600; }
 
+/* Avatar */
 .student-avatar {
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -168,7 +188,6 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     border: 2px solid #e2e8f0;
     flex-shrink: 0;
 }
-
 .avatar-initials {
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -182,10 +201,11 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     flex-shrink: 0;
 }
 
-.name-cell { font-weight: 600; color: #0f2342; }
-.adm-cell { font-family: 'Courier New', monospace; font-size: 11px; color: #475569; }
+.name-cell   { font-weight: 600; color: #0f2342; }
+.adm-cell    { font-family: 'Courier New', monospace; font-size: 11px; color: #475569; }
 .gender-cell { text-align: center; font-size: 11px; }
 
+/* ── Summary footer ── */
 .summary-footer {
     background: white;
     border: 1px solid #e2e8f0;
@@ -197,8 +217,9 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
 .summary-grid { display: flex; gap: 12px; flex-wrap: wrap; }
 .summary-item { flex: 1; min-width: 120px; text-align: center; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
 .summary-count { font-size: 26px; font-weight: 800; display: block; }
-.summary-lbl { font-size: 11px; font-weight: 600; display: block; margin-top: 4px; }
+.summary-lbl   { font-size: 11px; font-weight: 600; display: block; margin-top: 4px; }
 
+/* ── No-print toolbar ── */
 .toolbar {
     background: white;
     border: 1px solid #e2e8f0;
@@ -213,7 +234,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
 }
 
-.toolbar-title { font-size: 15px; font-weight: 700; color: #0f2342; display: flex; align-items: center; gap: 8px; }
+.toolbar-title   { font-size: 15px; font-weight: 700; color: #0f2342; display: flex; align-items: center; gap: 8px; }
 .toolbar-actions { display: flex; gap: 8px; }
 
 .btn-print {
@@ -233,6 +254,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
 }
 .btn-close-tab:hover { background: #e2e8f0; }
 
+/* ── Generated at line ── */
 .generated-line {
     text-align: center;
     font-size: 10.5px;
@@ -246,6 +268,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
 <body>
 <div class="page-wrap">
 
+    {{-- ── TOOLBAR (no-print) ── --}}
     <div class="toolbar no-print">
         <div class="toolbar-title">
             <span style="font-size:20px;">📋</span>
@@ -258,16 +281,23 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
         </div>
         <div class="toolbar-actions">
             <button class="btn-print" onclick="window.print()">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M6 9V2h12v7"/>
+                    <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                </svg>
                 Print / Save PDF
             </button>
             <a href="javascript:window.close()" class="btn-close-tab">
-                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
                 Close
             </a>
         </div>
     </div>
 
+    {{-- ── SCHOOL HEADER ── --}}
     <div class="school-header">
         @if(!empty($school_logo_base64))
             <img src="{{ $school_logo_base64 }}" class="school-logo" alt="Logo">
@@ -285,11 +315,13 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                 <div class="school-motto">"{{ $schoolInfo->school_motto }}"</div>
             @endif
         </div>
-        <div style="width:80px;flex-shrink:0;"></div>
+        <div style="width:80px;flex-shrink:0;"></div>{{-- spacer to balance logo --}}
     </div>
 
+    {{-- ── TITLE BAR ── --}}
     <div class="list-title-bar">STUDENT PROMOTION RECOMMENDATION LIST</div>
 
+    {{-- ── META STRIP ── --}}
     <div class="meta-strip">
         <div class="meta-cell">
             <span class="meta-label">Class</span>
@@ -314,29 +346,32 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     </div>
 
     @php
+    /* ── Field display label map ── */
     $allFields = [
-        'admissionno'  => 'Admission No',
-        'firstname'    => 'First Name',
-        'lastname'     => 'Last Name',
-        'gender'       => 'Gender',
-        'dateofbirth'  => 'Date of Birth',
-        'arm'          => 'Arm',
-        'total_cum'    => 'Cum Total',
-        'total_term'   => 'Term Total',
-        'position_cum' => 'Overall Pos (Cum)',
-        'position_term'=> 'Overall Pos (Term)',
-        'gpa'          => 'GPA',
+        'admissionno'   => 'Admission No',
+        'firstname'     => 'First Name',
+        'lastname'      => 'Last Name',
+        'gender'        => 'Gender',
+        'dateofbirth'   => 'Date of Birth',
+        'arm'           => 'Arm',
+        'total_cum'     => 'Cum Total',
+        'total_term'    => 'Term Total',
+        'position_cum'  => 'Overall Pos (Cum)',
+        'position_term' => 'Overall Pos (Term)',
+        'gpa'           => 'GPA',
     ];
 
+    /* ── Status meta (fallback labels / icons / CSS classes) ── */
     $statusMeta = [
-        'promoted'       => ['label' => 'Promoted', 'icon' => '✅', 'class' => 'status-promoted', 'badge' => 'badge-promoted'],
-        'trial'          => ['label' => 'Promoted on Trial', 'icon' => '⚠️', 'class' => 'status-trial', 'badge' => 'badge-trial'],
-        'see_principal'  => ['label' => 'See Principal', 'icon' => '👤', 'class' => 'status-see_principal','badge' => 'badge-see_principal'],
-        'repeated'       => ['label' => 'Repeat', 'icon' => '🔁', 'class' => 'status-repeated', 'badge' => 'badge-repeated'],
-        'awaiting'       => ['label' => 'Awaiting Decision', 'icon' => '⏳', 'class' => 'status-awaiting', 'badge' => 'badge-awaiting'],
-        '__other'        => ['label' => 'Other', 'icon' => '📌', 'class' => 'status-other', 'badge' => 'badge-other'],
+        'promoted'      => ['label' => 'Promoted',            'icon' => '✅', 'class' => 'status-promoted',     'badge' => 'badge-promoted'],
+        'trial'         => ['label' => 'Promoted on Trial',   'icon' => '⚠️', 'class' => 'status-trial',        'badge' => 'badge-trial'],
+        'see_principal' => ['label' => 'See Principal',       'icon' => '👤', 'class' => 'status-see_principal','badge' => 'badge-see_principal'],
+        'repeated'      => ['label' => 'Repeat',              'icon' => '🔁', 'class' => 'status-repeated',     'badge' => 'badge-repeated'],
+        'awaiting'      => ['label' => 'Awaiting Decision',   'icon' => '⏳', 'class' => 'status-awaiting',     'badge' => 'badge-awaiting'],
+        '__other'       => ['label' => 'Other',               'icon' => '📌', 'class' => 'status-other',        'badge' => 'badge-other'],
     ];
 
+    /* ── Ordinal helper ── */
     function listOrdinal($n) {
         if (!$n) return '—';
         $n = (int)$n;
@@ -348,19 +383,26 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
     $globalSn = 0;
     @endphp
 
+    {{-- ══════════════════════════════════════════════════════════
+         GROUPED STUDENT SECTIONS
+    ══════════════════════════════════════════════════════════ --}}
     @foreach($grouped_students as $statusKey => $students)
         @php
-            $meta = $statusMeta[$statusKey] ?? $statusMeta['__other'];
+            $meta       = $statusMeta[$statusKey] ?? $statusMeta['__other'];
+            /* Use the actual custom label from PromotionSetting if available */
             $groupLabel = $students[0]['promotion_label'] ?? $meta['label'];
             $groupCount = count($students);
         @endphp
         <div class="group-section">
+
+            {{-- Group header --}}
             <div class="group-header {{ $meta['class'] }}">
                 <span style="font-size:18px;">{{ $meta['icon'] }}</span>
                 <span>{{ $groupLabel }}</span>
                 <span class="count-badge">{{ $groupCount }} Student{{ $groupCount === 1 ? '' : 's' }}</span>
             </div>
 
+            {{-- Student table --}}
             <table class="student-table">
                 <thead>
                     <tr>
@@ -370,12 +412,8 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                         @if($show_photos)
                             <th style="width:44px;"></th>
                         @endif
-                        @foreach($list_fields as $field)
-                            @if($field === 'firstname' || $field === 'lastname') @continue @endif
-                            @if(isset($allFields[$field]))
-                                <th>{{ $allFields[$field] }}</th>
-                            @endif
-                        @endforeach
+
+                        {{-- Name columns header ── handle combined vs separate --}}
                         @if(in_array('firstname', $list_fields) && in_array('lastname', $list_fields))
                             <th>Student Name</th>
                         @elseif(in_array('firstname', $list_fields))
@@ -383,15 +421,25 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                         @elseif(in_array('lastname', $list_fields))
                             <th>Last Name</th>
                         @endif
+
+                        {{-- All other fields --}}
+                        @foreach($list_fields as $field)
+                            @if(in_array($field, ['firstname','lastname','name'])) @continue @endif
+                            @if(isset($allFields[$field]))
+                                <th>{{ $allFields[$field] }}</th>
+                            @endif
+                        @endforeach
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($students as $idx => $stu)
                         @php
                             $globalSn++;
-                            $hasPic = !empty($stu['picture']) && $stu['picture'] !== 'unnamed.jpg';
-                            $imgSrc = $hasPic ? asset('storage/student_avatars/' . basename($stu['picture'])) : null;
-                            $initials = strtoupper(substr($stu['lastname']??'',0,1) . substr($stu['firstname']??'',0,1)) ?: 'ST';
+                            $hasPic   = !empty($stu['picture']) && $stu['picture'] !== 'unnamed.jpg';
+                            $imgSrc   = $hasPic ? asset('storage/student_avatars/' . basename($stu['picture'])) : null;
+                            $initials = strtoupper(
+                                substr($stu['lastname']??'',0,1) . substr($stu['firstname']??'',0,1)
+                            ) ?: 'ST';
                         @endphp
                         <tr>
                             @if($show_sn)
@@ -410,34 +458,52 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                                 </td>
                             @endif
 
+                            {{-- Name column(s) ── always render name first --}}
                             @if(in_array('firstname', $list_fields) && in_array('lastname', $list_fields))
-                                <td class="name-cell">{{ strtoupper($stu['lastname'] ?? '') }}, {{ $stu['firstname'] ?? '' }}</td>
+                                <td class="name-cell">
+                                    {{ strtoupper($stu['lastname'] ?? '') }}, {{ $stu['firstname'] ?? '' }}
+                                </td>
                             @elseif(in_array('firstname', $list_fields))
                                 <td class="name-cell">{{ $stu['firstname'] ?? '' }}</td>
                             @elseif(in_array('lastname', $list_fields))
                                 <td class="name-cell">{{ strtoupper($stu['lastname'] ?? '') }}</td>
                             @endif
 
+                            {{-- All other selected fields --}}
                             @foreach($list_fields as $field)
                                 @if(in_array($field, ['firstname','lastname','name'])) @continue @endif
+
                                 @if($field === 'admissionno')
                                     <td class="adm-cell">{{ $stu['admissionno'] ?? '—' }}</td>
+
                                 @elseif($field === 'gender')
                                     <td class="gender-cell">{{ $stu['gender'] ?? '—' }}</td>
+
                                 @elseif($field === 'dateofbirth')
-                                    <td>{{ $stu['dateofbirth'] ? \Carbon\Carbon::parse($stu['dateofbirth'])->format('d M Y') : '—' }}</td>
+                                    <td>{{ !empty($stu['dateofbirth']) ? \Carbon\Carbon::parse($stu['dateofbirth'])->format('d M Y') : '—' }}</td>
+
                                 @elseif($field === 'arm')
                                     <td>{{ $stu['arm'] ?: '—' }}</td>
+
                                 @elseif($field === 'total_cum')
                                     <td style="text-align:center;font-weight:700;">{{ $stu['total_cum'] ?? '—' }}</td>
+
                                 @elseif($field === 'total_term')
                                     <td style="text-align:center;font-weight:700;">{{ $stu['total_term'] ?? '—' }}</td>
+
                                 @elseif($field === 'position_cum')
-                                    <td style="text-align:center;font-weight:700;color:#1e40af;">{{ listOrdinal($stu['position_cum']) }}</td>
+                                    <td style="text-align:center;font-weight:700;color:#1e40af;">
+                                        {{ listOrdinal($stu['position_cum'] ?? null) }}
+                                    </td>
+
                                 @elseif($field === 'position_term')
-                                    <td style="text-align:center;font-weight:700;color:#92400e;">{{ listOrdinal($stu['position_term']) }}</td>
+                                    <td style="text-align:center;font-weight:700;color:#92400e;">
+                                        {{ listOrdinal($stu['position_term'] ?? null) }}
+                                    </td>
+
                                 @elseif($field === 'gpa')
                                     <td style="text-align:center;">{{ number_format($stu['gpa'] ?? 0, 2) }}</td>
+
                                 @endif
                             @endforeach
                         </tr>
@@ -447,27 +513,30 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
         </div>
     @endforeach
 
+    {{-- ══════════════════════════════════════════════════════════
+         SUMMARY FOOTER
+    ══════════════════════════════════════════════════════════ --}}
     @php
         $summaryGroups = [];
         foreach($grouped_students as $statusKey => $students) {
-            $meta = $statusMeta[$statusKey] ?? $statusMeta['__other'];
+            $meta  = $statusMeta[$statusKey] ?? $statusMeta['__other'];
             $label = !empty($students[0]['promotion_label']) ? $students[0]['promotion_label'] : $meta['label'];
             $summaryGroups[] = [
-                'label' => $label,
-                'count' => count($students),
-                'bgColor' => match($statusKey) {
-                    'promoted' => '#d1fae5',
-                    'trial' => '#fef3c7',
+                'label'     => $label,
+                'count'     => count($students),
+                'bgColor'   => match($statusKey) {
+                    'promoted'      => '#d1fae5',
+                    'trial'         => '#fef3c7',
                     'see_principal' => '#dbeafe',
-                    'repeated' => '#fee2e2',
-                    default => '#f1f5f9',
+                    'repeated'      => '#fee2e2',
+                    default         => '#f1f5f9',
                 },
                 'textColor' => match($statusKey) {
-                    'promoted' => '#065f46',
-                    'trial' => '#92400e',
+                    'promoted'      => '#065f46',
+                    'trial'         => '#92400e',
                     'see_principal' => '#1e40af',
-                    'repeated' => '#991b1b',
-                    default => '#475569',
+                    'repeated'      => '#991b1b',
+                    default         => '#475569',
                 },
             ];
         }
@@ -478,19 +547,21 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
             @foreach($summaryGroups as $sg)
                 <div class="summary-item" style="background:{{ $sg['bgColor'] }};border-color:{{ $sg['bgColor'] }};">
                     <span class="summary-count" style="color:{{ $sg['textColor'] }};">{{ $sg['count'] }}</span>
-                    <span class="summary-lbl" style="color:{{ $sg['textColor'] }};">{{ $sg['label'] }}</span>
+                    <span class="summary-lbl"   style="color:{{ $sg['textColor'] }};">{{ $sg['label'] }}</span>
                 </div>
             @endforeach
             <div class="summary-item" style="background:#0f2342;border-color:#0f2342;">
                 <span class="summary-count" style="color:white;">{{ $totalStudents }}</span>
-                <span class="summary-lbl" style="color:rgba(255,255,255,.75);">Total Students</span>
+                <span class="summary-lbl"   style="color:rgba(255,255,255,.75);">Total Students</span>
             </div>
         </div>
     </div>
 
     <div class="generated-line">
-        Generated: {{ $generatedAt }} &nbsp;·&nbsp; {{ ($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arm_name ?? '') }}
-        &nbsp;·&nbsp; {{ $schoolsession->session ?? '' }} &nbsp;·&nbsp; {{ $schoolterm->term ?? '' }}
+        Generated: {{ $generatedAt }} &nbsp;·&nbsp;
+        {{ ($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arm_name ?? '') }}
+        &nbsp;·&nbsp; {{ $schoolsession->session ?? '' }}
+        &nbsp;·&nbsp; {{ $schoolterm->term ?? '' }}
     </div>
 
 </div>
