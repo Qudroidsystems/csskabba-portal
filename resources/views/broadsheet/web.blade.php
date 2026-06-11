@@ -193,6 +193,29 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-cell { transition:all .2s ease; }
 .score-cell:hover { transform:scale(1.05); filter:brightness(.95); }
 
+/* ── Promotion status cells ── */
+.promo-cell { text-align: center; border-left: 2px solid #7c3aed !important; }
+
+.promo-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; white-space: nowrap;
+    transition: all .2s ease; cursor: default;
+}
+.promo-badge:hover { transform: scale(1.06); }
+
+.promo-promoted     { background: #d1fae5; color: #065f46; }
+.promo-trial        { background: #fef3c7; color: #92400e; }
+.promo-see_principal{ background: #dbeafe; color: #1e40af; }
+.promo-repeated     { background: #fee2e2; color: #991b1b; }
+.promo-awaiting     { background: #f1f5f9; color: #475569; }
+
+.promo-header-th {
+    background: #3b0764 !important;
+    border-left: 2px solid #7c3aed !important;
+    min-width: 110px;
+}
+
 /* ── Position cells: term vs cum styling ── */
 .pos-term-cell {
     background:#fef3c7 !important; color:#92400e; font-weight:700;
@@ -311,6 +334,79 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-toast-error   { background:#fff1f2; border:1.5px solid #fca5a5; color:#be123c; }
 .cb-toast-info    { background:#eff6ff; border:1.5px solid #93c5fd; color:#1d4ed8; }
 .cb-toast-warning { background:#fffbeb; border:1.5px solid #fcd34d; color:#92400e; }
+
+/* ── Student List Modal ── */
+.slist-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 99990;
+    align-items: center; justify-content: center;
+    animation: backdropIn .2s ease;
+}
+.slist-modal-overlay.open { display: flex; }
+
+.slist-modal {
+    background: white; border-radius: 16px;
+    width: 620px; max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 40px); overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,.25);
+    animation: popIn .28s cubic-bezier(.22,1,.36,1);
+}
+
+.slist-modal-header {
+    background: linear-gradient(135deg, #3b0764, #7c3aed);
+    color: white; padding: 18px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+}
+.slist-modal-header h5 { font-size: 16px; font-weight: 700; margin: 0; }
+.slist-modal-close {
+    background: rgba(255,255,255,.18); border: none; color: white;
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    font-size: 17px; display: flex; align-items: center; justify-content: center;
+    transition: all .2s ease;
+}
+.slist-modal-close:hover { background: rgba(255,255,255,.35); transform: rotate(90deg); }
+
+.slist-modal-body { padding: 20px 22px; overflow-y: auto; flex: 1; }
+.slist-modal-footer {
+    padding: 14px 22px; border-top: 1px solid #e2e8f0;
+    display: flex; justify-content: flex-end; gap: 10px;
+    flex-shrink: 0; background: #f8fafc;
+}
+
+/* Drag-and-drop list */
+.promo-order-list { list-style: none; padding: 0; margin: 0; }
+.promo-order-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: white;
+    border: 1.5px solid #e2e8f0; border-radius: 10px;
+    margin-bottom: 6px; cursor: grab;
+    transition: all .2s ease; user-select: none;
+}
+.promo-order-item:hover { border-color: #7c3aed; box-shadow: 0 2px 8px rgba(124,58,237,.15); }
+.promo-order-item.dragging { opacity: .45; transform: scale(.98); cursor: grabbing; }
+.promo-order-item.drag-over { border-color: #7c3aed; background: #f5f3ff; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(124,58,237,.2); }
+.drag-handle { color: #94a3b8; font-size: 18px; cursor: grab; line-height: 1; }
+.drag-handle:active { cursor: grabbing; }
+
+/* Field checkboxes grid */
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.field-checkbox-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border: 1.5px solid #e2e8f0;
+    border-radius: 8px; cursor: pointer;
+    transition: all .15s ease; font-size: 12.5px;
+}
+.field-checkbox-item:hover { border-color: #7c3aed; background: #f5f3ff; }
+.field-checkbox-item input[type=checkbox] { accent-color: #7c3aed; width: 15px; height: 15px; }
+.field-checkbox-item.checked { border-color: #7c3aed; background: #f5f3ff; }
+
+.slist-section-title {
+    font-size: 12px; font-weight: 700; color: #3b0764;
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
 
 /* ── Performance (grade) popup ── */
 #cbGradePopup {
@@ -578,6 +674,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <button class="btn btn-sm btn-outline-secondary" onclick="window.print()" style="border-radius:8px;">
                 <i class="ri-printer-line me-1"></i>Print
             </button>
+            <button class="btn btn-sm" onclick="openStudentListModal()"
+                style="background:linear-gradient(135deg,#3b0764,#7c3aed);color:#fff;border:none;border-radius:8px;">
+                <i class="ri-list-check-2 me-1"></i>Print Student List
+            </button>
             <button class="btn btn-sm" onclick="scrollToTop()" style="background:var(--cb-teal);color:#fff;border-radius:8px;border:none;">
                 <i class="ri-arrow-up-line me-1"></i>Top
             </button>
@@ -615,7 +715,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     $showPosTerm = $showAll || in_array('position_term',  $selected);
     $showPosCum  = $showAll || in_array('position_cum',   $selected);
 
-    // CRITICAL: Per-subject position flags - THESE MUST BE SET CORRECTLY
+    // Per-subject position flags
     $showSubPosClassCum   = $showAll || in_array('pos_class_cum',   $selected);
     $showSubPosClassTotal = $showAll || in_array('pos_class_total', $selected);
     $showSubPosArmTotal   = $showAll || in_array('pos_arm_total',   $selected);
@@ -627,6 +727,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     $showGPAGrade = in_array('gpa_grade', $selected);
     $showNumSub  = in_array('num_subjects', $selected);
     $showTotalGP = in_array('total_grade_points', $selected);
+
+    // Promotion columns
+    $showPromoStatus = $showAll || in_array('promotion_status', $selected);
+    $showPromoLabel  = in_array('promotion_label', $selected);
+    $showPromoRule   = in_array('promotion_rule_applied', $selected);
+
+    $promoColspan = ($showPromoStatus ? 1 : 0)
+                  + ($showPromoLabel  ? 1 : 0)
+                  + ($showPromoRule   ? 1 : 0);
 
     $activeAssessments = $assessments->filter(fn($a) =>
         empty($selected) || in_array('assessment_' . $a->id, $selected)
@@ -700,6 +809,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     @if($gpaColspan > 0)
                         <th colspan="{{ $gpaColspan }}" style="background:#0a1e38;border-left:2px solid #3b82f6;font-size:10px;">GPA METRICS</th>
                     @endif
+
+                    @if($promoColspan > 0)
+                        <th colspan="{{ $promoColspan }}" class="promo-header-th"
+                            style="font-size:10px;letter-spacing:.4px;">
+                            <span style="font-size:13px; margin-right:4px;">🎓</span> PROMOTION
+                        </th>
+                    @endif
                 </tr>
 
                 {{-- Row 2: Assessment / score sub-headers --}}
@@ -761,6 +877,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     @if($showGPAGrade) <th style="background:#0a1e38;color:#fcd34d;min-width:30px;">GGrd</th>  @endif
                     @if($showNumSub)   <th style="background:#0a1e38;color:#a8d4ef;min-width:30px;">NS</th>    @endif
                     @if($showTotalGP)  <th style="background:#0a1e38;color:#a8d4ef;min-width:36px;">TGP</th>   @endif
+
+                    @if($showPromoStatus)
+                        <th style="background:#3b0764;color:#d8b4fe;min-width:110px;border-left:2px solid #7c3aed;white-space:nowrap;">Status</th>
+                    @endif
+                    @if($showPromoLabel)
+                        <th style="background:#3b0764;color:#d8b4fe;min-width:130px;">Label</th>
+                    @endif
+                    @if($showPromoRule)
+                        <th style="background:#3b0764;color:#d8b4fe;min-width:100px;">Rule</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -854,7 +980,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                     @endif
                                 </div>
                             </div>
-                        </td>
+                        </table>
 
                         @if($showGender)
                             <td style="font-size:10px;">{{ substr($stu['gender']??'',0,1) }}</td>
@@ -989,6 +1115,46 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                            <td class="gpa-cell {{ $ggc }}" style="font-weight:700;">{{ $stu['gpa_grade'] ?? '—' }}</td> @endif
                         @if($showNumSub)   <td>{{ $stu['num_subjects'] ?? '—' }}</td> @endif
                         @if($showTotalGP)  <td>{{ number_format($stu['total_grade_points'],1) }}</td> @endif
+
+                        {{-- Promotion Status Cells --}}
+                        @if($showPromoStatus)
+                            @php
+                                $pStatus    = $stu['promotion_status'] ?? 'awaiting';
+                                $pLabel     = $stu['promotion_label']  ?? 'Awaiting';
+                                $pBadgeClass = match($pStatus) {
+                                    'promoted'      => 'promo-promoted',
+                                    'trial'         => 'promo-trial',
+                                    'see_principal' => 'promo-see_principal',
+                                    'repeated'      => 'promo-repeated',
+                                    default         => 'promo-awaiting',
+                                };
+                                $pIcon = match($pStatus) {
+                                    'promoted'      => '✅',
+                                    'trial'         => '⚠️',
+                                    'see_principal' => '👤',
+                                    'repeated'      => '🔁',
+                                    default         => '⏳',
+                                };
+                            @endphp
+                            <td class="promo-cell">
+                                <span class="promo-badge {{ $pBadgeClass }}" title="{{ $pLabel }}">
+                                    {{ $pIcon }} {{ ucfirst($pStatus) }}
+                                </span>
+                            </td>
+                        @endif
+
+                        @if($showPromoLabel)
+                            <td class="promo-cell" style="font-size:10px;font-weight:600;color:#5b21b6;">
+                                {{ $stu['promotion_label'] ?? '—' }}
+                            </td>
+                        @endif
+
+                        @if($showPromoRule)
+                            <td class="promo-cell" style="font-size:10px;color:#64748b;max-width:120px;overflow:hidden;text-overflow:ellipsis;"
+                                title="{{ $stu['promotion_rule_applied'] ?? '' }}">
+                                {{ $stu['promotion_rule_applied'] ? Str::limit($stu['promotion_rule_applied'], 20) : '—' }}
+                            </td>
+                        @endif
                     </tr>
                 @endforeach
 
@@ -1020,6 +1186,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         @if($showGPAGrade)  <td>—</td> @endif
                         @if($showNumSub)    <td>—</td> @endif
                         @if($showTotalGP)   <td>—</td> @endif
+                        @if($showPromoStatus)  <td>—</td> @endif
+                        @if($showPromoLabel)   <td>—</td> @endif
+                        @if($showPromoRule)    <td>—</td> @endif
                     </tr>
                 @endforeach
             </tbody>
@@ -1091,6 +1260,152 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         </div>
     </div>
 </div>
+
+{{-- ── Student List Modal ── --}}
+<div class="slist-modal-overlay" id="slistModalOverlay">
+    <div class="slist-modal">
+
+        <div class="slist-modal-header">
+            <h5><span style="font-size:18px;margin-right:6px;">📋</span>Print Student List Preferences</h5>
+            <button class="slist-modal-close" onclick="closeSlistModal()">&times;</button>
+        </div>
+
+        <div class="slist-modal-body">
+
+            {{-- ── Info pills ── --}}
+            <div class="d-flex gap-2 flex-wrap mb-4">
+                <span class="badge" style="background:#ede9fe;color:#5b21b6;padding:5px 12px;border-radius:20px;font-size:12px;">
+                    <i class="ri-school-line me-1"></i>
+                    {{ ($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arm_name ?? '') }}
+                </span>
+                <span class="badge" style="background:#dbeafe;color:#1e40af;padding:5px 12px;border-radius:20px;font-size:12px;">
+                    {{ $schoolsession->session ?? '' }}
+                </span>
+                <span class="badge" style="background:#fef3c7;color:#92400e;padding:5px 12px;border-radius:20px;font-size:12px;">
+                    {{ $schoolterm->term ?? '' }}
+                </span>
+                <span class="badge" style="background:#f1f5f9;color:#475569;padding:5px 12px;border-radius:20px;font-size:12px;">
+                    {{ $totalStudents }} Students
+                </span>
+            </div>
+
+            {{-- ── SECTION A: Fields to show ── --}}
+            <div class="mb-4">
+                <div class="slist-section-title">
+                    <i class="ri-table-line"></i> Student Fields to Include
+                </div>
+                <div class="field-grid" id="slistFieldGrid">
+                    @php
+                    $fieldOptions = [
+                        ['key' => 'admissionno',   'label' => 'Admission Number', 'default' => true],
+                        ['key' => 'lastname',      'label' => 'Last Name',        'default' => true],
+                        ['key' => 'firstname',     'label' => 'First Name',       'default' => true],
+                        ['key' => 'gender',        'label' => 'Gender',           'default' => false],
+                        ['key' => 'dateofbirth',   'label' => 'Date of Birth',    'default' => false],
+                        ['key' => 'arm',           'label' => 'Arm / Class',      'default' => false],
+                        ['key' => 'total_cum',     'label' => 'Cum Total Score',  'default' => true],
+                        ['key' => 'total_term',    'label' => 'Term Total Score', 'default' => false],
+                        ['key' => 'position_cum',  'label' => 'Overall Pos (Cum)','default' => true],
+                        ['key' => 'position_term', 'label' => 'Overall Pos (Term)','default'=> false],
+                        ['key' => 'gpa',           'label' => 'GPA',              'default' => false],
+                    ];
+                    @endphp
+                    @foreach($fieldOptions as $fo)
+                        <label class="field-checkbox-item {{ $fo['default'] ? 'checked' : '' }}">
+                            <input type="checkbox"
+                                   name="list_fields[]"
+                                   value="{{ $fo['key'] }}"
+                                   {{ $fo['default'] ? 'checked' : '' }}
+                                   onchange="this.closest('.field-checkbox-item').classList.toggle('checked', this.checked)">
+                            {{ $fo['label'] }}
+                        </label>
+                    @endforeach
+                </div>
+
+                <div class="d-flex gap-3 mt-3">
+                    <label class="field-checkbox-item" style="flex:1;">
+                        <input type="checkbox" id="slistShowPhotos">
+                        <i class="ri-image-line"></i> Show Student Photos
+                    </label>
+                    <label class="field-checkbox-item" style="flex:1;">
+                        <input type="checkbox" id="slistShowSn" checked>
+                        <i class="ri-list-ordered-2"></i> Show Serial Number
+                    </label>
+                </div>
+            </div>
+
+            {{-- ── SECTION B: Recommendation order ── --}}
+            <div>
+                <div class="slist-section-title">
+                    <i class="ri-drag-move-line"></i> Recommendation Order
+                    <span style="font-size:10px;font-weight:400;color:#64748b;">
+                        — drag to reorder. Students appear in this group order.
+                    </span>
+                </div>
+
+                <ul class="promo-order-list" id="promoOrderList">
+                    @php
+                    $existingStatuses = collect($studentRows)->groupBy('promotion_status')->map->count();
+                    $defaultStatusOrder = [
+                        ['key' => 'promoted',      'icon' => '✅', 'color' => '#d1fae5', 'text' => '#065f46'],
+                        ['key' => 'trial',         'icon' => '⚠️', 'color' => '#fef3c7', 'text' => '#92400e'],
+                        ['key' => 'see_principal', 'icon' => '👤', 'color' => '#dbeafe', 'text' => '#1e40af'],
+                        ['key' => 'repeated',      'icon' => '🔁', 'color' => '#fee2e2', 'text' => '#991b1b'],
+                        ['key' => 'awaiting',      'icon' => '⏳', 'color' => '#f1f5f9', 'text' => '#475569'],
+                    ];
+                    @endphp
+
+                    @foreach($defaultStatusOrder as $so)
+                        @php
+                            $count = $existingStatuses[$so['key']] ?? 0;
+                            $label = ucfirst($so['key']);
+                        @endphp
+                        <li class="promo-order-item"
+                            data-status="{{ $so['key'] }}"
+                            draggable="true">
+                            <span class="drag-handle" title="Drag to reorder">⠿</span>
+                            <span style="font-size:16px;">{{ $so['icon'] }}</span>
+                            <span style="font-weight:600;color:{{ $so['text'] }};flex:1;">
+                                {{ $label }}
+                                <small style="font-weight:400;color:#94a3b8;margin-left:4px;">({{ $so['key'] }})</small>
+                            </span>
+                            <span class="badge" style="background:{{ $so['color'] }};color:{{ $so['text'] }};font-size:11px;border-radius:12px;padding:3px 10px;">
+                                {{ $count }} student{{ $count !== 1 ? 's' : '' }}
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <p style="font-size:11px;color:#94a3b8;margin-top:8px;">
+                    <i class="ri-information-line me-1"></i>
+                    Groups with zero students will be omitted from the printed list.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="slist-modal-footer">
+            <button class="btn btn-secondary btn-sm" onclick="closeSlistModal()">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="generateListBtn"
+                    style="background:linear-gradient(135deg,#3b0764,#7c3aed);border:none;"
+                    onclick="generateStudentList()">
+                <i class="ri-file-list-line me-1"></i>Generate List
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- Hidden form for student list POST --}}
+<form id="slistForm" method="POST" action="{{ route('broadsheet.student-list') }}" target="_blank" style="display:none;">
+    @csrf
+    <input type="hidden" name="schoolclassid" value="{{ request('schoolclassid') }}">
+    <input type="hidden" name="sessionid"     value="{{ request('sessionid') }}">
+    <input type="hidden" name="termid"        value="{{ request('termid') }}">
+    <input type="hidden" name="show_photos"   id="sf_show_photos" value="0">
+    <input type="hidden" name="show_sn"       id="sf_show_sn"     value="1">
+    <div id="sf_fields"></div>
+    <div id="sf_order"></div>
+</form>
 
 </div>{{-- /container --}}
 </div>{{-- /page-content --}}
@@ -1384,6 +1699,120 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     }
 
     window.scrollToTop = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    window.closeSlistModal = function() {
+        document.getElementById('slistModalOverlay').classList.remove('open');
+    };
+    window.openStudentListModal = function() {
+        document.getElementById('slistModalOverlay').classList.add('open');
+    };
+    window.generateStudentList = function() {
+        var btn = document.getElementById('generateListBtn');
+        if (!btn) return;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Opening…';
+
+        var fieldDivEl = document.getElementById('sf_fields');
+        if (fieldDivEl) {
+            fieldDivEl.innerHTML = '';
+            document.querySelectorAll('#slistFieldGrid input[name="list_fields[]"]:checked').forEach(function(cb, i) {
+                var inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'list_fields[' + i + ']';
+                inp.value = cb.value;
+                fieldDivEl.appendChild(inp);
+            });
+        }
+
+        var orderDivEl = document.getElementById('sf_order');
+        if (orderDivEl) {
+            orderDivEl.innerHTML = '';
+            document.querySelectorAll('#promoOrderList .promo-order-item').forEach(function(item, i) {
+                var inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'recommendation_order[' + i + ']';
+                inp.value = item.getAttribute('data-status');
+                orderDivEl.appendChild(inp);
+            });
+        }
+
+        var showPhotos = document.getElementById('slistShowPhotos');
+        var showSn = document.getElementById('slistShowSn');
+        var sfShowPhotos = document.getElementById('sf_show_photos');
+        var sfShowSn = document.getElementById('sf_show_sn');
+        if (sfShowPhotos) sfShowPhotos.value = (showPhotos && showPhotos.checked) ? '1' : '0';
+        if (sfShowSn) sfShowSn.value = (showSn && showSn.checked) ? '1' : '0';
+
+        var slistForm = document.getElementById('slistForm');
+        if (slistForm) slistForm.submit();
+
+        setTimeout(function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ri-file-list-line me-1"></i>Generate List';
+            var modal = document.getElementById('slistModalOverlay');
+            if (modal) modal.classList.remove('open');
+        }, 1500);
+    };
+
+    // Drag-and-drop for promo order list
+    (function initDnD() {
+        var list = document.getElementById('promoOrderList');
+        if (!list) return;
+        var draggingEl = null;
+
+        list.addEventListener('dragstart', function(e) {
+            draggingEl = e.target.closest('.promo-order-item');
+            if (!draggingEl) return;
+            draggingEl.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        list.addEventListener('dragend', function() {
+            if (draggingEl) draggingEl.classList.remove('dragging');
+            if (list) {
+                list.querySelectorAll('.promo-order-item').forEach(function(i) {
+                    i.classList.remove('drag-over');
+                });
+            }
+            draggingEl = null;
+        });
+
+        list.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            var target = e.target.closest('.promo-order-item');
+            if (!target || target === draggingEl || !list) return;
+
+            list.querySelectorAll('.promo-order-item').forEach(function(i) {
+                i.classList.remove('drag-over');
+            });
+            target.classList.add('drag-over');
+
+            var rect = target.getBoundingClientRect();
+            var midY = rect.top + rect.height / 2;
+            if (e.clientY < midY) {
+                list.insertBefore(draggingEl, target);
+            } else {
+                list.insertBefore(draggingEl, target.nextSibling);
+            }
+        });
+
+        list.addEventListener('drop', function(e) { e.preventDefault(); });
+    })();
+
+    // Modal overlay click to close
+    var modalOverlay = document.getElementById('slistModalOverlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) window.closeSlistModal();
+        });
+    }
+
+    // ESC closes modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            window.closeSlistModal();
+            closeGradePop();
+        }
+    });
 
     function animateStats() {
         var rows = Array.from(document.querySelectorAll('#broadsheetTable tbody tr[data-student-id]'));
@@ -1425,10 +1854,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
         document.addEventListener('click', function (e) {
             if (e.target && e.target.id === 'cbPopupBackdrop') closeGradePop();
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeGradePop();
         });
 
         initSearch();

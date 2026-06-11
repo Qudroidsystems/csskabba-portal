@@ -1189,18 +1189,11 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
         // AJAX: column options
         Route::post('/column-options',  [BroadsheetController::class, 'getColumnOptions'])->name('column-options');
-
-        // AJAX: student preview
         Route::post('/student-preview', [BroadsheetController::class, 'getStudentPreview'])->name('student-preview');
-
-        // Web View — accept both GET and POST (form submits via POST, direct link works via GET)
         Route::match(['GET', 'POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
-
-        // PDF export
         Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
-
-        // Excel export
         Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
+        Route::match(['GET', 'POST'], '/student-list', [BroadsheetController::class, 'studentList'])->name('student-list');
     });
 
     // All-classes broadsheet
