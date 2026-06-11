@@ -785,7 +785,7 @@ class PromotionEvaluator
             self::STATUS_SEE_PRINCIPAL => $settings->see_principal_label ?? 'Advised to See Principal',
             self::STATUS_REPEATED      => $settings->repeat_label        ?? 'Advice to Repeat',
             default                    => 'Awaiting Decision',
-        ];
+        };
     }
 
     private function describeRule(array $rule, bool $isSenior): string
