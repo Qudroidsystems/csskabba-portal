@@ -29,18 +29,32 @@ body {
     .no-print { display: none !important; }
     .page-wrap { max-width: none !important; padding: 0 !important; background: #fff !important; }
     .school-header { page-break-after: avoid; }
-    .group-section { page-break-inside: avoid; }
+    .group-section {
+        page-break-after: always;
+        page-break-inside: avoid;
+    }
+    .group-section:last-child {
+        page-break-after: auto;
+    }
     @page { margin: 1.4cm 1.2cm; }
 }
 
+/* Paper size overrides for print */
+@media print and (size: A4) { @page { size: A4; } }
+@media print and (size: A3) { @page { size: A3; } }
+@media print and (size: A2) { @page { size: A2; } }
+@media print and (size: A1) { @page { size: A1; } }
+@media print and (size: Legal) { @page { size: Legal; } }
+@media print and (size: Letter) { @page { size: Letter; } }
+
 /* Portrait orientation */
 @media print and (orientation: portrait) {
-    @page { size: portrait; }
+    @page { orientation: portrait; }
 }
 
 /* Landscape orientation */
 @media print and (orientation: landscape) {
-    @page { size: landscape; }
+    @page { orientation: landscape; }
 }
 
 /* ── Layout ── */
@@ -124,7 +138,14 @@ body {
 /* ═══════════════════════════════════════════════════════════
    PROMOTION GROUP HEADER
 ═══════════════════════════════════════════════════════════ */
-.group-section { margin-bottom: 28px; }
+.group-section {
+    margin-bottom: 28px;
+    page-break-after: always;
+    page-break-inside: avoid;
+}
+.group-section:last-child {
+    page-break-after: auto;
+}
 
 .group-header {
     display: flex;
@@ -226,6 +247,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
 .name-cell   { font-weight: 600; color: #0f2342; }
 .adm-cell    { font-family: 'Courier New', monospace; font-size: 11px; color: #475569; }
 .gender-cell { text-align: center; font-size: 11px; }
+.arm-cell    { font-size: 11px; color: #0f2342; }
 
 /* ── Summary footer ── */
 .summary-footer {
@@ -290,7 +312,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
 }
 .settings-panel.open { display: block; }
 .settings-panel h4 { font-size: 13px; font-weight: 700; color: #0f2342; margin-bottom: 12px; }
-.settings-group { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; }
+.settings-group { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
 .settings-group label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .settings-group select, .settings-group input { padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
 .btn-settings {
@@ -430,9 +452,18 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                 <span>📏 Paper Size:</span>
                 <select id="paperSize">
                     <option value="A4">A4</option>
-                    <option value="A3" selected>A3</option>
+                    <option value="A3">A3</option>
+                    <option value="A2">A2</option>
+                    <option value="A1">A1</option>
                     <option value="Legal">Legal</option>
                     <option value="Letter">Letter</option>
+                </select>
+            </label>
+            <label>
+                <span>📄 New Page per Group:</span>
+                <select id="newPagePerGroup">
+                    <option value="yes" selected>Yes (Start each group on new page)</option>
+                    <option value="no">No (Continue on same page)</option>
                 </select>
             </label>
         </div>
@@ -578,11 +609,17 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                 $meta = $statusMeta[$statusKey] ?? $statusMeta['__other'];
                 $groupLabel = $students[0]['promotion_label'] ?? $meta['label'];
                 $groupCount = count($students);
+                $hasArm = !empty($students[0]['arm']);
             @endphp
-            <div class="group-section">
+            <div class="group-section" data-status="{{ $statusKey }}">
                 <div class="group-header {{ $meta['class'] }}">
                     <span style="font-size:18px;">{{ $meta['icon'] }}</span>
                     <span>{{ $groupLabel }}</span>
+                    @if($hasArm)
+                        <span style="font-size:12px; font-weight:normal; margin-left:8px;">
+                            📍 Arm: {{ $students[0]['arm'] }}
+                        </span>
+                    @endif
                     <span class="count-badge">{{ $groupCount }} Student{{ $groupCount === 1 ? '' : 's' }}</span>
                 </div>
 
@@ -644,11 +681,24 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                                     @if(in_array('firstname', $list_fields) && in_array('lastname', $list_fields))
                                         <td class="name-cell">
                                             {{ strtoupper($stu['lastname'] ?? '') }}, {{ $stu['firstname'] ?? '' }}
+                                            @if(!empty($stu['arm']) && !in_array('arm', $list_fields))
+                                                <span style="font-size:10px; color:#64748b; margin-left:8px;">[{{ $stu['arm'] }}]</span>
+                                            @endif
                                         </td>
                                     @elseif(in_array('firstname', $list_fields))
-                                        <td class="name-cell">{{ $stu['firstname'] ?? '' }}</td>
+                                        <td class="name-cell">
+                                            {{ $stu['firstname'] ?? '' }}
+                                            @if(!empty($stu['arm']) && !in_array('arm', $list_fields))
+                                                <span style="font-size:10px; color:#64748b; margin-left:8px;">[{{ $stu['arm'] }}]</span>
+                                            @endif
+                                        </td>
                                     @elseif(in_array('lastname', $list_fields))
-                                        <td class="name-cell">{{ strtoupper($stu['lastname'] ?? '') }}</td>
+                                        <td class="name-cell">
+                                            {{ strtoupper($stu['lastname'] ?? '') }}
+                                            @if(!empty($stu['arm']) && !in_array('arm', $list_fields))
+                                                <span style="font-size:10px; color:#64748b; margin-left:8px;">[{{ $stu['arm'] }}]</span>
+                                            @endif
+                                        </td>
                                     @endif
 
                                     {{-- All other selected fields --}}
@@ -665,7 +715,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
                                             <td>{{ !empty($stu['dateofbirth']) ? \Carbon\Carbon::parse($stu['dateofbirth'])->format('d M Y') : '—' }}</td>
 
                                         @elseif($field === 'arm')
-                                            <td>{{ $stu['arm'] ?: '—' }}</td>
+                                            <td class="arm-cell">{{ $stu['arm'] ?: '—' }}</td>
 
                                         @elseif($field === 'total_cum')
                                             <td style="text-align:center;font-weight:700;">{{ $stu['total_cum'] ?? '—' }}</td>
@@ -688,7 +738,7 @@ td.sn-cell { width: 36px; text-align: center; font-size: 11px; color: #64748b; f
 
                                         @endif
                                     @endforeach
-                                </tr>
+                                </td>
                             @endforeach
                         </tbody>
                     </table>
@@ -759,10 +809,43 @@ function toggleSettings() {
     btn.classList.toggle('active');
 }
 
-// Print with orientation
+// Apply page break based on setting
+function applyPageBreaks() {
+    var newPagePerGroup = localStorage.getItem('new_page_per_group') || 'yes';
+    var groups = document.querySelectorAll('.group-section');
+
+    groups.forEach(function(group, index) {
+        if (newPagePerGroup === 'yes') {
+            if (index < groups.length - 1) {
+                group.style.pageBreakAfter = 'always';
+            } else {
+                group.style.pageBreakAfter = 'auto';
+            }
+        } else {
+            group.style.pageBreakAfter = 'auto';
+        }
+    });
+}
+
+// Print with orientation and page breaks
 function printStudentList() {
     var orientation = document.getElementById('printOrientation').value;
     var paperSize = document.getElementById('paperSize').value;
+    var newPagePerGroup = document.getElementById('newPagePerGroup').value;
+
+    // Apply page breaks
+    var groups = document.querySelectorAll('.group-section');
+    groups.forEach(function(group, index) {
+        if (newPagePerGroup === 'yes') {
+            if (index < groups.length - 1) {
+                group.style.pageBreakAfter = 'always';
+            } else {
+                group.style.pageBreakAfter = 'auto';
+            }
+        } else {
+            group.style.pageBreakAfter = 'auto';
+        }
+    });
 
     var style = document.createElement('style');
     style.textContent = '@page { size: ' + paperSize + ' ' + orientation + '; margin: 1.2cm; }';
@@ -772,6 +855,10 @@ function printStudentList() {
 
     setTimeout(function() {
         document.head.removeChild(style);
+        // Reset page breaks
+        groups.forEach(function(group) {
+            group.style.pageBreakAfter = '';
+        });
     }, 100);
 }
 
@@ -779,6 +866,21 @@ function printStudentList() {
 function exportToPDF() {
     var orientation = document.getElementById('printOrientation').value;
     var paperSize = document.getElementById('paperSize').value;
+    var newPagePerGroup = document.getElementById('newPagePerGroup').value;
+
+    // Apply page breaks
+    var groups = document.querySelectorAll('.group-section');
+    groups.forEach(function(group, index) {
+        if (newPagePerGroup === 'yes') {
+            if (index < groups.length - 1) {
+                group.style.pageBreakAfter = 'always';
+            } else {
+                group.style.pageBreakAfter = 'auto';
+            }
+        } else {
+            group.style.pageBreakAfter = 'auto';
+        }
+    });
 
     var loading = document.getElementById('pdfLoading');
     loading.classList.add('active');
@@ -792,6 +894,10 @@ function exportToPDF() {
         loading.classList.remove('active');
         setTimeout(function() {
             if (style.parentNode) document.head.removeChild(style);
+            // Reset page breaks
+            groups.forEach(function(group) {
+                group.style.pageBreakAfter = '';
+            });
         }, 500);
     }, 500);
 }
@@ -807,6 +913,7 @@ function applySettingsAndRefresh() {
     var showSn = document.getElementById('showSnCheckbox').checked;
     var orientation = document.getElementById('printOrientation').value;
     var paperSize = document.getElementById('paperSize').value;
+    var newPagePerGroup = document.getElementById('newPagePerGroup').value;
 
     // Store preferences
     localStorage.setItem('student_list_columns', JSON.stringify(selectedColumns));
@@ -814,6 +921,7 @@ function applySettingsAndRefresh() {
     localStorage.setItem('student_list_show_sn', showSn);
     localStorage.setItem('student_list_orientation', orientation);
     localStorage.setItem('student_list_paper_size', paperSize);
+    localStorage.setItem('new_page_per_group', newPagePerGroup);
 
     // Build URL with parameters
     var url = window.location.pathname;
@@ -862,6 +970,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedPaperSize) {
         document.getElementById('paperSize').value = savedPaperSize;
     }
+
+    var savedNewPage = localStorage.getItem('new_page_per_group');
+    if (savedNewPage) {
+        document.getElementById('newPagePerGroup').value = savedNewPage;
+    }
+
+    // Apply page breaks based on saved setting
+    applyPageBreaks();
 });
 
 // Prevent Settings panel from printing
