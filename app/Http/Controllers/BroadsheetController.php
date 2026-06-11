@@ -218,7 +218,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Fetch previous term's cum scores for a set of students & subjects
+    // HELPER: Fetch previous term's cum scores
     // =========================================================================
 
     private function fetchPreviousTermCums(
@@ -413,7 +413,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // SHARED: Assemble student rows, compute positions, promotion evaluation
+    // SHARED: Assemble student rows
     // =========================================================================
 
     private function assembleStudentRows(
@@ -487,9 +487,21 @@ class BroadsheetController extends Controller
                 ? round(array_sum($gradePointsA) / count($gradePointsA), 2) : 0.0;
             $classAvgScore = $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0;
 
+            // Get arm label
             $armLabel = '';
             if ($isCombined && $studentClassMap && isset($studentClassMap[$sid])) {
                 $armLabel = $armLabels[$studentClassMap[$sid]] ?? '';
+            } elseif ($schoolclassid) {
+                // For single class, try to get arm from student's class record
+                $studentClass = Studentclass::where('studentId', $sid)
+                    ->where('sessionid', $sessionid)
+                    ->first();
+                if ($studentClass && $studentClass->schoolclassid) {
+                    $class = Schoolclass::find($studentClass->schoolclassid);
+                    if ($class && $class->arm_name) {
+                        $armLabel = $class->arm_name;
+                    }
+                }
             }
 
             // ── Promotion evaluation ─────────────────────────────────────────
@@ -546,7 +558,6 @@ class BroadsheetController extends Controller
                 'total_grade_points'     => round(array_sum($gradePointsA), 1),
                 'position_cum'           => 0,
                 'position_term'          => 0,
-                // ── Promotion ──────────────────────────────────────────────
                 'promotion_status'       => $promoResult['status']       ?? 'awaiting',
                 'promotion_label'        => $promoResult['status_label'] ?? 'Awaiting Decision',
                 'promotion_rule_applied' => $promoResult['applied_rule']['name'] ?? null,
@@ -589,7 +600,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Build position map (dense ranking)
+    // HELPER: Build position map
     // =========================================================================
 
     private function buildPositionMap(array $studentRows, string $key): array
@@ -700,7 +711,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // STUDENT LIST (Printable promotion-ordered list)
+    // STUDENT LIST (Printable promotion-ordered list) - UPDATED
     // =========================================================================
 
     public function studentList(Request $request): View|JsonResponse|RedirectResponse
@@ -723,12 +734,17 @@ class BroadsheetController extends Controller
                 [] // all columns — we only need student rows + promotion
             );
 
-            $listFields          = $request->input('list_fields', ['firstname', 'lastname', 'admissionno', 'gender']);
+            // Merge list_fields from request with defaults
+            $listFields = $request->input('list_fields', []);
+            if (empty($listFields)) {
+                $listFields = ['admissionno', 'firstname', 'lastname', 'gender', 'total_cum', 'position_cum'];
+            }
+
             $recommendationOrder = $request->input('recommendation_order', [
                 'promoted', 'trial', 'see_principal', 'repeated', 'awaiting',
             ]);
             $showPhotos = filter_var($request->input('show_photos', false), FILTER_VALIDATE_BOOLEAN);
-            $showSn     = filter_var($request->input('show_sn', true),     FILTER_VALIDATE_BOOLEAN);
+            $showSn     = filter_var($request->input('show_sn', true), FILTER_VALIDATE_BOOLEAN);
 
             // Group students by promotion_status in admin-specified order
             $grouped = [];
@@ -1203,19 +1219,6 @@ class BroadsheetController extends Controller
         if ($gpa >= 2.0) return 'C6';
         if ($gpa >= 1.5) return 'D7';
         if ($gpa >= 1.0) return 'E8';
-        return 'F9';
-    }
-
-    private function calculateGrade(float $score): string
-    {
-        if ($score >= 75) return 'A1';
-        if ($score >= 70) return 'B2';
-        if ($score >= 65) return 'B3';
-        if ($score >= 60) return 'C4';
-        if ($score >= 55) return 'C5';
-        if ($score >= 50) return 'C6';
-        if ($score >= 45) return 'D7';
-        if ($score >= 40) return 'E8';
         return 'F9';
     }
 
