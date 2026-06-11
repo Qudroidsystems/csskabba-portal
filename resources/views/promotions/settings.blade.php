@@ -117,7 +117,6 @@
 .template-badge { background:#ede9fe; color:#5b21b6; border-radius:8px;
     padding:2px 10px; font-size:10px; font-weight:700; }
 
-/* ── Interpretation panel ── */
 .rule-interp-panel strong { font-weight:700; }
 .rule-interp-panel em     { font-style:italic; }
 .ri-interp-and { font-style:normal; font-weight:700; color:#64748b;
@@ -190,7 +189,7 @@
                     </small>
                     <div class="mt-1 mb-3">
                         <span class="badge bg-info">{{ $logicLabel }}</span>
-                        @if($setting->promotion_pass_average)
+                        @if($setting->promotion_pass_average !== null && $setting->promotion_pass_average !== '')
                             <span class="badge bg-secondary ms-1">≥{{ $setting->promotion_pass_average }}% avg</span>
                         @endif
                     </div>
@@ -1081,7 +1080,7 @@ function escH(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Class Info Loading (FIXED: includes subject_id mapping) ───────────────────
+// ── Class Info Loading ───────────────────────────────────────────────────────
 async function refreshClassInfo() {
     const classId = document.getElementById('schoolclass_id').value;
     const termId = document.getElementById('term_id').value;
@@ -1090,6 +1089,10 @@ async function refreshClassInfo() {
     const loadEl = document.getElementById('subjectLoadStatus');
     const summaryEl = document.getElementById('subjectSummary');
     const scopeInfo = document.getElementById('ruleScopeInfo');
+
+    // Store current average value before refreshing
+    const currentAvg = document.getElementById('promotion_pass_average').value;
+
     addBtn.disabled = true;
     summaryEl.style.display = 'none';
     if (!classId) { scopeInfo.textContent = ''; rerenderRules(); return; }
@@ -1109,9 +1112,8 @@ async function refreshClassInfo() {
             classPassAvg = data.pass_average ?? null;
             gradeScale = (data.grade_scale && data.grade_scale.length) ? data.grade_scale : GRADE_SCALES[isSenior ? 'senior' : 'junior'];
 
-            // FIX: Map compulsory subjects with correct property names including subject_id
             compulsorySubjects = (data.compulsory_subjects ?? []).map(cs => ({
-                subject_id: cs.id,  // ← CRITICAL FIX: Map 'id' from server to 'subject_id'
+                subject_id: cs.id,
                 subject_name: cs.subject,
                 subject_code: cs.subject_code,
                 default_min_grade: cs.default_min_grade || '',
@@ -1119,14 +1121,12 @@ async function refreshClassInfo() {
                 override: false
             }));
 
-            // Debug log to verify subject_ids
-            console.log('Compulsory subjects loaded:', compulsorySubjects);
-            console.log('Subject IDs:', compulsorySubjects.map(cs => cs.subject_id));
-
-            if (classPassAvg) {
+            // Only set default if no value is currently set
+            if (classPassAvg && (!currentAvg || currentAvg === '')) {
                 document.getElementById('promotion_pass_average').value = classPassAvg;
                 document.getElementById('avg_slider').value = classPassAvg;
             }
+
             const scaleLabel = isSenior ? 'Senior (A1–F9)' : 'Junior (A–F)';
             scopeInfo.textContent = `${totalSubjects} total | ${compulsoryCount} compulsory | ${otherCount} other | ${scaleLabel}`;
 
@@ -1138,7 +1138,6 @@ async function refreshClassInfo() {
             summaryEl.style.display = 'block';
             addBtn.disabled = false;
 
-            // Update existing rules with fresh subject data
             if (promotionRules.length > 0) {
                 promotionRules = promotionRules.map(rule => {
                     if (!rule.compulsory_section) rule.compulsory_section = { subjects: [], count_conditions: [] };
@@ -1206,53 +1205,6 @@ function resetModal() {
     rerenderRules();
 }
 
-// ── Save ───────────────────────────────────────────────────────────────────────
-document.getElementById('saveSettingBtn')?.addEventListener('click', async function() {
-    const classId = document.getElementById('schoolclass_id').value;
-    if (!classId) { Swal.fire('Validation', 'Please select a class.', 'warning'); return; }
-    for (const [i, rule] of promotionRules.entries()) {
-        if (!rule.rule_name?.trim()) { Swal.fire('Validation', `Rule ${i + 1} needs a name.`, 'warning'); return; }
-        const hasCompSubjGrades = (rule.compulsory_section?.subjects ?? []).some(s => s.min_grade);
-        const hasCompConds = (rule.compulsory_section?.count_conditions ?? []).length > 0;
-        const hasOtherConds = (rule.other_section?.count_conditions ?? []).length > 0;
-        const hasAvg = rule.average_condition?.enabled;
-        if (!hasCompSubjGrades && !hasCompConds && !hasOtherConds && !hasAvg) {
-            Swal.fire('Validation', `Rule ${i + 1} has no conditions.`, 'warning'); return;
-        }
-    }
-    document.getElementById('promotion_rules_input').value = JSON.stringify(promotionRules);
-    const fd = new FormData(document.getElementById('settingForm'));
-    fd.set('schoolclass_id', classId);
-    fd.set('session_id', document.getElementById('session_id').value || '');
-    fd.set('term_id', document.getElementById('term_id').value || '');
-    fd.set('promoted_label', document.getElementById('promoted_label').value);
-    fd.set('trial_label', document.getElementById('trial_label').value);
-    fd.set('see_principal_label', document.getElementById('see_principal_label').value);
-    fd.set('repeat_label', document.getElementById('repeat_label').value);
-    fd.set('rule_logic', document.getElementById('rule_logic').value || 'grade_count');
-    fd.set('promotion_pass_average', document.getElementById('promotion_pass_average').value || '');
-    fd.set('is_active', document.getElementById('modal_is_active').checked ? '1' : '0');
-    fd.set('template_id', document.getElementById('template_id_input').value || '');
-    const id = document.getElementById('setting_id').value;
-    let url = '/promotion-settings';
-    if (id) { url = `/promotion-settings/${id}`; fd.append('_method', 'PUT'); }
-    Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-    try {
-        const res = await fetch(url, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
-        const data = await res.json();
-        if (data.success) Swal.fire({ icon: 'success', title: 'Saved!', text: data.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
-        else Swal.fire('Error', data.message || 'Failed.', 'error');
-    } catch { Swal.fire('Error', 'An error occurred.', 'error'); }
-});
-
-// ── Edit / Delete ──────────────────────────────────────────────────────────────
-function bindEditButtons() {
-    document.querySelectorAll('.edit-setting').forEach(btn => {
-        btn.removeEventListener('click', handleEditClick);
-        btn.addEventListener('click', handleEditClick);
-    });
-}
-
 async function handleEditClick(e) {
     const d = e.currentTarget.dataset;
     resetModal();
@@ -1264,25 +1216,40 @@ async function handleEditClick(e) {
     document.getElementById('trial_label').value = d.trial_label;
     document.getElementById('see_principal_label').value = d.see_principal_label;
     document.getElementById('repeat_label').value = d.repeat_label;
-    document.getElementById('rule_logic').value = d.rule_logic || 'grade_count';
-    document.getElementById('promotion_pass_average').value = d.promotion_pass_average || '';
-    document.getElementById('avg_slider').value = d.promotion_pass_average || 50;
+
+    const ruleLogic = d.rule_logic || 'grade_count';
+    document.getElementById('rule_logic').value = ruleLogic;
+
+    // Set average value BEFORE triggering change event
+    const avgValue = d.promotion_pass_average !== undefined && d.promotion_pass_average !== '' ? d.promotion_pass_average : '';
+    document.getElementById('promotion_pass_average').value = avgValue;
+    document.getElementById('avg_slider').value = avgValue || 50;
+
     document.getElementById('template_id_input').value = d.template_id || '';
     if (d.template_id) document.getElementById('templateSelect').value = d.template_id;
+
     const isActive = d.is_active === '1';
     document.getElementById('modal_is_active').checked = isActive;
     const badge = document.getElementById('modalActiveBadge');
-    if (badge) { badge.className = isActive ? 'active-badge is-active' : 'active-badge is-inactive'; badge.innerHTML = isActive ? '<i class="ri-checkbox-circle-line"></i> Active' : '<i class="ri-close-circle-line"></i> Inactive'; }
-    document.getElementById('rule_logic').dispatchEvent(new Event('change'));
+    if (badge) {
+        badge.className = isActive ? 'active-badge is-active' : 'active-badge is-inactive';
+        badge.innerHTML = isActive ? '<i class="ri-checkbox-circle-line"></i> Active' : '<i class="ri-close-circle-line"></i> Inactive';
+    }
+
+    // Manually trigger change event to show/hide average section
+    const ruleLogicSelect = document.getElementById('rule_logic');
+    const changeEvent = new Event('change');
+    ruleLogicSelect.dispatchEvent(changeEvent);
+
     try { promotionRules = JSON.parse(d.promotion_rules || '[]'); } catch { promotionRules = []; }
     openModal();
     await refreshClassInfo();
 }
 
-function bindDeleteButtons() {
-    document.querySelectorAll('.delete-setting').forEach(btn => {
-        btn.removeEventListener('click', handleDeleteClick);
-        btn.addEventListener('click', handleDeleteClick);
+function bindEditButtons() {
+    document.querySelectorAll('.edit-setting').forEach(btn => {
+        btn.removeEventListener('click', handleEditClick);
+        btn.addEventListener('click', handleEditClick);
     });
 }
 
@@ -1298,6 +1265,76 @@ async function handleDeleteClick(e) {
         else Swal.fire('Error', data.message || 'Failed.', 'error');
     } catch { Swal.fire('Error', 'Network error.', 'error'); }
 }
+
+function bindDeleteButtons() {
+    document.querySelectorAll('.delete-setting').forEach(btn => {
+        btn.removeEventListener('click', handleDeleteClick);
+        btn.addEventListener('click', handleDeleteClick);
+    });
+}
+
+// ── Save ───────────────────────────────────────────────────────────────────────
+document.getElementById('saveSettingBtn')?.addEventListener('click', async function() {
+    const classId = document.getElementById('schoolclass_id').value;
+    if (!classId) { Swal.fire('Validation', 'Please select a class.', 'warning'); return; }
+
+    // Validate average based on rule logic
+    const ruleLogic = document.getElementById('rule_logic').value;
+    const avgValue = document.getElementById('promotion_pass_average').value;
+
+    if ((ruleLogic === 'average_only' || ruleLogic === 'both') && (!avgValue || avgValue === '')) {
+        Swal.fire('Validation', 'Minimum average is required for Average Only or Both evaluation modes.', 'warning');
+        return;
+    }
+
+    for (const [i, rule] of promotionRules.entries()) {
+        if (!rule.rule_name?.trim()) { Swal.fire('Validation', `Rule ${i + 1} needs a name.`, 'warning'); return; }
+        const hasCompSubjGrades = (rule.compulsory_section?.subjects ?? []).some(s => s.min_grade);
+        const hasCompConds = (rule.compulsory_section?.count_conditions ?? []).length > 0;
+        const hasOtherConds = (rule.other_section?.count_conditions ?? []).length > 0;
+        const hasAvg = rule.average_condition?.enabled;
+        if (!hasCompSubjGrades && !hasCompConds && !hasOtherConds && !hasAvg) {
+            Swal.fire('Validation', `Rule ${i + 1} has no conditions.`, 'warning');
+            return;
+        }
+    }
+
+    document.getElementById('promotion_rules_input').value = JSON.stringify(promotionRules);
+    const fd = new FormData(document.getElementById('settingForm'));
+    fd.set('schoolclass_id', classId);
+    fd.set('session_id', document.getElementById('session_id').value || '');
+    fd.set('term_id', document.getElementById('term_id').value || '');
+    fd.set('promoted_label', document.getElementById('promoted_label').value);
+    fd.set('trial_label', document.getElementById('trial_label').value);
+    fd.set('see_principal_label', document.getElementById('see_principal_label').value);
+    fd.set('repeat_label', document.getElementById('repeat_label').value);
+    fd.set('rule_logic', ruleLogic);
+
+    // Ensure average is included even if 0
+    fd.set('promotion_pass_average', avgValue !== '' ? avgValue : '');
+
+    fd.set('is_active', document.getElementById('modal_is_active').checked ? '1' : '0');
+    fd.set('template_id', document.getElementById('template_id_input').value || '');
+    const id = document.getElementById('setting_id').value;
+    let url = '/promotion-settings';
+    if (id) { url = `/promotion-settings/${id}`; fd.append('_method', 'PUT'); }
+
+    Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: fd
+        });
+        const data = await res.json();
+        if (data.success) Swal.fire({ icon: 'success', title: 'Saved!', text: data.message, timer: 1500, showConfirmButton: false }).then(() => location.reload());
+        else Swal.fire('Error', data.message || 'Failed.', 'error');
+    } catch { Swal.fire('Error', 'An error occurred.', 'error'); }
+});
 
 // ── Toggle Active ──────────────────────────────────────────────────────────────
 document.addEventListener('change', async function(e) {
@@ -1324,7 +1361,8 @@ document.getElementById('modal_is_active')?.addEventListener('change', function(
     if (b) { b.className = this.checked ? 'active-badge is-active' : 'active-badge is-inactive'; b.innerHTML = this.checked ? '<i class="ri-checkbox-circle-line"></i> Active' : '<i class="ri-close-circle-line"></i> Inactive'; }
 });
 document.getElementById('rule_logic')?.addEventListener('change', function() {
-    document.getElementById('globalAvgSection').style.display = ['average_only','both'].includes(this.value) ? 'block' : 'none';
+    const showAvg = this.value === 'average_only' || this.value === 'both';
+    document.getElementById('globalAvgSection').style.display = showAvg ? 'block' : 'none';
     updateGlobalInterpPanel();
 });
 document.getElementById('avg_slider')?.addEventListener('input', e => {
