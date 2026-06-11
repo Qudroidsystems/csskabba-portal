@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class BroadsheetController extends Controller
 {
@@ -669,7 +670,7 @@ class BroadsheetController extends Controller
     // WEB VIEW
     // =========================================================================
 
-    public function webView(Request $request): View|JsonResponse
+    public function webView(Request $request): View|JsonResponse|RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -691,10 +692,10 @@ class BroadsheetController extends Controller
 
             return view('broadsheet.web', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->errors())->with('error', 'Invalid input.');
+            return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
         } catch (\Exception $e) {
             Log::error('Broadsheet web view error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
         }
     }
 
@@ -702,7 +703,7 @@ class BroadsheetController extends Controller
     // STUDENT LIST (Printable promotion-ordered list)
     // =========================================================================
 
-    public function studentList(Request $request): View|JsonResponse
+    public function studentList(Request $request): View|JsonResponse|RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -758,10 +759,10 @@ class BroadsheetController extends Controller
 
             return view('broadsheet.student_list', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->errors())->with('error', 'Invalid input.');
+            return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
         } catch (\Exception $e) {
             Log::error('Student list error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Failed to generate student list: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate student list: ' . $e->getMessage());
         }
     }
 
@@ -769,7 +770,7 @@ class BroadsheetController extends Controller
     // EXPORT PDF
     // =========================================================================
 
-    public function exportPdf(Request $request)
+    public function exportPdf(Request $request): \Illuminate\Http\Response|RedirectResponse
     {
         try {
             ini_set('max_execution_time', 600);
@@ -824,7 +825,7 @@ class BroadsheetController extends Controller
             ));
         } catch (\Exception $e) {
             Log::error('Broadsheet PDF export error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
     }
 
@@ -832,7 +833,7 @@ class BroadsheetController extends Controller
     // EXPORT EXCEL
     // =========================================================================
 
-    public function exportExcel(Request $request)
+    public function exportExcel(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -857,7 +858,7 @@ class BroadsheetController extends Controller
             );
         } catch (\Exception $e) {
             Log::error('Broadsheet Excel export error', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
         }
     }
 
@@ -865,7 +866,7 @@ class BroadsheetController extends Controller
     // ALL CLASSES WEB VIEW
     // =========================================================================
 
-    public function allClassesWebView(Request $request): View|JsonResponse
+    public function allClassesWebView(Request $request): View|JsonResponse|RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -888,10 +889,10 @@ class BroadsheetController extends Controller
 
             return view('broadsheet.web', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->errors())->with('error', 'Invalid input.');
+            return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
         } catch (\Exception $e) {
             Log::error('All-classes broadsheet error', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
         }
     }
 
@@ -899,7 +900,7 @@ class BroadsheetController extends Controller
     // ALL CLASSES EXPORT PDF
     // =========================================================================
 
-    public function allClassesExportPdf(Request $request)
+    public function allClassesExportPdf(Request $request): \Illuminate\Http\Response|RedirectResponse
     {
         try {
             ini_set('max_execution_time', 600);
@@ -946,7 +947,7 @@ class BroadsheetController extends Controller
             ));
         } catch (\Exception $e) {
             Log::error('All-classes PDF error', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
     }
 
