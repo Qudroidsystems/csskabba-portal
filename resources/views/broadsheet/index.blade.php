@@ -1,9 +1,9 @@
 {{--
-    broadsheet/index.blade.php  (updated)
+    broadsheet/index.blade.php (updated)
     Key changes:
-      1. doExport('web') now POSTs to broadsheet.web-view correctly
-      2. getStudentPreview response now includes subject_count & assessment_count
-      3. PDF size label updates correctly
+      1. Added Promotion column group to the column modal
+      2. Updated renderColumnForm to include promotion columns
+      3. Fixed web view display issues
 --}}
 @extends('layouts.master')
 
@@ -342,6 +342,7 @@
                         ['ri-calculator-line','#0891b2','GPA / CGPA','Optional GPA and CGPA columns from current term grade points.'],
                         ['ri-global-line','#1d6fa4','Web View','Interactive scrollable view with smart locate/filter toolbar.'],
                         ['ri-pen-line','#374151','Signatures','Class teacher, HOD, VP and Principal signature rows.'],
+                        ['ri-medal-line','#7c3aed','Promotion Status','Student promotion recommendations based on performance.'],
                     ];
                     @endphp
                     @foreach($features as $f)
@@ -475,6 +476,19 @@
                             </div>
                         </div>
 
+                        {{-- NEW: Promotion Column Group --}}
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-12">
+                                <div class="col-group" style="border-color:#7c3aed;">
+                                    <div class="col-group-header" style="color:#5b21b6;">
+                                        <span>🎓 Promotion Columns</span>
+                                        <a href="#" class="text-decoration-none" style="color:#7c3aed;font-size:11px;" onclick="toggleGroup('promoCols');return false;">Toggle</a>
+                                    </div>
+                                    <div id="promoCols"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mt-4 p-3 rounded-3" style="background:#f8fafc;border:1px solid var(--bs-border);">
                             <h6 class="fw-bold mb-3" style="color:#1e3a5f;"><i class="ri-download-line me-2"></i>Export Format</h6>
                             <div class="row g-3">
@@ -555,6 +569,9 @@ const ROUTES = {
     exportPdf      : '{{ route("broadsheet.export.pdf") }}',
     exportExcel    : '{{ route("broadsheet.export.excel") }}',
     webView        : '{{ route("broadsheet.web-view") }}',
+    allClassesWeb  : '{{ route("broadsheet.all-classes.web") }}',
+    allClassesPdf  : '{{ route("broadsheet.all-classes.pdf") }}',
+    classGroups    : '{{ route("broadsheet.class-groups") }}',
 };
 
 let columnData   = null;
@@ -674,12 +691,17 @@ function openColumnModal() {
     });
 }
 
-/* ── Render column checkboxes ── */
+/* ── Render column checkboxes (UPDATED with promotion group) ── */
 function renderColumnForm(columns) {
     renderGroup('studentInfoCols', columns.student_info ?? {});
     renderGroup('assessmentCols',  columns.assessments  ?? {});
     renderGroup('scoreCols',       columns.scores       ?? {});
     renderGroup('gpaCols',         columns.gpa_metrics  ?? {});
+
+    // NEW: Render promotion columns
+    if (columns.promotion) {
+        renderGroup('promoCols', columns.promotion);
+    }
 }
 
 function renderGroup(containerId, items) {
@@ -694,6 +716,7 @@ function renderGroup(containerId, items) {
             <label for="chk_${key}" style="cursor:pointer;">
                 ${cfg.label}
                 ${cfg.max_score ? '<small style="color:#9ca3af;"> (' + cfg.max_score + ')</small>' : ''}
+                ${cfg.note ? '<small style="color:#f59e0b;"> (' + cfg.note + ')</small>' : ''}
             </label>`;
         container.appendChild(div);
     });
@@ -767,11 +790,9 @@ function doExport(type) {
     bootstrap.Modal.getInstance(document.getElementById('columnModal'))?.hide();
 }
 
-
-
 // ── All Classes Broadsheet ────────────────────────────────────────────
 // Load class groups on page load
-fetch('{{ route("broadsheet.class-groups") }}')
+fetch(ROUTES.classGroups)
     .then(r => r.json())
     .then(data => {
         const sel = document.getElementById('classGroupSelect');
@@ -785,7 +806,8 @@ fetch('{{ route("broadsheet.class-groups") }}')
     });
 
 ['classGroupSelect','classGroupSession','classGroupTerm'].forEach(id => {
-    document.getElementById(id).addEventListener('change', checkAllClassesPreview);
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', checkAllClassesPreview);
 });
 
 function checkAllClassesPreview() {
@@ -797,14 +819,14 @@ function checkAllClassesPreview() {
     const preview   = document.getElementById('allClassesPreview');
 
     if (!group || !sessionId || !termId) {
-        webBtn.disabled = true;
-        pdfBtn.disabled = true;
-        preview.style.display = 'none';
+        if (webBtn) webBtn.disabled = true;
+        if (pdfBtn) pdfBtn.disabled = true;
+        if (preview) preview.style.display = 'none';
         return;
     }
 
     // Fetch a quick preview: count arms and students
-    fetch('{{ route("broadsheet.student-preview") }}', {
+    fetch(ROUTES.studentPreview, {
         method : 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
         body   : JSON.stringify({ classgroup: group, sessionid: sessionId, termid: termId }),
@@ -814,9 +836,9 @@ function checkAllClassesPreview() {
         if (data.success) {
             document.getElementById('allClassesArms').textContent     = data.arms_count    ?? '—';
             document.getElementById('allClassesStudents').textContent = data.count         ?? '—';
-            preview.style.display = 'block';
-            webBtn.disabled = false;
-            pdfBtn.disabled = false;
+            if (preview) preview.style.display = 'block';
+            if (webBtn) webBtn.disabled = false;
+            if (pdfBtn) pdfBtn.disabled = false;
         }
     })
     .catch(() => {});
@@ -834,14 +856,14 @@ function doAllClassesExport(type) {
 
     const form   = document.getElementById('exportForm');
     const routes = {
-        web : '{{ route("broadsheet.all-classes.web") }}',
-        pdf : '{{ route("broadsheet.all-classes.pdf") }}',
+        web : ROUTES.allClassesWeb,
+        pdf : ROUTES.allClassesPdf,
     };
 
     form.action = routes[type];
     form.target = '_blank';
 
-    // Re-use existing hidden inputs
+    // Clear class-specific fields
     document.getElementById('ef_class').value   = '';
     document.getElementById('ef_session').value = sessionId;
     document.getElementById('ef_term').value    = termId;
@@ -864,9 +886,12 @@ function doAllClassesExport(type) {
     colDiv.innerHTML = '';
 
     if (type !== 'web') {
-        document.getElementById('loadingMsg').textContent = 'Generating Combined Broadsheet…';
-        document.getElementById('loadingOverlay').classList.add('active');
-        setTimeout(() => document.getElementById('loadingOverlay').classList.remove('active'), 15000);
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            document.getElementById('loadingMsg').textContent = 'Generating Combined Broadsheet…';
+            overlay.classList.add('active');
+            setTimeout(() => overlay.classList.remove('active'), 15000);
+        }
     }
 
     form.submit();
