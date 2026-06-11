@@ -14,24 +14,18 @@ use App\Models\Schoolterm;
 use App\Models\SchoolInformation;
 use App\Models\BroadsheetAssessmentScore;
 use App\Models\Subjectclass;
-use App\Services\PromotionEvaluator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 
 class BroadsheetController extends Controller
 {
-    private PromotionEvaluator $promotionEvaluator;
-
-    public function __construct(PromotionEvaluator $promotionEvaluator)
+    public function __construct()
     {
         $this->middleware('permission:View student-report');
-        $this->promotionEvaluator = $promotionEvaluator;
     }
 
     // =========================================================================
@@ -78,15 +72,12 @@ class BroadsheetController extends Controller
                 ->get();
         }
 
+        // Count actual subjects in the class
         $actualSubjectCount = DB::table('subjectclass as sc')
             ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
             ->where('sc.schoolclassid', $schoolclassid)
             ->distinct()
             ->count('sc.subjectid');
-
-        // Check if this is a promotional term
-        $term              = Schoolterm::find($termid);
-        $isPromotionalTerm = $term && $term->is_promotional;
 
         $columns = [
             'student_info' => [
@@ -97,16 +88,16 @@ class BroadsheetController extends Controller
             ],
             'assessments' => [],
             'scores' => [
-                'total'           => ['label' => 'Total',              'default' => true],
-                'bf'              => ['label' => 'BF',                 'default' => true],
-                'cum'             => ['label' => 'Cum',                'default' => true],
-                'grade'           => ['label' => 'Grade',              'default' => true],
-                'pos_class_cum'   => ['label' => 'Class Pos (Cum)',    'default' => true],
-                'pos_class_total' => ['label' => 'Class Pos (Total)',  'default' => false],
-                'pos_arm_total'   => ['label' => 'Arm Pos (Total)',    'default' => true],
-                'pos_arm_cum'     => ['label' => 'Arm Pos (Cum)',      'default' => true],
-                'class_average'   => ['label' => 'Class Avg',          'default' => true],
-                'remark'          => ['label' => 'Remark',             'default' => false],
+                'total'         => ['label' => 'Total',              'default' => true],
+                'bf'            => ['label' => 'BF',                 'default' => true],
+                'cum'           => ['label' => 'Cum',                'default' => true],
+                'grade'         => ['label' => 'Grade',              'default' => true],
+                'pos_class_cum'   => ['label' => 'Class Pos (Cum)',       'default' => true],
+                'pos_class_total' => ['label' => 'Class Pos (Total)',     'default' => false],
+                'pos_arm_total'   => ['label' => 'Arm Pos (Total)',       'default' => true],
+                'pos_arm_cum'     => ['label' => 'Arm Pos (Cum)',         'default' => true],
+                'class_average'   => ['label' => 'Class Avg',             'default' => true],
+                'remark'          => ['label' => 'Remark',               'default' => false],
             ],
             'summary' => [
                 'position_cum'  => ['label' => 'Overall Pos (Cum)',  'default' => true],
@@ -118,21 +109,6 @@ class BroadsheetController extends Controller
                 'gpa_grade'          => ['label' => 'GPA Grade',    'default' => false],
                 'num_subjects'       => ['label' => 'No. Subjects', 'default' => false],
                 'total_grade_points' => ['label' => 'Total GP',     'default' => false],
-            ],
-            'promotion' => [
-                'promotion_status' => [
-                    'label'   => 'Promotion Status',
-                    'default' => $isPromotionalTerm,
-                    'note'    => $isPromotionalTerm ? null : 'Non-promotional term',
-                ],
-                'promotion_label' => [
-                    'label'   => 'Promotion Label (verbose)',
-                    'default' => false,
-                ],
-                'promotion_rule_applied' => [
-                    'label'   => 'Rule Applied',
-                    'default' => false,
-                ],
             ],
         ];
 
@@ -147,13 +123,12 @@ class BroadsheetController extends Controller
         }
 
         return response()->json([
-            'success'             => true,
-            'columns'             => $columns,
-            'is_senior'           => $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            'success'          => true,
+            'columns'          => $columns,
+            'is_senior'        => $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? ($schoolclass->classcategories->first()->is_senior ?? false) : false,
-            'subject_count'       => $actualSubjectCount,
-            'assessment_count'    => count($columns['assessments']),
-            'is_promotional_term' => $isPromotionalTerm,
+            'subject_count'    => $actualSubjectCount,
+            'assessment_count' => count($columns['assessments']),
         ]);
     }
 
@@ -413,7 +388,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // SHARED: Assemble student rows, compute positions, promotion evaluation
+    // SHARED: Assemble student rows, compute positions, build result array
     // =========================================================================
 
     private function assembleStudentRows(
@@ -457,10 +432,6 @@ class BroadsheetController extends Controller
             ->orderBy('studentRegistration.firstname')
             ->get();
 
-        // Determine whether to run promotion evaluation
-        $termid          = $schoolterm ? $schoolterm->id : null;
-        $shouldEvalPromo = $termid && $sessionid;
-
         $studentRows = [];
         foreach ($studentInfoRows as $stu) {
             $sid       = (int)$stu->id;
@@ -480,77 +451,38 @@ class BroadsheetController extends Controller
                 }
             }
 
-            $totalCum      = array_sum($cumValues);
-            $totalTerm     = array_sum($totalValues);
-            $numSubjects   = count($cumValues);
-            $gpa           = count($gradePointsA) > 0
+            $totalCum    = array_sum($cumValues);
+            $totalTerm   = array_sum($totalValues);
+            $numSubjects = count($cumValues);
+            $gpa         = count($gradePointsA) > 0
                 ? round(array_sum($gradePointsA) / count($gradePointsA), 2) : 0.0;
-            $classAvgScore = $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0;
 
             $armLabel = '';
             if ($isCombined && $studentClassMap && isset($studentClassMap[$sid])) {
                 $armLabel = $armLabels[$studentClassMap[$sid]] ?? '';
             }
 
-            // ── Promotion evaluation ─────────────────────────────────────────
-            $promoResult = null;
-            if ($shouldEvalPromo) {
-                $scoresForPromo = [];
-                foreach ($subScores as $subjectId => $sd) {
-                    $scoresForPromo[] = (object)[
-                        'subject_id'   => $subjectId,
-                        'grade'        => $sd['grade'] ?? null,
-                        'total'        => $sd['total'] ?? 0,
-                        'cum'          => $sd['cum']   ?? 0,
-                        'subject_name' => $subjectsMap[$subjectId]['subject_name'] ?? null,
-                    ];
-                }
-
-                $evalClassId = ($isCombined && $studentClassMap && isset($studentClassMap[$sid]))
-                    ? $studentClassMap[$sid]
-                    : $schoolclassid;
-
-                try {
-                    $promoResult = $this->promotionEvaluator->evaluate(
-                        $sid,
-                        (int)$evalClassId,
-                        (int)$termid,
-                        (int)$sessionid,
-                        $scoresForPromo,
-                        $classAvgScore > 0 ? $classAvgScore : null
-                    );
-                } catch (\Exception $e) {
-                    Log::warning('Promotion eval failed for student ' . $sid . ': ' . $e->getMessage());
-                    $promoResult = $this->promotionEvaluator->awaitingResult($classAvgScore ?: null);
-                }
-            }
-
             $studentRows[$sid] = [
-                'id'                     => $sid,
-                'admissionno'            => $stu->admissionno,
-                'firstname'              => $stu->firstname,
-                'lastname'               => $stu->lastname,
-                'gender'                 => $stu->gender,
-                'dateofbirth'            => $stu->dateofbirth,
-                'picture'                => $stu->picture,
-                'arm'                    => $armLabel,
-                'schoolclassid'          => (int)$stu->schoolclassid,
-                'subjects'               => $subScores,
-                'total_cum'              => round($totalCum, 1),
-                'total_term'             => round($totalTerm, 1),
-                'num_subjects'           => $numSubjects,
-                'class_average'          => $classAvgScore,
-                'gpa'                    => $gpa,
-                'cgpa'                   => $gpa,
-                'gpa_grade'              => $this->getGpaGrade($gpa),
-                'total_grade_points'     => round(array_sum($gradePointsA), 1),
-                'position_cum'           => 0,
-                'position_term'          => 0,
-                // ── Promotion ──────────────────────────────────────────────
-                'promotion_status'       => $promoResult['status']       ?? 'awaiting',
-                'promotion_label'        => $promoResult['status_label'] ?? 'Awaiting Decision',
-                'promotion_rule_applied' => $promoResult['applied_rule']['name'] ?? null,
-                'promotion_data'         => $promoResult,
+                'id'                 => $sid,
+                'admissionno'        => $stu->admissionno,
+                'firstname'          => $stu->firstname,
+                'lastname'           => $stu->lastname,
+                'gender'             => $stu->gender,
+                'dateofbirth'        => $stu->dateofbirth,
+                'picture'            => $stu->picture,
+                'arm'                => $armLabel,
+                'schoolclassid'      => (int)$stu->schoolclassid,
+                'subjects'           => $subScores,
+                'total_cum'          => round($totalCum, 1),
+                'total_term'         => round($totalTerm, 1),
+                'num_subjects'       => $numSubjects,
+                'class_average'      => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
+                'gpa'                => $gpa,
+                'cgpa'               => $gpa,
+                'gpa_grade'          => $this->getGpaGrade($gpa),
+                'total_grade_points' => round(array_sum($gradePointsA), 1),
+                'position_cum'       => 0,
+                'position_term'      => 0,
             ];
         }
 
@@ -670,7 +602,7 @@ class BroadsheetController extends Controller
     // WEB VIEW
     // =========================================================================
 
-    public function webView(Request $request): View|JsonResponse|RedirectResponse
+    public function webView(Request $request): View|JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -692,77 +624,10 @@ class BroadsheetController extends Controller
 
             return view('broadsheet.web', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
+            return back()->withErrors($e->errors())->with('error', 'Invalid input.');
         } catch (\Exception $e) {
             Log::error('Broadsheet web view error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return redirect()->back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
-        }
-    }
-
-    // =========================================================================
-    // STUDENT LIST (Printable promotion-ordered list)
-    // =========================================================================
-
-    public function studentList(Request $request): View|JsonResponse|RedirectResponse
-    {
-        try {
-            $validated = $request->validate([
-                'schoolclassid'        => 'required|integer|exists:schoolclass,id',
-                'sessionid'            => 'required|integer|exists:schoolsession,id',
-                'termid'               => 'required|integer',
-                'list_fields'          => 'nullable|array',
-                'recommendation_order' => 'nullable|array',
-                'show_photos'          => 'nullable',
-                'show_sn'              => 'nullable',
-            ]);
-
-            $data = $this->buildBroadsheetData(
-                (int)$validated['schoolclassid'],
-                (int)$validated['sessionid'],
-                (int)$validated['termid'],
-                [] // all columns — we only need student rows + promotion
-            );
-
-            $listFields          = $request->input('list_fields', ['firstname', 'lastname', 'admissionno', 'gender']);
-            $recommendationOrder = $request->input('recommendation_order', [
-                'promoted', 'trial', 'see_principal', 'repeated', 'awaiting',
-            ]);
-            $showPhotos = filter_var($request->input('show_photos', false), FILTER_VALIDATE_BOOLEAN);
-            $showSn     = filter_var($request->input('show_sn', true),     FILTER_VALIDATE_BOOLEAN);
-
-            // Group students by promotion_status in admin-specified order
-            $grouped = [];
-            foreach ($recommendationOrder as $status) {
-                $grouped[$status] = [];
-            }
-            $grouped['__other'] = [];
-
-            foreach ($data['studentRows'] as $stu) {
-                $status = $stu['promotion_status'] ?? 'awaiting';
-                if (array_key_exists($status, $grouped)) {
-                    $grouped[$status][] = $stu;
-                } else {
-                    $grouped['__other'][] = $stu;
-                }
-            }
-
-            // Remove empty groups
-            $grouped = array_filter($grouped, fn($g) => count($g) > 0);
-
-            $data['grouped_students']     = $grouped;
-            $data['list_fields']          = $listFields;
-            $data['recommendation_order'] = $recommendationOrder;
-            $data['show_photos']          = $showPhotos;
-            $data['show_sn']              = $showSn;
-            $data['school_logo_base64']   = $this->getLogoBase64($data['schoolInfo']);
-            $data['pagetitle']            = 'Student Promotion List';
-
-            return view('broadsheet.student_list', $data);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
-        } catch (\Exception $e) {
-            Log::error('Student list error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return redirect()->back()->with('error', 'Failed to generate student list: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
         }
     }
 
@@ -770,7 +635,7 @@ class BroadsheetController extends Controller
     // EXPORT PDF
     // =========================================================================
 
-    public function exportPdf(Request $request): \Illuminate\Http\Response|RedirectResponse
+    public function exportPdf(Request $request)
     {
         try {
             ini_set('max_execution_time', 600);
@@ -825,7 +690,7 @@ class BroadsheetController extends Controller
             ));
         } catch (\Exception $e) {
             Log::error('Broadsheet PDF export error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
     }
 
@@ -833,7 +698,7 @@ class BroadsheetController extends Controller
     // EXPORT EXCEL
     // =========================================================================
 
-    public function exportExcel(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
+    public function exportExcel(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -858,7 +723,7 @@ class BroadsheetController extends Controller
             );
         } catch (\Exception $e) {
             Log::error('Broadsheet Excel export error', ['error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
         }
     }
 
@@ -866,7 +731,7 @@ class BroadsheetController extends Controller
     // ALL CLASSES WEB VIEW
     // =========================================================================
 
-    public function allClassesWebView(Request $request): View|JsonResponse|RedirectResponse
+    public function allClassesWebView(Request $request): View|JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -889,10 +754,10 @@ class BroadsheetController extends Controller
 
             return view('broadsheet.web', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
+            return back()->withErrors($e->errors())->with('error', 'Invalid input.');
         } catch (\Exception $e) {
             Log::error('All-classes broadsheet error', ['error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
         }
     }
 
@@ -900,7 +765,7 @@ class BroadsheetController extends Controller
     // ALL CLASSES EXPORT PDF
     // =========================================================================
 
-    public function allClassesExportPdf(Request $request): \Illuminate\Http\Response|RedirectResponse
+    public function allClassesExportPdf(Request $request)
     {
         try {
             ini_set('max_execution_time', 600);
@@ -947,7 +812,7 @@ class BroadsheetController extends Controller
             ));
         } catch (\Exception $e) {
             Log::error('All-classes PDF error', ['error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
     }
 
