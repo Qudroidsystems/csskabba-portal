@@ -574,6 +574,16 @@
 
     const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
+    // ── Server-side flash messages → SweetAlert ─────────────
+    @if (session('error'))
+    Swal.fire({
+        icon: 'warning',
+        title: 'Unable to Open Result',
+        text: @json(session('error')),
+        confirmButtonColor: '#2563eb'
+    });
+    @endif
+
     // ── Selection state ─────────────────────────────────────
     function updateSelectionUI() {
         const cls     = document.getElementById('idclass');
