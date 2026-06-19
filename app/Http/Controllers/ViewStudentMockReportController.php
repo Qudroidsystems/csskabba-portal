@@ -491,7 +491,13 @@ class ViewStudentMockReportController extends Controller
                 return back()->with('error', 'No student data found for the provided parameters.');
             }
 
-            $this->fixImagePaths([$data]);
+            // NOTE: fixImagePaths() takes its argument by reference, so we can't pass
+            // a literal array expression like [$data] directly (PHP can't bind a
+            // reference to a temporary value). We wrap $data into a real variable
+            // first, pass that, then unwrap the (now-mutated) result back into $data.
+            $dataWrapper = [$data];
+            $this->fixImagePaths($dataWrapper);
+            $data = $dataWrapper[0];
 
             $student     = $data['students']->first();
             $studentName = $student ? $student->fname . '_' . $student->lastname : 'Student';
