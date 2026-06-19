@@ -30,7 +30,8 @@
                 .ap-filter-select { padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); min-width:160px; }
                 .ap-filter-btn,.ap-print-btn { padding:8px 22px; border-radius:var(--radius-sm); cursor:pointer; border:none; }
                 .ap-filter-btn { background:var(--gold); color:var(--navy); font-weight:600; }
-                .ap-print-btn  { background:var(--navy-mid); color:#fff; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
+                .ap-print-btn  { background:var(--navy-mid); color:#fff; text-decoration:none; display:inline-flex; align-items:center; gap:7px; font-size:13px; }
+                .ap-print-btn-mock { background:var(--gold); color:var(--navy); font-weight:700; }
 
                 /* Body */
                 .ap-body { padding:32px 24px; }
@@ -186,6 +187,9 @@
                     color: #7b85a3;
                     font-size: 13px;
                 }
+
+                /* print button group */
+                .ap-print-btn-group { margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
             </style>
 
             <div class="assessment-portal">
@@ -225,14 +229,30 @@
                         <button type="submit" class="ap-filter-btn">Apply Filter</button>
 
                         @if(isset($subjectsWithAssessments) && $subjectsWithAssessments->isNotEmpty())
-                        <button type="button" class="ap-print-btn" id="showPrintModalBtn" style="margin-left:auto;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6 9 6 2 18 2 18 9"/>
-                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                                <rect x="6" y="14" width="12" height="8"/>
-                            </svg>
-                            Print / Save PDF
-                        </button>
+                        <div class="ap-print-btn-group">
+
+                            {{-- Terminal Report Button --}}
+                            <button type="button" class="ap-print-btn" id="showPrintModalBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 6 2 18 2 18 9"/>
+                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                                    <rect x="6" y="14" width="12" height="8"/>
+                                </svg>
+                                Print Terminal Report
+                            </button>
+
+                            {{-- Mock Report Button — only shown when mock data exists --}}
+                            @if(isset($mockResults) && $mockResults->isNotEmpty())
+                            <button type="button" class="ap-print-btn ap-print-btn-mock" id="printMockBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 11l3 3L22 4"/>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                                </svg>
+                                Print Mock Report
+                            </button>
+                            @endif
+
+                        </div>
                         @endif
                     </div>
                 </form>
@@ -448,9 +468,11 @@
                                 </svg>
                                 Mock Exam Results
                             </h4>
-                            @if($hasMock)
-                                <span class="mock-badge">{{ $mockResults->count() }} Subjects</span>
-                            @endif
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                @if($hasMock)
+                                    <span class="mock-badge">{{ $mockResults->count() }} Subjects</span>
+                                @endif
+                            </div>
                         </div>
 
                         @if($hasMock)
@@ -529,16 +551,18 @@
                 </div>
             </div>
 
-            {{-- PRINT COLUMN SELECTION MODAL --}}
+            {{-- ════════════════════════════════════════════════
+                 TERMINAL PRINT COLUMN SELECTION MODAL
+            ════════════════════════════════════════════════ --}}
             <div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Select Columns for PDF Report</h5>
+                            <h5 class="modal-title">Select Columns for Terminal PDF Report</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="alert alert-info">Select the columns you want to include in your PDF report.</div>
+                            <div class="alert alert-info">Select the columns you want to include in your terminal PDF report.</div>
 
                             <div class="card mb-3">
                                 <div class="card-header">Student Information</div>
@@ -618,7 +642,7 @@
                                 <div class="card-body">
                                     <label>
                                         <input type="checkbox" class="col-checkbox" value="include_mock" checked>
-                                        <strong>Include Mock Results section in PDF</strong>
+                                        <strong>Include Mock Results section in Terminal PDF</strong>
                                     </label>
                                 </div>
                             </div>
@@ -626,7 +650,7 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="generatePdfBtn">Generate PDF</button>
+                            <button type="button" class="btn btn-primary" id="generatePdfBtn">Generate Terminal PDF</button>
                         </div>
                     </div>
                 </div>
@@ -639,10 +663,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // ── Accordion ──────────────────────────────────────────────────────────────
     function toggleItem(idx) {
         document.getElementById('item-' + idx).classList.toggle('is-open');
     }
 
+    // ── Terminal Print Modal ───────────────────────────────────────────────────
     document.getElementById('showPrintModalBtn')?.addEventListener('click', function () {
         new bootstrap.Modal(document.getElementById('printModal')).show();
     });
@@ -658,7 +684,7 @@
         });
 
         if (selectedColumns.length <= 2) {
-            Swal.fire({ icon:'warning', title:'No Columns Selected', text:'Please select at least one column.' });
+            Swal.fire({ icon: 'warning', title: 'No Columns Selected', text: 'Please select at least one column.' });
             return;
         }
 
@@ -666,15 +692,15 @@
         const sessionId = document.getElementById('sessionSelect').value;
 
         if (!termId || !sessionId) {
-            Swal.fire({ icon:'warning', title:'Missing Selection', text:'Please select both Term and Session.' });
+            Swal.fire({ icon: 'warning', title: 'Missing Selection', text: 'Please select both Term and Session.' });
             return;
         }
 
         bootstrap.Modal.getInstance(document.getElementById('printModal')).hide();
 
         Swal.fire({
-            title: 'Generating PDF',
-            html: 'Please wait while your report is being prepared...',
+            title: 'Generating Terminal PDF',
+            html: 'Please wait while your terminal report is being prepared...',
             icon: 'info', showConfirmButton: false, allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
@@ -688,6 +714,29 @@
         setTimeout(() => Swal.close(), 1500);
     });
 
+    // ── Mock Print Button ──────────────────────────────────────────────────────
+    document.getElementById('printMockBtn')?.addEventListener('click', function () {
+        const termId    = document.getElementById('termSelect').value;
+        const sessionId = document.getElementById('sessionSelect').value;
+
+        if (!termId || !sessionId) {
+            Swal.fire({ icon: 'warning', title: 'Missing Selection', text: 'Please select both Term and Session before printing the mock report.' });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Generating Mock PDF',
+            html: 'Please wait while your mock examination report is being prepared...',
+            icon: 'info', showConfirmButton: false, allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const params = new URLSearchParams({ session_id: sessionId, term_id: termId });
+        window.open("{{ route('assessments.print.mock') }}?" + params.toString(), '_blank');
+        setTimeout(() => Swal.close(), 1500);
+    });
+
+    // ── GPA Trend Chart ────────────────────────────────────────────────────────
     @if(isset($gpaTrend) && count($gpaTrend) > 0)
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('gpaTrendChart')?.getContext('2d');

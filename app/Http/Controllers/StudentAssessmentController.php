@@ -21,7 +21,7 @@ class StudentAssessmentController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult']]);
+        $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult', 'printMockResult']]);
     }
 
     protected function formatOrdinal($number)
@@ -160,9 +160,9 @@ class StudentAssessmentController extends Controller
         }
 
         $class = (object) [
-            'id'         => $studentClassData->class_id,
+            'id'          => $studentClassData->class_id,
             'schoolclass' => $studentClassData->class_name,
-            'arm_name'   => $studentClassData->arm_name ?? '',
+            'arm_name'    => $studentClassData->arm_name ?? '',
         ];
 
         $term    = (object) ['id' => $studentClassData->term_id,    'term'    => $studentClassData->term_name];
@@ -252,11 +252,11 @@ class StudentAssessmentController extends Controller
                 }
 
                 return [
-                    'id'             => $assessment->id,
-                    'name'           => $assessment->name,
-                    'max_score'      => $assessment->max_score,
-                    'score'          => $score,
-                    'percentage'     => $assessment->max_score > 0 ? round($score / $assessment->max_score * 100, 2) : 0,
+                    'id'              => $assessment->id,
+                    'name'            => $assessment->name,
+                    'max_score'       => $assessment->max_score,
+                    'score'           => $score,
+                    'percentage'      => $assessment->max_score > 0 ? round($score / $assessment->max_score * 100, 2) : 0,
                     'sub_assessments' => $subScores,
                 ];
             });
@@ -298,10 +298,10 @@ class StudentAssessmentController extends Controller
                 $studentId, $schoolclass, $selectedTermId,
                 $selectedSessionId ?? $studentClassData->session_id, $isSenior
             );
-            $overallProgress['gpa']               = round($gpaCgpaData['gpa'], 2);
-            $overallProgress['cgpa']              = round($gpaCgpaData['cgpa'], 2);
-            $overallProgress['gpa_grade']         = $gpaCgpaData['gpa_grade'] ?? 'F';
-            $overallProgress['num_subjects']      = $gpaCgpaData['num_subjects'];
+            $overallProgress['gpa']                = round($gpaCgpaData['gpa'], 2);
+            $overallProgress['cgpa']               = round($gpaCgpaData['cgpa'], 2);
+            $overallProgress['gpa_grade']          = $gpaCgpaData['gpa_grade'] ?? 'F';
+            $overallProgress['num_subjects']       = $gpaCgpaData['num_subjects'];
             $overallProgress['total_grade_points'] = $gpaCgpaData['total_grade_points'];
         }
 
@@ -313,7 +313,6 @@ class StudentAssessmentController extends Controller
             $selectedTermId
         );
 
-        // Summarise mock totals
         $mockTotalObtained   = $mockResults->sum(fn ($r) => (float) ($r->total ?? 0));
         $mockTotalObtainable = $mockResults->count() * 100;
         $mockPercentage      = $mockTotalObtainable > 0
@@ -327,9 +326,9 @@ class StudentAssessmentController extends Controller
         ];
         // ──────────────────────────────────────────────────────────────────────
 
-        $gpaTrend      = $this->buildGpaTrend($studentId, $selectedSessionId, $isSenior);
+        $gpaTrend       = $this->buildGpaTrend($studentId, $selectedSessionId, $isSenior);
         $studentPicture = DB::table('studentpicture')->where('studentid', $studentId)->value('picture');
-        $schoolInfo    = SchoolInformation::first();
+        $schoolInfo     = SchoolInformation::first();
 
         return view('student.assessments.index', compact(
             'pagetitle', 'student', 'class', 'term', 'session',
@@ -337,13 +336,12 @@ class StudentAssessmentController extends Controller
             'userSelectedTermId', 'selectedSessionId', 'overallProgress',
             'gpaTrend', 'studentPicture', 'schoolInfo', 'selectedTermId',
             'isSenior', 'allAssessments', 'attendanceSummary',
-            // mock additions:
             'mockResults', 'mockSummary'
         ));
     }
 
     // =========================================================================
-    // PRINT RESULT (PDF) - STREAM IN BROWSER
+    // PRINT TERMINAL RESULT (PDF)
     // =========================================================================
     public function printResult(Request $request)
     {
@@ -440,7 +438,7 @@ class StudentAssessmentController extends Controller
 
             $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
 
-            $scoreData              = new \stdClass();
+            $scoreData               = new \stdClass();
             $scoreData->subject_name = $regSubject->subject_name;
             $scoreData->subject_code = $regSubject->subject_code;
             $scoreData->total        = $broadsheet->total ?? 0;
@@ -493,9 +491,9 @@ class StudentAssessmentController extends Controller
             $sessionIdForQuery, $isSenior
         );
 
-        $schoolInfo      = SchoolInformation::first();
-        $logoBase64      = $this->logoToBase64($schoolInfo);
-        $pictureBase64   = $this->imageToBase64ForPdf(
+        $schoolInfo    = SchoolInformation::first();
+        $logoBase64    = $this->logoToBase64($schoolInfo);
+        $pictureBase64 = $this->imageToBase64ForPdf(
             DB::table('studentpicture')->where('studentid', $studentId)->value('picture')
         );
         $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
@@ -516,13 +514,13 @@ class StudentAssessmentController extends Controller
         $attendanceData = [];
         if ($attendanceSummary) {
             $attendanceData = [
-                'found'               => true,
-                'total_school_days'   => $attendanceSummary->total_school_days ?? 0,
-                'days_present'        => $attendanceSummary->days_present ?? 0,
-                'days_absent'         => $attendanceSummary->days_absent ?? 0,
-                'days_late'           => $attendanceSummary->days_late ?? 0,
-                'days_sick_leave'     => $attendanceSummary->days_sick_leave ?? 0,
-                'days_excused'        => $attendanceSummary->days_excused ?? 0,
+                'found'                 => true,
+                'total_school_days'     => $attendanceSummary->total_school_days ?? 0,
+                'days_present'          => $attendanceSummary->days_present ?? 0,
+                'days_absent'           => $attendanceSummary->days_absent ?? 0,
+                'days_late'             => $attendanceSummary->days_late ?? 0,
+                'days_sick_leave'       => $attendanceSummary->days_sick_leave ?? 0,
+                'days_excused'          => $attendanceSummary->days_excused ?? 0,
                 'attendance_percentage' => $attendanceSummary->attendance_percentage ?? 0,
             ];
         } else {
@@ -530,7 +528,7 @@ class StudentAssessmentController extends Controller
         }
 
         // ── MOCK DATA FOR PDF ──────────────────────────────────────────────────
-        $mockRows = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
+        $mockRows            = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
         $mockTotalObtained   = $mockRows->sum(fn ($r) => (float) ($r->total ?? 0));
         $mockTotalObtainable = $mockRows->count() * 100;
         $mockPercentage      = $mockTotalObtainable > 0
@@ -549,7 +547,7 @@ class StudentAssessmentController extends Controller
             'selected_columns' => $selectedColumns,
         ];
 
-        $schoolclassWithArms          = new \stdClass();
+        $schoolclassWithArms              = new \stdClass();
         $schoolclassWithArms->schoolclass = $studentClassData->class_name ?? '';
         $schoolclassWithArms->arms        = new \stdClass();
         $schoolclassWithArms->arms->arm   = $studentClassData->arm_name ?? '';
@@ -573,7 +571,6 @@ class StudentAssessmentController extends Controller
             'studentpp'            => $studentProfileData,
             'attendance_summary'   => $attendanceData,
             'promotion_result'     => [],
-            // mock additions:
             'mock_results'         => $mockRows,
             'mock_summary'         => $mockSummaryForPdf,
         ]];
@@ -585,6 +582,119 @@ class StudentAssessmentController extends Controller
         $pdf = Pdf::loadView('student.assessments.print-pdf', [
             'allStudentData' => $allStudentData,
             'metadata'       => $metadata,
+        ])
+        ->setPaper('A4', 'portrait')
+        ->setOptions([
+            'dpi'                  => 150,
+            'defaultFont'          => 'DejaVu Sans',
+            'isRemoteEnabled'      => true,
+            'isHtml5ParserEnabled' => true,
+        ]);
+
+        return $pdf->stream($filename);
+    }
+
+    // =========================================================================
+    // PRINT MOCK RESULT (PDF)
+    // =========================================================================
+    public function printMockResult(Request $request)
+    {
+        ini_set('max_execution_time', 120);
+        ini_set('memory_limit', '512M');
+
+        $studentId         = auth()->user()->student_id;
+        $selectedSessionId = $request->get('session_id');
+        $selectedTermId    = $request->get('term_id');
+
+        if (!$studentId) {
+            return back()->with('error', 'Student profile not found.');
+        }
+
+        $student = Student::where('id', $studentId)
+            ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
+            ->first();
+
+        if (!$student || !$student->can_view_assessments) {
+            return back()->with('error', 'You do not have permission to print assessments.');
+        }
+
+        $studentClassData = DB::table('studentclass')
+            ->where('studentclass.studentId', $studentId)
+            ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+            ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
+            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
+            ->select(
+                'schoolclass.id as class_id',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+                'schoolterm.id as term_id',
+                'schoolterm.term as term_name',
+                'schoolsession.id as session_id',
+                'schoolsession.session as session_name'
+            )
+            ->first();
+
+        if (!$studentClassData) {
+            return back()->with('error', 'No class data found.');
+        }
+
+        if (!$selectedTermId) {
+            $selectedTermId = $studentClassData->term_id;
+        }
+
+        $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;
+        $schoolclassId     = $studentClassData->class_id;
+
+        $termModel    = Schoolterm::find($selectedTermId);
+        $sessionModel = Schoolsession::find($sessionIdForQuery);
+        $schoolInfo   = SchoolInformation::first();
+
+        $mockRows            = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
+        $mockTotalObtained   = $mockRows->sum(fn ($r) => (float) ($r->total ?? 0));
+        $mockTotalObtainable = $mockRows->count() * 100;
+        $mockPercentage      = $mockTotalObtainable > 0
+            ? round(($mockTotalObtained / $mockTotalObtainable) * 100, 1)
+            : 0;
+
+        $logoBase64    = $this->logoToBase64($schoolInfo);
+        $pictureBase64 = $this->imageToBase64ForPdf(
+            DB::table('studentpicture')->where('studentid', $studentId)->value('picture')
+        );
+        $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
+
+        $numberOfStudents = DB::table('studentclass')
+            ->where('schoolclassid', $schoolclassId)
+            ->where('sessionid', $sessionIdForQuery)
+            ->where('termid', $selectedTermId)
+            ->count();
+
+        $schoolclassWithArms              = new \stdClass();
+        $schoolclassWithArms->schoolclass = $studentClassData->class_name ?? '';
+        $schoolclassWithArms->arms        = new \stdClass();
+        $schoolclassWithArms->arms->arm   = $studentClassData->arm_name ?? '';
+
+        $safeAdmissionNo = preg_replace('/[^A-Za-z0-9\-]/', '_', $student->admissionNo ?? 'student');
+        $safeTerm        = preg_replace('/[^A-Za-z0-9\-]/', '_', $termModel->term ?? 'Term');
+        $filename        = 'Mock_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
+
+        $pdf = Pdf::loadView('student.assessments.print-mock-pdf', [
+            'student'          => $student,
+            'schoolclass'      => $schoolclassWithArms,
+            'mockRows'         => $mockRows,
+            'mockSummary'      => [
+                'obtained'   => round($mockTotalObtained, 1),
+                'obtainable' => $mockTotalObtainable,
+                'percentage' => $mockPercentage,
+            ],
+            'schoolInfo'       => $schoolInfo,
+            'logoBase64'       => $logoBase64,
+            'stampBase64'      => $stampBase64,
+            'pictureBase64'    => $pictureBase64,
+            'numberOfStudents' => $numberOfStudents,
+            'term'             => $termModel->term ?? 'Term',
+            'session'          => $sessionModel->session ?? 'Session',
         ])
         ->setPaper('A4', 'portrait')
         ->setOptions([
@@ -711,17 +821,17 @@ class StudentAssessmentController extends Controller
             })
             ->get(['cum']);
 
-        $termGradePoints   = $currentTermBroadsheets->map(fn ($b) => $this->getGradePoint($b->cum, $isSenior));
-        $gpa               = $termGradePoints->avg() ?? 0.0;
-        $num_subjects      = $currentTermBroadsheets->count();
+        $termGradePoints    = $currentTermBroadsheets->map(fn ($b) => $this->getGradePoint($b->cum, $isSenior));
+        $gpa                = $termGradePoints->avg() ?? 0.0;
+        $num_subjects       = $currentTermBroadsheets->count();
         $total_grade_points = $termGradePoints->sum();
-        $gpaGrade          = $this->getGpaGrade($gpa);
+        $gpaGrade           = $this->getGpaGrade($gpa);
 
         return [
-            'gpa'               => $gpa,
-            'cgpa'              => 0.0,
-            'gpa_grade'         => $gpaGrade,
-            'num_subjects'      => $num_subjects,
+            'gpa'                => $gpa,
+            'cgpa'               => 0.0,
+            'gpa_grade'          => $gpaGrade,
+            'num_subjects'       => $num_subjects,
             'total_grade_points' => $total_grade_points,
         ];
     }

@@ -462,6 +462,7 @@ Route::get('/studentreport/drawer-data/{studentId}/{schoolclassId}/{sessionId}/{
 
     Route::get('/studentassessments', [StudentAssessmentController::class, 'index'])->name('assessments');
     Route::get('/studentassessments/print', [StudentAssessmentController::class, 'printResult'])->name('assessments.print');
+    Route::get('assessments/print-mock', [StudentAssessmentController::class, 'printMockResult'])->name('assessments.print.mock');
 
 
     // ── Student Payment Portal ──────────────────────────────────────
