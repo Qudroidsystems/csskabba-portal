@@ -91,12 +91,10 @@
                 .ap-metric-box { background:white; padding:10px 16px; border-radius:8px; border:1px solid var(--border); }
                 .ap-metric-box strong { display:block; font-size:10px; color:#7b85a3; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
                 .ap-metric-box span { font-size:16px; font-weight:700; color:var(--navy); }
-
-                /* Position boxes */
-                .ap-metric-box.pos-class-cum  { border-left:3px solid #2563eb; }
+                .ap-metric-box.pos-class-cum   { border-left:3px solid #2563eb; }
                 .ap-metric-box.pos-class-total { border-left:3px solid #0891b2; }
-                .ap-metric-box.pos-arm-total  { border-left:3px solid #7c3aed; }
-                .ap-metric-box.pos-arm-cum    { border-left:3px solid #a21caf; }
+                .ap-metric-box.pos-arm-total   { border-left:3px solid #7c3aed; }
+                .ap-metric-box.pos-arm-cum     { border-left:3px solid #a21caf; }
 
                 /* Assessment row */
                 .ap-assessment-row { background:white; border-radius:8px; padding:12px 16px; margin-bottom:8px; border:1px solid #e9ecef; }
@@ -107,6 +105,87 @@
                 .bar-good      { background:#2563eb; }
                 .bar-average   { background:#d4870a; }
                 .bar-low       { background:#c0392b; }
+
+                /* ════ MOCK SECTION ════ */
+                .mock-section-card {
+                    background: var(--paper);
+                    border: 1px solid var(--border);
+                    border-top: 4px solid var(--gold);
+                    border-radius: var(--radius);
+                    margin-top: 28px;
+                    overflow: hidden;
+                }
+                .mock-section-header {
+                    background: linear-gradient(135deg, #0f1c35 0%, #1a2f55 100%);
+                    padding: 16px 22px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+                .mock-section-header h4 {
+                    color: #fff;
+                    font-size: 15px;
+                    font-weight: 700;
+                    margin: 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .mock-badge {
+                    background: var(--gold);
+                    color: #0f1c35;
+                    font-size: 11px;
+                    font-weight: 800;
+                    padding: 3px 11px;
+                    border-radius: 20px;
+                    text-transform: uppercase;
+                    letter-spacing: .5px;
+                }
+                .mock-table { width:100%; border-collapse:collapse; font-size:13px; }
+                .mock-table thead th {
+                    background: #1a2f55;
+                    color: #fff;
+                    padding: 10px 14px;
+                    font-size: 10.5px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: .4px;
+                    text-align: center;
+                    border: none;
+                    white-space: nowrap;
+                }
+                .mock-table thead th:first-child { text-align:left; padding-left:20px; }
+                .mock-table tbody td {
+                    padding: 10px 14px;
+                    text-align: center;
+                    border-bottom: 1px solid #f0f0f0;
+                    font-size: 13px;
+                    vertical-align: middle;
+                }
+                .mock-table tbody td:first-child { text-align:left; padding-left:20px; }
+                .mock-table tbody tr:last-child td { border-bottom:none; }
+                .mock-table tbody tr:hover td { background:#fdf6e3; }
+                .mock-score-bar { height:5px; background:#e2e8f0; border-radius:3px; overflow:hidden; margin-top:5px; width:60px; margin-left:auto; margin-right:auto; }
+                .mock-score-fill { height:100%; border-radius:3px; }
+                .mock-summary-strip {
+                    background: #0f1c35;
+                    color: rgba(255,255,255,.75);
+                    font-weight: 600;
+                    font-size: 13px;
+                    text-align: center;
+                    padding: 12px;
+                    display: flex;
+                    gap: 28px;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                }
+                .mock-summary-strip strong { color: var(--gold); }
+                .mock-empty {
+                    text-align: center;
+                    padding: 36px 24px;
+                    color: #7b85a3;
+                    font-size: 13px;
+                }
             </style>
 
             <div class="assessment-portal">
@@ -165,7 +244,7 @@
                     @endif
 
                     @if(!isset($subjectsWithAssessments) || $subjectsWithAssessments->isEmpty())
-                        <div class="ap-empty">
+                        <div class="ap-empty" style="text-align:center;padding:52px 24px;color:#7b85a3;">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 16px;display:block;">
                                 <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
                                 <rect x="9" y="3" width="6" height="4" rx="2"/>
@@ -192,9 +271,7 @@
                             </p>
                             <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#6b7280;">
                                 <span>Adm No: {{ $student->admissionNo ?? '—' }}</span>
-                                @isset($class)
-                                    <span>Class: {{ $class->schoolclass }} {{ $class->arm_name ?? '' }}</span>
-                                @endisset
+                                @isset($class)<span>Class: {{ $class->schoolclass }} {{ $class->arm_name ?? '' }}</span>@endisset
                                 @isset($term)<span>Term: {{ $term->term }}</span>@endisset
                                 @isset($session)<span>Session: {{ $session->session }}</span>@endisset
                             </div>
@@ -233,12 +310,12 @@
 
                     {{-- ATTENDANCE CARD --}}
                     @php
-                        $att = $attendanceSummary ?? null;
-                        $attPct = $att ? (float)($att->attendance_percentage ?? 0) : null;
+                        $att        = $attendanceSummary ?? null;
+                        $attPct     = $att ? (float)($att->attendance_percentage ?? 0) : null;
                         $attBarClass = $attPct === null ? '' : ($attPct >= 90 ? 'att-excellent' : ($attPct >= 75 ? 'att-good' : ($attPct >= 60 ? 'att-average' : 'att-poor')));
-                        $attLabel = $attPct === null ? '' : ($attPct >= 90 ? 'Excellent' : ($attPct >= 75 ? 'Good' : ($attPct >= 60 ? 'Average' : 'Poor')));
-                        $attColor = $attPct === null ? '' : ($attPct >= 90 ? '#16a34a' : ($attPct >= 75 ? '#2563eb' : ($attPct >= 60 ? '#d97706' : '#dc2626')));
-                        $attBg = $attPct === null ? '' : ($attPct >= 90 ? '#d1fae5' : ($attPct >= 75 ? '#dbeafe' : ($attPct >= 60 ? '#fef3c7' : '#fee2e2')));
+                        $attLabel   = $attPct === null ? '' : ($attPct >= 90 ? 'Excellent' : ($attPct >= 75 ? 'Good' : ($attPct >= 60 ? 'Average' : 'Poor')));
+                        $attColor   = $attPct === null ? '' : ($attPct >= 90 ? '#16a34a' : ($attPct >= 75 ? '#2563eb' : ($attPct >= 60 ? '#d97706' : '#dc2626')));
+                        $attBg      = $attPct === null ? '' : ($attPct >= 90 ? '#d1fae5' : ($attPct >= 75 ? '#dbeafe' : ($attPct >= 60 ? '#fef3c7' : '#fee2e2')));
                     @endphp
                     <div class="ap-attendance-card">
                         <div class="att-section-title">
@@ -261,7 +338,6 @@
                             <div class="att-stat" style="background:#e0f2fe;border-color:#7dd3fc;"><div class="att-stat-value" style="color:#075985;">{{ $att->days_sick_leave ?? 0 }}</div><div class="att-stat-label">Sick Leave</div></div>
                             <div class="att-stat" style="background:#f3e8ff;border-color:#d8b4fe;"><div class="att-stat-value" style="color:#6b21a8;">{{ $att->days_excused ?? 0 }}</div><div class="att-stat-label">Excused</div></div>
                         </div>
-
                         <div class="att-bar-wrap">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                                 <span style="font-size:12px;color:#6b7280;font-weight:600;">Attendance Rate</span>
@@ -273,13 +349,8 @@
                                 <div class="att-bar-fill {{ $attBarClass }}" style="width:{{ min($attPct, 100) }}%;"></div>
                             </div>
                         </div>
-
-                        @php
-                            $attRemark = $attPct >= 90 ? '🌟 Outstanding attendance! Keep it up.' : ($attPct >= 75 ? '👍 Good attendance. Aim for 90% and above.' : ($attPct >= 60 ? '⚠️ Your attendance needs improvement.' : '🚨 Poor attendance. Please attend regularly.'));
-                        @endphp
-                        <div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:{{ $attBg }};font-size:12px;font-weight:500;color:{{ $attColor }};">
-                            {{ $attRemark }}
-                        </div>
+                        @php $attRemark = $attPct >= 90 ? '🌟 Outstanding attendance! Keep it up.' : ($attPct >= 75 ? '👍 Good attendance. Aim for 90% and above.' : ($attPct >= 60 ? '⚠️ Your attendance needs improvement.' : '🚨 Poor attendance. Please attend regularly.')); @endphp
+                        <div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:{{ $attBg }};font-size:12px;font-weight:500;color:{{ $attColor }};">{{ $attRemark }}</div>
                         @else
                         <div class="att-no-data">Attendance data not available for this term/session.</div>
                         @endif
@@ -289,9 +360,7 @@
                     @if(isset($gpaTrend) && count($gpaTrend) > 0)
                     <div class="ap-trend-card">
                         <h4 style="font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;">GPA Trend</h4>
-                        <div style="height:200px;">
-                            <canvas id="gpaTrendChart"></canvas>
-                        </div>
+                        <div style="height:200px;"><canvas id="gpaTrendChart"></canvas></div>
                     </div>
                     @endif
 
@@ -308,20 +377,12 @@
                                 default => 'grade-F9',
                             };
                             $icons = ['📐','📚','🔬','🌍','💻','🎨','⚗️','📊','🏛️','🌿'];
-                            $icon = $icons[$idx % count($icons)];
-
-                            $posClassCum   = $subject['position'] ?? '—';
-                            $posClassTotal = $subject['position_total'] ?? '—';
-                            $posArmTotal   = $subject['arm_position'] ?? '—';
-                            $posArmCum     = $subject['arm_position_cum'] ?? '—';
+                            $icon  = $icons[$idx % count($icons)];
                         @endphp
-
                         <div class="ap-accordion-item {{ $idx === 0 ? 'is-open' : '' }}" id="item-{{ $idx }}">
                             <button class="ap-accordion-trigger" onclick="toggleItem({{ $idx }})">
                                 <div style="display:flex;align-items:center;gap:14px;">
-                                    <div style="width:40px;height:40px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
-                                        {{ $icon }}
-                                    </div>
+                                    <div style="width:40px;height:40px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">{{ $icon }}</div>
                                     <div>
                                         <p class="ap-subject-name">{{ $subject['subject_name'] ?? 'Unknown Subject' }}</p>
                                         <p class="ap-subject-code">{{ $subject['subject_code'] ?? '' }}</p>
@@ -330,32 +391,24 @@
                                 <div style="display:flex;gap:12px;align-items:center;">
                                     <span class="ap-grade-pill {{ $gradeClass }}">{{ $grade }}</span>
                                     <span style="font-weight:600;font-size:14px;">{{ number_format($subject['cum'] ?? 0, 1) }}</span>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <polyline points="6 9 12 15 18 9"/>
-                                    </svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                                 </div>
                             </button>
-
                             <div class="ap-panel">
                                 <div class="ap-metrics-strip">
                                     <div class="ap-metric-box"><strong>Total</strong><span>{{ number_format($subject['total'] ?? 0, 1) }}</span></div>
                                     <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format($subject['cum'] ?? 0, 1) }}</span></div>
                                     <div class="ap-metric-box"><strong>Subject GPA</strong><span>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</span></div>
-
-                                    <div class="ap-metric-box pos-class-cum"><strong>Class Pos (Cum)</strong><span>{{ $posClassCum }}</span></div>
-                                    <div class="ap-metric-box pos-class-total"><strong>Class Pos (Total)</strong><span>{{ $posClassTotal }}</span></div>
-                                    <div class="ap-metric-box pos-arm-total"><strong>Arm Pos (Total)</strong><span>{{ $posArmTotal }}</span></div>
-                                    <div class="ap-metric-box pos-arm-cum"><strong>Arm Pos (Cum)</strong><span>{{ $posArmCum }}</span></div>
+                                    <div class="ap-metric-box pos-class-cum"><strong>Class Pos (Cum)</strong><span>{{ $subject['position'] ?? '—' }}</span></div>
+                                    <div class="ap-metric-box pos-class-total"><strong>Class Pos (Total)</strong><span>{{ $subject['position_total'] ?? '—' }}</span></div>
+                                    <div class="ap-metric-box pos-arm-total"><strong>Arm Pos (Total)</strong><span>{{ $subject['arm_position'] ?? '—' }}</span></div>
+                                    <div class="ap-metric-box pos-arm-cum"><strong>Arm Pos (Cum)</strong><span>{{ $subject['arm_position_cum'] ?? '—' }}</span></div>
                                 </div>
 
-                                {{-- Assessment Breakdown + TOTAL --}}
                                 @if(isset($subject['assessments']) && $subject['assessments']->isNotEmpty())
                                 <h4 style="font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;color:#374151;">Assessment Breakdown</h4>
                                 @foreach($subject['assessments'] as $assessment)
-                                @php
-                                    $pct = $assessment['percentage'] ?? 0;
-                                    $barClass = $pct >= 70 ? 'bar-excellent' : ($pct >= 50 ? 'bar-good' : ($pct >= 40 ? 'bar-average' : 'bar-low'));
-                                @endphp
+                                @php $pct = $assessment['percentage'] ?? 0; $barClass = $pct >= 70 ? 'bar-excellent' : ($pct >= 50 ? 'bar-good' : ($pct >= 40 ? 'bar-average' : 'bar-low')); @endphp
                                 <div class="ap-assessment-row">
                                     <div class="ap-assessment-header">
                                         <span><strong>{{ $assessment['name'] }}</strong></span>
@@ -364,23 +417,16 @@
                                             <span style="color:#7b85a3;">({{ $pct }}%)</span>
                                         </span>
                                     </div>
-                                    <div class="ap-bar-track">
-                                        <div class="ap-bar-fill {{ $barClass }}" style="width:{{ min($pct, 100) }}%;"></div>
-                                    </div>
+                                    <div class="ap-bar-track"><div class="ap-bar-fill {{ $barClass }}" style="width:{{ min($pct,100) }}%;"></div></div>
                                 </div>
                                 @endforeach
 
-                                {{-- TOTAL SCORE --}}
-                                <div class="ap-assessment-row" style="background:#f0f9f0; border-color:#4ade80; margin-top:12px;">
+                                <div class="ap-assessment-row" style="background:#f0f9f0;border-color:#4ade80;margin-top:12px;">
                                     <div class="ap-assessment-header">
                                         <span><strong style="color:#166534;">TOTAL SCORE</strong></span>
-                                        <span style="font-size:15px;font-weight:700;color:#166534;">
-                                            {{ number_format($subject['total'] ?? 0, 1) }} / 100
-                                        </span>
+                                        <span style="font-size:15px;font-weight:700;color:#166534;">{{ number_format($subject['total'] ?? 0, 1) }} / 100</span>
                                     </div>
-                                    <div class="ap-bar-track">
-                                        <div class="ap-bar-fill bar-excellent" style="width:{{ min($subject['total'] ?? 0, 100) }}%;"></div>
-                                    </div>
+                                    <div class="ap-bar-track"><div class="ap-bar-fill bar-excellent" style="width:{{ min($subject['total'] ?? 0, 100) }}%;"></div></div>
                                 </div>
                                 @endif
                             </div>
@@ -388,7 +434,98 @@
                         @endforeach
                     </div>
 
-                    @endif
+                    {{-- ════════════════════════════════════════════════
+                         MOCK EXAM RESULTS
+                    ════════════════════════════════════════════════ --}}
+                    @php $hasMock = isset($mockResults) && $mockResults->isNotEmpty(); @endphp
+
+                    <div class="mock-section-card">
+                        <div class="mock-section-header">
+                            <h4>
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M9 11l3 3L22 4"/>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                                </svg>
+                                Mock Exam Results
+                            </h4>
+                            @if($hasMock)
+                                <span class="mock-badge">{{ $mockResults->count() }} Subjects</span>
+                            @endif
+                        </div>
+
+                        @if($hasMock)
+                            <div class="table-responsive">
+                                <table class="mock-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#&nbsp; Subject</th>
+                                            <th>Exam Score</th>
+                                            <th>Total / 100</th>
+                                            <th>Grade</th>
+                                            <th>Remark</th>
+                                            <th>Position</th>
+                                            <th>Class Avg</th>
+                                            <th>Min</th>
+                                            <th>Max</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($mockResults as $mi => $mock)
+                                        @php
+                                            $mg       = $mock->grade ?? '-';
+                                            $mgClass  = match(true) {
+                                                str_starts_with($mg,'A') => 'grade-A1',
+                                                str_starts_with($mg,'B') => 'grade-B2',
+                                                str_starts_with($mg,'C') => 'grade-C4',
+                                                str_starts_with($mg,'D') => 'grade-D7',
+                                                default => 'grade-F9',
+                                            };
+                                            $mTotal    = (float)($mock->total ?? 0);
+                                            $mBarColor = $mTotal >= 70 ? '#1a7f5a' : ($mTotal >= 50 ? '#2563eb' : ($mTotal >= 40 ? '#d4870a' : '#c0392b'));
+                                        @endphp
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight:700;color:var(--navy);">{{ $mi+1 }}.&nbsp;&nbsp;{{ $mock->subject_name ?? '—' }}</div>
+                                                @if(!empty($mock->subject_code))
+                                                    <div style="font-size:11px;color:#7b85a3;">{{ $mock->subject_code }}</div>
+                                                @endif
+                                            </td>
+                                            <td style="font-weight:600;">{{ number_format($mock->exam ?? 0, 1) }}</td>
+                                            <td>
+                                                <div style="font-weight:700;color:var(--navy);">{{ number_format($mTotal, 1) }}</div>
+                                                <div class="mock-score-bar">
+                                                    <div class="mock-score-fill" style="width:{{ min($mTotal,100) }}%;background:{{ $mBarColor }};"></div>
+                                                </div>
+                                            </td>
+                                            <td><span class="ap-grade-pill {{ $mgClass }}">{{ $mg }}</span></td>
+                                            <td style="font-size:12px;color:#6b7280;">{{ $mock->remark ?? '—' }}</td>
+                                            <td style="font-weight:600;color:#1a2f55;">{{ $mock->position ?? '—' }}</td>
+                                            <td style="color:#6b7280;">{{ number_format($mock->class_average ?? 0, 1) }}</td>
+                                            <td style="color:#dc2626;font-weight:600;">{{ number_format($mock->cmin ?? 0, 1) }}</td>
+                                            <td style="color:#16a34a;font-weight:600;">{{ number_format($mock->cmax ?? 0, 1) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mock-summary-strip">
+                                <div>Total Obtained: <strong>{{ $mockSummary['obtained'] ?? 0 }}</strong></div>
+                                <div>Total Obtainable: <strong>{{ $mockSummary['obtainable'] ?? 0 }}</strong></div>
+                                <div>Overall %: <strong>{{ $mockSummary['percentage'] ?? 0 }}%</strong></div>
+                            </div>
+                        @else
+                            <div class="mock-empty">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 10px;display:block;">
+                                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                                    <rect x="9" y="3" width="6" height="4" rx="2"/>
+                                    <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+                                </svg>
+                                No mock exam results are available for this term.
+                            </div>
+                        @endif
+                    </div>
+
+                    @endif {{-- end subjectsWithAssessments --}}
                 </div>
             </div>
 
@@ -455,18 +592,10 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-6">
-                                            <label><input type="checkbox" class="col-checkbox" value="position" checked><strong>Class Pos (Cum)</strong></label>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label><input type="checkbox" class="col-checkbox" value="position_total" checked><strong>Class Pos (Total)</strong></label>
-                                        </div>
-                                        <div class="col-md-6 mt-2">
-                                            <label><input type="checkbox" class="col-checkbox" value="arm_position" checked><strong>Arm Pos (Total)</strong></label>
-                                        </div>
-                                        <div class="col-md-6 mt-2">
-                                            <label><input type="checkbox" class="col-checkbox" value="arm_position_cum" checked><strong>Arm Pos (Cum)</strong></label>
-                                        </div>
+                                        <div class="col-md-6"><label><input type="checkbox" class="col-checkbox" value="position" checked><strong>Class Pos (Cum)</strong></label></div>
+                                        <div class="col-md-6"><label><input type="checkbox" class="col-checkbox" value="position_total" checked><strong>Class Pos (Total)</strong></label></div>
+                                        <div class="col-md-6 mt-2"><label><input type="checkbox" class="col-checkbox" value="arm_position" checked><strong>Arm Pos (Total)</strong></label></div>
+                                        <div class="col-md-6 mt-2"><label><input type="checkbox" class="col-checkbox" value="arm_position_cum" checked><strong>Arm Pos (Cum)</strong></label></div>
                                     </div>
                                 </div>
                             </div>
@@ -475,12 +604,25 @@
                                 <div class="card-header">Attendance</div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-4">
-                                            <label><input type="checkbox" class="col-checkbox" value="attendance" checked> Include Attendance Summary</label>
-                                        </div>
+                                        <div class="col-md-4"><label><input type="checkbox" class="col-checkbox" value="attendance" checked> Include Attendance Summary</label></div>
                                     </div>
                                 </div>
                             </div>
+
+                            {{-- Mock toggle — only shown if mock data exists for this term --}}
+                            @if(isset($mockResults) && $mockResults->isNotEmpty())
+                            <div class="card mb-3" style="border-top:3px solid #c9a84c;">
+                                <div class="card-header" style="background:#0f1c35;color:#fff;font-weight:700;">
+                                    🏆 Mock Exam Results
+                                </div>
+                                <div class="card-body">
+                                    <label>
+                                        <input type="checkbox" class="col-checkbox" value="include_mock" checked>
+                                        <strong>Include Mock Results section in PDF</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -512,33 +654,28 @@
     document.getElementById('generatePdfBtn')?.addEventListener('click', function () {
         const selectedColumns = ['sn', 'name'];
         document.querySelectorAll('.col-checkbox:checked').forEach(cb => {
-            if (!selectedColumns.includes(cb.value)) {
-                selectedColumns.push(cb.value);
-            }
+            if (!selectedColumns.includes(cb.value)) selectedColumns.push(cb.value);
         });
 
         if (selectedColumns.length <= 2) {
-            Swal.fire({ icon: 'warning', title: 'No Columns Selected', text: 'Please select at least one column.' });
+            Swal.fire({ icon:'warning', title:'No Columns Selected', text:'Please select at least one column.' });
             return;
         }
 
-        const termId = document.getElementById('termSelect').value;
+        const termId    = document.getElementById('termSelect').value;
         const sessionId = document.getElementById('sessionSelect').value;
 
         if (!termId || !sessionId) {
-            Swal.fire({ icon: 'warning', title: 'Missing Selection', text: 'Please select both Term and Session.' });
+            Swal.fire({ icon:'warning', title:'Missing Selection', text:'Please select both Term and Session.' });
             return;
         }
 
-        const modal = bootstrap.Modal.getInstance(document.getElementById('printModal'));
-        modal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('printModal')).hide();
 
         Swal.fire({
             title: 'Generating PDF',
             html: 'Please wait while your report is being prepared...',
-            icon: 'info',
-            showConfirmButton: false,
-            allowOutsideClick: false,
+            icon: 'info', showConfirmButton: false, allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
 
@@ -573,11 +710,8 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, max: 5 }
-                    }
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 5 } }
                 }
             });
         }
