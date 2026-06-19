@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Mock Examination Report</title>
+    <title>Mock Examination Report | Student Copy</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -16,7 +16,7 @@
             min-height: 100vh;
         }
 
-        /* ── WATERMARK ── */
+        /* WATERMARK */
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -36,7 +36,7 @@
             border-radius: 24px;
         }
 
-        /* ── CARD ── */
+        /* CARD */
         .report-card {
             max-width: 200mm;
             width: 100%;
@@ -55,7 +55,7 @@
             gap: 6px;
         }
 
-        /* ── SCHOOL HEADER ── */
+        /* SCHOOL HEADER */
         .school-name-header {
             background: #111827;
             color: white;
@@ -80,7 +80,7 @@
             opacity: .95;
         }
 
-        /* ── LOGO / CONTACT / PHOTO ROW ── */
+        /* LOGO / CONTACT / PHOTO */
         .header-table { width:100%; border-collapse:collapse; margin:6px 0 4px; }
         .school-logo {
             width:72px; height:80px;
@@ -99,11 +99,10 @@
         .contact-info td { padding:3px 4px; }
         .contact-label { font-weight:900; color:#1e40af; width:58px; }
 
-        /* ── DIVIDERS ── */
         .divider-dark  { height:2px; background:#1e40af; margin:5px 0 2px; }
         .divider-light { height:1px; background:#94a3b8; margin:2px 0 4px; }
 
-        /* ── REPORT TITLE BAND ── */
+        /* REPORT TITLE */
         .report-title {
             background: linear-gradient(135deg, #0f1c35 0%, #1a2f55 100%);
             color: white;
@@ -128,7 +127,7 @@
             vertical-align: middle;
         }
 
-        /* ── SESSION INFO BOX ── */
+        /* SESSION INFO */
         .mock-info-box {
             background: linear-gradient(135deg, #0f1c35, #1a2f55);
             border: 2px solid #c9a84c;
@@ -141,7 +140,7 @@
         }
         .mock-info-box strong { color: #c9a84c; }
 
-        /* ── STUDENT INFO BAR ── */
+        /* STUDENT INFO */
         .student-info-bar {
             background: linear-gradient(135deg, #fffbea, #ffffff);
             border: 1.8px solid #c9a84c;
@@ -161,7 +160,7 @@
         }
         .info-value { font-weight:900; margin-left:5px; font-size:10.5px; }
 
-        /* ── STATS STRIP ── */
+        /* STATS STRIP */
         .stats-strip {
             display: flex;
             gap: 0;
@@ -169,13 +168,15 @@
             border-radius: 8px;
             overflow: hidden;
             margin: 6px 0;
+            flex-wrap: wrap;
         }
         .stat-cell {
-            flex: 1;
+            flex: 1 0 12%;
             text-align: center;
             padding: 8px 4px;
             border-right: 1px solid #cbd5e1;
             background: #f8fafc;
+            min-width: 70px;
         }
         .stat-cell:last-child { border-right: none; }
         .stat-cell.gold-cell { background: #fef9e3; }
@@ -183,7 +184,7 @@
         .stat-value { font-size: 14px; font-weight: 900; color: #0f1c35; margin-top: 2px; }
         .stat-value.gold-val { color: #92400e; }
 
-        /* ── RESULT TABLE WRAPPER ── */
+        /* RESULT TABLE */
         .result-wrapper {
             margin: 8px 0;
             border: 2px solid #0f1c35;
@@ -192,7 +193,6 @@
         }
         .result-table { width:100%; border-collapse:collapse; font-size:8.8px; }
 
-        /* Table heading row 1 — banner */
         .result-table thead tr.banner-row th {
             background: #0f1c35;
             color: white;
@@ -204,7 +204,6 @@
             letter-spacing: .3px;
         }
 
-        /* Table heading row 2 — column labels */
         .result-table thead tr.col-label-row th {
             background: #0b2b44;
             color: white;
@@ -217,7 +216,6 @@
         }
         .result-table thead tr.col-label-row th.left-align { text-align:left; padding-left:8px; }
 
-        /* Body cells */
         .result-table tbody td {
             border: 1.2px solid #000;
             padding: 5px 4px;
@@ -234,25 +232,22 @@
             background: #fef9e3 !important;
         }
 
-        /* Grade colours */
         .grade-A { color:#15803d; font-weight:900; }
         .grade-B { color:#1d4ed8; font-weight:900; }
         .grade-C { color:#b45309; font-weight:900; }
         .grade-D { color:#e11d48; font-weight:900; }
         .grade-F { color:#b91c1c; font-weight:900; }
 
-        /* Position medals */
         .pos-1 { background-color:#FFD966 !important; color:#000; font-weight:900; }
         .pos-2 { background-color:#D1D5DB !important; color:#000; font-weight:900; }
         .pos-3 { background-color:#E6B17E !important; color:#000; font-weight:900; }
 
         .highlight-red { color:#dc2626; font-weight:900; }
 
-        /* Mini score bar */
         .score-bar  { height:5px; background:#e2e8f0; border-radius:3px; overflow:hidden; margin-top:4px; }
         .score-fill { height:100%; border-radius:3px; }
 
-        /* ── TOTALS STRIP ── */
+        /* TOTALS */
         .totals-summary {
             background: #0b2b44;
             color: white;
@@ -264,7 +259,7 @@
             margin: 5px 0;
         }
 
-        /* ── PERFORMANCE BADGE ── */
+        /* PERFORMANCE BADGE */
         .perf-badge {
             margin: 4px 0;
             padding: 7px 12px;
@@ -279,7 +274,7 @@
         .perf-average   { background:#fef3c7; border-color:#ca8a04; color:#854d0e; }
         .perf-poor      { background:#fee2e2; border-color:#b91c1c; color:#7f1d1d; }
 
-        /* ── GRADE DISTRIBUTION BOX ── */
+        /* GRADE DISTRIBUTION */
         .grade-dist-box {
             background: #f8fafc;
             border: 1.5px solid #e2e8f0;
@@ -287,14 +282,18 @@
             padding: 7px 12px;
             font-size: 8.5px;
             margin: 4px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
         }
 
-        /* ── REMARKS TABLE ── */
+        /* REMARKS */
         .remarks-table { width:100%; border-collapse:collapse; margin:6px 0; border:2px solid #000; }
         .remarks-table td { border:1.2px solid #000; padding:7px 9px; vertical-align:top; font-size:9px; background:white; }
         .remark-title { font-weight:900; font-size:9.5px; border-bottom:1.5px solid #94a3b8; display:inline-block; margin-bottom:5px; }
 
-        /* ── FOOTER ── */
+        /* FOOTER */
         .bottom-strip {
             margin-top: 6px;
             border-top: 1.8px solid #cbd5e1;
@@ -309,7 +308,6 @@
         .sign-line { border-bottom:1.5px dotted #1e293b; min-width:100px; display:inline-block; margin:0 6px; }
         .powered   { font-size:7px; color:#475569; margin-top:4px; }
 
-        /* ── EMPTY STATE ── */
         .empty-state {
             text-align: center;
             padding: 40px 24px;
