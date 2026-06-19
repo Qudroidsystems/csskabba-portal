@@ -31,7 +31,8 @@
                 .ap-filter-btn,.ap-print-btn { padding:8px 22px; border-radius:var(--radius-sm); cursor:pointer; border:none; }
                 .ap-filter-btn { background:var(--gold); color:var(--navy); font-weight:600; }
                 .ap-print-btn  { background:var(--navy-mid); color:#fff; text-decoration:none; display:inline-flex; align-items:center; gap:7px; font-size:13px; }
-                .ap-print-btn-mock { background:var(--gold); color:var(--navy); font-weight:700; }
+                .ap-print-btn-mock { background:var(--gold) !important; color:var(--navy) !important; font-weight:700 !important; }
+                .ap-print-btn-group { margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
 
                 /* Body */
                 .ap-body { padding:32px 24px; }
@@ -69,7 +70,7 @@
                 /* GPA trend card */
                 .ap-trend-card { background:var(--paper); border-radius:var(--radius); padding:22px 24px; margin-bottom:24px; border:1px solid var(--border); }
 
-                /* Accordion */
+                /* ── SHARED ACCORDION ── */
                 .ap-accordion { display:flex; flex-direction:column; gap:12px; }
                 .ap-accordion-item { background:var(--paper); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
                 .ap-accordion-item.is-open { box-shadow:0 4px 12px rgba(0,0,0,.1); }
@@ -96,6 +97,9 @@
                 .ap-metric-box.pos-class-total { border-left:3px solid #0891b2; }
                 .ap-metric-box.pos-arm-total   { border-left:3px solid #7c3aed; }
                 .ap-metric-box.pos-arm-cum     { border-left:3px solid #a21caf; }
+                .ap-metric-box.mock-pos        { border-left:3px solid #c9a84c; }
+                .ap-metric-box.mock-avg        { border-left:3px solid #059669; }
+                .ap-metric-box.mock-minmax     { border-left:3px solid #dc2626; }
 
                 /* Assessment row */
                 .ap-assessment-row { background:white; border-radius:8px; padding:12px 16px; margin-bottom:8px; border:1px solid #e9ecef; }
@@ -142,32 +146,13 @@
                     text-transform: uppercase;
                     letter-spacing: .5px;
                 }
-                .mock-table { width:100%; border-collapse:collapse; font-size:13px; }
-                .mock-table thead th {
-                    background: #1a2f55;
-                    color: #fff;
-                    padding: 10px 14px;
-                    font-size: 10.5px;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: .4px;
-                    text-align: center;
-                    border: none;
-                    white-space: nowrap;
-                }
-                .mock-table thead th:first-child { text-align:left; padding-left:20px; }
-                .mock-table tbody td {
-                    padding: 10px 14px;
-                    text-align: center;
-                    border-bottom: 1px solid #f0f0f0;
-                    font-size: 13px;
-                    vertical-align: middle;
-                }
-                .mock-table tbody td:first-child { text-align:left; padding-left:20px; }
-                .mock-table tbody tr:last-child td { border-bottom:none; }
-                .mock-table tbody tr:hover td { background:#fdf6e3; }
-                .mock-score-bar { height:5px; background:#e2e8f0; border-radius:3px; overflow:hidden; margin-top:5px; width:60px; margin-left:auto; margin-right:auto; }
-                .mock-score-fill { height:100%; border-radius:3px; }
+                /* Mock accordion uses same classes but panel bg differs */
+                .mock-ap-panel { background: #fffbea !important; border-top-color: #f0e4bc !important; }
+
+                /* Score bar inside mock panel */
+                .mock-score-bar-lg { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+                .mock-score-fill-lg { height:100%; border-radius:4px; transition:width .5s; }
+
                 .mock-summary-strip {
                     background: #0f1c35;
                     color: rgba(255,255,255,.75);
@@ -187,9 +172,6 @@
                     color: #7b85a3;
                     font-size: 13px;
                 }
-
-                /* print button group */
-                .ap-print-btn-group { margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
             </style>
 
             <div class="assessment-portal">
@@ -230,8 +212,6 @@
 
                         @if(isset($subjectsWithAssessments) && $subjectsWithAssessments->isNotEmpty())
                         <div class="ap-print-btn-group">
-
-                            {{-- Terminal Report Button --}}
                             <button type="button" class="ap-print-btn" id="showPrintModalBtn">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="6 9 6 2 18 2 18 9"/>
@@ -241,7 +221,6 @@
                                 Print Terminal Report
                             </button>
 
-                            {{-- Mock Report Button — only shown when mock data exists --}}
                             @if(isset($mockResults) && $mockResults->isNotEmpty())
                             <button type="button" class="ap-print-btn ap-print-btn-mock" id="printMockBtn">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -251,7 +230,6 @@
                                 Print Mock Report
                             </button>
                             @endif
-
                         </div>
                         @endif
                     </div>
@@ -330,12 +308,12 @@
 
                     {{-- ATTENDANCE CARD --}}
                     @php
-                        $att        = $attendanceSummary ?? null;
-                        $attPct     = $att ? (float)($att->attendance_percentage ?? 0) : null;
+                        $att         = $attendanceSummary ?? null;
+                        $attPct      = $att ? (float)($att->attendance_percentage ?? 0) : null;
                         $attBarClass = $attPct === null ? '' : ($attPct >= 90 ? 'att-excellent' : ($attPct >= 75 ? 'att-good' : ($attPct >= 60 ? 'att-average' : 'att-poor')));
-                        $attLabel   = $attPct === null ? '' : ($attPct >= 90 ? 'Excellent' : ($attPct >= 75 ? 'Good' : ($attPct >= 60 ? 'Average' : 'Poor')));
-                        $attColor   = $attPct === null ? '' : ($attPct >= 90 ? '#16a34a' : ($attPct >= 75 ? '#2563eb' : ($attPct >= 60 ? '#d97706' : '#dc2626')));
-                        $attBg      = $attPct === null ? '' : ($attPct >= 90 ? '#d1fae5' : ($attPct >= 75 ? '#dbeafe' : ($attPct >= 60 ? '#fef3c7' : '#fee2e2')));
+                        $attLabel    = $attPct === null ? '' : ($attPct >= 90 ? 'Excellent' : ($attPct >= 75 ? 'Good' : ($attPct >= 60 ? 'Average' : 'Poor')));
+                        $attColor    = $attPct === null ? '' : ($attPct >= 90 ? '#16a34a' : ($attPct >= 75 ? '#2563eb' : ($attPct >= 60 ? '#d97706' : '#dc2626')));
+                        $attBg       = $attPct === null ? '' : ($attPct >= 90 ? '#d1fae5' : ($attPct >= 75 ? '#dbeafe' : ($attPct >= 60 ? '#fef3c7' : '#fee2e2')));
                     @endphp
                     <div class="ap-attendance-card">
                         <div class="att-section-title">
@@ -348,7 +326,6 @@
                             </svg>
                             Attendance Summary
                         </div>
-
                         @if($att)
                         <div class="att-grid">
                             <div class="att-stat"><div class="att-stat-value">{{ $att->total_school_days ?? 0 }}</div><div class="att-stat-label">School Days</div></div>
@@ -384,7 +361,9 @@
                     </div>
                     @endif
 
-                    {{-- SUBJECTS ACCORDION --}}
+                    {{-- ════════════════════════════════════════════════
+                         TERMINAL SUBJECTS ACCORDION
+                    ════════════════════════════════════════════════ --}}
                     <div class="ap-accordion" id="apAccordion">
                         @foreach($subjectsWithAssessments as $idx => $subject)
                         @php
@@ -455,7 +434,7 @@
                     </div>
 
                     {{-- ════════════════════════════════════════════════
-                         MOCK EXAM RESULTS
+                         MOCK EXAM RESULTS — ACCORDION UI
                     ════════════════════════════════════════════════ --}}
                     @php $hasMock = isset($mockResults) && $mockResults->isNotEmpty(); @endphp
 
@@ -468,82 +447,131 @@
                                 </svg>
                                 Mock Exam Results
                             </h4>
-                            <div style="display:flex;align-items:center;gap:10px;">
-                                @if($hasMock)
-                                    <span class="mock-badge">{{ $mockResults->count() }} Subjects</span>
-                                @endif
-                            </div>
+                            @if($hasMock)
+                                <span class="mock-badge">{{ $mockResults->count() }} Subjects</span>
+                            @endif
                         </div>
 
                         @if($hasMock)
-                            <div class="table-responsive">
-                                <table class="mock-table">
-                                    <thead>
-                                        <tr>
-                                            <th>#&nbsp; Subject</th>
-                                            <th>Exam Score</th>
-                                            <th>Total / 100</th>
-                                            <th>Grade</th>
-                                            <th>Remark</th>
-                                            <th>Position</th>
-                                            <th>Class Avg</th>
-                                            <th>Min</th>
-                                            <th>Max</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($mockResults as $mi => $mock)
-                                        @php
-                                            $mg       = $mock->grade ?? '-';
-                                            $mgClass  = match(true) {
-                                                str_starts_with($mg,'A') => 'grade-A1',
-                                                str_starts_with($mg,'B') => 'grade-B2',
-                                                str_starts_with($mg,'C') => 'grade-C4',
-                                                str_starts_with($mg,'D') => 'grade-D7',
-                                                default => 'grade-F9',
-                                            };
-                                            $mTotal    = (float)($mock->total ?? 0);
-                                            $mBarColor = $mTotal >= 70 ? '#1a7f5a' : ($mTotal >= 50 ? '#2563eb' : ($mTotal >= 40 ? '#d4870a' : '#c0392b'));
-                                        @endphp
-                                        <tr>
-                                            <td>
-                                                <div style="font-weight:700;color:var(--navy);">{{ $mi+1 }}.&nbsp;&nbsp;{{ $mock->subject_name ?? '—' }}</div>
+
+                        {{-- Mock summary strip (always visible above accordion) --}}
+                        <div class="mock-summary-strip">
+                            <div>Total Obtained: <strong>{{ $mockSummary['obtained'] ?? 0 }}</strong></div>
+                            <div>Total Obtainable: <strong>{{ $mockSummary['obtainable'] ?? 0 }}</strong></div>
+                            <div>Overall %: <strong>{{ $mockSummary['percentage'] ?? 0 }}%</strong></div>
+                        </div>
+
+                        {{-- Mock subjects accordion --}}
+                        <div style="padding:20px 24px;">
+                            <div class="ap-accordion" id="mockAccordion">
+                                @foreach($mockResults as $mi => $mock)
+                                @php
+                                    $mg = $mock->grade ?? '-';
+                                    $mgClass = match(true) {
+                                        str_starts_with($mg,'A') => 'grade-A1',
+                                        str_starts_with($mg,'B') => 'grade-B2',
+                                        str_starts_with($mg,'C') => 'grade-C4',
+                                        str_starts_with($mg,'D') => 'grade-D7',
+                                        default => 'grade-F9',
+                                    };
+                                    $mTotal    = (float)($mock->total ?? 0);
+                                    $mBarColor = $mTotal >= 70 ? '#1a7f5a' : ($mTotal >= 50 ? '#2563eb' : ($mTotal >= 40 ? '#d4870a' : '#c0392b'));
+                                    $mBarClass = $mTotal >= 70 ? 'bar-excellent' : ($mTotal >= 50 ? 'bar-good' : ($mTotal >= 40 ? 'bar-average' : 'bar-low'));
+                                    $mIcons    = ['🏆','📝','✏️','📖','🔖','📋','🗒️','📌','🗂️','📑'];
+                                    $mIcon     = $mIcons[$mi % count($mIcons)];
+                                @endphp
+                                <div class="ap-accordion-item {{ $mi === 0 ? 'is-open' : '' }}" id="mock-item-{{ $mi }}">
+                                    <button class="ap-accordion-trigger" onclick="toggleMockItem({{ $mi }})">
+                                        <div style="display:flex;align-items:center;gap:14px;">
+                                            <div style="width:40px;height:40px;background:linear-gradient(135deg,#0f1c35,#1a2f55);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">{{ $mIcon }}</div>
+                                            <div>
+                                                <p class="ap-subject-name">{{ $mock->subject_name ?? 'Unknown Subject' }}</p>
                                                 @if(!empty($mock->subject_code))
-                                                    <div style="font-size:11px;color:#7b85a3;">{{ $mock->subject_code }}</div>
+                                                    <p class="ap-subject-code">{{ $mock->subject_code }}</p>
                                                 @endif
-                                            </td>
-                                            <td style="font-weight:600;">{{ number_format($mock->exam ?? 0, 1) }}</td>
-                                            <td>
-                                                <div style="font-weight:700;color:var(--navy);">{{ number_format($mTotal, 1) }}</div>
-                                                <div class="mock-score-bar">
-                                                    <div class="mock-score-fill" style="width:{{ min($mTotal,100) }}%;background:{{ $mBarColor }};"></div>
-                                                </div>
-                                            </td>
-                                            <td><span class="ap-grade-pill {{ $mgClass }}">{{ $mg }}</span></td>
-                                            <td style="font-size:12px;color:#6b7280;">{{ $mock->remark ?? '—' }}</td>
-                                            <td style="font-weight:600;color:#1a2f55;">{{ $mock->position ?? '—' }}</td>
-                                            <td style="color:#6b7280;">{{ number_format($mock->class_average ?? 0, 1) }}</td>
-                                            <td style="color:#dc2626;font-weight:600;">{{ number_format($mock->cmin ?? 0, 1) }}</td>
-                                            <td style="color:#16a34a;font-weight:600;">{{ number_format($mock->cmax ?? 0, 1) }}</td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                            </div>
+                                        </div>
+                                        <div style="display:flex;gap:12px;align-items:center;">
+                                            <span class="ap-grade-pill {{ $mgClass }}">{{ $mg }}</span>
+                                            <span style="font-weight:600;font-size:14px;">{{ number_format($mTotal, 1) }}</span>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                                        </div>
+                                    </button>
+                                    <div class="ap-panel mock-ap-panel">
+                                        {{-- Metrics strip --}}
+                                        <div class="ap-metrics-strip">
+                                            <div class="ap-metric-box">
+                                                <strong>Exam Score</strong>
+                                                <span>{{ number_format($mock->exam ?? 0, 1) }}</span>
+                                            </div>
+                                            <div class="ap-metric-box">
+                                                <strong>Total / 100</strong>
+                                                <span>{{ number_format($mTotal, 1) }}</span>
+                                            </div>
+                                            <div class="ap-metric-box mock-pos">
+                                                <strong>Position</strong>
+                                                <span>{{ $mock->position ?? '—' }}</span>
+                                            </div>
+                                            <div class="ap-metric-box mock-avg">
+                                                <strong>Class Avg</strong>
+                                                <span>{{ number_format($mock->class_average ?? 0, 1) }}</span>
+                                            </div>
+                                            <div class="ap-metric-box mock-minmax">
+                                                <strong>Min</strong>
+                                                <span style="color:#dc2626;">{{ number_format($mock->cmin ?? 0, 1) }}</span>
+                                            </div>
+                                            <div class="ap-metric-box mock-minmax">
+                                                <strong>Max</strong>
+                                                <span style="color:#16a34a;">{{ number_format($mock->cmax ?? 0, 1) }}</span>
+                                            </div>
+                                        </div>
+
+                                        {{-- Score breakdown --}}
+                                        <h4 style="font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;color:#374151;">Score Breakdown</h4>
+
+                                        <div class="ap-assessment-row">
+                                            <div class="ap-assessment-header">
+                                                <span><strong>Exam Score</strong></span>
+                                                <span style="font-size:13px;color:#374151;">
+                                                    {{ number_format($mock->exam ?? 0, 1) }} / 100
+                                                    <span style="color:#7b85a3;">({{ number_format($mTotal, 1) }}%)</span>
+                                                </span>
+                                            </div>
+                                            <div class="ap-bar-track">
+                                                <div class="ap-bar-fill {{ $mBarClass }}" style="width:{{ min($mTotal,100) }}%;"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="ap-assessment-row" style="background:#f0f9f0;border-color:#4ade80;margin-top:12px;">
+                                            <div class="ap-assessment-header">
+                                                <span><strong style="color:#166534;">TOTAL SCORE</strong></span>
+                                                <span style="font-size:15px;font-weight:700;color:#166534;">{{ number_format($mTotal, 1) }} / 100</span>
+                                            </div>
+                                            <div class="ap-bar-track">
+                                                <div class="ap-bar-fill bar-excellent" style="width:{{ min($mTotal,100) }}%;"></div>
+                                            </div>
+                                        </div>
+
+                                        @if(!empty($mock->remark) && $mock->remark !== '—')
+                                        <div style="margin-top:12px;padding:10px 14px;border-radius:8px;background:#fef3c7;border:1px solid #fde68a;font-size:12px;color:#92400e;font-weight:500;">
+                                            💬 Remark: <strong>{{ $mock->remark }}</strong>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
-                            <div class="mock-summary-strip">
-                                <div>Total Obtained: <strong>{{ $mockSummary['obtained'] ?? 0 }}</strong></div>
-                                <div>Total Obtainable: <strong>{{ $mockSummary['obtainable'] ?? 0 }}</strong></div>
-                                <div>Overall %: <strong>{{ $mockSummary['percentage'] ?? 0 }}%</strong></div>
-                            </div>
+                        </div>
+
                         @else
-                            <div class="mock-empty">
-                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 10px;display:block;">
-                                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-                                    <rect x="9" y="3" width="6" height="4" rx="2"/>
-                                    <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
-                                </svg>
-                                No mock exam results are available for this term.
-                            </div>
+                        <div class="mock-empty">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 10px;display:block;">
+                                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                                <rect x="9" y="3" width="6" height="4" rx="2"/>
+                                <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+                            </svg>
+                            No mock exam results are available for this term.
+                        </div>
                         @endif
                     </div>
 
@@ -551,18 +579,16 @@
                 </div>
             </div>
 
-            {{-- ════════════════════════════════════════════════
-                 TERMINAL PRINT COLUMN SELECTION MODAL
-            ════════════════════════════════════════════════ --}}
+            {{-- PRINT COLUMN SELECTION MODAL --}}
             <div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Select Columns for Terminal PDF Report</h5>
+                            <h5 class="modal-title">Select Columns for PDF Report</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="alert alert-info">Select the columns you want to include in your terminal PDF report.</div>
+                            <div class="alert alert-info">Select the columns you want to include in your PDF report.</div>
 
                             <div class="card mb-3">
                                 <div class="card-header">Student Information</div>
@@ -633,7 +659,6 @@
                                 </div>
                             </div>
 
-                            {{-- Mock toggle — only shown if mock data exists for this term --}}
                             @if(isset($mockResults) && $mockResults->isNotEmpty())
                             <div class="card mb-3" style="border-top:3px solid #c9a84c;">
                                 <div class="card-header" style="background:#0f1c35;color:#fff;font-weight:700;">
@@ -642,7 +667,7 @@
                                 <div class="card-body">
                                     <label>
                                         <input type="checkbox" class="col-checkbox" value="include_mock" checked>
-                                        <strong>Include Mock Results section in Terminal PDF</strong>
+                                        <strong>Include Mock Results section in PDF</strong>
                                     </label>
                                 </div>
                             </div>
@@ -650,7 +675,7 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="generatePdfBtn">Generate Terminal PDF</button>
+                            <button type="button" class="btn btn-primary" id="generatePdfBtn">Generate PDF</button>
                         </div>
                     </div>
                 </div>
@@ -663,12 +688,17 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // ── Accordion ──────────────────────────────────────────────────────────────
+    // Terminal accordion
     function toggleItem(idx) {
         document.getElementById('item-' + idx).classList.toggle('is-open');
     }
 
-    // ── Terminal Print Modal ───────────────────────────────────────────────────
+    // Mock accordion
+    function toggleMockItem(idx) {
+        document.getElementById('mock-item-' + idx).classList.toggle('is-open');
+    }
+
+    // Terminal print modal
     document.getElementById('showPrintModalBtn')?.addEventListener('click', function () {
         new bootstrap.Modal(document.getElementById('printModal')).show();
     });
@@ -684,7 +714,7 @@
         });
 
         if (selectedColumns.length <= 2) {
-            Swal.fire({ icon: 'warning', title: 'No Columns Selected', text: 'Please select at least one column.' });
+            Swal.fire({ icon:'warning', title:'No Columns Selected', text:'Please select at least one column.' });
             return;
         }
 
@@ -692,15 +722,15 @@
         const sessionId = document.getElementById('sessionSelect').value;
 
         if (!termId || !sessionId) {
-            Swal.fire({ icon: 'warning', title: 'Missing Selection', text: 'Please select both Term and Session.' });
+            Swal.fire({ icon:'warning', title:'Missing Selection', text:'Please select both Term and Session.' });
             return;
         }
 
         bootstrap.Modal.getInstance(document.getElementById('printModal')).hide();
 
         Swal.fire({
-            title: 'Generating Terminal PDF',
-            html: 'Please wait while your terminal report is being prepared...',
+            title: 'Generating PDF',
+            html: 'Please wait while your report is being prepared...',
             icon: 'info', showConfirmButton: false, allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
@@ -714,19 +744,19 @@
         setTimeout(() => Swal.close(), 1500);
     });
 
-    // ── Mock Print Button ──────────────────────────────────────────────────────
+    // Mock PDF print button
     document.getElementById('printMockBtn')?.addEventListener('click', function () {
         const termId    = document.getElementById('termSelect').value;
         const sessionId = document.getElementById('sessionSelect').value;
 
         if (!termId || !sessionId) {
-            Swal.fire({ icon: 'warning', title: 'Missing Selection', text: 'Please select both Term and Session before printing the mock report.' });
+            Swal.fire({ icon:'warning', title:'Missing Selection', text:'Please select both Term and Session before printing the mock report.' });
             return;
         }
 
         Swal.fire({
             title: 'Generating Mock PDF',
-            html: 'Please wait while your mock examination report is being prepared...',
+            html: 'Please wait while your mock report is being prepared...',
             icon: 'info', showConfirmButton: false, allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
@@ -736,7 +766,6 @@
         setTimeout(() => Swal.close(), 1500);
     });
 
-    // ── GPA Trend Chart ────────────────────────────────────────────────────────
     @if(isset($gpaTrend) && count($gpaTrend) > 0)
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('gpaTrendChart')?.getContext('2d');
