@@ -229,9 +229,10 @@
     border: none; cursor: pointer;
     text-decoration: none;
     transition: transform .15s, box-shadow .15s;
+    background: none;
 }
 .r-action-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.15); }
-.r-action-btn.view { background:#eff6ff; color:#2563eb; }
+.r-action-btn.view  { background:#eff6ff; color:#2563eb; }
 .r-action-btn.print { background:#f0fdf4; color:#16a34a; }
 
 /* ── Empty state ── */
@@ -568,6 +569,17 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+{{-- Expose Laravel route base URLs to JavaScript --}}
+<script>
+    window._mockRoutes = {
+        index:     '{{ route("studentmockreports.index") }}',
+        viewBase:  '{{ url("studentmockreports") }}',
+        pdfBase:   '{{ url("studentmockreports/export-pdf") }}',
+        exportClass: '{{ route("studentmockreports.exportClassMockResultsPdf") }}',
+        columnOptions: '{{ route("studentmockreports.column-options") }}',
+    };
+</script>
+
 <script>
 (function () {
     'use strict';
@@ -584,7 +596,92 @@
     });
     @endif
 
-    // ── Selection state ─────────────────────────────────────
+    // ════════════════════════════════════════════════════════
+    // PER-ROW ACTION GUARDS
+    // ════════════════════════════════════════════════════════
+
+    /**
+     * Called by each row's View button.
+     * Shows a SweetAlert warning if no term is selected, otherwise navigates.
+     */
+    window.handleViewResult = function (btn) {
+        const trm = document.getElementById('idterm');
+
+        if (!trm || trm.value === 'ALL') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Select a Term First',
+                text: 'Please choose a term from the filter above before viewing a student\'s mock result.',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'OK, got it'
+            });
+            // Highlight the term select to draw attention
+            if (trm) {
+                trm.closest('#termSelectContainer') &&
+                    (trm.closest('#termSelectContainer').style.display = '');
+                trm.style.borderColor = 'var(--r-warning)';
+                trm.style.boxShadow   = '0 0 0 3px rgba(217,119,6,.15)';
+                setTimeout(() => {
+                    trm.style.borderColor = '';
+                    trm.style.boxShadow   = '';
+                }, 2500);
+            }
+            return;
+        }
+
+        const stid      = btn.dataset.stid;
+        const classid   = btn.dataset.classid;
+        const sessionid = btn.dataset.sessionid;
+        const termid    = trm.value;
+
+        window.location.href =
+            `${window._mockRoutes.viewBase}/${stid}/${classid}/${sessionid}/${termid}`;
+    };
+
+    /**
+     * Called by each row's PDF button.
+     * Shows a SweetAlert warning if no term is selected, otherwise opens the PDF in a new tab.
+     */
+    window.handlePdfResult = function (btn) {
+        const trm = document.getElementById('idterm');
+
+        if (!trm || trm.value === 'ALL') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Select a Term First',
+                text: 'Please choose a term from the filter above before exporting a PDF.',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'OK, got it'
+            });
+            // Highlight the term select
+            if (trm) {
+                trm.closest('#termSelectContainer') &&
+                    (trm.closest('#termSelectContainer').style.display = '');
+                trm.style.borderColor = 'var(--r-warning)';
+                trm.style.boxShadow   = '0 0 0 3px rgba(217,119,6,.15)';
+                setTimeout(() => {
+                    trm.style.borderColor = '';
+                    trm.style.boxShadow   = '';
+                }, 2500);
+            }
+            return;
+        }
+
+        const stid      = btn.dataset.stid;
+        const classid   = btn.dataset.classid;
+        const sessionid = btn.dataset.sessionid;
+        const termid    = trm.value;
+
+        window.open(
+            `${window._mockRoutes.pdfBase}/${stid}/${classid}/${sessionid}/${termid}`,
+            '_blank'
+        );
+    };
+
+    // ════════════════════════════════════════════════════════
+    // SELECTION STATE
+    // ════════════════════════════════════════════════════════
+
     function updateSelectionUI() {
         const cls     = document.getElementById('idclass');
         const ses     = document.getElementById('idsession');
@@ -615,14 +712,14 @@
             selectedInfo.style.display = 'none';
         }
 
-        // Print button
-        const printRow = document.getElementById('printBtnRow');
+        // Print button row — only show when a term is chosen AND students are selected
+        const printRow   = document.getElementById('printBtnRow');
         const printBadge = document.getElementById('printCountBadge');
         if (trm.value !== 'ALL' && checked.length > 0) {
-            printRow.style.display = '';
+            printRow.style.cssText = ''; // clear the !important hide
             printBadge.textContent = checked.length;
         } else {
-            printRow.style.display = 'none';
+            printRow.style.cssText = 'display:none!important;';
         }
     }
 
@@ -658,7 +755,10 @@
         updateSelectionUI();
     };
 
-    // ── Filter / search ─────────────────────────────────────
+    // ════════════════════════════════════════════════════════
+    // FILTER / SEARCH
+    // ════════════════════════════════════════════════════════
+
     window.filterData = function () {
         const cls    = document.getElementById('idclass').value;
         const ses    = document.getElementById('idsession').value;
@@ -666,7 +766,12 @@
         const search = document.getElementById('searchInput').value.trim();
 
         if (cls === 'ALL' || ses === 'ALL') {
-            Swal.fire({ icon:'warning', title:'Missing Selection', text:'Please select a class and session.', confirmButtonColor:'#2563eb' });
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Selection',
+                text: 'Please select a class and session.',
+                confirmButtonColor: '#2563eb'
+            });
             return;
         }
 
@@ -678,12 +783,16 @@
             </div>
         </td></tr>`;
 
-        axios.get('{{ route("studentmockreports.index") }}', {
+        axios.get(window._mockRoutes.index, {
             params: { search, schoolclassid: cls, sessionid: ses, termid: trm },
             headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
         }).then(res => {
             tbody.innerHTML = res.data.tableBody ||
-                `<tr><td colspan="11"><div class="r-empty"><i class="ri-inbox-line r-empty-icon"></i><h6>No students found</h6><p>Try adjusting your filters</p></div></td></tr>`;
+                `<tr><td colspan="11"><div class="r-empty">
+                    <i class="ri-inbox-line r-empty-icon"></i>
+                    <h6>No students found</h6>
+                    <p>Try adjusting your filters</p>
+                </div></td></tr>`;
             document.getElementById('pagination-container').innerHTML = res.data.pagination || '';
             const count = res.data.studentCount || 0;
             document.getElementById('studentcount').textContent = count;
@@ -713,10 +822,14 @@
     function updateSearchBtnVisibility() {
         const cls = document.getElementById('idclass').value;
         const ses = document.getElementById('idsession').value;
-        document.getElementById('searchBtn').style.display = (cls !== 'ALL' && ses !== 'ALL') ? '' : 'none';
+        document.getElementById('searchBtn').style.display =
+            (cls !== 'ALL' && ses !== 'ALL') ? '' : 'none';
     }
 
-    // ── Print ────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════
+    // BULK PRINT (class PDF)
+    // ════════════════════════════════════════════════════════
+
     window.printAllResults = function () {
         const cls     = document.getElementById('idclass').value;
         const ses     = document.getElementById('idsession').value;
@@ -725,10 +838,22 @@
         const ids     = Array.from(checked).map(cb => cb.value);
 
         if (cls === 'ALL' || ses === 'ALL' || trm === 'ALL') {
-            Swal.fire({ icon:'warning', title:'Missing Selection', text:'Please select class, session, and term.', confirmButtonColor:'#2563eb' }); return;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Selection',
+                text: 'Please select class, session, and term.',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
         }
         if (!ids.length) {
-            Swal.fire({ icon:'warning', title:'No Students Selected', text:'Select at least one student.', confirmButtonColor:'#2563eb' }); return;
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Students Selected',
+                text: 'Select at least one student.',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
         }
 
         window.currentPrintParams = { classId: cls, sessionId: ses, termId: trm, studentIds: ids };
@@ -743,10 +868,14 @@
         const saveBtn = document.getElementById('saveColumnSelection');
         loader.style.display = ''; form.style.display = 'none'; saveBtn.disabled = true;
 
-        fetch('{{ route("studentmockreports.column-options") }}', {
+        fetch(window._mockRoutes.columnOptions, {
             method: 'POST',
-            headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ schoolclassid:p.classId, sessionid:p.sessionId, termid:p.termId })
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({
+                schoolclassid: p.classId,
+                sessionid:     p.sessionId,
+                termid:        p.termId
+            })
         })
         .then(r => r.json())
         .then(data => {
@@ -756,10 +885,20 @@
                 form.style.display   = '';
                 saveBtn.disabled     = false;
             } else {
-                Swal.fire({ icon:'error', title:'Error', text:data.message, confirmButtonColor:'#2563eb' });
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message,
+                    confirmButtonColor: '#2563eb'
+                });
             }
         })
-        .catch(() => Swal.fire({ icon:'error', title:'Network Error', text:'Failed to load options.', confirmButtonColor:'#2563eb' }));
+        .catch(() => Swal.fire({
+            icon: 'error',
+            title: 'Network Error',
+            text: 'Failed to load options.',
+            confirmButtonColor: '#2563eb'
+        }));
     }
 
     function populateColumnOptions(columns) {
@@ -776,15 +915,14 @@
                 const d = document.createElement('div');
                 d.className = 'col-md-4 col-sm-6';
                 d.innerHTML = `
-                    <label class="col-check-item ${cfg.default?'checked':''}" id="wrap_${key}">
-                        <input type="checkbox" class="column-checkbox" data-column="${key}" ${cfg.default?'checked':''}>
+                    <label class="col-check-item ${cfg.default ? 'checked' : ''}" id="wrap_${key}">
+                        <input type="checkbox" class="column-checkbox" data-column="${key}" ${cfg.default ? 'checked' : ''}>
                         <span style="font-size:13px;font-weight:500;">${cfg.label}</span>
                     </label>`;
                 el.appendChild(d);
             });
         });
 
-        // live checked count
         function updateColCount() {
             const n = document.querySelectorAll('.column-checkbox:checked').length;
             document.getElementById('colSelectedCount').textContent = n;
@@ -792,40 +930,55 @@
                 item.classList.toggle('checked', item.querySelector('input').checked);
             });
         }
-        document.querySelectorAll('.column-checkbox').forEach(cb => cb.addEventListener('change', updateColCount));
+        document.querySelectorAll('.column-checkbox').forEach(cb =>
+            cb.addEventListener('change', updateColCount)
+        );
         updateColCount();
     }
 
     document.getElementById('saveColumnSelection').addEventListener('click', function () {
-        const selected = Array.from(document.querySelectorAll('.column-checkbox:checked')).map(cb => cb.dataset.column);
+        const selected = Array.from(
+            document.querySelectorAll('.column-checkbox:checked')
+        ).map(cb => cb.dataset.column);
+
         if (!selected.length) {
-            Swal.fire({ icon:'warning', title:'No Columns Selected', text:'Select at least one column.', confirmButtonColor:'#2563eb' }); return;
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Columns Selected',
+                text: 'Select at least one column.',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
         }
+
         const p = window.currentPrintParams;
         bootstrap.Modal.getInstance(document.getElementById('columnSelectionModal'))?.hide();
 
         Swal.fire({
             title: 'Generating PDF',
             html: `<p class="text-muted">Processing <strong>${p.studentIds.length}</strong> student(s)…</p>`,
-            icon: 'info', showConfirmButton: false, allowOutsideClick: false,
+            icon: 'info',
+            showConfirmButton: false,
+            allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
 
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ route("studentmockreports.exportClassMockResultsPdf") }}';
+        form.action = window._mockRoutes.exportClass;
         form.target = '_blank';
 
         const add = (name, val) => {
             const i = document.createElement('input');
-            i.type='hidden'; i.name=name; i.value=val; form.appendChild(i);
+            i.type = 'hidden'; i.name = name; i.value = val;
+            form.appendChild(i);
         };
         add('_token', CSRF);
         add('schoolclassid', p.classId);
-        add('sessionid', p.sessionId);
-        add('termid', p.termId);
-        p.studentIds.forEach((id,i) => add(`studentIds[${i}]`, id));
-        selected.forEach((col,i) => add(`selectedColumns[${i}]`, col));
+        add('sessionid',     p.sessionId);
+        add('termid',        p.termId);
+        p.studentIds.forEach((id, i) => add(`studentIds[${i}]`, id));
+        selected.forEach((col, i)    => add(`selectedColumns[${i}]`, col));
 
         document.body.appendChild(form);
         form.submit();
@@ -833,7 +986,10 @@
         setTimeout(() => Swal.close(), 2000);
     });
 
-    // ── Image zoom ───────────────────────────────────────────
+    // ════════════════════════════════════════════════════════
+    // IMAGE ZOOM
+    // ════════════════════════════════════════════════════════
+
     function setupImageZoom() {
         document.querySelectorAll('[data-image-zoom]').forEach(el => {
             el.addEventListener('click', function () {
@@ -846,33 +1002,60 @@
         });
     }
 
-    // ── Pagination ───────────────────────────────────────────
+    // ════════════════════════════════════════════════════════
+    // PAGINATION
+    // ════════════════════════════════════════════════════════
+
     function setupPaginationLinks() {
         document.querySelectorAll('#pagination-container a').forEach(link => {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
-                if (this.href && !this.classList.contains('disabled')) loadPage(this.href);
+                if (this.href && !this.classList.contains('disabled')) {
+                    loadPage(this.href);
+                }
             });
         });
     }
 
     function loadPage(url) {
         const tbody = document.getElementById('studentTableBody');
-        tbody.innerHTML = `<tr><td colspan="11"><div class="r-empty"><div class="r-loading-spinner mx-auto mb-2"></div><p class="text-muted">Loading…</p></div></td></tr>`;
-        axios.get(url, { headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest'} })
+        tbody.innerHTML = `<tr><td colspan="11">
+            <div class="r-empty">
+                <div class="r-loading-spinner mx-auto mb-2"></div>
+                <p class="text-muted">Loading…</p>
+            </div>
+        </td></tr>`;
+
+        axios.get(url, {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+        })
         .then(res => {
-            tbody.innerHTML = res.data.tableBody || `<tr><td colspan="11"><div class="r-empty"><i class="ri-inbox-line r-empty-icon"></i><p>No students</p></div></td></tr>`;
+            tbody.innerHTML = res.data.tableBody ||
+                `<tr><td colspan="11">
+                    <div class="r-empty">
+                        <i class="ri-inbox-line r-empty-icon"></i>
+                        <p>No students</p>
+                    </div>
+                </td></tr>`;
             document.getElementById('pagination-container').innerHTML = res.data.pagination || '';
-            document.getElementById('studentcount').textContent  = res.data.studentCount || 0;
+            document.getElementById('studentcount').textContent   = res.data.studentCount || 0;
             document.getElementById('totalCountText').textContent = res.data.studentCount || 0;
-            setupPaginationLinks(); setupCheckboxListeners(); setupImageZoom();
-            updateTermVisibility(); updateSelectionUI();
+            setupPaginationLinks();
+            setupCheckboxListeners();
+            setupImageZoom();
+            updateTermVisibility();
+            updateSelectionUI();
         }).catch(() => {
-            tbody.innerHTML = `<tr><td colspan="11"><div class="r-empty text-danger"><p>Error loading page</p></div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="11">
+                <div class="r-empty text-danger"><p>Error loading page</p></div>
+            </td></tr>`;
         });
     }
 
-    // ── DOM Ready ────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════
+    // DOM READY
+    // ════════════════════════════════════════════════════════
+
     document.addEventListener('DOMContentLoaded', function () {
         setupCheckboxListeners();
         setupPaginationLinks();
@@ -884,25 +1067,38 @@
 
         const resetTable = () => {
             document.getElementById('studentTableBody').innerHTML =
-                `<tr><td colspan="11"><div class="r-empty">
-                    <i class="ri-filter-line r-empty-icon"></i>
-                    <h6>Select Class &amp; Session</h6>
-                    <p>Use the filters above to load students</p>
-                </div></td></tr>`;
+                `<tr><td colspan="11">
+                    <div class="r-empty">
+                        <i class="ri-filter-line r-empty-icon"></i>
+                        <h6>Select Class &amp; Session</h6>
+                        <p>Use the filters above to load students</p>
+                    </div>
+                </td></tr>`;
             document.getElementById('pagination-container').innerHTML = '';
-            document.getElementById('studentcount').textContent = '0';
-            document.getElementById('totalCountText').textContent = '0';
+            document.getElementById('studentcount').textContent       = '0';
+            document.getElementById('totalCountText').textContent     = '0';
             document.getElementById('termSelectContainer').style.display = 'none';
-            document.getElementById('printBtnRow').style.display = 'none';
-            document.getElementById('selectionAlert').style.display = 'none';
+            document.getElementById('printBtnRow').style.cssText         = 'display:none!important;';
+            document.getElementById('selectionAlert').style.display      = 'none';
         };
 
-        cls.addEventListener('change', () => { updateSearchBtnVisibility(); trm.value='ALL'; resetTable(); });
-        ses.addEventListener('change', () => { updateSearchBtnVisibility(); trm.value='ALL'; resetTable(); });
-        trm.addEventListener('change', () => { updateSelectionUI(); if (trm.value!=='ALL') filterData(); });
+        cls.addEventListener('change', () => {
+            updateSearchBtnVisibility();
+            trm.value = 'ALL';
+            resetTable();
+        });
+        ses.addEventListener('change', () => {
+            updateSearchBtnVisibility();
+            trm.value = 'ALL';
+            resetTable();
+        });
+        trm.addEventListener('change', () => {
+            updateSelectionUI();
+            if (trm.value !== 'ALL') filterData();
+        });
 
-        // Keyboard search
-        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+        // Keyboard search trigger
+        document.getElementById('searchInput').addEventListener('keydown', function (e) {
             if (e.key === 'Enter') filterData();
         });
     });

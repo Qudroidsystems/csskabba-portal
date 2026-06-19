@@ -20,6 +20,7 @@
 @endphp
 
 <tr style="animation: rowIn .3s ease {{ $index * 0.03 }}s both;">
+
     {{-- Checkbox --}}
     <td>
         <input type="checkbox" name="chk_child" value="{{ $student->stid }}"
@@ -115,24 +116,27 @@
     {{-- Actions --}}
     <td>
         <div class="d-flex gap-1 flex-wrap">
-            <a href="{{ route('studentmockreports.studentmockresult', [
-                           $student->stid,
-                           $student->schoolclassID,
-                           $student->sessionid,
-                           request('termid', 1)
-                       ]) }}"
-               class="r-action-btn view" title="View Mock Result">
+            {{-- View: JS checks term before navigating --}}
+            <button type="button"
+                    class="r-action-btn view"
+                    title="View Mock Result"
+                    data-stid="{{ $student->stid }}"
+                    data-classid="{{ $student->schoolclassID }}"
+                    data-sessionid="{{ $student->sessionid }}"
+                    onclick="handleViewResult(this)">
                 <i class="ph-eye"></i> View
-            </a>
-            <a href="{{ route('studentmockreports.exportStudentMockResultPdf', [
-                           $student->stid,
-                           $student->schoolclassID,
-                           $student->sessionid,
-                           request('termid', 1)
-                       ]) }}"
-               class="r-action-btn print" title="Export PDF" target="_blank">
+            </button>
+
+            {{-- PDF: JS checks term before opening --}}
+            <button type="button"
+                    class="r-action-btn print"
+                    title="Export PDF"
+                    data-stid="{{ $student->stid }}"
+                    data-classid="{{ $student->schoolclassID }}"
+                    data-sessionid="{{ $student->sessionid }}"
+                    onclick="handlePdfResult(this)">
                 <i class="bi bi-file-earmark-pdf"></i> PDF
-            </a>
+            </button>
         </div>
     </td>
 </tr>
