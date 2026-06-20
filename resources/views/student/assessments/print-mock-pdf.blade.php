@@ -13,14 +13,13 @@
         body {
             font-family: 'Times New Roman', Times, serif;
             background: #e2e8f0;
-            padding: 6mm 4mm;
+            padding: 8mm 5mm;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
         }
 
-        /* fixed watermark – stays behind content */
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -40,44 +39,49 @@
             border-radius: 24px;
         }
 
-        /* main card – exactly one page */
         .student-section {
             max-width: 210mm;
             width: 100%;
+            margin: 0 auto;
             background: white;
             border: 3px solid #0f172a;
             border-radius: 6px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            page-break-after: avoid;
-            break-inside: avoid;
             display: flex;
             flex-direction: column;
-            /* ensure content does not overflow */
+            /* Prevent overflow to next page */
+            page-break-inside: avoid;
+            page-break-after: avoid;
+            break-inside: avoid;
+            max-height: 297mm; /* A4 height */
             overflow: hidden;
         }
 
         .card-inner {
-            padding: 10px 12px 10px 12px;
+            padding: 10px 14px 10px 14px;
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 4px;
+            overflow: hidden;
+            height: 100%;
         }
 
-        /* SCHOOL HEADER */
+        /* SCHOOL HEADER - reduced padding */
         .school-name-header {
             background: #111827;
             color: white;
-            padding: 8px 12px 6px 12px;
+            padding: 6px 14px 5px 14px;
             border: 2px solid #c9a84c;
             border-left: none;
             border-right: none;
             text-align: center;
             margin-bottom: 2px;
+            flex-shrink: 0;
         }
         .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -90,17 +94,18 @@
             opacity: 0.95;
         }
 
-        /* HEADER TABLE */
+        /* HEADER TABLE - reduced sizes */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 4px 0 2px;
+            margin: 3px 0 2px;
+            flex-shrink: 0;
         }
         .school-logo {
-            width: 64px;
-            height: 72px;
+            width: 60px;
+            height: 68px;
             border: 2px solid #2c7a4d;
-            border-radius: 10px;
+            border-radius: 8px;
             background: white;
             padding: 3px;
             text-align: center;
@@ -108,10 +113,10 @@
         }
         .school-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .photo-frame {
-            width: 64px;
-            height: 72px;
+            width: 60px;
+            height: 68px;
             border: 2px solid #c9a84c;
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
             margin-left: auto;
             background: #f1f5f9;
@@ -119,10 +124,10 @@
         .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
         .contact-info { width: 100%; font-size: 8.5px; border-collapse: collapse; }
         .contact-info td { padding: 2px 3px; }
-        .contact-label { font-weight: 900; color: #1e40af; width: 50px; }
+        .contact-label { font-weight: 900; color: #1e40af; width: 52px; }
 
-        .divider-dark { height: 2px; background: #1e40af; margin: 4px 0 2px; }
-        .divider-light { height: 1px; background: #94a3b8; margin: 2px 0 3px; }
+        .divider-dark { height: 1.5px; background: #1e40af; margin: 3px 0 1px; flex-shrink: 0; }
+        .divider-light { height: 1px; background: #94a3b8; margin: 1px 0 2px; flex-shrink: 0; }
 
         .report-title {
             background: linear-gradient(135deg, #0f1c35, #1a2f55);
@@ -130,19 +135,21 @@
             font-size: 12px;
             font-weight: 800;
             text-align: center;
-            padding: 6px;
+            padding: 5px;
             border-radius: 6px;
             letter-spacing: 0.5px;
             border: 2px solid #c9a84c;
+            flex-shrink: 0;
         }
 
-        /* STUDENT INFO */
+        /* STUDENT INFO - reduced */
         .student-info-bar {
             background: linear-gradient(135deg, #fffbea, #ffffff);
             border: 1.8px solid #c9a84c;
             border-radius: 8px;
-            padding: 5px 10px;
+            padding: 4px 10px;
             margin: 2px 0;
+            flex-shrink: 0;
         }
         .info-table { width: 100%; }
         .info-table td {
@@ -153,10 +160,11 @@
         .info-badge {
             background: #fef3c7;
             padding: 2px 8px;
-            border-radius: 30px;
+            border-radius: 20px;
             font-weight: 900;
             color: #92400e;
             display: inline-block;
+            font-size: 8px;
         }
         .info-value {
             font-weight: 900;
@@ -164,49 +172,82 @@
             font-size: 9.5px;
         }
 
-        /* STATS STRIP – single row, no wrap */
+        /* STATS TABLE - more compact */
         .stats-strip-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            margin: 4px 0;
-            border: 2px solid #0f1c35;
+            margin: 3px 0;
+            flex-shrink: 0;
         }
+
         .stats-strip-table td {
             border: 1px solid #cbd5e1;
             text-align: center;
             vertical-align: middle;
-            padding: 4px 2px;
+            padding: 3px 2px;
         }
-        .stat-cell { background: #f8fafc; }
-        .gold-cell { background: #fef9e3; }
-        .high-cell { background: #d1fae5; }
-        .low-cell { background: #fee2e2; }
+
+        .stats-strip-table .stat-cell {
+            background: #f8fafc;
+        }
+
+        .stats-strip-table .gold-cell {
+            background: #fef9e3;
+        }
+
+        .stats-strip-table .high-cell {
+            background: #d1fae5;
+        }
+
+        .stats-strip-table .low-cell {
+            background: #fee2e2;
+        }
+
         .stat-label {
-            font-size: 7.5px;
+            font-size: 7px;
             font-weight: 800;
             color: #64748b;
             text-transform: uppercase;
             line-height: 1.1;
         }
+
         .stat-value {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 900;
             color: #0f1c35;
             margin-top: 1px;
         }
-        .gold-val { color: #92400e; }
-        .high-val { color: #065f46; }
-        .low-val { color: #991b1b; }
 
-        /* RESULT TABLE – compact */
-        .result-wrapper {
-            margin: 4px 0;
-            border: 2px solid #0f1c35;
-            border-radius: 6px;
-            overflow-x: auto;
-            overflow-y: visible;
+        .gold-val {
+            color: #92400e;
         }
+
+        .high-val {
+            color: #065f46;
+        }
+
+        .low-val {
+            color: #991b1b;
+        }
+
+        /* RESULT TABLE - scrollable container */
+        .result-wrapper {
+            margin: 3px 0;
+            border: 2px solid #0f1c35;
+            border-radius: 4px;
+            overflow: hidden;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-table-scroll {
+            overflow-y: auto;
+            flex: 1;
+        }
+
         .result-table {
             width: 100%;
             border-collapse: collapse;
@@ -216,14 +257,17 @@
             background: #0b2b44;
             color: white;
             border: 1.2px solid #000;
-            padding: 4px 2px;
-            font-size: 7.8px;
+            padding: 3px 2px;
+            font-size: 8px;
             text-align: center;
             font-weight: 800;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         .result-table td {
             border: 1.2px solid #000;
-            padding: 4px 2px;
+            padding: 3px 2px;
             text-align: center;
             font-size: 8.5px;
             background: white;
@@ -237,24 +281,27 @@
         }
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        .grade-A { color: #15803d; font-weight: 900; font-size: 9.5px; }
-        .grade-B { color: #1d4ed8; font-weight: 900; font-size: 9.5px; }
-        .grade-C { color: #b45309; font-weight: 900; font-size: 9.5px; }
-        .grade-D { color: #e11d48; font-weight: 900; font-size: 9.5px; }
-        .grade-F { color: #b91c1c; font-weight: 900; font-size: 9.5px; }
+        .grade-A { color: #15803d; font-weight: 900; font-size: 9px; }
+        .grade-B { color: #1d4ed8; font-weight: 900; font-size: 9px; }
+        .grade-C { color: #b45309; font-weight: 900; font-size: 9px; }
+        .grade-D { color: #e11d48; font-weight: 900; font-size: 9px; }
+        .grade-F { color: #b91c1c; font-weight: 900; font-size: 9px; }
 
         .pos-1 { background-color: #FFD966 !important; color: #000; font-weight: 900; }
         .pos-2 { background-color: #D1D5DB !important; color: #000; font-weight: 900; }
         .pos-3 { background-color: #E6B17E !important; color: #000; font-weight: 900; }
 
         .score-bar {
-            height: 5px;
+            height: 4px;
             background: #e2e8f0;
-            border-radius: 3px;
+            border-radius: 2px;
             margin-top: 2px;
             overflow: hidden;
         }
-        .score-fill { height: 100%; border-radius: 3px; }
+        .score-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
 
         .totals-summary {
             background: #0b2b44;
@@ -262,19 +309,21 @@
             font-weight: 900;
             font-size: 9.5px;
             text-align: center;
-            padding: 5px;
+            padding: 4px;
             border-radius: 30px;
             margin: 3px 0;
+            flex-shrink: 0;
         }
 
         .perf-badge {
-            margin: 3px 0;
+            margin: 2px 0;
             padding: 4px 10px;
-            border-radius: 40px;
+            border-radius: 30px;
             font-weight: 800;
             text-align: center;
-            font-size: 9.5px;
+            font-size: 9px;
             border: 1.8px solid;
+            flex-shrink: 0;
         }
         .perf-excellent { background: #dcfce7; border-color: #15803d; color: #14532d; }
         .perf-good { background: #dbeafe; border-color: #1d4ed8; color: #1e3a5f; }
@@ -284,45 +333,48 @@
         .grade-dist-box {
             background: #f8fafc;
             border: 1.5px solid #e2e8f0;
-            border-radius: 8px;
+            border-radius: 6px;
             padding: 4px 10px;
             font-size: 8.5px;
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .remarks-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 4px 0;
+            margin: 3px 0;
             border: 2px solid #000;
+            flex-shrink: 0;
         }
         .remarks-table td {
             border: 1.2px solid #000;
-            padding: 4px 6px;
+            padding: 4px 7px;
             vertical-align: top;
             font-size: 8.5px;
             background: white;
         }
         .remark-title {
             font-weight: 900;
-            font-size: 8.8px;
+            font-size: 8.5px;
             border-bottom: 1.5px solid #94a3b8;
             display: inline-block;
             margin-bottom: 3px;
         }
 
         .bottom-strip {
-            margin-top: 4px;
+            margin-top: 3px;
             border-top: 1.8px solid #cbd5e1;
             background: #f8fafc;
             padding: 4px 0 2px;
+            flex-shrink: 0;
         }
         .strip-table { width: 100%; }
         .strip-table td {
-            padding: 3px 2px;
+            padding: 3px 3px;
             vertical-align: middle;
             text-align: center;
         }
@@ -338,7 +390,7 @@
             margin-top: 1px;
         }
         .stamp-img {
-            width: 60px;
+            width: 65px;
             transform: rotate(-6deg);
         }
         .sign-line {
@@ -350,13 +402,28 @@
         .powered {
             font-size: 6.5px;
             color: #475569;
-            margin-top: 3px;
+            margin-top: 2px;
         }
 
         @media print {
             body { background: white; padding: 0; margin: 0; }
-            .student-section { box-shadow: none; margin: 0; page-break-after: avoid; }
+            .student-section {
+                box-shadow: none;
+                margin: 0;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+                max-height: 100vh;
+                border: 3px solid #0f172a;
+            }
             .watermark-text { color: rgba(201,168,76,0.07); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .result-table-scroll { overflow-y: visible; }
+            .result-table th { position: static; }
+        }
+
+        @media screen and (max-width: 768px) {
+            .student-section { max-height: none; overflow: visible; }
+            .result-table-scroll { overflow-y: visible; }
+            .result-table th { position: static; }
         }
     </style>
 </head>
@@ -370,61 +437,14 @@
             return $n . match($n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th' };
         }
 
-        // ----- DUMMY DATA (simulate real variables) -----
-        $schoolInfo = (object) [
-            'school_name' => 'PREMIER ACADEMY',
-            'school_motto' => 'KNOWLEDGE & INTEGRITY',
-            'school_address' => '123 Education Way, Lagos',
-            'formatted_phones' => '+234 800 123 4567',
-            'school_email' => 'info@premieracademy.ng',
-            'school_website' => 'www.premieracademy.ng'
-        ];
+        $admNo = $student->admissionNo ?? 'N/A';
+        $fullName = trim(strtoupper($student->lastname ?? '').' '.($student->firstname ?? '').' '.($student->othername ?? ''));
+        $armName = $schoolclass->arms->arm ?? '';
+        $className = trim(($schoolclass->schoolclass ?? '').' '.$armName);
+        $qrData = "Student: {$fullName}\nAdm: {$admNo}\nClass: {$className}\nTerm: {$term}\nSession: {$session}\nType: Mock Exam";
+        $qrBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(220)->errorCorrection('H')->generate($qrData));
 
-        $student = (object) [
-            'admissionNo' => 'PA/2025/001',
-            'lastname' => 'OKONKWO',
-            'firstname' => 'CHIDIMMA',
-            'othername' => 'GRACE'
-        ];
-
-        $schoolclass = (object) [
-            'schoolclass' => 'SS 2',
-            'arms' => (object) ['arm' => 'A']
-        ];
-
-        $term = 'Second';
-        $session = '2024/2025';
-
-        // logo, picture, stamp as base64 dummy (1x1 pixel PNG)
-        $logoBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-        $pictureBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-        $stampBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-
-        // QR data
-        $qrData = "Student: CHIDIMMA GRACE OKONKWO\nAdm: PA/2025/001\nClass: SS 2 A\nTerm: Second\nSession: 2024/2025\nType: Mock Exam";
-        $qrBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='; // dummy
-
-        // ----- MOCK ROWS (10 subjects) -----
-        $mockRows = collect([
-            (object) ['subject_name' => 'English Language', 'subject_code' => 'ENG101', 'exam' => 82.0, 'total' => 82.0, 'grade' => 'A', 'remark' => 'Excellent', 'position' => 1, 'class_average' => 64.2, 'cmin' => 35.0, 'cmax' => 88.0],
-            (object) ['subject_name' => 'Mathematics', 'subject_code' => 'MTH102', 'exam' => 71.5, 'total' => 71.5, 'grade' => 'B', 'remark' => 'Good', 'position' => 4, 'class_average' => 59.1, 'cmin' => 28.0, 'cmax' => 83.0],
-            (object) ['subject_name' => 'Physics', 'subject_code' => 'PHY201', 'exam' => 68.0, 'total' => 68.0, 'grade' => 'B', 'remark' => 'Good', 'position' => 3, 'class_average' => 52.7, 'cmin' => 22.0, 'cmax' => 76.0],
-            (object) ['subject_name' => 'Chemistry', 'subject_code' => 'CHM201', 'exam' => 54.5, 'total' => 54.5, 'grade' => 'C', 'remark' => 'Average', 'position' => 8, 'class_average' => 48.3, 'cmin' => 19.0, 'cmax' => 72.0],
-            (object) ['subject_name' => 'Biology', 'subject_code' => 'BIO201', 'exam' => 79.0, 'total' => 79.0, 'grade' => 'A', 'remark' => 'Excellent', 'position' => 2, 'class_average' => 61.5, 'cmin' => 30.0, 'cmax' => 85.0],
-            (object) ['subject_name' => 'Economics', 'subject_code' => 'ECO101', 'exam' => 63.0, 'total' => 63.0, 'grade' => 'B', 'remark' => 'Good', 'position' => 5, 'class_average' => 54.0, 'cmin' => 25.0, 'cmax' => 74.0],
-            (object) ['subject_name' => 'Government', 'subject_code' => 'GOV101', 'exam' => 47.0, 'total' => 47.0, 'grade' => 'D', 'remark' => 'Needs improvement', 'position' => 10, 'class_average' => 50.2, 'cmin' => 20.0, 'cmax' => 68.0],
-            (object) ['subject_name' => 'Literature', 'subject_code' => 'LIT101', 'exam' => 58.0, 'total' => 58.0, 'grade' => 'C', 'remark' => 'Average', 'position' => 7, 'class_average' => 51.0, 'cmin' => 18.0, 'cmax' => 70.0],
-            (object) ['subject_name' => 'Civic Education', 'subject_code' => 'CIV101', 'exam' => 32.0, 'total' => 32.0, 'grade' => 'F', 'remark' => 'Poor', 'position' => 12, 'class_average' => 45.0, 'cmin' => 15.0, 'cmax' => 62.0],
-            (object) ['subject_name' => 'Data Processing', 'subject_code' => 'DTP101', 'exam' => 76.0, 'total' => 76.0, 'grade' => 'A', 'remark' => 'Excellent', 'position' => 2, 'class_average' => 58.0, 'cmin' => 24.0, 'cmax' => 80.0]
-        ]);
-
-        $mockSummary = [
-            'obtained' => 631.0,
-            'obtainable' => 1000.0,
-            'percentage' => 63.1
-        ];
-
-        $pct = $mockSummary['percentage'];
+        $pct = $mockSummary['percentage'] ?? 0;
         $perfBadgeClass = $pct >= 70 ? 'perf-excellent' : ($pct >= 55 ? 'perf-good' : ($pct >= 40 ? 'perf-average' : 'perf-poor'));
         $perfText = $pct >= 70
             ? '🌟 EXCELLENT PERFORMANCE'
@@ -434,7 +454,10 @@
                     ? '⚠️ AVERAGE PERFORMANCE — NEEDS IMPROVEMENT'
                     : '🚨 POOR PERFORMANCE — URGENT ATTENTION REQUIRED'));
 
-        $avgScore = $mockRows->count() > 0 ? round($mockSummary['obtained'] / $mockRows->count(), 1) : 0;
+        $avgScore = $mockRows->count() > 0
+            ? round(($mockSummary['obtained'] ?? 0) / $mockRows->count(), 1)
+            : 0;
+
         $highest = $mockRows->max('total') ?? 0;
         $lowest = $mockRows->min('total') ?? 0;
 
@@ -447,38 +470,33 @@
             'D' => ['bg' => '#ffe4cc', 'color' => '#9a3412'],
             'F' => ['bg' => '#fee2e2', 'color' => '#b91c1c'],
         ];
-
-        $fullName = trim(strtoupper($student->lastname ?? '').' '.($student->firstname ?? '').' '.($student->othername ?? ''));
-        $armName = $schoolclass->arms->arm ?? '';
-        $className = trim(($schoolclass->schoolclass ?? '').' '.$armName);
-        $admNo = $student->admissionNo ?? 'N/A';
     @endphp
 
     <div class="student-section">
         <div class="card-inner">
             {{-- SCHOOL HEADER --}}
             <div class="school-name-header">
-                <div class="school-full-name">{{ $schoolInfo->school_name }}</div>
-                <div class="motto">{{ $schoolInfo->school_motto }}</div>
+                <div class="school-full-name">{{ $schoolInfo->school_name ?? 'PREMIER ACADEMY' }}</div>
+                <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE & INTEGRITY' }}</div>
             </div>
 
             {{-- LOGO + CONTACT + PHOTO --}}
             <table class="header-table">
                 <tr>
                     <td width="18%" style="text-align:center">
-                        <div class="school-logo"><img src="data:image/png;base64,{{ $logoBase64 }}" alt="logo"></div>
+                        <div class="school-logo"><img src="{{ $logoBase64 }}" alt="logo"></div>
                     </td>
                     <td>
                         <table class="contact-info">
-                            <tr><td class="contact-label">Address:</td><td>{{ $schoolInfo->school_address }}</td></tr>
-                            <tr><td class="contact-label">Phone:</td><td>{{ $schoolInfo->formatted_phones }}</td></tr>
-                            <tr><td class="contact-label">Email:</td><td>{{ $schoolInfo->school_email }}</td></tr>
-                            <tr><td class="contact-label">Website:</td><td>{{ $schoolInfo->school_website }}</td></tr>
+                            <tr><td class="contact-label">Address:</td><td>{{ $schoolInfo->school_address ?? '—' }}</td></tr>
+                            <tr><td class="contact-label">Phone:</td><td>{{ $schoolInfo->formatted_phones ?? '—' }}</td></tr>
+                            <tr><td class="contact-label">Email:</td><td>{{ $schoolInfo->school_email ?? '—' }}</td></tr>
+                            <tr><td class="contact-label">Website:</td><td>{{ $schoolInfo->school_website ?? '—' }}</td></tr>
                         </table>
                     </td>
                     <td width="20%" style="text-align:right">
                         <div class="photo-frame">
-                            <img src="data:image/png;base64,{{ $pictureBase64 }}" alt="student photo">
+                            <img src="{{ $pictureBase64 }}" alt="student photo">
                         </div>
                     </td>
                 </tr>
@@ -509,77 +527,118 @@
             </div>
 
             @if($mockRows->isEmpty())
-                <div style="text-align:center; padding:30px 20px; color:#64748b;">No mock examination results available.</div>
+                <div style="text-align:center; padding:40px 20px; color:#64748b;">
+                    <div style="font-size:32px; margin-bottom:8px;">📋</div>
+                    No mock examination results available.
+                </div>
             @else
             {{-- STATS STRIP --}}
             <table class="stats-strip-table">
                 <tr>
-                    <td class="stat-cell"><div class="stat-label">SUBJECTS</div><div class="stat-value">{{ $mockRows->count() }}</div></td>
-                    <td class="stat-cell gold-cell"><div class="stat-label">TOTAL OBTAINED</div><div class="stat-value gold-val">{{ number_format($mockSummary['obtained'], 1) }}</div></td>
-                    <td class="stat-cell"><div class="stat-label">TOTAL OBTAINABLE</div><div class="stat-value">{{ $mockSummary['obtainable'] }}</div></td>
-                    <td class="stat-cell gold-cell"><div class="stat-label">OVERALL %</div><div class="stat-value gold-val">{{ $mockSummary['percentage'] }}%</div></td>
-                    <td class="stat-cell"><div class="stat-label">AVERAGE</div><div class="stat-value">{{ $avgScore }}</div></td>
-                    <td class="stat-cell high-cell"><div class="stat-label">HIGHEST</div><div class="stat-value high-val">{{ number_format($highest, 1) }}</div></td>
-                    <td class="stat-cell low-cell"><div class="stat-label">LOWEST</div><div class="stat-value low-val">{{ number_format($lowest, 1) }}</div></td>
+                    <td class="stat-cell">
+                        <div class="stat-label">SUBJECTS</div>
+                        <div class="stat-value">{{ $mockRows->count() }}</div>
+                    </td>
+                    <td class="stat-cell gold-cell">
+                        <div class="stat-label">TOTAL OBTAINED</div>
+                        <div class="stat-value gold-val">
+                            {{ number_format($mockSummary['obtained'] ?? 0, 1) }}
+                        </div>
+                    </td>
+                    <td class="stat-cell">
+                        <div class="stat-label">TOTAL OBTAINABLE</div>
+                        <div class="stat-value">
+                            {{ $mockSummary['obtainable'] ?? 0 }}
+                        </div>
+                    </td>
+                    <td class="stat-cell gold-cell">
+                        <div class="stat-label">OVERALL %</div>
+                        <div class="stat-value gold-val">
+                            {{ $mockSummary['percentage'] ?? 0 }}%
+                        </div>
+                    </td>
+                    <td class="stat-cell">
+                        <div class="stat-label">AVERAGE</div>
+                        <div class="stat-value">
+                            {{ $avgScore }}
+                        </div>
+                    </td>
+                    <td class="stat-cell high-cell">
+                        <div class="stat-label">HIGHEST</div>
+                        <div class="stat-value high-val">
+                            {{ number_format($highest, 1) }}
+                        </div>
+                    </td>
+                    <td class="stat-cell low-cell">
+                        <div class="stat-label">LOWEST</div>
+                        <div class="stat-value low-val">
+                            {{ number_format($lowest, 1) }}
+                        </div>
+                    </td>
                 </tr>
             </table>
 
-            {{-- RESULTS TABLE --}}
+            {{-- RESULTS TABLE with scroll container --}}
             <div class="result-wrapper">
-                <table class="result-table">
-                    <thead>
-                        <tr>
-                            <th style="width:24px;">#</th>
-                            <th style="width:120px; text-align:left; padding-left:6px;">SUBJECT</th>
-                            <th style="width:40px;">EXAM</th>
-                            <th style="width:48px;">TOTAL</th>
-                            <th style="width:34px;">GRADE</th>
-                            <th style="width:48px;">REMARK</th>
-                            <th style="width:36px;">POS</th>
-                            <th style="width:40px;">CLASS AVG</th>
-                            <th style="width:48px;">MIN / MAX</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($mockRows as $mi => $mock)
-                        @php
-                            $mTotal = (float)($mock->total ?? 0);
-                            $mExam = (float)($mock->exam ?? 0);
-                            $gRaw = $mock->grade ?? '-';
-                            $gLetter = ($gRaw !== '-') ? strtoupper(substr($gRaw, 0, 1)) : 'F';
-                            $gradeStyle = match($gLetter) { 'A'=>'grade-A','B'=>'grade-B','C'=>'grade-C','D'=>'grade-D', default=>'grade-F' };
-                            $mPos = $mock->position ?? null;
-                            $posClass = ($mPos == 1) ? 'pos-1' : (($mPos == 2) ? 'pos-2' : (($mPos == 3) ? 'pos-3' : ''));
-                            $barColor = $mTotal >= 70 ? '#15803d' : ($mTotal >= 55 ? '#1d4ed8' : ($mTotal >= 40 ? '#d97706' : '#dc2626'));
-                            $isLow = $mTotal < 40;
-                        @endphp
-                        <tr>
-                            <td>{{ $mi + 1 }}</td>
-                            <td class="subject-name-cell">
-                                {{ $mock->subject_name }}
-                                @if(!empty($mock->subject_code))<br><small style="color:#64748b;">{{ $mock->subject_code }}</small>@endif
-                            </td>
-                            <td @if($isLow) class="highlight-red" @endif>{{ number_format($mExam, 1) }}</td>
-                            <td @if($isLow) class="highlight-red" @endif>
-                                <div style="font-weight:700;">{{ number_format($mTotal, 1) }}</div>
-                                <div class="score-bar"><div class="score-fill" style="width:{{ min($mTotal,100) }}%; background:{{ $barColor }};"></div></div>
-                            </td>
-                            <td class="{{ $gradeStyle }}">{{ $gRaw }}</td>
-                            <td style="font-size:8px; color:#6b7280;">{{ $mock->remark ?? '—' }}</td>
-                            <td class="{{ $posClass }}">{{ mockOrdinal($mPos) }}</td>
-                            <td>{{ number_format($mock->class_average ?? 0, 1) }}</td>
-                            <td><span style="color:#dc2626;">{{ number_format($mock->cmin ?? 0,1) }}</span> / <span style="color:#15803d;">{{ number_format($mock->cmax ?? 0,1) }}</span></td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                <div class="result-table-scroll">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th style="width:24px;">#</th>
+                                <th style="width:120px; text-align:left; padding-left:6px;">SUBJECT</th>
+                                <th style="width:40px;">EXAM</th>
+                                <th style="width:48px;">TOTAL</th>
+                                <th style="width:34px;">GRADE</th>
+                                <th style="width:50px;">REMARK</th>
+                                <th style="width:38px;">POSITION</th>
+                                <th style="width:40px;">CLASS AVG</th>
+                                <th style="width:50px;">MIN / MAX</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($mockRows as $mi => $mock)
+                            @php
+                                $mTotal = (float)($mock->total ?? 0);
+                                $mExam = (float)($mock->exam ?? 0);
+                                $gRaw = $mock->grade ?? '-';
+                                $gLetter = ($gRaw !== '-') ? strtoupper(substr($gRaw, 0, 1)) : 'F';
+                                $gradeStyle = match($gLetter) { 'A'=>'grade-A','B'=>'grade-B','C'=>'grade-C','D'=>'grade-D', default=>'grade-F' };
+                                $mPos = $mock->position ?? null;
+                                $posClass = ($mPos == 1) ? 'pos-1' : (($mPos == 2) ? 'pos-2' : (($mPos == 3) ? 'pos-3' : ''));
+                                $barColor = $mTotal >= 70 ? '#15803d' : ($mTotal >= 55 ? '#1d4ed8' : ($mTotal >= 40 ? '#d97706' : '#dc2626'));
+                                $isLow = $mTotal < 40;
+                            @endphp
+                            <tr>
+                                <td>{{ $mi + 1 }}</td>
+                                <td class="subject-name-cell">
+                                    {{ $mock->subject_name ?? '—' }}
+                                    @if(!empty($mock->subject_code))<br><small style="color:#64748b;font-size:7px;">{{ $mock->subject_code }}</small>@endif
+                                </td>
+                                <td @if($isLow) class="highlight-red" @endif>{{ number_format($mExam, 1) }}</td>
+                                <td @if($isLow) class="highlight-red" @endif>
+                                    <div style="font-weight:700;">{{ number_format($mTotal, 1) }}</div>
+                                    <div class="score-bar"><div class="score-fill" style="width:{{ min($mTotal,100) }}%; background:{{ $barColor }};"></div></div>
+                                </td>
+                                <td class="{{ $gradeStyle }}">{{ $gRaw }}</td>
+                                <td style="font-size:7.8px; color:#6b7280;">{{ $mock->remark ?? '—' }}</td>
+                                <td class="{{ $posClass }}">{{ mockOrdinal($mPos) }}</td>
+                                <td>{{ number_format($mock->class_average ?? 0, 1) }}</td>
+                                <td>
+                                    <span style="color:#dc2626;">{{ number_format($mock->cmin ?? 0,1) }}</span> /
+                                    <span style="color:#15803d;">{{ number_format($mock->cmax ?? 0,1) }}</span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {{-- TOTALS --}}
             <div class="totals-summary">
-                🎯 TOTAL OBTAINED: {{ number_format($mockSummary['obtained'], 1) }}
-                &nbsp;|&nbsp; TOTAL OBTAINABLE: {{ $mockSummary['obtainable'] }}
-                &nbsp;|&nbsp; PERCENTAGE: {{ $mockSummary['percentage'] }}%
+                🎯 TOTAL OBTAINED: {{ number_format($mockSummary['obtained'] ?? 0, 1) }}
+                &nbsp;|&nbsp; TOTAL OBTAINABLE: {{ $mockSummary['obtainable'] ?? 0 }}
+                &nbsp;|&nbsp; PERCENTAGE: {{ $mockSummary['percentage'] ?? 0 }}%
             </div>
 
             {{-- PERFORMANCE BADGE --}}
@@ -590,7 +649,7 @@
                 <strong>GRADE DISTRIBUTION:</strong>
                 @foreach(['A','B','C','D','F'] as $gl)
                     @if(($gradeCount[$gl] ?? 0) > 0)
-                        <span style="background:{{ $gradeColors[$gl]['bg'] }}; color:{{ $gradeColors[$gl]['color'] }}; padding:2px 10px; border-radius:20px; font-weight:800; font-size:8px;">
+                        <span style="background:{{ $gradeColors[$gl]['bg'] }}; color:{{ $gradeColors[$gl]['color'] }}; padding:1px 9px; border-radius:20px; font-weight:800; font-size:8px;">
                             {{ $gl }}: {{ $gradeCount[$gl] }}
                         </span>
                     @endif
@@ -616,17 +675,17 @@
             <div class="bottom-strip">
                 <table class="strip-table">
                     <tr>
-                        <td width="22%">
+                        <td width="20%">
                             <img class="qr-img" src="data:image/png;base64,{{ $qrBase64 }}" alt="QR">
                             <div class="qr-label">Verify with portal</div>
                         </td>
-                        <td width="56%" style="text-align:center">
-                            <div><strong>Issued:</strong> <span class="sign-line">{{ now()->format('jS F, Y') }}</span></div>
-                            <div style="margin:4px 0"><strong>Parent/Guardian Signature:</strong> <span class="sign-line"> ________________________ </span></div>
+                        <td width="58%" style="text-align:center">
+                            <div style="font-size:8.5px;"><strong>Issued:</strong> <span class="sign-line">{{ now()->format('jS F, Y') }}</span></div>
+                            <div style="margin:3px 0;font-size:8.5px;"><strong>Parent/Guardian Signature:</strong> <span class="sign-line"> ________________________ </span></div>
                             <div class="powered">🔹 Powered by Qudroid Systems 🔹</div>
                         </td>
                         <td width="22%">
-                            <img class="stamp-img" src="data:image/png;base64,{{ $stampBase64 }}" alt="stamp">
+                            <img class="stamp-img" src="{{ $stampBase64 }}" alt="stamp">
                         </td>
                     </tr>
                 </table>
