@@ -47,10 +47,12 @@
             border: 3px solid #0f172a;
             border-radius: 6px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            page-break-after: always;
-            break-inside: avoid;
             display: flex;
             flex-direction: column;
+            break-inside: avoid;
+            page-break-inside: avoid;
+            page-break-before: avoid;
+            page-break-after: avoid;           /* Changed */
         }
 
         .card-inner {
@@ -161,70 +163,26 @@
             font-size: 10.8px;
         }
 
-        /* STATS STRIP - FORCED HORIZONTAL */
-       /* STATS TABLE */
-.stats-strip-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    margin: 6px 0;
-    border: 2px solid #0f1c35;
-}
+        /* STATS STRIP */
+        .stats-strip-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin: 6px 0;
+            border: 2px solid #0f1c35;
+        }
 
-.stats-strip-table td {
-    border: 1px solid #cbd5e1;
-    text-align: center;
-    vertical-align: middle;
-    padding: 6px 4px;
-}
+        .stats-strip-table td {
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            vertical-align: middle;
+            padding: 6px 4px;
+        }
 
-.stats-strip-table .stat-cell {
-    background: #f8fafc;
-}
+        .stat-cell {
+            background: #f8fafc;
+        }
 
-.stats-strip-table .gold-cell {
-    background: #fef9e3;
-}
-
-.stats-strip-table .high-cell {
-    background: #d1fae5;
-}
-
-.stats-strip-table .low-cell {
-    background: #fee2e2;
-}
-
-.stat-label {
-    font-size: 8px;
-    font-weight: 800;
-    color: #64748b;
-    text-transform: uppercase;
-    line-height: 1.2;
-}
-
-.stat-value {
-    font-size: 14px;
-    font-weight: 900;
-    color: #0f1c35;
-    margin-top: 2px;
-}
-
-.gold-val {
-    color: #92400e;
-}
-
-.high-val {
-    color: #065f46;
-}
-
-.low-val {
-    color: #991b1b;
-}
-
-        .stat-cell:last-child { border-right: none; }
-        .stat-cell.gold-cell { background: #fef9e3; }
-        .stat-cell.high-cell { background: #d1fae5; }
-        .stat-cell.low-cell { background: #fee2e2; }
         .stat-label {
             font-size: 8.8px;
             font-weight: 800;
@@ -238,9 +196,9 @@
             color: #0f1c35;
             margin-top: 2px;
         }
-        .stat-value.gold-val { color: #92400e; }
-        .stat-value.high-val { color: #065f46; }
-        .stat-value.low-val { color: #991b1b; }
+        .gold-val { color: #92400e; }
+        .high-val { color: #065f46; }
+        .low-val { color: #991b1b; }
 
         /* RESULT TABLE */
         .result-wrapper {
@@ -399,10 +357,23 @@
         }
 
         @media print {
-            body { background: white; padding: 0; margin: 0; }
-            .student-section { box-shadow: none; margin: 0; page-break-after: avoid; }
-            .watermark-text { color: rgba(201,168,76,0.07); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .stats-strip { overflow-x: visible; }
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .student-section {
+                box-shadow: none;
+                margin: 0;
+                page-break-inside: avoid;
+                page-break-before: avoid;
+                page-break-after: avoid;
+            }
+            .watermark-text {
+                color: rgba(201,168,76,0.07);
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
     </style>
 </head>
@@ -511,57 +482,51 @@
                     No mock examination results available.
                 </div>
             @else
-            {{-- STATS STRIP - FORCED SINGLE ROW --}}
-           <table class="stats-strip-table">
-    <tr>
-        <td class="stat-cell">
-            <div class="stat-label">SUBJECTS</div>
-            <div class="stat-value">{{ $mockRows->count() }}</div>
-        </td>
-
-        <td class="stat-cell gold-cell">
-            <div class="stat-label">TOTAL OBTAINED</div>
-            <div class="stat-value gold-val">
-                {{ number_format($mockSummary['obtained'] ?? 0, 1) }}
-            </div>
-        </td>
-
-        <td class="stat-cell">
-            <div class="stat-label">TOTAL OBTAINABLE</div>
-            <div class="stat-value">
-                {{ $mockSummary['obtainable'] ?? 0 }}
-            </div>
-        </td>
-
-        <td class="stat-cell gold-cell">
-            <div class="stat-label">OVERALL %</div>
-            <div class="stat-value gold-val">
-                {{ $mockSummary['percentage'] ?? 0 }}%
-            </div>
-        </td>
-
-        <td class="stat-cell">
-            <div class="stat-label">AVERAGE</div>
-            <div class="stat-value">
-                {{ $avgScore }}
-            </div>
-        </td>
-
-        <td class="stat-cell high-cell">
-            <div class="stat-label">HIGHEST</div>
-            <div class="stat-value high-val">
-                {{ number_format($highest, 1) }}
-            </div>
-        </td>
-
-        <td class="stat-cell low-cell">
-            <div class="stat-label">LOWEST</div>
-            <div class="stat-value low-val">
-                {{ number_format($lowest, 1) }}
-            </div>
-        </td>
-    </tr>
-</table>
+            {{-- STATS STRIP --}}
+            <table class="stats-strip-table">
+                <tr>
+                    <td class="stat-cell">
+                        <div class="stat-label">SUBJECTS</div>
+                        <div class="stat-value">{{ $mockRows->count() }}</div>
+                    </td>
+                    <td class="stat-cell gold-cell">
+                        <div class="stat-label">TOTAL OBTAINED</div>
+                        <div class="stat-value gold-val">
+                            {{ number_format($mockSummary['obtained'] ?? 0, 1) }}
+                        </div>
+                    </td>
+                    <td class="stat-cell">
+                        <div class="stat-label">TOTAL OBTAINABLE</div>
+                        <div class="stat-value">
+                            {{ $mockSummary['obtainable'] ?? 0 }}
+                        </div>
+                    </td>
+                    <td class="stat-cell gold-cell">
+                        <div class="stat-label">OVERALL %</div>
+                        <div class="stat-value gold-val">
+                            {{ $mockSummary['percentage'] ?? 0 }}%
+                        </div>
+                    </td>
+                    <td class="stat-cell">
+                        <div class="stat-label">AVERAGE</div>
+                        <div class="stat-value">
+                            {{ $avgScore }}
+                        </div>
+                    </td>
+                    <td class="stat-cell high-cell">
+                        <div class="stat-label">HIGHEST</div>
+                        <div class="stat-value high-val">
+                            {{ number_format($highest, 1) }}
+                        </div>
+                    </td>
+                    <td class="stat-cell low-cell">
+                        <div class="stat-label">LOWEST</div>
+                        <div class="stat-value low-val">
+                            {{ number_format($lowest, 1) }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
 
             {{-- RESULTS TABLE --}}
             <div class="result-wrapper">
