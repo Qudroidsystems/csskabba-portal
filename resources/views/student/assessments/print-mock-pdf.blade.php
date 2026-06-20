@@ -5,7 +5,6 @@
     <title>Mock Examination Report</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-
         body {
             font-family: 'Times New Roman', Times, serif;
             background: #e2e8f0;
@@ -15,7 +14,6 @@
             align-items: flex-start;
             min-height: 100vh;
         }
-
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -34,7 +32,6 @@
             padding: 10px 28px;
             border-radius: 20px;
         }
-
         .report-card {
             max-width: 210mm;
             width: 100%;
@@ -45,14 +42,12 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-
         .card-inner {
             padding: 10px 14px 12px;
             display: flex;
             flex-direction: column;
             gap: 5px;
         }
-
         /* SCHOOL HEADER */
         .school-name-header {
             background: #111827;
@@ -77,7 +72,6 @@
             margin-top: 2px;
             opacity: .95;
         }
-
         /* LOGO / CONTACT / PHOTO */
         .header-table { width:100%; border-collapse:collapse; margin:5px 0 4px; }
         .school-logo {
@@ -96,10 +90,8 @@
         .contact-info { width:100%; font-size:9px; border-collapse:collapse; }
         .contact-info td { padding:2px 4px; }
         .contact-label { font-weight:900; color:#1e40af; width:52px; }
-
-        .divider-dark  { height:2px; background:#1e40af; margin:4px 0 2px; }
+        .divider-dark { height:2px; background:#1e40af; margin:4px 0 2px; }
         .divider-light { height:1px; background:#94a3b8; margin:2px 0 4px; }
-
         /* REPORT TITLE */
         .report-title {
             background: linear-gradient(135deg, #0f1c35 0%, #1a2f55 100%);
@@ -124,7 +116,6 @@
             text-transform: uppercase;
             vertical-align: middle;
         }
-
         /* SESSION INFO */
         .mock-info-box {
             background: linear-gradient(135deg, #0f1c35, #1a2f55);
@@ -137,7 +128,6 @@
             margin: 4px 0;
         }
         .mock-info-box strong { color: #c9a84c; }
-
         /* STUDENT INFO */
         .student-info-bar {
             background: linear-gradient(135deg, #fffbea, #ffffff);
@@ -158,7 +148,6 @@
             font-size: 9px;
         }
         .info-value { font-weight:900; margin-left:4px; font-size:10.5px; }
-
         /* STATS STRIP - HORIZONTAL with larger text */
         .stats-strip {
             display: flex;
@@ -166,11 +155,14 @@
             border-radius: 6px;
             overflow: hidden;
             margin: 5px 0;
+            flex-wrap: wrap;
+            gap: 2px;
         }
         .stat-cell {
             flex: 1;
+            min-width: 95px;
             text-align: center;
-            padding: 7px 4px;
+            padding: 9px 6px;
             border-right: 1px solid #cbd5e1;
             background: #f8fafc;
         }
@@ -179,22 +171,21 @@
         .stat-cell.high-cell { background: #d1fae5; }
         .stat-cell.low-cell { background: #fee2e2; }
         .stat-label {
-            font-size: 8px;
+            font-size: 9.5px;
             font-weight: 800;
             color: #64748b;
             text-transform: uppercase;
             letter-spacing: .04em;
         }
         .stat-value {
-            font-size: 15px;
+            font-size: 17.5px;
             font-weight: 900;
             color: #0f1c35;
-            margin-top: 2px;
+            margin-top: 3px;
         }
         .stat-value.gold-val { color: #92400e; }
         .stat-value.high-val { color: #065f46; }
         .stat-value.low-val { color: #991b1b; }
-
         /* RESULT TABLE */
         .result-wrapper {
             margin: 5px 0;
@@ -202,35 +193,32 @@
             border-radius: 4px;
             overflow-x: auto;
         }
-        .result-table { width:100%; border-collapse:collapse; font-size:9px; }
-
+        .result-table { width:100%; border-collapse:collapse; font-size:10px; }
         .result-table thead tr.banner-row th {
             background: #0f1c35;
             color: white;
             border: 1px solid #000;
-            padding: 5px 4px;
-            font-size: 9px;
+            padding: 6px 4px;
+            font-size: 10px;
             font-weight: 800;
             text-align: center;
         }
-
         .result-table thead tr.col-label-row th {
             background: #0b2b44;
             color: white;
             border: 1px solid #000;
             padding: 5px 4px;
-            font-size: 8px;
+            font-size: 8.8px;
             text-align: center;
             font-weight: 800;
             white-space: nowrap;
         }
         .result-table thead tr.col-label-row th.left-align { text-align:left; padding-left:8px; }
-
         .result-table tbody td {
             border: 1px solid #000;
-            padding: 5px 4px;
+            padding: 6px 5px;
             text-align: center;
-            font-size: 9px;
+            font-size: 9.8px;
             background: white;
             font-weight: 600;
             vertical-align: middle;
@@ -241,69 +229,60 @@
             padding-left: 8px !important;
             background: #fef9e3 !important;
         }
-
-        .grade-A { color:#15803d; font-weight:900; font-size:10px; }
-        .grade-B { color:#1d4ed8; font-weight:900; font-size:10px; }
-        .grade-C { color:#b45309; font-weight:900; font-size:10px; }
-        .grade-D { color:#e11d48; font-weight:900; font-size:10px; }
-        .grade-F { color:#b91c1c; font-weight:900; font-size:10px; }
-
+        .grade-A { color:#15803d; font-weight:900; font-size:11px; }
+        .grade-B { color:#1d4ed8; font-weight:900; font-size:11px; }
+        .grade-C { color:#b45309; font-weight:900; font-size:11px; }
+        .grade-D { color:#e11d48; font-weight:900; font-size:11px; }
+        .grade-F { color:#b91c1c; font-weight:900; font-size:11px; }
         .pos-1 { background-color:#FFD966 !important; color:#000; font-weight:900; }
         .pos-2 { background-color:#D1D5DB !important; color:#000; font-weight:900; }
         .pos-3 { background-color:#E6B17E !important; color:#000; font-weight:900; }
-
         .highlight-red { color:#dc2626; font-weight:900; }
-
-        .score-bar { height:5px; background:#e2e8f0; border-radius:2px; overflow:hidden; margin-top:3px; }
+        .score-bar { height:6px; background:#e2e8f0; border-radius:2px; overflow:hidden; margin-top:3px; }
         .score-fill { height:100%; border-radius:2px; }
-
         /* TOTALS */
         .totals-summary {
             background: #0b2b44;
             color: white;
             font-weight: 900;
-            font-size: 10px;
+            font-size: 11px;
             text-align: center;
-            padding: 7px;
+            padding: 8px;
             border-radius: 30px;
             margin: 4px 0;
         }
-
         /* PERFORMANCE BADGE */
         .perf-badge {
             margin: 4px 0;
-            padding: 6px 12px;
+            padding: 7px 12px;
             border-radius: 30px;
             font-weight: 800;
             text-align: center;
-            font-size: 10px;
+            font-size: 11px;
             border: 1.5px solid;
         }
         .perf-excellent { background:#dcfce7; border-color:#15803d; color:#14532d; }
-        .perf-good      { background:#dbeafe; border-color:#1d4ed8; color:#1e3a5f; }
-        .perf-average   { background:#fef3c7; border-color:#ca8a04; color:#854d0e; }
-        .perf-poor      { background:#fee2e2; border-color:#b91c1c; color:#7f1d1d; }
-
+        .perf-good { background:#dbeafe; border-color:#1d4ed8; color:#1e3a5f; }
+        .perf-average { background:#fef3c7; border-color:#ca8a04; color:#854d0e; }
+        .perf-poor { background:#fee2e2; border-color:#b91c1c; color:#7f1d1d; }
         /* GRADE DISTRIBUTION */
         .grade-dist-box {
             background: #f8fafc;
             border: 1.5px solid #e2e8f0;
             border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 9px;
+            padding: 8px 12px;
+            font-size: 9.8px;
             margin: 4px 0;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
-        .grade-dist-box strong { font-size: 9px; color:#0f1c35; }
-
+        .grade-dist-box strong { font-size: 10.5px; color:#0f1c35; }
         /* REMARKS */
         .remarks-table { width:100%; border-collapse:collapse; margin:4px 0; border:2px solid #000; }
-        .remarks-table td { border:1px solid #000; padding:6px 10px; vertical-align:top; font-size:9px; background:white; }
-        .remark-title { font-weight:900; font-size:9px; border-bottom:1.5px solid #94a3b8; display:inline-block; margin-bottom:4px; }
-
+        .remarks-table td { border:1px solid #000; padding:7px 10px; vertical-align:top; font-size:9.8px; background:white; }
+        .remark-title { font-weight:900; font-size:10px; border-bottom:1.5px solid #94a3b8; display:inline-block; margin-bottom:4px; }
         /* FOOTER */
         .bottom-strip {
             margin-top: 5px;
@@ -313,19 +292,17 @@
         }
         .strip-table { width:100%; }
         .strip-table td { padding:4px 4px; vertical-align:middle; text-align:center; }
-        .qr-img    { width:50px; height:50px; display:block; margin:0 auto; }
-        .qr-label  { font-size:7px; font-weight:700; margin-top:2px; }
+        .qr-img { width:50px; height:50px; display:block; margin:0 auto; }
+        .qr-label { font-size:7px; font-weight:700; margin-top:2px; }
         .stamp-img { width:70px; transform:rotate(-6deg); }
         .sign-line { border-bottom:1.5px dotted #1e293b; min-width:90px; display:inline-block; margin:0 4px; }
-        .powered   { font-size:7px; color:#475569; margin-top:3px; }
-
+        .powered { font-size:7px; color:#475569; margin-top:3px; }
         .empty-state {
             text-align: center;
             padding: 30px 20px;
             color: #7b85a3;
             font-size: 12px;
         }
-
         @media print {
             body { background:white; padding:2mm; margin:0; }
             .report-card { box-shadow:none; margin:0; border:1px solid #000; }
@@ -334,43 +311,36 @@
     </style>
 </head>
 <body>
-
 <div class="watermark-text">MOCK EXAMINATION</div>
 
+<!-- PHP Blade section remains the same -->
 @php
     function mockOrdinal($n) {
         if (!is_numeric($n) || $n <= 0) return '-';
         if ($n % 100 >= 11 && $n % 100 <= 13) return $n.'th';
         return $n . match($n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th' };
     }
-
-    $admNo     = $student->admissionNo ?? 'N/A';
-    $fullName  = trim(strtoupper($student->lastname ?? '').' '.($student->firstname ?? '').' '.($student->othername ?? ''));
-    $armName   = $schoolclass->arms->arm ?? '';
+    $admNo = $student->admissionNo ?? 'N/A';
+    $fullName = trim(strtoupper($student->lastname ?? '').' '.($student->firstname ?? '').' '.($student->othername ?? ''));
+    $armName = $schoolclass->arms->arm ?? '';
     $className = trim(($schoolclass->schoolclass ?? '').' '.$armName);
-
-    $qrData   = "Student: {$fullName}\nAdm: {$admNo}\nClass: {$className}\nTerm: {$term}\nSession: {$session}\nType: Mock Exam";
+    $qrData = "Student: {$fullName}\nAdm: {$admNo}\nClass: {$className}\nTerm: {$term}\nSession: {$session}\nType: Mock Exam";
     $qrBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(200)->errorCorrection('H')->generate($qrData));
-
     $pct = $mockSummary['percentage'] ?? 0;
     $perfBadgeClass = $pct >= 70 ? 'perf-excellent' : ($pct >= 55 ? 'perf-good' : ($pct >= 40 ? 'perf-average' : 'perf-poor'));
-    $perfText       = $pct >= 70
+    $perfText = $pct >= 70
         ? '🌟 EXCELLENT PERFORMANCE'
         : ($pct >= 55
             ? '👍 GOOD PERFORMANCE'
             : ($pct >= 40
                 ? '⚠️ AVERAGE PERFORMANCE — NEEDS IMPROVEMENT'
                 : '🚨 POOR PERFORMANCE — URGENT ATTENTION REQUIRED'));
-
     $avgScore = $mockRows->count() > 0
         ? round(($mockSummary['obtained'] ?? 0) / $mockRows->count(), 1)
         : 0;
-
     $highest = $mockRows->max('total') ?? 0;
     $lowest = $mockRows->min('total') ?? 0;
-
     $gradeCount = $mockRows->groupBy(fn($r) => strtoupper(substr($r->grade ?? 'F', 0, 1)))->map->count();
-
     $gradeColors = [
         'A' => ['bg' => '#dcfce7', 'color' => '#15803d'],
         'B' => ['bg' => '#dbeafe', 'color' => '#1d4ed8'],
@@ -382,7 +352,6 @@
 
 <div class="report-card">
     <div class="card-inner">
-
         {{-- SCHOOL HEADER --}}
         <div class="school-name-header">
             <div class="school-full-name">{{ $schoolInfo->school_name ?? 'PREMIER ACADEMY' }}</div>
@@ -410,7 +379,6 @@
                 </td>
             </tr>
         </table>
-
         <div class="divider-dark"></div>
         <div class="divider-light"></div>
 
@@ -441,15 +409,12 @@
         </div>
 
         @if($mockRows->isEmpty())
-
             <div class="empty-state">
                 <div style="font-size:24px;margin-bottom:8px;">📋</div>
                 No mock examination results are available for the selected term and session.
             </div>
-
         @else
-
-        {{-- STATS STRIP - HORIZONTAL with all stats side by side --}}
+        {{-- STATS STRIP - Side by side with larger text --}}
         <div class="stats-strip">
             <div class="stat-cell">
                 <div class="stat-label">Subjects</div>
@@ -491,8 +456,8 @@
                     <tr class="col-label-row">
                         <th style="width:20px;">#</th>
                         <th class="left-align" style="width:135px;">SUBJECT</th>
-                        <th style="width:38px;">EXAM<br><span style="font-size:6.5px;">(Score)</span></th>
-                        <th style="width:50px;">TOTAL<br><span style="font-size:6.5px;">(/100)</span></th>
+                        <th style="width:38px;">EXAM<br><span style="font-size:7px;">(Score)</span></th>
+                        <th style="width:50px;">TOTAL<br><span style="font-size:7px;">(/100)</span></th>
                         <th style="width:35px;">GRADE</th>
                         <th style="width:50px;">REMARK</th>
                         <th style="width:38px;">POSITION</th>
@@ -503,22 +468,22 @@
                 <tbody>
                     @foreach($mockRows as $mi => $mock)
                     @php
-                        $mTotal   = (float)($mock->total ?? 0);
-                        $mExam    = (float)($mock->exam ?? 0);
-                        $gRaw     = $mock->grade ?? '-';
-                        $gLetter  = ($gRaw !== '-') ? strtoupper(substr($gRaw, 0, 1)) : 'F';
+                        $mTotal = (float)($mock->total ?? 0);
+                        $mExam = (float)($mock->exam ?? 0);
+                        $gRaw = $mock->grade ?? '-';
+                        $gLetter = ($gRaw !== '-') ? strtoupper(substr($gRaw, 0, 1)) : 'F';
                         $gradeStyle = match($gLetter) { 'A'=>'grade-A','B'=>'grade-B','C'=>'grade-C','D'=>'grade-D', default=>'grade-F' };
-                        $mPos     = $mock->position ?? null;
+                        $mPos = $mock->position ?? null;
                         $posClass = ($mPos == 1) ? 'pos-1' : (($mPos == 2) ? 'pos-2' : (($mPos == 3) ? 'pos-3' : ''));
                         $barColor = $mTotal >= 70 ? '#15803d' : ($mTotal >= 55 ? '#1d4ed8' : ($mTotal >= 40 ? '#d97706' : '#dc2626'));
-                        $isLow    = $mTotal < 40;
+                        $isLow = $mTotal < 40;
                     @endphp
                     <tr>
                         <td>{{ $mi + 1 }}</td>
                         <td class="subject-name-cell">
-                            <div style="font-weight:800;color:#0f1c35;font-size:9px;">{{ $mock->subject_name ?? '—' }}</div>
+                            <div style="font-weight:800;color:#0f1c35;font-size:9.5px;">{{ $mock->subject_name ?? '—' }}</div>
                             @if(!empty($mock->subject_code))
-                                <div style="font-size:7px;color:#94a3b8;font-weight:600;">{{ $mock->subject_code }}</div>
+                                <div style="font-size:7.5px;color:#94a3b8;font-weight:600;">{{ $mock->subject_code }}</div>
                             @endif
                         </td>
                         <td @if($isLow) class="highlight-red" @endif>
@@ -531,7 +496,7 @@
                             </div>
                         </td>
                         <td class="{{ $gradeStyle }}">{{ $gRaw }}</td>
-                        <td style="font-size:7.5px;color:#6b7280;">{{ $mock->remark ?? '—' }}</td>
+                        <td style="font-size:8px;color:#6b7280;">{{ $mock->remark ?? '—' }}</td>
                         <td class="{{ $posClass }}" style="font-weight:700;">{{ mockOrdinal($mPos) }}</td>
                         <td style="color:#64748b;">{{ number_format($mock->class_average ?? 0, 1) }}</td>
                         <td>
@@ -567,7 +532,7 @@
                         padding:2px 10px;
                         border-radius:16px;
                         font-weight:800;
-                        font-size:8.5px;
+                        font-size:9px;
                     ">{{ $gl }}: {{ $gradeCount[$gl] }}</span>
                 @endif
             @endforeach
@@ -578,19 +543,18 @@
             <tr>
                 <td width="50%">
                     <span class="remark-title">📖 CLASS TEACHER'S REMARK</span><br>
-                    <span style="font-style:italic;color:#374151;font-size:8.5px;">
+                    <span style="font-style:italic;color:#374151;font-size:9px;">
                         Based on mock performance — keep striving for excellence.
                     </span>
                 </td>
                 <td width="50%">
                     <span class="remark-title">🏛️ PRINCIPAL'S REMARK</span><br>
-                    <span style="font-style:italic;color:#374151;font-size:8.5px;">
+                    <span style="font-style:italic;color:#374151;font-size:9px;">
                         Use this result to identify areas for improvement before the terminal examination.
                     </span>
                 </td>
             </tr>
         </table>
-
         @endif
 
         {{-- FOOTER --}}
@@ -618,9 +582,7 @@
                 </tr>
             </table>
         </div>
-
     </div>
 </div>
-
 </body>
 </html>
