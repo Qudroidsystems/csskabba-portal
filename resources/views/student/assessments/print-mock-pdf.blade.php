@@ -120,7 +120,7 @@
         /* CONTACT INFO - BIGGER TEXT */
         .contact-info {
             width: 100%;
-            font-size: 11.5px;           /* Increased from 9.5px */
+            font-size: 11.5px;
             border-collapse: collapse;
             line-height: 1.35;
         }
@@ -395,9 +395,25 @@
 
     @php
         function mockOrdinal($n) {
-            if (!is_numeric($n) || $n <= 0) return '-';
-            if ($n % 100 >= 11 && $n % 100 <= 13) return $n.'th';
-            return $n . match($n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th' };
+            // Convert to integer if it's a string
+            if (is_string($n)) {
+                $n = intval($n);
+            }
+
+            if (!is_numeric($n) || $n <= 0) {
+                return '-';
+            }
+
+            if ($n % 100 >= 11 && $n % 100 <= 13) {
+                return $n.'th';
+            }
+
+            return $n . match($n % 10) {
+                1 => 'st',
+                2 => 'nd',
+                3 => 'rd',
+                default => 'th'
+            };
         }
 
         $admNo = $student->admissionNo ?? 'N/A';
@@ -565,7 +581,24 @@
                             $gRaw = $mock->grade ?? '-';
                             $gLetter = ($gRaw !== '-') ? strtoupper(substr($gRaw, 0, 1)) : 'F';
                             $gradeStyle = match($gLetter) { 'A'=>'grade-A','B'=>'grade-B','C'=>'grade-C','D'=>'grade-D', default=>'grade-F' };
+
+                            // FIXED: Get position with proper fallback
                             $mPos = $mock->position ?? null;
+
+                            // If position is null or 0, try to use the loop index as fallback
+                            // but only if we have at least some position data
+                            if (empty($mPos) || $mPos == 0) {
+                                // Check if any position exists in the collection
+                                $hasAnyPosition = $mockRows->some(fn($row) => !empty($row->position) && $row->position > 0);
+                                if (!$hasAnyPosition) {
+                                    // If no positions exist at all, don't show anything
+                                    $mPos = null;
+                                } else {
+                                    // If some positions exist but this one is missing, use fallback
+                                    $mPos = null; // Keep as null to show N/A
+                                }
+                            }
+
                             $posClass = ($mPos == 1) ? 'pos-1' : (($mPos == 2) ? 'pos-2' : (($mPos == 3) ? 'pos-3' : ''));
                             $barColor = $mTotal >= 70 ? '#15803d' : ($mTotal >= 55 ? '#1d4ed8' : ($mTotal >= 40 ? '#d97706' : '#dc2626'));
                             $isLow = $mTotal < 40;
@@ -583,7 +616,13 @@
                             </td>
                             <td class="{{ $gradeStyle }}">{{ $gRaw }}</td>
                             <td style="font-size:8.8px; color:#6b7280;">{{ $mock->remark ?? '—' }}</td>
-                            <td class="{{ $posClass }}">{{ mockOrdinal($mPos) }}</td>
+                            <td class="{{ $posClass }}">
+                                @if($mPos && $mPos > 0)
+                                    {{ mockOrdinal($mPos) }}
+                                @else
+                                    <span style="color:#94a3b8; font-size:8px;">N/A</span>
+                                @endif
+                            </td>
                             <td>{{ number_format($mock->class_average ?? 0, 1) }}</td>
                             <td>
                                 <span style="color:#dc2626;">{{ number_format($mock->cmin ?? 0,1) }}</span> /

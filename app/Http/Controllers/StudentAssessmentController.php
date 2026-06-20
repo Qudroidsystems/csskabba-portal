@@ -46,7 +46,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // MOCK DATA HELPER
+    // MOCK DATA HELPER - FIXED VERSION
     // =========================================================================
 
     /**
@@ -76,8 +76,42 @@ class StudentAssessmentController extends Controller
                     'broadsheetmock.avg as class_average',
                     'broadsheetmock.cmin',
                     'broadsheetmock.cmax',
+                    'broadsheet_records_mock.id as record_id',
                 ])
                 ->get();
+
+            // If positions are not stored, calculate them dynamically
+            if ($rows->isNotEmpty() && $rows->every(fn($row) => empty($row->position) || $row->position == 0)) {
+                \Log::info('Calculating mock positions dynamically for student ' . $studentId);
+
+                // Get all mock records for this class, session, and term
+                $allMockRecords = BroadsheetsMock::where('term_id', $termId)
+                    ->whereHas('broadsheetRecord', function($q) use ($schoolclassId, $sessionId) {
+                        $q->where('schoolclass_id', $schoolclassId)
+                          ->where('session_id', $sessionId);
+                    })
+                    ->get();
+
+                // Group by subject (using broadsheet_record_id which links to subject)
+                $subjectGroups = $allMockRecords->groupBy('broadsheet_record_id');
+
+                // For each row, calculate position within its subject group
+                foreach ($rows as $row) {
+                    $subjectRecords = $subjectGroups->get($row->record_id, collect());
+
+                    if ($subjectRecords->isNotEmpty()) {
+                        // Sort by total descending
+                        $sorted = $subjectRecords->sortByDesc('total')->values();
+
+                        // Find the position of this student's score
+                        $position = $sorted->search(function($record) use ($row) {
+                            return $record->total == $row->total && $record->id == $row->id;
+                        });
+
+                        $row->position = $position !== false ? $position + 1 : null;
+                    }
+                }
+            }
 
             return $rows;
         } catch (\Exception $e) {
@@ -595,7 +629,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // PRINT MOCK RESULT (PDF)
+    // PRINT MOCK RESULT (PDF) - FIXED VERSION
     // =========================================================================
     public function printMockResult(Request $request)
     {
@@ -651,7 +685,17 @@ class StudentAssessmentController extends Controller
         $sessionModel = Schoolsession::find($sessionIdForQuery);
         $schoolInfo   = SchoolInformation::first();
 
-        $mockRows            = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
+        // Get mock data with positions
+        $mockRows = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
+
+        // Debug: Log mock data for verification
+        \Log::info('Mock rows for PDF print', [
+            'student_id' => $studentId,
+            'count' => $mockRows->count(),
+            'positions' => $mockRows->pluck('position')->toArray(),
+            'has_positions' => $mockRows->some(fn($row) => !empty($row->position) && $row->position > 0)
+        ]);
+
         $mockTotalObtained   = $mockRows->sum(fn ($r) => (float) ($r->total ?? 0));
         $mockTotalObtainable = $mockRows->count() * 100;
         $mockPercentage      = $mockTotalObtainable > 0
