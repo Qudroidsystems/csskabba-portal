@@ -52,7 +52,7 @@
             break-inside: avoid;
             page-break-inside: avoid;
             page-break-before: avoid;
-            page-break-after: avoid;           /* Changed */
+            page-break-after: avoid;
         }
 
         .card-inner {
@@ -116,9 +116,22 @@
             background: #f1f5f9;
         }
         .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
-        .contact-info { width: 100%; font-size: 9.5px; border-collapse: collapse; }
-        .contact-info td { padding: 3px 4px; }
-        .contact-label { font-weight: 900; color: #1e40af; width: 58px; }
+
+        /* CONTACT INFO - BIGGER TEXT */
+        .contact-info {
+            width: 100%;
+            font-size: 11.5px;           /* Increased from 9.5px */
+            border-collapse: collapse;
+            line-height: 1.35;
+        }
+        .contact-info td {
+            padding: 3.5px 5px;
+        }
+        .contact-label {
+            font-weight: 900;
+            color: #1e40af;
+            width: 62px;
+        }
 
         .divider-dark { height: 2px; background: #1e40af; margin: 5px 0 2px; }
         .divider-light { height: 1px; background: #94a3b8; margin: 2px 0 4px; }
@@ -438,10 +451,10 @@
                     </td>
                     <td>
                         <table class="contact-info">
-                            <tr><td class="contact-label">Address:</td><td>{{ $schoolInfo->school_address ?? '—' }}</td></tr>
-                            <tr><td class="contact-label">Phone:</td><td>{{ $schoolInfo->formatted_phones ?? '—' }}</td></tr>
-                            <tr><td class="contact-label">Email:</td><td>{{ $schoolInfo->school_email ?? '—' }}</td></tr>
-                            <tr><td class="contact-label">Website:</td><td>{{ $schoolInfo->school_website ?? '—' }}</td></tr>
+                            <tr><td class="contact-label">Address:</td><td>{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</td></tr>
+                            <tr><td class="contact-label">Phone:</td><td>{{ $schoolInfo->formatted_phones ?? '08039257337, 08136663185' }}</td></tr>
+                            <tr><td class="contact-label">Email:</td><td>{{ $schoolInfo->school_email ?? 'claretsecschools@yahoo.com' }}</td></tr>
+                            <tr><td class="contact-label">Website:</td><td>{{ $schoolInfo->school_website ?? 'http://portal.csskabba.ng' }}</td></tr>
                         </table>
                     </td>
                     <td width="20%" style="text-align:right">
