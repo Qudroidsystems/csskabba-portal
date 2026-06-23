@@ -38,82 +38,49 @@
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slideIn {
     from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
+    to   { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes scaleIn {
     from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    to   { opacity: 1; transform: scale(1); }
 }
-
 @keyframes pulse2 {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50%       { opacity: 0.5; }
 }
-
 @keyframes barIn {
     from { width: 0; }
-    to { width: var(--bw); }
+    to   { width: var(--bw); }
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
 
-@keyframes expandSlideDown {
-    0% {
-        opacity: 0;
-        transform: scaleY(0);
-        max-height: 0;
-    }
-    100% {
-        opacity: 1;
-        transform: scaleY(1);
-        max-height: 1000px;
-    }
-}
-
-@keyframes collapseSlideUp {
-    0% {
-        opacity: 1;
-        transform: scaleY(1);
-        max-height: 1000px;
-    }
-    100% {
-        opacity: 0;
-        transform: scaleY(0);
-        max-height: 0;
-    }
-}
+.ri-spin { animation: spin 0.8s linear infinite; }
 
 .expand-icon {
     font-size: 14px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
 }
-.expand-icon.rotated {
-    transform: rotate(90deg);
-}
-.parent-row {
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-.parent-row:hover {
-    background: #f8fafc;
-}
-.parent-row.expanded {
-    background: #eff6ff;
-}
-.child-row {
-    display: none;
-}
-.child-row.show {
-    display: table-row;
-}
+.expand-icon.rotated { transform: rotate(90deg); }
+.parent-row { cursor: pointer; transition: background 0.2s ease; }
+.parent-row:hover { background: #f8fafc; }
+.parent-row.expanded { background: #eff6ff; }
+.child-row { display: none; }
+.child-row.show { display: table-row; }
 .child-row .expandable-content {
     animation: expandSlideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     transform-origin: top;
+}
+@keyframes expandSlideDown {
+    0%   { opacity: 0; transform: scaleY(0); max-height: 0; }
+    100% { opacity: 1; transform: scaleY(1); max-height: 1000px; }
 }
 
 /* Hero Section */
@@ -131,17 +98,8 @@
     font-weight: 700;
     margin-bottom: 8px;
 }
-.hero-subtitle {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-bottom: 0;
-}
-.hero-actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
+.hero-subtitle { font-size: 14px; opacity: 0.9; margin-bottom: 0; }
+.hero-actions { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
 .btn-hero {
     background: rgba(255,255,255,0.2);
     border: 1px solid rgba(255,255,255,0.3);
@@ -186,10 +144,8 @@
 .sc::after {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 80px;
-    height: 80px;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
     border-radius: 50%;
     background: var(--sc-color, #4f5fff);
     opacity: 0.04;
@@ -197,50 +153,30 @@
 }
 .sc:hover { transform: translateY(-3px); box-shadow: var(--sh-hover); }
 .sc-icon {
-    width: 46px;
-    height: 46px;
+    width: 46px; height: 46px;
     border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
 }
 .sc-label {
-    font-size: 10.5px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--c-muted);
-    margin-bottom: 0;
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--c-muted); margin-bottom: 0;
 }
 .sc-value {
     font-family: 'Syne', sans-serif;
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--c-text);
-    line-height: 1.1;
+    font-size: 26px; font-weight: 700;
+    color: var(--c-text); line-height: 1.1;
 }
 .sc-sub {
-    font-size: 11.5px;
-    color: var(--c-sub);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 4px;
+    font-size: 11.5px; color: var(--c-sub);
+    display: flex; align-items: center; gap: 5px; margin-top: 4px;
 }
 .sc-bar {
-    height: 3px;
-    border-radius: 3px;
-    background: #f1f5f9;
-    margin-top: 14px;
-    overflow: hidden;
+    height: 3px; border-radius: 3px;
+    background: #f1f5f9; margin-top: 14px; overflow: hidden;
 }
-.sc-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    animation: barIn 0.9s ease both;
-}
+.sc-bar-fill { height: 100%; border-radius: 3px; animation: barIn 0.9s ease both; }
 
 /* Filter Card */
 .filter-card {
@@ -253,12 +189,9 @@
     animation: fadeIn 0.5s ease 0.1s both;
 }
 .filter-label-custom {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--c-muted);
-    margin-bottom: 6px;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--c-muted); margin-bottom: 6px;
 }
 
 /* Section Cards */
@@ -274,92 +207,48 @@
 .section-card-header {
     padding: 16px 20px 12px;
     border-bottom: 1px solid #f8fafc;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 12px;
 }
 .section-card-title {
     font-family: 'Syne', sans-serif;
-    font-size: 14.5px;
-    font-weight: 700;
-    color: var(--c-text);
+    font-size: 14.5px; font-weight: 700; color: var(--c-text);
 }
-.section-card-sub {
-    font-size: 11.5px;
-    color: var(--c-muted);
-    margin-top: 2px;
-}
-.section-card-body {
-    padding: 16px 20px 20px;
-}
+.section-card-sub { font-size: 11.5px; color: var(--c-muted); margin-top: 2px; }
+.section-card-body { padding: 16px 20px 20px; }
 
 /* Tables */
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12.5px;
-}
+.data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .data-table thead th {
-    padding: 10px 12px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--c-muted);
-    border-bottom: 1px solid var(--c-border);
+    padding: 10px 12px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--c-muted); border-bottom: 1px solid var(--c-border);
     background: #fafbfe;
 }
 .data-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #f8fafc;
-    color: var(--c-sub);
-    vertical-align: middle;
+    padding: 10px 12px; border-bottom: 1px solid #f8fafc;
+    color: var(--c-sub); vertical-align: middle;
 }
-.child-table {
-    width: 100%;
-    background: #fff;
-    margin: 0;
-    border-radius: 8px;
-}
-.child-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f0f2f5;
-}
-.child-table tr:last-child td {
-    border-bottom: none;
-}
+.child-table { width: 100%; background: #fff; margin: 0; border-radius: 8px; }
+.child-table td { padding: 12px 16px; border-bottom: 1px solid #f0f2f5; }
+.child-table tr:last-child td { border-bottom: none; }
 
 /* Status Badges */
 .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
 }
 .status-badge.complete { background: #dcfce7; color: #15803d; }
-.status-badge.good { background: #dbeafe; color: #1d4ed8; }
-.status-badge.partial { background: #fef3c7; color: #b45309; }
-.status-badge.low { background: #fee2e2; color: #dc2626; }
+.status-badge.good     { background: #dbeafe; color: #1d4ed8; }
+.status-badge.partial  { background: #fef3c7; color: #b45309; }
+.status-badge.low      { background: #fee2e2; color: #dc2626; }
 
 /* Progress Bar */
-.progress-bar-custom {
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    overflow: hidden;
-}
-.progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.progress-fill.high { background: #10b981; }
+.progress-bar-custom { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.progress-fill.high   { background: #10b981; }
 .progress-fill.medium { background: #f59e0b; }
-.progress-fill.low { background: #ef4444; }
+.progress-fill.low    { background: #ef4444; }
 
 /* Teacher Grid */
 .teachers-grid {
@@ -380,37 +269,19 @@
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     padding: 20px;
     border-bottom: 1px solid var(--c-border);
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    display: flex; align-items: center; gap: 16px;
 }
 .teacher-avatar {
-    width: 56px;
-    height: 56px;
+    width: 56px; height: 56px;
     border-radius: 50%;
     background: linear-gradient(135deg, #1e3a5f, #2563eb);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 700;
-    font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 22px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     flex-shrink: 0;
 }
-.teacher-name {
-    font-weight: 700;
-    color: var(--c-text);
-    font-size: 18px;
-    margin: 0 0 6px;
-}
-.teacher-stats {
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    color: var(--c-muted);
-    flex-wrap: wrap;
-}
+.teacher-name { font-weight: 700; color: var(--c-text); font-size: 18px; margin: 0 0 6px; }
+.teacher-stats { display: flex; gap: 16px; font-size: 12px; color: var(--c-muted); flex-wrap: wrap; }
 .teacher-card-body { padding: 0 20px; max-height: 540px; overflow-y: auto; }
 
 /* Subject Items */
@@ -424,49 +295,27 @@
 .subject-item:hover { background: #f8fafc; margin: 0 -20px; padding: 14px 20px; transform: translateX(4px); }
 .subject-item.is-selected { background: #eff6ff !important; margin: 0 -20px; padding: 14px 20px; }
 .subject-name {
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--c-text);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
+    font-weight: 600; font-size: 15px; color: var(--c-text);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
 }
 .subject-code {
-    font-size: 11px;
-    color: var(--c-muted);
-    font-family: monospace;
-    background: #f1f5f9;
-    padding: 2px 8px;
-    border-radius: 12px;
+    font-size: 11px; color: var(--c-muted); font-family: monospace;
+    background: #f1f5f9; padding: 2px 8px; border-radius: 12px;
 }
 .badge-terminal, .badge-mock, .badge-open {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
 }
 .badge-terminal { background: #dcfce7; color: #15803d; }
-.badge-mock { background: #fef3c7; color: #b45309; }
-.badge-open { background: #dbeafe; color: #1d4ed8; }
+.badge-mock     { background: #fef3c7; color: #b45309; }
+.badge-open     { background: #dbeafe; color: #1d4ed8; }
 .btn-score-group { display: flex; gap: 10px; margin-top: 12px; }
 .btn-score {
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    text-decoration: none;
-    text-align: center;
-    transition: all var(--tr);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
+    flex: 1; padding: 8px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; text-decoration: none;
+    text-align: center; transition: all var(--tr);
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
 }
 .btn-terminal-score { background: #10b981; color: #fff; }
 .btn-terminal-score:hover { background: #059669; transform: translateY(-2px); }
@@ -484,7 +333,7 @@
     padding: 14px 20px;
     display: none;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 20px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.25);
@@ -501,44 +350,37 @@
     font-weight: 500;
     cursor: pointer;
     transition: all var(--tr);
-}
-.btn-toolbar:hover { background: rgba(255,255,255,0.15); color: white; transform: translateY(-2px); }
-.btn-toolbar.green { background: #10b981; border-color: #10b981; }
-.btn-toolbar.green:hover { background: #059669; }
-
-/* Search Bar */
-.search-input-wrapper {
-    position: relative;
-    max-width: 350px;
-}
-.search-input {
-    padding-left: 40px;
-    border-radius: 12px;
-    border: 1px solid var(--c-border);
-    height: 44px;
-    width: 100%;
-    font-family: 'Outfit', sans-serif;
-    transition: all var(--tr);
-}
-.search-input:focus { outline: none; border-color: var(--c-indigo); box-shadow: 0 0 0 3px rgba(79,95,255,0.1); transform: scale(1.01); }
-
-/* Live dot */
-.live-dot {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 11.5px;
-    color: var(--c-muted);
-    font-weight: 500;
+}
+.btn-toolbar:hover         { background: rgba(255,255,255,0.15); color: white; transform: translateY(-2px); }
+.btn-toolbar:disabled      { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-toolbar.green         { background: #10b981; border-color: #10b981; }
+.btn-toolbar.green:hover   { background: #059669; }
+.btn-toolbar.red           { background: #dc2626; border-color: #dc2626; }
+.btn-toolbar.red:hover     { background: #b91c1c; }
+
+/* Search Bar */
+.search-input-wrapper { position: relative; max-width: 350px; }
+.search-input {
+    padding-left: 40px; border-radius: 12px;
+    border: 1px solid var(--c-border); height: 44px; width: 100%;
+    font-family: 'Outfit', sans-serif; transition: all var(--tr);
+}
+.search-input:focus {
+    outline: none; border-color: var(--c-indigo);
+    box-shadow: 0 0 0 3px rgba(79,95,255,0.1); transform: scale(1.01);
+}
+
+/* Live dot */
+.live-dot {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--c-muted); font-weight: 500;
 }
 .live-dot::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #10b981;
-    animation: pulse2 2s infinite;
-    flex-shrink: 0;
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: #10b981; animation: pulse2 2s infinite; flex-shrink: 0;
 }
 
 /* Responsive */
@@ -647,7 +489,7 @@
                         <p class="sc-label mb-0">Overall Completion</p>
                         <div class="sc-value">{{ $completionRate }}%</div>
                         <div class="sc-sub mt-1">
-                            <span class="badge-up"><i class="ri-check-line"></i> {{ $totalWithScores }} / {{ $totalSubjects }}</span>
+                            <span><i class="ri-check-line"></i> {{ $totalWithScores }} / {{ $totalSubjects }}</span>
                         </div>
                     </div>
                     <div class="sc-icon bg-indigo fg-indigo"><i class="ri-bar-chart-2-line"></i></div>
@@ -918,7 +760,7 @@
         <div class="section-card-header">
             <div>
                 <div class="section-card-title"><i class="ri-group-line me-2 text-primary"></i>Class Performance Overview</div>
-                <div class="section-card-sub">Scoresheet completion by class - Click any row to view details</div>
+                <div class="section-card-sub">Scoresheet completion by class — Click any row to view details</div>
             </div>
         </div>
         <div class="section-card-body p-0">
@@ -976,15 +818,24 @@
     </div>
     @endif
 
-    {{-- Bulk Export Toolbar --}}
+    {{-- ══ BULK EXPORT TOOLBAR ══════════════════════════════════════════════ --}}
     <div id="bulkExportToolbar">
         <div class="d-flex align-items-center gap-3 flex-grow-1">
             <i class="ri-checkbox-circle-line fs-5"></i>
             <span class="fw-semibold"><span id="toolbarSelectedCount">0</span> selected</span>
         </div>
-        <button type="button" class="btn-toolbar" onclick="adminBulkExport.deselectAll()"><i class="ri-close-line"></i> Clear</button>
-        <button type="button" class="btn-toolbar" onclick="adminBulkExport.selectOnlyWithScores()"><i class="ri-filter-line"></i> With scores</button>
-        <button type="button" class="btn-toolbar green" id="btnBulkExport" onclick="adminBulkExport.export()"><i class="ri-download-2-line"></i> Export ZIP</button>
+        <button type="button" class="btn-toolbar" onclick="adminBulkExport.deselectAll()">
+            <i class="ri-close-line"></i> Clear
+        </button>
+        <button type="button" class="btn-toolbar" onclick="adminBulkExport.selectOnlyWithScores()">
+            <i class="ri-filter-line"></i> With scores
+        </button>
+        <button type="button" class="btn-toolbar green" id="btnBulkExport" onclick="adminBulkExport.export()">
+            <i class="ri-download-2-line"></i> Export XLSX ZIP
+        </button>
+        <button type="button" class="btn-toolbar red" id="btnBulkExportPdf" onclick="adminBulkExport.exportPdf()">
+            <i class="ri-file-pdf-line"></i> Export PDF
+        </button>
     </div>
 
     {{-- Search and Filters --}}
@@ -1037,9 +888,17 @@
                 </div>
                 <div class="teacher-card-body">
                     @foreach($subjects as $subject)
-                    <div class="subject-item" data-subjectclass-id="{{ $subject->subjectclass_id }}" data-teacher-id="{{ $subject->teacher_id }}" data-schoolclass-id="{{ $subject->schoolclass_id }}" data-term-id="{{ $subject->termid }}" data-session-id="{{ $subject->sessionid }}" data-has-scores="{{ $subject->has_terminal_scores ? '1' : '0' }}" onclick="adminBulkExport.toggleRow(this)">
+                    <div class="subject-item"
+                         data-subjectclass-id="{{ $subject->subjectclass_id }}"
+                         data-teacher-id="{{ $subject->teacher_id }}"
+                         data-schoolclass-id="{{ $subject->schoolclass_id }}"
+                         data-term-id="{{ $subject->termid }}"
+                         data-session-id="{{ $subject->sessionid }}"
+                         data-has-scores="{{ $subject->has_terminal_scores ? '1' : '0' }}"
+                         onclick="adminBulkExport.toggleRow(this)">
                         <div class="d-flex gap-3">
-                            <input type="checkbox" class="subject-checkbox bulk-export-check mt-1" onclick="event.stopPropagation(); adminBulkExport.onCheckboxClick(this)">
+                            <input type="checkbox" class="subject-checkbox bulk-export-check mt-1"
+                                   onclick="event.stopPropagation(); adminBulkExport.onCheckboxClick(this)">
                             <div class="flex-grow-1">
                                 <div class="subject-name">
                                     {{ $subject->subject_name }}
@@ -1062,8 +921,12 @@
                                     </div>
                                 </div>
                                 <div class="btn-score-group" onclick="event.stopPropagation()">
-                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}" class="btn-score btn-terminal-score"><i class="ri-file-edit-line"></i> Terminal</a>
-                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'mock']) }}" class="btn-score btn-mock-score"><i class="ri-flask-line"></i> Mock</a>
+                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}" class="btn-score btn-terminal-score">
+                                        <i class="ri-file-edit-line"></i> Terminal
+                                    </a>
+                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'mock']) }}" class="btn-score btn-mock-score">
+                                        <i class="ri-flask-line"></i> Mock
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -1088,21 +951,20 @@
         </div>
     @endif
 
-</div>
-</div>
-</div>
+</div>{{-- /.container-fluid --}}
+</div>{{-- /.page-content --}}
+</div>{{-- /.main-content --}}
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Expandable Rows
+// ── Expandable Rows ──────────────────────────────────────────────────────────
 document.querySelectorAll('.parent-row').forEach(parentRow => {
     parentRow.addEventListener('click', function(e) {
         if (e.target.tagName === 'A' || e.target.closest('a')) return;
-        const teacherId = this.dataset.teacherId;
-        const childRow = document.querySelector(`.child-row[data-parent="${teacherId}"]`);
+        const teacherId  = this.dataset.teacherId;
+        const childRow   = document.querySelector(`.child-row[data-parent="${teacherId}"]`);
         const expandIcon = this.querySelector('.expand-icon');
         const isExpanded = this.dataset.expanded === 'true';
-
         if (isExpanded) {
             childRow.classList.remove('show');
             expandIcon.classList.remove('rotated');
@@ -1117,88 +979,174 @@ document.querySelectorAll('.parent-row').forEach(parentRow => {
     });
 });
 
-// Bulk Export Module
+// ── Bulk Export Module ───────────────────────────────────────────────────────
 const adminBulkExport = (() => {
-    const EXPORT_URL = '{{ route("admin.score-entry.bulk-export") }}';
-    const CSRF = '{{ csrf_token() }}';
+    const EXPORT_URL     = '{{ route("admin.score-entry.bulk-export") }}';
+    const EXPORT_PDF_URL = '{{ route("admin.score-entry.bulk-export-pdf") }}';
+    const CSRF           = '{{ csrf_token() }}';
 
-    function allCheckboxes() { return [...document.querySelectorAll('.bulk-export-check')]; }
+    function allCheckboxes()     { return [...document.querySelectorAll('.bulk-export-check')]; }
     function visibleCheckboxes() { return allCheckboxes().filter(cb => cb.closest('.teacher-card').style.display !== 'none'); }
-    function checkedBoxes() { return allCheckboxes().filter(cb => cb.checked); }
+    function checkedBoxes()      { return allCheckboxes().filter(cb => cb.checked); }
 
     function updateToolbar() {
-        const n = checkedBoxes().length;
+        const n       = checkedBoxes().length;
         const toolbar = document.getElementById('bulkExportToolbar');
-        const badge = document.getElementById('toolbarSelectedCount');
-        const selAll = document.getElementById('selectAllCheckbox');
+        const badge   = document.getElementById('toolbarSelectedCount');
+        const selAll  = document.getElementById('selectAllCheckbox');
         if (toolbar) toolbar.classList.toggle('visible', n > 0);
-        if (badge) badge.textContent = n;
+        if (badge)   badge.textContent = n;
         if (selAll) {
-            const vis = visibleCheckboxes();
+            const vis        = visibleCheckboxes();
             const visChecked = vis.filter(cb => cb.checked).length;
-            selAll.checked = vis.length > 0 && visChecked === vis.length;
+            selAll.checked       = vis.length > 0 && visChecked === vis.length;
             selAll.indeterminate = visChecked > 0 && visChecked < vis.length;
         }
     }
 
-    function toggleRow(row) { const cb = row.querySelector('.bulk-export-check'); if (cb) { cb.checked = !cb.checked; row.classList.toggle('is-selected', cb.checked); updateToolbar(); } }
-    function onCheckboxClick(cb) { cb.closest('.subject-item').classList.toggle('is-selected', cb.checked); updateToolbar(); }
-    function toggleAll(checked) { visibleCheckboxes().forEach(cb => { cb.checked = checked; cb.closest('.subject-item').classList.toggle('is-selected', checked); }); updateToolbar(); }
-    function deselectAll() { allCheckboxes().forEach(cb => { cb.checked = false; cb.closest('.subject-item').classList.remove('is-selected'); }); updateToolbar(); }
-    function selectOnlyWithScores() { allCheckboxes().forEach(cb => { const row = cb.closest('.subject-item'); if (row && row.dataset.hasScores !== '1') { cb.checked = false; row.classList.remove('is-selected'); } }); updateToolbar(); }
-
-    function export_() {
-        const selected = checkedBoxes();
-        if (selected.length === 0) { alert('Please select at least one scoresheet to export.'); return; }
-        const btn = document.getElementById('btnBulkExport');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Preparing…'; }
-        const subjects = selected.map(cb => {
-            const row = cb.closest('.subject-item');
-            return { subjectclass_id: row.dataset.subjectclassId, teacher_id: row.dataset.teacherId, schoolclass_id: row.dataset.schoolclassId, term_id: row.dataset.termId, session_id: row.dataset.sessionId };
-        });
-        const form = document.createElement('form'); form.method = 'POST'; form.action = EXPORT_URL; form.style.display = 'none';
-        const addInput = (name, value) => { const el = document.createElement('input'); el.type = 'hidden'; el.name = name; el.value = value; form.appendChild(el); };
-        addInput('_token', CSRF);
-        subjects.forEach((s, i) => { Object.entries(s).forEach(([key, val]) => addInput(`subjects[${i}][${key}]`, val)); });
-        document.body.appendChild(form); form.submit();
-        setTimeout(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ri-download-2-line"></i> Export ZIP'; } document.body.removeChild(form); }, 4000);
+    function toggleRow(row) {
+        const cb = row.querySelector('.bulk-export-check');
+        if (cb) { cb.checked = !cb.checked; row.classList.toggle('is-selected', cb.checked); updateToolbar(); }
     }
 
-    return { toggleRow, onCheckboxClick, toggleAll, deselectAll, selectOnlyWithScores, export: export_ };
+    function onCheckboxClick(cb) {
+        cb.closest('.subject-item').classList.toggle('is-selected', cb.checked);
+        updateToolbar();
+    }
+
+    function toggleAll(checked) {
+        visibleCheckboxes().forEach(cb => {
+            cb.checked = checked;
+            cb.closest('.subject-item').classList.toggle('is-selected', checked);
+        });
+        updateToolbar();
+    }
+
+    function deselectAll() {
+        allCheckboxes().forEach(cb => { cb.checked = false; cb.closest('.subject-item').classList.remove('is-selected'); });
+        updateToolbar();
+    }
+
+    function selectOnlyWithScores() {
+        allCheckboxes().forEach(cb => {
+            const row = cb.closest('.subject-item');
+            if (row && row.dataset.hasScores !== '1') { cb.checked = false; row.classList.remove('is-selected'); }
+        });
+        updateToolbar();
+    }
+
+    // Collect selected subject data from checked checkboxes
+    function getSelectedSubjects() {
+        return checkedBoxes().map(cb => {
+            const row = cb.closest('.subject-item');
+            return {
+                subjectclass_id: row.dataset.subjectclassId,
+                teacher_id:      row.dataset.teacherId,
+                schoolclass_id:  row.dataset.schoolclassId,
+                term_id:         row.dataset.termId,
+                session_id:      row.dataset.sessionId,
+            };
+        });
+    }
+
+    // Build and submit a hidden POST form (triggers file download)
+    function postForm(url, subjects, btnId, loadingLabel, resetLabel) {
+        if (subjects.length === 0) {
+            Swal.fire({ icon: 'warning', title: 'Nothing selected', text: 'Please select at least one scoresheet to export.', confirmButtonColor: '#2563eb' });
+            return;
+        }
+
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = true; btn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> ${loadingLabel}`; }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.style.display = 'none';
+
+        const addInput = (name, value) => {
+            const el = document.createElement('input');
+            el.type = 'hidden'; el.name = name; el.value = value;
+            form.appendChild(el);
+        };
+
+        addInput('_token', CSRF);
+        subjects.forEach((s, i) => {
+            Object.entries(s).forEach(([key, val]) => addInput(`subjects[${i}][${key}]`, val));
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+
+        // Re-enable after delay (download triggers in bg)
+        setTimeout(() => {
+            if (btn) { btn.disabled = false; btn.innerHTML = resetLabel; }
+            if (document.body.contains(form)) document.body.removeChild(form);
+        }, 8000);
+    }
+
+    // XLSX ZIP export
+    function export_() {
+        const subjects = getSelectedSubjects();
+        postForm(
+            EXPORT_URL,
+            subjects,
+            'btnBulkExport',
+            'Preparing ZIP…',
+            '<i class="ri-download-2-line"></i> Export XLSX ZIP'
+        );
+    }
+
+    // PDF export — single PDF direct download, multiple → ZIP
+    function exportPdf() {
+        const subjects  = getSelectedSubjects();
+        const isSingle  = subjects.length === 1;
+        postForm(
+            EXPORT_PDF_URL,
+            subjects,
+            'btnBulkExportPdf',
+            isSingle ? 'Generating PDF…' : 'Building PDF ZIP…',
+            '<i class="ri-file-pdf-line"></i> Export PDF'
+        );
+    }
+
+    return { toggleRow, onCheckboxClick, toggleAll, deselectAll, selectOnlyWithScores, export: export_, exportPdf };
 })();
 
-// Search and Filter
+// ── Search & Status Filter ───────────────────────────────────────────────────
 (function() {
-    const input = document.getElementById('searchInput');
+    const input        = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     if (!input) return;
+
     function filterCards() {
-        const searchTerm = input.value.toLowerCase().trim();
+        const searchTerm  = input.value.toLowerCase().trim();
         const statusValue = statusFilter ? statusFilter.value : 'all';
         let visible = 0;
         document.querySelectorAll('.teacher-card').forEach(card => {
-            const matchesSearch = !searchTerm || card.innerText.toLowerCase().includes(searchTerm);
-            const matchesStatus = statusValue === 'all' || card.dataset.status === statusValue;
-            const show = matchesSearch && matchesStatus;
-            card.style.display = show ? '' : 'none';
+            const matchesSearch  = !searchTerm || card.innerText.toLowerCase().includes(searchTerm);
+            const matchesStatus  = statusValue === 'all' || card.dataset.status === statusValue;
+            const show           = matchesSearch && matchesStatus;
+            card.style.display   = show ? '' : 'none';
             if (show) visible++;
         });
-        const total = document.querySelectorAll('.teacher-card').length;
+        const total     = document.querySelectorAll('.teacher-card').length;
         const countSpan = document.getElementById('totalSubjectCount');
-        if (countSpan) countSpan.textContent = (searchTerm || statusValue !== 'all') ? `${visible} of ${total}` : '{{ $teacherSubjects->count() }} sheets';
+        if (countSpan) countSpan.textContent = (searchTerm || statusValue !== 'all')
+            ? `${visible} of ${total}`
+            : '{{ $teacherSubjects->count() }} sheets';
     }
+
     input.addEventListener('input', filterCards);
     if (statusFilter) statusFilter.addEventListener('change', filterCards);
 })();
 
-// Show Class Details Modal
+// ── Class Details Modal ──────────────────────────────────────────────────────
 function showClassDetails(classId, classData) {
     let subjectList = '';
     if (classData.subjects && classData.subjects.length > 0) {
         subjectList = '<ul class="list-group mt-2" style="max-height: 300px; overflow-y: auto;">';
-        classData.subjects.forEach(sub => {
-            subjectList += `<li class="list-group-item">${sub}</li>`;
-        });
+        classData.subjects.forEach(sub => { subjectList += `<li class="list-group-item">${sub}</li>`; });
         subjectList += '</ul>';
     } else {
         subjectList = '<p class="text-muted">No subjects available</p>';
@@ -1216,8 +1164,14 @@ function showClassDetails(classId, classData) {
                     <div class="col-6"><div class="border rounded p-2 text-center"><div class="small text-muted">Completed</div><div class="h5 mb-0 text-success">${classData.completed_subjects}</div></div></div>
                     <div class="col-6"><div class="border rounded p-2 text-center"><div class="small text-muted">Pending</div><div class="h5 mb-0 text-warning">${classData.pending_subjects}</div></div></div>
                 </div>
-                <div class="mb-3"><div class="d-flex justify-content-between mb-1"><span>Completion Rate</span><span class="fw-bold">${classData.completion_rate}%</span></div><div class="progress" style="height: 8px;"><div class="progress-bar bg-${classData.completion_rate >= 75 ? 'success' : (classData.completion_rate >= 50 ? 'warning' : 'danger')}" style="width: ${classData.completion_rate}%"></div></div></div>
-                <div class="mb-3"><div class="d-flex justify-content-between mb-1"><span>Entry Completion</span><span class="fw-bold">${classData.entry_completion_rate || 0}%</span></div><div class="progress" style="height: 8px;"><div class="progress-bar bg-info" style="width: ${classData.entry_completion_rate || 0}%"></div></div></div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1"><span>Completion Rate</span><span class="fw-bold">${classData.completion_rate}%</span></div>
+                    <div class="progress" style="height: 8px;"><div class="progress-bar bg-${classData.completion_rate >= 75 ? 'success' : (classData.completion_rate >= 50 ? 'warning' : 'danger')}" style="width: ${classData.completion_rate}%"></div></div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1"><span>Entry Completion</span><span class="fw-bold">${classData.entry_completion_rate || 0}%</span></div>
+                    <div class="progress" style="height: 8px;"><div class="progress-bar bg-info" style="width: ${classData.entry_completion_rate || 0}%"></div></div>
+                </div>
                 <hr><h6>Subjects:</h6>${subjectList}
             </div>
         `,

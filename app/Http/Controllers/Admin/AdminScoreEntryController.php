@@ -2463,4 +2463,183 @@ class AdminScoreEntryController extends Controller
         }
         @rmdir($dir);
     }
+
+
+    // =========================================================================
+    // BULK EXPORT PDF — multiple scoresheets → PDF(s), zipped when > 1
+    // =========================================================================
+
+    public function bulkExportPdf(Request $request)
+    {
+        $request->validate([
+            'subjects'                   => 'required|array|min:1',
+            'subjects.*.subjectclass_id' => 'required|exists:subjectclass,id',
+            'subjects.*.teacher_id'      => 'required|exists:users,id',
+            'subjects.*.schoolclass_id'  => 'required|exists:schoolclass,id',
+            'subjects.*.term_id'         => 'required|exists:schoolterm,id',
+            'subjects.*.session_id'      => 'required|exists:schoolsession,id',
+        ]);
+
+        $subjects  = $request->input('subjects');
+        $school    = \App\Models\SchoolInformation::first();
+        $tempDir   = storage_path('app/temp');
+        $isSingle  = count($subjects) === 1;
+
+        try {
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            $pdfFiles  = [];   // [['path' => ..., 'filename' => ...]]
+            $generated = 0;
+
+            foreach ($subjects as $subjectData) {
+                $subjectclassId = (int) $subjectData['subjectclass_id'];
+                $teacherId      = (int) $subjectData['teacher_id'];
+                $schoolclassId  = (int) $subjectData['schoolclass_id'];
+                $termId         = (int) $subjectData['term_id'];
+                $sessionId      = (int) $subjectData['session_id'];
+
+                // ── Skip if no scores exist ───────────────────────────────────
+                $hasScores = \Illuminate\Support\Facades\DB::table('broadsheets')
+                    ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                    ->where('broadsheets.subjectclass_id', $subjectclassId)
+                    ->where('broadsheets.term_id', $termId)
+                    ->where('broadsheet_records.session_id', $sessionId)
+                    ->exists();
+
+                if (!$hasScores) {
+                    \Illuminate\Support\Facades\Log::info(
+                        "[AdminBulkExportPdf] skipping subjectclass {$subjectclassId} — no scores"
+                    );
+                    continue;
+                }
+
+                // ── Fetch broadsheets ─────────────────────────────────────────
+                $broadsheets = $this->getBroadsheets(
+                    $teacherId, $termId, $sessionId, $schoolclassId, $subjectclassId
+                );
+
+                if ($broadsheets->isEmpty()) {
+                    continue;
+                }
+
+                // ── Load assessments ──────────────────────────────────────────
+                $schoolclass = \App\Models\Schoolclass::with('classcategories')->find($schoolclassId);
+                $assessments = collect();
+                if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                    $categoryIds = $schoolclass->classcategories->pluck('id');
+                    $assessments = \App\Models\Assessment::whereIn('classcategory_id', $categoryIds)
+                        ->with('subAssessments')
+                        ->orderBy('id')
+                        ->get();
+                }
+
+                // ── Teacher name ──────────────────────────────────────────────
+                $teacher     = \App\Models\User::find($teacherId);
+                $teacherName = $teacher ? $teacher->name : '';
+
+                // ── Build a clean filename ────────────────────────────────────
+                $first       = $broadsheets->first();
+                $subjectSlug = preg_replace('/[^a-zA-Z0-9-]/', '_', $first->subject ?? 'subject');
+                $classSlug   = preg_replace('/[^a-zA-Z0-9-]/', '_',
+                    trim(($first->schoolclass ?? '') . ' ' . ($first->arm ?? ''))
+                );
+                $termSlug    = preg_replace('/[^a-zA-Z0-9-]/', '_', $first->term    ?? 'term');
+                $sessionSlug = preg_replace('/[^a-zA-Z0-9-]/', '_', $first->session ?? 'session');
+
+                $filenameInZip = "admin_{$subjectSlug}_{$classSlug}_{$termSlug}_{$sessionSlug}_scoresheet.pdf";
+
+                // ── Render PDF ────────────────────────────────────────────────
+                try {
+                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                        'admin.score-entry.scoresheet-pdf',
+                        [
+                            'broadsheets' => $broadsheets,
+                            'assessments' => $assessments,
+                            'classInfo'   => $first,
+                            'school'      => $school,
+                            'teacherName' => $teacherName,
+                        ]
+                    );
+
+                    // Landscape for wider assessment columns, portrait when few assessments
+                    $orientation = $assessments->count() > 4 ? 'landscape' : 'portrait';
+                    $pdf->setPaper('a4', $orientation);
+
+                    $pdfContent  = $pdf->output();
+                    $tempPath    = $tempDir . '/' . uniqid('pdf_') . '.pdf';
+                    file_put_contents($tempPath, $pdfContent);
+
+                    $pdfFiles[] = ['path' => $tempPath, 'filename' => $filenameInZip];
+                    $generated++;
+
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error(
+                        "[AdminBulkExportPdf] PDF render failed for subjectclass {$subjectclassId}: "
+                        . $e->getMessage()
+                    );
+                    continue;
+                }
+            }
+
+            // ── Nothing generated ─────────────────────────────────────────────
+            if ($generated === 0) {
+                foreach ($pdfFiles as $f) { @unlink($f['path']); }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No scoresheets could be generated. Ensure scores exist for the selected subjects.',
+                ], 422);
+            }
+
+            // ── Single PDF — just download directly ───────────────────────────
+            if ($isSingle && count($pdfFiles) === 1) {
+                $file        = $pdfFiles[0];
+                $pdfContent  = file_get_contents($file['path']);
+                @unlink($file['path']);
+
+                return response($pdfContent, 200, [
+                    'Content-Type'        => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $file['filename'] . '"',
+                    'Content-Length'      => strlen($pdfContent),
+                ]);
+            }
+
+            // ── Multiple PDFs — zip them ──────────────────────────────────────
+            $zipName = 'admin_scoresheets_pdf_' . now()->format('Y-m-d_His') . '.zip';
+            $zipPath = $tempDir . '/' . $zipName;
+
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+                foreach ($pdfFiles as $f) { @unlink($f['path']); }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not create ZIP archive.',
+                ], 500);
+            }
+
+            foreach ($pdfFiles as $f) {
+                $zip->addFile($f['path'], $f['filename']);
+            }
+            $zip->close();
+
+            // Clean up individual temp PDFs
+            foreach ($pdfFiles as $f) { @unlink($f['path']); }
+
+            return response()->download($zipPath, $zipName, [
+                'Content-Type'        => 'application/zip',
+                'Content-Disposition' => 'attachment; filename="' . $zipName . '"',
+            ])->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error(
+                'Admin bulkExportPdf error: ' . $e->getMessage() . "\n" . $e->getTraceAsString()
+            );
+            foreach (($pdfFiles ?? []) as $f) { @unlink($f['path']); }
+            return response()->json([
+                'success' => false,
+                'message' => 'PDF export failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

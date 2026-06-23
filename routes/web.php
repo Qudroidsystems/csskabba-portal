@@ -1437,6 +1437,8 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
             Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
             Route::post('/bulk-export', [AdminScoreEntryController::class, 'bulkExport'])->name('bulk-export');
+            Route::post('bulk-export-pdf', [AdminScoreEntryController::class, 'bulkExportPdf'])->name('admin.score-entry.bulk-export-pdf');
+
 
             // Mock scoresheet endpoints
             Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
