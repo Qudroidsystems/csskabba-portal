@@ -1326,7 +1326,10 @@ function previewBroadsheet(subjectclassId, teacherId, termId, sessionId, type) {
 
     title.textContent = `Broadsheet Preview - ${type.toUpperCase()}`;
 
-    fetch(`{{ route('admin.score-entry.broadsheet-preview') }}?subjectclass_id=${subjectclassId}&teacher_id=${teacherId}&term_id=${termId}&session_id=${sessionId}&type=${type}`)
+    // Build the preview URL with parameters
+    const previewUrl = `{{ route('admin.score-entry.broadsheet-preview') }}?subjectclass_id=${subjectclassId}&teacher_id=${teacherId}&term_id=${termId}&session_id=${sessionId}&type=${type}`;
+
+    fetch(previewUrl)
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
@@ -1454,9 +1457,9 @@ function previewBroadsheet(subjectclassId, teacherId, termId, sessionId, type) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
-            // Set the "Open Full Scoresheet" link
-            document.getElementById('openFullScoresheet').href =
-                `{{ route('admin.score-entry.scoresheet', ['', '', '', '', '']) }}/${subjectclassId}/${teacherId}/${termId}/${sessionId}/${type}`;
+            // Set the "Open Full Scoresheet" link - FIXED: Build URL manually
+            const scoresheetUrl = `/admin/score-entry/scoresheet/${subjectclassId}/${teacherId}/${termId}/${sessionId}/${type}`;
+            document.getElementById('openFullScoresheet').href = scoresheetUrl;
         })
         .catch(error => {
             content.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
