@@ -69,7 +69,10 @@ class AdminScoreEntryController extends Controller
             'class_stats'            => [],
             'total_expected_entries' => 0,
             'total_actual_entries'   => 0,
+            'total_slots_expected'   => 0,
+            'total_slots_filled'     => 0,
             'entry_completion_rate'  => 0,
+            'slot_completion_rate'   => 0,
         ];
 
         if ($selectedTermId && $selectedSessionId) {
@@ -90,47 +93,55 @@ class AdminScoreEntryController extends Controller
     protected function calculateDashboardStats($teacherSubjects, $termId, $sessionId)
     {
         $stats = [
-            'total_teachers'         => $teacherSubjects->groupBy('teacher_id')->count(),
-            'total_subjects'         => $teacherSubjects->count(),
-            'total_classes'          => $teacherSubjects->groupBy('schoolclass_id')->count(),
-            'completed_scoresheets'  => 0,
-            'pending_scoresheets'    => 0,
-            'completion_rate'        => 0,
-            'mock_completed'         => 0,
-            'mock_pending'           => 0,
-            'teacher_stats'          => [],
-            'class_stats'            => [],
-            'total_expected_entries' => 0,
-            'total_actual_entries'   => 0,
-            'entry_completion_rate'  => 0,
+            'total_teachers'          => $teacherSubjects->groupBy('teacher_id')->count(),
+            'total_subjects'          => $teacherSubjects->count(),
+            'total_classes'           => $teacherSubjects->groupBy('schoolclass_id')->count(),
+            'completed_scoresheets'   => 0,
+            'pending_scoresheets'     => 0,
+            'completion_rate'         => 0,
+            'mock_completed'          => 0,
+            'mock_pending'            => 0,
+            'teacher_stats'           => [],
+            'class_stats'             => [],
+            // Row-level counts (students with any score entered)
+            'total_expected_entries'  => $teacherSubjects->sum('student_count'),
+            'total_actual_entries'    => $teacherSubjects->sum('terminal_entries_count'),
+            // Slot-level counts (assessment × student granularity)
+            'total_slots_expected'    => $teacherSubjects->sum('total_slots_expected'),
+            'total_slots_filled'      => $teacherSubjects->sum('total_slots_filled'),
+            'entry_completion_rate'   => 0,
+            'slot_completion_rate'    => 0,
         ];
 
         // ── Per-teacher stats ─────────────────────────────────────────────────
         $teacherGroups = $teacherSubjects->groupBy('teacher_id');
 
         foreach ($teacherGroups as $teacherId => $subjects) {
-            $teacherName  = $subjects->first()->teacher_name;
+            $teacherName = $subjects->first()->teacher_name;
+
             $teacherStats = [
-                'teacher_id'           => $teacherId,
-                'teacher_name'         => $teacherName,
-                'subjects_count'       => $subjects->count(),
-                'completed_terminal'   => 0,
-                'pending_terminal'     => 0,
-                'completed_mock'       => 0,
-                'pending_mock'         => 0,
-                'completion_rate'      => 0,
-                'expected_entries'     => 0,
-                'actual_entries'       => 0,
-                'subjects_details'     => [],
-                'classes'              => [],
+                'teacher_id'            => $teacherId,
+                'teacher_name'          => $teacherName,
+                'subjects_count'        => $subjects->count(),
+                'completed_terminal'    => 0,
+                'pending_terminal'      => 0,
+                'completed_mock'        => 0,
+                'pending_mock'          => 0,
+                'completion_rate'       => 0,
+                'slot_fill_rate'        => 0,
+                'expected_entries'      => 0,
+                'actual_entries'        => 0,
+                'total_slots_expected'  => 0,
+                'total_slots_filled'    => 0,
+                'subjects_details'      => [],
+                'classes'               => [],
             ];
 
             foreach ($subjects as $subject) {
-                // Re-use already-computed values from getTeacherSubjects()
-                // so we don't run duplicate queries here.
-                $expectedEntries       = $subject->student_count;
-                $actualTerminalEntries = $subject->terminal_entries_count;
-                $actualMockEntries     = $subject->mock_entries_count;
+                $studentCount   = $subject->student_count;
+                $numAssessments = $subject->num_assessments;
+                $slotsExpected  = $subject->total_slots_expected;
+                $slotsFilled    = $subject->total_slots_filled;
 
                 if ($subject->has_terminal_scores) {
                     $teacherStats['completed_terminal']++;
@@ -144,33 +155,38 @@ class AdminScoreEntryController extends Controller
                     $teacherStats['pending_mock']++;
                 }
 
-                $teacherStats['expected_entries'] += $expectedEntries;
-                $teacherStats['actual_entries']   += $actualTerminalEntries;
+                $teacherStats['expected_entries']     += $studentCount;
+                $teacherStats['actual_entries']       += $subject->terminal_entries_count;
+                $teacherStats['total_slots_expected'] += $slotsExpected;
+                $teacherStats['total_slots_filled']   += $slotsFilled;
 
                 $teacherStats['subjects_details'][] = [
                     'subject_name'          => $subject->subject_name,
                     'class_name'            => $subject->class_name,
-                    'student_count'         => $expectedEntries,
+                    'student_count'         => $studentCount,
+                    'num_assessments'       => $numAssessments,
                     'has_terminal'          => $subject->has_terminal_scores,
                     'has_mock'              => $subject->has_mock_scores,
-                    'terminal_entries'      => $actualTerminalEntries,
-                    'mock_entries'          => $actualMockEntries,
-                    'expected_entries'      => $expectedEntries,
-                    'completion_percentage' => $expectedEntries > 0
-                        ? round(($actualTerminalEntries / $expectedEntries) * 100, 1)
+                    'terminal_entries'      => $subject->terminal_entries_count,
+                    'students_complete'     => $subject->students_complete,
+                    'mock_entries'          => $subject->mock_entries_count,
+                    'slots_expected'        => $slotsExpected,
+                    'slots_filled'          => $slotsFilled,
+                    'entry_percentage'      => $subject->entry_percentage,
+                    'students_complete_pct' => $studentCount > 0
+                        ? round(($subject->students_complete / $studentCount) * 100, 1)
                         : 0,
                 ];
 
                 $teacherStats['classes'][] = $subject->class_name;
-
-                $stats['total_expected_entries'] += $expectedEntries;
-                $stats['total_actual_entries']   += $actualTerminalEntries;
             }
 
-            $teacherStats['classes']         = array_unique($teacherStats['classes']);
-            $teacherStats['completion_rate'] = $teacherStats['subjects_count'] > 0
-                ? round(($teacherStats['completed_terminal'] / $teacherStats['subjects_count']) * 100, 1)
+            $teacherStats['classes']        = array_unique($teacherStats['classes']);
+            $teacherStats['slot_fill_rate'] = $teacherStats['total_slots_expected'] > 0
+                ? round(($teacherStats['total_slots_filled'] / $teacherStats['total_slots_expected']) * 100, 1)
                 : 0;
+            // completion_rate is now slot-based, not just "has any score"
+            $teacherStats['completion_rate'] = $teacherStats['slot_fill_rate'];
 
             $stats['completed_scoresheets'] += $teacherStats['completed_terminal'];
             $stats['pending_scoresheets']   += $teacherStats['pending_terminal'];
@@ -193,10 +209,12 @@ class AdminScoreEntryController extends Controller
 
             $totalSubjects     = $subjects->count();
             $completedSubjects = $subjects->where('has_terminal_scores', true)->count();
+            $classSlotsExp     = $subjects->sum('total_slots_expected');
+            $classSlotsFilled  = $subjects->sum('total_slots_filled');
 
-            // Re-use already-computed counts — no extra queries needed
-            $classExpectedEntries = $subjects->sum('student_count');
-            $classActualEntries   = $subjects->sum('terminal_entries_count');
+            $slotRate = $classSlotsExp > 0
+                ? round(($classSlotsFilled / $classSlotsExp) * 100, 1)
+                : 0;
 
             $stats['class_stats'][] = [
                 'class_name'            => $className,
@@ -205,12 +223,10 @@ class AdminScoreEntryController extends Controller
                 'total_subjects'        => $totalSubjects,
                 'completed_subjects'    => $completedSubjects,
                 'pending_subjects'      => $totalSubjects - $completedSubjects,
-                'completion_rate'       => $totalSubjects > 0
-                    ? round(($completedSubjects / $totalSubjects) * 100, 1)
-                    : 0,
-                'entry_completion_rate' => $classExpectedEntries > 0
-                    ? round(($classActualEntries / $classExpectedEntries) * 100, 1)
-                    : 0,
+                'completion_rate'       => $slotRate,
+                'entry_completion_rate' => $slotRate,
+                'slots_expected'        => $classSlotsExp,
+                'slots_filled'          => $classSlotsFilled,
                 'subjects'              => $subjects->pluck('subject_name')->toArray(),
             ];
         }
@@ -219,13 +235,21 @@ class AdminScoreEntryController extends Controller
         usort($stats['teacher_stats'], fn($a, $b) => $b['completion_rate'] <=> $a['completion_rate']);
         usort($stats['class_stats'],   fn($a, $b) => $b['completion_rate'] <=> $a['completion_rate']);
 
+        // Scoresheet-level completion (has any score entered for this subject)
         $stats['completion_rate'] = $stats['total_subjects'] > 0
             ? round(($stats['completed_scoresheets'] / $stats['total_subjects']) * 100, 1)
             : 0;
 
-        $stats['entry_completion_rate'] = $stats['total_expected_entries'] > 0
-            ? round(($stats['total_actual_entries'] / $stats['total_expected_entries']) * 100, 1)
+        // Slot-level completion (actual assessment score fill rate)
+        $totalSlotsExp    = $teacherSubjects->sum('total_slots_expected');
+        $totalSlotsFilled = $teacherSubjects->sum('total_slots_filled');
+
+        $stats['total_slots_expected'] = $totalSlotsExp;
+        $stats['total_slots_filled']   = $totalSlotsFilled;
+        $stats['slot_completion_rate'] = $totalSlotsExp > 0
+            ? round(($totalSlotsFilled / $totalSlotsExp) * 100, 1)
             : 0;
+        $stats['entry_completion_rate'] = $stats['slot_completion_rate'];
 
         return $stats;
     }
@@ -236,7 +260,7 @@ class AdminScoreEntryController extends Controller
 
     protected function getTeacherSubjects($termId, $sessionId)
     {
-        return SubjectTeacher::query()
+        $rows = SubjectTeacher::query()
             ->join('users', 'users.id', '=', 'subjectteacher.staffid')
             ->join('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
             ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
@@ -257,6 +281,8 @@ class AdminScoreEntryController extends Controller
                 'schoolclass.id as schoolclass_id',
                 DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as class_name"),
                 DB::raw("GROUP_CONCAT(DISTINCT classcategories.category ORDER BY classcategories.category SEPARATOR ', ') as class_categories"),
+                // MIN gives us a single classcategory_id to look up assessments per class type
+                DB::raw("MIN(classcategories.id) as classcategory_id"),
                 'schoolclass.classcategoryid',
                 'subjectteacher.termid',
                 'subjectteacher.sessionid',
@@ -275,56 +301,108 @@ class AdminScoreEntryController extends Controller
             ->orderBy('users.name')
             ->orderBy('schoolclass.schoolclass')
             ->orderBy('schoolarm.arm')
-            ->get()
-            ->map(function ($item) use ($termId, $sessionId) {
+            ->get();
 
-                // ── Student count for this class in this session ──────────────
-                $studentCount = DB::table('studentclass')
-                    ->where('sessionid', $sessionId)
-                    ->where('schoolclassid', $item->schoolclass_id)
+        // ── Pre-load assessment counts per classcategory (avoids N+1) ─────────
+        // entry_percentage = (filled assessment slots) / (students × assessments) × 100
+        $categoryIds = $rows->pluck('classcategory_id')->filter()->unique()->values();
+
+        $assessmentCounts = Assessment::whereIn('classcategory_id', $categoryIds)
+            ->selectRaw('classcategory_id, COUNT(*) as cnt')
+            ->groupBy('classcategory_id')
+            ->pluck('cnt', 'classcategory_id');   // [ category_id => count ]
+
+        return $rows->map(function ($item) use ($termId, $sessionId, $assessmentCounts) {
+
+            // ── Student count enrolled in this class/session ───────────────────
+            $studentCount = DB::table('studentclass')
+                ->where('sessionid', $sessionId)
+                ->where('schoolclassid', $item->schoolclass_id)
+                ->count();
+
+            $item->student_count = $studentCount;
+
+            // ── Number of assessments configured for this class category ───────
+            $numAssessments       = (int) ($assessmentCounts[$item->classcategory_id] ?? 0);
+            $item->num_assessments = $numAssessments;
+
+            // ── Collect broadsheet IDs for this subjectclass/term/session ──────
+            // Must join through broadsheet_records for the session filter because
+            // broadsheets has no direct session_id column.
+            $broadsheetIds = DB::table('broadsheets')
+                ->join(
+                    'broadsheet_records',
+                    'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id'
+                )
+                ->where('broadsheets.subjectclass_id', $item->subjectclass_id)
+                ->where('broadsheets.term_id', $termId)
+                ->where('broadsheet_records.session_id', $sessionId)
+                ->pluck('broadsheets.id');
+
+            $broadsheetCount = $broadsheetIds->count();
+
+            // ── Broadsheets that have at least ONE assessment score entered ─────
+            // A broadsheet row is created on registration, so its mere existence
+            // does NOT mean any score has been keyed in. We must check the
+            // broadsheet_assessment_scores table instead.
+            $broadsheetsWithAnyScore = 0;
+            if ($broadsheetCount > 0) {
+                $broadsheetsWithAnyScore = DB::table('broadsheet_assessment_scores')
+                    ->whereIn('broadsheet_id', $broadsheetIds)
+                    ->distinct('broadsheet_id')
+                    ->count('broadsheet_id');
+            }
+
+            // ── Total assessment score SLOTS filled ────────────────────────────
+            // Expected: students × assessments (every student should have every assessment filled)
+            // Filled:   count of rows in broadsheet_assessment_scores for these broadsheets
+            $totalSlotsExpected = $studentCount * max($numAssessments, 1);
+
+            $totalSlotsFilled = 0;
+            if ($broadsheetCount > 0 && $numAssessments > 0) {
+                $totalSlotsFilled = DB::table('broadsheet_assessment_scores')
+                    ->whereIn('broadsheet_id', $broadsheetIds)
                     ->count();
+            }
 
-                $item->student_count = $studentCount;
+            $item->has_terminal_scores    = $broadsheetsWithAnyScore > 0;
+            $item->terminal_entries_count = $broadsheetsWithAnyScore;   // students with any score
+            $item->total_slots_expected   = $totalSlotsExpected;
+            $item->total_slots_filled     = $totalSlotsFilled;
 
-                // ── Terminal scores: MUST join through broadsheet_records ──────
-                // broadsheets has no direct session_id column — it comes from
-                // broadsheet_records.session_id. Without this join, queries match
-                // rows from ALL sessions and give wrong counts for term 3.
-                $terminalCount = DB::table('broadsheets')
-                    ->join(
-                        'broadsheet_records',
-                        'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id'
-                    )
-                    ->where('broadsheets.subjectclass_id', $item->subjectclass_id)
-                    ->where('broadsheets.term_id', $termId)
-                    ->where('broadsheet_records.session_id', $sessionId)
+            // ── Slot-based entry percentage (the accurate metric) ──────────────
+            $item->entry_percentage = $totalSlotsExpected > 0
+                ? round(($totalSlotsFilled / $totalSlotsExpected) * 100, 1)
+                : 0;
+
+            // ── Students fully complete: every assessment filled for that student
+            $item->students_complete = 0;
+            if ($broadsheetCount > 0 && $numAssessments > 0) {
+                $item->students_complete = DB::table('broadsheet_assessment_scores')
+                    ->whereIn('broadsheet_id', $broadsheetIds)
+                    ->selectRaw('broadsheet_id, COUNT(*) as filled')
+                    ->groupBy('broadsheet_id')
+                    ->havingRaw('COUNT(*) >= ?', [$numAssessments])
+                    ->get()
                     ->count();
+            }
 
-                $item->has_terminal_scores    = $terminalCount > 0;
-                $item->terminal_entries_count = $terminalCount;
+            // ── Mock scores: same pattern — join through broadsheet_records_mock
+            $mockCount = DB::table('broadsheetmock')
+                ->join(
+                    'broadsheet_records_mock',
+                    'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id'
+                )
+                ->where('broadsheetmock.subjectclass_id', $item->subjectclass_id)
+                ->where('broadsheetmock.term_id', $termId)
+                ->where('broadsheet_records_mock.session_id', $sessionId)
+                ->count();
 
-                // ── Entry percentage ──────────────────────────────────────────
-                $item->entry_percentage = $studentCount > 0
-                    ? round(($terminalCount / $studentCount) * 100, 1)
-                    : 0;
+            $item->has_mock_scores    = $mockCount > 0;
+            $item->mock_entries_count = $mockCount;
 
-                // ── Mock scores: MUST join through broadsheet_records_mock ─────
-                // Same pattern — broadsheetmock has no direct session_id column.
-                $mockCount = DB::table('broadsheetmock')
-                    ->join(
-                        'broadsheet_records_mock',
-                        'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id'
-                    )
-                    ->where('broadsheetmock.subjectclass_id', $item->subjectclass_id)
-                    ->where('broadsheetmock.term_id', $termId)
-                    ->where('broadsheet_records_mock.session_id', $sessionId)
-                    ->count();
-
-                $item->has_mock_scores    = $mockCount > 0;
-                $item->mock_entries_count = $mockCount;
-
-                return $item;
-            });
+            return $item;
+        });
     }
 
     // =========================================================================
@@ -765,9 +843,9 @@ class AdminScoreEntryController extends Controller
                 return response()->json(['success' => false, 'message' => 'Session context missing — please reload the scoresheet.'], 200);
             }
 
-            $termId    = $broadsheet->term_id ?? session('admin_score_entry_term_id');
+            $termId      = $broadsheet->term_id ?? session('admin_score_entry_term_id');
             $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
-            $isSenior  = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            $isSenior    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? $schoolclass->classcategories->first()->is_senior ?? false : false;
 
             DB::transaction(function () use (
@@ -1044,14 +1122,14 @@ class AdminScoreEntryController extends Controller
         $type = $request->input('type', 'terminal');
 
         if ($type === 'mock') {
-            $broadsheet    = \App\Models\BroadsheetsMock::findOrFail($id);
+            $broadsheet     = \App\Models\BroadsheetsMock::findOrFail($id);
             $subjectclassid = $broadsheet->subjectclass_id; $staffid = $broadsheet->staff_id; $termid = $broadsheet->term_id;
-            $mockRecord    = \App\Models\BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
+            $mockRecord     = \App\Models\BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
             $broadsheet->delete();
             if ($mockRecord) { $this->updateMockClassMetrics($subjectclassid, $staffid, $termid, $mockRecord->session_id); $this->updateMockSubjectPositions($subjectclassid, $staffid, $termid, $mockRecord->session_id); }
         } else {
-            $broadsheet    = Broadsheets::findOrFail($id);
-            $subjectclassid = $broadsheet->subjectclass_id; $staffid = $broadsheet->staff_id; $termid = $broadsheet->term_id;
+            $broadsheet       = Broadsheets::findOrFail($id);
+            $subjectclassid   = $broadsheet->subjectclass_id; $staffid = $broadsheet->staff_id; $termid = $broadsheet->term_id;
             $broadsheetRecord = BroadsheetRecord::find($broadsheet->broadSheet_record_id);
             BroadsheetAssessmentScore::where('broadsheet_id', $id)->delete();
             \App\Models\BroadsheetSubAssessmentScore::where('broadsheet_id', $id)->delete();
@@ -2128,14 +2206,14 @@ class AdminScoreEntryController extends Controller
             return;
         }
 
-        // Class pos by cum
+        // Class position by cum
         $lastVal = null; $currentRank = 0;
         foreach ($allStudents->sortByDesc('cum')->values() as $idx => $b) {
             if ($lastVal === null || $b->cum != $lastVal) { $currentRank = $idx + 1; $lastVal = $b->cum; }
             DB::table('broadsheets')->where('id', $b->id)->update(['subject_position_class' => $currentRank]);
         }
 
-        // Class pos by total
+        // Class position by total
         $lastVal = null; $currentRank = 0;
         foreach ($allStudents->sortByDesc('total')->values() as $idx => $b) {
             if ($lastVal === null || $b->total != $lastVal) { $currentRank = $idx + 1; $lastVal = $b->total; }
@@ -2263,9 +2341,9 @@ class AdminScoreEntryController extends Controller
             })
             ->get(['broadsheets.total']);
 
-        $category      = $schoolclass->classcategories->first();
-        $averageTotal  = $currentBroadsheets->avg('total') ?? 0.0;
-        $gpaGrade      = $category ? $category->calculateGrade($averageTotal) : $this->getDefaultGrade($averageTotal);
+        $category        = $schoolclass->classcategories->first();
+        $averageTotal    = $currentBroadsheets->avg('total') ?? 0.0;
+        $gpaGrade        = $category ? $category->calculateGrade($averageTotal) : $this->getDefaultGrade($averageTotal);
         $termGradePoints = $currentBroadsheets->map(fn($b) => $this->getGradePoint($b->total, $isSenior));
         $gpa             = $termGradePoints->avg() ?? 0.0;
         $numSubjects     = $currentBroadsheets->count();
