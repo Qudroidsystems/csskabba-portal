@@ -1402,6 +1402,8 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
 
     // Admin Score Entry Routes
+
+    // Admin Score Entry Routes
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('score-entry')->name('score-entry.')->group(function () {
             // Main listing page
@@ -1439,6 +1441,8 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             Route::post('/bulk-export', [AdminScoreEntryController::class, 'bulkExport'])->name('bulk-export');
             Route::post('/bulk-export-pdf', [AdminScoreEntryController::class, 'bulkExportPdf'])->name('bulk-export-pdf');
 
+            // Broadsheet preview (quick-view modal on the index page)
+            Route::get('/broadsheet-preview', [AdminScoreEntryController::class, 'broadsheetPreview'])->name('broadsheet-preview');
 
             // Mock scoresheet endpoints
             Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
