@@ -1421,7 +1421,6 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             Route::post('/unlock-batch', [AdminScoreEntryController::class, 'unlockBatchScoresheets'])->name('unlock-batch');
             Route::post('/disable-teacher-editing', [AdminScoreEntryController::class, 'disableTeacherEditing'])->name('disable-teacher-editing');
             Route::post('/enable-teacher-editing', [AdminScoreEntryController::class, 'enableTeacherEditing'])->name('enable-teacher-editing');
-            Route::post('bulk-export-pdf', [AdminScoreEntryController::class, 'bulkExportPdf'])->name('admin.score-entry.bulk-export-pdf');
 
             // Get lock status
             Route::get('/lock-status', [AdminScoreEntryController::class, 'getLockStatus'])->name('lock-status');
@@ -1438,6 +1437,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
             Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
             Route::post('/bulk-export', [AdminScoreEntryController::class, 'bulkExport'])->name('bulk-export');
+            Route::post('/bulk-export-pdf', [AdminScoreEntryController::class, 'bulkExportPdf'])->name('bulk-export-pdf');
 
 
             // Mock scoresheet endpoints
