@@ -435,23 +435,70 @@ table.score-table tbody td.adm-cell {
                 <th>Grade</th>
                 <th>BF</th>
                 <th>Cum</th>
-                <th>Pos<br><span style="font-size:6.5px;opacity:.8;">(Class)</span></th>
-                <th>Pos<br><span style="font-size:6.5px;opacity:.8;">(Arm)</span></th>
+                <th>Cum<br><span style="font-size:6.5px;opacity:.8;">Grade</span></th>
+                <th>Class Pos<br><span style="font-size:6.5px;opacity:.8;">(Cum)</span></th>
+                <th>Class Pos<br><span style="font-size:6.5px;opacity:.8;">(Total)</span></th>
+                <th>Arm Pos<br><span style="font-size:6.5px;opacity:.8;">(Total)</span></th>
+                <th>Arm Pos<br><span style="font-size:6.5px;opacity:.8;">(Cum)</span></th>
                 <th>Avg</th>
             </tr>
         </thead>
         <tbody>
             @php
-                // Declared once outside the loop to avoid redeclaration errors
-                // when DomPDF renders multiple scoresheets in one request.
+                // ── Ordinal helper ───────────────────────────────────────────
+                // Declared with function_exists guard: safe when DomPDF renders
+                // multiple PDFs in a single PHP request (bulk export).
                 if (!function_exists('ordinal_pdf')) {
                     function ordinal_pdf($n) {
                         if (!$n) return '-';
-                        $s = ['th','st','nd','rd'];
-                        $v = $n % 100;
-                        return $n . ($s[($v - 20) % 10] ?? $s[min($v, 3)] ?? $s[0]);
+                        $n = (int) $n;
+                        $mod100 = $n % 100;
+                        $mod10  = $n % 10;
+                        if ($mod100 >= 11 && $mod100 <= 13) return $n . 'th';
+                        return $n . match($mod10) {
+                            1       => 'st',
+                            2       => 'nd',
+                            3       => 'rd',
+                            default => 'th',
+                        };
                     }
                 }
+
+                // ── Position fallback maps ───────────────────────────────────
+                // All four position columns may be null in the DB when
+                // subjectRegistrationStatus records are absent. We compute every
+                // rank directly from the collection so the PDF always has values.
+
+                // Helper: rank a collection by a score key, return [id => rank]
+                $rankByKey = function($items, $keyFn) {
+                    $sorted = collect($items)->sortByDesc($keyFn)->values();
+                    $map    = [];
+                    $rank   = 0;
+                    $last   = null;
+                    foreach ($sorted as $idx => $b) {
+                        $score = (float) $keyFn($b);
+                        if ($last === null || $score !== $last) {
+                            $rank = $idx + 1;
+                            $last = $score;
+                        }
+                        $map[$b->id] = $rank;
+                    }
+                    return $map;
+                };
+
+                // Class-wide rankings (all rows in this $broadsheets collection)
+                $classByTotalMap = $rankByKey($broadsheets, fn($b) => $b->total ?? 0);
+                $classByCumMap   = $rankByKey($broadsheets, fn($b) => $b->cum   ?? 0);
+
+                // Arm rankings — group by arm_id, fall back to schoolclass_id
+                $armGroups      = $broadsheets->groupBy(fn($b) => $b->arm_id ?? $b->schoolclass_id ?? 0);
+                $armByTotalMap  = [];
+                $armByCumMap    = [];
+                foreach ($armGroups as $armStudents) {
+                    $armByTotalMap += $rankByKey($armStudents, fn($b) => $b->total ?? 0);
+                    $armByCumMap   += $rankByKey($armStudents, fn($b) => $b->cum   ?? 0);
+                }
+
                 $i = 0;
             @endphp
             @foreach($broadsheets as $broadsheet)
@@ -469,8 +516,29 @@ table.score-table tbody td.adm-cell {
                     in_array($grade, ['D','D7','E8'])      => 'g-d',
                     default                                => 'g-f',
                 };
-                $pos    = $broadsheet->position ?? null;
-                $armPos = $broadsheet->arm_position ?? null;
+
+                // DB value preferred; collection-computed rank as fallback
+                $posClassCum   = ($broadsheet->position         ?? null) ?: ($classByCumMap[$broadsheet->id]  ?? null);
+                $posClassTotal = ($broadsheet->position_total   ?? null) ?: ($classByTotalMap[$broadsheet->id] ?? null);
+                $posArmTotal   = ($broadsheet->arm_position     ?? null) ?: ($armByTotalMap[$broadsheet->id]   ?? null);
+                $posArmCum     = ($broadsheet->arm_position_cum ?? null) ?: ($armByCumMap[$broadsheet->id]     ?? null);
+
+                // Cumulative grade
+                $cum     = (float)($broadsheet->cum ?? 0);
+                $cumGrade = match(true) {
+                    $cum >= 70 => 'A',
+                    $cum >= 60 => 'B',
+                    $cum >= 50 => 'C',
+                    $cum >= 40 => 'D',
+                    default    => 'F',
+                };
+                $cumGradeClass = match($cumGrade) {
+                    'A'     => 'g-a',
+                    'B'     => 'g-b',
+                    'C'     => 'g-c',
+                    'D'     => 'g-d',
+                    default => 'g-f',
+                };
             @endphp
             <tr>
                 <td>{{ ++$i }}</td>
@@ -486,17 +554,36 @@ table.score-table tbody td.adm-cell {
                 <td style="font-weight: bold; color: #1e3a5f;">{{ number_format($broadsheet->total ?? 0, 1) }}</td>
                 <td><span class="grade-chip {{ $gradeClass }}">{{ $grade }}</span></td>
                 <td style="color: #64748b;">{{ number_format($broadsheet->bf ?? 0, 1) }}</td>
-                <td style="font-weight: bold;">{{ number_format($broadsheet->cum ?? 0, 1) }}</td>
+                <td style="font-weight: bold;">{{ number_format($cum, 1) }}</td>
+                <td><span class="grade-chip {{ $cumGradeClass }}">{{ $cumGrade }}</span></td>
+                {{-- Class Pos (Cum) --}}
                 <td>
-                    @if($pos)
-                        <span class="pos-chip">{{ ordinal_pdf($pos) }}</span>
+                    @if($posClassCum)
+                        <span class="pos-chip">{{ ordinal_pdf($posClassCum) }}</span>
                     @else
                         <span style="color:#94a3b8;">-</span>
                     @endif
                 </td>
+                {{-- Class Pos (Total) --}}
                 <td>
-                    @if($armPos)
-                        <span class="pos-chip" style="background:#0891b2;">{{ ordinal_pdf($armPos) }}</span>
+                    @if($posClassTotal)
+                        <span class="pos-chip" style="background:#0f766e;">{{ ordinal_pdf($posClassTotal) }}</span>
+                    @else
+                        <span style="color:#94a3b8;">-</span>
+                    @endif
+                </td>
+                {{-- Arm Pos (Total) --}}
+                <td>
+                    @if($posArmTotal)
+                        <span class="pos-chip" style="background:#0891b2;">{{ ordinal_pdf($posArmTotal) }}</span>
+                    @else
+                        <span style="color:#94a3b8;">-</span>
+                    @endif
+                </td>
+                {{-- Arm Pos (Cum) --}}
+                <td>
+                    @if($posArmCum)
+                        <span class="pos-chip" style="background:#7c3aed;">{{ ordinal_pdf($posArmCum) }}</span>
                     @else
                         <span style="color:#94a3b8;">-</span>
                     @endif
