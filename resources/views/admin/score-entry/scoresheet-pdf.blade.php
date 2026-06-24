@@ -441,7 +441,19 @@ table.score-table tbody td.adm-cell {
             </tr>
         </thead>
         <tbody>
-            @php $i = 0; @endphp
+            @php
+                // Declared once outside the loop to avoid redeclaration errors
+                // when DomPDF renders multiple scoresheets in one request.
+                if (!function_exists('ordinal_pdf')) {
+                    function ordinal_pdf($n) {
+                        if (!$n) return '-';
+                        $s = ['th','st','nd','rd'];
+                        $v = $n % 100;
+                        return $n . ($s[($v - 20) % 10] ?? $s[min($v, 3)] ?? $s[0]);
+                    }
+                }
+                $i = 0;
+            @endphp
             @foreach($broadsheets as $broadsheet)
             @php
                 $rowTotal = 0;
@@ -459,12 +471,6 @@ table.score-table tbody td.adm-cell {
                 };
                 $pos    = $broadsheet->position ?? null;
                 $armPos = $broadsheet->arm_position ?? null;
-                function ordinal_pdf($n) {
-                    if (!$n) return '-';
-                    $s = ['th','st','nd','rd'];
-                    $v = $n % 100;
-                    return $n . ($s[($v - 20) % 10] ?? $s[min($v, 3)] ?? $s[0]);
-                }
             @endphp
             <tr>
                 <td>{{ ++$i }}</td>
