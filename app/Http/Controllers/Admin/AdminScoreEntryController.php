@@ -135,13 +135,10 @@ class AdminScoreEntryController extends Controller
             ];
 
             foreach ($subjects as $subject) {
-                // Student count for this subject/class — already computed
-                // accurately in getTeacherSubjects(), reuse it here.
                 $studentCount = $subject->student_count;
-
-                $expectedEntries       = $studentCount;
-                $actualTerminalEntries = $subject->terminal_entries_count; // fully-scored students only
-                $actualMockEntries     = $subject->mock_entries_count;
+                $expectedEntries = $studentCount;
+                $actualTerminalEntries = $subject->terminal_entries_count;
+                $actualMockEntries = $subject->mock_entries_count;
 
                 if ($subject->has_terminal_scores) {
                     $teacherStats['completed_terminal']++;
@@ -174,8 +171,6 @@ class AdminScoreEntryController extends Controller
                 ];
 
                 $teacherStats['classes'][] = $subject->class_name;
-
-                // Update global stats
                 $stats['total_expected_entries'] += $expectedEntries;
                 $stats['total_actual_entries'] += $actualTerminalEntries;
             }
@@ -189,7 +184,6 @@ class AdminScoreEntryController extends Controller
             $stats['pending_scoresheets'] += $teacherStats['pending_terminal'];
             $stats['mock_completed'] += $teacherStats['completed_mock'];
             $stats['mock_pending'] += $teacherStats['pending_mock'];
-
             $stats['teacher_stats'][] = $teacherStats;
         }
 
@@ -198,14 +192,10 @@ class AdminScoreEntryController extends Controller
         foreach ($classGroups as $classId => $subjects) {
             $className = $subjects->first()->class_name;
             $studentCount = $subjects->first()->student_count;
-
             $totalSubjects = $subjects->count();
             $completedSubjects = $subjects->where('entry_status', 'complete')->count();
-
-            // Entry completion for this class — sum the already-accurate
-            // per-subject fully-entered counts, not raw broadsheet rows.
             $classExpectedEntries = $totalSubjects * $studentCount;
-            $classActualEntries   = $subjects->sum('terminal_entries_count');
+            $classActualEntries = $subjects->sum('terminal_entries_count');
 
             $stats['class_stats'][] = [
                 'class_name' => $className,
@@ -229,12 +219,10 @@ class AdminScoreEntryController extends Controller
             return $b['completion_rate'] <=> $a['completion_rate'];
         });
 
-        // Calculate overall completion rate
         $stats['completion_rate'] = $stats['total_subjects'] > 0
             ? round(($stats['completed_scoresheets'] / $stats['total_subjects']) * 100, 1)
             : 0;
 
-        // Calculate entry completion rate (based on actual student entries vs expected)
         $stats['entry_completion_rate'] = $stats['total_expected_entries'] > 0
             ? round(($stats['total_actual_entries'] / $stats['total_expected_entries']) * 100, 1)
             : 0;
@@ -242,6 +230,9 @@ class AdminScoreEntryController extends Controller
         return $stats;
     }
 
+    /**
+     * Get teacher subjects with enhanced assessment-level progress tracking
+     */
     protected function getTeacherSubjects($termId, $sessionId)
     {
         $subjects = SubjectTeacher::query()
@@ -285,19 +276,19 @@ class AdminScoreEntryController extends Controller
             ->orderBy('schoolarm.arm')
             ->get();
 
-        // ---------------------------------------------------------------
-        // Pre-compute the required-assessment count per class-category
-        // ONCE, instead of querying it inside the per-subject map() below.
-        // This avoids an N+1 query across every subject/teacher row.
-        // ---------------------------------------------------------------
+        // Pre-compute assessment data per class category
         $categoryIds = $subjects->pluck('classcategoryid')->filter()->unique()->values();
-        $assessmentCountsByCategory = Assessment::whereIn('classcategory_id', $categoryIds)
-            ->get(['id', 'classcategory_id'])
-            ->groupBy('classcategory_id')
-            ->map(fn ($rows) => $rows->count());
 
-        return $subjects->map(function ($item) use ($termId, $sessionId, $assessmentCountsByCategory) {
-            // Student count for this class/subject (the denominator for %)
+        $assessmentsByCategory = Assessment::whereIn('classcategory_id', $categoryIds)
+            ->get(['id', 'classcategory_id', 'name', 'max_score'])
+            ->groupBy('classcategory_id');
+
+        $assessmentCountsByCategory = $assessmentsByCategory->map(fn ($rows) => $rows->count());
+        $assessmentIdsByCategory = $assessmentsByCategory->map(fn ($rows) => $rows->pluck('id')->toArray());
+        $assessmentDetailsByCategory = $assessmentsByCategory->map(fn ($rows) => $rows->toArray());
+
+        return $subjects->map(function ($item) use ($termId, $sessionId, $assessmentCountsByCategory, $assessmentIdsByCategory, $assessmentDetailsByCategory) {
+            // Student count for this class/subject
             $studentCount = DB::table('studentclass')
                 ->where('sessionid', $sessionId)
                 ->where('termid', $termId)
@@ -308,22 +299,27 @@ class AdminScoreEntryController extends Controller
 
             $requiredAssessments = (int) ($assessmentCountsByCategory[$item->classcategoryid] ?? 0);
             $item->required_assessment_count = $requiredAssessments;
+            $item->assessment_ids = $assessmentIdsByCategory[$item->classcategoryid] ?? [];
+            $item->assessment_details = $assessmentDetailsByCategory[$item->classcategoryid] ?? [];
 
-            // ---------------------------------------------------------------
-            // TERMINAL completion — a student only counts as "entered" when
-            // EVERY required assessment for the class category has a score
-            // > 0 recorded against their broadsheet row. Empty stub rows
-            // (created by firstOrCreate elsewhere in the app) no longer
-            // inflate the percentage.
-            // ---------------------------------------------------------------
+            // Get detailed assessment progress for each assessment
+            $assessmentProgress = $this->getAssessmentProgress(
+                $item->subjectclass_id,
+                $termId,
+                $sessionId,
+                $item->assessment_ids
+            );
+            $item->assessment_progress = $assessmentProgress;
+
+            // Terminal completion stats - now properly checking ALL assessments
             $terminalStats = $this->computeTerminalCompletionStats(
                 $item->subjectclass_id, $termId, $sessionId, $requiredAssessments
             );
 
-            $item->terminal_entries_count = $terminalStats['fully_entered'];    // fully-scored students
-            $item->terminal_partial_count = $terminalStats['partially_entered']; // started but incomplete
+            $item->terminal_entries_count = $terminalStats['fully_entered'];
+            $item->terminal_partial_count = $terminalStats['partially_entered'];
             $item->terminal_started_count = $terminalStats['fully_entered'] + $terminalStats['partially_entered'];
-            $item->has_terminal_scores    = $terminalStats['fully_entered'] > 0;
+            $item->has_terminal_scores = $terminalStats['fully_entered'] > 0;
 
             $item->entry_percentage = $studentCount > 0
                 ? round(($terminalStats['fully_entered'] / $studentCount) * 100, 1)
@@ -333,9 +329,7 @@ class AdminScoreEntryController extends Controller
                 $terminalStats['fully_entered'], $item->terminal_started_count, $studentCount
             );
 
-            // ---------------------------------------------------------------
-            // MOCK completion — single `exam` field, so "entered" = exam > 0.
-            // ---------------------------------------------------------------
+            // Mock completion
             $mockEnteredCount = \App\Models\BroadsheetsMock::where('subjectclass_id', $item->subjectclass_id)
                 ->where('staff_id', $item->teacher_id)
                 ->where('term_id', $item->termid)
@@ -348,8 +342,8 @@ class AdminScoreEntryController extends Controller
                 ->count();
 
             $item->mock_entries_count = $mockEnteredCount;
-            $item->has_mock_scores    = $mockEnteredCount > 0;
-            $item->mock_percentage    = $studentCount > 0
+            $item->has_mock_scores = $mockEnteredCount > 0;
+            $item->mock_percentage = $studentCount > 0
                 ? round(($mockEnteredCount / $studentCount) * 100, 1)
                 : 0;
             $item->mock_status = $this->resolveEntryStatus($mockEnteredCount, $mockStartedCount, $studentCount);
@@ -359,18 +353,76 @@ class AdminScoreEntryController extends Controller
     }
 
     /**
+     * Get detailed progress for each assessment
+     */
+    protected function getAssessmentProgress($subjectclassId, $termId, $sessionId, $assessmentIds)
+    {
+        if (empty($assessmentIds)) {
+            return [];
+        }
+
+        $students = DB::table('studentclass')
+            ->where('sessionid', $sessionId)
+            ->where('termid', $termId)
+            ->where('schoolclassid', function($query) use ($subjectclassId) {
+                $query->select('schoolclassid')
+                    ->from('subjectclass')
+                    ->where('id', $subjectclassId);
+            })
+            ->pluck('studentId')
+            ->toArray();
+
+        $totalStudents = count($students);
+
+        $progress = [];
+        foreach ($assessmentIds as $assessmentId) {
+            $assessment = Assessment::find($assessmentId);
+            if (!$assessment) continue;
+
+            // Count students who have a score > 0 for this assessment
+            $scoredCount = DB::table('broadsheets')
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                ->join('broadsheet_assessment_scores', 'broadsheet_assessment_scores.broadsheet_id', '=', 'broadsheets.id')
+                ->where('broadsheets.subjectclass_id', $subjectclassId)
+                ->where('broadsheets.term_id', $termId)
+                ->where('broadsheet_records.session_id', $sessionId)
+                ->where('broadsheet_assessment_scores.assessment_id', $assessmentId)
+                ->where('broadsheet_assessment_scores.score', '>', 0)
+                ->distinct('broadsheet_records.student_id')
+                ->count('broadsheet_records.student_id');
+
+            $progress[] = [
+                'assessment_id' => $assessmentId,
+                'assessment_name' => $assessment->name,
+                'max_score' => $assessment->max_score,
+                'scored_count' => $scoredCount,
+                'total_students' => $totalStudents,
+                'percentage' => $totalStudents > 0 ? round(($scoredCount / $totalStudents) * 100, 1) : 0,
+                'status' => $scoredCount >= $totalStudents ? 'complete' : ($scoredCount > 0 ? 'partial' : 'not_started')
+            ];
+        }
+
+        return $progress;
+    }
+
+    /**
      * For a given subjectclass/term/session, count students who are:
      *  - "fully entered"     -> score > 0 against EVERY required assessment
      *  - "partially entered" -> score > 0 against at least one, but not all
-     *
-     * Implemented as a single aggregated query (no N+1 per student).
      */
     protected function computeTerminalCompletionStats($subjectclassId, $termId, $sessionId, $requiredAssessments)
     {
-        if ($requiredAssessments <= 0) {
-            // No assessment structure configured for this class category.
-            // Fall back to "broadsheet total > 0" so the UI doesn't silently
-            // show 0% forever for a misconfigured/legacy category.
+        // Get all assessment IDs for this class category
+        $assessmentIds = DB::table('assessments')
+            ->join('schoolclass_classcategory', 'schoolclass_classcategory.classcategory_id', '=', 'assessments.classcategory_id')
+            ->join('schoolclass', 'schoolclass.id', '=', 'schoolclass_classcategory.schoolclass_id')
+            ->join('subjectclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
+            ->where('subjectclass.id', $subjectclassId)
+            ->pluck('assessments.id')
+            ->toArray();
+
+        if (empty($assessmentIds)) {
+            // Fall back to total > 0 for legacy configurations
             $fullyEntered = Broadsheets::where('broadsheets.subjectclass_id', $subjectclassId)
                 ->where('broadsheets.term_id', $termId)
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
@@ -381,29 +433,62 @@ class AdminScoreEntryController extends Controller
             return ['fully_entered' => $fullyEntered, 'partially_entered' => 0];
         }
 
-        // For each broadsheet row, count DISTINCT assessment_id with score > 0
-        $perStudentScoredCounts = DB::table('broadsheets')
+        $totalAssessments = count($assessmentIds);
+
+        // Get all students in this class
+        $students = DB::table('studentclass')
+            ->where('sessionid', $sessionId)
+            ->where('termid', $termId)
+            ->where('schoolclassid', function($query) use ($subjectclassId) {
+                $query->select('schoolclassid')
+                    ->from('subjectclass')
+                    ->where('id', $subjectclassId);
+            })
+            ->pluck('studentId')
+            ->toArray();
+
+        if (empty($students)) {
+            return ['fully_entered' => 0, 'partially_entered' => 0];
+        }
+
+        // For each student, count how many assessments they have scores for
+        $studentScores = DB::table('broadsheets')
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-            ->leftJoin('broadsheet_assessment_scores', function ($join) {
+            ->leftJoin('broadsheet_assessment_scores', function($join) use ($assessmentIds) {
                 $join->on('broadsheet_assessment_scores.broadsheet_id', '=', 'broadsheets.id')
+                     ->whereIn('broadsheet_assessment_scores.assessment_id', $assessmentIds)
                      ->where('broadsheet_assessment_scores.score', '>', 0);
             })
             ->where('broadsheets.subjectclass_id', $subjectclassId)
             ->where('broadsheets.term_id', $termId)
             ->where('broadsheet_records.session_id', $sessionId)
-            ->select('broadsheets.id', DB::raw('COUNT(DISTINCT broadsheet_assessment_scores.assessment_id) as scored_count'))
-            ->groupBy('broadsheets.id')
-            ->get();
+            ->whereIn('broadsheet_records.student_id', $students)
+            ->select(
+                'broadsheet_records.student_id',
+                DB::raw('COUNT(DISTINCT broadsheet_assessment_scores.assessment_id) as scored_count')
+            )
+            ->groupBy('broadsheet_records.student_id')
+            ->get()
+            ->keyBy('student_id');
 
-        $fullyEntered     = $perStudentScoredCounts->where('scored_count', '>=', $requiredAssessments)->count();
-        $partiallyEntered = $perStudentScoredCounts->where('scored_count', '>', 0)
-            ->where('scored_count', '<', $requiredAssessments)->count();
+        $fullyEntered = 0;
+        $partiallyEntered = 0;
+
+        foreach ($students as $studentId) {
+            $scoredCount = isset($studentScores[$studentId]) ? (int)$studentScores[$studentId]->scored_count : 0;
+
+            if ($scoredCount >= $totalAssessments) {
+                $fullyEntered++;
+            } elseif ($scoredCount > 0) {
+                $partiallyEntered++;
+            }
+        }
 
         return ['fully_entered' => $fullyEntered, 'partially_entered' => $partiallyEntered];
     }
 
     /**
-     * Resolve a 3-state status for progress badges: not_started, partial, complete.
+     * Resolve a 3-state status for progress badges
      */
     protected function resolveEntryStatus($fullyEntered, $startedCount, $studentCount)
     {
@@ -1295,11 +1380,6 @@ class AdminScoreEntryController extends Controller
     // BROADSHEET PREVIEW — compact payload for the index-page modal
     // =========================================================================
 
-    /**
-     * Returns a lightweight broadsheet preview for a given subject/teacher/
-     * term/session, intended for the quick-view modal on the index page.
-     * Supports both terminal and mock types.
-     */
     public function broadsheetPreview(Request $request)
     {
         $request->validate([
@@ -1404,6 +1484,7 @@ class AdminScoreEntryController extends Controller
                 'scored_count'   => $scoredCount,
                 'fully_entered'  => $requiredAssessments > 0 ? $scoredCount >= $requiredAssessments : ((float) $b->total > 0),
                 'is_locked'      => (bool) $b->is_locked,
+                'assessment_scores' => $b->assessmentScores->keyBy('assessment_id')->map(fn($s) => (float)$s->score)->toArray(),
             ];
         });
 
@@ -1434,8 +1515,6 @@ class AdminScoreEntryController extends Controller
             'rows' => $rows->values(),
         ]);
     }
-
-
 
     public function export(Request $request)
     {
@@ -2684,7 +2763,6 @@ class AdminScoreEntryController extends Controller
         @rmdir($dir);
     }
 
-
     // =========================================================================
     // BULK EXPORT PDF — multiple scoresheets → PDF(s), zipped when > 1
     // =========================================================================
@@ -2710,7 +2788,7 @@ class AdminScoreEntryController extends Controller
                 mkdir($tempDir, 0755, true);
             }
 
-            $pdfFiles  = [];   // [['path' => ..., 'filename' => ...]]
+            $pdfFiles  = [];
             $generated = 0;
 
             foreach ($subjects as $subjectData) {
@@ -2720,8 +2798,7 @@ class AdminScoreEntryController extends Controller
                 $termId         = (int) $subjectData['term_id'];
                 $sessionId      = (int) $subjectData['session_id'];
 
-                // ── Skip if no scores exist ───────────────────────────────────
-                $hasScores = \Illuminate\Support\Facades\DB::table('broadsheets')
+                $hasScores = DB::table('broadsheets')
                     ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
                     ->where('broadsheets.subjectclass_id', $subjectclassId)
                     ->where('broadsheets.term_id', $termId)
@@ -2729,13 +2806,10 @@ class AdminScoreEntryController extends Controller
                     ->exists();
 
                 if (!$hasScores) {
-                    \Illuminate\Support\Facades\Log::info(
-                        "[AdminBulkExportPdf] skipping subjectclass {$subjectclassId} — no scores"
-                    );
+                    Log::info("[AdminBulkExportPdf] skipping subjectclass {$subjectclassId} — no scores");
                     continue;
                 }
 
-                // ── Fetch broadsheets ─────────────────────────────────────────
                 $broadsheets = $this->getBroadsheets(
                     $teacherId, $termId, $sessionId, $schoolclassId, $subjectclassId
                 );
@@ -2744,22 +2818,19 @@ class AdminScoreEntryController extends Controller
                     continue;
                 }
 
-                // ── Load assessments ──────────────────────────────────────────
-                $schoolclass = \App\Models\Schoolclass::with('classcategories')->find($schoolclassId);
+                $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
                 $assessments = collect();
                 if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                     $categoryIds = $schoolclass->classcategories->pluck('id');
-                    $assessments = \App\Models\Assessment::whereIn('classcategory_id', $categoryIds)
+                    $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
                         ->with('subAssessments')
                         ->orderBy('id')
                         ->get();
                 }
 
-                // ── Teacher name ──────────────────────────────────────────────
-                $teacher     = \App\Models\User::find($teacherId);
+                $teacher     = User::find($teacherId);
                 $teacherName = $teacher ? $teacher->name : '';
 
-                // ── Build a clean filename ────────────────────────────────────
                 $first       = $broadsheets->first();
                 $subjectSlug = preg_replace('/[^a-zA-Z0-9-]/', '_', $first->subject ?? 'subject');
                 $classSlug   = preg_replace('/[^a-zA-Z0-9-]/', '_',
@@ -2770,9 +2841,8 @@ class AdminScoreEntryController extends Controller
 
                 $filenameInZip = "admin_{$subjectSlug}_{$classSlug}_{$termSlug}_{$sessionSlug}_scoresheet.pdf";
 
-                // ── Render PDF ────────────────────────────────────────────────
                 try {
-                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+                    $pdf = Pdf::loadView(
                         'admin.score-entry.scoresheet-pdf',
                         [
                             'broadsheets' => $broadsheets,
@@ -2783,7 +2853,6 @@ class AdminScoreEntryController extends Controller
                         ]
                     );
 
-                    // Landscape for wider assessment columns, portrait when few assessments
                     $orientation = $assessments->count() > 4 ? 'landscape' : 'portrait';
                     $pdf->setPaper('a4', $orientation);
 
@@ -2795,15 +2864,11 @@ class AdminScoreEntryController extends Controller
                     $generated++;
 
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error(
-                        "[AdminBulkExportPdf] PDF render failed for subjectclass {$subjectclassId}: "
-                        . $e->getMessage()
-                    );
+                    Log::error("[AdminBulkExportPdf] PDF render failed for subjectclass {$subjectclassId}: " . $e->getMessage());
                     continue;
                 }
             }
 
-            // ── Nothing generated ─────────────────────────────────────────────
             if ($generated === 0) {
                 foreach ($pdfFiles as $f) { @unlink($f['path']); }
                 return response()->json([
@@ -2812,7 +2877,6 @@ class AdminScoreEntryController extends Controller
                 ], 422);
             }
 
-            // ── Single PDF — just download directly ───────────────────────────
             if ($isSingle && count($pdfFiles) === 1) {
                 $file        = $pdfFiles[0];
                 $pdfContent  = file_get_contents($file['path']);
@@ -2825,7 +2889,6 @@ class AdminScoreEntryController extends Controller
                 ]);
             }
 
-            // ── Multiple PDFs — zip them ──────────────────────────────────────
             $zipName = 'admin_scoresheets_pdf_' . now()->format('Y-m-d_His') . '.zip';
             $zipPath = $tempDir . '/' . $zipName;
 
@@ -2843,7 +2906,6 @@ class AdminScoreEntryController extends Controller
             }
             $zip->close();
 
-            // Clean up individual temp PDFs
             foreach ($pdfFiles as $f) { @unlink($f['path']); }
 
             return response()->download($zipPath, $zipName, [
@@ -2852,9 +2914,7 @@ class AdminScoreEntryController extends Controller
             ])->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error(
-                'Admin bulkExportPdf error: ' . $e->getMessage() . "\n" . $e->getTraceAsString()
-            );
+            Log::error('Admin bulkExportPdf error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             foreach (($pdfFiles ?? []) as $f) { @unlink($f['path']); }
             return response()->json([
                 'success' => false,

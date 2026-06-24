@@ -237,7 +237,9 @@
 .status-badge {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    transition: all 0.2s ease;
 }
+.status-badge:hover { transform: scale(1.05); }
 .status-badge.complete { background: #dcfce7; color: #15803d; }
 .status-badge.good     { background: #dbeafe; color: #1d4ed8; }
 .status-badge.partial  { background: #fef3c7; color: #b45309; }
@@ -253,7 +255,7 @@
 /* Teacher Grid */
 .teachers-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
     gap: 24px;
 }
 .teacher-card {
@@ -282,7 +284,7 @@
 }
 .teacher-name { font-weight: 700; color: var(--c-text); font-size: 18px; margin: 0 0 6px; }
 .teacher-stats { display: flex; gap: 16px; font-size: 12px; color: var(--c-muted); flex-wrap: wrap; }
-.teacher-card-body { padding: 0 20px; max-height: 540px; overflow-y: auto; }
+.teacher-card-body { padding: 0 20px; max-height: 600px; overflow-y: auto; }
 
 /* Subject Items */
 .subject-item {
@@ -303,6 +305,9 @@
     font-size: 11px; color: var(--c-muted); font-family: monospace;
     background: #f1f5f9; padding: 2px 8px; border-radius: 12px;
 }
+.subject-class {
+    font-size: 12px; color: var(--c-sub); margin-top: 2px;
+}
 .badge-terminal, .badge-mock, .badge-open {
     padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
     display: inline-flex; align-items: center; gap: 5px;
@@ -310,17 +315,37 @@
 .badge-terminal { background: #dcfce7; color: #15803d; }
 .badge-mock     { background: #fef3c7; color: #b45309; }
 .badge-open     { background: #dbeafe; color: #1d4ed8; }
-.btn-score-group { display: flex; gap: 10px; margin-top: 12px; }
+.btn-score-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .btn-score {
     flex: 1; padding: 8px 12px; border-radius: 8px;
     font-size: 12px; font-weight: 600; text-decoration: none;
     text-align: center; transition: all var(--tr);
     display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    min-width: 80px;
 }
-.btn-terminal-score { background: #10b981; color: #fff; }
-.btn-terminal-score:hover { background: #059669; transform: translateY(-2px); }
-.btn-mock-score { background: #fef3c7; color: #b45309; }
-.btn-mock-score:hover { background: #fde68a; transform: translateY(-2px); }
+.btn-terminal-score { background: #10b981; color: #fff; border: none; }
+.btn-terminal-score:hover { background: #059669; transform: translateY(-2px); color: #fff; }
+.btn-mock-score { background: #fef3c7; color: #b45309; border: none; }
+.btn-mock-score:hover { background: #fde68a; transform: translateY(-2px); color: #b45309; }
+.btn-preview-score {
+    flex: 0.5; padding: 8px 12px; border-radius: 8px; font-size: 12px;
+    font-weight: 600; text-decoration: none; text-align: center;
+    transition: all var(--tr); display: inline-flex; align-items: center;
+    justify-content: center; gap: 4px; background: #fff; color: #2563eb;
+    border: 1.5px solid #2563eb; min-width: 50px;
+}
+.btn-preview-score:hover { background: #2563eb; color: #fff; transform: translateY(-2px); }
+
+/* Assessment Progress Badges */
+.assessment-badge {
+    font-size: 10px; padding: 4px 10px; border-radius: 12px;
+    cursor: help; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.assessment-badge:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.assessment-badge.complete { background: #dcfce7; color: #15803d; }
+.assessment-badge.partial  { background: #fef3c7; color: #b45309; }
+.assessment-badge.not_started { background: #f1f5f9; color: #64748b; }
 
 /* Bulk Export Toolbar */
 #bulkExportToolbar {
@@ -383,12 +408,32 @@
     background: #10b981; animation: pulse2 2s infinite; flex-shrink: 0;
 }
 
+/* Preview Modal */
+#previewContent .table td, #previewContent .table th {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+#previewContent .table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+#previewContent .table .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+}
+.modal-xl { max-width: 95%; }
+
 /* Responsive */
 @media (max-width: 768px) {
     .teachers-grid { grid-template-columns: 1fr; }
     .sc-value { font-size: 20px; }
     .hero-section { padding: 20px; }
     .data-table thead th, .data-table td { padding: 6px 8px; font-size: 10px; }
+    .btn-score-group { flex-direction: column; }
+    .btn-score { width: 100%; }
+    .btn-preview-score { width: 100%; }
 }
 </style>
 
@@ -699,6 +744,7 @@
                                                     <th style="padding: 10px 12px;">Students</th>
                                                     <th style="padding: 10px 12px;">Entries</th>
                                                     <th style="padding: 10px 12px;">Progress</th>
+                                                    <th style="padding: 10px 12px;">Assessments</th>
                                                     <th style="padding: 10px 12px;">Mock</th>
                                                     <th style="padding: 10px 12px;">Action</th>
                                                 </tr>
@@ -723,6 +769,22 @@
                                                         </div>
                                                     </td>
                                                     <td>
+                                                        @if(isset($subject->assessment_progress) && count($subject->assessment_progress) > 0)
+                                                            <div class="d-flex flex-wrap gap-1">
+                                                                @foreach($subject->assessment_progress as $assessment)
+                                                                    <span class="assessment-badge {{ $assessment['status'] }}"
+                                                                          data-bs-toggle="tooltip"
+                                                                          title="{{ $assessment['assessment_name'] }}: {{ $assessment['percentage'] }}% ({{ $assessment['scored_count'] }}/{{ $assessment['total_students'] }})">
+                                                                        <i class="ri-{{ $assessment['status'] == 'complete' ? 'check-line' : ($assessment['status'] == 'partial' ? 'time-line' : 'add-line') }}"></i>
+                                                                        {{ Str::limit($assessment['assessment_name'], 8) }}
+                                                                    </span>
+                                                                @endforeach
+                                                            </div>
+                                                        @else
+                                                            <span class="text-muted">No assessments</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
                                                         @if($subject->has_mock_scores)
                                                             <span class="badge-mock"><i class="ri-check-line"></i> Entered</span>
                                                         @else
@@ -730,13 +792,18 @@
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        <div class="d-flex gap-2">
+                                                        <div class="d-flex gap-2 flex-wrap">
                                                             <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}" class="btn-score btn-terminal-score" style="padding: 4px 12px; font-size: 11px;">
                                                                 <i class="ri-file-edit-line"></i> Terminal
                                                             </a>
                                                             <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'mock']) }}" class="btn-score btn-mock-score" style="padding: 4px 12px; font-size: 11px;">
                                                                 <i class="ri-flask-line"></i> Mock
                                                             </a>
+                                                            <button type="button" class="btn-preview-score" style="padding: 4px 12px; font-size: 11px;"
+                                                                    onclick="event.stopPropagation(); previewBroadsheet({{ $subject->subjectclass_id }}, {{ $subject->teacher_id }}, {{ $subject->termid }}, {{ $subject->sessionid }}, 'terminal')"
+                                                                    data-bs-toggle="tooltip" title="Preview Scoresheet">
+                                                                <i class="ri-eye-line"></i>
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -903,30 +970,79 @@
                                 <div class="subject-name">
                                     {{ $subject->subject_name }}
                                     <span class="subject-code">{{ $subject->subject_code }}</span>
-                                    <span class="status-badge {{ $subject->entry_percentage >= 100 ? 'complete' : ($subject->entry_percentage >= 75 ? 'good' : ($subject->entry_percentage >= 50 ? 'partial' : 'low')) }}">{{ $subject->entry_percentage }}%</span>
+                                    <span class="status-badge {{ $subject->entry_percentage >= 100 ? 'complete' : ($subject->entry_percentage >= 75 ? 'good' : ($subject->entry_percentage >= 50 ? 'partial' : 'low')) }}">
+                                        {{ $subject->entry_percentage }}%
+                                    </span>
                                 </div>
-                                <div class="subject-class"><i class="ri-group-line"></i> {{ $subject->class_name }} · {{ $subject->student_count }} students</div>
+                                <div class="subject-class">
+                                    <i class="ri-group-line"></i> {{ $subject->class_name }} · {{ $subject->student_count }} students
+                                    @if($subject->required_assessment_count > 0)
+                                        <span class="badge bg-light text-dark ms-2" data-bs-toggle="tooltip" title="Required assessments for this class">
+                                            <i class="ri-file-list-line"></i> {{ $subject->required_assessment_count }} assessments
+                                        </span>
+                                    @endif
+                                </div>
+
+                                {{-- ASSESSMENT PROGRESS BADGES --}}
+                                @if(isset($subject->assessment_progress) && count($subject->assessment_progress) > 0)
+                                    <div class="d-flex flex-wrap gap-1 mt-2">
+                                        @foreach($subject->assessment_progress as $assessment)
+                                            @php
+                                                $statusClass = $assessment['status'] == 'complete' ? 'complete' : ($assessment['status'] == 'partial' ? 'partial' : 'not_started');
+                                                $statusIcon = $assessment['status'] == 'complete' ? 'ri-check-line' : ($assessment['status'] == 'partial' ? 'ri-time-line' : 'ri-add-line');
+                                            @endphp
+                                            <span class="assessment-badge {{ $statusClass }}"
+                                                  data-bs-toggle="tooltip"
+                                                  title="{{ $assessment['assessment_name'] }}: {{ $assessment['percentage'] }}% ({{ $assessment['scored_count'] }}/{{ $assessment['total_students'] }} students)">
+                                                <i class="{{ $statusIcon }}"></i>
+                                                {{ Str::limit($assessment['assessment_name'], 12) }}
+                                                <span class="ms-1 opacity-75">{{ $assessment['percentage'] }}%</span>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
                                 <div class="d-flex gap-2 mt-2 flex-wrap">
                                     @if($subject->entry_percentage >= 100)
-                                        <span class="badge-terminal"><i class="ri-check-line"></i> Done ({{ $subject->terminal_entries_count }}/{{ $subject->student_count }})</span>
+                                        <span class="badge-terminal"><i class="ri-check-line"></i> Complete ({{ $subject->terminal_entries_count }}/{{ $subject->student_count }})</span>
                                     @elseif($subject->entry_percentage > 0)
                                         <span class="badge-open"><i class="ri-time-line"></i> Partial ({{ $subject->terminal_entries_count }}/{{ $subject->student_count }})</span>
                                     @else
                                         <span class="badge-open"><i class="ri-add-line"></i> Not Started</span>
                                     @endif
+                                    @if($subject->terminal_partial_count > 0)
+                                        <span class="badge bg-warning text-dark" data-bs-toggle="tooltip" title="Students with some but not all assessments entered">
+                                            <i class="ri-information-line"></i> {{ $subject->terminal_partial_count }} partial
+                                        </span>
+                                    @endif
                                 </div>
+
                                 <div class="mt-2">
                                     <div class="progress-bar-custom" style="width: 100%;">
-                                        <div class="progress-fill {{ $subject->entry_percentage >= 75 ? 'high' : ($subject->entry_percentage >= 50 ? 'medium' : 'low') }}" style="width: {{ $subject->entry_percentage }}%;"></div>
+                                        <div class="progress-fill {{ $subject->entry_percentage >= 75 ? 'high' : ($subject->entry_percentage >= 50 ? 'medium' : 'low') }}"
+                                             style="width: {{ $subject->entry_percentage }}%;"
+                                             data-bs-toggle="tooltip"
+                                             title="Entry Progress: {{ $subject->entry_percentage }}% ({{ $subject->terminal_entries_count }}/{{ $subject->student_count }} students fully entered)">
+                                        </div>
                                     </div>
                                 </div>
+
                                 <div class="btn-score-group" onclick="event.stopPropagation()">
-                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}" class="btn-score btn-terminal-score">
+                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'terminal']) }}"
+                                       class="btn-score btn-terminal-score">
                                         <i class="ri-file-edit-line"></i> Terminal
                                     </a>
-                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'mock']) }}" class="btn-score btn-mock-score">
+                                    <a href="{{ route('admin.score-entry.scoresheet', [$subject->subjectclass_id, $subject->teacher_id, $subject->termid, $subject->sessionid, 'mock']) }}"
+                                       class="btn-score btn-mock-score">
                                         <i class="ri-flask-line"></i> Mock
                                     </a>
+                                    <button type="button"
+                                            class="btn-preview-score"
+                                            onclick="event.stopPropagation(); previewBroadsheet({{ $subject->subjectclass_id }}, {{ $subject->teacher_id }}, {{ $subject->termid }}, {{ $subject->sessionid }}, 'terminal')"
+                                            data-bs-toggle="tooltip"
+                                            title="Preview Scoresheet">
+                                        <i class="ri-eye-line"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -955,6 +1071,63 @@
 </div>{{-- /.page-content --}}
 </div>{{-- /.main-content --}}
 
+{{-- ═══════════════════════════════════════════════════════════════════════════ --}}
+{{-- MODALS                                                                   --}}
+{{-- ═══════════════════════════════════════════════════════════════════════════ --}}
+
+{{-- Broadsheet Preview Modal --}}
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="ri-file-list-line me-2"></i>
+                    <span id="previewTitle">Broadsheet Preview</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading scoresheet...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" id="openFullScoresheet" class="btn btn-primary" target="_blank">
+                    <i class="ri-file-edit-line"></i> Open Full Scoresheet
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Class Details Modal --}}
+<div class="modal fade" id="classDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="ri-group-line me-2"></i>
+                    <span id="classDetailsTitle">Class Details</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="classDetailsBody">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════════════════════════ --}}
+{{-- JAVASCRIPT                                                                --}}
+{{-- ═══════════════════════════════════════════════════════════════════════════ --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ── Expandable Rows ──────────────────────────────────────────────────────────
@@ -1035,7 +1208,6 @@ const adminBulkExport = (() => {
         updateToolbar();
     }
 
-    // Collect selected subject data from checked checkboxes
     function getSelectedSubjects() {
         return checkedBoxes().map(cb => {
             const row = cb.closest('.subject-item');
@@ -1049,7 +1221,6 @@ const adminBulkExport = (() => {
         });
     }
 
-    // Build and submit a hidden POST form (triggers file download)
     function postForm(url, subjects, btnId, loadingLabel, resetLabel) {
         if (subjects.length === 0) {
             Swal.fire({ icon: 'warning', title: 'Nothing selected', text: 'Please select at least one scoresheet to export.', confirmButtonColor: '#2563eb' });
@@ -1078,14 +1249,12 @@ const adminBulkExport = (() => {
         document.body.appendChild(form);
         form.submit();
 
-        // Re-enable after delay (download triggers in bg)
         setTimeout(() => {
             if (btn) { btn.disabled = false; btn.innerHTML = resetLabel; }
             if (document.body.contains(form)) document.body.removeChild(form);
         }, 8000);
     }
 
-    // XLSX ZIP export
     function export_() {
         const subjects = getSelectedSubjects();
         postForm(
@@ -1097,7 +1266,6 @@ const adminBulkExport = (() => {
         );
     }
 
-    // PDF export — single PDF direct download, multiple → ZIP
     function exportPdf() {
         const subjects  = getSelectedSubjects();
         const isSingle  = subjects.length === 1;
@@ -1141,45 +1309,248 @@ const adminBulkExport = (() => {
     if (statusFilter) statusFilter.addEventListener('change', filterCards);
 })();
 
+// ── Broadsheet Preview ──────────────────────────────────────────────────────
+function previewBroadsheet(subjectclassId, teacherId, termId, sessionId, type) {
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    const content = document.getElementById('previewContent');
+    const title = document.getElementById('previewTitle');
+
+    content.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading scoresheet...</p>
+        </div>
+    `;
+
+    title.textContent = `Broadsheet Preview - ${type.toUpperCase()}`;
+
+    fetch(`{{ route('admin.score-entry.broadsheet-preview') }}?subjectclass_id=${subjectclassId}&teacher_id=${teacherId}&term_id=${termId}&session_id=${sessionId}&type=${type}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                content.innerHTML = `<div class="alert alert-danger">${data.message || 'Error loading scoresheet'}</div>`;
+                return;
+            }
+
+            const rows = data.rows || [];
+            const meta = data.meta || {};
+            const summary = data.summary || {};
+            const assessments = data.assessments || [];
+
+            let html = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6><i class="ri-book-line text-primary me-1"></i> ${meta.subject_name} (${meta.subject_code})</h6>
+                        <p class="mb-0 text-muted"><i class="ri-user-line text-success me-1"></i> ${meta.teacher_name}</p>
+                        <p class="mb-0 text-muted"><i class="ri-group-line text-info me-1"></i> ${meta.class_name}</p>
+                        <p class="mb-0 text-muted"><i class="ri-calendar-line text-warning me-1"></i> ${meta.term_name} | ${meta.session_name}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="card bg-success text-white p-2 text-center">
+                                    <h6 class="mb-0">${summary.student_count}</h6>
+                                    <small>Students</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-info text-white p-2 text-center">
+                                    <h6 class="mb-0">${summary.percentage || 0}%</h6>
+                                    <small>Completion</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-4">
+                                <div class="card bg-success text-white p-1 text-center">
+                                    <small><i class="ri-check-line"></i> ${summary.fully_entered_count || 0}</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-warning text-dark p-1 text-center">
+                                    <small><i class="ri-time-line"></i> ${summary.partial_count || 0}</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-secondary text-white p-1 text-center">
+                                    <small><i class="ri-close-line"></i> ${summary.not_started_count || 0}</small>
+                                </div>
+                            </div>
+                        </div>
+                        ${summary.class_average ? `
+                        <div class="row g-2 mt-1">
+                            <div class="col-4">
+                                <div class="card bg-info text-white p-1 text-center">
+                                    <small>Avg: ${summary.class_average}</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-success text-white p-1 text-center">
+                                    <small>Highest: ${summary.highest}</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card bg-danger text-white p-1 text-center">
+                                    <small>Lowest: ${summary.lowest}</small>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-striped">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th>#</th>
+                                <th>Admission</th>
+                                <th>Name</th>
+                                ${assessments.map(a => `<th data-bs-toggle="tooltip" title="${a.name} (Max: ${a.max_score})">${a.name}</th>`).join('')}
+                                <th>Total</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (rows.length === 0) {
+                html += `<tr><td colspan="${3 + assessments.length + 3}" class="text-center text-muted">No students found</td></tr>`;
+            } else {
+                rows.forEach((row, index) => {
+                    const status = row.fully_entered ? '✅ Complete' : (row.scored_count > 0 ? '⏳ Partial' : '⬜ Not Started');
+                    const statusClass = row.fully_entered ? 'text-success' : (row.scored_count > 0 ? 'text-warning' : 'text-secondary');
+
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${row.admissionno || ''}</td>
+                            <td>${row.name || ''}</td>
+                            ${assessments.map(a => {
+                                const score = row.assessment_scores && row.assessment_scores[a.id] !== undefined ? row.assessment_scores[a.id] : 0;
+                                return `<td class="${score > 0 ? 'text-success fw-bold' : 'text-muted'}">${score}</td>`;
+                            }).join('')}
+                            <td class="fw-bold">${row.total || 0}</td>
+                            <td><span class="badge ${row.grade && ['A','A1','B','B2','B3'].includes(row.grade) ? 'bg-success' : (row.grade && ['C','C4','C5','C6'].includes(row.grade) ? 'bg-warning text-dark' : 'bg-danger')}">${row.grade || '-'}</span></td>
+                            <td class="${statusClass} fw-bold">${status}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            content.innerHTML = html;
+
+            // Re-initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Set the "Open Full Scoresheet" link
+            document.getElementById('openFullScoresheet').href =
+                `{{ route('admin.score-entry.scoresheet', ['', '', '', '', '']) }}/${subjectclassId}/${teacherId}/${termId}/${sessionId}/${type}`;
+        })
+        .catch(error => {
+            content.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        });
+
+    modal.show();
+}
+
 // ── Class Details Modal ──────────────────────────────────────────────────────
 function showClassDetails(classId, classData) {
+    const modal = new bootstrap.Modal(document.getElementById('classDetailsModal'));
+    const title = document.getElementById('classDetailsTitle');
+    const body = document.getElementById('classDetailsBody');
+
+    title.textContent = `${classData.class_name} - Class Details`;
+
     let subjectList = '';
     if (classData.subjects && classData.subjects.length > 0) {
-        subjectList = '<ul class="list-group mt-2" style="max-height: 300px; overflow-y: auto;">';
-        classData.subjects.forEach(sub => { subjectList += `<li class="list-group-item">${sub}</li>`; });
+        subjectList = '<ul class="list-group mt-2" style="max-height: 200px; overflow-y: auto;">';
+        classData.subjects.forEach(sub => {
+            subjectList += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                ${sub}
+                <span class="badge bg-primary rounded-pill">${classData.total_subjects}</span>
+            </li>`;
+        });
         subjectList += '</ul>';
     } else {
         subjectList = '<p class="text-muted">No subjects available</p>';
     }
 
-    Swal.fire({
-        title: `${classData.class_name} - Class Details`,
-        html: `
-            <div class="text-start">
-                <div class="row mb-3">
-                    <div class="col-6"><div class="border rounded p-2 text-center"><div class="small text-muted">Students</div><div class="h5 mb-0">${Number(classData.student_count).toLocaleString()}</div></div></div>
-                    <div class="col-6"><div class="border rounded p-2 text-center"><div class="small text-muted">Subjects</div><div class="h5 mb-0">${classData.total_subjects}</div></div></div>
+    body.innerHTML = `
+        <div class="text-start">
+            <div class="row mb-3">
+                <div class="col-6">
+                    <div class="border rounded p-2 text-center">
+                        <div class="small text-muted">Students</div>
+                        <div class="h5 mb-0">${Number(classData.student_count).toLocaleString()}</div>
+                    </div>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-6"><div class="border rounded p-2 text-center"><div class="small text-muted">Completed</div><div class="h5 mb-0 text-success">${classData.completed_subjects}</div></div></div>
-                    <div class="col-6"><div class="border rounded p-2 text-center"><div class="small text-muted">Pending</div><div class="h5 mb-0 text-warning">${classData.pending_subjects}</div></div></div>
+                <div class="col-6">
+                    <div class="border rounded p-2 text-center">
+                        <div class="small text-muted">Subjects</div>
+                        <div class="h5 mb-0">${classData.total_subjects}</div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1"><span>Completion Rate</span><span class="fw-bold">${classData.completion_rate}%</span></div>
-                    <div class="progress" style="height: 8px;"><div class="progress-bar bg-${classData.completion_rate >= 75 ? 'success' : (classData.completion_rate >= 50 ? 'warning' : 'danger')}" style="width: ${classData.completion_rate}%"></div></div>
-                </div>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1"><span>Entry Completion</span><span class="fw-bold">${classData.entry_completion_rate || 0}%</span></div>
-                    <div class="progress" style="height: 8px;"><div class="progress-bar bg-info" style="width: ${classData.entry_completion_rate || 0}%"></div></div>
-                </div>
-                <hr><h6>Subjects:</h6>${subjectList}
             </div>
-        `,
-        icon: 'info',
-        confirmButtonText: 'Close',
-        confirmButtonColor: '#2563eb',
-        width: '600px'
-    });
+            <div class="row mb-3">
+                <div class="col-6">
+                    <div class="border rounded p-2 text-center">
+                        <div class="small text-muted">Completed</div>
+                        <div class="h5 mb-0 text-success">${classData.completed_subjects}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="border rounded p-2 text-center">
+                        <div class="small text-muted">Pending</div>
+                        <div class="h5 mb-0 text-warning">${classData.pending_subjects}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Completion Rate</span>
+                    <span class="fw-bold">${classData.completion_rate}%</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-${classData.completion_rate >= 75 ? 'success' : (classData.completion_rate >= 50 ? 'warning' : 'danger')}"
+                         style="width: ${classData.completion_rate}%"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Entry Completion</span>
+                    <span class="fw-bold">${classData.entry_completion_rate || 0}%</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-info" style="width: ${classData.entry_completion_rate || 0}%"></div>
+                </div>
+            </div>
+            <hr>
+            <h6>Subjects:</h6>
+            ${subjectList}
+        </div>
+    `;
+
+    modal.show();
 }
+
+// ── Initialize Tooltips ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 </script>
 @endsection
