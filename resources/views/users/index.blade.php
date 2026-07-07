@@ -800,7 +800,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </div>
 
     {{-- ══════════════════════════════════════════════════════
-         MASS STUDENT MODAL
+         MASS STUDENT MODAL - FIXED VERSION
     ══════════════════════════════════════════════════════ --}}
     <div id="massStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -1178,965 +1178,1160 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 </style>
 
 <script>
-(function () {
-    'use strict';
+document.addEventListener('DOMContentLoaded', function () {
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // ============================================================
+    // MAIN USER MANAGEMENT FUNCTIONS
+    // ============================================================
 
-        if (typeof bootstrap === 'undefined') {
-            console.error('Bootstrap not loaded!');
-            return;
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap not loaded!');
+        return;
+    }
+
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    function showModal(modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (!modalElement) return null;
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: true });
+        modal.show();
+        return modal;
+    }
+
+    function hideModal(modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
         }
+    }
 
-        const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    // Modal triggers
+    ['openAddUserModalBtn', 'openAddUserModalBtnMobile'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('showModal'); });
+    });
+    ['openAddStudentModalBtn', 'openAddStudentModalBtnMobile'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('addStudentModal'); });
+    });
+    ['openMassStudentModalBtn', 'openMassStudentModalBtnMobile'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('massStudentModal'); });
+    });
 
-        function showModal(modalId) {
-            const modalElement = document.getElementById(modalId);
-            if (!modalElement) return null;
-            let modal = bootstrap.Modal.getInstance(modalElement);
-            if (!modal) modal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: true });
-            modal.show();
-            return modal;
-        }
+    // ── Table filtering ─────────────────────────────────────
+    const allRows = () => Array.from(document.querySelectorAll('#usersTableBody tr[data-id]'));
 
-        function hideModal(modalId) {
-            const modalElement = document.getElementById(modalId);
-            if (modalElement) {
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) modal.hide();
+    function applyFilters() {
+        const search = document.getElementById('liveSearch')?.value.toLowerCase().trim() || '';
+        const role   = document.getElementById('roleFilter')?.value.toLowerCase().trim() || '';
+        const email  = document.getElementById('emailFilter')?.value.toLowerCase().trim() || '';
+        let shown = 0;
+        allRows().forEach(row => {
+            const name = row.dataset.name || '';
+            const rEmail = row.dataset.email || '';
+            const roles = row.dataset.roles || '';
+            const matchSearch = !search || name.includes(search) || rEmail.includes(search);
+            const matchRole = !role || roles.split(',').some(r => r.trim() === role) || (role === 'no role' && !roles.trim());
+            const matchEmail = !email || rEmail === email;
+            const visible = matchSearch && matchRole && matchEmail;
+            row.style.display = visible ? '' : 'none';
+            if (visible) shown++;
+        });
+        const showingSpan = document.getElementById('showingCount');
+        if (showingSpan) showingSpan.textContent = shown;
+        const userBadge = document.getElementById('userCountBadge');
+        if (userBadge) userBadge.textContent = shown;
+
+        let empty = document.getElementById('noResults');
+        if (shown === 0 && allRows().length > 0) {
+            if (!empty) {
+                empty = document.createElement('tr');
+                empty.id = 'noResults';
+                empty.innerHTML = `<td colspan="7"><div class="u-empty"><i class="ri-search-line"></i>No users match your filters</div></td>`;
+                document.getElementById('usersTableBody')?.appendChild(empty);
             }
-        }
+        } else if (empty) empty.remove();
+    }
 
-        // Modal triggers
-        ['openAddUserModalBtn', 'openAddUserModalBtnMobile'].forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('showModal'); });
-        });
-        ['openAddStudentModalBtn', 'openAddStudentModalBtnMobile'].forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('addStudentModal'); });
-        });
-        ['openMassStudentModalBtn', 'openMassStudentModalBtnMobile'].forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) btn.addEventListener('click', e => { e.preventDefault(); showModal('massStudentModal'); });
-        });
+    document.getElementById('liveSearch')?.addEventListener('input', applyFilters);
+    document.getElementById('roleFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('emailFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('clearFilters')?.addEventListener('click', () => {
+        if (document.getElementById('liveSearch')) document.getElementById('liveSearch').value = '';
+        if (document.getElementById('roleFilter')) document.getElementById('roleFilter').value = '';
+        if (document.getElementById('emailFilter')) document.getElementById('emailFilter').value = '';
+        applyFilters();
+    });
 
-        // ── Table filtering ─────────────────────────────────────
-        const allRows = () => Array.from(document.querySelectorAll('#usersTableBody tr[data-id]'));
-
-        function applyFilters() {
-            const search = document.getElementById('liveSearch')?.value.toLowerCase().trim() || '';
-            const role   = document.getElementById('roleFilter')?.value.toLowerCase().trim() || '';
-            const email  = document.getElementById('emailFilter')?.value.toLowerCase().trim() || '';
-            let shown = 0;
-            allRows().forEach(row => {
-                const name = row.dataset.name || '';
-                const rEmail = row.dataset.email || '';
-                const roles = row.dataset.roles || '';
-                const matchSearch = !search || name.includes(search) || rEmail.includes(search);
-                const matchRole = !role || roles.split(',').some(r => r.trim() === role) || (role === 'no role' && !roles.trim());
-                const matchEmail = !email || rEmail === email;
-                const visible = matchSearch && matchRole && matchEmail;
-                row.style.display = visible ? '' : 'none';
-                if (visible) shown++;
-            });
-            const showingSpan = document.getElementById('showingCount');
-            if (showingSpan) showingSpan.textContent = shown;
-            const userBadge = document.getElementById('userCountBadge');
-            if (userBadge) userBadge.textContent = shown;
-
-            let empty = document.getElementById('noResults');
-            if (shown === 0 && allRows().length > 0) {
-                if (!empty) {
-                    empty = document.createElement('tr');
-                    empty.id = 'noResults';
-                    empty.innerHTML = `<td colspan="7"><div class="u-empty"><i class="ri-search-line"></i>No users match your filters</div></td>`;
-                    document.getElementById('usersTableBody')?.appendChild(empty);
-                }
-            } else if (empty) empty.remove();
-        }
-
-        document.getElementById('liveSearch')?.addEventListener('input', applyFilters);
-        document.getElementById('roleFilter')?.addEventListener('change', applyFilters);
-        document.getElementById('emailFilter')?.addEventListener('change', applyFilters);
-        document.getElementById('clearFilters')?.addEventListener('click', () => {
-            if (document.getElementById('liveSearch')) document.getElementById('liveSearch').value = '';
-            if (document.getElementById('roleFilter')) document.getElementById('roleFilter').value = '';
-            if (document.getElementById('emailFilter')) document.getElementById('emailFilter').value = '';
-            applyFilters();
-        });
-
-        // Sortable columns
-        let sortDir = {};
-        document.querySelectorAll('.sortable').forEach(th => {
-            th.style.cursor = 'pointer';
-            th.addEventListener('click', () => {
-                const col = parseInt(th.dataset.col);
-                sortDir[col] = !sortDir[col];
-                const tbody = document.getElementById('usersTableBody');
-                if (!tbody) return;
-                const rows = [...document.querySelectorAll('#usersTableBody tr[data-id]')];
-                rows.sort((a, b) => {
-                    const key = ['name','email','','','','date'][col] || 'name';
-                    const av = a.dataset[key] || a.cells[col]?.textContent || '';
-                    const bv = b.dataset[key] || b.cells[col]?.textContent || '';
-                    return sortDir[col] ? av.localeCompare(bv) : bv.localeCompare(av);
-                });
-                rows.forEach(r => tbody.appendChild(r));
-            });
-        });
-
-        // Check all functionality
-        const checkAll = document.getElementById('checkAll');
-        if (checkAll) {
-            checkAll.addEventListener('change', function() {
-                document.querySelectorAll('.row-check').forEach(cb => {
-                    const row = cb.closest('tr');
-                    if (row && row.style.display !== 'none') cb.checked = this.checked;
-                });
-                updateRemoveBtn();
-            });
-        }
-        document.addEventListener('change', e => { if (e.target.classList.contains('row-check')) updateRemoveBtn(); });
-        function updateRemoveBtn() {
-            const count = document.querySelectorAll('.row-check:checked').length;
-            const removeBtn = document.getElementById('remove-actions');
-            if (removeBtn) removeBtn.classList.toggle('d-none', count === 0);
-        }
-
-        // Delete single
-        document.addEventListener('click', e => {
-            const btn = e.target.closest('.remove-item-btn');
-            if (!btn) return;
-            const id = btn.dataset.id;
-            const deleteBtn = document.getElementById('delete-record');
-            if (deleteBtn) {
-                const fresh = deleteBtn.cloneNode(true);
-                deleteBtn.replaceWith(fresh);
-                fresh.addEventListener('click', () => {
-                    axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': CSRF } })
-                        .then(() => {
-                            const row = document.querySelector(`tr[data-id="${id}"]`);
-                            if (row) row.remove();
-                            const totalEl = document.getElementById('totalCount');
-                            if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) - 1;
-                            hideModal('deleteRecordModal');
-                            Swal.fire({ icon: 'success', title: 'Deleted!', text: 'User removed.', showConfirmButton: false, timer: 2000 });
-                            applyFilters();
-                        })
-                        .catch(err => Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error'));
-                });
-            }
-            showModal('deleteRecordModal');
-        });
-
-        // Delete multiple
-        window.deleteMultiple = function() {
-            const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.closest('tr').dataset.id).filter(Boolean);
-            if (!ids.length) { Swal.fire('Select at least one user'); return; }
-            Swal.fire({
-                title: 'Delete ' + ids.length + ' user(s)?',
-                text: 'This cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                confirmButtonText: 'Yes, Delete All'
-            }).then(r => {
-                if (!r.isConfirmed) return;
-                Promise.all(ids.map(id => axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': CSRF } })))
-                    .then(() => {
-                        ids.forEach(id => { const row = document.querySelector(`tr[data-id="${id}"]`); if (row) row.remove(); });
-                        Swal.fire('Deleted!', ids.length + ' users removed.', 'success');
-                        updateRemoveBtn();
-                        applyFilters();
-                    });
-            });
-        };
-
-        // Edit user
-        document.addEventListener('click', e => {
-            const btn = e.target.closest('.edit-item-btn');
-            if (!btn) return;
-            document.getElementById('edit-id-field').value = btn.dataset.id;
-            document.getElementById('edit-name').value = btn.dataset.name;
-            document.getElementById('edit-email').value = btn.dataset.email;
-            const roles = (btn.dataset.roles || '').split(',');
-            const roleSelect = document.getElementById('edit-role');
-            if (roleSelect) {
-                Array.from(roleSelect.options).forEach(opt => { opt.selected = roles.includes(opt.value); });
-            }
-            document.getElementById('edit-password').value = '';
-            document.getElementById('edit-password_confirmation').value = '';
-            document.getElementById('edit-alert')?.classList.add('d-none');
-            showModal('editModal');
-        });
-
-        // Add user form
-        const addUserForm = document.getElementById('add-user-form');
-        if (addUserForm) {
-            addUserForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const alert = document.getElementById('add-alert');
-                alert?.classList.add('d-none');
-                const name = document.getElementById('name')?.value.trim();
-                const email = document.getElementById('email')?.value.trim();
-                const pass = document.getElementById('password')?.value;
-                const conf = document.getElementById('password_confirmation')?.value;
-                const roles = Array.from(document.getElementById('role')?.selectedOptions || []).map(o => o.value);
-                if (!name) return showAlert(alert, 'Enter a name');
-                if (!email) return showAlert(alert, 'Enter an email');
-                if (!roles.length) return showAlert(alert, 'Select at least one role');
-                if (!pass) return showAlert(alert, 'Enter a password');
-                if (pass !== conf) return showAlert(alert, 'Passwords do not match');
-                const btn = document.getElementById('add-btn');
-                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…'; }
-                axios.post('/users', { name, email, roles, password: pass, password_confirmation: conf, _token: CSRF })
-                    .then(res => {
-                        addRowToTable(res.data.user);
-                        hideModal('showModal');
-                        Swal.fire({ icon: 'success', title: 'User Created!', text: res.data.user.name + ' added.', showConfirmButton: false, timer: 2500 });
-                    })
-                    .catch(err => showAlert(alert, err.response?.data?.message || 'Error creating user'))
-                    .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle"></i> Create User'; } });
-            });
-        }
-
-        // Edit user form
-        const editUserForm = document.getElementById('edit-user-form');
-        if (editUserForm) {
-            editUserForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const alert = document.getElementById('edit-alert');
-                alert?.classList.add('d-none');
-                const id = document.getElementById('edit-id-field')?.value;
-                const name = document.getElementById('edit-name')?.value.trim();
-                const email = document.getElementById('edit-email')?.value.trim();
-                const pass = document.getElementById('edit-password')?.value;
-                const conf = document.getElementById('edit-password_confirmation')?.value;
-                const roles = Array.from(document.getElementById('edit-role')?.selectedOptions || []).map(o => o.value);
-                if (!name) return showAlert(alert, 'Enter a name');
-                if (!email) return showAlert(alert, 'Enter an email');
-                if (!roles.length) return showAlert(alert, 'Select at least one role');
-                if (pass && pass !== conf) return showAlert(alert, 'Passwords do not match');
-                const btn = document.getElementById('update-btn');
-                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…'; }
-                const payload = { name, email, roles, _token: CSRF };
-                if (pass) { payload.password = pass; payload.password_confirmation = conf; }
-                axios.put(`/users/${id}`, payload, { headers: { 'X-CSRF-TOKEN': CSRF } })
-                    .then(res => {
-                        updateRowInTable(res.data.user);
-                        hideModal('editModal');
-                        Swal.fire({ icon: 'success', title: 'Updated!', text: res.data.user.name + ' updated.', showConfirmButton: false, timer: 2500 });
-                    })
-                    .catch(err => showAlert(alert, err.response?.data?.message || 'Error updating user'))
-                    .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Update User'; } });
-            });
-        }
-
-        function showAlert(el, msg) { if (el) { el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg; el.classList.remove('d-none'); setTimeout(() => el.classList.add('d-none'), 5000); } }
-        function rolePill(roleName) {
-            const map = { Student: 'student', Admin: 'admin', Teacher: 'teacher', Staff: 'staff' };
-            const cls = map[roleName] || 'default';
-            return `<span class="u-role-pill ${cls}"><i class="bi bi-shield-check"></i>${roleName}</span>`;
-        }
-        function escHtml(s) { return String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
-        function getInitials(name) { const parts = (name || '').split(' '); return (parts[0]?.[0] || '') + (parts[1]?.[0] || ''); }
-        function addRowToTable(user) {
+    // Sortable columns
+    let sortDir = {};
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', () => {
+            const col = parseInt(th.dataset.col);
+            sortDir[col] = !sortDir[col];
             const tbody = document.getElementById('usersTableBody');
             if (!tbody) return;
-            const emptyRow = document.getElementById('emptyRow');
-            if (emptyRow) emptyRow.remove();
-            const row = document.createElement('tr');
-            row.dataset.id = user.id;
-            row.dataset.name = user.name.toLowerCase();
-            row.dataset.email = user.email.toLowerCase();
-            row.dataset.roles = (user.roles || []).join(',').toLowerCase();
-            row.dataset.date = new Date().toISOString().slice(0, 10);
-            row.innerHTML = `
-                <td><input type="checkbox" class="row-check" style="accent-color:var(--u-accent);cursor:pointer;"></td>
-                <td><div class="u-avatar">${getInitials(user.name)}</div></td>
-                <td><div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div></td>
-                <td><span class="text-muted small">${escHtml(user.email)}</span></td>
-                <td>${(user.roles || []).map(rolePill).join('')}</td>
-                <td class="text-muted small">${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                <td><div class="d-flex gap-1">
-                    <a href="/users/${user.id}" class="u-action-btn view"><i class="ph-eye"></i></a>
-                    <button class="u-action-btn edit edit-item-btn" data-id="${user.id}" data-name="${escHtml(user.name)}" data-email="${escHtml(user.email)}" data-roles="${(user.roles || []).join(',')}"><i class="ph-pencil"></i></button>
-                    <button class="u-action-btn del remove-item-btn" data-id="${user.id}"><i class="ph-trash"></i></button>
-                </div></td>
-            `;
-            tbody.prepend(row);
-            const total = document.getElementById('totalCount');
-            if (total) total.textContent = parseInt(total.textContent) + 1;
-            applyFilters();
-        }
-        function updateRowInTable(user) {
-            const row = document.querySelector(`tr[data-id="${user.id}"]`);
-            if (!row) return;
-            row.dataset.name = user.name.toLowerCase();
-            row.dataset.email = user.email.toLowerCase();
-            row.dataset.roles = (user.roles || []).join(',').toLowerCase();
-            if (row.cells[2]) row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div>`;
-            if (row.cells[3]) row.cells[3].innerHTML = `<span class="text-muted small">${escHtml(user.email)}</span>`;
-            if (row.cells[4]) row.cells[4].innerHTML = (user.roles || []).map(rolePill).join('');
-        }
-
-        // Password reset for student
-        $(document).on('click', '.reset-student-pwd-btn', function() {
-            const userId = $(this).data('user-id');
-            const userName = $(this).data('user-name');
-            Swal.fire({
-                title: 'Reset Password?',
-                html: `Reset password for <strong>${userName}</strong>?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#d97706',
-                confirmButtonText: 'Reset'
-            }).then(r => {
-                if (!r.isConfirmed) return;
-                Swal.fire({ title: 'Resetting…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                fetch(`/users/reset-single-password/${userId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF }
-                }).then(r => r.json()).then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: 'Password Reset!',
-                            html: `<div style="text-align:center"><p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
-                                <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
-                                    <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
-                                </div></div>`,
-                            icon: 'success',
-                            confirmButtonColor: '#2563eb'
-                        });
-                    } else Swal.fire('Error', data.message || 'Reset failed', 'error');
-                }).catch(() => Swal.fire('Error', 'Network error', 'error'));
+            const rows = [...document.querySelectorAll('#usersTableBody tr[data-id]')];
+            rows.sort((a, b) => {
+                const key = ['name','email','','','','date'][col] || 'name';
+                const av = a.dataset[key] || a.cells[col]?.textContent || '';
+                const bv = b.dataset[key] || b.cells[col]?.textContent || '';
+                return sortDir[col] ? av.localeCompare(bv) : bv.localeCompare(av);
             });
+            rows.forEach(r => tbody.appendChild(r));
         });
+    });
 
-        // Chart
-        const ctx = document.getElementById('usersByRoleChart')?.getContext('2d');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'bar',
-                data: { labels: @json(array_keys($role_counts)), datasets: [{ label: 'Users', data: @json(array_values($role_counts)), backgroundColor: ['rgba(37,99,235,.75)', 'rgba(16,185,129,.75)', 'rgba(245,158,11,.75)', 'rgba(239,68,68,.75)'], borderRadius: 8 }] },
-                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    // Check all functionality
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+        checkAll.addEventListener('change', function() {
+            document.querySelectorAll('.row-check').forEach(cb => {
+                const row = cb.closest('tr');
+                if (row && row.style.display !== 'none') cb.checked = this.checked;
+            });
+            updateRemoveBtn();
+        });
+    }
+    document.addEventListener('change', e => { if (e.target.classList.contains('row-check')) updateRemoveBtn(); });
+    function updateRemoveBtn() {
+        const count = document.querySelectorAll('.row-check:checked').length;
+        const removeBtn = document.getElementById('remove-actions');
+        if (removeBtn) removeBtn.classList.toggle('d-none', count === 0);
+    }
+
+    // Delete single
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.remove-item-btn');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const deleteBtn = document.getElementById('delete-record');
+        if (deleteBtn) {
+            const fresh = deleteBtn.cloneNode(true);
+            deleteBtn.replaceWith(fresh);
+            fresh.addEventListener('click', () => {
+                axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': CSRF } })
+                    .then(() => {
+                        const row = document.querySelector(`tr[data-id="${id}"]`);
+                        if (row) row.remove();
+                        const totalEl = document.getElementById('totalCount');
+                        if (totalEl) totalEl.textContent = parseInt(totalEl.textContent) - 1;
+                        hideModal('deleteRecordModal');
+                        Swal.fire({ icon: 'success', title: 'Deleted!', text: 'User removed.', showConfirmButton: false, timer: 2000 });
+                        applyFilters();
+                    })
+                    .catch(err => Swal.fire('Error', err.response?.data?.message || 'Delete failed', 'error'));
             });
         }
+        showModal('deleteRecordModal');
+    });
 
-        // ── Mass Student Modal Logic with IMPROVED PRINT FORMAT (4 per page, horizontal layout, cut lines) ─────────────────────────────────
-        let selectedStudents = [];
-        let allStudents = [];
-        let currentResults = null;
+    // Delete multiple
+    window.deleteMultiple = function() {
+        const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.closest('tr').dataset.id).filter(Boolean);
+        if (!ids.length) { Swal.fire('Select at least one user'); return; }
+        Swal.fire({
+            title: 'Delete ' + ids.length + ' user(s)?',
+            text: 'This cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Yes, Delete All'
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            Promise.all(ids.map(id => axios.delete(`/users/${id}`, { headers: { 'X-CSRF-TOKEN': CSRF } })))
+                .then(() => {
+                    ids.forEach(id => { const row = document.querySelector(`tr[data-id="${id}"]`); if (row) row.remove(); });
+                    Swal.fire('Deleted!', ids.length + ' users removed.', 'success');
+                    updateRemoveBtn();
+                    applyFilters();
+                });
+        });
+    };
 
-        function classLabel(s) {
-            const c = (s.class_name || '').trim();
-            const a = (s.arm_name || '').trim();
-            return c && a ? `${c} ${a}` : c || a || '—';
+    // Edit user
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.edit-item-btn');
+        if (!btn) return;
+        document.getElementById('edit-id-field').value = btn.dataset.id;
+        document.getElementById('edit-name').value = btn.dataset.name;
+        document.getElementById('edit-email').value = btn.dataset.email;
+        const roles = (btn.dataset.roles || '').split(',');
+        const roleSelect = document.getElementById('edit-role');
+        if (roleSelect) {
+            Array.from(roleSelect.options).forEach(opt => { opt.selected = roles.includes(opt.value); });
         }
-        function genEmail(first, last) {
-            const c = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
-            return c(first) + '.' + c(last) + '@csskabba.ng';
-        }
-        function statusBadge(has) {
-            return has ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>' : '<span class="msm-badge-none"><i class="bi bi-circle me-1"></i>No Account</span>';
-        }
+        document.getElementById('edit-password').value = '';
+        document.getElementById('edit-password_confirmation').value = '';
+        document.getElementById('edit-alert')?.classList.add('d-none');
+        showModal('editModal');
+    });
 
-        // Helper to get student photo URL
-        function getStudentPhotoUrl(student) {
-            if (student.photo_url) return student.photo_url;
-            if (student.picture && student.picture !== 'unnamed.jpg' && student.picture !== '') {
-                return '/storage/images/student_avatars/' + student.picture;
+    // Add user form
+    const addUserForm = document.getElementById('add-user-form');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const alert = document.getElementById('add-alert');
+            alert?.classList.add('d-none');
+            const name = document.getElementById('name')?.value.trim();
+            const email = document.getElementById('email')?.value.trim();
+            const pass = document.getElementById('password')?.value;
+            const conf = document.getElementById('password_confirmation')?.value;
+            const roles = Array.from(document.getElementById('role')?.selectedOptions || []).map(o => o.value);
+            if (!name) return showAlert(alert, 'Enter a name');
+            if (!email) return showAlert(alert, 'Enter an email');
+            if (!roles.length) return showAlert(alert, 'Select at least one role');
+            if (!pass) return showAlert(alert, 'Enter a password');
+            if (pass !== conf) return showAlert(alert, 'Passwords do not match');
+            const btn = document.getElementById('add-btn');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…'; }
+            axios.post('/users', { name, email, roles, password: pass, password_confirmation: conf, _token: CSRF })
+                .then(res => {
+                    addRowToTable(res.data.user);
+                    hideModal('showModal');
+                    Swal.fire({ icon: 'success', title: 'User Created!', text: res.data.user.name + ' added.', showConfirmButton: false, timer: 2500 });
+                })
+                .catch(err => showAlert(alert, err.response?.data?.message || 'Error creating user'))
+                .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle"></i> Create User'; } });
+        });
+    }
+
+    // Edit user form
+    const editUserForm = document.getElementById('edit-user-form');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const alert = document.getElementById('edit-alert');
+            alert?.classList.add('d-none');
+            const id = document.getElementById('edit-id-field')?.value;
+            const name = document.getElementById('edit-name')?.value.trim();
+            const email = document.getElementById('edit-email')?.value.trim();
+            const pass = document.getElementById('edit-password')?.value;
+            const conf = document.getElementById('edit-password_confirmation')?.value;
+            const roles = Array.from(document.getElementById('edit-role')?.selectedOptions || []).map(o => o.value);
+            if (!name) return showAlert(alert, 'Enter a name');
+            if (!email) return showAlert(alert, 'Enter an email');
+            if (!roles.length) return showAlert(alert, 'Select at least one role');
+            if (pass && pass !== conf) return showAlert(alert, 'Passwords do not match');
+            const btn = document.getElementById('update-btn');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…'; }
+            const payload = { name, email, roles, _token: CSRF };
+            if (pass) { payload.password = pass; payload.password_confirmation = conf; }
+            axios.put(`/users/${id}`, payload, { headers: { 'X-CSRF-TOKEN': CSRF } })
+                .then(res => {
+                    updateRowInTable(res.data.user);
+                    hideModal('editModal');
+                    Swal.fire({ icon: 'success', title: 'Updated!', text: res.data.user.name + ' updated.', showConfirmButton: false, timer: 2500 });
+                })
+                .catch(err => showAlert(alert, err.response?.data?.message || 'Error updating user'))
+                .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle"></i> Update User'; } });
+        });
+    }
+
+    function showAlert(el, msg) { if (el) { el.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + msg; el.classList.remove('d-none'); setTimeout(() => el.classList.add('d-none'), 5000); } }
+    function rolePill(roleName) {
+        const map = { Student: 'student', Admin: 'admin', Teacher: 'teacher', Staff: 'staff' };
+        const cls = map[roleName] || 'default';
+        return `<span class="u-role-pill ${cls}"><i class="bi bi-shield-check"></i>${roleName}</span>`;
+    }
+    function escHtml(s) { return String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
+    function getInitials(name) { const parts = (name || '').split(' '); return (parts[0]?.[0] || '') + (parts[1]?.[0] || ''); }
+    function addRowToTable(user) {
+        const tbody = document.getElementById('usersTableBody');
+        if (!tbody) return;
+        const emptyRow = document.getElementById('emptyRow');
+        if (emptyRow) emptyRow.remove();
+        const row = document.createElement('tr');
+        row.dataset.id = user.id;
+        row.dataset.name = user.name.toLowerCase();
+        row.dataset.email = user.email.toLowerCase();
+        row.dataset.roles = (user.roles || []).join(',').toLowerCase();
+        row.dataset.date = new Date().toISOString().slice(0, 10);
+        row.innerHTML = `
+            <td><input type="checkbox" class="row-check" style="accent-color:var(--u-accent);cursor:pointer;"></td>
+            <td><div class="u-avatar">${getInitials(user.name)}</div></td>
+            <td><div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div></td>
+            <td><span class="text-muted small">${escHtml(user.email)}</span></td>
+            <td>${(user.roles || []).map(rolePill).join('')}</td>
+            <td class="text-muted small">${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+            <td><div class="d-flex gap-1">
+                <a href="/users/${user.id}" class="u-action-btn view"><i class="ph-eye"></i></a>
+                <button class="u-action-btn edit edit-item-btn" data-id="${user.id}" data-name="${escHtml(user.name)}" data-email="${escHtml(user.email)}" data-roles="${(user.roles || []).join(',')}"><i class="ph-pencil"></i></button>
+                <button class="u-action-btn del remove-item-btn" data-id="${user.id}"><i class="ph-trash"></i></button>
+            </div></td>
+        `;
+        tbody.prepend(row);
+        const total = document.getElementById('totalCount');
+        if (total) total.textContent = parseInt(total.textContent) + 1;
+        applyFilters();
+    }
+    function updateRowInTable(user) {
+        const row = document.querySelector(`tr[data-id="${user.id}"]`);
+        if (!row) return;
+        row.dataset.name = user.name.toLowerCase();
+        row.dataset.email = user.email.toLowerCase();
+        row.dataset.roles = (user.roles || []).join(',').toLowerCase();
+        if (row.cells[2]) row.cells[2].innerHTML = `<div class="fw-semibold" style="color:var(--u-primary)">${escHtml(user.name)}</div>`;
+        if (row.cells[3]) row.cells[3].innerHTML = `<span class="text-muted small">${escHtml(user.email)}</span>`;
+        if (row.cells[4]) row.cells[4].innerHTML = (user.roles || []).map(rolePill).join('');
+    }
+
+    // Password reset for student
+    $(document).on('click', '.reset-student-pwd-btn', function() {
+        const userId = $(this).data('user-id');
+        const userName = $(this).data('user-name');
+        Swal.fire({
+            title: 'Reset Password?',
+            html: `Reset password for <strong>${userName}</strong>?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#d97706',
+            confirmButtonText: 'Reset'
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            Swal.fire({ title: 'Resetting…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            fetch(`/users/reset-single-password/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF }
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Password Reset!',
+                        html: `<div style="text-align:center"><p class="text-muted mb-3">New password for <strong>${data.user.name}</strong></p>
+                            <div style="background:#f0f9ff;border:2px solid #bfdbfe;border-radius:10px;padding:16px 24px;display:inline-block;">
+                                <code style="font-size:26px;font-weight:700;letter-spacing:4px;color:#1e40af;">${data.password}</code>
+                            </div></div>`,
+                        icon: 'success',
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else Swal.fire('Error', data.message || 'Reset failed', 'error');
+            }).catch(() => Swal.fire('Error', 'Network error', 'error'));
+        });
+    });
+
+    // Chart
+    const ctx = document.getElementById('usersByRoleChart')?.getContext('2d');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: { labels: @json(array_keys($role_counts)), datasets: [{ label: 'Users', data: @json(array_values($role_counts)), backgroundColor: ['rgba(37,99,235,.75)', 'rgba(16,185,129,.75)', 'rgba(245,158,11,.75)', 'rgba(239,68,68,.75)'], borderRadius: 8 }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+    }
+
+    // ============================================================
+    // MASS STUDENT MANAGEMENT - FIXED VERSION
+    // ============================================================
+
+    let selectedStudents = [];
+    let allStudents = [];
+    let currentResults = null;
+    let isProcessing = false;
+
+    function classLabel(s) {
+        const c = (s.class_name || '').trim();
+        const a = (s.arm_name || '').trim();
+        return c && a ? `${c} ${a}` : c || a || '—';
+    }
+
+    function genEmail(first, last) {
+        const clean = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+        return clean(first) + '.' + clean(last) + '@csskabba.ng';
+    }
+
+    function statusBadge(has) {
+        return has
+            ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>'
+            : '<span class="msm-badge-none"><i class="bi bi-circle me-1"></i>No Account</span>';
+    }
+
+    function setStep(n) {
+        [1, 2, 3].forEach(i => {
+            const el = document.getElementById('stepBar' + i);
+            const circle = el?.querySelector('.msm-step-circle');
+            if (!el || !circle) return;
+            el.classList.remove('active', 'done');
+            if (i < n) {
+                el.classList.add('done');
+                circle.innerHTML = '<i class="bi bi-check-lg"></i>';
+            } else {
+                circle.textContent = i;
+                if (i === n) el.classList.add('active');
             }
-            return null;
+        });
+    }
+
+    function loadStudents() {
+        const search = document.getElementById('massStudentSearch')?.value || '';
+        const classId = document.getElementById('massClassFilter')?.value || '';
+        const status = document.getElementById('massAccountStatus')?.value || 'all';
+
+        const tbody = document.getElementById('massStudentList');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell"><div class="spinner-border spinner-border-sm me-2 text-primary"></div>Loading students…</td></tr>';
         }
 
-        // Helper to get initials from name
-        function getStudentInitials(student) {
-            const firstName = student.firstname || '';
-            const lastName = student.lastname || '';
-            return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'ST';
-        }
+        let url = '{{ route("get.students") }}?limit=2000';
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (classId) url += `&class_id=${classId}`;
+        if (status !== 'all') url += `&has_account=${status}`;
 
-        function setStep(n) {
-            [1, 2, 3].forEach(i => {
-                const el = document.getElementById('stepBar' + i);
-                const circle = el?.querySelector('.msm-step-circle');
-                if (!el || !circle) return;
-                el.classList.remove('active', 'done');
-                if (i < n) { el.classList.add('done'); circle.innerHTML = '<i class="bi bi-check-lg"></i>'; }
-                else { circle.textContent = i; if (i === n) el.classList.add('active'); }
-            });
-        }
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.</td></tr>';
+                    }
+                    return;
+                }
 
-        function loadStudents() {
-            const search = document.getElementById('massStudentSearch')?.value || '';
-            const classId = document.getElementById('massClassFilter')?.value || '';
-            const status = document.getElementById('massAccountStatus')?.value || 'all';
-            const tbody = document.getElementById('massStudentList');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell"><div class="spinner-border spinner-border-sm me-2 text-primary"></div>Loading students…</td></tr>';
-            let url = '{{ route("get.students") }}?limit=2000';
-            if (search) url += `&search=${encodeURIComponent(search)}`;
-            if (classId) url += `&class_id=${classId}`;
-            if (status !== 'all') url += `&has_account=${status}`;
-            fetch(url).then(r => r.json()).then(data => {
-                if (!data.success) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Error loading students.</td></tr>'; return; }
                 allStudents = data.students.map(s => ({
                     ...s,
-                    generatedEmail: genEmail(s.firstname, s.lastname),
-                    photo_url: getStudentPhotoUrl(s),
-                    initials: getStudentInitials(s)
+                    generatedEmail: genEmail(s.firstname, s.lastname)
                 }));
+
                 renderStudentTable(allStudents);
+
+                // Populate class filter
                 const classFilter = document.getElementById('massClassFilter');
                 if (classFilter && classFilter.options.length <= 1) {
                     let html = '<option value="">All Classes</option>';
-                    if (data.classes?.length) data.classes.forEach(c => { html += `<option value="${escHtml(String(c.id))}">${escHtml(c.name || c.class_name || '')}</option>`; });
-                    else {
+                    if (data.classes?.length) {
+                        data.classes.forEach(c => {
+                            html += `<option value="${escHtml(String(c.id))}">${escHtml(c.name || c.class_name || '')}</option>`;
+                        });
+                    } else {
                         const seen = new Map();
-                        allStudents.forEach(s => { if (s.class_id && !seen.has(s.class_id)) seen.set(s.class_id, classLabel(s)); });
-                        [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1])).forEach(([id, lbl]) => { html += `<option value="${escHtml(String(id))}">${escHtml(lbl)}</option>`; });
+                        allStudents.forEach(s => {
+                            if (s.class_id && !seen.has(s.class_id)) {
+                                seen.set(s.class_id, classLabel(s));
+                            }
+                        });
+                        [...seen.entries()].sort((a, b) => a[1].localeCompare(b[1])).forEach(([id, lbl]) => {
+                            html += `<option value="${escHtml(String(id))}">${escHtml(lbl)}</option>`;
+                        });
                     }
                     classFilter.innerHTML = html;
                 }
-            }).catch(() => { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.</td></tr>'; });
-        }
-
-        function renderStudentTable(students) {
-            const tbody = document.getElementById('massStudentList');
-            if (!tbody) return;
-            if (!students.length) { tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell">No students found.</td></tr>'; updateSelectedCount(); return; }
-            let html = '';
-            students.forEach(s => {
-                const checked = selectedStudents.some(x => x.id === s.id) ? 'checked' : '';
-                html += `<tr>
-                    <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked}></td>
-                    <td><strong>${escHtml(s.admissionNo || 'N/A')}</strong></td>
-                    <td>${escHtml(s.name)}</td>
-                    <td>${escHtml(classLabel(s))}</td>
-                    <td>${statusBadge(s.has_account)}</td>
-                    <td><small class="text-muted font-monospace">${escHtml(s.generatedEmail)}</small></td>
-                <tr>`;
+            })
+            .catch(() => {
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell text-danger">Network error.</td></tr>';
+                }
             });
-            tbody.innerHTML = html;
+    }
+
+    function renderStudentTable(students) {
+        const tbody = document.getElementById('massStudentList');
+        if (!tbody) return;
+
+        if (!students || !students.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="msm-loading-cell">No students found.</td></tr>';
             updateSelectedCount();
-            document.querySelectorAll('.student-checkbox').forEach(cb => {
-                cb.addEventListener('change', function() {
-                    const id = parseInt(this.dataset.id);
-                    const stu = allStudents.find(x => x.id === id);
-                    if (this.checked) { if (!selectedStudents.some(x => x.id === id)) selectedStudents.push(stu); }
-                    else selectedStudents = selectedStudents.filter(x => x.id !== id);
-                    updateSelectedCount();
+            return;
+        }
+
+        let html = '';
+        students.forEach(s => {
+            const checked = selectedStudents.some(x => x && x.id === s.id) ? 'checked' : '';
+            html += `<tr>
+                <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked}></td>
+                <td><strong>${escHtml(s.admissionNo || 'N/A')}</strong></td>
+                <td>${escHtml(s.name)}</td>
+                <td>${escHtml(classLabel(s))}</td>
+                <td>${statusBadge(s.has_account)}</td>
+                <td><small class="text-muted font-monospace">${escHtml(s.generatedEmail)}</small></td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        updateSelectedCount();
+
+        // Attach change events to new checkboxes
+        document.querySelectorAll('.student-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const id = parseInt(this.dataset.id);
+                const stu = allStudents.find(x => x && x.id === id);
+                if (!stu) return;
+
+                if (this.checked) {
+                    if (!selectedStudents.some(x => x && x.id === id)) {
+                        selectedStudents.push(stu);
+                    }
+                } else {
+                    selectedStudents = selectedStudents.filter(x => x && x.id !== id);
+                }
+                updateSelectedCount();
+                updateProceedButton();
+            });
+        });
+    }
+
+    function updateSelectedCount() {
+        const countSpan = document.getElementById('massSelectedCount');
+        if (countSpan) {
+            countSpan.textContent = `${selectedStudents.length} selected`;
+        }
+        const selectAllCheck = document.getElementById('selectAllCheckbox');
+        if (selectAllCheck) {
+            selectAllCheck.checked = allStudents.length > 0 && selectedStudents.length === allStudents.length;
+        }
+        updateProceedButton();
+    }
+
+    function updateProceedButton() {
+        const proceedBtn = document.getElementById('proceedToAction');
+        if (proceedBtn) {
+            proceedBtn.disabled = selectedStudents.length === 0;
+            proceedBtn.style.opacity = selectedStudents.length === 0 ? '0.5' : '1';
+        }
+    }
+
+    function applyClientFilters() {
+        const search = document.getElementById('massStudentSearch')?.value?.toLowerCase() || '';
+        const status = document.getElementById('massAccountStatus')?.value || 'all';
+
+        const filtered = allStudents.filter(s => {
+            if (!s) return false;
+            if (search && !s.name?.toLowerCase().includes(search) && !(s.admissionNo || '').toLowerCase().includes(search)) return false;
+            if (status === 'yes' && !s.has_account) return false;
+            if (status === 'no' && s.has_account) return false;
+            return true;
+        });
+        renderStudentTable(filtered);
+    }
+
+    // ── Mass Student Event Listeners ──────────────────────
+
+    const massSearchInput = document.getElementById('massStudentSearch');
+    if (massSearchInput) massSearchInput.addEventListener('input', applyClientFilters);
+
+    const massStatusFilter = document.getElementById('massAccountStatus');
+    if (massStatusFilter) massStatusFilter.addEventListener('change', applyClientFilters);
+
+    const massClassFilter = document.getElementById('massClassFilter');
+    if (massClassFilter) {
+        massClassFilter.addEventListener('change', () => {
+            selectedStudents = [];
+            loadStudents();
+        });
+    }
+
+    const selectAllStudentsBtn = document.getElementById('selectAllStudents');
+    if (selectAllStudentsBtn) {
+        selectAllStudentsBtn.addEventListener('click', () => {
+            selectedStudents = [...allStudents];
+            renderStudentTable(allStudents);
+        });
+    }
+
+    const deselectAllBtn = document.getElementById('deselectAll');
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', () => {
+            selectedStudents = [];
+            renderStudentTable(allStudents);
+        });
+    }
+
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            selectedStudents = this.checked ? [...allStudents] : [];
+            renderStudentTable(allStudents);
+        });
+    }
+
+    // ── Step 1 → 2 - FIXED ──────────────────────────────────
+    const proceedToActionBtn = document.getElementById('proceedToAction');
+    if (proceedToActionBtn) {
+        proceedToActionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Debug logging
+            console.log('Selected students count:', selectedStudents.length);
+            console.log('Selected students:', selectedStudents);
+
+            // Check if any students are selected
+            if (!selectedStudents || selectedStudents.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Students Selected',
+                    text: 'Please select at least one student to proceed.',
+                    confirmButtonColor: '#2563eb'
                 });
-            });
-        }
+                return;
+            }
 
-        function updateSelectedCount() {
-            const countSpan = document.getElementById('massSelectedCount');
-            if (countSpan) countSpan.textContent = `${selectedStudents.length} selected`;
-            const selectAllCheck = document.getElementById('selectAllCheckbox');
-            if (selectAllCheck) selectAllCheck.checked = allStudents.length > 0 && selectedStudents.length === allStudents.length;
-        }
-
-        function applyClientFilters() {
-            const search = document.getElementById('massStudentSearch')?.value.toLowerCase() || '';
-            const status = document.getElementById('massAccountStatus')?.value || 'all';
-            const filtered = allStudents.filter(s => {
-                if (search && !s.name.toLowerCase().includes(search) && !(s.admissionNo || '').toLowerCase().includes(search)) return false;
-                if (status === 'yes' && !s.has_account) return false;
-                if (status === 'no' && s.has_account) return false;
-                return true;
-            });
-            renderStudentTable(filtered);
-        }
-
-        document.getElementById('massStudentSearch')?.addEventListener('input', applyClientFilters);
-        document.getElementById('massAccountStatus')?.addEventListener('change', applyClientFilters);
-        document.getElementById('massClassFilter')?.addEventListener('change', () => { selectedStudents = []; loadStudents(); });
-        document.getElementById('selectAllStudents')?.addEventListener('click', () => { selectedStudents = [...allStudents]; renderStudentTable(allStudents); });
-        document.getElementById('deselectAll')?.addEventListener('click', () => { selectedStudents = []; renderStudentTable(allStudents); });
-        document.getElementById('selectAllCheckbox')?.addEventListener('change', function() { selectedStudents = this.checked ? [...allStudents] : []; renderStudentTable(allStudents); });
-
-        document.getElementById('proceedToAction')?.addEventListener('click', () => {
-            if (!selectedStudents.length) { Swal.fire({ icon: 'warning', title: 'No Students Selected', text: 'Select at least one student.', confirmButtonColor: '#2563eb' }); return; }
+            // Build the summary table
             let html = '';
             selectedStudents.forEach(s => {
+                if (!s) return;
                 html += `<tr>
-                    <td>${escHtml(s.name)}</td>
+                    <td>${escHtml(s.name || '')}</td>
                     <td>${escHtml(s.admissionNo || 'N/A')}</td>
                     <td>${escHtml(classLabel(s))}</td>
                     <td>${statusBadge(s.has_account)}</td>
-                    <td><small class="font-monospace">${escHtml(s.generatedEmail)}</small></td>
+                    <td><small class="font-monospace">${escHtml(s.generatedEmail || '')}</small></td>
                 </tr>`;
             });
+
             const listBody = document.getElementById('selectedStudentsList');
-            if (listBody) listBody.innerHTML = html;
+            if (listBody) {
+                listBody.innerHTML = html;
+            }
+
             const countSpan = document.getElementById('step2SelectedCount');
-            if (countSpan) countSpan.textContent = selectedStudents.length;
-            document.getElementById('massStep1').style.display = 'none';
-            document.getElementById('massStep2').style.display = '';
+            if (countSpan) {
+                countSpan.textContent = selectedStudents.length;
+            }
+
+            // Show step 2, hide step 1
+            const step1 = document.getElementById('massStep1');
+            const step2 = document.getElementById('massStep2');
+            if (step1) step1.style.display = 'none';
+            if (step2) step2.style.display = '';
+
             setStep(2);
         });
+    }
 
-        document.querySelectorAll('.msm-action-card').forEach(card => {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.msm-action-card').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-                const action = this.dataset.action;
-                document.getElementById('selectedAction').value = action;
-                const showPwd = action === 'create' || action === 'reset';
-                document.getElementById('passwordSettings').style.display = showPwd ? '' : 'none';
-                document.getElementById('roleSettings').style.display = showPwd ? '' : 'none';
-                const hasAcc = selectedStudents.filter(s => s.has_account).length;
-                const noAcc = selectedStudents.filter(s => !s.has_account).length;
-                let warn = '';
-                if (action === 'create' && hasAcc) warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${hasAcc} student(s) already have accounts and will be skipped.`;
-                if (action === 'reset' && noAcc) warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
-                if (action === 'revoke' && noAcc) warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
-                const w = document.getElementById('actionWarning');
-                if (w) { if (warn) { w.innerHTML = warn; w.style.display = ''; } else w.style.display = 'none'; }
-            });
+    // ── Action Cards ───────────────────────────────────────
+    document.querySelectorAll('.msm-action-card').forEach(card => {
+        card.addEventListener('click', function() {
+            document.querySelectorAll('.msm-action-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            const action = this.dataset.action;
+            document.getElementById('selectedAction').value = action;
+
+            const showPwd = action === 'create' || action === 'reset';
+            const pwdSettings = document.getElementById('passwordSettings');
+            const roleSettings = document.getElementById('roleSettings');
+            if (pwdSettings) pwdSettings.style.display = showPwd ? '' : 'none';
+            if (roleSettings) roleSettings.style.display = showPwd ? '' : 'none';
+
+            // Show warnings
+            const hasAcc = selectedStudents.filter(s => s && s.has_account).length;
+            const noAcc = selectedStudents.filter(s => s && !s.has_account).length;
+            let warn = '';
+            if (action === 'create' && hasAcc) {
+                warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${hasAcc} student(s) already have accounts and will be skipped.`;
+            } else if (action === 'reset' && noAcc) {
+                warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
+            } else if (action === 'revoke' && noAcc) {
+                warn = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${noAcc} student(s) have no accounts and will be skipped.`;
+            }
+
+            const warningEl = document.getElementById('actionWarning');
+            if (warningEl) {
+                if (warn) {
+                    warningEl.innerHTML = warn;
+                    warningEl.style.display = '';
+                } else {
+                    warningEl.style.display = 'none';
+                }
+            }
         });
+    });
 
-        document.querySelectorAll('input[name="passwordTypeRadio"]').forEach(r => {
-            r.addEventListener('change', function() {
-                const sharedContainer = document.getElementById('sharedPasswordContainer');
-                if (sharedContainer) sharedContainer.style.display = this.value === 'same' ? '' : 'none';
-            });
+    // ── Password Type Radio ───────────────────────────────
+    document.querySelectorAll('input[name="passwordTypeRadio"]').forEach(r => {
+        r.addEventListener('change', function() {
+            const container = document.getElementById('sharedPasswordContainer');
+            if (container) {
+                container.style.display = this.value === 'same' ? '' : 'none';
+            }
         });
+    });
 
-        document.getElementById('backToStep1')?.addEventListener('click', () => {
-            document.getElementById('massStep2').style.display = 'none';
-            document.getElementById('massStep1').style.display = '';
+    // ── Back to Step 1 ─────────────────────────────────────
+    const backToStep1Btn = document.getElementById('backToStep1');
+    if (backToStep1Btn) {
+        backToStep1Btn.addEventListener('click', () => {
+            const step2 = document.getElementById('massStep2');
+            const step1 = document.getElementById('massStep1');
+            if (step2) step2.style.display = 'none';
+            if (step1) step1.style.display = '';
             setStep(1);
         });
+    }
 
-        document.getElementById('executeAction')?.addEventListener('click', () => {
+    // ── Execute Action - FIXED ─────────────────────────────
+    const executeActionBtn = document.getElementById('executeAction');
+    if (executeActionBtn) {
+        executeActionBtn.addEventListener('click', function() {
+            if (isProcessing) return;
+
             const actionType = document.getElementById('selectedAction')?.value;
-            if (!actionType) { Swal.fire({ icon: 'error', title: 'No Action', text: 'Choose an action first.', confirmButtonColor: '#2563eb' }); return; }
-            const payload = { _token: '{{ csrf_token() }}', students: selectedStudents.map(s => ({ student_id: s.id })), action_type: actionType };
+            if (!actionType) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Action Selected',
+                    text: 'Please choose an action first.',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            // Validate selected students
+            if (!selectedStudents || selectedStudents.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Students',
+                    text: 'No students selected to process.',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
+            const payload = {
+                _token: '{{ csrf_token() }}',
+                students: selectedStudents.map(s => ({ student_id: s.id })),
+                action_type: actionType,
+            };
+
             if (actionType === 'create' || actionType === 'reset') {
-                const pwdType = document.querySelector('input[name="passwordTypeRadio"]:checked')?.value;
+                const pwdType = document.querySelector('input[name="passwordTypeRadio"]:checked')?.value || 'individual';
                 payload.password_type = pwdType;
                 if (pwdType === 'same') {
-                    payload.shared_password = document.getElementById('sharedPassword')?.value;
-                    if (!payload.shared_password || payload.shared_password.length < 6) { Swal.fire({ icon: 'error', title: 'Password Too Short', text: 'Minimum 6 characters.', confirmButtonColor: '#2563eb' }); return; }
+                    const sharedPwd = document.getElementById('sharedPassword')?.value;
+                    if (!sharedPwd || sharedPwd.length < 6) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Password Too Short',
+                            text: 'Shared password must be at least 6 characters.',
+                            confirmButtonColor: '#2563eb'
+                        });
+                        return;
+                    }
+                    payload.shared_password = sharedPwd;
                 }
                 payload.roles = ['Student'];
             }
-            Swal.fire({ title: 'Processing…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            isProcessing = true;
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+            Swal.fire({
+                title: 'Processing...',
+                text: `Performing "${actionType}" action on ${selectedStudents.length} student(s)`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
             fetch('{{ route("users.mass-create-students") }}', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
                 body: JSON.stringify(payload)
-            }).then(r => r.json()).then(data => {
+            })
+            .then(response => response.json())
+            .then(data => {
                 Swal.close();
+                isProcessing = false;
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Execute Action';
+
                 if (data.success) {
                     currentResults = data;
                     displayResults(data);
-                    document.getElementById('massStep2').style.display = 'none';
-                    document.getElementById('massStep3').style.display = '';
+
+                    const step2 = document.getElementById('massStep2');
+                    const step3 = document.getElementById('massStep3');
+                    if (step2) step2.style.display = 'none';
+                    if (step3) step3.style.display = '';
                     setStep(3);
-                } else { Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Operation failed.', confirmButtonColor: '#2563eb' }); }
-            }).catch(() => { Swal.close(); Swal.fire({ icon: 'error', title: 'Network Error', confirmButtonColor: '#2563eb' }); });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Operation Failed',
+                        text: data.message || 'An error occurred while processing.',
+                        confirmButtonColor: '#2563eb'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.close();
+                isProcessing = false;
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Execute Action';
+
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Failed to connect to the server. Please try again.',
+                    confirmButtonColor: '#2563eb'
+                });
+            });
         });
+    }
 
-        function displayResults(data) {
-            let html = `<div class="alert alert-success border-0 rounded-3" style="background:#f0fdf4;border-left:4px solid #16a34a !important;">
-                <h5 class="mb-1"><i class="bi bi-check-circle-fill me-2 text-success"></i>Operation Complete</h5>
-                <p class="mb-0 text-muted">${escHtml(data.message)}</p>
+    // ── Results Display ────────────────────────────────────
+    function displayResults(data) {
+        let html = `<div class="alert alert-success border-0 rounded-3" style="background:#f0fdf4;border-left:4px solid #16a34a !important;">
+            <h5 class="mb-1"><i class="bi bi-check-circle-fill me-2 text-success"></i>Operation Complete</h5>
+            <p class="mb-0 text-muted">${escHtml(data.message)}</p>
+        </div>`;
+
+        if (data.created?.length) {
+            html += mkTable('Created Accounts', data.created, 'success', 'person-plus-fill',
+                ['Name', 'Username', 'Email', 'Password', 'Admission No', 'Class'],
+                c => `<tr>
+                    <td>${escHtml(c.name)}</td>
+                    <td><code>${escHtml(c.username)}</code></td>
+                    <td><small>${escHtml(c.email)}</small></td>
+                    <td><code class="text-success fw-bold">${escHtml(c.password)}</code></td>
+                    <td>${escHtml(c.admissionNo || 'N/A')}</td>
+                    <td>${escHtml(c.class_name || '')}</td>
+                </tr>`
+            );
+        }
+
+        if (data.reset?.length) {
+            html += mkTable('Password Resets', data.reset, 'warning', 'key-fill',
+                ['Name', 'Username', 'Email', 'New Password', 'Admission No', 'Class'],
+                r => `<tr>
+                    <td>${escHtml(r.name)}</td>
+                    <td><code>${escHtml(r.username)}</code></td>
+                    <td><small>${escHtml(r.email)}</small></td>
+                    <td><code class="text-warning fw-bold">${escHtml(r.password)}</code></td>
+                    <td>${escHtml(r.admissionNo || 'N/A')}</td>
+                    <td>${escHtml(r.class_name || '')}</td>
+                </tr>`
+            );
+        }
+
+        if (data.revoked?.length) {
+            html += `<div class="mt-3 p-3 border rounded-3">
+                <strong><i class="bi bi-person-x-fill text-danger me-2"></i>Revoked (${data.revoked.length})</strong>
+                <ul class="mt-2 mb-0">
+                    ${data.revoked.map(r => `<li>${escHtml(r.name)} (${escHtml(r.admissionNo || 'N/A')}) — account removed</li>`).join('')}
+                </ul>
             </div>`;
-            if (data.created?.length) html += mkTable('Created Accounts', data.created, 'success', 'person-plus-fill', ['Name', 'Username', 'Email', 'Password', 'Admission No', 'Class'],
-                c => `<tr><td>${escHtml(c.name)}</td><td><code>${escHtml(c.username)}</code></td><td><small>${escHtml(c.email)}</small></td><td><code class="text-success fw-bold">${escHtml(c.password)}</code></td><td>${escHtml(c.admissionNo || 'N/A')}</td><td>${escHtml(c.class_name || '')}</td></tr>`);
-            if (data.reset?.length) html += mkTable('Password Resets', data.reset, 'warning', 'key-fill', ['Name', 'Username', 'Email', 'New Password', 'Admission No', 'Class'],
-                r => `<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td><code class="text-warning fw-bold">${escHtml(r.password)}</code></td><td>${escHtml(r.admissionNo || 'N/A')}</td><td>${escHtml(r.class_name || '')}</td></tr>`);
-            if (data.revoked?.length) { html += `<div class="mt-3 p-3 border rounded-3"><strong><i class="bi bi-person-x-fill text-danger me-2"></i>Revoked (${data.revoked.length})</strong><ul class="mt-2 mb-0">`; data.revoked.forEach(r => { html += `<li>${escHtml(r.name)} (${escHtml(r.admissionNo || 'N/A')}) — account removed</li>`; }); html += '</ul></div>'; }
-            if (data.reprinted?.length) html += mkTable('Reprinted Credentials', data.reprinted, 'info', 'printer-fill', ['Name', 'Username', 'Email', 'Admission No', 'Note'],
-                r => `<tr><td>${escHtml(r.name)}</td><td><code>${escHtml(r.username)}</code></td><td><small>${escHtml(r.email)}</small></td><td>${escHtml(r.admissionNo || 'N/A')}</td><td><small class="text-muted">Password hidden</small></td></tr>`);
-            if (data.skipped?.length) { html += `<div class="mt-3 p-3 border rounded-3 bg-light"><strong><i class="bi bi-skip-forward-fill text-muted me-2"></i>Skipped (${data.skipped.length})</strong><ul class="mt-2 mb-0">`; data.skipped.forEach(s => { html += `<li class="text-muted">${escHtml(s)}</li>`; }); html += '</ul></div>'; }
-            const container = document.getElementById('resultsContainer');
-            if (container) container.innerHTML = html;
         }
 
-        function mkTable(title, rows, color, icon, headers, rowFn) {
-            return `<div class="mt-3"><strong><i class="bi bi-${icon} text-${color} me-2"></i>${title} (${rows.length})</strong>
-                <div class="table-responsive mt-2"><table class="table table-sm table-bordered msm-table"><thead class="table-${color}"><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(rowFn).join('')}</tbody></table></div></div>`;
+        if (data.reprinted?.length) {
+            html += mkTable('Reprinted Credentials', data.reprinted, 'info', 'printer-fill',
+                ['Name', 'Username', 'Email', 'Admission No', 'Note'],
+                r => `<tr>
+                    <td>${escHtml(r.name)}</td>
+                    <td><code>${escHtml(r.username)}</code></td>
+                    <td><small>${escHtml(r.email)}</small></td>
+                    <td>${escHtml(r.admissionNo || 'N/A')}</td>
+                    <td><small class="text-muted">Password hidden</small></td>
+                </tr>`
+            );
         }
 
-        // ============================================================
-        // IMPROVED PRINT WITH 4 HORIZONTAL SLIPS PER PAGE + CUT LINES
-        // ============================================================
-        document.getElementById('printResults')?.addEventListener('click', () => {
-            if (!currentResults) return;
+        if (data.skipped?.length) {
+            html += `<div class="mt-3 p-3 border rounded-3 bg-light">
+                <strong><i class="bi bi-skip-forward-fill text-muted me-2"></i>Skipped (${data.skipped.length})</strong>
+                <ul class="mt-2 mb-0">
+                    ${data.skipped.map(s => `<li class="text-muted">${escHtml(s)}</li>`).join('')}
+                </ul>
+            </div>`;
+        }
+
+        const container = document.getElementById('resultsContainer');
+        if (container) container.innerHTML = html;
+    }
+
+    function mkTable(title, rows, color, icon, headers, rowFn) {
+        if (!rows || !rows.length) return '';
+        return `<div class="mt-3">
+            <strong><i class="bi bi-${icon} text-${color} me-2"></i>${title} (${rows.length})</strong>
+            <div class="table-responsive mt-2">
+                <table class="table table-sm table-bordered msm-table">
+                    <thead class="table-${color}"><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                    <tbody>${rows.map(rowFn).join('')}</tbody>
+                </table>
+            </div>
+        </div>`;
+    }
+
+    // ── Print Results ──────────────────────────────────────
+    const printResultsBtn = document.getElementById('printResults');
+    if (printResultsBtn) {
+        printResultsBtn.addEventListener('click', function() {
+            if (!currentResults) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Results',
+                    text: 'Please execute an action first.',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
+
             const school = document.querySelector('meta[name="school-name"]')?.content || 'CSS Kabba';
             const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-            // Merge created and reset credentials
             const allCreds = [
                 ...(currentResults.created || []).map(c => ({ ...c, type: 'created' })),
                 ...(currentResults.reset || []).map(r => ({ ...r, type: 'reset' })),
             ];
 
-            if (!allCreds.length) { Swal.fire({ icon: 'info', title: 'Nothing to Print', text: 'No created or reset credentials available.', confirmButtonColor: '#2563eb' }); return; }
+            if (!allCreds.length) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Nothing to Print',
+                    text: 'No created or reset credentials available.',
+                    confirmButtonColor: '#2563eb'
+                });
+                return;
+            }
 
-            // For each credential, find matching student from selectedStudents to get photo
-            const credsWithPhotos = allCreds.map(cred => {
-                const matchingStudent = selectedStudents.find(s => s.id == cred.student_id);
-                let photoUrl = cred.photo_url || (matchingStudent ? matchingStudent.photo_url : null);
-                let initials = cred.initials || (matchingStudent ? matchingStudent.initials : 'ST');
-                let studentName = cred.name || (matchingStudent ? matchingStudent.name : '');
-
-                return { ...cred, photo_url: photoUrl, initials: initials, name: studentName };
-            });
-
-            // Generate larger, bolder slips - Horizontal layout (4 per page in 2x2 grid)
-            const slips = credsWithPhotos.map(s => {
+            // Build slips with photos if available
+            const slipHtml = allCreds.map(s => {
                 const isReset = s.type === 'reset';
                 const tag = isReset ? 'RESET' : 'NEW';
                 const tagColor = isReset ? '#d97706' : '#16a34a';
-                const initialsVal = (s.initials || 'ST').substring(0, 2);
 
-                // Build larger photo HTML
+                // Try to find matching student for photo
+                const matchingStudent = selectedStudents.find(st => st && st.id == s.student_id);
                 let photoHtml = '';
-                if (s.photo_url && s.photo_url !== '' && s.photo_url !== 'null') {
-                    photoHtml = `<div class="slip-photo"><img src="${s.photo_url}" alt="Photo" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'slip-photo-fallback\\'>${escHtml(initialsVal)}</div>'"></div>`;
+                if (matchingStudent && matchingStudent.photo_url) {
+                    photoHtml = `<div class="slip-photo"><img src="${matchingStudent.photo_url}" alt="Photo" onerror="this.style.display='none'"></div>`;
+                } else if (matchingStudent && matchingStudent.picture) {
+                    photoHtml = `<div class="slip-photo"><img src="/storage/images/student_avatars/${matchingStudent.picture}" alt="Photo" onerror="this.style.display='none'"></div>`;
                 } else {
-                    photoHtml = `<div class="slip-photo"><div class="slip-photo-fallback">${escHtml(initialsVal)}</div></div>`;
+                    const initials = (s.name || 'ST').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+                    photoHtml = `<div class="slip-photo" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;">${initials}</div>`;
                 }
 
-                return `<div class="print-slip">
-                    <div class="slip-header">
-                        <span class="slip-tag" style="background:${tagColor}">${tag}</span>
-                        <span class="slip-school">${escHtml(school)}</span>
-                        <span class="slip-cut-icon">✂</span>
-                    </div>
-                    <div class="slip-content">
-                        ${photoHtml}
-                        <div class="slip-info">
-                            <div class="slip-name">${escHtml(s.name)}</div>
-                            <div class="slip-detail"><span class="detail-label">Adm No</span><span class="detail-value">${escHtml(s.admissionNo || 'N/A')}</span></div>
-                            <div class="slip-detail"><span class="detail-label">Class</span><span class="detail-value">${escHtml(s.class_name || '—')}</span></div>
-                            <div class="slip-detail"><span class="detail-label">Email</span><span class="detail-value mono">${escHtml(s.email)}</span></div>
-                            <div class="slip-detail"><span class="detail-label">Username</span><span class="detail-value mono">${escHtml(s.username || '')}</span></div>
-                            <div class="slip-password">
-                                <span class="pwd-label">${isReset ? 'New Password' : 'Password'}</span>
-                                <span class="pwd-value">${escHtml(s.password)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="slip-footer">Change password after login &bull; ${window.location.hostname}</div>
+                return `
+                <div class="slip">
+                    <div class="slip-tag" style="background:${tagColor}">${tag}</div>
+                    <div class="slip-school">${escHtml(school)}</div>
+                    ${photoHtml}
+                    <div class="slip-name">${escHtml(s.name)}</div>
+                    <div class="slip-row"><span class="sl">Adm No</span><span class="sv">${escHtml(s.admissionNo || 'N/A')}</span></div>
+                    <div class="slip-row"><span class="sl">Class</span><span class="sv">${escHtml(s.class_name || '—')}</span></div>
+                    <div class="slip-row"><span class="sl">Email</span><span class="sv mono">${escHtml(s.email)}</span></div>
+                    <div class="slip-row"><span class="sl">Username</span><span class="sv mono">${escHtml(s.username || '')}</span></div>
+                    <div class="slip-pwd"><span class="pwd-label">${isReset ? 'New Password' : 'Password'}</span><span class="pwd-val">${escHtml(s.password)}</span></div>
+                    <div class="slip-note">Change password after first login &bull; ${window.location.hostname}</div>
                 </div>`;
-            });
-
-            // 4 slips per page in 2x2 grid (2 columns x 2 rows) for horizontal layout
-            const perPage = 4;
-            const pages = [];
-            for (let i = 0; i < slips.length; i += perPage) {
-                pages.push(slips.slice(i, i + perPage));
-            }
+            }).join('');
 
             const printWin = window.open('', '_blank');
-            printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student Credentials — ${today}</title>
-            <style>
-                * { margin:0; padding:0; box-sizing:border-box; }
-                body { font-family: 'Segoe UI', 'Roboto', Arial, sans-serif; background:#fff; font-size:14px; }
+            printWin.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>Student Credentials — ${today}</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background:#f0f4f8; font-size:10px; }
 
-                /* Cover page */
-                .cover-page { text-align:center; padding:40px 20px; page-break-after:always; break-after:page; display:flex; flex-direction:column; justify-content:center; min-height:100vh; }
-                .cover-school { font-size:32px; font-weight:800; color:#1e3a5f; margin-bottom:20px; letter-spacing:-0.5px; }
-                .cover-title { font-size:26px; font-weight:700; color:#2563eb; margin-bottom:15px; }
-                .cover-date { font-size:16px; color:#64748b; margin-bottom:50px; }
-                .cover-stats { display:flex; justify-content:center; gap:40px; margin-top:50px; flex-wrap:wrap; }
-                .cover-stat { background:#f8fafc; border-radius:20px; padding:25px 35px; min-width:180px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
-                .cover-stat-number { font-size:44px; font-weight:800; color:#1e3a5f; }
-                .cover-stat-label { font-size:13px; color:#64748b; margin-top:8px; letter-spacing:0.5px; text-transform:uppercase; font-weight:600; }
-                .cover-footer { margin-top:70px; font-size:12px; color:#94a3b8; }
+/* Summary Page */
+.summary-page { page-break-after: always; padding:20mm; }
+.summary-page h2 { font-size:18px; color:#1e3a5f; margin-bottom:8px; }
+.summary-page .meta { color:#666; font-size:12px; margin-bottom:16px; }
+.sum-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.sum-stat { background:#fff; border-radius:8px; padding:14px; text-align:center; border:1px solid #e2e8f0; }
+.sum-stat .n { font-size:28px; font-weight:800; color:#1e3a5f; }
+.sum-stat .l { font-size:11px; color:#64748b; margin-top:2px; }
+.sum-table { width:100%; border-collapse:collapse; font-size:12px; }
+.sum-table th { background:#1e3a5f; color:#fff; padding:8px 12px; text-align:left; }
+.sum-table td { border:1px solid #e2e8f0; padding:7px 12px; }
+.sum-table tr:nth-child(even) td { background:#f8fafc; }
 
-                /* Slips page - 2x2 grid = 4 horizontal slips per page */
-                .slips-page { page-break-after:always; break-after:page; padding:15px; position:relative; }
-                .slips-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:20px; }
-                .slips-grid:last-child { margin-bottom:0; }
+/* Slip Grid - 3 per row */
+.slips-page { padding:8mm; }
+.slip-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; }
 
-                /* Individual slip - LARGER AND BOLDER WITH CUT MARKS */
-                .print-slip {
-                    border:2px solid #cbd5e1;
-                    border-radius:16px;
-                    padding:20px;
-                    background:#fff;
-                    break-inside:avoid;
-                    page-break-inside:avoid;
-                    position:relative;
-                    box-shadow:0 2px 6px rgba(0,0,0,0.08);
-                }
-                .slip-header {
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    margin-bottom:16px;
-                    padding-bottom:10px;
-                    border-bottom:2px dashed #e2e8f0;
-                    position:relative;
-                }
-                .slip-tag {
-                    font-size:11px;
-                    font-weight:800;
-                    color:#fff;
-                    padding:4px 14px;
-                    border-radius:25px;
-                    letter-spacing:1px;
-                }
-                .slip-school {
-                    font-size:11px;
-                    font-weight:700;
-                    color:#1e3a5f;
-                    text-transform:uppercase;
-                }
-                .slip-cut-icon {
-                    font-size:14px;
-                    font-weight:bold;
-                    color:#94a3b8;
-                    opacity:0.7;
-                }
-                .slip-content {
-                    display:flex;
-                    gap:20px;
-                    margin-bottom:14px;
-                }
-                .slip-photo {
-                    flex-shrink:0;
-                    width:90px;
-                    height:90px;
-                    border-radius:50%;
-                    overflow:hidden;
-                    background:#f1f5f9;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    border:2px solid #e2e8f0;
-                }
-                .slip-photo img {
-                    width:100%;
-                    height:100%;
-                    object-fit:cover;
-                }
-                .slip-photo-fallback {
-                    font-size:38px;
-                    font-weight:700;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    width:100%;
-                    height:100%;
-                    background:linear-gradient(135deg, #667eea, #764ba2);
-                    color:white;
-                }
-                .slip-info { flex:1; }
-                .slip-name {
-                    font-size:19px;
-                    font-weight:800;
-                    color:#0f172a;
-                    margin-bottom:14px;
-                    border-bottom:2px solid #e2e8f0;
-                    padding-bottom:8px;
-                }
-                .slip-detail {
-                    display:flex;
-                    justify-content:space-between;
-                    margin-bottom:10px;
-                    font-size:13px;
-                }
-                .detail-label {
-                    font-weight:800;
-                    color:#64748b;
-                    text-transform:uppercase;
-                    font-size:10px;
-                    letter-spacing:0.5px;
-                }
-                .detail-value {
-                    font-weight:600;
-                    color:#1e293b;
-                    text-align:right;
-                    word-break:break-word;
-                }
-                .mono { font-family:'Courier New', monospace; font-size:11px; font-weight:600; }
-                .slip-password {
-                    background:linear-gradient(135deg,#f0f9ff,#eff6ff);
-                    border:2px solid #bfdbfe;
-                    border-radius:12px;
-                    padding:12px 14px;
-                    margin-top:14px;
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    flex-wrap:wrap;
-                    gap:8px;
-                }
-                .pwd-label {
-                    font-size:10px;
-                    font-weight:800;
-                    color:#1e40af;
-                    text-transform:uppercase;
-                    letter-spacing:1px;
-                }
-                .pwd-value {
-                    font-family:'Courier New', monospace;
-                    font-size:19px;
-                    font-weight:900;
-                    color:#1e40af;
-                    letter-spacing:1.5px;
-                    word-break:break-all;
-                    text-align:right;
-                }
-                .slip-footer {
-                    margin-top:14px;
-                    padding-top:10px;
-                    border-top:1px dashed #e2e8f0;
-                    font-size:9px;
-                    font-weight:500;
-                    color:#94a3b8;
-                    text-align:center;
-                }
+/* Individual Slip */
+.slip {
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    padding:9px 11px;
+    background:#fff;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    position: relative;
+    overflow: hidden;
+}
+.slip::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,#1e3a5f,#2563eb);
+}
+.slip-tag {
+    display:inline-block;
+    color:#fff; font-size:8px; font-weight:700;
+    padding:1px 6px; border-radius:10px;
+    margin-bottom:4px; letter-spacing:.5px;
+}
+.slip-school { font-size:9px; font-weight:700; color:#1e3a5f; margin-bottom:3px; text-transform:uppercase; letter-spacing:.5px; }
+.slip-photo {
+    width:50px; height:50px;
+    border-radius:50%;
+    overflow:hidden;
+    margin:0 auto 6px;
+    border:2px solid #e2e8f0;
+    background:#f1f5f9;
+}
+.slip-photo img { width:100%; height:100%; object-fit:cover; }
+.slip-name { font-size:13px; font-weight:800; color:#0f172a; margin-bottom:7px; text-align:center; line-height:1.2; }
+.slip-row { display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:1px dashed #f1f5f9; }
+.sl { color:#64748b; font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+.sv { color:#1e293b; font-size:9px; font-weight:500; text-align:right; word-break:break-all; }
+.mono { font-family:'Courier New',monospace; font-size:8.5px; }
+.slip-pwd {
+    margin-top:7px;
+    background:linear-gradient(135deg,#f0f9ff,#eff6ff);
+    border:1.5px solid #bfdbfe;
+    border-radius:6px;
+    padding:7px 9px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+.pwd-label { font-size:8px; font-weight:700; color:#1e40af; text-transform:uppercase; letter-spacing:.3px; }
+.pwd-val { font-family:'Courier New',monospace; font-size:14px; font-weight:900; color:#1e40af; letter-spacing:2px; }
+.slip-note { margin-top:5px; font-size:7.5px; color:#94a3b8; text-align:center; border-top:1px dashed #f1f5f9; padding-top:4px; }
 
-                /* Horizontal cut lines between rows and columns */
-                .slips-grid::before {
-                    display:none;
-                }
+/* Cut line between rows */
+.cut-row { text-align:center; font-size:8px; color:#cbd5e1; letter-spacing:2px; margin:2mm 0; font-family:monospace; }
 
-                /* Cut line between rows in the same page */
-                .slips-grid .print-slip {
-                    position:relative;
-                }
-                .slips-grid .print-slip::after {
-                    content:'✂';
-                    position:absolute;
-                    bottom:-12px;
-                    left:50%;
-                    transform:translateX(-50%);
-                    font-size:12px;
-                    font-weight:bold;
-                    color:#cbd5e1;
-                    background:#fff;
-                    padding:0 8px;
-                    font-family:monospace;
-                }
+@media print {
+    body { background:#fff; }
+    .summary-page { padding:15mm; }
+    .slips-page { padding:6mm; }
+    .slip-grid { gap:4mm; }
+    .pwd-val, .slip-pwd, .slip-tag, .slip-photo { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+    .summary-page { page-break-after:always; break-after:page; }
+}
+</style>
+</head>
+<body>
 
-                /* Vertical cut line between columns */
-                .slips-grid {
-                    position:relative;
-                }
-                .slips-grid::after {
-                    content:'✂';
-                    position:absolute;
-                    top:50%;
-                    right:-10px;
-                    transform:translateY(-50%) rotate(90deg);
-                    font-size:12px;
-                    font-weight:bold;
-                    color:#cbd5e1;
-                    background:#fff;
-                    padding:0 8px;
-                    font-family:monospace;
-                    display:none;
-                }
+<!-- Summary Page -->
+<div class="summary-page">
+    <h2>🎓 Student Portal Credentials — ${escHtml(school)}</h2>
+    <div class="meta">Printed: ${today} &nbsp;|&nbsp; Total slips: ${allCreds.length}</div>
+    <div class="sum-grid">
+        <div class="sum-stat"><div class="n" style="color:#2563eb">${allCreds.length}</div><div class="l">Total Slips</div></div>
+        <div class="sum-stat"><div class="n" style="color:#16a34a">${currentResults.created?.length || 0}</div><div class="l">New Accounts</div></div>
+        <div class="sum-stat"><div class="n" style="color:#d97706">${currentResults.reset?.length || 0}</div><div class="l">Password Resets</div></div>
+        <div class="sum-stat"><div class="n" style="color:#64748b">${currentResults.skipped?.length || 0}</div><div class="l">Skipped</div></div>
+    </div>
+    <table class="sum-table">
+        <thead><tr><th>#</th><th>Student Name</th><th>Admission No</th><th>Class</th><th>Email</th><th>Type</th></tr></thead>
+        <tbody>
+        ${allCreds.map((s, i) => `<tr>
+            <td>${i + 1}</td>
+            <td><strong>${escHtml(s.name)}</strong></td>
+            <td style="font-family:monospace">${escHtml(s.admissionNo || 'N/A')}</td>
+            <td>${escHtml(s.class_name || '—')}</td>
+            <td style="font-family:monospace;font-size:10px">${escHtml(s.email)}</td>
+            <td style="color:${s.type === 'reset' ? '#d97706' : '#16a34a'};font-weight:700">${s.type === 'reset' ? 'RESET' : 'NEW'}</td>
+        </tr>`).join('')}
+        </tbody>
+    </table>
+    <div class="print-note" style="margin-top:12px;font-size:10.5px;color:#94a3b8;text-align:center;">
+        ✂ Cut individual slips along the borders &nbsp;|&nbsp; Keep credentials secure &nbsp;|&nbsp; ${escHtml(school)} School Management System
+    </div>
+</div>
 
-                /* Page cut line between pages */
-                .page-cut-row {
-                    text-align:center;
-                    margin:15px 0 10px;
-                    font-family:monospace;
-                    font-size:12px;
-                    font-weight:bold;
-                    color:#cbd5e1;
-                    letter-spacing:6px;
-                    border-top:2px dashed #cbd5e1;
-                    padding-top:10px;
-                }
+<!-- Credential Slips -->
+<div class="slips-page">
+    <div class="slip-grid">${slipHtml}</div>
+</div>
 
-                /* Remove cut marks on last row of each page */
-                .slips-grid .print-slip:last-child::after {
-                    display:none;
-                }
-
-                .slips-page:last-child .page-cut-row {
-                    display:none;
-                }
-
-                @media print {
-                    .cover-page { padding:25px; }
-                    .slips-page { padding:12px; page-break-after:always; break-after:page; }
-                    .slips-grid { gap:15px; }
-                    .print-slip { border:1.5px solid #cbd5e1; break-inside:avoid; page-break-inside:avoid; }
-                    .slip-photo img, .slip-photo-fallback { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-                    .slip-password { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-                    .page-cut-row { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-                }
-            </style></head><body>
-            <div class="cover-page">
-                <div class="cover-school">${escHtml(school)}</div>
-                <div class="cover-title">🎓 Student Portal Credentials</div>
-                <div class="cover-date">Printed: ${today}</div>
-                <div class="cover-stats">
-                    <div class="cover-stat"><div class="cover-stat-number">${allCreds.length}</div><div class="cover-stat-label">Total Slips</div></div>
-                    <div class="cover-stat"><div class="cover-stat-number">${currentResults.created?.length || 0}</div><div class="cover-stat-label">New Accounts</div></div>
-                    <div class="cover-stat"><div class="cover-stat-number">${currentResults.reset?.length || 0}</div><div class="cover-stat-label">Password Resets</div></div>
-                    <div class="cover-stat"><div class="cover-stat-number">${currentResults.skipped?.length || 0}</div><div class="cover-stat-label">Skipped</div></div>
-                </div>
-                <div class="cover-footer">✂ Cut along the dotted lines between slips | Keep credentials secure</div>
-            </div>
-            ${pages.map((pageSlips, pageIndex) => `
-            <div class="slips-page">
-                <div class="slips-grid">
-                    ${pageSlips.map(slip => slip).join('')}
-                </div>
-                ${pageIndex < pages.length - 1 ? '<div class="page-cut-row">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - CUT HERE - - - - - - - - - - - - - - - - - - - - - - - - - - - - ✂</div>' : ''}
-            </div>
-            `).join('')}
-            <script>window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close();},1500);},500);};<\/script>
-            </body></html>`);
+<script>
+window.onload = function() {
+    setTimeout(function() {
+        window.print();
+        setTimeout(function() {
+            window.close();
+        }, 1500);
+    }, 600);
+};
+<\/script>
+</body></html>`);
             printWin.document.close();
         });
+    }
 
-        function resetModal() {
+    // ── Modal Reset ────────────────────────────────────────
+    function resetMassModal() {
+        selectedStudents = [];
+        currentResults = null;
+        isProcessing = false;
+
+        const actionField = document.getElementById('selectedAction');
+        if (actionField) actionField.value = '';
+
+        const step1 = document.getElementById('massStep1');
+        const step2 = document.getElementById('massStep2');
+        const step3 = document.getElementById('massStep3');
+
+        if (step1) step1.style.display = '';
+        if (step2) step2.style.display = 'none';
+        if (step3) step3.style.display = 'none';
+
+        document.querySelectorAll('.msm-action-card').forEach(c => c.classList.remove('selected'));
+
+        const warning = document.getElementById('actionWarning');
+        if (warning) warning.style.display = 'none';
+
+        const pwdSettings = document.getElementById('passwordSettings');
+        const roleSettings = document.getElementById('roleSettings');
+        if (pwdSettings) pwdSettings.style.display = 'none';
+        if (roleSettings) roleSettings.style.display = 'none';
+
+        // Reset password radio to default
+        const defaultRadio = document.querySelector('input[name="passwordTypeRadio"][value="individual"]');
+        if (defaultRadio) defaultRadio.checked = true;
+        const sharedContainer = document.getElementById('sharedPasswordContainer');
+        if (sharedContainer) sharedContainer.style.display = 'none';
+        const sharedPwd = document.getElementById('sharedPassword');
+        if (sharedPwd) sharedPwd.value = '';
+
+        setStep(1);
+        loadStudents();
+    }
+
+    const newActionBtn = document.getElementById('newAction');
+    if (newActionBtn) newActionBtn.addEventListener('click', resetMassModal);
+
+    const massModal = document.getElementById('massStudentModal');
+    if (massModal) {
+        massModal.addEventListener('hidden.bs.modal', resetMassModal);
+        massModal.addEventListener('show.bs.modal', () => {
             selectedStudents = [];
-            currentResults = null;
-            const actionField = document.getElementById('selectedAction');
-            if (actionField) actionField.value = '';
-            const step2 = document.getElementById('massStep2');
-            const step3 = document.getElementById('massStep3');
-            const step1 = document.getElementById('massStep1');
-            if (step2) step2.style.display = 'none';
-            if (step3) step3.style.display = 'none';
-            if (step1) step1.style.display = '';
-            document.querySelectorAll('.msm-action-card').forEach(c => c.classList.remove('selected'));
-            const warning = document.getElementById('actionWarning');
-            if (warning) warning.style.display = 'none';
-            const pwdSettings = document.getElementById('passwordSettings');
-            const roleSettings = document.getElementById('roleSettings');
-            if (pwdSettings) pwdSettings.style.display = 'none';
-            if (roleSettings) roleSettings.style.display = 'none';
-            setStep(1);
             loadStudents();
-        }
+        });
+    }
 
-        document.getElementById('newAction')?.addEventListener('click', resetModal);
-        const massModal = document.getElementById('massStudentModal');
-        if (massModal) {
-            massModal.addEventListener('hidden.bs.modal', resetModal);
-            massModal.addEventListener('show.bs.modal', () => { selectedStudents = []; loadStudents(); });
-        }
+    // ── Single Student Modal ──────────────────────────────
+    const addStudentModal = document.getElementById('addStudentModal');
+    const credentialsModal = document.getElementById('setStudentCredentialsModal');
 
-        // Single student modal
-        const addStudentModal = document.getElementById('addStudentModal');
-        const credentialsModal = document.getElementById('setStudentCredentialsModal');
-        if (addStudentModal && credentialsModal) {
-            let selectedStudent = null;
-            addStudentModal.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
-            function loadStudentsForSingle(search) {
-                const proceed = document.getElementById('proceed-to-credentials');
-                if (proceed) proceed.disabled = true;
-                let url = '{{ route("get.students") }}?limit=500&has_account=no';
-                if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
-                fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF } }).then(r => r.json()).then(data => {
+    if (addStudentModal && credentialsModal) {
+        let selectedSingleStudent = null;
+
+        addStudentModal.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
+
+        function loadStudentsForSingle(search) {
+            const proceed = document.getElementById('proceed-to-credentials');
+            if (proceed) proceed.disabled = true;
+
+            let url = '{{ route("get.students") }}?limit=500&has_account=no';
+            if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
+
+            fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF } })
+                .then(r => r.json())
+                .then(data => {
                     const sel = document.getElementById('student-select');
                     if (sel) {
                         sel.innerHTML = '<option value="">— Choose a student —</option>';
@@ -2148,60 +2343,125 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                             sel.appendChild(o);
                         });
                     }
-                }).catch(err => console.error(err));
-            }
-            document.getElementById('student-search')?.addEventListener('input', debounce(e => loadStudentsForSingle(e.target.value), 350));
-            document.getElementById('student-select')?.addEventListener('change', function() {
-                const opt = this.options[this.selectedIndex];
-                if (!opt || !opt.value) { selectedStudent = null; const proceed = document.getElementById('proceed-to-credentials'); if (proceed) proceed.disabled = true; return; }
-                selectedStudent = { id: opt.value, name: opt.dataset.name, email: opt.dataset.email, admissionNo: opt.dataset.admission };
-                const proceed = document.getElementById('proceed-to-credentials');
-                if (proceed) proceed.disabled = false;
-            });
-            document.getElementById('proceed-to-credentials')?.addEventListener('click', () => {
-                if (!selectedStudent) return;
-                const idField = document.getElementById('student-id-field');
-                const nameField = document.getElementById('student-name-field');
-                const emailField = document.getElementById('student-user-email');
-                const usernameField = document.getElementById('student-username');
-                if (idField) idField.value = selectedStudent.id;
-                if (nameField) nameField.value = selectedStudent.name;
-                if (emailField) emailField.value = selectedStudent.email;
-                if (usernameField) usernameField.value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
-                hideModal('addStudentModal');
-                setTimeout(() => showModal('setStudentCredentialsModal'), 300);
-            });
-            document.getElementById('generate-temp-password')?.addEventListener('click', () => {
-                const p = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
-                const pwdField = document.getElementById('student-password');
-                const confField = document.getElementById('student-password_confirmation');
-                if (pwdField) pwdField.value = p;
-                if (confField) confField.value = p;
-            });
-            document.getElementById('add-student-credentials-form')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const fd = new FormData(this);
-                fd.append('_token', CSRF);
-                const btn = document.getElementById('create-student-user');
-                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…'; }
-                fetch('{{ route("users.store-student") }}', { method: 'POST', body: fd }).then(r => r.json()).then(data => {
-                    if (data.success) { Swal.fire({ icon: 'success', title: 'Student User Created!', text: data.message, showConfirmButton: false, timer: 2000 }); hideModal('setStudentCredentialsModal'); setTimeout(() => location.reload(), 2000); }
-                    else { const errDiv = document.getElementById('student-credentials-error'); if (errDiv) { errDiv.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message || 'Error'); errDiv.classList.remove('d-none'); } }
-                }).catch(() => Swal.fire('Error', 'Network error', 'error')).finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-check"></i> Create Student User'; } });
-            });
-            window.resetStudentCredentialsModal = function() {
-                ['student-id-field', 'student-name-field', 'student-user-email', 'student-username', 'student-password', 'student-password_confirmation'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-                const errDiv = document.getElementById('student-credentials-error');
-                if (errDiv) errDiv.classList.add('d-none');
-            };
-            credentialsModal.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
+                })
+                .catch(err => console.error(err));
         }
 
-        function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+        document.getElementById('student-search')?.addEventListener('input', debounce(e => loadStudentsForSingle(e.target.value), 350));
 
-        applyFilters();
-        console.log('User management page initialized');
-    });
-})();
+        document.getElementById('student-select')?.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (!opt || !opt.value) {
+                selectedSingleStudent = null;
+                const proceed = document.getElementById('proceed-to-credentials');
+                if (proceed) proceed.disabled = true;
+                return;
+            }
+            selectedSingleStudent = {
+                id: opt.value,
+                name: opt.dataset.name,
+                email: opt.dataset.email,
+                admissionNo: opt.dataset.admission
+            };
+            const proceed = document.getElementById('proceed-to-credentials');
+            if (proceed) proceed.disabled = false;
+        });
+
+        document.getElementById('proceed-to-credentials')?.addEventListener('click', () => {
+            if (!selectedSingleStudent) return;
+
+            const idField = document.getElementById('student-id-field');
+            const nameField = document.getElementById('student-name-field');
+            const emailField = document.getElementById('student-user-email');
+            const usernameField = document.getElementById('student-username');
+
+            if (idField) idField.value = selectedSingleStudent.id;
+            if (nameField) nameField.value = selectedSingleStudent.name;
+            if (emailField) emailField.value = selectedSingleStudent.email;
+            if (usernameField) usernameField.value = (selectedSingleStudent.admissionNo || '').replace(/[\/\\]/g, '_');
+
+            hideModal('addStudentModal');
+            setTimeout(() => showModal('setStudentCredentialsModal'), 300);
+        });
+
+        document.getElementById('generate-temp-password')?.addEventListener('click', () => {
+            const p = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+            const pwdField = document.getElementById('student-password');
+            const confField = document.getElementById('student-password_confirmation');
+            if (pwdField) pwdField.value = p;
+            if (confField) confField.value = p;
+        });
+
+        document.getElementById('add-student-credentials-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fd = new FormData(this);
+            fd.append('_token', CSRF);
+
+            const btn = document.getElementById('create-student-user');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…';
+            }
+
+            fetch('{{ route("users.store-student") }}', {
+                method: 'POST',
+                body: fd
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Student User Created!',
+                        text: data.message,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                    hideModal('setStudentCredentialsModal');
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    const errDiv = document.getElementById('student-credentials-error');
+                    if (errDiv) {
+                        errDiv.innerHTML = data.errors
+                            ? Object.values(data.errors).flat().join('<br>')
+                            : (data.message || 'Error');
+                        errDiv.classList.remove('d-none');
+                    }
+                }
+            })
+            .catch(() => Swal.fire('Error', 'Network error', 'error'))
+            .finally(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-person-check"></i> Create Student User';
+                }
+            });
+        });
+
+        window.resetStudentCredentialsModal = function() {
+            ['student-id-field', 'student-name-field', 'student-user-email', 'student-username', 'student-password', 'student-password_confirmation'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            const errDiv = document.getElementById('student-credentials-error');
+            if (errDiv) errDiv.classList.add('d-none');
+        };
+
+        credentialsModal.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
+    }
+
+    function debounce(fn, ms) {
+        let t;
+        return (...a) => {
+            clearTimeout(t);
+            t = setTimeout(() => fn(...a), ms);
+        };
+    }
+
+    // ── Initial Load ───────────────────────────────────────
+    applyFilters();
+    console.log('User management page initialized');
+
+});
 </script>
 @endsection
