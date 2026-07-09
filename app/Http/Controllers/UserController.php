@@ -281,7 +281,20 @@ class UserController extends Controller
         return $string;
     }
 
-    private function generateStudentEmail($student)
+    /**
+     * Builds the canonical firstname.lastname@csskabba.ng email for a
+     * student, ALWAYS derived from the student's current firstname/lastname
+     * — this is the single source of truth other methods should call
+     * whenever they need "what should this student's email be right now."
+     *
+     * @param  object      $student        Row/model with firstname/lastname/admissionNo/id
+     * @param  int|null    $excludeUserId   When regenerating for an EXISTING
+     *                                      account (reset/reprint), pass that
+     *                                      user's own id so the uniqueness
+     *                                      check doesn't collide with itself
+     *                                      and needlessly append a number.
+     */
+    private function generateStudentEmail($student, $excludeUserId = null)
     {
         $domain = '@csskabba.ng';
 
@@ -306,12 +319,26 @@ class UserController extends Controller
         $email = $baseEmail . $domain;
 
         $counter = 1;
-        while (User::where('email', $email)->exists()) {
+        while ($this->emailTakenByAnotherUser($email, $excludeUserId)) {
             $email = $baseEmail . $counter . $domain;
             $counter++;
         }
 
         return $email;
+    }
+
+    /**
+     * True if $email belongs to some OTHER user than $excludeUserId.
+     * Used so regenerating an existing account's own email doesn't
+     * falsely register as "taken" and get a stray number appended.
+     */
+    private function emailTakenByAnotherUser($email, $excludeUserId = null)
+    {
+        $query = User::where('email', $email);
+        if (!empty($excludeUserId)) {
+            $query->where('id', '!=', $excludeUserId);
+        }
+        return $query->exists();
     }
 
     private function generateUsername($student)
@@ -334,6 +361,32 @@ class UserController extends Controller
     private function generateRandomPassword()
     {
         return strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
+    }
+
+    /**
+     * Given an existing $user and their linked $student record, brings the
+     * user's `name` and `email` back in line with the student's CURRENT
+     * firstname/lastname if either has drifted (e.g. the student was
+     * renamed after the account was first created). Returns the array of
+     * fields that actually need updating (empty if already in sync) — the
+     * caller decides when to persist (e.g. bundled into the same ->update()
+     * call as a password reset).
+     */
+    private function syncedAccountFields($user, $student)
+    {
+        $updates = [];
+
+        $currentName = trim("{$student->firstname} {$student->lastname}");
+        if ($currentName !== '' && $user->name !== $currentName) {
+            $updates['name'] = $currentName;
+        }
+
+        $expectedEmail = $this->generateStudentEmail($student, $user->id);
+        if ($user->email !== $expectedEmail) {
+            $updates['email'] = $expectedEmail;
+        }
+
+        return $updates;
     }
 
     // ============================================================
@@ -364,6 +417,10 @@ class UserController extends Controller
 
             $student = Student::findOrFail($validated['student_id']);
 
+            // NOTE: the frontend now always sends a freshly-computed email
+            // (built from the student's current name at selection time), but
+            // we still regenerate here as the authoritative fallback/guard
+            // rather than trusting client input blindly.
             $email = $request->input('email');
             if (empty($email)) {
                 $email = $this->generateStudentEmail($student);
@@ -636,7 +693,18 @@ class UserController extends Controller
                 ? $validated['shared_password']
                 : $this->generateRandomPassword();
 
-            $user->update(['password' => Hash::make($plainPassword)]);
+            // FIX: previously this only ever updated the password, then
+            // returned $user->name / $user->email as-is — whatever was
+            // stored at account-creation time, forever. If the student was
+            // renamed afterward, resets kept regenerating passwords for an
+            // email built from their OLD name. Now every reset also re-syncs
+            // name/email to the student's CURRENT record in the same update.
+            $updates = array_merge(
+                ['password' => Hash::make($plainPassword)],
+                $this->syncedAccountFields($user, $student)
+            );
+
+            $user->update($updates);
 
             if (!$user->hasRole('Student')) {
                 $user->syncRoles(['Student']);
@@ -690,6 +758,13 @@ class UserController extends Controller
     private function reprintStudentCredentials($user, $student)
     {
         try {
+            // Same self-healing sync as reset: a reprint should always show
+            // the CURRENT name/email, not whatever was stored historically.
+            $updates = $this->syncedAccountFields($user, $student);
+            if (!empty($updates)) {
+                $user->update($updates);
+            }
+
             return [
                 'success' => true,
                 'data' => [
@@ -749,7 +824,19 @@ class UserController extends Controller
             }
 
             $plainPassword = $this->generateRandomPassword();
-            $user->update(['password' => Hash::make($plainPassword)]);
+            $updates = ['password' => Hash::make($plainPassword)];
+
+            // FIX: this endpoint (the single "reset password" key icon on
+            // the main Users table) previously never touched name/email at
+            // all, so a renamed student's account kept showing their old
+            // name's email forever. Now it re-syncs from the linked student
+            // record — same fix as the mass-reset path.
+            $student = $user->student;
+            if ($student) {
+                $updates = array_merge($updates, $this->syncedAccountFields($user, $student));
+            }
+
+            $user->update($updates);
 
             return response()->json([
                 'success' => true,
