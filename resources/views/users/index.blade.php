@@ -1175,6 +1175,12 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentResults = null;
     let isProcessing = false;
 
+    // Normalizes any id (number/string/null) to a consistent string key
+    // so comparisons never fail on type mismatches (e.g. "12" !== 12).
+    function idKey(v) {
+        return v === null || v === undefined ? '' : String(v);
+    }
+
     function classLabel(s) {
         const c = (s.class_name || '').trim();
         const a = (s.arm_name || '').trim();
@@ -1240,9 +1246,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // IMPORTANT: rebuild selectedStudents from the freshly loaded list so
                 // stale references never linger, but preserve prior selection by id.
+                // Compare via idKey() so string/number id mismatches don't drop selections.
                 if (selectedStudents.length) {
-                    const keptIds = new Set(selectedStudents.map(s => s && s.id));
-                    selectedStudents = allStudents.filter(s => keptIds.has(s.id));
+                    const keptIds = new Set(selectedStudents.map(s => idKey(s && s.id)));
+                    selectedStudents = allStudents.filter(s => keptIds.has(idKey(s.id)));
                 }
 
                 renderStudentTable(allStudents);
@@ -1288,9 +1295,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let html = '';
         students.forEach(s => {
-            const checked = selectedStudents.some(x => x && x.id === s.id) ? 'checked' : '';
+            // idKey() comparison — was strict `x.id === s.id`, which silently
+            // failed whenever one side was a string and the other a number.
+            const checked = selectedStudents.some(x => x && idKey(x.id) === idKey(s.id)) ? 'checked' : '';
             html += `<tr>
-                <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked}></td>
+                <td><input type="checkbox" class="student-checkbox" data-id="${escHtml(String(s.id))}" ${checked}></td>
                 <td><strong>${escHtml(s.admissionNo || 'N/A')}</strong></td>
                 <td>${escHtml(s.name)}</td>
                 <td>${escHtml(classLabel(s))}</td>
@@ -1306,16 +1315,24 @@ document.addEventListener('DOMContentLoaded', function () {
         // more than one listener per checkbox at a time.
         document.querySelectorAll('#massStudentList .student-checkbox').forEach(cb => {
             cb.addEventListener('change', function() {
-                const id = parseInt(this.dataset.id, 10);
-                const stu = allStudents.find(x => x && x.id === id);
+                // FIX: previously used `parseInt(this.dataset.id, 10)` and then
+                // compared with strict `===` against `x.id`. If the API returns
+                // ids as strings (or any non-Number type), that strict comparison
+                // never matched, `stu` came back undefined, and the handler
+                // returned early — so nothing was ever pushed to selectedStudents
+                // and updateSelectedCount() never ran. That's why a single
+                // checkbox click ticked the box but left the "0 selected" counter
+                // frozen and the "Continue to Action" button disabled.
+                const id = this.dataset.id;
+                const stu = allStudents.find(x => x && idKey(x.id) === idKey(id));
                 if (!stu) return;
 
                 if (this.checked) {
-                    if (!selectedStudents.some(x => x && x.id === id)) {
+                    if (!selectedStudents.some(x => x && idKey(x.id) === idKey(id))) {
                         selectedStudents.push(stu);
                     }
                 } else {
-                    selectedStudents = selectedStudents.filter(x => x && x.id !== id);
+                    selectedStudents = selectedStudents.filter(x => x && idKey(x.id) !== idKey(id));
                 }
                 updateSelectedCount();
             });
@@ -1742,7 +1759,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const tag = isReset ? 'RESET' : 'NEW';
                 const tagColor = isReset ? '#d97706' : '#16a34a';
 
-                const matchingStudent = selectedStudents.find(st => st && st.id == s.student_id);
+                // idKey() comparison here too — matching against student_id.
+                const matchingStudent = selectedStudents.find(st => st && idKey(st.id) === idKey(s.student_id));
                 let photoHtml = '';
                 if (matchingStudent && matchingStudent.photo_url) {
                     photoHtml = `<div class="slip-photo"><img src="${matchingStudent.photo_url}" alt="Photo" onerror="this.style.display='none'"></div>`;
