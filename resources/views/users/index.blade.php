@@ -832,6 +832,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
+    // ── Shared email generator ──────────────────────────────
+    // Single source of truth for "firstname.lastname@csskabba.ng" style
+    // emails, used by BOTH the single-student flow and the mass-student
+    // flow. Always regenerated from whatever name is CURRENTLY on the
+    // student record — never from a stored/cached email field — so a
+    // recent name change is immediately reflected.
+    function cleanEmailPart(s) {
+        return (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+    }
+    function genEmail(first, last) {
+        return cleanEmailPart(first) + '.' + cleanEmailPart(last) + '@csskabba.ng';
+    }
+    // Fallback for places where only a single "full name" string is
+    // available (no separate firstname/lastname fields): splits on the
+    // first space, first token = first name, LAST token = last name.
+    function genEmailFromFullName(fullName) {
+        const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+        const first = parts[0] || '';
+        const last  = parts.length > 1 ? parts[parts.length - 1] : '';
+        return genEmail(first, last);
+    }
+
     function showModal(modalId) {
         const modalElement = document.getElementById(modalId);
         if (!modalElement) return null;
@@ -1187,11 +1209,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return c && a ? `${c} ${a}` : c || a || '—';
     }
 
-    function genEmail(first, last) {
-        const clean = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
-        return clean(first) + '.' + clean(last) + '@csskabba.ng';
-    }
-
     function statusBadge(has) {
         return has
             ? '<span class="msm-badge-has"><i class="bi bi-check-circle-fill me-1"></i>Has Account</span>'
@@ -1239,6 +1256,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
+                // Email is ALWAYS derived here from whatever firstname/lastname
+                // the API returns right now — never from a stored/cached email
+                // field on the student record. This guarantees that if a
+                // student's name was just edited, the very next time this list
+                // is loaded (e.g. modal re-opened) the generated email reflects
+                // the new name.
                 allStudents = data.students.map(s => ({
                     ...s,
                     generatedEmail: genEmail(s.firstname, s.lastname)
@@ -1552,9 +1575,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            // Send the freshly-generated email along with each student id.
+            // This lets the backend use the CURRENT name-derived email as the
+            // source of truth for account creation/reset, rather than falling
+            // back to whatever (possibly stale) email is stored against the
+            // student record server-side. The backend should still be the
+            // final authority — it should recompute/validate this against the
+            // student's current firstname/lastname rather than trusting the
+            // payload blindly — but passing it explicitly closes the gap for
+            // any code path that currently reads a cached email column.
             const payload = {
                 _token: '{{ csrf_token() }}',
-                students: selectedStudents.map(s => ({ student_id: s.id })),
+                students: selectedStudents.map(s => ({
+                    student_id: s.id,
+                    generated_email: s.generatedEmail
+                })),
                 action_type: actionType,
             };
 
@@ -2000,7 +2035,16 @@ window.onload = function() {
                             const o = document.createElement('option');
                             o.value = s.id;
                             o.textContent = `${s.name} (${s.admissionNo})`;
-                            Object.assign(o.dataset, { name: s.name, email: s.email || '', admission: s.admissionNo || '' });
+                            // Store firstname/lastname (when the API provides them) so the
+                            // email can be regenerated from the CURRENT name rather than
+                            // any stored email value. Falls back to splitting `s.name`
+                            // when discrete firstname/lastname fields aren't available.
+                            Object.assign(o.dataset, {
+                                name: s.name,
+                                firstname: s.firstname || '',
+                                lastname: s.lastname || '',
+                                admission: s.admissionNo || ''
+                            });
                             sel.appendChild(o);
                         });
                     }
@@ -2018,10 +2062,21 @@ window.onload = function() {
                 if (proceed) proceed.disabled = true;
                 return;
             }
+
+            // FIX: previously this read `opt.dataset.email`, i.e. whatever
+            // (possibly stale) email the API happened to return for this
+            // student. That's why an old name kept showing up in generated
+            // credentials after the student was renamed. Now the email is
+            // always freshly computed from the CURRENTLY selected student's
+            // name, exactly like the mass-management flow already does.
+            const generatedEmail = (opt.dataset.firstname || opt.dataset.lastname)
+                ? genEmail(opt.dataset.firstname, opt.dataset.lastname)
+                : genEmailFromFullName(opt.dataset.name);
+
             selectedSingleStudent = {
                 id: opt.value,
                 name: opt.dataset.name,
-                email: opt.dataset.email,
+                email: generatedEmail,
                 admissionNo: opt.dataset.admission
             };
             const proceed = document.getElementById('proceed-to-credentials');
