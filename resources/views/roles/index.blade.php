@@ -214,6 +214,17 @@ body{font-family:var(--rol-font);}
 .rol-empty-icon { font-size:56px; opacity:.2; margin-bottom:14px; display:block; }
 .rol-empty h4   { font-weight:700; color:var(--rol-muted); font-size:17px; }
 .rol-empty p    { font-size:13px; color:var(--rol-muted); }
+
+/* ── Modal scroll fix ───────────────────────────── */
+.rol-modal .modal-dialog-scrollable .modal-content {
+    max-height: calc(100vh - 3.5rem);
+    display: flex;
+    flex-direction: column;
+}
+.rol-modal .modal-body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
 </style>
 
 <div class="main-content">
