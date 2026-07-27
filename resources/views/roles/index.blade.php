@@ -169,15 +169,31 @@ body{font-family:var(--rol-font);}
     box-shadow:0 24px 64px rgba(15,23,42,.2);
     font-family:var(--rol-font);
     animation:scaleIn .25s cubic-bezier(.22,1,.36,1);
+    max-height: 90vh;
+}
+.rol-modal .modal-content form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 .rol-modal .modal-header {
     background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 60%,#312e81 100%);
     padding:20px 24px; border:none;
+    flex: 0 0 auto;
 }
 .rol-modal .modal-title { color:#fff; font-weight:700; font-size:16px; }
 .rol-modal .modal-header .btn-close { filter:invert(1); opacity:.8; }
-.rol-modal .modal-body  { padding:22px 24px; }
-.rol-modal .modal-footer { padding:14px 24px; border-top:1px solid var(--rol-border); background:var(--rol-surface2); }
+.rol-modal .modal-body  {
+    padding:22px 24px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.rol-modal .modal-footer {
+    padding:14px 24px; border-top:1px solid var(--rol-border); background:var(--rol-surface2);
+    flex: 0 0 auto;
+}
 
 .rol-form-label { font-size:11.5px; font-weight:700; color:var(--rol-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; display:block; }
 .rol-form-control {
@@ -214,17 +230,6 @@ body{font-family:var(--rol-font);}
 .rol-empty-icon { font-size:56px; opacity:.2; margin-bottom:14px; display:block; }
 .rol-empty h4   { font-weight:700; color:var(--rol-muted); font-size:17px; }
 .rol-empty p    { font-size:13px; color:var(--rol-muted); }
-
-/* ── Modal scroll fix ───────────────────────────── */
-.rol-modal .modal-dialog-scrollable .modal-content {
-    max-height: calc(100vh - 3.5rem);
-    display: flex;
-    flex-direction: column;
-}
-.rol-modal .modal-body {
-    overflow-y: auto;
-    flex: 1 1 auto;
-}
 </style>
 
 <div class="main-content">
