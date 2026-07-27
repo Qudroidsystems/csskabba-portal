@@ -4,6 +4,7 @@
 use Spatie\Permission\Models\Role;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Str;
 ?>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -415,7 +416,12 @@ body{font-family:var(--rol-font);}
                                         $permission = Permission::where('title',$value)->get();
                                     @endphp
                                     <tr>
-                                        <td class="perm-group">{{ $value }}</td>
+                                        <td class="perm-group">
+                                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                                <input type="checkbox" class="perm-check module-select-all" data-module="{{ Str::slug($value) }}">
+                                                {{ $value }}
+                                            </label>
+                                        </td>
                                         @foreach ($permission as $v)
                                         @php
                                             $word = '';
@@ -430,7 +436,7 @@ body{font-family:var(--rol-font);}
                                         @endphp
                                         <td>
                                             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;">
-                                                <input class="perm-check" type="checkbox" value="{{ $v->id }}" name="permission[]">
+                                                <input class="perm-check module-perm" type="checkbox" value="{{ $v->id }}" name="permission[]" data-module="{{ Str::slug($value) }}">
                                                 {{ $word }}
                                             </label>
                                         </td>
@@ -459,19 +465,52 @@ body{font-family:var(--rol-font);}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const selectAll = document.getElementById('kt_roles_select_all');
-    const permBoxes = document.querySelectorAll('input[name="permission[]"]');
+    const selectAll     = document.getElementById('kt_roles_select_all');
+    const permBoxes     = document.querySelectorAll('input[name="permission[]"]');
+    const moduleToggles = document.querySelectorAll('.module-select-all');
 
     if (selectAll && permBoxes.length) {
+
+        // Global "select all" → checks/unchecks everything, including module toggles
         selectAll.addEventListener('change', function () {
             permBoxes.forEach(c => c.checked = this.checked);
+            moduleToggles.forEach(m => { m.checked = this.checked; m.indeterminate = false; });
         });
-        function sync() {
+
+        // Per-module "select all" → checks/unchecks only that module's permissions
+        moduleToggles.forEach(function (toggle) {
+            toggle.addEventListener('change', function () {
+                const module = this.dataset.module;
+                document.querySelectorAll('.module-perm[data-module="' + module + '"]')
+                    .forEach(c => c.checked = this.checked);
+                syncGlobal();
+            });
+        });
+
+        // Keep each module toggle's checked/indeterminate state in sync with its own boxes
+        function syncModuleToggles() {
+            moduleToggles.forEach(function (toggle) {
+                const module = toggle.dataset.module;
+                const boxes  = document.querySelectorAll('.module-perm[data-module="' + module + '"]');
+                const all    = Array.from(boxes).every(c => c.checked);
+                const some   = Array.from(boxes).some(c => c.checked);
+                toggle.checked       = all;
+                toggle.indeterminate = some && !all;
+            });
+        }
+
+        function syncGlobal() {
             const all  = Array.from(permBoxes).every(c => c.checked);
             const some = Array.from(permBoxes).some(c => c.checked);
             selectAll.checked       = all;
             selectAll.indeterminate = some && !all;
         }
+
+        function sync() {
+            syncModuleToggles();
+            syncGlobal();
+        }
+
         permBoxes.forEach(c => c.addEventListener('change', sync));
         sync();
 
