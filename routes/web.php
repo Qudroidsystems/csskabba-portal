@@ -110,6 +110,17 @@ Route::get('/test-sibling-data/{id}', function($id) {
 
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
+// CSRF Refresh Route (Optional - for auto-refresh feature)
+Route::get('/refresh-csrf', function () {
+    if (request()->ajax()) {
+        Session::regenerateToken();
+        return response()->json([
+            'csrf_token' => csrf_token()
+        ]);
+    }
+    return abort(404);
+})->middleware('web')->name('refresh.csrf');
+
 Route::get('/student-id-cards/verify/{token}',[StudentIdCardController::class, 'verify'])->name('student-id-cards.verify');
 Route::group(['middleware' => ['auth']], function () {
         // These must come BEFORE the resource route

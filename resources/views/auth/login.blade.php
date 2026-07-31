@@ -117,6 +117,14 @@
             50% { transform: scale(1.05); opacity: 0.9; }
         }
 
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(20px); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Page container animation */
         .auth-page-wrapper {
             animation: pageFadeInUp 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
@@ -262,10 +270,6 @@
 
         .apple-button.loading span {
             opacity: 0;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         /* Effect circles */
@@ -415,7 +419,6 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #10b981;
             color: white;
             padding: 12px 20px;
             border-radius: 12px;
@@ -423,18 +426,36 @@
             font-weight: 500;
             z-index: 9999;
             animation: successCheck 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             display: flex;
             align-items: center;
             gap: 8px;
+            max-width: 400px;
         }
 
-        .login-success.error {
-            background: #ef4444;
+        .login-success.success { background: #10b981; }
+        .login-success.error { background: #ef4444; }
+        .login-success.info { background: #4f8ef7; }
+        .login-success.warning { background: #f59e0b; }
+
+        .login-success .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
         }
 
-        @keyframes fadeOut {
-            to { opacity: 0; transform: translateX(20px); }
+        .login-success .toast-content {
+            flex: 1;
+        }
+
+        .login-success .toast-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .login-success .toast-message {
+            font-size: 11px;
+            opacity: 0.9;
         }
 
         /* Responsive adjustments */
@@ -455,6 +476,7 @@
                 to { transform: rotate(-360deg) translate(80px, 0) rotate(360deg); }
             }
             .school-login-logo { height: 40px; }
+            .login-success { top: 10px; right: 10px; left: 10px; max-width: none; }
         }
     </style>
 </head>
@@ -576,6 +598,38 @@
                                         <div class="p-2 mt-3">
                                             <form method="POST" action="{{ route('login') }}" id="loginForm">
                                                 @csrf
+
+                                                {{-- Display session expired error message from 419 redirect --}}
+                                                @if(session('session_expired') || session('error'))
+                                                    <div id="sessionExpiredAlert" class="alert alert-warning alert-dismissible fade show mb-4" role="alert" style="border-left: 4px solid #f59e0b; background: #fffbeb;">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-alert-line me-2" style="font-size: 18px; color: #d97706;"></i>
+                                                            <div>
+                                                                <strong style="color: #92400e;">Session Expired</strong>
+                                                                <p class="mb-0 small" style="color: #78350f;">{{ session('error') ?? 'Your session has expired. Please login again.' }}</p>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                @endif
+
+                                                {{-- Display validation errors --}}
+                                                @if ($errors->any())
+                                                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="border-left: 4px solid #ef4444;">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-error-warning-line me-2" style="font-size: 18px;"></i>
+                                                            <div>
+                                                                <strong>Please fix the following errors:</strong>
+                                                                <ul class="mb-0 mt-1 ps-3 small">
+                                                                    @foreach ($errors->all() as $error)
+                                                                        <li>{{ $error }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                @endif
 
                                                 <div class="mb-4">
                                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -728,6 +782,21 @@
                 showToast('Login Failed', 'Invalid email or password. Please try again.', 'error');
             @endif
 
+            // Check for session expired on page load
+            @if(session('session_expired'))
+                showToast('Session Expired', '{{ session('error') ?? "Your session has expired. Please login again." }}', 'warning');
+                // Auto-dismiss the session expired alert after 5 seconds
+                const sessionAlert = document.getElementById('sessionExpiredAlert');
+                if (sessionAlert) {
+                    setTimeout(() => {
+                        const bsAlert = bootstrap.Alert.getInstance(sessionAlert);
+                        if (bsAlert) {
+                            bsAlert.close();
+                        }
+                    }, 5000);
+                }
+            @endif
+
             // Real-time validation - remove error on input
             if (emailInput) {
                 emailInput.addEventListener('input', function() {
@@ -782,8 +851,25 @@
                 });
             }
 
-            // NOTE: We DO NOT add a submit event listener that prevents default
-            // Let the form submit naturally to Laravel's login route
+            // Form submission - show loading state
+            if (loginForm) {
+                loginForm.addEventListener('submit', function() {
+                    if (loginButton) {
+                        loginButton.classList.add('loading');
+                        loginButton.querySelector('span').textContent = 'Signing In...';
+                        loginButton.disabled = true;
+                    }
+                });
+            }
+
+            // Clear session expired flag from URL (prevents showing on refresh)
+            if (window.history && window.history.replaceState) {
+                const url = new URL(window.location.href);
+                if (url.searchParams.has('session_expired')) {
+                    url.searchParams.delete('session_expired');
+                    window.history.replaceState({}, document.title, url.toString());
+                }
+            }
         });
 
         // Staff credential fill function
@@ -811,25 +897,25 @@
 
         // Toast notification function
         function showToast(title, message, type = 'info') {
-            const colors = {
-                success: '#10b981',
-                error: '#ef4444',
-                info: '#4f8ef7',
-                warning: '#f59e0b'
-            };
-
             // Remove existing toasts
             const existingToasts = document.querySelectorAll('.login-success');
             existingToasts.forEach(toast => toast.remove());
 
             const toast = document.createElement('div');
-            toast.className = 'login-success ' + (type === 'error' ? 'error' : '');
-            toast.style.background = colors[type] || colors.info;
+            toast.className = 'login-success ' + type;
+
+            const icons = {
+                success: 'ri-checkbox-circle-line',
+                error: 'ri-alert-circle-line',
+                info: 'ri-information-line',
+                warning: 'ri-alert-line'
+            };
+
             toast.innerHTML = `
-                <i class="mdi mdi-${type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'information'}"></i>
-                <div>
-                    <div style="font-weight: 600; font-size: 13px;">${title}</div>
-                    <div style="font-size: 11px; opacity: 0.9;">${message}</div>
+                <i class="${icons[type] || icons.info} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
                 </div>
             `;
             document.body.appendChild(toast);
@@ -837,7 +923,7 @@
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease forwards';
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 4000);
         }
     </script>
 </body>
