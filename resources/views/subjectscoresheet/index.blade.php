@@ -509,7 +509,9 @@
         <span>
             <i class="ri-information-line me-1 text-info"></i>
             <strong>Total Grade</strong> = grade on raw total (saved) &nbsp;|&nbsp;
-            <strong>Cum Grade</strong>   = grade on cumulative avg (display) &nbsp;|&nbsp;
+            <strong>Cum</strong> = raw cumulative sum (BF + this term's total) &nbsp;|&nbsp;
+            <strong>Cum Ave</strong> = Cum ÷ term number &nbsp;|&nbsp;
+            <strong>Cum Grade</strong> = grade on Cum Ave (display) &nbsp;|&nbsp;
             <strong>Class Pos (Cum)</strong>   = all arms, ranked by cum &nbsp;|&nbsp;
             <strong>Class Pos (Total)</strong>  = all arms, ranked by total &nbsp;|&nbsp;
             <strong>Arm Pos (Total)</strong>   = this arm, ranked by total &nbsp;|&nbsp;
@@ -611,7 +613,12 @@
                             Total<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
                         <th class="col-bf text-center">BF</th>
-                        <th class="col-cum text-center">Cum</th>
+                        <th class="col-cum text-center" title="Raw cumulative sum (BF + this term's total)">
+                            Cum
+                        </th>
+                        <th class="col-cum-ave text-center" title="Cumulative sum divided by the term number">
+                            Cum<br><small class="fw-normal opacity-75">Ave</small>
+                        </th>
                         <th class="col-cum-grade text-center" title="Grade based on cumulative average (display only)">
                             Cum<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
@@ -652,14 +659,18 @@
                                 $so = $broadsheet->assessmentScores->where('assessment_id', $a->id)->first();
                                 $rowTotal += $so ? $so->score : 0;
                             }
+                            // "cum" is the raw running sum (BF + this term's total).
+                            // "cum_ave" is that sum divided by the term number, and is the
+                            // figure grades/colour-coding should be based on.
                             $cum        = $broadsheet->cum ?? 0;
+                            $cumAve     = $broadsheet->cum_ave ?? 0;
                             $totalGrade = $broadsheet->grade ?? '-';
                             $gradeForCum = '-';
                             if (isset($broadsheet->classcategoryid)) {
                                 $cat = \App\Models\Classcategory::find($broadsheet->classcategoryid);
-                                $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
+                                $gradeForCum = $cat ? $cat->calculateGrade($cumAve) : '-';
                             }
-                            $cumColor        = $cum      >= 70 ? 'success' : ($cum      >= 50 ? 'info' : ($cum      >= 40 ? 'warning' : 'danger'));
+                            $cumAveColor     = $cumAve   >= 70 ? 'success' : ($cumAve   >= 50 ? 'info' : ($cumAve   >= 40 ? 'warning' : 'danger'));
                             $totalColor      = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
 
                             // Determine lock status for this row
@@ -755,12 +766,17 @@
                                 </span>
                             </td>
                             <td class="col-cum text-center">
-                                <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">
+                                <span class="badge bg-secondary-subtle text-secondary cum-badge">
                                     {{ number_format($cum, 1) }}
                                 </span>
                             </td>
+                            <td class="col-cum-ave text-center">
+                                <span class="badge bg-{{ $cumAveColor }}-subtle text-{{ $cumAveColor }} fw-bold cum-ave-badge" style="font-size:12px;">
+                                    {{ number_format($cumAve, 1) }}
+                                </span>
+                            </td>
                             <td class="col-cum-grade text-center">
-                                <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">{{ $gradeForCum }}</span>
+                                <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cumAve }}">{{ $gradeForCum }}</span>
                             </td>
                             <td class="col-avg text-center">
                                 <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">
@@ -853,7 +869,7 @@
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 18 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 19 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -930,7 +946,8 @@
                                 ['col-total',            'Total'],
                                 ['col-total-grade',      'Total Grade (saved)'],
                                 ['col-bf',               'BF'],
-                                ['col-cum',              'Cum'],
+                                ['col-cum',              'Cum (raw sum)'],
+                                ['col-cum-ave',          'Cum Ave'],
                                 ['col-cum-grade',        'Cum Grade (display)'],
                                 ['col-avg',              'Class Avg'],
                                 ['col-gpa',              'GPA'],
@@ -1162,7 +1179,15 @@ function updateRowGrades(row) {
 
     let totalRaw = 0;
     row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
-    const cum = (termId == 1 || bf === 0) ? totalRaw : (totalRaw + bf) / 2;
+
+    // rawCum = raw running sum (BF + this term's live total).
+    // cumAve = that sum divided by the term number — matches the backend's
+    // computeCumulative() rule (Term 1: /1, Term 2: /2, Term 3: /3).
+    // bf === 0 with termId > 1 means there's no prior-term record yet
+    // (e.g. broadsheet just created), so we show the raw total un-averaged
+    // rather than dividing it down artificially.
+    const rawCum = (termId <= 1 || bf === 0) ? totalRaw : bf + totalRaw;
+    const cumAve = (termId <= 1 || bf === 0) ? totalRaw : rawCum / termId;
 
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) {
@@ -1172,16 +1197,23 @@ function updateRowGrades(row) {
         totalBadge.style.fontSize = '12px';
     }
 
+    // Plain badge for the raw running sum — not colour-coded, since a growing
+    // sum shouldn't be judged against pass/fail thresholds.
     const cumBadge = row.querySelector('.cum-badge');
-    if (cumBadge) {
-        cumBadge.textContent = fmtN(cum);
-        const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
-        cumBadge.className   = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
-        cumBadge.style.fontSize = '12px';
+    if (cumBadge) cumBadge.textContent = fmtN(rawCum);
+
+    // Colour-coded badge for the per-term average — this is the figure that
+    // actually reflects academic performance.
+    const cumAveBadge = row.querySelector('.cum-ave-badge');
+    if (cumAveBadge) {
+        cumAveBadge.textContent = fmtN(cumAve);
+        const cc = cumAve >= 70 ? 'success' : cumAve >= 50 ? 'info' : cumAve >= 40 ? 'warning' : 'danger';
+        cumAveBadge.className   = `badge fw-bold cum-ave-badge bg-${cc}-subtle text-${cc}`;
+        cumAveBadge.style.fontSize = '12px';
     }
 
     applyGrade(row.querySelector('.grade-badge'),     clientGrade(totalRaw));
-    applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(cum));
+    applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(cumAve));
 
     clearTimeout(gradeTimers[bid]);
     gradeTimers[bid] = setTimeout(async () => {
@@ -1190,9 +1222,11 @@ function updateRowGrades(row) {
         try {
             if (totalGradeBadge) { totalGradeBadge.classList.add('updating'); totalGradeBadge.innerHTML = '<span class="grade-loading"></span>'; }
             if (cumGradeBadge)   { cumGradeBadge.classList.add('updating');   cumGradeBadge.innerHTML   = '<span class="grade-loading"></span>'; }
+            // NOTE: the server's grade-for-score endpoint expects the AVERAGED
+            // figure in its "cum" param (it grades against cum_ave, not the raw sum).
             const res  = await fetch(window.routes.gradeForScore, {
                 method: 'POST', headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF },
-                body: JSON.stringify({ schoolclass_id: schoolclsId, total: totalRaw, cum }),
+                body: JSON.stringify({ schoolclass_id: schoolclsId, total: totalRaw, cum: cumAve }),
             });
             const data = await res.json();
             if (data.success) {
@@ -1200,11 +1234,11 @@ function updateRowGrades(row) {
                 applyGrade(cumGradeBadge,   data.cum_grade);
             } else {
                 applyGrade(totalGradeBadge, clientGrade(totalRaw));
-                applyGrade(cumGradeBadge,   clientGrade(cum));
+                applyGrade(cumGradeBadge,   clientGrade(cumAve));
             }
         } catch {
             applyGrade(totalGradeBadge, clientGrade(totalRaw));
-            applyGrade(cumGradeBadge,   clientGrade(cum));
+            applyGrade(cumGradeBadge,   clientGrade(cumAve));
         }
     }, 400);
 }
@@ -1255,20 +1289,26 @@ function saveIndividualScore(input) {
         const bfBadge = row.querySelector('.bf-badge');
         if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
 
+        // Raw running sum — plain badge, no colour coding.
         const cumBadge = row.querySelector('.cum-badge');
-        if (cumBadge && d.cum != null) {
-            const cum = parseFloat(d.cum);
-            cumBadge.textContent = fmtN(cum);
-            const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
-            cumBadge.className   = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
-            cumBadge.style.fontSize = '12px';
+        if (cumBadge && d.cum != null) cumBadge.textContent = fmtN(d.cum);
+
+        // Per-term average — colour-coded badge, and the value the Cum Grade uses.
+        const cumAveBadge = row.querySelector('.cum-ave-badge');
+        let cumAveVal = null;
+        if (cumAveBadge && d.cum_ave != null) {
+            cumAveVal = parseFloat(d.cum_ave);
+            cumAveBadge.textContent = fmtN(cumAveVal);
+            const cc = cumAveVal >= 70 ? 'success' : cumAveVal >= 50 ? 'info' : cumAveVal >= 40 ? 'warning' : 'danger';
+            cumAveBadge.className   = `badge fw-bold cum-ave-badge bg-${cc}-subtle text-${cc}`;
+            cumAveBadge.style.fontSize = '12px';
         }
 
         const totalGradeBadge = row.querySelector('.grade-badge');
         if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
 
         const cumGradeBadge = row.querySelector('.cum-grade-badge');
-        if (cumGradeBadge && d.cum != null) applyGrade(cumGradeBadge, clientGrade(parseFloat(d.cum)));
+        if (cumGradeBadge && cumAveVal != null) applyGrade(cumGradeBadge, clientGrade(cumAveVal));
 
         const gpaBadge  = row.querySelector('.gpa-badge');
         const cgpaBadge = row.querySelector('.cgpa-badge');
@@ -1431,17 +1471,23 @@ function bulkSave() {
             const bfB = row.querySelector('.bf-badge');
             if (bfB) bfB.textContent = fmtN(bs.bf);
 
-            const cum = parseFloat(bs.cum ?? 0);
-            const cb  = row.querySelector('.cum-badge');
-            if (cb) {
-                cb.textContent = fmtN(cum);
-                const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
-                cb.className   = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
-                cb.style.fontSize = '12px';
+            // Raw running sum — plain badge, no colour coding.
+            const cumRaw = parseFloat(bs.cum ?? 0);
+            const cb = row.querySelector('.cum-badge');
+            if (cb) cb.textContent = fmtN(cumRaw);
+
+            // Per-term average — colour-coded badge, and the value Cum Grade uses.
+            const cumAve = parseFloat(bs.cum_ave ?? 0);
+            const cab = row.querySelector('.cum-ave-badge');
+            if (cab) {
+                cab.textContent = fmtN(cumAve);
+                const cc = cumAve >= 70 ? 'success' : cumAve >= 50 ? 'info' : cumAve >= 40 ? 'warning' : 'danger';
+                cab.className   = `badge fw-bold cum-ave-badge bg-${cc}-subtle text-${cc}`;
+                cab.style.fontSize = '12px';
             }
 
             const cgb = row.querySelector('.cum-grade-badge');
-            if (cgb) applyGrade(cgb, clientGrade(cum));
+            if (cgb) applyGrade(cgb, clientGrade(cumAve));
 
             const ab = row.querySelector('.avg-badge');
             if (ab && bs.avg != null) ab.textContent = fmtN(bs.avg);

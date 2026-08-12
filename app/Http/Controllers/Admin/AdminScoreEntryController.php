@@ -1050,11 +1050,11 @@ class AdminScoreEntryController extends Controller
                 'message' => 'Score updated successfully!',
                 'data'    => [
                     'total'                        => $broadsheet->total,
-                    // NOTE: "cum" here is the CUM AVE (divided) value shown to users.
-                    // The raw running-sum lives in $broadsheet->cum on the model now —
-                    // expose it separately as cum_raw if the frontend ever needs it.
-                    'cum'                          => $broadsheet->cum_ave,
-                    'cum_raw'                      => $broadsheet->cum,
+                    // Both figures returned under their real names so the UI can show
+                    // the raw running sum ("cum") and the per-term average ("cum_ave")
+                    // as separate columns.
+                    'cum'                          => $broadsheet->cum,
+                    'cum_ave'                      => $broadsheet->cum_ave,
                     'bf'                           => $broadsheet->bf,
                     'grade'                        => $broadsheet->grade,
                     'remark'                       => $broadsheet->remark,
@@ -1341,9 +1341,9 @@ class AdminScoreEntryController extends Controller
                     'broadsheets.id', 'studentRegistration.admissionNO as admissionno',
                     'studentRegistration.firstname as fname', 'studentRegistration.lastname as lname',
                     'broadsheets.total', 'broadsheets.bf',
-                    // "cum" here is aliased to the AVERAGED value (cum_ave) for display —
-                    // the raw running sum stays on broadsheets.cum in the DB.
-                    'broadsheets.cum_ave as cum',
+                    // Both figures returned under their real names — see getBroadsheets() note above.
+                    'broadsheets.cum',
+                    'broadsheets.cum_ave',
                     'broadsheets.grade',
                     'broadsheets.avg', 'broadsheets.subject_position_class as position',
                     'broadsheets.subject_position_class_total as position_total',
@@ -1362,7 +1362,8 @@ class AdminScoreEntryController extends Controller
                 }
                 return [
                     'id' => $b->id, 'admissionno' => $b->admissionno, 'fname' => $b->fname, 'lname' => $b->lname,
-                    'assessments' => $assessmentData, 'total' => $b->total, 'bf' => $b->bf, 'cum' => $b->cum,
+                    'assessments' => $assessmentData, 'total' => $b->total, 'bf' => $b->bf,
+                    'cum' => $b->cum, 'cum_ave' => $b->cum_ave,
                     'avg' => $b->avg ?? 0, 'gpa' => $b->gpa ?? 0, 'gpa_grade' => $b->gpa_grade ?? 'F',
                     'cgpa' => $b->cgpa ?? 0, 'grade' => $b->grade, 'position' => $b->position,
                     'position_total' => $b->position_total, 'arm_position' => $b->arm_position,
@@ -1486,8 +1487,8 @@ class AdminScoreEntryController extends Controller
                 'admissionno'    => $b->admissionno,
                 'name'           => trim(($b->lname ?? '') . ' ' . ($b->fname ?? '')),
                 'total'          => (float) ($b->total ?? 0),
-                // $b->cum here already comes aliased to cum_ave from getBroadsheets()
                 'cum'            => (float) ($b->cum ?? 0),
+                'cum_ave'        => (float) ($b->cum_ave ?? 0),
                 'grade'          => $b->grade,
                 'position'       => $b->position,
                 'scored_count'   => $scoredCount,
@@ -2338,7 +2339,7 @@ class AdminScoreEntryController extends Controller
                     $remark   = $this->getRemark($grade);
                     if (abs((float) $broadsheet->total - $totalRaw) > 0.01 || abs((float) $broadsheet->bf - $bf) > 0.01 || abs((float) $broadsheet->cum - $cum) > 0.01 || abs((float) $broadsheet->cum_ave - $cumAve) > 0.01 || $broadsheet->grade !== $grade || $broadsheet->remark !== $remark) { $broadsheet->total = $totalRaw; $broadsheet->bf = $bf; $broadsheet->cum = $cum; $broadsheet->cum_ave = $cumAve; $broadsheet->grade = $grade; $broadsheet->remark = $remark; $broadsheet->last_modified_by = auth()->id(); $broadsheet->last_modified_at = now(); $broadsheet->save(); }
                     $totalScores += $totalRaw;
-                    $studentSubjects[] = ['subject_id' => $subjectId, 'subject_name' => $subjInfo->subject_name, 'subject_code' => $subjInfo->subject_code ?? '', 'subjectclass_id' => $subjectclassId, 'broadsheet_id' => (int) $broadsheet->id, 'total' => $totalRaw, 'bf' => (float) $bf, 'cum' => (float) $cumAve, 'cum_raw' => (float) $cum, 'grade' => $grade, 'remark' => $remark, 'assessment_scores' => $assessmentScores];
+                    $studentSubjects[] = ['subject_id' => $subjectId, 'subject_name' => $subjInfo->subject_name, 'subject_code' => $subjInfo->subject_code ?? '', 'subjectclass_id' => $subjectclassId, 'broadsheet_id' => (int) $broadsheet->id, 'total' => $totalRaw, 'bf' => (float) $bf, 'cum' => (float) $cum, 'cum_ave' => (float) $cumAve, 'grade' => $grade, 'remark' => $remark, 'assessment_scores' => $assessmentScores];
                 }
                 $numSubj = count($studentSubjects); $average = $numSubj > 0 ? round($totalScores / $numSubj, 2) : 0.0;
                 $gradePoints  = array_map(fn($sub) => $this->getGradePoint($sub['total'], $isSenior), $studentSubjects);
@@ -2384,7 +2385,7 @@ class AdminScoreEntryController extends Controller
             $broadsheet->total = $totalRaw; $broadsheet->bf = $bf; $broadsheet->cum = $cum; $broadsheet->cum_ave = $cumAve; $broadsheet->grade = $grade; $broadsheet->remark = $remark; $broadsheet->last_modified_by = auth()->id(); $broadsheet->last_modified_at = now(); $broadsheet->save();
             DB::commit();
             $this->updateSubjectPositions($subjectclassId, $staffId, $termId, $sessionId);
-            return response()->json(['success' => true, 'message' => 'Score updated successfully!', 'data' => ['subject_id' => $subjectId, 'broadsheet_id' => $broadsheet->id, 'total' => $totalRaw, 'bf' => (float) $bf, 'cum' => (float) $cumAve, 'cum_raw' => (float) $cum, 'grade' => $grade, 'remark' => $remark, 'assessment_scores' => $request->scores]]);
+            return response()->json(['success' => true, 'message' => 'Score updated successfully!', 'data' => ['subject_id' => $subjectId, 'broadsheet_id' => $broadsheet->id, 'total' => $totalRaw, 'bf' => (float) $bf, 'cum' => (float) $cum, 'cum_ave' => (float) $cumAve, 'grade' => $grade, 'remark' => $remark, 'assessment_scores' => $request->scores]]);
         } catch (\Exception $e) {
             DB::rollBack(); Log::error('updateStudentSubjectScore: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -2450,11 +2451,11 @@ class AdminScoreEntryController extends Controller
             'subjectclass.id as subjectclid', 'broadsheets.staff_id', 'broadsheets.term_id',
             'broadsheet_records.session_id as sessionid', 'studentpicture.picture',
             'broadsheets.total', 'broadsheets.bf',
-            // "cum" is aliased to cum_ave (the averaged figure) so every caller of this
-            // helper — blades, exports, JS — keeps working without further changes.
-            // The raw running-sum is still readable directly via broadsheets.cum on the model.
-            'broadsheets.cum_ave as cum',
-            'broadsheets.cum as cum_raw',
+            // Both cumulative figures are returned under their real names:
+            // "cum"     = raw running sum (BF + this term's total)
+            // "cum_ave" = that sum divided by the term number (what's shown as "Cum Ave")
+            'broadsheets.cum',
+            'broadsheets.cum_ave',
             'broadsheets.grade',
             'broadsheets.subject_position_class as position', 'broadsheets.subject_position_class_total as position_total',
             'broadsheets.arm_position', 'broadsheets.arm_position_cum', 'broadsheets.remark', 'broadsheets.vettedstatus',
@@ -2511,9 +2512,7 @@ class AdminScoreEntryController extends Controller
                 $s = $b->assessmentScores->where('assessment_id', $a->id)->first();
                 $assessmentScores[] = ['assessment_id' => $a->id, 'assessment_name' => $a->name, 'max_score' => $a->max_score, 'score' => $s ? floatval($s->score) : 0];
             }
-            // $b->cum is already aliased to cum_ave by getBroadsheets(), so this keeps
-            // showing the averaged figure without any extra work here.
-            $formatted[] = ['id' => $b->id, 'admissionno' => $b->admissionno, 'fname' => $b->fname, 'lname' => $b->lname, 'mname' => $b->mname, 'total' => floatval($b->total), 'bf' => floatval($b->bf), 'cum' => floatval($b->cum), 'grade' => $b->grade, 'position' => $b->position, 'position_total' => $b->position_total, 'arm_position' => $b->arm_position, 'arm_position_cum' => $b->arm_position_cum, 'remark' => $b->remark, 'avg' => floatval($b->avg ?? 0), 'assessment_scores' => $assessmentScores];
+            $formatted[] = ['id' => $b->id, 'admissionno' => $b->admissionno, 'fname' => $b->fname, 'lname' => $b->lname, 'mname' => $b->mname, 'total' => floatval($b->total), 'bf' => floatval($b->bf), 'cum' => floatval($b->cum), 'cum_ave' => floatval($b->cum_ave ?? 0), 'grade' => $b->grade, 'position' => $b->position, 'position_total' => $b->position_total, 'arm_position' => $b->arm_position, 'arm_position_cum' => $b->arm_position_cum, 'remark' => $b->remark, 'avg' => floatval($b->avg ?? 0), 'assessment_scores' => $assessmentScores];
         }
         return $formatted;
     }

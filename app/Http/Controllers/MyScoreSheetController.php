@@ -297,11 +297,10 @@ class MyScoreSheetController extends Controller
                 'message' => 'Score updated successfully!',
                 'data' => [
                     'total' => $broadsheet->total,
-                    // NOTE: "cum" returned to the frontend is the CUM AVE (divided) value —
-                    // the raw running-sum stays on $broadsheet->cum in the DB and can be
-                    // exposed via cum_raw if a screen ever needs the un-divided figure.
-                    'cum' => $broadsheet->cum_ave,
-                    'cum_raw' => $broadsheet->cum,
+                    // Both figures returned under their real names so the UI can show the
+                    // raw running sum ("cum") and the per-term average ("cum_ave") separately.
+                    'cum' => $broadsheet->cum,
+                    'cum_ave' => $broadsheet->cum_ave,
                     'bf' => $broadsheet->bf,
                     'grade' => $broadsheet->grade,
                     'remark' => $broadsheet->remark,
@@ -785,8 +784,10 @@ class MyScoreSheetController extends Controller
                     'studentRegistration.lastname as lname',
                     'broadsheets.total',
                     'broadsheets.bf',
-                    // "cum" aliased to the AVERAGED value (cum_ave) for display purposes.
-                    'broadsheets.cum_ave as cum',
+                    // Both cumulative figures returned under their real names — see
+                    // getBroadsheets() note below.
+                    'broadsheets.cum',
+                    'broadsheets.cum_ave',
                     'broadsheets.grade',
                     'broadsheets.avg',
                     'broadsheets.subject_position_class as position',
@@ -817,6 +818,7 @@ class MyScoreSheetController extends Controller
                     'total' => $b->total,
                     'bf' => $b->bf,
                     'cum' => $b->cum,
+                    'cum_ave' => $b->cum_ave,
                     'avg' => $b->avg ?? 0,
                     'gpa' => $b->gpa,
                     'gpa_grade' => $b->gpa_grade ?? 'F',
@@ -1239,10 +1241,11 @@ class MyScoreSheetController extends Controller
             'studentpicture.picture',
             'broadsheets.total',
             'broadsheets.bf',
-            // "cum" is aliased to cum_ave (the averaged, displayed figure). The raw
-            // running-sum is exposed alongside as cum_raw in case anything needs it.
-            'broadsheets.cum_ave as cum',
-            'broadsheets.cum as cum_raw',
+            // Both cumulative figures returned under their real names:
+            // "cum"     = raw running sum (BF + this term's total)
+            // "cum_ave" = that sum divided by the term number
+            'broadsheets.cum',
+            'broadsheets.cum_ave',
             'broadsheets.grade',
             'broadsheets.subject_position_class as position',
             'broadsheets.subject_position_class_total as position_total',
@@ -1337,8 +1340,6 @@ class MyScoreSheetController extends Controller
                     'score' => $s ? floatval($s->score) : 0,
                 ];
             }
-            // $b->cum is already aliased to cum_ave by getBroadsheets(), so this keeps
-            // showing the averaged figure without any extra work here.
             $formatted[] = [
                 'id' => $b->id,
                 'admissionno' => $b->admissionno,
@@ -1348,6 +1349,7 @@ class MyScoreSheetController extends Controller
                 'total' => floatval($b->total),
                 'bf' => floatval($b->bf),
                 'cum' => floatval($b->cum),
+                'cum_ave' => floatval($b->cum_ave ?? 0),
                 'grade' => $b->grade,
                 'position' => $b->position,
                 'position_total' => $b->position_total,
