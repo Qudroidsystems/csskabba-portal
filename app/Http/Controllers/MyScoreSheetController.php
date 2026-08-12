@@ -297,7 +297,11 @@ class MyScoreSheetController extends Controller
                 'message' => 'Score updated successfully!',
                 'data' => [
                     'total' => $broadsheet->total,
-                    'cum' => $broadsheet->cum,
+                    // NOTE: "cum" returned to the frontend is the CUM AVE (divided) value —
+                    // the raw running-sum stays on $broadsheet->cum in the DB and can be
+                    // exposed via cum_raw if a screen ever needs the un-divided figure.
+                    'cum' => $broadsheet->cum_ave,
+                    'cum_raw' => $broadsheet->cum,
                     'bf' => $broadsheet->bf,
                     'grade' => $broadsheet->grade,
                     'remark' => $broadsheet->remark,
@@ -781,7 +785,8 @@ class MyScoreSheetController extends Controller
                     'studentRegistration.lastname as lname',
                     'broadsheets.total',
                     'broadsheets.bf',
-                    'broadsheets.cum',
+                    // "cum" aliased to the AVERAGED value (cum_ave) for display purposes.
+                    'broadsheets.cum_ave as cum',
                     'broadsheets.grade',
                     'broadsheets.avg',
                     'broadsheets.subject_position_class as position',
@@ -1234,7 +1239,10 @@ class MyScoreSheetController extends Controller
             'studentpicture.picture',
             'broadsheets.total',
             'broadsheets.bf',
-            'broadsheets.cum',
+            // "cum" is aliased to cum_ave (the averaged, displayed figure). The raw
+            // running-sum is exposed alongside as cum_raw in case anything needs it.
+            'broadsheets.cum_ave as cum',
+            'broadsheets.cum as cum_raw',
             'broadsheets.grade',
             'broadsheets.subject_position_class as position',
             'broadsheets.subject_position_class_total as position_total',
@@ -1329,6 +1337,8 @@ class MyScoreSheetController extends Controller
                     'score' => $s ? floatval($s->score) : 0,
                 ];
             }
+            // $b->cum is already aliased to cum_ave by getBroadsheets(), so this keeps
+            // showing the averaged figure without any extra work here.
             $formatted[] = [
                 'id' => $b->id,
                 'admissionno' => $b->admissionno,
@@ -1367,6 +1377,9 @@ class MyScoreSheetController extends Controller
         }
         $subjectId = $subjectTeacher->subjectid;
 
+        // NOTE: min/max/avg here are computed from cum_ave (the divided figure), not the
+        // raw running-sum "cum" column — otherwise these numbers would balloon term-on-term
+        // even though "Ave remains Average of each subject per class" should stay stable.
         $metrics = Broadsheets::where('broadsheets.subjectclass_id', $subjectclassid)
             ->where('broadsheets.staff_id', $staffid)
             ->where('broadsheets.term_id', $termid)
@@ -1374,9 +1387,9 @@ class MyScoreSheetController extends Controller
             ->where('broadsheet_records.session_id', $sessionid)
             ->where('broadsheet_records.subject_id', $subjectId)
             ->select([
-                DB::raw('MIN(broadsheets.cum) as class_min'),
-                DB::raw('MAX(broadsheets.cum) as class_max'),
-                DB::raw('SUM(broadsheets.cum) as cum_sum'),
+                DB::raw('MIN(broadsheets.cum_ave) as class_min'),
+                DB::raw('MAX(broadsheets.cum_ave) as class_max'),
+                DB::raw('SUM(broadsheets.cum_ave) as cum_sum'),
                 DB::raw('COUNT(broadsheets.id) as student_count'),
             ])->first();
 
@@ -1396,6 +1409,11 @@ class MyScoreSheetController extends Controller
 
 protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
 {
+    // NOTE: ranking still reads the RAW running-sum "broadsheets.cum" column below.
+    // This is intentional and needs no change: every row being ranked here is for the
+    // SAME term_id, so every student's cum_ave = cum / term_id is divided by the exact
+    // same constant. Dividing by a shared constant never changes relative ordering, so
+    // ranking by raw cum produces identical positions to ranking by cum_ave.
     Log::info('[updateSubjectPositions] START', [
         'subjectclass_id' => $subjectclass_id,
         'term_id'         => $term_id,
@@ -1788,6 +1806,28 @@ protected function nullOutStalePositions($subjectClassIds, $term_id, $session_id
         return 0.0;
     }
 
+    /**
+     * Compute the raw cumulative sum and the cumulative average for a term.
+     *
+     * Rules (per term):
+     *   Term 1: bf = 0                -> cum = total     -> cum_ave = cum / 1
+     *   Term 2: bf = Term 1's raw cum -> cum = bf + total -> cum_ave = cum / 2
+     *   Term 3: bf = Term 2's raw cum -> cum = bf + total -> cum_ave = cum / 3
+     *
+     * "cum" is the raw running SUM across terms (BF + current term's total).
+     * "cum_ave" is that sum divided by the term number — this is the figure that
+     * should be DISPLAYED to users (what "cum" used to mean before the rename).
+     * BF for the next term always comes from the previous term's raw "cum"
+     * (see getPreviousTermCum()), never from cum_ave.
+     */
+    protected function computeCumulative(float $totalRaw, float $bf, int $termId): array
+    {
+        $cum    = round($totalRaw + $bf, 2);
+        $cumAve = $termId > 0 ? round($cum / $termId, 2) : $cum;
+
+        return ['cum' => $cum, 'cum_ave' => $cumAve];
+    }
+
     protected function computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termId, $sessionId)
     {
         foreach ($broadsheets as $broadsheet) {
@@ -1806,9 +1846,11 @@ protected function nullOutStalePositions($subjectClassIds, $term_id, $session_id
             }
 
             $newBf = $this->getPreviousTermCum($broadsheet->student_id, $subjectId, $termId, $sessionId);
-            $newCum = ($termId == 1 || $newBf == 0)
-                ? round($totalRaw, 2)
-                : round(($totalRaw + $newBf) / 2, 2);
+
+            // Raw sum + its per-term average, per the new cumulative rules above.
+            $cumData   = $this->computeCumulative($totalRaw, $newBf, $termId);
+            $newCum    = $cumData['cum'];      // raw running sum
+            $newCumAve = $cumData['cum_ave'];  // divided value shown to users
 
             $newGrade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
@@ -1818,6 +1860,7 @@ protected function nullOutStalePositions($subjectClassIds, $term_id, $session_id
             $changed = abs($broadsheet->total - $totalRaw) > 0.001
                 || abs($broadsheet->bf - $newBf) > 0.001
                 || abs($broadsheet->cum - $newCum) > 0.001
+                || abs($broadsheet->cum_ave - $newCumAve) > 0.001
                 || $broadsheet->grade !== $newGrade
                 || $broadsheet->remark !== $newRemark;
 
@@ -1825,6 +1868,7 @@ protected function nullOutStalePositions($subjectClassIds, $term_id, $session_id
                 $broadsheet->total = $totalRaw;
                 $broadsheet->bf = $newBf;
                 $broadsheet->cum = $newCum;
+                $broadsheet->cum_ave = $newCumAve;
                 $broadsheet->grade = $newGrade;
                 $broadsheet->remark = $newRemark;
                 $broadsheet->save();
@@ -1865,6 +1909,8 @@ protected function nullOutStalePositions($subjectClassIds, $term_id, $session_id
         if ($termId == 1) {
             return 0;
         }
+        // NOTE: reads the RAW running-sum "cum" column (not cum_ave), because BF for the
+        // next term must be the previous term's raw total sum, not its per-term average.
         $prev = DB::table('broadsheets')
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
             ->where('broadsheet_records.student_id', $studentId)
