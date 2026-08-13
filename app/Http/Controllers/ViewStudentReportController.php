@@ -308,7 +308,14 @@ class ViewStudentReportController extends Controller
                     'studentRegistration.admissionNo as admission_no',
                     'broadsheets.total',
                     'broadsheets.bf',
+                    // "cum" is the raw cumulative sum (BF + this term's total). Ranking by
+                    // this raw value is equivalent to ranking by cum_ave (cum / term number)
+                    // because every row here shares the same term_id, so the divisor is the
+                    // same constant for everyone — dividing by a shared constant never
+                    // changes relative order. cum_ave is fetched too, purely so it's
+                    // available on the model if a caller needs it for display later.
                     'broadsheets.cum',
+                    'broadsheets.cum_ave',
                     'broadsheets.subject_position_class',
                     'broadsheets.subject_position_class_total',
                     'broadsheets.arm_position',
@@ -485,7 +492,10 @@ class ViewStudentReportController extends Controller
                     'subject.subject_code',
                     'broadsheets.total',
                     'broadsheets.bf',
+                    // "cum" = raw cumulative sum, "cum_ave" = that sum divided by the term
+                    // number. Both are exposed so views/PDFs can show either or both.
                     'broadsheets.cum',
+                    'broadsheets.cum_ave',
                     'broadsheets.grade',
                     'broadsheets.remark',
                     'broadsheets.subject_position_class as position',
@@ -728,7 +738,8 @@ class ViewStudentReportController extends Controller
             'scores' => [
                 'total'            => ['label' => 'Total',                        'default' => true],
                 'bf'               => ['label' => 'BF',                           'default' => true],
-                'cum'              => ['label' => 'Cum',                          'default' => true],
+                'cum'              => ['label' => 'Cum (raw sum)',                'default' => true],
+                'cum_ave'          => ['label' => 'Cum Ave',                      'default' => true],
                 'grade'            => ['label' => 'Grade',                        'default' => true],
                 'position'         => ['label' => 'Class Pos (Cum) — All Arms',   'default' => true],
                 'position_total'   => ['label' => 'Class Pos (Total) — All Arms', 'default' => true],
@@ -1391,7 +1402,10 @@ class ViewStudentReportController extends Controller
                     'assessment_scores' => $assessmentScores,
                     'total'             => $score->total !== null ? (float) $score->total : null,
                     'bf'                => $score->bf    !== null ? (float) $score->bf    : null,
-                    'cum'               => $score->cum   !== null ? (float) $score->cum   : null,
+                    // "cum" = raw cumulative sum, "cum_ave" = that sum divided by the term
+                    // number. Both are returned so the drawer can show either/both.
+                    'cum'               => $score->cum     !== null ? (float) $score->cum     : null,
+                    'cum_ave'           => $score->cum_ave  !== null ? (float) $score->cum_ave  : null,
                     'grade'             => $score->grade,
                     'remark'            => $score->remark,
                     'position'          => $score->position_formatted         ?? ($score->position          ? $this->formatOrdinal($score->position)          : '-'),
