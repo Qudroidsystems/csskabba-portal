@@ -973,6 +973,14 @@ class ViewStudentReportController extends Controller
             $termid          = $request->input('termid', 3);
             $studentIds      = $request->input('studentIds', []);
             $selectedColumns = $request->input('selectedColumns', []);
+            // Lets the person printing choose whether the PDF's subject grade
+            // column is based on the term's raw total (current/default) or on
+            // the cumulative average (cum_ave). Anything other than these two
+            // falls back to 'total' so a bad/missing value never breaks the PDF.
+            $gradeBasis      = $request->input('grade_basis', 'total');
+            if (!in_array($gradeBasis, ['total', 'cum_ave'], true)) {
+                $gradeBasis = 'total';
+            }
 
             if (!$schoolclassid || !$sessionid || !$termid) {
                 return response()->json(['success' => false, 'message' => 'Missing required parameters'], 400);
@@ -1030,6 +1038,7 @@ class ViewStudentReportController extends Controller
                     'generation_date'  => now()->format('Y-m-d H:i:s'),
                     'student_count'    => count($allStudentData),
                     'selected_columns' => $selectedColumns,
+                    'grade_basis'      => $gradeBasis,
                 ],
             ];
 

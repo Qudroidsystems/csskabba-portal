@@ -1,4 +1,3 @@
-
 @extends('layouts.master')
 
 @section('content')
@@ -98,6 +97,24 @@
     border-radius:var(--bill-radius);
     font-size:13px; font-weight:500;
 }
+
+/* ── Grade basis toggle ───────────────────────────────────── */
+.grade-basis-option {
+    border: 1.5px solid var(--bill-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    height: 100%;
+}
+.grade-basis-option:hover { border-color: var(--bill-accent); }
+.grade-basis-option.active {
+    border-color: var(--bill-accent);
+    background: #eff6ff;
+}
+.grade-basis-option .form-check-input { margin-top: 3px; }
+.grade-basis-option .gb-title { font-weight: 700; font-size: 13px; color: var(--bill-primary); }
+.grade-basis-option .gb-desc  { font-size: 11.5px; color: var(--bill-muted); margin-top: 2px; }
 </style>
 
 <div class="main-content">
@@ -303,6 +320,40 @@
 
                 <div id="columnSelectionForm" style="display:none;">
                     <div class="row g-3">
+
+                        {{-- Grade Basis Toggle --}}
+                        <div class="col-12">
+                            <div class="card border" style="border-radius:var(--bill-radius);">
+                                <div class="card-header bg-white fw-semibold"
+                                     style="font-size:13px; color:var(--bill-primary);">
+                                    <i class="ri-medal-line me-1"></i>Grade Basis
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="grade-basis-option active d-flex gap-2 mb-0" id="gbOptionTotal">
+                                                <input class="form-check-input" type="radio" name="gradeBasis"
+                                                       id="gradeBasisTotal" value="total" checked>
+                                                <span>
+                                                    <span class="gb-title d-block">Term Total (current)</span>
+                                                    <span class="gb-desc d-block">Grades each subject off the raw score entered for this term.</span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="grade-basis-option d-flex gap-2 mb-0" id="gbOptionCumAve">
+                                                <input class="form-check-input" type="radio" name="gradeBasis"
+                                                       id="gradeBasisCumAve" value="cum_ave">
+                                                <span>
+                                                    <span class="gb-title d-block">Cumulative Average</span>
+                                                    <span class="gb-desc d-block">Grades each subject off Cum Ave (cumulative sum ÷ term number) instead.</span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="col-12">
                             <div class="card border" style="border-radius:var(--bill-radius);">
@@ -637,6 +688,17 @@
         });
     }
 
+    // ── Grade basis toggle visuals ──────────────────────────────────────
+    function refreshGradeBasisVisuals() {
+        const totalChecked = document.getElementById('gradeBasisTotal').checked;
+        document.getElementById('gbOptionTotal').classList.toggle('active', totalChecked);
+        document.getElementById('gbOptionCumAve').classList.toggle('active', !totalChecked);
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('gradeBasisTotal')?.addEventListener('change', refreshGradeBasisVisuals);
+        document.getElementById('gradeBasisCumAve')?.addEventListener('change', refreshGradeBasisVisuals);
+    });
+
     document.getElementById('saveColumnSelection').addEventListener('click', function () {
         const selectedColumns = [];
         document.querySelectorAll('.column-checkbox:checked')
@@ -649,6 +711,8 @@
         }
 
         const params = window.currentPrintParams;
+        const gradeBasisEl = document.querySelector('input[name="gradeBasis"]:checked');
+        const gradeBasis = gradeBasisEl ? gradeBasisEl.value : 'total';
         bootstrap.Modal.getInstance(document.getElementById('columnSelectionModal')).hide();
 
         Swal.fire({
@@ -657,6 +721,7 @@
                 <p><strong>Class:</strong> ${document.getElementById('idclass').options[document.getElementById('idclass').selectedIndex].text}</p>
                 <p><strong>Session:</strong> ${document.getElementById('idsession').options[document.getElementById('idsession').selectedIndex].text}</p>
                 <p><strong>Term:</strong> ${document.getElementById('idterm').options[document.getElementById('idterm').selectedIndex].text}</p>
+                <p><strong>Grade Basis:</strong> ${gradeBasis === 'cum_ave' ? 'Cumulative Average' : 'Term Total'}</p>
                 <p><strong>Students Selected:</strong> ${params.studentIds.length}</p>
                 <p><strong>Columns Selected:</strong> ${selectedColumns.length}</p>
                 <p>Generating PDF… Please wait.</p>`,
@@ -685,6 +750,7 @@
         addInput('sessionid',       params.sessionId);
         addInput('termid',          params.termId);
         addInput('response_method', 'inline');
+        addInput('grade_basis',     gradeBasis);
         params.studentIds.forEach((id,  i) => addInput(`studentIds[${i}]`,      id));
         selectedColumns.forEach((col,   i) => addInput(`selectedColumns[${i}]`, col));
 

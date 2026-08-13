@@ -1181,13 +1181,14 @@ function updateRowGrades(row) {
     row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
 
     // rawCum = raw running sum (BF + this term's live total).
-    // cumAve = that sum divided by the term number — matches the backend's
-    // computeCumulative() rule (Term 1: /1, Term 2: /2, Term 3: /3).
-    // bf === 0 with termId > 1 means there's no prior-term record yet
-    // (e.g. broadsheet just created), so we show the raw total un-averaged
-    // rather than dividing it down artificially.
-    const rawCum = (termId <= 1 || bf === 0) ? totalRaw : bf + totalRaw;
-    const cumAve = (termId <= 1 || bf === 0) ? totalRaw : rawCum / termId;
+    // cumAve = that sum divided by the term number for EVERY term (1st, 2nd,
+    // 3rd), matching the backend's computeCumulative() rule exactly. This is
+    // always divided — even when BF is 0 (e.g. a brand-new broadsheet with no
+    // prior-term record) — because Cum Grade must always be based on Cum Ave,
+    // never on the un-averaged raw sum.
+    const safeTermId = (termId && termId > 0) ? termId : 1;
+    const rawCum = bf + totalRaw;
+    const cumAve = rawCum / safeTermId;
 
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) {

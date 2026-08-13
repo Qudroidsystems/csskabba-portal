@@ -501,6 +501,12 @@
         }
 
         $selectedColumns = $metadata['selected_columns'] ?? [];
+        // "total"   -> grade the printed subject grade off the term's raw total (default, current behaviour)
+        // "cum_ave" -> grade it off the cumulative average instead (Cum ÷ term number)
+        $gradeBasis = $metadata['grade_basis'] ?? 'total';
+        if (!in_array($gradeBasis, ['total', 'cum_ave'], true)) {
+            $gradeBasis = 'total';
+        }
         // "cum" = raw cumulative sum (BF + this term's total).
         // "cum_ave" = that sum divided by the term number — the figure that reflects
         // actual academic performance. Both are included by default.
@@ -529,6 +535,9 @@
             $assessments = $studentData['assessments'] ?? collect();
             $totals      = $studentData['totals_summary'] ?? [];
             $attendance  = $studentData['attendance_summary'] ?? [];
+            // Used only when $gradeBasis === 'cum_ave' — all subjects for a
+            // student share the same class, so one category lookup covers them.
+            $gradeCategory = ($studentData['schoolclass']->classcategories ?? collect())->first();
 
             $admNo    = $student->admissionNo ?? 'N/A';
             $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
@@ -708,7 +717,7 @@
                             @endforeach
 
                             @if(in_array('total', $columnsToShow))
-                                <th class="col-total">Total</th>
+                                <th class="col-total">Total<br><span style="font-size:6.5px;">(100)</span></th>
                             @endif
                             @if(in_array('bf', $columnsToShow))
                                 <th class="col-bf">BF</th>
@@ -720,7 +729,7 @@
                                 <th class="col-cum">Cum<br><span style="font-size:6.5px;">Ave</span></th>
                             @endif
                             @if(in_array('grade', $columnsToShow))
-                                <th class="col-grade">Grade</th>
+                                <th class="col-grade">Grade<br><span style="font-size:6.5px;">({{ $gradeBasis === 'cum_ave' ? 'Cum Ave' : 'Total' }})</span></th>
                             @endif
                             @if(in_array('position', $columnsToShow))
                                 <th class="col-position">Class Pos<br>(Cum)</th>
@@ -735,7 +744,7 @@
                                 <th class="col-position">Arm Pos<br>(Cum)</th>
                             @endif
                             @if(in_array('class_average', $columnsToShow))
-                                <th class="col-class-average">Avg</th>
+                                <th class="col-class-average">Subject<br><span style="font-size:6.5px;">Ave</span></th>
                             @endif
                         </tr>
                     </thead>
@@ -810,7 +819,15 @@
 
                             @if(in_array('grade', $columnsToShow))
                                 @php
-                                    $gradeRaw   = $score->grade ?? '-';
+                                    // Grade basis toggle: 'total' uses the stored term-total
+                                    // grade as before; 'cum_ave' recalculates the grade from
+                                    // the cumulative average instead, using the same class
+                                    // category rules (senior A1–F9 / junior A–F) as everywhere else.
+                                    if ($gradeBasis === 'cum_ave' && $gradeCategory && $score->cum_ave !== null) {
+                                        $gradeRaw = $gradeCategory->calculateGrade($score->cum_ave);
+                                    } else {
+                                        $gradeRaw = $score->grade ?? '-';
+                                    }
                                     $gradeUpper = strtoupper($gradeRaw);
                                     $gradeClass = match(true) {
                                         str_starts_with($gradeUpper, 'A') => 'grade-A',
