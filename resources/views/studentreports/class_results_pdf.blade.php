@@ -203,6 +203,7 @@
         .col-total         { width: 36px; }
         .col-bf            { width: 30px; }
         .col-cum           { width: 34px; }
+        .col-cum-ave       { width: 34px; }
         .col-grade         { width: 32px; }
         .col-position      { width: 32px; }
         .col-class-average { width: 34px; }
@@ -503,7 +504,7 @@
         $selectedColumns = $metadata['selected_columns'] ?? [];
         $defaultColumns  = [
             'sn', 'admission_no', 'name',
-            'total', 'bf', 'cum', 'grade',
+            'total', 'bf', 'cum', 'cum_ave', 'grade',
             'position', 'position_total', 'arm_position', 'arm_position_cum',
             'class_average',
             'attendance_days_present', 'attendance_days_absent',
@@ -713,6 +714,9 @@
                             @if(in_array('cum', $columnsToShow))
                                 <th class="col-cum">Cum</th>
                             @endif
+                            @if(in_array('cum_ave', $columnsToShow))
+                                <th class="col-cum-ave">Cum<br>Ave</th>
+                            @endif
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
                             @endif
@@ -795,6 +799,9 @@
                             @endif
                             @if(in_array('cum', $columnsToShow))
                                 <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td>
+                            @endif
+                            @if(in_array('cum_ave', $columnsToShow))
+                                <td>{{ $score->cum_ave ? number_format($score->cum_ave, 1) : '-' }}</td>
                             @endif
 
                             @if(in_array('grade', $columnsToShow))
