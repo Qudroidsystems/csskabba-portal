@@ -501,9 +501,12 @@
         }
 
         $selectedColumns = $metadata['selected_columns'] ?? [];
+        // "cum" = raw cumulative sum (BF + this term's total).
+        // "cum_ave" = that sum divided by the term number — the figure that reflects
+        // actual academic performance. Both are included by default.
         $defaultColumns  = [
             'sn', 'admission_no', 'name',
-            'total', 'bf', 'cum', 'grade',
+            'total', 'bf', 'cum', 'cum_ave', 'grade',
             'position', 'position_total', 'arm_position', 'arm_position_cum',
             'class_average',
             'attendance_days_present', 'attendance_days_absent',
@@ -713,6 +716,9 @@
                             @if(in_array('cum', $columnsToShow))
                                 <th class="col-cum">Cum</th>
                             @endif
+                            @if(in_array('cum_ave', $columnsToShow))
+                                <th class="col-cum">Cum<br><span style="font-size:6.5px;">Ave</span></th>
+                            @endif
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
                             @endif
@@ -794,7 +800,12 @@
                                 <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td>
                             @endif
                             @if(in_array('cum', $columnsToShow))
+                                {{-- Raw cumulative sum (BF + this term's total) --}}
                                 <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td>
+                            @endif
+                            @if(in_array('cum_ave', $columnsToShow))
+                                {{-- Cumulative sum divided by the term number --}}
+                                <td>{{ $score->cum_ave ? number_format($score->cum_ave, 1) : '-' }}</td>
                             @endif
 
                             @if(in_array('grade', $columnsToShow))
