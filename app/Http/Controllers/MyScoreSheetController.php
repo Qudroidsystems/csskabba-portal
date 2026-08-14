@@ -147,7 +147,7 @@ class MyScoreSheetController extends Controller
 
         return view('subjectscoresheet.index', compact(
             'broadsheets', 'pagetitle', 'is_senior', 'assessments',
-            'globalLock', 'teacherEditingEnabled'
+            'globalLock', 'teacherEditingEnabled', 'schoolclass'
         ));
     }
 

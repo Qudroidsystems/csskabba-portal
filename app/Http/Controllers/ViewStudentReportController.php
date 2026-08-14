@@ -741,10 +741,10 @@ class ViewStudentReportController extends Controller
                 'cum'              => ['label' => 'Cum (raw sum)',                'default' => true],
                 'cum_ave'          => ['label' => 'Cum Ave',                      'default' => true],
                 'grade'            => ['label' => 'Grade',                        'default' => true],
-                'position'         => ['label' => 'Class Pos (Cum) — All Arms',   'default' => true],
-                'position_total'   => ['label' => 'Class Pos (Total) — All Arms', 'default' => true],
                 'arm_position'     => ['label' => 'Arm Pos (Total) — This Arm',   'default' => true],
                 'arm_position_cum' => ['label' => 'Arm Pos (Cum) — This Arm',     'default' => true],
+                'position_total'   => ['label' => 'Class Pos (Total) — All Arms', 'default' => true],
+                'position'         => ['label' => 'Class Pos (Cum) — All Arms',   'default' => true],
                 'class_average'    => ['label' => 'Class Avg',                    'default' => true],
             ],
             'gpa_metrics' => [

@@ -513,7 +513,7 @@
         $defaultColumns  = [
             'sn', 'admission_no', 'name',
             'total', 'bf', 'cum', 'cum_ave', 'grade',
-            'position', 'position_total', 'arm_position', 'arm_position_cum',
+            'arm_position', 'arm_position_cum', 'position_total', 'position',
             'class_average',
             'attendance_days_present', 'attendance_days_absent',
             'attendance_total_days', 'attendance_percentage',
@@ -731,17 +731,17 @@
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade<br><span style="font-size:6.5px;">({{ $gradeBasis === 'cum_ave' ? 'Cum Ave' : 'Total' }})</span></th>
                             @endif
-                            @if(in_array('position', $columnsToShow))
-                                <th class="col-position">Class Pos<br>(Cum)</th>
-                            @endif
-                            @if(in_array('position_total', $columnsToShow))
-                                <th class="col-position">Class Pos<br>(Total)</th>
-                            @endif
                             @if(in_array('arm_position', $columnsToShow))
                                 <th class="col-position">Arm Pos<br>(Total)</th>
                             @endif
                             @if(in_array('arm_position_cum', $columnsToShow))
                                 <th class="col-position">Arm Pos<br>(Cum)</th>
+                            @endif
+                            @if(in_array('position_total', $columnsToShow))
+                                <th class="col-position">Class Pos<br>(Total)</th>
+                            @endif
+                            @if(in_array('position', $columnsToShow))
+                                <th class="col-position">Class Pos<br>(Cum)</th>
                             @endif
                             @if(in_array('class_average', $columnsToShow))
                                 <th class="col-class-average">Subject<br><span style="font-size:6.5px;">Ave</span></th>
@@ -840,17 +840,17 @@
                                 <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
                             @endif
 
-                            @if(in_array('position', $columnsToShow))
-                                <td class="{{ $posCumClass }}">{{ $posCumFormatted }}</td>
-                            @endif
-                            @if(in_array('position_total', $columnsToShow))
-                                <td class="{{ $posTotalClass }}">{{ $posTotalFormatted }}</td>
-                            @endif
                             @if(in_array('arm_position', $columnsToShow))
                                 <td class="{{ $armPosClass }}">{{ $armPosFormatted }}</td>
                             @endif
                             @if(in_array('arm_position_cum', $columnsToShow))
                                 <td class="{{ $armPosCumClass }}">{{ $armPosCumFormatted }}</td>
+                            @endif
+                            @if(in_array('position_total', $columnsToShow))
+                                <td class="{{ $posTotalClass }}">{{ $posTotalFormatted }}</td>
+                            @endif
+                            @if(in_array('position', $columnsToShow))
+                                <td class="{{ $posCumClass }}">{{ $posCumFormatted }}</td>
                             @endif
                             @if(in_array('class_average', $columnsToShow))
                                 <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td>

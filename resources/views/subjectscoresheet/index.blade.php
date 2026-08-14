@@ -342,6 +342,15 @@
     @endif
 
     {{-- ══ INFO + ASSESSMENTS HEADER ══════════════════════════════════ --}}
+    @php
+        // Resolved ONCE here (not per row) so Cum Grade never silently falls
+        // back to '-' due to a per-row DB lookup failing or isset() returning
+        // false on a legitimately-null attribute. All rows in this scoresheet
+        // belong to the same class, so one category covers every row.
+        $gradeCategory = isset($schoolclass) && $schoolclass
+            ? $schoolclass->classcategories->first()
+            : null;
+    @endphp
     @if ($broadsheets->isNotEmpty())
     @php
         $first    = $broadsheets->first();
@@ -512,10 +521,10 @@
             <strong>Cum</strong> = raw cumulative sum (BF + this term's total) &nbsp;|&nbsp;
             <strong>Cum Ave</strong> = Cum ÷ term number &nbsp;|&nbsp;
             <strong>Cum Grade</strong> = grade on Cum Ave (display) &nbsp;|&nbsp;
-            <strong>Class Pos (Cum)</strong>   = all arms, ranked by cum &nbsp;|&nbsp;
-            <strong>Class Pos (Total)</strong>  = all arms, ranked by total &nbsp;|&nbsp;
             <strong>Arm Pos (Total)</strong>   = this arm, ranked by total &nbsp;|&nbsp;
-            <strong>Arm Pos (Cum)</strong>     = this arm, ranked by cum
+            <strong>Arm Pos (Cum)</strong>     = this arm, ranked by cum &nbsp;|&nbsp;
+            <strong>Class Pos (Total)</strong>  = all arms, ranked by total &nbsp;|&nbsp;
+            <strong>Class Pos (Cum)</strong>   = all arms, ranked by cum
         </span>
         <button type="button" class="btn btn-sm btn-primary flex-shrink-0" id="updateArmPositionsBtn">
             <i class="ri-refresh-line me-1"></i>Recalculate All Positions
@@ -626,14 +635,6 @@
                         <th class="col-gpa  text-center">GPA</th>
                         <th class="col-cgpa text-center">CGPA</th>
 
-                        <th class="col-position text-center"
-                            title="All arms of this class combined, ranked by cumulative average">
-                            Class Pos<br><small class="fw-normal opacity-75">(Cum)</small>
-                        </th>
-                        <th class="col-position-total text-center"
-                            title="All arms of this class combined, ranked by raw total">
-                            Class Pos<br><small class="fw-normal opacity-75">(Total)</small>
-                        </th>
                         <th class="col-arm-position text-center"
                             title="This arm only, ranked by raw total">
                             Arm Pos<br><small class="fw-normal opacity-75">(Total)</small>
@@ -641,6 +642,14 @@
                         <th class="col-arm-position-cum text-center"
                             title="This arm only, ranked by cumulative average">
                             Arm Pos<br><small class="fw-normal opacity-75">(Cum)</small>
+                        </th>
+                        <th class="col-position-total text-center"
+                            title="All arms of this class combined, ranked by raw total">
+                            Class Pos<br><small class="fw-normal opacity-75">(Total)</small>
+                        </th>
+                        <th class="col-position text-center"
+                            title="All arms of this class combined, ranked by cumulative average">
+                            Class Pos<br><small class="fw-normal opacity-75">(Cum)</small>
                         </th>
 
                         <th class="col-vetted text-center">Status</th>
@@ -665,11 +674,10 @@
                             $cum        = $broadsheet->cum ?? 0;
                             $cumAve     = $broadsheet->cum_ave ?? 0;
                             $totalGrade = $broadsheet->grade ?? '-';
-                            $gradeForCum = '-';
-                            if (isset($broadsheet->classcategoryid)) {
-                                $cat = \App\Models\Classcategory::find($broadsheet->classcategoryid);
-                                $gradeForCum = $cat ? $cat->calculateGrade($cumAve) : '-';
-                            }
+                            // Always attempt the calculation when a category is available —
+                            // no isset() check on the broadsheet row, since that silently
+                            // skips grading whenever classcategoryid happens to be null.
+                            $gradeForCum = $gradeCategory ? $gradeCategory->calculateGrade($cumAve) : '-';
                             $cumAveColor     = $cumAve   >= 70 ? 'success' : ($cumAve   >= 50 ? 'info' : ($cumAve   >= 40 ? 'warning' : 'danger'));
                             $totalColor      = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
 
@@ -794,24 +802,6 @@
                                 </span>
                             </td>
 
-                            <td class="col-position text-center">
-                                <span class="badge position-badge" style="background:var(--ss-primary);"
-                                      title="All arms of this class, ranked by cumulative average">
-                                    {{ $broadsheet->position
-                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position)
-                                        : '-' }}
-                                </span>
-                            </td>
-
-                            <td class="col-position-total text-center">
-                                <span class="badge position-total-badge" style="background:#0f766e;"
-                                      title="All arms of this class, ranked by raw total">
-                                    {{ $broadsheet->position_total
-                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position_total)
-                                        : '-' }}
-                                </span>
-                            </td>
-
                             <td class="col-arm-position text-center">
                                 <span class="badge arm-position-badge" style="background:#0891b2;"
                                       title="Position within {{ $broadsheet->arm ?? 'this arm' }} only, ranked by raw total">
@@ -826,6 +816,24 @@
                                       title="Position within {{ $broadsheet->arm ?? 'this arm' }} only, ranked by cumulative average">
                                     {{ $broadsheet->arm_position_cum
                                         ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position_cum)
+                                        : '-' }}
+                                </span>
+                            </td>
+
+                            <td class="col-position-total text-center">
+                                <span class="badge position-total-badge" style="background:#0f766e;"
+                                      title="All arms of this class, ranked by raw total">
+                                    {{ $broadsheet->position_total
+                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position_total)
+                                        : '-' }}
+                                </span>
+                            </td>
+
+                            <td class="col-position text-center">
+                                <span class="badge position-badge" style="background:var(--ss-primary);"
+                                      title="All arms of this class, ranked by cumulative average">
+                                    {{ $broadsheet->position
+                                        ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position)
                                         : '-' }}
                                 </span>
                             </td>
@@ -952,10 +960,10 @@
                                 ['col-avg',              'Class Avg'],
                                 ['col-gpa',              'GPA'],
                                 ['col-cgpa',             'CGPA'],
-                                ['col-position',         'Class Pos (Cum) — all arms'],
-                                ['col-position-total',   'Class Pos (Total) — all arms'],
                                 ['col-arm-position',     'Arm Pos (Total) — this arm'],
                                 ['col-arm-position-cum', 'Arm Pos (Cum) — this arm'],
+                                ['col-position-total',   'Class Pos (Total) — all arms'],
+                                ['col-position',         'Class Pos (Cum) — all arms'],
                                 ['col-vetted',           'Status'],
                                 ['col-lock-status',      'Lock Status'],
                             ] as [$cls,$lbl])
@@ -1288,17 +1296,16 @@ function saveIndividualScore(input) {
         const d = data.data;
 
         const bfBadge = row.querySelector('.bf-badge');
-        if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
+        if (bfBadge) bfBadge.textContent = fmtN(d.bf ?? 0);
 
         // Raw running sum — plain badge, no colour coding.
         const cumBadge = row.querySelector('.cum-badge');
-        if (cumBadge && d.cum != null) cumBadge.textContent = fmtN(d.cum);
+        if (cumBadge) cumBadge.textContent = fmtN(d.cum ?? 0);
 
         // Per-term average — colour-coded badge, and the value the Cum Grade uses.
         const cumAveBadge = row.querySelector('.cum-ave-badge');
-        let cumAveVal = null;
-        if (cumAveBadge && d.cum_ave != null) {
-            cumAveVal = parseFloat(d.cum_ave);
+        const cumAveVal = parseFloat(d.cum_ave ?? 0);
+        if (cumAveBadge) {
             cumAveBadge.textContent = fmtN(cumAveVal);
             const cc = cumAveVal >= 70 ? 'success' : cumAveVal >= 50 ? 'info' : cumAveVal >= 40 ? 'warning' : 'danger';
             cumAveBadge.className   = `badge fw-bold cum-ave-badge bg-${cc}-subtle text-${cc}`;
@@ -1306,10 +1313,10 @@ function saveIndividualScore(input) {
         }
 
         const totalGradeBadge = row.querySelector('.grade-badge');
-        if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
+        if (totalGradeBadge) applyGrade(totalGradeBadge, d.grade ?? clientGrade(parseFloat(d.total ?? 0)));
 
         const cumGradeBadge = row.querySelector('.cum-grade-badge');
-        if (cumGradeBadge && cumAveVal != null) applyGrade(cumGradeBadge, clientGrade(cumAveVal));
+        if (cumGradeBadge) applyGrade(cumGradeBadge, clientGrade(cumAveVal));
 
         const gpaBadge  = row.querySelector('.gpa-badge');
         const cgpaBadge = row.querySelector('.cgpa-badge');
@@ -1470,7 +1477,7 @@ function bulkSave() {
             if (tgb) applyGrade(tgb, bs.grade ?? '-');
 
             const bfB = row.querySelector('.bf-badge');
-            if (bfB) bfB.textContent = fmtN(bs.bf);
+            if (bfB) bfB.textContent = fmtN(bs.bf ?? 0);
 
             // Raw running sum — plain badge, no colour coding.
             const cumRaw = parseFloat(bs.cum ?? 0);
