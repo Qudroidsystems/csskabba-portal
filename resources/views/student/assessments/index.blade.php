@@ -394,17 +394,19 @@
                                 </div>
                             </button>
                             <div class="ap-panel">
+                               <!-- REPLACE this section with the corrected order -->
                                 <div class="ap-metrics-strip">
                                     <div class="ap-metric-box"><strong>Total</strong><span>{{ number_format($subject['total'] ?? 0, 1) }}</span></div>
                                     <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format($subject['cum'] ?? 0, 1) }}</span></div>
                                     <div class="ap-metric-box"><strong>Subject GPA</strong><span>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</span></div>
-                                    <div class="ap-metric-box pos-class-cum"><strong>Class Pos (Cum)</strong><span>{{ $subject['position'] ?? '—' }}</span></div>
-                                    <div class="ap-metric-box pos-class-total"><strong>Class Pos (Total)</strong><span>{{ $subject['position_total'] ?? '—' }}</span></div>
+                                    <!-- REORDERED: Arm positions first -->
                                     <div class="ap-metric-box pos-arm-total"><strong>Arm Pos (Total)</strong><span>{{ $subject['arm_position'] ?? '—' }}</span></div>
                                     <div class="ap-metric-box pos-arm-cum"><strong>Arm Pos (Cum)</strong><span>{{ $subject['arm_position_cum'] ?? '—' }}</span></div>
+                                    <!-- Then Class positions -->
+                                    <div class="ap-metric-box pos-class-total"><strong>Class Pos (Total)</strong><span>{{ $subject['position_total'] ?? '—' }}</span></div>
+                                    <div class="ap-metric-box pos-class-cum"><strong>Class Pos (Cum)</strong><span>{{ $subject['position'] ?? '—' }}</span></div>
                                 </div>
-
-                                @if(isset($subject['assessments']) && $subject['assessments']->isNotEmpty())
+                                 @if(isset($subject['assessments']) && $subject['assessments']->isNotEmpty())
                                 <h4 style="font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;color:#374151;">Assessment Breakdown</h4>
                                 @foreach($subject['assessments'] as $assessment)
                                 @php $pct = $assessment['percentage'] ?? 0; $barClass = $pct >= 70 ? 'bar-excellent' : ($pct >= 50 ? 'bar-good' : ($pct >= 40 ? 'bar-average' : 'bar-low')); @endphp

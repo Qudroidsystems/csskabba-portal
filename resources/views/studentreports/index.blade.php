@@ -1,3 +1,4 @@
+{{-- resources/views/studentreports/index.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
