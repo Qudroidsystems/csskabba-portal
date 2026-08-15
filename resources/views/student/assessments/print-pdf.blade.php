@@ -476,6 +476,7 @@
                                 @if(in_array('total', $showCols)) <th class="col-num">Total</th> @endif
                                 @if(in_array('bf', $showCols)) <th class="col-num">BF</th> @endif
                                 @if(in_array('cum', $showCols)) <th class="col-num">Cum</th> @endif
+                                {{-- FIXED: Added cum_ave column --}}
                                 @if(in_array('cum_ave', $showCols)) <th class="col-num">Cum Ave</th> @endif
                                 @if(in_array('grade', $showCols)) <th class="col-num">Grade</th> @endif
                                 {{-- REORDERED POSITION COLUMNS --}}
@@ -520,6 +521,7 @@
                                 @if(in_array('total', $showCols)) <td @if(($sc->total ?? 0) < 50) class="highlight-red" @endif>{{ number_format($sc->total ?? 0,1) }}</td> @endif
                                 @if(in_array('bf', $showCols)) <td>{{ number_format($sc->bf ?? 0,1) }}</td> @endif
                                 @if(in_array('cum', $showCols)) <td>{{ number_format($sc->cum ?? 0,1) }}</td> @endif
+                                {{-- FIXED: Added cum_ave column value --}}
                                 @if(in_array('cum_ave', $showCols)) <td>{{ number_format($sc->cum_ave ?? 0,1) }}</td> @endif
                                 @if(in_array('grade', $showCols)) <td class="{{ $gradeStyle }}">{{ $gradeForDisplay }}</td> @endif
 
