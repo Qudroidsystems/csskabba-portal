@@ -20,7 +20,7 @@
             min-height: 100vh;
         }
 
-        /* WATERMARK – STUDENT COPY */
+        /* WATERMARK – visible but not intrusive */
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -28,18 +28,19 @@
             transform: translate(-50%, -50%) rotate(-28deg);
             font-size: 72px;
             font-weight: 900;
-            color: rgba(37, 99, 235, 0.12);
+            color: rgba(220, 38, 38, 0.12);
             font-family: 'Arial Black', sans-serif;
             letter-spacing: 6px;
             white-space: nowrap;
             pointer-events: none;
             z-index: 1000;
             text-transform: uppercase;
-            border: 3px double rgba(37, 99, 235, 0.2);
+            border: 3px double rgba(220, 38, 38, 0.2);
             padding: 12px 32px;
             border-radius: 24px;
         }
 
+        /* MAIN CARD – fills A4/A5 perfectly */
         .student-section {
             max-width: 200mm;
             width: 100%;
@@ -62,6 +63,7 @@
             gap: 6px;
         }
 
+        /* SCHOOL HEADER – bold & compact */
         .school-name-header {
             background: #111827;
             color: white;
@@ -87,6 +89,7 @@
             opacity: 0.95;
         }
 
+        /* HEADER TABLE (logo + info + photo) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -131,6 +134,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* STUDENT INFO – tighter, well spaced */
         .student-info-bar {
             background: linear-gradient(135deg, #eff6ff, #ffffff);
             border: 1.8px solid #2aa886;
@@ -160,6 +164,7 @@
             font-size: 10.5px;
         }
 
+        /* RESULT TABLE – robust, full width */
         .result-wrapper {
             margin: 8px 0;
             border: 1.5px solid #94a3b8;
@@ -196,12 +201,14 @@
         }
         .highlight-red { color: #dc2626; font-weight: 900; }
 
+        /* GRADE COLORS */
         .grade-A { color: #15803d; font-weight: 900; }
         .grade-B { color: #1d4ed8; font-weight: 900; }
         .grade-C { color: #b45309; font-weight: 900; }
         .grade-D { color: #e11d48; font-weight: 900; }
         .grade-F { color: #b91c1c; font-weight: 900; }
 
+        /* POSITION BADGES */
         .pos-1 { background-color: #FFD966 !important; color: #000; font-weight: 900; }
         .pos-2 { background-color: #D1D5DB !important; color: #000; font-weight: 900; }
         .pos-3 { background-color: #E6B17E !important; color: #000; font-weight: 900; }
@@ -217,6 +224,7 @@
             margin: 5px 0;
         }
 
+        /* ATTENDANCE */
         .attendance-box {
             border: 1.8px solid #0f766e;
             border-radius: 12px;
@@ -267,6 +275,7 @@
         }
         .progress-fill.warning { background: #f97316; }
 
+        /* REMARKS TABLE */
         .remarks-table {
             width: 100%;
             border-collapse: collapse;
@@ -288,6 +297,7 @@
             margin-bottom: 5px;
         }
 
+        /* BOTTOM STRIP – no empty gaps */
         .bottom-strip {
             margin-top: 5px;
             border-top: 1.8px solid #cbd5e1;
@@ -329,6 +339,7 @@
             margin-top: 4px;
         }
 
+        /* PROMOTION BADGE – compact */
         .promo-badge {
             margin: 4px 0;
             padding: 6px 10px;
@@ -342,6 +353,7 @@
         .promo-fail { background: #fee2e2; border-color: #b91c1c; color: #7f1d1d; }
         .promo-wait { background: #fef9c3; border-color: #ca8a04; color: #854d0e; }
 
+        /* COLUMN WIDTHS */
         .col-sn { width: 28px; }
         .col-adm { width: 65px; }
         .col-subj { width: 135px; }
@@ -352,12 +364,12 @@
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .student-section { box-shadow: none; margin: 0; page-break-after: avoid; }
-            .watermark-text { color: rgba(37,99,235,0.1); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .watermark-text { color: rgba(220,38,38,0.1); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
 <body>
-    <div class="watermark-text">STUDENT COPY</div>
+    <div class="watermark-text">NOT FOR OFFICIAL USE</div>
 
     @php
         function ordinal($n) {
@@ -367,7 +379,7 @@
         }
 
         $selected = $metadata['selected_columns'] ?? [];
-        $defaultCols = ['sn','admission_no','name','total','bf','cum','cum_ave','grade','arm_position','arm_position_cum','position_total','position','class_average','attendance_days_present','attendance_days_absent','attendance_percentage'];
+        $defaultCols = ['sn','admission_no','name','total','bf','cum','grade','position','position_total','arm_position','arm_position_cum','class_average','attendance_days_present','attendance_days_absent','attendance_percentage'];
         $showCols = !empty($selected) ? $selected : $defaultCols;
         $showAttendance = collect(['attendance_days_present','attendance_days_absent','attendance_total_days','attendance_percentage'])->contains(fn($c)=>in_array($c,$showCols));
     @endphp
@@ -403,17 +415,17 @@
             $attPct = isset($att['attendance_percentage']) ? round($att['attendance_percentage'],1) : 0;
             $attWarn = $attPct < 75 && $attPct > 0;
             $attFound = $att['found'] ?? false;
-
-            $gradeCategory = ($studentData['schoolclass']->classcategories ?? collect())->first();
         @endphp
 
         <div class="student-section">
             <div class="card-inner">
+                {{-- SCHOOL HEADER --}}
                 <div class="school-name-header">
                     <div class="school-full-name">{{ $school->school_name ?? 'PREMIER ACADEMY' }}</div>
                     <div class="motto">{{ $school->school_motto ?? 'KNOWLEDGE & INTEGRITY' }}</div>
                 </div>
 
+                {{-- LOGO + CONTACT + PHOTO --}}
                 <table class="header-table">
                     <tr>
                         <td width="18%" style="text-align:center"><div class="school-logo"><img src="{{ $logoBase }}" alt="logo"></div></td>
@@ -442,6 +454,7 @@
 
                 <div class="report-title">{{ strtoupper($term) }} {{ strtoupper($session) }} – TERMINAL PROGRESS REPORT</div>
 
+                {{-- STUDENT INFO BAR --}}
                 <div class="student-info-bar">
                     <table class="info-table">
                         <tr>
@@ -461,6 +474,7 @@
                     </table>
                 </div>
 
+                {{-- SUBJECT TABLE --}}
                 <div class="result-wrapper">
                     <table class="result-table">
                         <thead>
@@ -476,14 +490,11 @@
                                 @if(in_array('total', $showCols)) <th class="col-num">Total</th> @endif
                                 @if(in_array('bf', $showCols)) <th class="col-num">BF</th> @endif
                                 @if(in_array('cum', $showCols)) <th class="col-num">Cum</th> @endif
-                                {{-- FIXED: Added cum_ave column --}}
-                                @if(in_array('cum_ave', $showCols)) <th class="col-num">Cum Ave</th> @endif
                                 @if(in_array('grade', $showCols)) <th class="col-num">Grade</th> @endif
-                                {{-- REORDERED POSITION COLUMNS --}}
-                                @if(in_array('arm_position', $showCols)) <th class="col-pos">Arm Pos (Total)</th> @endif
-                                @if(in_array('arm_position_cum', $showCols)) <th class="col-pos">Arm Pos (Cum)</th> @endif
-                                @if(in_array('position_total', $showCols)) <th class="col-pos">Class Pos (Total)</th> @endif
-                                @if(in_array('position', $showCols)) <th class="col-pos">Class Pos (Cum)</th> @endif
+                                @if(in_array('position', $showCols)) <th class="col-pos">Pos(Cum)</th> @endif
+                                @if(in_array('position_total', $showCols)) <th class="col-pos">Pos(Tot)</th> @endif
+                                @if(in_array('arm_position', $showCols)) <th class="col-pos">Arm Pos</th> @endif
+                                @if(in_array('arm_position_cum', $showCols)) <th class="col-pos">Arm Cum</th> @endif
                                 @if(in_array('class_average', $showCols)) <th class="col-num">Avg</th> @endif
                             </tr>
                         </thead>
@@ -498,12 +509,8 @@
                                 $posTotClass = ($posTot == 1) ? 'pos-1' : (($posTot == 2) ? 'pos-2' : (($posTot == 3) ? 'pos-3' : ''));
                                 $armPosClass = ($armPos == 1) ? 'pos-1' : (($armPos == 2) ? 'pos-2' : (($armPos == 3) ? 'pos-3' : ''));
                                 $armCumClass = ($armCum == 1) ? 'pos-1' : (($armCum == 2) ? 'pos-2' : (($armCum == 3) ? 'pos-3' : ''));
-
-                                // Grade based on cum_ave
-                                $gradeForDisplay = $gradeCategory && isset($sc->cum_ave)
-                                    ? $gradeCategory->calculateGrade($sc->cum_ave)
-                                    : ($sc->grade ?? '-');
-                                $gLetter = ($gradeForDisplay !== '-') ? substr($gradeForDisplay,0,1) : 'F';
+                                $gRaw = $sc->grade ?? '-';
+                                $gLetter = ($gRaw !== '-') ? substr($gRaw,0,1) : 'F';
                                 $gradeStyle = match($gLetter) { 'A'=>'grade-A','B'=>'grade-B','C'=>'grade-C','D'=>'grade-D', default=>'grade-F' };
                             @endphp
                             <tr>
@@ -521,15 +528,11 @@
                                 @if(in_array('total', $showCols)) <td @if(($sc->total ?? 0) < 50) class="highlight-red" @endif>{{ number_format($sc->total ?? 0,1) }}</td> @endif
                                 @if(in_array('bf', $showCols)) <td>{{ number_format($sc->bf ?? 0,1) }}</td> @endif
                                 @if(in_array('cum', $showCols)) <td>{{ number_format($sc->cum ?? 0,1) }}</td> @endif
-                                {{-- FIXED: Added cum_ave column value --}}
-                                @if(in_array('cum_ave', $showCols)) <td>{{ number_format($sc->cum_ave ?? 0,1) }}</td> @endif
-                                @if(in_array('grade', $showCols)) <td class="{{ $gradeStyle }}">{{ $gradeForDisplay }}</td> @endif
-
-                                {{-- REORDERED POSITION COLUMNS --}}
+                                @if(in_array('grade', $showCols)) <td class="{{ $gradeStyle }}">{{ $gRaw }}</td> @endif
+                                @if(in_array('position', $showCols)) <td class="{{ $posCumClass }}">{{ ordinal($posCum) }}</td> @endif
+                                @if(in_array('position_total', $showCols)) <td class="{{ $posTotClass }}">{{ ordinal($posTot) }}</td> @endif
                                 @if(in_array('arm_position', $showCols)) <td class="{{ $armPosClass }}">{{ ordinal($armPos) }}</td> @endif
                                 @if(in_array('arm_position_cum', $showCols)) <td class="{{ $armCumClass }}">{{ ordinal($armCum) }}</td> @endif
-                                @if(in_array('position_total', $showCols)) <td class="{{ $posTotClass }}">{{ ordinal($posTot) }}</td> @endif
-                                @if(in_array('position', $showCols)) <td class="{{ $posCumClass }}">{{ ordinal($posCum) }}</td> @endif
                                 @if(in_array('class_average', $showCols)) <td>{{ number_format($sc->class_average ?? 0,1) }}</td> @endif
                             </tr>
                             @empty
@@ -539,6 +542,7 @@
                     </table>
                 </div>
 
+                {{-- TOTALS & PROMOTION --}}
                 <div class="totals-summary">
                     🎯 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0,1) }} &nbsp;|&nbsp;
                     TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;|&nbsp;
@@ -554,6 +558,7 @@
                     <div class="promo-badge promo-fail"><strong>⚠️ NOT PROMOTED</strong> – Requires improvement, repeat class</div>
                 @endif
 
+                {{-- ATTENDANCE BLOCK --}}
                 @if($showAttendance && $attFound)
                 <div class="attendance-box">
                     <div class="attendance-header">📅 TERMINAL ATTENDANCE – {{ $term }}</div>
@@ -574,6 +579,7 @@
                 </div>
                 @endif
 
+                {{-- REMARKS --}}
                 <table class="remarks-table">
                     <tr>
                         <td width="50%"><span class="remark-title">📖 CLASS TEACHER'S REMARK</span><br>{{ $profile ? ($profile->classteachercomment ?? '—') : '—' }}</td>
@@ -581,6 +587,7 @@
                     </tr>
                 </table>
 
+                {{-- FOOTER (QR, SIGNATURE, STAMP) --}}
                 <div class="bottom-strip">
                     <table class="strip-table">
                         <tr>
