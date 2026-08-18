@@ -16,6 +16,7 @@ use App\Models\AttendanceSummary;
 use App\Models\Studentpersonalityprofile;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PromotionEvaluator;
 
 class StudentAssessmentController extends Controller
 {
@@ -46,16 +47,9 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // MOCK DATA HELPER - FIXED VERSION
+    // MOCK DATA HELPER
     // =========================================================================
 
-    /**
-     * Fetch mock exam results for a student in a given class/session/term.
-     * Returns a collection of enriched broadsheetmock rows, or an empty collection.
-     *
-     * NOTE: Mock exams have no BF/cumulative concept — they're graded purely on
-     * the single mock total, so nothing here is affected by the cum/cum_ave split.
-     */
     private function getMockData(int $studentId, int $schoolclassId, int $sessionId, ?int $termId): \Illuminate\Support\Collection
     {
         if (!$termId) return collect();
@@ -87,7 +81,6 @@ class StudentAssessmentController extends Controller
             if ($rows->isNotEmpty() && $rows->every(fn($row) => empty($row->position) || $row->position == 0)) {
                 \Log::info('Calculating mock positions dynamically for student ' . $studentId);
 
-                // Get all mock records for this class, session, and term
                 $allMockRecords = BroadsheetsMock::where('term_id', $termId)
                     ->whereHas('broadsheetRecord', function($q) use ($schoolclassId, $sessionId) {
                         $q->where('schoolclass_id', $schoolclassId)
@@ -95,22 +88,16 @@ class StudentAssessmentController extends Controller
                     })
                     ->get();
 
-                // Group by subject (using broadsheet_record_id which links to subject)
                 $subjectGroups = $allMockRecords->groupBy('broadsheet_record_id');
 
-                // For each row, calculate position within its subject group
                 foreach ($rows as $row) {
                     $subjectRecords = $subjectGroups->get($row->record_id, collect());
 
                     if ($subjectRecords->isNotEmpty()) {
-                        // Sort by total descending
                         $sorted = $subjectRecords->sortByDesc('total')->values();
-
-                        // Find the position of this student's score
                         $position = $sorted->search(function($record) use ($row) {
                             return $record->total == $row->total && $record->id == $row->id;
                         });
-
                         $row->position = $position !== false ? $position + 1 : null;
                     }
                 }
@@ -215,9 +202,6 @@ class StudentAssessmentController extends Controller
 
         $isSenior    = $schoolclass->classcategories->first()->is_senior ?? false;
         $categoryIds = $schoolclass->classcategories->pluck('id');
-        // Resolved ONCE here (not per subject) so every subject's grade is graded
-        // consistently, and so the grade calculation never has to guess or repeat
-        // a DB lookup — mirrors the pattern used in the scoresheet/report controllers.
         $gradeCategory = $schoolclass->classcategories->first();
 
         $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
@@ -302,11 +286,6 @@ class StudentAssessmentController extends Controller
                 ];
             });
 
-            // "cum" is the raw cumulative sum (BF + this term's total), which for
-            // Term 2/3 can legitimately exceed 100. "cum_ave" is that sum divided
-            // by the term number and is the figure that reflects actual academic
-            // performance — so BOTH the subject grade AND the subject grade-point
-            // must be derived from cum_ave, never from the raw sum.
             $cumRaw = $broadsheet->cum ?? 0;
             $cumAve = $broadsheet->cum_ave ?? 0;
 
@@ -356,7 +335,6 @@ class StudentAssessmentController extends Controller
             $overallProgress['total_grade_points'] = $gpaCgpaData['total_grade_points'];
         }
 
-        // ── MOCK DATA ──────────────────────────────────────────────────────────
         $mockResults = $this->getMockData(
             $studentId,
             $studentClassData->class_id,
@@ -375,7 +353,6 @@ class StudentAssessmentController extends Controller
             'percentage' => $mockPercentage,
             'count'      => $mockResults->count(),
         ];
-        // ──────────────────────────────────────────────────────────────────────
 
         $gpaTrend       = $this->buildGpaTrend($studentId, $selectedSessionId, $isSenior);
         $studentPicture = DB::table('studentpicture')->where('studentid', $studentId)->value('picture');
@@ -392,7 +369,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // PRINT TERMINAL RESULT (PDF)
+    // PRINT TERMINAL RESULT (PDF) - FIXED WITH PROMOTION EVALUATOR
     // =========================================================================
     public function printResult(Request $request)
     {
@@ -448,8 +425,6 @@ class StudentAssessmentController extends Controller
         $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
         $isSenior    = $schoolclass?->classcategories->first()?->is_senior ?? false;
         $categoryIds = $schoolclass?->classcategories->pluck('id') ?? collect();
-        // Same category used consistently to grade every subject row below — see
-        // the note in index() for why this must be resolved once, not per row.
         $gradeCategory = $schoolclass?->classcategories->first();
 
         $termModel    = Schoolterm::find($selectedTermId);
@@ -493,13 +468,11 @@ class StudentAssessmentController extends Controller
             $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
 
             $scoreData               = new \stdClass();
+            $scoreData->subject_id   = $regSubject->subject_id;
             $scoreData->subject_name = $regSubject->subject_name;
             $scoreData->subject_code = $regSubject->subject_code;
             $scoreData->total        = $broadsheet->total ?? 0;
 
-            // BF for display purposes: the previous term's raw cumulative sum
-            // (never its average) — this matches computeCumulative()'s rule that
-            // BF is always the prior term's un-divided running total.
             $bfValue = 0;
             if ($previousTermId) {
                 $previousBroadsheet = Broadsheets::where('broadSheet_record_id', $broadsheetRecord->id)
@@ -509,9 +482,6 @@ class StudentAssessmentController extends Controller
             }
             $scoreData->bf = $bfValue;
 
-            // "cum" = raw cumulative sum. "cum_ave" = that sum divided by the term
-            // number, and is the figure the subject grade must be based on — never
-            // the raw sum, and never the term total (the previous behaviour here).
             $cumRaw = $broadsheet->cum ?? 0;
             $cumAve = $broadsheet->cum_ave ?? 0;
 
@@ -555,6 +525,26 @@ class StudentAssessmentController extends Controller
             $sessionIdForQuery, $isSenior
         );
 
+        // =====================================================================
+        // PROMOTION EVALUATION - FIXED
+        // =====================================================================
+        $evaluator = new PromotionEvaluator();
+        $promotionResult = $evaluator->evaluate(
+            studentId:      $studentId,
+            schoolclassid:  $schoolclassId,
+            termid:         $selectedTermId,
+            sessionid:      $sessionIdForQuery,
+            scores:         $scores,
+            overallAverage: $percentage
+        );
+
+        \Log::info('Promotion evaluation result for student PDF', [
+            'student_id' => $studentId,
+            'status' => $promotionResult['status'] ?? 'unknown',
+            'status_label' => $promotionResult['status_label'] ?? 'unknown',
+        ]);
+        // =====================================================================
+
         $schoolInfo    = SchoolInformation::first();
         $logoBase64    = $this->logoToBase64($schoolInfo);
         $pictureBase64 = $this->imageToBase64ForPdf(
@@ -591,7 +581,6 @@ class StudentAssessmentController extends Controller
             $attendanceData = ['found' => false];
         }
 
-        // ── MOCK DATA FOR PDF ──────────────────────────────────────────────────
         $mockRows            = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
         $mockTotalObtained   = $mockRows->sum(fn ($r) => (float) ($r->total ?? 0));
         $mockTotalObtainable = $mockRows->count() * 100;
@@ -603,7 +592,6 @@ class StudentAssessmentController extends Controller
             'obtainable' => $mockTotalObtainable,
             'percentage' => $mockPercentage,
         ];
-        // ──────────────────────────────────────────────────────────────────────
 
         $metadata = [
             'term'             => $termModel->term ?? 'Term',
@@ -634,7 +622,7 @@ class StudentAssessmentController extends Controller
             'numberOfStudents'     => $numberOfStudents,
             'studentpp'            => $studentProfileData,
             'attendance_summary'   => $attendanceData,
-            'promotion_result'     => [],
+            'promotion_result'     => $promotionResult, // FIXED: Now using real evaluator
             'mock_results'         => $mockRows,
             'mock_summary'         => $mockSummaryForPdf,
         ]];
@@ -659,7 +647,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // PRINT MOCK RESULT (PDF) - FIXED VERSION
+    // PRINT MOCK RESULT (PDF)
     // =========================================================================
     public function printMockResult(Request $request)
     {
@@ -715,16 +703,7 @@ class StudentAssessmentController extends Controller
         $sessionModel = Schoolsession::find($sessionIdForQuery);
         $schoolInfo   = SchoolInformation::first();
 
-        // Get mock data with positions
         $mockRows = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
-
-        // Debug: Log mock data for verification
-        \Log::info('Mock rows for PDF print', [
-            'student_id' => $studentId,
-            'count' => $mockRows->count(),
-            'positions' => $mockRows->pluck('position')->toArray(),
-            'has_positions' => $mockRows->some(fn($row) => !empty($row->position) && $row->position > 0)
-        ]);
 
         $mockTotalObtained   = $mockRows->sum(fn ($r) => (float) ($r->total ?? 0));
         $mockTotalObtainable = $mockRows->count() * 100;
@@ -832,13 +811,6 @@ class StudentAssessmentController extends Controller
         return $placeholder;
     }
 
-    /**
-     * Build the per-term GPA trend used for the chart on the student's
-     * assessments page. GPA points are derived from cum_ave (the per-term
-     * cumulative average) — never from the raw "cum" running sum, which can
-     * exceed 100 in Term 2/3 and would otherwise skew every student toward
-     * the top grade-point bracket.
-     */
     private function buildGpaTrend(int $studentId, ?int $sessionId, bool $isSenior): array
     {
         $trend = [];
@@ -894,13 +866,6 @@ class StudentAssessmentController extends Controller
         return 'F9';
     }
 
-    /**
-     * GPA for the term is the average grade-point across the student's
-     * subjects, where each subject's grade-point comes from cum_ave (per-term
-     * cumulative average) — matching buildGpaTrend() and the subject-level
-     * grade shown elsewhere in this controller, so nothing here is computed
-     * differently from the rest of the app.
-     */
     private function computeOverallForStudent($studentId, $schoolclass, $termId, $sessionId, $isSenior): array
     {
         $currentTermBroadsheets = Broadsheets::where('term_id', $termId)

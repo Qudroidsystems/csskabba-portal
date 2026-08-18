@@ -20,7 +20,7 @@
             min-height: 100vh;
         }
 
-        /* WATERMARK – visible but not intrusive */
+        /* WATERMARK */
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -40,7 +40,6 @@
             border-radius: 24px;
         }
 
-        /* MAIN CARD – fills A4/A5 perfectly */
         .student-section {
             max-width: 200mm;
             width: 100%;
@@ -63,7 +62,7 @@
             gap: 6px;
         }
 
-        /* SCHOOL HEADER – bold & compact */
+        /* SCHOOL HEADER */
         .school-name-header {
             background: #111827;
             color: white;
@@ -89,7 +88,6 @@
             opacity: 0.95;
         }
 
-        /* HEADER TABLE (logo + info + photo) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -134,7 +132,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* STUDENT INFO – tighter, well spaced */
         .student-info-bar {
             background: linear-gradient(135deg, #eff6ff, #ffffff);
             border: 1.8px solid #2aa886;
@@ -164,7 +161,6 @@
             font-size: 10.5px;
         }
 
-        /* RESULT TABLE – robust, full width */
         .result-wrapper {
             margin: 8px 0;
             border: 1.5px solid #94a3b8;
@@ -201,14 +197,12 @@
         }
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        /* GRADE COLORS */
         .grade-A { color: #15803d; font-weight: 900; }
         .grade-B { color: #1d4ed8; font-weight: 900; }
         .grade-C { color: #b45309; font-weight: 900; }
         .grade-D { color: #e11d48; font-weight: 900; }
         .grade-F { color: #b91c1c; font-weight: 900; }
 
-        /* POSITION BADGES */
         .pos-1 { background-color: #FFD966 !important; color: #000; font-weight: 900; }
         .pos-2 { background-color: #D1D5DB !important; color: #000; font-weight: 900; }
         .pos-3 { background-color: #E6B17E !important; color: #000; font-weight: 900; }
@@ -224,7 +218,55 @@
             margin: 5px 0;
         }
 
-        /* ATTENDANCE */
+        /* ─── PROMOTION BADGE ─── */
+        .promo-badge {
+            margin: 4px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-align: center;
+            font-size: 10px;
+            border: 1.5px solid;
+            line-height: 1.5;
+        }
+        .promo-pass {
+            background: #dcfce7;
+            border-color: #15803d;
+            color: #14532d;
+        }
+        .promo-fail {
+            background: #fee2e2;
+            border-color: #b91c1c;
+            color: #7f1d1d;
+        }
+        .promo-trial {
+            background: #fef9c3;
+            border-color: #ca8a04;
+            color: #854d0e;
+        }
+        .promo-principal {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1e3a8a;
+        }
+        .promo-wait {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #475569;
+        }
+        .promo-badge .promo-rule {
+            font-size: 8.5px;
+            font-weight: 600;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+        .promo-badge .promo-detail {
+            font-size: 8.5px;
+            font-weight: 500;
+            margin-top: 2px;
+            opacity: 0.9;
+        }
+
         .attendance-box {
             border: 1.8px solid #0f766e;
             border-radius: 12px;
@@ -275,7 +317,6 @@
         }
         .progress-fill.warning { background: #f97316; }
 
-        /* REMARKS TABLE */
         .remarks-table {
             width: 100%;
             border-collapse: collapse;
@@ -297,7 +338,6 @@
             margin-bottom: 5px;
         }
 
-        /* BOTTOM STRIP – no empty gaps */
         .bottom-strip {
             margin-top: 5px;
             border-top: 1.8px solid #cbd5e1;
@@ -339,21 +379,6 @@
             margin-top: 4px;
         }
 
-        /* PROMOTION BADGE – compact */
-        .promo-badge {
-            margin: 4px 0;
-            padding: 6px 10px;
-            border-radius: 40px;
-            font-weight: 800;
-            text-align: center;
-            font-size: 9.5px;
-            border: 1.5px solid;
-        }
-        .promo-pass { background: #dcfce7; border-color: #15803d; color: #14532d; }
-        .promo-fail { background: #fee2e2; border-color: #b91c1c; color: #7f1d1d; }
-        .promo-wait { background: #fef9c3; border-color: #ca8a04; color: #854d0e; }
-
-        /* COLUMN WIDTHS */
         .col-sn { width: 28px; }
         .col-adm { width: 65px; }
         .col-subj { width: 135px; }
@@ -369,7 +394,7 @@
     </style>
 </head>
 <body>
-    <div class="watermark-text">NOT FOR OFFICIAL USE</div>
+    <div class="watermark-text">STUDENT COPY</div>
 
     @php
         function ordinal($n) {
@@ -391,6 +416,27 @@
             $assessments = $studentData['assessments'] ?? collect();
             $totals = $studentData['totals_summary'] ?? [];
             $att = $studentData['attendance_summary'] ?? [];
+
+            // ── PROMOTION DATA (from evaluator) ──
+            $pr = $studentData['promotion_result'] ?? [];
+            $promoStatus = $pr['status'] ?? 'awaiting';
+            $statusLabel = $pr['status_label'] ?? 'Awaiting Decision';
+            $promoFailed = $pr['failed_compulsory'] ?? [];
+            $reqAvg = $pr['required_average'] ?? null;
+            $actAvg = $pr['actual_average'] ?? null;
+            $promoTotal = $pr['compulsory_count'] ?? 0;
+            $promoPassed = $pr['passed_compulsory'] ?? 0;
+            $appliedRule = $pr['applied_rule']['name'] ?? null;
+            $isPromoTerm = $pr['is_promotional_term'] ?? false;
+            // Clean rule display
+            $ruleDisplay = '';
+            if ($appliedRule) {
+                $ruleDisplay = preg_replace('/^Rule\s+\d+\s*[-:.]?\s*/i', '', $appliedRule);
+                $ruleDisplay = trim($ruleDisplay);
+                if (empty($ruleDisplay) || $ruleDisplay === 'null') {
+                    $ruleDisplay = '';
+                }
+            }
 
             $profile = null;
             if (isset($studentData['studentpp']) && $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty()) {
@@ -415,6 +461,28 @@
             $attPct = isset($att['attendance_percentage']) ? round($att['attendance_percentage'],1) : 0;
             $attWarn = $attPct < 75 && $attPct > 0;
             $attFound = $att['found'] ?? false;
+
+            // Determine promo badge class
+            $promoClass = 'promo-wait';
+            if ($isPromoTerm) {
+                switch ($promoStatus) {
+                    case 'promoted':
+                        $promoClass = 'promo-pass';
+                        break;
+                    case 'trial':
+                        $promoClass = 'promo-trial';
+                        break;
+                    case 'see_principal':
+                        $promoClass = 'promo-principal';
+                        break;
+                    case 'repeated':
+                    case 'repeat':
+                        $promoClass = 'promo-fail';
+                        break;
+                    default:
+                        $promoClass = 'promo-wait';
+                }
+            }
         @endphp
 
         <div class="student-section">
@@ -542,20 +610,95 @@
                     </table>
                 </div>
 
-                {{-- TOTALS & PROMOTION --}}
+                {{-- TOTALS SUMMARY --}}
                 <div class="totals-summary">
                     🎯 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0,1) }} &nbsp;|&nbsp;
                     TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;|&nbsp;
                     PERCENTAGE: {{ $totals['percentage'] ?? 0 }}%
                 </div>
 
-                @php $isPromoTerm = (stripos($term, 'third') !== false); $promoState = (($totals['percentage'] ?? 0) >= 50) ? 'pass' : 'fail'; @endphp
-                @if(!$isPromoTerm)
-                    <div class="promo-badge promo-wait"><strong>⏳ AWAITING FINAL TERM</strong> – Promotion will be assessed at year end</div>
-                @elseif($promoState === 'pass')
-                    <div class="promo-badge promo-pass"><strong>🎓 PROMOTED TO NEXT CLASS</strong> – Excellent performance</div>
+                {{-- ═══════════════════════════════════════════════════════
+                     PROMOTION BADGE – FIXED: uses real evaluator data
+                ═══════════════════════════════════════════════════════ --}}
+                @if($isPromoTerm)
+                    @if($promoStatus === 'promoted')
+                        <div class="promo-badge promo-pass">
+                            <strong>✅ {{ $statusLabel }}</strong>
+                            @if($ruleDisplay && $ruleDisplay !== '' && $ruleDisplay !== 'null')
+                                <div class="promo-rule">📋 {{ $ruleDisplay }}</div>
+                            @endif
+                            @if($promoTotal > 0)
+                                <div class="promo-detail">
+                                    Passed {{ $promoPassed }}/{{ $promoTotal }} compulsory subject(s)
+                                </div>
+                            @endif
+                            @if($reqAvg !== null && $actAvg !== null)
+                                <div class="promo-detail">
+                                    Average: {{ number_format($actAvg, 1) }}%
+                                    (Required: {{ number_format($reqAvg, 1) }}%) ✓
+                                </div>
+                            @endif
+                        </div>
+                    @elseif($promoStatus === 'trial')
+                        <div class="promo-badge promo-trial">
+                            <strong>⏳ {{ $statusLabel }}</strong>
+                            @if($ruleDisplay && $ruleDisplay !== '' && $ruleDisplay !== 'null')
+                                <div class="promo-rule">📋 {{ $ruleDisplay }}</div>
+                            @endif
+                            <div class="promo-detail">Promoted conditionally – needs improvement</div>
+                            @if($reqAvg !== null && $actAvg !== null)
+                                <div class="promo-detail">
+                                    Average: {{ number_format($actAvg, 1) }}%
+                                    (Required: {{ number_format($reqAvg, 1) }}%)
+                                </div>
+                            @endif
+                        </div>
+                    @elseif($promoStatus === 'see_principal')
+                        <div class="promo-badge promo-principal">
+                            <strong>🏛️ {{ $statusLabel }}</strong>
+                            @if($ruleDisplay && $ruleDisplay !== '' && $ruleDisplay !== 'null')
+                                <div class="promo-rule">📋 {{ $ruleDisplay }}</div>
+                            @endif
+                            <div class="promo-detail">Parents must see the Principal for discussion</div>
+                            @if($reqAvg !== null && $actAvg !== null)
+                                <div class="promo-detail">
+                                    Average: {{ number_format($actAvg, 1) }}%
+                                    (Required: {{ number_format($reqAvg, 1) }}%)
+                                </div>
+                            @endif
+                        </div>
+                    @elseif($promoStatus === 'repeated' || $promoStatus === 'repeat')
+                        <div class="promo-badge promo-fail">
+                            <strong>⚠️ {{ $statusLabel }}</strong>
+                            @if(!empty($promoFailed))
+                                <div class="promo-detail">
+                                    Failed: {{ collect($promoFailed)->pluck('subject')->filter()->implode(', ') }}
+                                </div>
+                            @endif
+                            @if($ruleDisplay && $ruleDisplay !== '' && $ruleDisplay !== 'null')
+                                <div class="promo-rule">📋 {{ $ruleDisplay }}</div>
+                            @endif
+                            @if($reqAvg !== null && $actAvg !== null)
+                                <div class="promo-detail">
+                                    Average: {{ number_format($actAvg, 1) }}%
+                                    (Required: {{ number_format($reqAvg, 1) }}%)
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <div class="promo-badge promo-wait">
+                            <strong>⏳ Awaiting Decision</strong>
+                            <div class="promo-detail">Promotion decision pending further review</div>
+                            @if($actAvg !== null)
+                                <div class="promo-detail">Average: {{ number_format($actAvg, 1) }}%</div>
+                            @endif
+                        </div>
+                    @endif
                 @else
-                    <div class="promo-badge promo-fail"><strong>⚠️ NOT PROMOTED</strong> – Requires improvement, repeat class</div>
+                    <div class="promo-badge promo-wait">
+                        <strong>⏳ Non-Promotional Term</strong>
+                        <div class="promo-detail">Promotion is assessed at the end of the academic year (Third Term).</div>
+                    </div>
                 @endif
 
                 {{-- ATTENDANCE BLOCK --}}
@@ -587,7 +730,7 @@
                     </tr>
                 </table>
 
-                {{-- FOOTER (QR, SIGNATURE, STAMP) --}}
+                {{-- FOOTER --}}
                 <div class="bottom-strip">
                     <table class="strip-table">
                         <tr>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\ScholarshipController;
 use App\Http\Controllers\Admin\SiblingGroupController;
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\Api\DeviceAttendanceController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSettingController;
 use App\Http\Controllers\BiodataController;
@@ -1477,9 +1478,24 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         });
     });
 
+    Route::prefix('attendance/device-mappings')->name('device-mappings.')->group(function () {
+        Route::get('/',              [DeviceUserMappingController::class, 'index'])->name('index');
+        Route::post('/',             [DeviceUserMappingController::class, 'store'])->name('store');
+        Route::delete('/{id}',       [DeviceUserMappingController::class, 'destroy'])->name('destroy');
+        Route::get('/search',        [DeviceUserMappingController::class, 'search'])->name('search');
+        Route::post('/bulk-import',  [DeviceUserMappingController::class, 'bulkImport'])->name('bulk-import');
+        Route::get('/unmapped',      [DeviceUserMappingController::class, 'unmapped'])->name('unmapped');
+        Route::post('/quick-assign', [DeviceUserMappingController::class, 'quickAssign'])->name('quick-assign');
+    });
+
 
     // Spotlight Search API
    Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
+
+   /// API
+   Route::middleware('device.auth')->post('/device/attendance', [DeviceAttendanceController::class, 'store']);
+   Route::resource('device-mappings', DeviceUserMappingController::class)->except(['show']);
+   Route::get('/attendance/live-feed', [LiveAttendanceController::class, 'feed'])->name('attendance.live-feed');
 
 });
 
