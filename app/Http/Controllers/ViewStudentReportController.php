@@ -71,9 +71,6 @@ class ViewStudentReportController extends Controller
     // GRADE HELPERS
     // =========================================================================
 
-    /**
-     * Calculate grade for SENIOR classes (A1, B2, B3, C4, C5, C6, D7, E8, F9)
-     */
     protected function calculateSeniorGrade($score)
     {
         if ($score === null || $score < 0) return 'F9';
@@ -88,9 +85,6 @@ class ViewStudentReportController extends Controller
         return 'F9';
     }
 
-    /**
-     * Calculate grade for JUNIOR classes (A, B, C, D, F)
-     */
     protected function calculateJuniorGrade($score)
     {
         if ($score === null || $score < 40) return 'F';
@@ -101,9 +95,6 @@ class ViewStudentReportController extends Controller
         return 'F';
     }
 
-    /**
-     * Alias for backward compatibility - defaults to senior grade calculation
-     */
     protected function calculateGrade($score)
     {
         return $this->calculateSeniorGrade($score);
@@ -123,9 +114,6 @@ class ViewStudentReportController extends Controller
         return 0.0;
     }
 
-    /**
-     * Get remark - handles both senior and junior grade formats
-     */
     protected function getRemark($grade)
     {
         return match ($grade) {
@@ -273,7 +261,6 @@ class ViewStudentReportController extends Controller
 
         $armId = $schoolclass->arm;
 
-        // Determine if this is a senior or junior class
         $isSeniorClass = false;
         if ($schoolclass->classcategories && $schoolclass->classcategories->isNotEmpty()) {
             $isSeniorClass = $schoolclass->classcategories->first()->is_senior ?? false;
@@ -344,7 +331,6 @@ class ViewStudentReportController extends Controller
                 $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
 
                 foreach ($subjectRecords as $record) {
-                    // Use appropriate grade calculation based on class type
                     if ($isSeniorClass) {
                         $grade = $record->total == 0 ? 'F9' : $this->calculateSeniorGrade($record->total);
                     } else {
@@ -409,7 +395,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // GET STUDENT RESULT DATA - FIXED WITH CORRECT TOTAL CALCULATION
+    // GET STUDENT RESULT DATA - FIXED WITH TOTAL CALCULATION
     // =========================================================================
 
     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
@@ -462,6 +448,7 @@ class ViewStudentReportController extends Controller
                 }
             }
 
+            // Fetch the broadsheet records
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
@@ -499,13 +486,14 @@ class ViewStudentReportController extends Controller
                     'broadsheets.vettedstatus',
                 ])->get();
 
-            // Formatted positions and calculate total from assessment scores
+            // Process each score - CALCULATE TOTAL FROM ASSESSMENT SCORES
             foreach ($scores as $score) {
                 $score->position_formatted         = ($score->position      && $score->position      > 0) ? $this->formatOrdinal($score->position)      : '-';
                 $score->position_total_formatted   = ($score->position_total && $score->position_total > 0) ? $this->formatOrdinal($score->position_total) : '-';
                 $score->arm_position_formatted     = ($score->arm_position  && $score->arm_position  > 0) ? $this->formatOrdinal($score->arm_position)  : '-';
                 $score->arm_position_cum_formatted = ($score->arm_position_cum && $score->arm_position_cum > 0) ? $this->formatOrdinal($score->arm_position_cum) : '-';
 
+                // --- FIX: CALCULATE TOTAL FROM ASSESSMENT SCORES ---
                 try {
                     if (class_exists(\App\Models\BroadsheetAssessmentScore::class)) {
                         $assessmentScores = \App\Models\BroadsheetAssessmentScore::where('broadsheet_id', $score->broadsheet_id)
@@ -524,42 +512,46 @@ class ViewStudentReportController extends Controller
                         $score->ca3 = $ca3;
                         $score->exam = $exam;
                         
-                        // Calculate total from assessment scores
+                        // CALCULATE TOTAL FROM INDIVIDUAL SCORES
                         $calculatedTotal = $ca1 + $ca2 + $ca3 + $exam;
+                        $storedTotal = (float)($score->total ?? 0);
                         
-                        // If the calculated total differs from stored total, use calculated
-                        // and log the discrepancy for debugging
-                        if (abs($calculatedTotal - (float)($score->total ?? 0)) > 0.01) {
-                            Log::warning('Total discrepancy detected in getStudentResultData', [
+                        // ALWAYS use calculated total
+                        $score->total = $calculatedTotal;
+                        $score->total_stored_original = $storedTotal;
+                        $score->total_calculated = $calculatedTotal;
+                        
+                        // Log discrepancy for debugging
+                        if (abs($calculatedTotal - $storedTotal) > 0.01) {
+                            Log::warning('Total discrepancy - USING CALCULATED VALUE', [
                                 'student_id' => $id,
-                                'subject_id' => $score->subject_id,
-                                'subject_name' => $score->subject_name,
-                                'stored_total' => $score->total,
-                                'calculated_total' => $calculatedTotal,
+                                'subject' => $score->subject_name,
+                                'stored' => $storedTotal,
+                                'calculated' => $calculatedTotal,
                                 'ca1' => $ca1,
                                 'ca2' => $ca2,
                                 'ca3' => $ca3,
                                 'exam' => $exam
                             ]);
-                            // Use the calculated total instead of stored
-                            $score->total = $calculatedTotal;
-                            $score->total_stored_original = $score->total; // Keep original for reference
-                        } else {
-                            // Use stored total but ensure it's a float
-                            $score->total = (float)($score->total ?? 0);
                         }
 
                         $score->assessment_scores = $assessmentScores;
                         $score->assessments       = $assessments;
                     }
                 } catch (\Exception $e) {
-                    Log::error('Error loading assessment scores', ['error' => $e->getMessage(), 'broadsheet_id' => $score->broadsheet_id]);
-                    // Fallback to stored total
+                    Log::error('Error loading assessment scores', [
+                        'error' => $e->getMessage(), 
+                        'broadsheet_id' => $score->broadsheet_id
+                    ]);
                     $score->total = (float)($score->total ?? 0);
+                    $score->ca1 = 0;
+                    $score->ca2 = 0;
+                    $score->ca3 = 0;
+                    $score->exam = 0;
                 }
             }
 
-            // Totals summary - recalculate based on corrected totals
+            // Recalculate totals summary
             $totalObtained   = 0;
             $totalObtainable = 0;
 
@@ -580,11 +572,12 @@ class ViewStudentReportController extends Controller
                 'percentage' => $totalPercentage,
             ];
 
-            // GPA/CGPA - use corrected totals
+            // GPA/CGPA - use the scores with corrected totals
             $gpaData = [];
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 try {
-                    $gpaData = $this->computeOverallGPAAndCGPAForStudent($id, $schoolclass, $termid, $sessionid);
+                    // Use the corrected scores for GPA calculation
+                    $gpaData = $this->computeGPAFromScores($id, $schoolclass, $termid, $sessionid, $scores);
                 } catch (\Exception $e) {
                     Log::error('Error calculating GPA/CGPA', ['student_id' => $id, 'error' => $e->getMessage()]);
                     $gpaData = ['gpa' => 0.0, 'cgpa' => 0.0, 'gpa_grade' => 'F9', 'num_subjects' => 0, 'total_grade_points' => 0, 'calculated_gpa' => 0.0];
@@ -716,6 +709,64 @@ class ViewStudentReportController extends Controller
             ]);
             return [];
         }
+    }
+
+    /**
+     * Compute GPA from already-corrected scores
+     */
+    private function computeGPAFromScores($studentId, $schoolclass, $termId, $sessionId, $scores)
+    {
+        $classIds = Schoolclass::where('schoolclass', $schoolclass->schoolclass)->pluck('id')->toArray();
+
+        // Use the corrected scores
+        $termGradePoints = $scores->map(function($score) {
+            return $this->getGradePoint($score->total ?? 0);
+        });
+        
+        $gpa                = $termGradePoints->avg() ?? 0.0;
+        $num_subjects       = $scores->count();
+        $total_grade_points = $termGradePoints->sum();
+
+        // Calculate CGPA from previous terms
+        $termGPAs = [];
+        for ($t = 1; $t <= $termId; $t++) {
+            if ($t == $termId) continue;
+            
+            $termBroadsheets = Broadsheets::where('broadsheets.term_id', $t)
+                ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
+                    $q->where('student_id', $studentId)->where('session_id', $sessionId);
+                })
+                ->whereExists(function ($query) use ($studentId, $t, $sessionId, $classIds) {
+                    $query->select(DB::raw(1))
+                        ->from('subjectRegistrationStatus')
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
+                        ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
+                        ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
+                        ->whereIn('subjectclass.schoolclassid', $classIds)
+                        ->where('subjectRegistrationStatus.studentid', $studentId)
+                        ->where('subjectRegistrationStatus.termid', $t)
+                        ->where('subjectRegistrationStatus.sessionid', $sessionId);
+                })
+                ->get(['broadsheets.total']);
+
+            if ($termBroadsheets->isNotEmpty()) {
+                $gp  = $termBroadsheets->map(fn($b) => $this->getGradePoint($b->total));
+                $tGPA = $gp->avg() ?? 0.0;
+                if ($tGPA > 0) $termGPAs[] = $tGPA;
+            }
+        }
+
+        $cgpa     = !empty($termGPAs) ? collect($termGPAs)->avg() : 0.0;
+        $gpaGrade = $this->getGpaGrade($gpa);
+
+        return [
+            'gpa'                => round($gpa, 2),
+            'cgpa'               => round($cgpa, 2),
+            'gpa_grade'          => $gpaGrade,
+            'num_subjects'       => $num_subjects,
+            'total_grade_points' => round($total_grade_points, 1),
+            'calculated_gpa'     => $num_subjects > 0 ? round($total_grade_points / $num_subjects, 2) : 0.0,
+        ];
     }
 
     // =========================================================================
