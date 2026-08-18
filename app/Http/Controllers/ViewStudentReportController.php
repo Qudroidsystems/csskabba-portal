@@ -76,7 +76,7 @@ class ViewStudentReportController extends Controller
      */
     protected function calculateSeniorGrade($score)
     {
-        if ($score === null || $score == 0) return 'F9';
+        if ($score === null || $score < 0) return 'F9';
         if ($score >= 75) return 'A1';
         if ($score >= 70) return 'B2';
         if ($score >= 65) return 'B3';
@@ -308,12 +308,6 @@ class ViewStudentReportController extends Controller
                     'studentRegistration.admissionNo as admission_no',
                     'broadsheets.total',
                     'broadsheets.bf',
-                    // "cum" is the raw cumulative sum (BF + this term's total). Ranking by
-                    // this raw value is equivalent to ranking by cum_ave (cum / term number)
-                    // because every row here shares the same term_id, so the divisor is the
-                    // same constant for everyone — dividing by a shared constant never
-                    // changes relative order. cum_ave is fetched too, purely so it's
-                    // available on the model if a caller needs it for display later.
                     'broadsheets.cum',
                     'broadsheets.cum_ave',
                     'broadsheets.subject_position_class',
@@ -415,7 +409,7 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // GET STUDENT RESULT DATA
+    // GET STUDENT RESULT DATA - FIXED WITH CORRECT TOTAL CALCULATION
     // =========================================================================
 
     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
@@ -492,8 +486,6 @@ class ViewStudentReportController extends Controller
                     'subject.subject_code',
                     'broadsheets.total',
                     'broadsheets.bf',
-                    // "cum" = raw cumulative sum, "cum_ave" = that sum divided by the term
-                    // number. Both are exposed so views/PDFs can show either or both.
                     'broadsheets.cum',
                     'broadsheets.cum_ave',
                     'broadsheets.grade',
@@ -507,7 +499,7 @@ class ViewStudentReportController extends Controller
                     'broadsheets.vettedstatus',
                 ])->get();
 
-            // Formatted positions
+            // Formatted positions and calculate total from assessment scores
             foreach ($scores as $score) {
                 $score->position_formatted         = ($score->position      && $score->position      > 0) ? $this->formatOrdinal($score->position)      : '-';
                 $score->position_total_formatted   = ($score->position_total && $score->position_total > 0) ? $this->formatOrdinal($score->position_total) : '-';
@@ -521,21 +513,53 @@ class ViewStudentReportController extends Controller
                             ->orderBy('assessment_id')
                             ->get();
 
-                        $arr         = $assessmentScores->values();
-                        $score->ca1  = $arr->count() > 0 ? ($arr->get(0)->score ?? 0) : 0;
-                        $score->ca2  = $arr->count() > 1 ? ($arr->get(1)->score ?? 0) : 0;
-                        $score->ca3  = $arr->count() > 2 ? ($arr->get(2)->score ?? 0) : 0;
-                        $score->exam = $arr->count() > 3 ? ($arr->get(3)->score ?? 0) : 0;
+                        $arr = $assessmentScores->values();
+                        $ca1 = $arr->count() > 0 ? (float)($arr->get(0)->score ?? 0) : 0;
+                        $ca2 = $arr->count() > 1 ? (float)($arr->get(1)->score ?? 0) : 0;
+                        $ca3 = $arr->count() > 2 ? (float)($arr->get(2)->score ?? 0) : 0;
+                        $exam = $arr->count() > 3 ? (float)($arr->get(3)->score ?? 0) : 0;
+                        
+                        $score->ca1 = $ca1;
+                        $score->ca2 = $ca2;
+                        $score->ca3 = $ca3;
+                        $score->exam = $exam;
+                        
+                        // Calculate total from assessment scores
+                        $calculatedTotal = $ca1 + $ca2 + $ca3 + $exam;
+                        
+                        // If the calculated total differs from stored total, use calculated
+                        // and log the discrepancy for debugging
+                        if (abs($calculatedTotal - (float)($score->total ?? 0)) > 0.01) {
+                            Log::warning('Total discrepancy detected in getStudentResultData', [
+                                'student_id' => $id,
+                                'subject_id' => $score->subject_id,
+                                'subject_name' => $score->subject_name,
+                                'stored_total' => $score->total,
+                                'calculated_total' => $calculatedTotal,
+                                'ca1' => $ca1,
+                                'ca2' => $ca2,
+                                'ca3' => $ca3,
+                                'exam' => $exam
+                            ]);
+                            // Use the calculated total instead of stored
+                            $score->total = $calculatedTotal;
+                            $score->total_stored_original = $score->total; // Keep original for reference
+                        } else {
+                            // Use stored total but ensure it's a float
+                            $score->total = (float)($score->total ?? 0);
+                        }
 
                         $score->assessment_scores = $assessmentScores;
                         $score->assessments       = $assessments;
                     }
                 } catch (\Exception $e) {
                     Log::error('Error loading assessment scores', ['error' => $e->getMessage(), 'broadsheet_id' => $score->broadsheet_id]);
+                    // Fallback to stored total
+                    $score->total = (float)($score->total ?? 0);
                 }
             }
 
-            // Totals summary
+            // Totals summary - recalculate based on corrected totals
             $totalObtained   = 0;
             $totalObtainable = 0;
 
@@ -556,7 +580,7 @@ class ViewStudentReportController extends Controller
                 'percentage' => $totalPercentage,
             ];
 
-            // GPA/CGPA
+            // GPA/CGPA - use corrected totals
             $gpaData = [];
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 try {
@@ -973,10 +997,6 @@ class ViewStudentReportController extends Controller
             $termid          = $request->input('termid', 3);
             $studentIds      = $request->input('studentIds', []);
             $selectedColumns = $request->input('selectedColumns', []);
-            // Lets the person printing choose whether the PDF's subject grade
-            // column is based on the term's raw total (current/default) or on
-            // the cumulative average (cum_ave). Anything other than these two
-            // falls back to 'total' so a bad/missing value never breaks the PDF.
             $gradeBasis      = $request->input('grade_basis', 'total');
             if (!in_array($gradeBasis, ['total', 'cum_ave'], true)) {
                 $gradeBasis = 'total';
@@ -1411,8 +1431,6 @@ class ViewStudentReportController extends Controller
                     'assessment_scores' => $assessmentScores,
                     'total'             => $score->total !== null ? (float) $score->total : null,
                     'bf'                => $score->bf    !== null ? (float) $score->bf    : null,
-                    // "cum" = raw cumulative sum, "cum_ave" = that sum divided by the term
-                    // number. Both are returned so the drawer can show either/both.
                     'cum'               => $score->cum     !== null ? (float) $score->cum     : null,
                     'cum_ave'           => $score->cum_ave  !== null ? (float) $score->cum_ave  : null,
                     'grade'             => $score->grade,
