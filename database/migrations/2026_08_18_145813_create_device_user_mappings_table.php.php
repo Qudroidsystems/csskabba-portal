@@ -6,15 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('device_user_mappings', function (Blueprint $table) {
             $table->id();
-            $table->string('device_serial');      // e.g. PKD7022588362 - supports multiple devices later
-            $table->unsignedInteger('device_pin'); // the PIN/User ID enrolled on the device
+            $table->string('device_serial');       // e.g. PKD7022588362 — supports multiple devices later
+            $table->unsignedInteger('device_pin');  // the PIN/User ID enrolled on the device
             $table->enum('person_type', ['student', 'staff']);
             $table->unsignedBigInteger('person_id'); // studentRegistration.id OR staffbioinfo.id
             $table->boolean('active')->default(true);
@@ -25,11 +22,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-         Schema::dropIfExists('device_user_mappings');
+        Schema::dropIfExists('device_user_mappings');
     }
 };

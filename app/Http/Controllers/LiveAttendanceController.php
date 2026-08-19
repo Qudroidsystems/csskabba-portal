@@ -1,15 +1,18 @@
 <?php
 
-// app/Http/Controllers/LiveAttendanceController.php
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\DeviceUserMappingController;
 use App\Models\DeviceAttendanceLog;
 use App\Models\DeviceUserMapping;
 use App\Models\Staff;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
+/**
+ * Polling-based "live" feed. Frontend hits this every ~8s with the last
+ * seen log id and appends any new processed punches to the dashboard.
+ * Swap for a Pusher broadcast later if a true push feel is needed.
+ */
 class LiveAttendanceController extends Controller
 {
     public function feed(Request $request)
@@ -26,7 +29,7 @@ class LiveAttendanceController extends Controller
             return response()->json(['logs' => [], 'last_id' => $sinceId]);
         }
 
-        $pins = $logs->pluck('device_pin')->unique();
+        $pins     = $logs->pluck('device_pin')->unique();
         $mappings = DeviceUserMapping::whereIn('device_pin', $pins)->get()->keyBy('device_pin');
 
         $studentIds = $mappings->where('person_type', 'student')->pluck('person_id');
@@ -38,6 +41,7 @@ class LiveAttendanceController extends Controller
             $mapping = $mappings->get($log->device_pin);
             $name = 'Unknown';
             $type = 'unknown';
+
             if ($mapping) {
                 $type = $mapping->person_type;
                 if ($type === 'student' && $students->has($mapping->person_id)) {
@@ -47,6 +51,7 @@ class LiveAttendanceController extends Controller
                     $name = $staff->get($mapping->person_id)->full_name;
                 }
             }
+
             return [
                 'id'         => $log->id,
                 'name'       => $name,

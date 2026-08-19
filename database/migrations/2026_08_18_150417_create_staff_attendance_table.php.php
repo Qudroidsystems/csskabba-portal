@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('staff_attendance', function (Blueprint $table) {
@@ -17,9 +14,9 @@ return new class extends Migration
             $table->date('attendance_date');
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
-            $table->enum('status', ['present', 'late', 'absent', 'half_day', 'excused'])->default('present');
+            $table->enum('status', ['present', 'late', 'excused'])->default('present');
             $table->enum('source', ['device', 'manual'])->default('device');
-            $table->unsignedBigInteger('marked_by')->nullable(); // null if from device
+            $table->unsignedBigInteger('marked_by')->nullable(); // null for device-generated rows
             $table->string('notes')->nullable();
             $table->timestamps();
 
@@ -27,11 +24,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-         Schema::dropIfExists('staff_attendance');
+        Schema::dropIfExists('staff_attendance');
     }
 };

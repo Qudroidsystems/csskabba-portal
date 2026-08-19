@@ -53,7 +53,7 @@
 <script>
 function csrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
 
-document.querySelectorAll('tr').forEach(row => {
+document.querySelectorAll('tbody tr').forEach(row => {
     const typeSel = row.querySelector('.assign-type');
     const personSel = row.querySelector('.assign-person');
     if (!typeSel) return;

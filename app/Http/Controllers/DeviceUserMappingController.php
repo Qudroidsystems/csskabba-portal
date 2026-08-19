@@ -1,12 +1,11 @@
 <?php
 
-// app/Http/Controllers/DeviceUserMappingController.php
 namespace App\Http\Controllers;
 
-use App\Models\DeviceUserMapping;
 use App\Models\DeviceAttendanceLog;
-use App\Models\Student;
+use App\Models\DeviceUserMapping;
 use App\Models\Staff;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +32,7 @@ class DeviceUserMappingController extends Controller
 
         $mappings = $query->paginate(50)->withQueryString();
 
-        // Attach display names without N+1 across two different tables
+        // Attach display names without N+1 across two different source tables
         $studentIds = $mappings->where('person_type', 'student')->pluck('person_id');
         $staffIds   = $mappings->where('person_type', 'staff')->pluck('person_id');
 
@@ -77,13 +76,15 @@ class DeviceUserMappingController extends Controller
                 ]);
         } else {
             $results = Staff::with('user')
-                ->whereHas('user', fn($qq) => $qq->where('name', 'like', "%{$q}%"))
-                ->orWhere('employmentid', 'like', "%{$q}%")
+                ->where(function ($qq) use ($q) {
+                    $qq->whereHas('user', fn($uq) => $uq->where('name', 'like', "%{$q}%"))
+                       ->orWhere('employmentid', 'like', "%{$q}%");
+                })
                 ->limit(20)
                 ->get()
                 ->map(fn($s) => [
                     'id'   => $s->id,
-                    'text' => ($s->full_name) . " ({$s->employmentid})",
+                    'text' => $s->full_name . " ({$s->employmentid})",
                 ]);
         }
 
@@ -134,20 +135,23 @@ class DeviceUserMappingController extends Controller
 
         $path   = $request->file('csv_file')->getRealPath();
         $handle = fopen($path, 'r');
-        $header = fgetcsv($handle); // skip header row
+        fgetcsv($handle); // skip header row
 
-        $created = 0; $failed = 0; $errors = [];
+        $created = 0;
+        $failed  = 0;
+        $errors  = [];
 
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle)) !== false) {
                 [$pin, $type, $identifier] = array_pad($row, 3, null);
-                $pin  = trim((string) $pin);
-                $type = strtolower(trim((string) $type));
+                $pin        = trim((string) $pin);
+                $type       = strtolower(trim((string) $type));
                 $identifier = trim((string) $identifier);
 
                 if (!$pin || !in_array($type, ['student', 'staff']) || !$identifier) {
-                    $failed++; $errors[] = "Invalid row: " . implode(',', $row);
+                    $failed++;
+                    $errors[] = 'Invalid row: ' . implode(',', $row);
                     continue;
                 }
 
@@ -156,7 +160,8 @@ class DeviceUserMappingController extends Controller
                     : Staff::where('employmentid', $identifier)->first();
 
                 if (!$person) {
-                    $failed++; $errors[] = "No {$type} found for identifier '{$identifier}'";
+                    $failed++;
+                    $errors[] = "No {$type} found for identifier '{$identifier}'";
                     continue;
                 }
 
@@ -178,7 +183,7 @@ class DeviceUserMappingController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Imported {$created} mapping(s), {$failed} failed.",
-            'errors'  => array_slice($errors, 0, 20), // cap what we send back
+            'errors'  => array_slice($errors, 0, 20),
         ]);
     }
 

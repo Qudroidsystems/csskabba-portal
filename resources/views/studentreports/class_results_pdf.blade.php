@@ -657,8 +657,17 @@
                                             }
                                             $isLow = $assessmentScore < ($assessment->max_score * 0.5);
                                         @endphp
+                                        {{--
+                                            FIX: previously number_format($assessmentScore, 0) rounded the
+                                            displayed value to a whole number while the Total column used the
+                                            full-precision score underneath. That mismatch made rows that
+                                            visually summed to one number show a different Total (e.g. a
+                                            displayed "11" that was actually 10.5, making 11+12+27=50 look
+                                            wrong next to a Total of 49.5). Displaying to 1 decimal place
+                                            keeps what's shown consistent with what's summed.
+                                        --}}
                                         <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>
-                                            {{ $assessmentScore ? number_format($assessmentScore, 0) : '-' }}
+                                            {{ $assessmentScore !== null && $assessmentScore !== '' ? number_format($assessmentScore, 1) : '-' }}
                                         </td>
                                     @endif
                                 @endforeach

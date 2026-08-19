@@ -130,11 +130,8 @@
 <script>
 function csrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
 
-// Simple debounce-search into a plain <select> (swap for select2/tom-select if you use one already)
 const personSelect = document.getElementById('personSelect');
 const personType = document.getElementById('personType');
-let searchTimer;
-personSelect.addEventListener('input', function() {}); // placeholder if you wire a proper autocomplete lib
 
 async function loadOptions(q) {
     const res = await fetch(`{{ route('device-mappings.search') }}?type=${personType.value}&q=${encodeURIComponent(q)}`);

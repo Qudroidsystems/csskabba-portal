@@ -1,29 +1,45 @@
 <?php
-// app/Services/PromotionEvaluator.php
 
 namespace App\Services;
 
+use App\Http\Controllers\AttendanceSettingController;
 use App\Models\AttendanceTermSetting;
-use App\Models\ClassTeacher;
 use App\Models\DeviceAttendanceLog;
+use App\Models\DeviceOutageDate;
 use App\Models\DeviceUserMapping;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\StaffAttendance;
 use App\Models\Studentclass;
 use App\Models\StudentAttendance;
-use App\Http\Controllers\AttendanceSettingController;
 use Illuminate\Support\Carbon;
 
+/**
+ * Turns a single raw device punch (DeviceAttendanceLog) into either a
+ * StudentAttendance row or a StaffAttendance row, based on the PIN mapping.
+ *
+ * Called synchronously from DeviceAttendanceController::store() at current
+ * volumes (~1,200 mapped users). If punch volume grows significantly,
+ * dispatch process() from a queued Job instead of calling it inline.
+ */
 class DeviceAttendanceProcessor
 {
-    // Configure these or pull from a settings table later
-    const MORNING_CUTOFF   = '08:00:00'; // after this = 'late' for students
-    const AFTERNOON_START  = '12:00:00'; // punches after this go to afternoon period
+    // Adjust these to match the school's actual bell schedule, or move to a
+    // settings table later if different periods need different cutoffs.
+    const MORNING_CUTOFF   = '08:00:00'; // punch after this = 'late' for students (morning period)
+    const AFTERNOON_START  = '12:00:00'; // punches after this go to the afternoon period
     const STAFF_LATE_AFTER = '08:30:00';
 
     public function process(DeviceAttendanceLog $log): void
     {
+        // Device outage days are excluded from processing entirely so nobody
+        // gets a spurious attendance row (or spurious absence) recorded for that date.
+        $punchDate = Carbon::parse($log->punch_time)->toDateString();
+        if (DeviceOutageDate::where('outage_date', $punchDate)->exists()) {
+            $log->update(['processing_status' => 'error', 'process_note' => 'Punch date flagged as device outage']);
+            return;
+        }
+
         $mapping = DeviceUserMapping::where('device_serial', $log->device_serial)
             ->where('device_pin', $log->device_pin)
             ->where('active', true)
@@ -40,7 +56,7 @@ class DeviceAttendanceProcessor
             } else {
                 $this->processStaff($mapping->person_id, $log);
             }
-            $log->update(['processing_status' => 'processed']);
+            $log->update(['processing_status' => 'processed', 'process_note' => null]);
         } catch (\Exception $e) {
             $log->update(['processing_status' => 'error', 'process_note' => $e->getMessage()]);
         }
@@ -53,17 +69,24 @@ class DeviceAttendanceProcessor
         $time  = $punch->format('H:i:s');
 
         $session = Schoolsession::where('status', 'Current')->first();
-        $term    = Schoolterm::where('status', 'Current')->first(); // adjust to your actual "current term" logic
+        $term    = Schoolterm::where('status', 'Current')->first();
+        if (!$session || !$term) {
+            throw new \RuntimeException('No current session/term configured.');
+        }
 
         $studentClass = Studentclass::where('studentId', $studentId)
             ->where('sessionid', $session->id)
             ->first();
-        if (!$studentClass) return;
+        if (!$studentClass) {
+            throw new \RuntimeException('Student has no class assignment for the current session.');
+        }
 
         $setting = AttendanceTermSetting::where('term_id', $term->id)
             ->where('session_id', $session->id)
             ->first();
-        if (!$setting) return;
+        if (!$setting) {
+            throw new \RuntimeException('Attendance not configured for the current term.');
+        }
 
         $period = ($time >= self::AFTERNOON_START && $setting->track_afternoon) ? 'afternoon' : 'morning';
         $status = ($period === 'morning' && $time > self::MORNING_CUTOFF) ? 'late' : 'present';
@@ -77,7 +100,8 @@ class DeviceAttendanceProcessor
             'period'          => $period,
         ])->first();
 
-        // First punch of the period = time_in; don't downgrade an existing 'present' to 'late' from a later duplicate punch
+        // First punch of the period sets status + time_in and is never downgraded
+        // by a later duplicate punch; every subsequent punch that day updates time_out.
         StudentAttendance::updateOrCreate(
             [
                 'student_id'      => $studentId,
@@ -90,7 +114,7 @@ class DeviceAttendanceProcessor
             [
                 'status'   => $existing->status ?? $status,
                 'time_in'  => $existing->time_in ?? $time,
-                'time_out' => $time, // last punch of the day becomes time_out
+                'time_out' => $time,
                 'source'   => 'device',
             ]
         );
@@ -116,8 +140,8 @@ class DeviceAttendanceProcessor
         StaffAttendance::updateOrCreate(
             ['staff_id' => $staffId, 'attendance_date' => $date],
             [
-                'time_in'  => $existing->time_in ?? $time, // keep the first punch as time_in
-                'time_out' => $time,                        // update time_out on every subsequent punch
+                'time_in'  => $existing->time_in ?? $time,
+                'time_out' => $time,
                 'status'   => $status,
                 'source'   => 'device',
             ]

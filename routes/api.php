@@ -1,7 +1,9 @@
 <?php
 // routes/api.php - Add these routes
 
+use App\Http\Controllers\Api\DeviceAttendanceController;
 use App\Http\Controllers\Api\TimetableApiController;
+
 
 Route::middleware('auth:sanctum')->prefix('timetable')->group(function () {
     // Teacher endpoints
@@ -21,4 +23,13 @@ Route::middleware('auth:sanctum')->prefix('timetable')->group(function () {
     // Notifications
     Route::get('notifications', [TimetableApiController::class, 'getNotifications']);
     Route::post('notifications/mark-read', [TimetableApiController::class, 'markNotificationsRead']);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | routes/api.php  — device -> server ingestion (protected by X-Device-Key)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('device.auth')->post('/device/attendance', [DeviceAttendanceController::class, 'store']);
+
 });
