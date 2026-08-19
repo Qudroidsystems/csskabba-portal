@@ -414,33 +414,37 @@
             animation: fadeInScale 0.5s ease;
         }
 
-        /* Toast notification */
+        /* Toast notification - UPDATED with better positioning */
         .login-success {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 24px;
+            right: 24px;
             color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
+            padding: 16px 20px;
+            border-radius: 14px;
             font-size: 14px;
             font-weight: 500;
             z-index: 9999;
             animation: successCheck 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
             display: flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 400px;
+            align-items: flex-start;
+            gap: 12px;
+            max-width: 420px;
+            min-width: 300px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .login-success.success { background: #10b981; }
-        .login-success.error { background: #ef4444; }
-        .login-success.info { background: #4f8ef7; }
-        .login-success.warning { background: #f59e0b; }
+        .login-success.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .login-success.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .login-success.info { background: linear-gradient(135deg, #4f8ef7, #3b7ae3); }
+        .login-success.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
         .login-success .toast-icon {
-            font-size: 20px;
+            font-size: 22px;
             flex-shrink: 0;
+            margin-top: 2px;
         }
 
         .login-success .toast-content {
@@ -449,13 +453,14 @@
 
         .login-success .toast-title {
             font-weight: 600;
-            font-size: 13px;
-            margin-bottom: 2px;
+            font-size: 14px;
+            margin-bottom: 4px;
         }
 
         .login-success .toast-message {
-            font-size: 11px;
-            opacity: 0.9;
+            font-size: 12px;
+            opacity: 0.92;
+            line-height: 1.4;
         }
 
         /* Responsive adjustments */
@@ -476,7 +481,7 @@
                 to { transform: rotate(-360deg) translate(80px, 0) rotate(360deg); }
             }
             .school-login-logo { height: 40px; }
-            .login-success { top: 10px; right: 10px; left: 10px; max-width: none; }
+            .login-success { top: 12px; right: 12px; left: 12px; max-width: none; min-width: auto; }
         }
     </style>
 </head>
@@ -782,9 +787,17 @@
                 showToast('Login Failed', 'Invalid email or password. Please try again.', 'error');
             @endif
 
-            // Check for session expired on page load
+            // =====================================================
+            // SESSION EXPIRED HANDLING - MAIN FEATURE
+            // =====================================================
             @if(session('session_expired'))
-                showToast('Session Expired', '{{ session('error') ?? "Your session has expired. Please login again." }}', 'warning');
+                // Show beautiful toast notification
+                showToast(
+                    'Session Expired',
+                    '{{ session('error') ?? "Your session has expired. Please login again." }}',
+                    'warning'
+                );
+
                 // Auto-dismiss the session expired alert after 5 seconds
                 const sessionAlert = document.getElementById('sessionExpiredAlert');
                 if (sessionAlert) {
@@ -794,6 +807,16 @@
                             bsAlert.close();
                         }
                     }, 5000);
+                }
+
+                // Add a subtle highlight to the login form
+                const loginCard = document.querySelector('.card-body.p-sm-5.m-lg-4');
+                if (loginCard) {
+                    loginCard.style.transition = 'all 0.5s ease';
+                    loginCard.style.borderLeft = '4px solid #f59e0b';
+                    setTimeout(() => {
+                        loginCard.style.borderLeft = '4px solid transparent';
+                    }, 3000);
                 }
             @endif
 
@@ -895,7 +918,9 @@
             showToast('Staff Selected', 'Email filled. Enter your password to continue.', 'info');
         }
 
-        // Toast notification function
+        // =====================================================
+        // TOAST NOTIFICATION FUNCTION - IMPROVED
+        // =====================================================
         function showToast(title, message, type = 'info') {
             // Remove existing toasts
             const existingToasts = document.querySelectorAll('.login-success');
@@ -906,7 +931,7 @@
 
             const icons = {
                 success: 'ri-checkbox-circle-line',
-                error: 'ri-alert-circle-line',
+                error: 'ri-close-circle-line',
                 info: 'ri-information-line',
                 warning: 'ri-alert-line'
             };
@@ -918,12 +943,29 @@
                     <div class="toast-message">${message}</div>
                 </div>
             `;
+
+            // Add to body with animation
             document.body.appendChild(toast);
 
+            // Auto dismiss after 5 seconds
             setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.3s ease forwards';
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
+                toast.style.animation = 'fadeOut 0.4s ease forwards';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 400);
+            }, 5000);
+
+            // Allow manual dismiss by clicking
+            toast.addEventListener('click', function() {
+                this.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => {
+                    if (this.parentNode) {
+                        this.remove();
+                    }
+                }, 300);
+            });
         }
     </script>
 </body>

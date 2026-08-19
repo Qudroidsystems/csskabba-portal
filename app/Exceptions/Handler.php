@@ -58,9 +58,9 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        // Handle 419 TokenMismatchException - Redirect to login with Apple-style toast
+        // Handle 419 TokenMismatchException - Redirect to login with toast message
         if ($exception instanceof TokenMismatchException) {
-            // Store the URL they were trying to access (Method 5)
+            // Store the URL they were trying to access (BEFORE clearing session)
             $intendedUrl = $request->fullUrl();
 
             // For AJAX/API requests
@@ -68,19 +68,19 @@ class Handler extends ExceptionHandler
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Session expired. Please login again.',
-                    'redirect' => route('login')
+                    'redirect' => route('login', [], false)
                 ], 419);
             }
 
-            // Clear old session data (Method 4)
-            $request->session()->flush();
-
-            // Check if user was already logged in
+            // Log out the user if they were logged in
             if (auth()->check()) {
                 auth()->logout();
             }
 
-            // Redirect to login with both error and intended URL (Method 4 + 5)
+            // Regenerate session to clear old data but preserve flash messages
+            $request->session()->regenerate();
+
+            // Redirect to login with error message and intended URL
             return redirect()->route('login')
                 ->with('session_expired', true)
                 ->with('error', 'Your session has expired. Please login again.')

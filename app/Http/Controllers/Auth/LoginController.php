@@ -49,18 +49,39 @@ class LoginController extends Controller
     protected function authenticated(Request $request, $user)
     {
         // Check if there's an intended URL from the 419 redirect
-        if (session('intended')) {
-            $intendedUrl = session('intended');
-            session()->forget('intended'); // Clear it so it doesn't persist
+        if ($intendedUrl = session('intended')) {
+            // Clear it so it doesn't persist
+            session()->forget('intended');
 
-            // Optional: Check if the intended URL is valid and not blocked
-            if (filter_var($intendedUrl, FILTER_VALIDATE_URL)) {
+            // Validate URL to prevent open redirect attacks
+            if ($this->isValidIntendedUrl($intendedUrl, $request)) {
                 return redirect($intendedUrl);
             }
         }
 
-        // If no intended URL, use default redirect
+        // If no intended URL or invalid, use default redirect
         return redirect()->intended($this->redirectPath());
+    }
+
+    /**
+     * Validate that the intended URL is safe to redirect to.
+     *
+     * @param  string  $url
+     * @param  \Illuminate\Http\Request  $request
+     * @return bool
+     */
+    protected function isValidIntendedUrl($url, $request)
+    {
+        // Parse the URL
+        $parsedUrl = parse_url($url);
+
+        // If it's a relative URL (no host), it's safe
+        if (!isset($parsedUrl['host'])) {
+            return true;
+        }
+
+        // If it's an absolute URL, ensure it's our own domain
+        return $parsedUrl['host'] === $request->getHost();
     }
 
     /**
