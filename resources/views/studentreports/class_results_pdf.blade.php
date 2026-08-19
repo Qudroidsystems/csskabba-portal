@@ -674,17 +674,17 @@
 
                                 @if(in_array('total', $columnsToShow))
                                     <td @if($isFailing) class="highlight-red" @endif>
-                                        {{ number_format($total, 1) }}
+                                        {{ number_format(round($total), 0) }}
                                     </td>
                                 @endif
                                 @if(in_array('bf', $columnsToShow))
                                     <td>{{ number_format($score->bf ?? 0, 1) }}</td>
                                 @endif
                                 @if(in_array('cum', $columnsToShow))
-                                    <td>{{ number_format($score->cum ?? 0, 1) }}</td>
+                                    <td>{{ number_format(round($score->cum ?? 0), 0) }}</td>
                                 @endif
                                 @if(in_array('cum_ave', $columnsToShow))
-                                    <td>{{ number_format($score->cum_ave ?? 0, 1) }}</td>
+                                    <td>{{ number_format(round($score->cum_ave ?? 0), 0) }}</td>
                                 @endif
                                 @if(in_array('grade', $columnsToShow))
                                     <td class="{{ $gradeClass }}">{{ $grade }}</td>

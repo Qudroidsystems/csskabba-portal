@@ -323,6 +323,12 @@ class ViewStudentReportController extends Controller
                 }
             }
 
+            // Used to determine which grading scale (senior WAEC-style vs junior
+            // letter grade) applies when deriving subject grades below.
+            $isSenior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                ? ($schoolclass->classcategories->first()->is_senior ?? false)
+                : false;
+
             // Fetch the broadsheet records
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
@@ -395,7 +401,23 @@ class ViewStudentReportController extends Controller
                         $score->total = $calculatedTotal;
                         $score->total_stored_original = $storedTotal;
                         $score->total_calculated = $calculatedTotal;
-                        
+
+                        // FIX (Aug 2026): grade must be determined by the Cumulative
+                        // Average (cum_ave), not by the current-term Total. The grade
+                        // previously came straight from the stored broadsheets.grade
+                        // value, which was derived from Total upstream — that's why
+                        // grades looked like they tracked Total instead of Cum. Ave.
+                        // Recomputing it here from cum_ave keeps it consistent no
+                        // matter how the stored grade was originally derived.
+                        // Grade is based on the ROUNDED cum_ave (same value shown in
+                        // the Cum Ave column) so the displayed grade always matches
+                        // the displayed cum_ave, rather than a hidden decimal value.
+                        $gradeSource   = (float) round($score->cum_ave ?? 0);
+                        $score->grade  = $isSenior
+                            ? $this->calculateSeniorGrade($gradeSource)
+                            : $this->calculateJuniorGrade($gradeSource);
+                        $score->remark = $this->getRemark($score->grade);
+
                         // Log discrepancy for debugging
                         if (abs($calculatedTotal - $storedTotal) > 0.01) {
                             Log::warning('Total discrepancy - USING CALCULATED VALUE', [
@@ -593,9 +615,12 @@ class ViewStudentReportController extends Controller
     {
         $classIds = Schoolclass::where('schoolclass', $schoolclass->schoolclass)->pluck('id')->toArray();
 
-        // Use the corrected scores
+        // FIX (Aug 2026): grade points must track Cumulative Average (cum_ave),
+        // not the current-term Total, so GPA stays consistent with the subject
+        // grades derived in getStudentResultData() above. Uses the rounded
+        // cum_ave to match the grade/cum_ave shown on the report.
         $termGradePoints = $scores->map(function($score) {
-            return $this->getGradePoint($score->total ?? 0);
+            return $this->getGradePoint(round($score->cum_ave ?? 0));
         });
         
         $gpa                = $termGradePoints->avg() ?? 0.0;
@@ -622,10 +647,10 @@ class ViewStudentReportController extends Controller
                         ->where('subjectRegistrationStatus.termid', $t)
                         ->where('subjectRegistrationStatus.sessionid', $sessionId);
                 })
-                ->get(['broadsheets.total']);
+                ->get(['broadsheets.cum_ave']);
 
             if ($termBroadsheets->isNotEmpty()) {
-                $gp  = $termBroadsheets->map(fn($b) => $this->getGradePoint($b->total));
+                $gp  = $termBroadsheets->map(fn($b) => $this->getGradePoint(round($b->cum_ave ?? 0)));
                 $tGPA = $gp->avg() ?? 0.0;
                 if ($tGPA > 0) $termGPAs[] = $tGPA;
             }

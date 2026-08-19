@@ -410,6 +410,8 @@
     @if (Route::is('rooms.*'))                @include('layouts.pages-assets.css.rooms-list-css') @endif
     @if (Route::is('promotions.*'))           @include('layouts.pages-assets.css.promotions-list-css') @endif
     @if (Route::is('attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('device-mappings.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('staff-attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
     @if (Route::is('transcript.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
     @if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
     @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
@@ -2224,6 +2226,8 @@
 @if (Route::is('rooms.*'))                 @include('layouts.pages-assets.js.rooms-list-js') @endif
 @if (Route::is('promotions.*'))            @include('layouts.pages-assets.js.promotions-list-js') @endif
 @if (Route::is('attendance.*'))            @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('device-mappings.*'))           @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('staff-attendance.*'))           @include('layouts.pages-assets.js.attendance-list-js') @endif
 @if (Route::is('transcript.*'))            @include('layouts.pages-assets.js.attendance-list-js') @endif
 @if (Route::is('admin.score-entry.*'))     @include('layouts.pages-assets.js.adminscoreentry-list-js') @endif
 @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
