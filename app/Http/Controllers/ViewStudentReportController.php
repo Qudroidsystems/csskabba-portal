@@ -29,12 +29,17 @@ use App\Models\BroadsheetAssessmentScore;
 use App\Models\BroadsheetsMock;
 use App\Models\Studentpersonalityprofile;
 use App\Services\PromotionEvaluator;
+use App\Services\ClassPositionService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ViewStudentReportController extends Controller
 {
-    public function __construct()
+    protected ClassPositionService $positionService;
+
+    public function __construct(ClassPositionService $positionService)
     {
+        $this->positionService = $positionService;
+
         $this->middleware('permission:View student-report', ['only' => [
             'index', 'show', 'registeredClasses', 'classBroadsheet',
             'studentresult', 'studentmockresult', 'exportStudentResultPdf', 'exportClassResultsPdf'
@@ -210,150 +215,20 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
-    // POSITION HELPERS
-    // =========================================================================
-
-    protected function calculatePositionsRaw($sortedRecords, $field)
-    {
-        $positionMap     = [];
-        $rank            = 0;
-        $lastValue       = null;
-        $currentPosition = 0;
-
-        foreach ($sortedRecords as $record) {
-            $rank++;
-            $currentValue = $record->$field;
-
-            if ($lastValue !== null && $currentValue == $lastValue) {
-                $positionMap[$record->id] = $currentPosition;
-            } else {
-                $currentPosition          = $rank;
-                $lastValue                = $currentValue;
-                $positionMap[$record->id] = $currentPosition;
-            }
-        }
-        return $positionMap;
-    }
-
-    // =========================================================================
     // CLASS POSITIONS AND AVERAGES
+    //
+    // FIX (Aug 2026): this now delegates to ClassPositionService, which
+    // computes arm positions per arm-group instead of relative to a single
+    // fixed arm. The old inline version here nulled out arm_position /
+    // arm_position_cum for every arm other than the one that triggered the
+    // recalculation, which is why some students' Arm Pos / Class Pos columns
+    // intermittently went missing depending on which arm's report was last
+    // generated. See ClassPositionService::recalculate() for details.
     // =========================================================================
 
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
     {
-        $schoolclass = Schoolclass::with(['classcategories', 'arms'])
-            ->where('id', $schoolclassid)
-            ->first(['id', 'schoolclass', 'arm']);
-
-        if (!$schoolclass) return false;
-
-        $className = $schoolclass->schoolclass;
-        $classIds  = Schoolclass::where('schoolclass', $className)->pluck('id')->toArray();
-
-        if (empty($classIds)) return false;
-
-        $students = Studentclass::whereIn('schoolclassid', $classIds)
-            ->where('sessionid', $sessionid)
-            ->pluck('studentId')
-            ->toArray();
-
-        if (empty($students)) return false;
-
-        $armId = $schoolclass->arm;
-
-        $isSeniorClass = false;
-        if ($schoolclass->classcategories && $schoolclass->classcategories->isNotEmpty()) {
-            $isSeniorClass = $schoolclass->classcategories->first()->is_senior ?? false;
-        }
-
-        $success = DB::transaction(function () use (
-            $schoolclassid, $sessionid, $termid, $className, $classIds, $students, $armId, $isSeniorClass
-        ) {
-            $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
-                ->where('broadsheets.term_id', $termid)
-                ->where('broadsheet_records.session_id', $sessionid)
-                ->whereIn('broadsheet_records.schoolclass_id', $classIds)
-                ->whereExists(function ($query) use ($termid, $sessionid) {
-                    $query->select(DB::raw(1))
-                        ->from('subjectRegistrationStatus')
-                        ->join('subjectclass as sjc_reg', 'sjc_reg.id', '=', 'subjectRegistrationStatus.subjectclassid')
-                        ->join('subjectteacher as st_reg', 'st_reg.id', '=', 'sjc_reg.subjectteacherid')
-                        ->whereColumn('st_reg.subjectid', 'broadsheet_records.subject_id')
-                        ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
-                        ->where('subjectRegistrationStatus.termid', $termid)
-                        ->where('subjectRegistrationStatus.sessionid', $sessionid);
-                })
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-                ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
-                ->select([
-                    'broadsheets.id',
-                    'broadsheet_records.student_id',
-                    'broadsheet_records.subject_id',
-                    'subject.subject as subject_name',
-                    'studentRegistration.admissionNo as admission_no',
-                    'broadsheets.total',
-                    'broadsheets.bf',
-                    'broadsheets.cum',
-                    'broadsheets.cum_ave',
-                    'broadsheets.subject_position_class',
-                    'broadsheets.subject_position_class_total',
-                    'broadsheets.arm_position',
-                    'broadsheets.arm_position_cum',
-                    'broadsheets.avg',
-                    'broadsheets.grade',
-                    'broadsheets.remark',
-                    'schoolclass.arm as student_arm_id',
-                ])
-                ->get();
-
-            if ($broadsheets->isEmpty()) return false;
-
-            $subjectGroups = $broadsheets->groupBy('subject_id');
-
-            foreach ($subjectGroups as $subjectId => $subjectRecords) {
-                $validRecordsCum   = $subjectRecords->filter(fn($r) => $r->cum !== null);
-                $positionMapCum    = $this->calculatePositionsRaw($validRecordsCum->sortByDesc('cum')->values(), 'cum');
-
-                $validRecordsTotal = $subjectRecords->filter(fn($r) => $r->total !== null);
-                $positionMapTotal  = $this->calculatePositionsRaw($validRecordsTotal->sortByDesc('total')->values(), 'total');
-
-                $armOnlyRecords      = $subjectRecords->filter(fn($r) => $r->student_arm_id == $armId);
-                $validArmTotal       = $armOnlyRecords->filter(fn($r) => $r->total !== null);
-                $armPositionMapTotal = $this->calculatePositionsRaw($validArmTotal->sortByDesc('total')->values(), 'total');
-
-                $validArmCum       = $armOnlyRecords->filter(fn($r) => $r->cum !== null);
-                $armPositionMapCum = $this->calculatePositionsRaw($validArmCum->sortByDesc('cum')->values(), 'cum');
-
-                $totalScores  = $validRecordsTotal->sum('total');
-                $studentCount = $validRecordsTotal->count();
-                $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
-
-                foreach ($subjectRecords as $record) {
-                    if ($isSeniorClass) {
-                        $grade = $record->total == 0 ? 'F9' : $this->calculateSeniorGrade($record->total);
-                    } else {
-                        $grade = $this->calculateJuniorGrade($record->total);
-                    }
-                    $remark = $this->getRemark($grade);
-
-                    Broadsheets::where('id', $record->id)->update([
-                        'avg'                          => $classAvg,
-                        'subject_position_class'       => ($record->cum   === null) ? null : ($positionMapCum[$record->id]  ?? null),
-                        'subject_position_class_total' => ($record->total === null) ? null : ($positionMapTotal[$record->id] ?? null),
-                        'arm_position'                 => ($record->total === null || $record->student_arm_id != $armId) ? null : ($armPositionMapTotal[$record->id] ?? null),
-                        'arm_position_cum'             => ($record->cum   === null || $record->student_arm_id != $armId) ? null : ($armPositionMapCum[$record->id]  ?? null),
-                        'grade'                        => $grade,
-                        'remark'                       => $remark,
-                    ]);
-                }
-            }
-
-            return true;
-        });
-
-        return $success;
+        return $this->positionService->recalculate($schoolclassid, $sessionid, $termid);
     }
 
     // =========================================================================

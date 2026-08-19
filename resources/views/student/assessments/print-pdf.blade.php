@@ -588,8 +588,18 @@
 
                                 @foreach($assessments as $ass)
                                     @if(in_array($ass->id, $showCols) || in_array('all_assessments', $showCols))
-                                        @php $aScore = $sc->assessment_scores->firstWhere('assessment_id', $ass->id)->score ?? 0; $low = $aScore < ($ass->max_score * 0.5); @endphp
-                                        <td @if($low && is_numeric($aScore)) class="highlight-red" @endif>{{ $aScore ? number_format($aScore,0) : '-' }}</td>
+                                        @php
+                                            $aScore = $sc->assessment_scores->firstWhere('assessment_id', $ass->id)->score ?? null;
+                                            $low = is_numeric($aScore) && $aScore < ($ass->max_score * 0.5);
+                                        @endphp
+                                        {{--
+                                            FIX: previously number_format($aScore, 0) rounded the displayed
+                                            value to a whole number, and `$aScore ? ... : '-'` treated a
+                                            genuine 0 score as falsy and showed '-' instead of 0.0. Both
+                                            broke the visual "these rows sum to the Total" check. Matches
+                                            the precision fix already applied to the class results PDF.
+                                        --}}
+                                        <td @if($low) class="highlight-red" @endif>{{ is_numeric($aScore) ? number_format($aScore, 1) : '-' }}</td>
                                     @endif
                                 @endforeach
 

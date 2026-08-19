@@ -17,11 +17,16 @@ use App\Models\Studentpersonalityprofile;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\PromotionEvaluator;
+use App\Services\ClassPositionService;
 
 class StudentAssessmentController extends Controller
 {
-    public function __construct()
+    protected ClassPositionService $positionService;
+
+    public function __construct(ClassPositionService $positionService)
     {
+        $this->positionService = $positionService;
+
         $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult', 'printMockResult']]);
     }
 
@@ -203,6 +208,17 @@ class StudentAssessmentController extends Controller
         $isSenior    = $schoolclass->classcategories->first()->is_senior ?? false;
         $categoryIds = $schoolclass->classcategories->pluck('id');
         $gradeCategory = $schoolclass->classcategories->first();
+
+        // Ensure positions/averages are current for this class/session/term before
+        // reading them below — a student may be the first person to view their
+        // report for a given term, before any admin action has recalculated it.
+        if ($selectedTermId) {
+            $this->positionService->recalculate(
+                $studentClassData->class_id,
+                $selectedSessionId ?? $studentClassData->session_id,
+                $selectedTermId
+            );
+        }
 
         $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
             ->where('term_id', $selectedTermId)
@@ -421,6 +437,11 @@ class StudentAssessmentController extends Controller
 
         $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;
         $schoolclassId     = $studentClassData->class_id;
+
+        // Ensure positions/averages are current before reading them below — the
+        // student may be printing before any admin action has triggered a
+        // recalculation for this class/session/term.
+        $this->positionService->recalculate($schoolclassId, $sessionIdForQuery, $selectedTermId);
 
         $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
         $isSenior    = $schoolclass?->classcategories->first()?->is_senior ?? false;
