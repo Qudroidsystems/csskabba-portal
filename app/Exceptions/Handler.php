@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\Auth;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -58,9 +59,9 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        // Handle 419 TokenMismatchException - Redirect to login with toast message
+        // Handle 419 TokenMismatchException
         if ($exception instanceof TokenMismatchException) {
-            // Store the URL they were trying to access (BEFORE clearing session)
+            // Store the URL they were trying to access
             $intendedUrl = $request->fullUrl();
 
             // For AJAX/API requests
@@ -73,14 +74,15 @@ class Handler extends ExceptionHandler
             }
 
             // Log out the user if they were logged in
-            if (auth()->check()) {
-                auth()->logout();
+            if (Auth::check()) {
+                Auth::logout();
             }
 
-            // Regenerate session to clear old data but preserve flash messages
+            // Clear and regenerate session
+            $request->session()->flush();
             $request->session()->regenerate();
 
-            // Redirect to login with error message and intended URL
+            // Redirect to login with flash data
             return redirect()->route('login')
                 ->with('session_expired', true)
                 ->with('error', 'Your session has expired. Please login again.')

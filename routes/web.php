@@ -127,6 +127,39 @@ Route::get('/refresh-csrf', function () {
 
 Route::get('/student-id-cards/verify/{token}',[StudentIdCardController::class, 'verify'])->name('student-id-cards.verify');
 Route::group(['middleware' => ['auth']], function () {
+
+
+
+    // ============================================
+// TEST ROUTE FOR SESSION EXPIRED - REMOVE AFTER TESTING
+// ============================================
+Route::get('/test-session-expired', function () {
+    return redirect()->route('login')
+        ->with('session_expired', true)
+        ->with('error', 'Your session has expired. Please login again.')
+        ->with('intended', url()->previous() ?? '/dashboard');
+})->name('test.session.expired');
+
+// ============================================
+// FORCE 419 TEST ROUTE - REMOVE AFTER TESTING
+// ============================================
+Route::get('/force-419', function () {
+    // Clear session and logout
+    if (auth()->check()) {
+        auth()->logout();
+    }
+    session()->flush();
+    session()->regenerate();
+    
+    // Redirect to login with session expired
+    return redirect()->route('login')
+        ->with('session_expired', true)
+        ->with('error', 'Your session has expired. Please login again.')
+        ->with('intended', '/dashboard');
+})->name('force.419');
+
+
+
         // These must come BEFORE the resource route
         Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
         Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');

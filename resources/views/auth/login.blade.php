@@ -414,7 +414,7 @@
             animation: fadeInScale 0.5s ease;
         }
 
-        /* Toast notification - UPDATED with better positioning */
+        /* Toast notification */
         .login-success {
             position: fixed;
             top: 24px;
@@ -434,6 +434,7 @@
             min-width: 300px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
         }
 
         .login-success.success { background: linear-gradient(135deg, #10b981, #059669); }
@@ -461,6 +462,17 @@
             font-size: 12px;
             opacity: 0.92;
             line-height: 1.4;
+        }
+
+        /* Gold border highlight for session expired */
+        .session-expired-highlight {
+            border-left: 4px solid #f59e0b !important;
+            transition: all 0.5s ease;
+        }
+
+        .session-expired-highlight-remove {
+            border-left: 4px solid transparent !important;
+            transition: all 0.5s ease;
         }
 
         /* Responsive adjustments */
@@ -580,7 +592,7 @@
 
                             <div class="col-xxl-6 mx-auto">
                                 <div class="card mb-0 border-0 shadow-none mb-0" style="background: transparent;">
-                                    <div class="card-body p-sm-5 m-lg-4">
+                                    <div class="card-body p-sm-5 m-lg-4" id="loginCardBody">
                                         <!-- School Logo on Login Form -->
                                         <div class="logo-container">
                                             @if($schoolInfo?->school_logo)
@@ -604,7 +616,9 @@
                                             <form method="POST" action="{{ route('login') }}" id="loginForm">
                                                 @csrf
 
-                                                {{-- Display session expired error message from 419 redirect --}}
+                                                {{-- ===================================================== --}}
+                                                {{-- SESSION EXPIRED ALERT - This displays the warning box --}}
+                                                {{-- ===================================================== --}}
                                                 @if(session('session_expired') || session('error'))
                                                     <div id="sessionExpiredAlert" class="alert alert-warning alert-dismissible fade show mb-4" role="alert" style="border-left: 4px solid #f59e0b; background: #fffbeb;">
                                                         <div class="d-flex align-items-center">
@@ -720,7 +734,56 @@
 
     <script>
         // =====================================================
-        // APPLE OS STYLE LOGIN PAGE
+        // TOAST NOTIFICATION FUNCTION
+        // =====================================================
+        function showToast(title, message, type = 'info') {
+            // Remove existing toasts
+            const existingToasts = document.querySelectorAll('.login-success');
+            existingToasts.forEach(toast => toast.remove());
+
+            const toast = document.createElement('div');
+            toast.className = 'login-success ' + type;
+
+            const icons = {
+                success: 'ri-checkbox-circle-line',
+                error: 'ri-close-circle-line',
+                info: 'ri-information-line',
+                warning: 'ri-alert-line'
+            };
+
+            toast.innerHTML = `
+                <i class="${icons[type] || icons.info} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.4s ease forwards';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 400);
+            }, 5000);
+
+            // Allow manual dismiss by clicking
+            toast.addEventListener('click', function() {
+                this.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => {
+                    if (this.parentNode) {
+                        this.remove();
+                    }
+                }, 300);
+            });
+        }
+
+        // =====================================================
+        // APPLE OS STYLE LOGIN PAGE - MAIN SCRIPT
         // =====================================================
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -809,13 +872,13 @@
                     }, 5000);
                 }
 
-                // Add a subtle highlight to the login form
-                const loginCard = document.querySelector('.card-body.p-sm-5.m-lg-4');
+                // Add gold border highlight to the login form
+                const loginCard = document.getElementById('loginCardBody');
                 if (loginCard) {
-                    loginCard.style.transition = 'all 0.5s ease';
-                    loginCard.style.borderLeft = '4px solid #f59e0b';
+                    loginCard.classList.add('session-expired-highlight');
                     setTimeout(() => {
-                        loginCard.style.borderLeft = '4px solid transparent';
+                        loginCard.classList.remove('session-expired-highlight');
+                        loginCard.classList.add('session-expired-highlight-remove');
                     }, 3000);
                 }
             @endif
@@ -916,56 +979,6 @@
             }
 
             showToast('Staff Selected', 'Email filled. Enter your password to continue.', 'info');
-        }
-
-        // =====================================================
-        // TOAST NOTIFICATION FUNCTION - IMPROVED
-        // =====================================================
-        function showToast(title, message, type = 'info') {
-            // Remove existing toasts
-            const existingToasts = document.querySelectorAll('.login-success');
-            existingToasts.forEach(toast => toast.remove());
-
-            const toast = document.createElement('div');
-            toast.className = 'login-success ' + type;
-
-            const icons = {
-                success: 'ri-checkbox-circle-line',
-                error: 'ri-close-circle-line',
-                info: 'ri-information-line',
-                warning: 'ri-alert-line'
-            };
-
-            toast.innerHTML = `
-                <i class="${icons[type] || icons.info} toast-icon"></i>
-                <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
-                </div>
-            `;
-
-            // Add to body with animation
-            document.body.appendChild(toast);
-
-            // Auto dismiss after 5 seconds
-            setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.4s ease forwards';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.remove();
-                    }
-                }, 400);
-            }, 5000);
-
-            // Allow manual dismiss by clicking
-            toast.addEventListener('click', function() {
-                this.style.animation = 'fadeOut 0.3s ease forwards';
-                setTimeout(() => {
-                    if (this.parentNode) {
-                        this.remove();
-                    }
-                }, 300);
-            });
         }
     </script>
 </body>
