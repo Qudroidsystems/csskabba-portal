@@ -126,13 +126,13 @@ Route::get('/refresh-csrf', function () {
 })->middleware('web')->name('refresh.csrf');
 
 Route::get('/student-id-cards/verify/{token}',[StudentIdCardController::class, 'verify'])->name('student-id-cards.verify');
-Route::group(['middleware' => ['auth']], function () {
 
 
-
-    // ============================================
-// TEST ROUTE FOR SESSION EXPIRED - REMOVE AFTER TESTING
 // ============================================
+// TEST ROUTES - OUTSIDE AUTH MIDDLEWARE
+// ============================================
+// These MUST be outside the auth group so they can be accessed without login
+
 Route::get('/test-session-expired', function () {
     return redirect()->route('login')
         ->with('session_expired', true)
@@ -140,26 +140,26 @@ Route::get('/test-session-expired', function () {
         ->with('intended', url()->previous() ?? '/dashboard');
 })->name('test.session.expired');
 
-// ============================================
-// FORCE 419 TEST ROUTE - REMOVE AFTER TESTING
-// ============================================
 Route::get('/force-419', function () {
-    // Clear session and logout
     if (auth()->check()) {
         auth()->logout();
     }
     session()->flush();
     session()->regenerate();
     
-    // Redirect to login with session expired
     return redirect()->route('login')
         ->with('session_expired', true)
         ->with('error', 'Your session has expired. Please login again.')
         ->with('intended', '/dashboard');
 })->name('force.419');
 
+// ============================================
+// AUTHENTICATED ROUTES GROUP - ALL PROTECTED ROUTES INSIDE
+Route::group(['middleware' => ['auth']], function () {
 
 
+
+    
         // These must come BEFORE the resource route
         Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
         Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');

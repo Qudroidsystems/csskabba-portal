@@ -24,14 +24,20 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/*',
             'payment/callback',
         ]);
+
+        // ============================================
+        // REPLACE THE DEFAULT CSRF MIDDLEWARE WITH CUSTOM ONE
+        // ============================================
+        $middleware->replace(
+            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+            \App\Http\Middleware\CustomVerifyCsrfToken::class
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Handle 419 TokenMismatchException - Redirect to login with toast
+        // Fallback handler for any other TokenMismatchException
         $exceptions->render(function (TokenMismatchException $e, $request) {
-            // Store the URL they were trying to access
             $intendedUrl = $request->fullUrl();
 
-            // For AJAX/API requests
             if ($request->expectsJson()) {
                 return response()->json([
                     'status' => 'error',
@@ -40,16 +46,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 419);
             }
 
-            // Log out the user if they were logged in
             if (Auth::check()) {
                 Auth::logout();
             }
 
-            // Clear and regenerate session
             $request->session()->flush();
             $request->session()->regenerate();
 
-            // Redirect to login with flash data
             return redirect()->route('login')
                 ->with('session_expired', true)
                 ->with('error', 'Your session has expired. Please login again.')
