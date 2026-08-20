@@ -1742,8 +1742,6 @@
 
         /* ── Attendance ── */
         {title:'Mark Attendance',                       url:'{{ route("attendance.my-classes") }}',                          icon:'mdi-clipboard-check',         category:'Attendance',          keywords:['attendance','present','absent','mark']},
-        {title:'Attendance Class Summary',              url:'{{ route("attendance.class-summary") }}',                       icon:'mdi-chart-bar',               category:'Attendance',          keywords:['attendance','class','summary','report']},
-        {title:'Attendance Student Report',             url:'{{ route("attendance.student-report") }}',                      icon:'mdi-file-document',           category:'Attendance',          keywords:['attendance','student','report','record']},
         {title:'Attendance Term Settings',              url:'{{ route("attendance.settings") }}',                            icon:'mdi-cog',                     category:'Attendance Admin',    keywords:['attendance','settings','term','configure']},
         {title:'Attendance Holidays & Breaks',          url:'{{ route("attendance.holidays") }}',                            icon:'mdi-calendar-remove',         category:'Attendance Admin',    keywords:['attendance','holiday','break']},
         {title:'Attendance School Report',              url:'{{ route("attendance.school-report") }}',                       icon:'mdi-chart-bar',               category:'Attendance Admin',    keywords:['attendance','report','school','summary']},
