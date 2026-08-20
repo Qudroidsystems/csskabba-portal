@@ -389,15 +389,16 @@
                                 </div>
                                 <div style="display:flex;gap:12px;align-items:center;">
                                     <span class="ap-grade-pill {{ $gradeClass }}">{{ $grade }}</span>
-                                    <span style="font-weight:600;font-size:14px;">{{ number_format($subject['cum'] ?? 0, 1) }}</span>
+                                    <span style="font-weight:600;font-size:14px;">{{ number_format(round($subject['cum'] ?? 0)) }}</span>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                                 </div>
                             </button>
                             <div class="ap-panel">
                                <!-- REPLACE this section with the corrected order -->
                                 <div class="ap-metrics-strip">
-                                    <div class="ap-metric-box"><strong>Total</strong><span>{{ number_format($subject['total'] ?? 0, 1) }}</span></div>
-                                    <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format($subject['cum'] ?? 0, 1) }}</span></div>
+                                    <div class="ap-metric-box"><strong>Total</strong><span>{{ number_format(round($subject['total'] ?? 0)) }}</span></div>
+                                    <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format(round($subject['cum'] ?? 0)) }}</span></div>
+                                    <div class="ap-metric-box"><strong>Cum. Average</strong><span>{{ number_format(round($subject['cum_ave'] ?? 0)) }}</span></div>
                                     <div class="ap-metric-box"><strong>Subject GPA</strong><span>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</span></div>
                                     <!-- REORDERED: Arm positions first -->
                                     <div class="ap-metric-box pos-arm-total"><strong>Arm Pos (Total)</strong><span>{{ $subject['arm_position'] ?? '—' }}</span></div>
@@ -425,7 +426,7 @@
                                 <div class="ap-assessment-row" style="background:#f0f9f0;border-color:#4ade80;margin-top:12px;">
                                     <div class="ap-assessment-header">
                                         <span><strong style="color:#166534;">TOTAL SCORE</strong></span>
-                                        <span style="font-size:15px;font-weight:700;color:#166534;">{{ number_format($subject['total'] ?? 0, 1) }} / 100</span>
+                                        <span style="font-size:15px;font-weight:700;color:#166534;">{{ number_format(round($subject['total'] ?? 0)) }} / 100</span>
                                     </div>
                                     <div class="ap-bar-track"><div class="ap-bar-fill bar-excellent" style="width:{{ min($subject['total'] ?? 0, 100) }}%;"></div></div>
                                 </div>
@@ -631,6 +632,7 @@
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="total" checked> Total</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="bf" checked> BF</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="cum" checked> Cumulative</label></div>
+                                        <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="cum_ave" checked> Cum. Average</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="grade" checked> Grade</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="class_average" checked> Class Average</label></div>
                                     </div>

@@ -305,8 +305,12 @@ class StudentAssessmentController extends Controller
             $cumRaw = $broadsheet->cum ?? 0;
             $cumAve = $broadsheet->cum_ave ?? 0;
 
-            $subjectGPA   = $this->getGradePoint($cumAve, $isSenior);
-            $subjectGrade = $gradeCategory ? $gradeCategory->calculateGrade($cumAve) : ($broadsheet->grade ?? '-');
+            // Grade is derived from the ROUNDED cum_ave (same value shown in the
+            // Cum Ave column/metric box) so the displayed grade always matches
+            // what's displayed, not a hidden decimal value.
+            $gradeSource  = round($cumAve);
+            $subjectGPA   = $this->getGradePoint($gradeSource, $isSenior);
+            $subjectGrade = $gradeCategory ? $gradeCategory->calculateGrade($gradeSource) : ($broadsheet->grade ?? '-');
 
             $subjectsWithAssessments->push([
                 'subject_id'       => $regSubject->subject_id,
@@ -506,9 +510,14 @@ class StudentAssessmentController extends Controller
             $cumRaw = $broadsheet->cum ?? 0;
             $cumAve = $broadsheet->cum_ave ?? 0;
 
+            // Grade is derived from the ROUNDED cum_ave (same value shown in the
+            // Cum Ave column) so the displayed grade always matches what's
+            // displayed, not a hidden decimal value.
+            $gradeSource = round($cumAve);
+
             $scoreData->cum           = $cumRaw;
             $scoreData->cum_ave       = $cumAve;
-            $scoreData->grade         = $gradeCategory ? $gradeCategory->calculateGrade($cumAve) : ($broadsheet->grade ?? '-');
+            $scoreData->grade         = $gradeCategory ? $gradeCategory->calculateGrade($gradeSource) : ($broadsheet->grade ?? '-');
             $scoreData->class_average = $broadsheet->avg ?? 0;
 
             $scoreData->position                     = $broadsheet->subject_position_class ?? null;
@@ -847,7 +856,7 @@ class StudentAssessmentController extends Controller
 
             if ($broadsheets->isEmpty()) continue;
 
-            $gp  = $broadsheets->map(fn ($b) => $this->getGradePoint($b->cum_ave ?? 0, $isSenior));
+            $gp  = $broadsheets->map(fn ($b) => $this->getGradePoint(round($b->cum_ave ?? 0), $isSenior));
             $gpa = $gp->avg() ?? 0.0;
             if ($gpa > 0) {
                 $trend[$t->term] = round($gpa, 2);
@@ -895,7 +904,7 @@ class StudentAssessmentController extends Controller
             })
             ->get(['cum_ave']);
 
-        $termGradePoints    = $currentTermBroadsheets->map(fn ($b) => $this->getGradePoint($b->cum_ave ?? 0, $isSenior));
+        $termGradePoints    = $currentTermBroadsheets->map(fn ($b) => $this->getGradePoint(round($b->cum_ave ?? 0), $isSenior));
         $gpa                = $termGradePoints->avg() ?? 0.0;
         $num_subjects       = $currentTermBroadsheets->count();
         $total_grade_points = $termGradePoints->sum();

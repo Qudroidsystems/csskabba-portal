@@ -404,7 +404,7 @@
         }
 
         $selected = $metadata['selected_columns'] ?? [];
-        $defaultCols = ['sn','admission_no','name','total','bf','cum','grade','position','position_total','arm_position','arm_position_cum','class_average','attendance_days_present','attendance_days_absent','attendance_percentage'];
+        $defaultCols = ['sn','admission_no','name','total','bf','cum','cum_ave','grade','position','position_total','arm_position','arm_position_cum','class_average','attendance_days_present','attendance_days_absent','attendance_percentage'];
         $showCols = !empty($selected) ? $selected : $defaultCols;
         $showAttendance = collect(['attendance_days_present','attendance_days_absent','attendance_total_days','attendance_percentage'])->contains(fn($c)=>in_array($c,$showCols));
     @endphp
@@ -558,6 +558,7 @@
                                 @if(in_array('total', $showCols)) <th class="col-num">Total</th> @endif
                                 @if(in_array('bf', $showCols)) <th class="col-num">BF</th> @endif
                                 @if(in_array('cum', $showCols)) <th class="col-num">Cum</th> @endif
+                                @if(in_array('cum_ave', $showCols)) <th class="col-num">Cum<br><span style="font-size:6px;">Ave</span></th> @endif
                                 @if(in_array('grade', $showCols)) <th class="col-num">Grade</th> @endif
                                 @if(in_array('position', $showCols)) <th class="col-pos">Pos(Cum)</th> @endif
                                 @if(in_array('position_total', $showCols)) <th class="col-pos">Pos(Tot)</th> @endif
@@ -603,9 +604,10 @@
                                     @endif
                                 @endforeach
 
-                                @if(in_array('total', $showCols)) <td @if(($sc->total ?? 0) < 50) class="highlight-red" @endif>{{ number_format($sc->total ?? 0,1) }}</td> @endif
+                                @if(in_array('total', $showCols)) <td @if(($sc->total ?? 0) < 50) class="highlight-red" @endif>{{ number_format(round($sc->total ?? 0)) }}</td> @endif
                                 @if(in_array('bf', $showCols)) <td>{{ number_format($sc->bf ?? 0,1) }}</td> @endif
-                                @if(in_array('cum', $showCols)) <td>{{ number_format($sc->cum ?? 0,1) }}</td> @endif
+                                @if(in_array('cum', $showCols)) <td>{{ number_format(round($sc->cum ?? 0)) }}</td> @endif
+                                @if(in_array('cum_ave', $showCols)) <td>{{ number_format(round($sc->cum_ave ?? 0)) }}</td> @endif
                                 @if(in_array('grade', $showCols)) <td class="{{ $gradeStyle }}">{{ $gRaw }}</td> @endif
                                 @if(in_array('position', $showCols)) <td class="{{ $posCumClass }}">{{ ordinal($posCum) }}</td> @endif
                                 @if(in_array('position_total', $showCols)) <td class="{{ $posTotClass }}">{{ ordinal($posTot) }}</td> @endif
