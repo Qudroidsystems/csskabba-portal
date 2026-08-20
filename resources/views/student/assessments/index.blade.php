@@ -81,12 +81,47 @@
                 .ap-panel { display:none; border-top:1px solid var(--border); padding:22px; background:#fdf6e3; }
                 .ap-accordion-item.is-open .ap-panel { display:block; }
 
-                /* Grade colours */
-                .grade-A1,.grade-A { background:#d4edda; color:#0e6b46; }
-                .grade-B2,.grade-B { background:#cce5ff; color:#1565c0; }
-                .grade-C4,.grade-C { background:#fff3cd; color:#8a6000; }
-                .grade-D7,.grade-D { background:#ffe5cc; color:#7a4200; }
-                .grade-F9,.grade-F { background:#f8d7da; color:#c0392b; }
+                /* Grade colours - enhanced with background */
+                .grade-A1 { color: #16a34a; font-weight: 900; background: #dcfce7; }
+                .grade-B2, .grade-B3 { color: #2563eb; font-weight: 900; background: #dbeafe; }
+                .grade-C4, .grade-C5, .grade-C6 { color: #ca8a04; font-weight: 900; background: #fef3c7; }
+                .grade-D7, .grade-E8 { color: #ea580c; font-weight: 900; background: #ffedd5; }
+                .grade-F9, .grade-F { color: #dc2626; font-weight: 900; background: #fee2e2; }
+
+                /* Compulsory subject indicators */
+                .compulsory-pass {
+                    color: #16a34a;
+                    font-weight: 900;
+                    font-size: 16px;
+                    margin-left: 2px;
+                    vertical-align: super;
+                    display: inline-block;
+                }
+                .compulsory-fail {
+                    color: #dc2626;
+                    font-weight: 900;
+                    font-size: 16px;
+                    margin-left: 2px;
+                    vertical-align: super;
+                    display: inline-block;
+                }
+
+                /* Compulsory legend */
+                .compulsory-legend {
+                    font-size: 11px;
+                    color: #6b7280;
+                    margin-top: 8px;
+                    padding: 8px 14px;
+                    background: #f8fafc;
+                    border-radius: 6px;
+                    border: 1px solid #e2e8f0;
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    flex-wrap: wrap;
+                }
+                .compulsory-legend .pass { color: #16a34a; font-weight: 700; }
+                .compulsory-legend .fail { color: #dc2626; font-weight: 700; }
 
                 /* Panel metrics strip */
                 .ap-metrics-strip { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
@@ -100,6 +135,8 @@
                 .ap-metric-box.mock-pos        { border-left:3px solid #c9a84c; }
                 .ap-metric-box.mock-avg        { border-left:3px solid #059669; }
                 .ap-metric-box.mock-minmax     { border-left:3px solid #dc2626; }
+                .ap-metric-box.compulsory-pass-box { border-left:3px solid #16a34a; }
+                .ap-metric-box.compulsory-fail-box { border-left:3px solid #dc2626; }
 
                 /* Assessment row */
                 .ap-assessment-row { background:white; border-radius:8px; padding:12px 16px; margin-bottom:8px; border:1px solid #e9ecef; }
@@ -146,13 +183,9 @@
                     text-transform: uppercase;
                     letter-spacing: .5px;
                 }
-                /* Mock accordion uses same classes but panel bg differs */
                 .mock-ap-panel { background: #fffbea !important; border-top-color: #f0e4bc !important; }
-
-                /* Score bar inside mock panel */
                 .mock-score-bar-lg { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
                 .mock-score-fill-lg { height:100%; border-radius:4px; transition:width .5s; }
-
                 .mock-summary-strip {
                     background: #0f1c35;
                     color: rgba(255,255,255,.75);
@@ -180,9 +213,14 @@
                 <div class="ap-hero">
                     <h1 class="ap-hero-title">My Assessment Report</h1>
                     <p class="ap-hero-sub">View your subject scores, assessment breakdowns, positions and attendance</p>
-                    @if(isset($term) && isset($session))
+                    @php
+                        // Use the selected term/session from the controller
+                        $displayTerm = $selectedTermName ?? ($term->term ?? '');
+                        $displaySession = $selectedSessionName ?? ($session->session ?? '');
+                    @endphp
+                    @if($displayTerm && $displaySession)
                         <span style="color:var(--gold);font-size:12px;margin-top:6px;display:inline-block;">
-                            {{ $term->term ?? '' }} &middot; {{ $session->session ?? '' }}
+                            {{ $displayTerm }} &middot; {{ $displaySession }}
                         </span>
                     @endif
                 </div>
@@ -296,7 +334,9 @@
                         </div>
                         <div class="ap-stat-card">
                             <div class="ap-stat-value">
-                                <span class="ap-grade-pill grade-A1">{{ $overallProgress['gpa_grade'] ?? '-' }}</span>
+                                <span class="ap-grade-pill {{ $overallProgress['gpa_grade'] == 'A1' ? 'grade-A1' : ($overallProgress['gpa_grade'] == 'B2' || $overallProgress['gpa_grade'] == 'B3' ? 'grade-B2' : ($overallProgress['gpa_grade'] == 'C4' || $overallProgress['gpa_grade'] == 'C5' || $overallProgress['gpa_grade'] == 'C6' ? 'grade-C4' : ($overallProgress['gpa_grade'] == 'D7' || $overallProgress['gpa_grade'] == 'E8' ? 'grade-D7' : 'grade-F9'))) }}">
+                                    {{ $overallProgress['gpa_grade'] ?? '-' }}
+                                </span>
                             </div>
                             <div class="ap-stat-label">Grade</div>
                         </div>
@@ -362,7 +402,7 @@
                     @endif
 
                     {{-- ════════════════════════════════════════════════
-                         TERMINAL SUBJECTS ACCORDION
+                         TERMINAL SUBJECTS ACCORDION WITH COMPULSORY INDICATORS
                     ════════════════════════════════════════════════ --}}
                     <div class="ap-accordion" id="apAccordion">
                         @foreach($subjectsWithAssessments as $idx => $subject)
@@ -373,17 +413,37 @@
                                 str_starts_with($grade, 'B') => 'grade-B2',
                                 str_starts_with($grade, 'C') => 'grade-C4',
                                 str_starts_with($grade, 'D') => 'grade-D7',
+                                str_starts_with($grade, 'E') => 'grade-D7',
                                 default => 'grade-F9',
                             };
                             $icons = ['📐','📚','🔬','🌍','💻','🎨','⚗️','📊','🏛️','🌿'];
                             $icon  = $icons[$idx % count($icons)];
+                            
+                            // Compulsory subject indicator
+                            $isCompulsory = $subject['is_compulsory'] ?? false;
+                            $cumAve = $subject['cum_ave'] ?? 0;
+                            $isPassing = $cumAve >= 50;
+                            $compulsorySymbol = '';
+                            $compulsoryClass = '';
+                            if ($isCompulsory) {
+                                $compulsoryClass = $isPassing ? 'compulsory-pass' : 'compulsory-fail';
+                                $compulsorySymbol = '<span class="' . $compulsoryClass . '" title="' . ($isPassing ? 'Passed' : 'Failed') . ' compulsory subject">*</span>';
+                            }
                         @endphp
                         <div class="ap-accordion-item {{ $idx === 0 ? 'is-open' : '' }}" id="item-{{ $idx }}">
                             <button class="ap-accordion-trigger" onclick="toggleItem({{ $idx }})">
                                 <div style="display:flex;align-items:center;gap:14px;">
                                     <div style="width:40px;height:40px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">{{ $icon }}</div>
                                     <div>
-                                        <p class="ap-subject-name">{{ $subject['subject_name'] ?? 'Unknown Subject' }}</p>
+                                        <p class="ap-subject-name">
+                                            {{ $subject['subject_name'] ?? 'Unknown Subject' }}
+                                            {!! $compulsorySymbol !!}
+                                            @if($isCompulsory)
+                                                <span style="font-size:8px;color:#6b7280;font-weight:400;margin-left:4px;">
+                                                    ({{ $isPassing ? '✓ Passed' : '✗ Failed' }})
+                                                </span>
+                                            @endif
+                                        </p>
                                         <p class="ap-subject-code">{{ $subject['subject_code'] ?? '' }}</p>
                                     </div>
                                 </div>
@@ -394,20 +454,25 @@
                                 </div>
                             </button>
                             <div class="ap-panel">
-                               <!-- REPLACE this section with the corrected order -->
                                 <div class="ap-metrics-strip">
                                     <div class="ap-metric-box"><strong>Total</strong><span>{{ number_format(round($subject['total'] ?? 0)) }}</span></div>
                                     <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format(round($subject['cum'] ?? 0)) }}</span></div>
                                     <div class="ap-metric-box"><strong>Cum. Average</strong><span>{{ number_format(round($subject['cum_ave'] ?? 0)) }}</span></div>
                                     <div class="ap-metric-box"><strong>Subject GPA</strong><span>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</span></div>
-                                    <!-- REORDERED: Arm positions first -->
+                                    @if($isCompulsory)
+                                        <div class="ap-metric-box {{ $isPassing ? 'compulsory-pass-box' : 'compulsory-fail-box' }}">
+                                            <strong>Compulsory</strong>
+                                            <span style="color:{{ $isPassing ? '#16a34a' : '#dc2626' }};">
+                                                {{ $isPassing ? '✓ PASSED' : '✗ FAILED' }}
+                                            </span>
+                                        </div>
+                                    @endif
                                     <div class="ap-metric-box pos-arm-total"><strong>Arm Pos (Total)</strong><span>{{ $subject['arm_position'] ?? '—' }}</span></div>
                                     <div class="ap-metric-box pos-arm-cum"><strong>Arm Pos (Cum)</strong><span>{{ $subject['arm_position_cum'] ?? '—' }}</span></div>
-                                    <!-- Then Class positions -->
                                     <div class="ap-metric-box pos-class-total"><strong>Class Pos (Total)</strong><span>{{ $subject['position_total'] ?? '—' }}</span></div>
                                     <div class="ap-metric-box pos-class-cum"><strong>Class Pos (Cum)</strong><span>{{ $subject['position'] ?? '—' }}</span></div>
                                 </div>
-                                 @if(isset($subject['assessments']) && $subject['assessments']->isNotEmpty())
+                                @if(isset($subject['assessments']) && $subject['assessments']->isNotEmpty())
                                 <h4 style="font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;color:#374151;">Assessment Breakdown</h4>
                                 @foreach($subject['assessments'] as $assessment)
                                 @php $pct = $assessment['percentage'] ?? 0; $barClass = $pct >= 70 ? 'bar-excellent' : ($pct >= 50 ? 'bar-good' : ($pct >= 40 ? 'bar-average' : 'bar-low')); @endphp
@@ -435,6 +500,21 @@
                         </div>
                         @endforeach
                     </div>
+
+                    {{-- COMPULSORY SUBJECT LEGEND --}}
+                    @php
+                        $hasCompulsorySubjects = collect($subjectsWithAssessments)->contains(fn($s) => $s['is_compulsory'] ?? false);
+                    @endphp
+                    @if($hasCompulsorySubjects)
+                    <div class="compulsory-legend">
+                        <span>📌 <strong>Compulsory Subjects:</strong></span>
+                        <span class="pass">✓ <span style="color:#16a34a;">*</span> = Passed</span>
+                        <span class="fail">✗ <span style="color:#dc2626;">*</span> = Failed</span>
+                        <span style="color:#6b7280;font-size:10px;">
+                            (Must pass all compulsory subjects for promotion)
+                        </span>
+                    </div>
+                    @endif
 
                     {{-- ════════════════════════════════════════════════
                          MOCK EXAM RESULTS — ACCORDION UI
@@ -475,6 +555,7 @@
                                         str_starts_with($mg,'B') => 'grade-B2',
                                         str_starts_with($mg,'C') => 'grade-C4',
                                         str_starts_with($mg,'D') => 'grade-D7',
+                                        str_starts_with($mg,'E') => 'grade-D7',
                                         default => 'grade-F9',
                                     };
                                     $mTotal    = (float)($mock->total ?? 0);
