@@ -410,8 +410,8 @@
     @if (Route::is('rooms.*'))                @include('layouts.pages-assets.css.rooms-list-css') @endif
     @if (Route::is('promotions.*'))           @include('layouts.pages-assets.css.promotions-list-css') @endif
     @if (Route::is('attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('device-mappings.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
-    @if (Route::is('staff-attendance.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('device-mappings.*'))      @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('staff-attendance.*'))     @include('layouts.pages-assets.css.attendance-list-css') @endif
     @if (Route::is('transcript.*'))           @include('layouts.pages-assets.css.attendance-list-css') @endif
     @if (Route::is('admin.score-entry.*'))    @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
     @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
@@ -762,7 +762,12 @@
                     @endif
 
                     {{-- ATTENDANCE --}}
-                    @if(auth()->user()->can('View attendance-register') || auth()->user()->can('View attendance-class-summary') || auth()->user()->can('View attendance-student-report'))
+                    @if(auth()->user()->can('View attendance-register') || 
+                        auth()->user()->can('View attendance-class-summary') || 
+                        auth()->user()->can('View attendance-student-report') ||
+                        auth()->user()->can('View device-mappings') ||
+                        auth()->user()->can('View staff-attendance'))
+                        <li class="menu-title"><i class="ph-calendar-check"></i> <span>ATTENDANCE</span></li>
                         <li class="nav-item">
                             <a href="#sidebarAttendance" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendance">
                                 <i class="ph-calendar-check"></i> <span>Attendance</span>
@@ -771,6 +776,18 @@
                                 <ul class="nav nav-sm flex-column">
                                     @can('View attendance-register')
                                         <li class="nav-item"><a href="{{ route('attendance.my-classes') }}" class="nav-link">Mark Attendance</a></li>
+                                    @endcan
+                                    @can('View attendance-class-summary')
+                                        <li class="nav-item"><a href="{{ route('attendance.class-summary') }}" class="nav-link">Class Summary</a></li>
+                                    @endcan
+                                    @can('View attendance-student-report')
+                                        <li class="nav-item"><a href="{{ route('attendance.student-report') }}" class="nav-link">Student Report</a></li>
+                                    @endcan
+                                    @can('View device-mappings')
+                                        <li class="nav-item"><a href="{{ route('device-mappings.index') }}" class="nav-link">Device Mappings</a></li>
+                                    @endcan
+                                    @can('View staff-attendance')
+                                        <li class="nav-item"><a href="{{ route('staff-attendance.index') }}" class="nav-link">Staff Attendance</a></li>
                                     @endcan
                                 </ul>
                             </div>
@@ -1048,16 +1065,30 @@
                     @endif
 
                     {{-- ATTENDANCE ADMIN --}}
-                    @if(auth()->user()->can('View attendance-settings') || auth()->user()->can('View attendance-holidays') || auth()->user()->can('View attendance-school-report'))
+                    @if(auth()->user()->can('View attendance-settings') || auth()->user()->can('View attendance-holidays') || auth()->user()->can('View attendance-school-report') ||
+                        auth()->user()->can('View device-mappings') || auth()->user()->can('View staff-attendance'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>ATTENDANCE ADMIN</span></li>
                         <li class="nav-item">
                             <a href="#sidebarAttendanceAdmin" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendanceAdmin">
                                 <i class="ph-calendar-check"></i> <span>Attendance Admin</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarAttendanceAdmin">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('View attendance-settings')      <li class="nav-item"><a href="{{ route('attendance.settings') }}"      class="nav-link">Term Settings</a></li>    @endcan
-                                    @can('View attendance-holidays')      <li class="nav-item"><a href="{{ route('attendance.holidays') }}"      class="nav-link">Holidays & Breaks</a></li> @endcan
-                                    @can('View attendance-school-report') <li class="nav-item"><a href="{{ route('attendance.school-report') }}" class="nav-link">School Report</a></li>     @endcan
+                                    @can('View attendance-settings')
+                                        <li class="nav-item"><a href="{{ route('attendance.settings') }}" class="nav-link">Term Settings</a></li>
+                                    @endcan
+                                    @can('View attendance-holidays')
+                                        <li class="nav-item"><a href="{{ route('attendance.holidays') }}" class="nav-link">Holidays & Breaks</a></li>
+                                    @endcan
+                                    @can('View attendance-school-report')
+                                        <li class="nav-item"><a href="{{ route('attendance.school-report') }}" class="nav-link">School Report</a></li>
+                                    @endcan
+                                    @can('View device-mappings')
+                                        <li class="nav-item"><a href="{{ route('device-mappings.index') }}" class="nav-link">Device Mappings</a></li>
+                                    @endcan
+                                    @can('View staff-attendance')
+                                        <li class="nav-item"><a href="{{ route('staff-attendance.index') }}" class="nav-link">Staff Attendance</a></li>
+                                    @endcan
                                 </ul>
                             </div>
                         </li>
@@ -1721,6 +1752,8 @@
         {title:'Attendance Term Settings',              url:'{{ route("attendance.settings") }}',                            icon:'mdi-cog',                     category:'Attendance',          keywords:['attendance','settings','term','configure']},
         {title:'Attendance Holidays & Breaks',          url:'{{ route("attendance.holidays") }}',                            icon:'mdi-calendar-remove',         category:'Attendance',          keywords:['attendance','holiday','break']},
         {title:'Attendance School Report',              url:'{{ route("attendance.school-report") }}',                       icon:'mdi-chart-bar',               category:'Attendance',          keywords:['attendance','report','school','summary']},
+        {title:'Device Mappings',                       url:'{{ route("device-mappings.index") }}',                          icon:'mdi-devices',                  category:'Attendance',          keywords:['device','map','attendance','hardware','biometric']},
+        {title:'Staff Attendance',                      url:'{{ route("staff-attendance.index") }}',                        icon:'mdi-account-clock',            category:'Attendance',          keywords:['staff','attendance','clock','in','out','time']},
 
         /* ── Records & Results ── */
         {title:'Terminal Records',                      url:'{{ route("myresultroom.index") }}',                             icon:'mdi-file-chart',              category:'Records & Results',   keywords:['result','terminal','record','scores']},
@@ -2226,8 +2259,8 @@
 @if (Route::is('rooms.*'))                 @include('layouts.pages-assets.js.rooms-list-js') @endif
 @if (Route::is('promotions.*'))            @include('layouts.pages-assets.js.promotions-list-js') @endif
 @if (Route::is('attendance.*'))            @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('device-mappings.*'))           @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('staff-attendance.*'))           @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('device-mappings.*'))       @include('layouts.pages-assets.js.attendance-list-js') @endif
+@if (Route::is('staff-attendance.*'))      @include('layouts.pages-assets.js.attendance-list-js') @endif
 @if (Route::is('transcript.*'))            @include('layouts.pages-assets.js.attendance-list-js') @endif
 @if (Route::is('admin.score-entry.*'))     @include('layouts.pages-assets.js.adminscoreentry-list-js') @endif
 @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
