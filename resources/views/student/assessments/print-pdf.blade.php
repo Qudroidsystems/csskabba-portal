@@ -218,29 +218,6 @@
             margin: 5px 0;
         }
 
-        /* Compulsory subject indicators — mirrors the class results PDF.
-           Colour reflects pass (green) / fail (red) of the compulsory
-           subject itself, not merely whether it's flagged compulsory. */
-        .col-compulsory { width: 40px; }
-        .compulsory-mark {
-            font-weight: 900;
-            font-size: 10px;
-            margin-left: 2px;
-            vertical-align: super;
-        }
-        .compulsory-mark-pass { color: #16a34a; }
-        .compulsory-mark-fail { color: #dc2626; }
-        .compulsory-badge-pass { color: #16a34a; font-weight: 900; }
-        .compulsory-badge-fail { color: #dc2626; font-weight: 900; }
-        .compulsory-badge-no   { color: #94a3b8; font-weight: 700; }
-        .compulsory-note {
-            font-size: 7.5px;
-            color: #64748b;
-            font-style: italic;
-            margin: 3px 2px 0;
-            text-align: left;
-        }
-
         /* ─── PROMOTION BADGE ─── */
         .promo-badge {
             margin: 4px 0;
@@ -485,10 +462,6 @@
             $attWarn = $attPct < 75 && $attPct > 0;
             $attFound = $att['found'] ?? false;
 
-            // Whether any subject on this report is flagged compulsory — used to
-            // decide whether to print the "* Compulsory Subject" footnote.
-            $hasAnyCompulsory = collect($studentData['scores'] ?? [])->contains(fn($s) => $s->is_compulsory ?? false);
-
             // Determine promo badge class
             $promoClass = 'promo-wait';
             if ($isPromoTerm) {
@@ -587,7 +560,6 @@
                                 @if(in_array('cum', $showCols)) <th class="col-num">Cum</th> @endif
                                 @if(in_array('cum_ave', $showCols)) <th class="col-num">Cum<br><span style="font-size:6px;">Ave</span></th> @endif
                                 @if(in_array('grade', $showCols)) <th class="col-num">Grade</th> @endif
-                                @if(in_array('compulsory_flag', $showCols)) <th class="col-compulsory">Comp.</th> @endif
                                 @if(in_array('position', $showCols)) <th class="col-pos">Pos(Cum)</th> @endif
                                 @if(in_array('position_total', $showCols)) <th class="col-pos">Pos(Tot)</th> @endif
                                 @if(in_array('arm_position', $showCols)) <th class="col-pos">Arm Pos</th> @endif
@@ -609,23 +581,11 @@
                                 $gRaw = $sc->grade ?? '-';
                                 $gLetter = ($gRaw !== '-') ? substr($gRaw,0,1) : 'F';
                                 $gradeStyle = match($gLetter) { 'A'=>'grade-A','B'=>'grade-B','C'=>'grade-C','D'=>'grade-D', default=>'grade-F' };
-                                $isCompulsory = $sc->is_compulsory ?? false;
-                                // Reuses the gradeStyle already computed above — 'grade-F'
-                                // is the default (fail) bucket in the match() above.
-                                $isFailingGrade = $gradeStyle === 'grade-F';
                             @endphp
                             <tr>
                                 @if(in_array('sn', $showCols)) <td>{{ $idx+1 }}</td> @endif
                                 @if(in_array('admission_no', $showCols)) <td>{{ $admNo }}</td> @endif
-                                @if(in_array('name', $showCols))
-                                    <td class="subject-name-cell">
-                                        {{ $sc->subject_name ?? '—' }}
-                                        @if($isCompulsory)
-                                            <span class="compulsory-mark {{ $isFailingGrade ? 'compulsory-mark-fail' : 'compulsory-mark-pass' }}"
-                                                  title="Compulsory Subject — {{ $isFailingGrade ? 'Failed' : 'Passed' }}">*</span>
-                                        @endif
-                                    </td>
-                                @endif
+                                @if(in_array('name', $showCols)) <td class="subject-name-cell">{{ $sc->subject_name ?? '—' }}</td> @endif
 
                                 @foreach($assessments as $ass)
                                     @if(in_array($ass->id, $showCols) || in_array('all_assessments', $showCols))
@@ -649,17 +609,6 @@
                                 @if(in_array('cum', $showCols)) <td>{{ number_format(round($sc->cum ?? 0)) }}</td> @endif
                                 @if(in_array('cum_ave', $showCols)) <td>{{ number_format(round($sc->cum_ave ?? 0)) }}</td> @endif
                                 @if(in_array('grade', $showCols)) <td class="{{ $gradeStyle }}">{{ $gRaw }}</td> @endif
-                                @if(in_array('compulsory_flag', $showCols))
-                                    <td>
-                                        @if(!$isCompulsory)
-                                            <span class="compulsory-badge-no">&mdash;</span>
-                                        @elseif($isFailingGrade)
-                                            <span class="compulsory-badge-fail">NO</span>
-                                        @else
-                                            <span class="compulsory-badge-pass">YES</span>
-                                        @endif
-                                    </td>
-                                @endif
                                 @if(in_array('position', $showCols)) <td class="{{ $posCumClass }}">{{ ordinal($posCum) }}</td> @endif
                                 @if(in_array('position_total', $showCols)) <td class="{{ $posTotClass }}">{{ ordinal($posTot) }}</td> @endif
                                 @if(in_array('arm_position', $showCols)) <td class="{{ $armPosClass }}">{{ ordinal($armPos) }}</td> @endif
@@ -671,13 +620,6 @@
                             @endforelse
                         </tbody>
                     </table>
-
-                    @if(in_array('name', $showCols) && $hasAnyCompulsory)
-                        <div class="compulsory-note">
-                            <span class="compulsory-mark compulsory-mark-pass" style="margin-left:0;">*</span> Compulsory subject &mdash;
-                            green = passed, red = failed. Must be passed to qualify for promotion.
-                        </div>
-                    @endif
                 </div>
 
                 {{-- TOTALS SUMMARY --}}
