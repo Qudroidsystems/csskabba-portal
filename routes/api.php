@@ -24,12 +24,12 @@ Route::middleware('auth:sanctum')->prefix('timetable')->group(function () {
     Route::get('notifications', [TimetableApiController::class, 'getNotifications']);
     Route::post('notifications/mark-read', [TimetableApiController::class, 'markNotificationsRead']);
 
+});
 
-    /*
+
+/*
     |--------------------------------------------------------------------------
     | routes/api.php  — device -> server ingestion (protected by X-Device-Key)
     |--------------------------------------------------------------------------
     */
     Route::middleware('device.auth')->post('/device/attendance', [DeviceAttendanceController::class, 'store']);
-
-});
