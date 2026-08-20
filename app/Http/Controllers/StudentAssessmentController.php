@@ -14,6 +14,7 @@ use App\Models\Schoolsession;
 use App\Models\BroadsheetRecord;
 use App\Models\AttendanceSummary;
 use App\Models\Studentpersonalityprofile;
+use App\Models\CompulsorySubjectClass;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\PromotionEvaluator;
@@ -49,6 +50,44 @@ class StudentAssessmentController extends Controller
             3       => 'rd',
             default => 'th',
         };
+    }
+
+    // =========================================================================
+    // COMPULSORY SUBJECTS HELPER
+    // =========================================================================
+
+    /**
+     * Resolve compulsory subject IDs for a class/term/session, using the same
+     * term/session fallback precedence as PromotionEvaluator::getCompulsoryIds():
+     * exact term+session match > session-only (null term) > fully global
+     * (null term, null session). Used to flag which subjects on a student's
+     * report are compulsory, both on the web accordion and the printed PDF.
+     */
+    private function getCompulsorySubjectIds(int $schoolclassid, ?int $termid, ?int $sessionid): array
+    {
+        try {
+            return CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
+                ->where(function ($q) use ($termid, $sessionid) {
+                    $q->where(function ($q2) use ($termid, $sessionid) {
+                        $q2->where('termid', $termid)->where('sessionid', $sessionid);
+                    })->orWhere(function ($q2) use ($sessionid) {
+                        $q2->whereNull('termid')->where('sessionid', $sessionid);
+                    })->orWhere(function ($q2) {
+                        $q2->whereNull('termid')->whereNull('sessionid');
+                    });
+                })
+                ->pluck('subjectId')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        } catch (\Exception $e) {
+            \Log::error('getCompulsorySubjectIds error', [
+                'schoolclassid' => $schoolclassid,
+                'termid'        => $termid,
+                'sessionid'     => $sessionid,
+                'error'         => $e->getMessage(),
+            ]);
+            return [];
+        }
     }
 
     // =========================================================================
@@ -237,6 +276,14 @@ class StudentAssessmentController extends Controller
             ->select('subject.id as subject_id', 'subject.subject as subject_name', 'subject.subject_code')
             ->distinct()->get();
 
+        // Compulsory subject IDs for this class/term/session — used to flag
+        // each subject card in the accordion below.
+        $compulsoryIds = $this->getCompulsorySubjectIds(
+            $studentClassData->class_id,
+            $selectedTermId,
+            $selectedSessionId ?? $studentClassData->session_id
+        );
+
         $subjectsWithAssessments = collect();
         $allAssessments          = Assessment::whereIn('classcategory_id', $categoryIds)
             ->with('subAssessments')
@@ -328,6 +375,7 @@ class StudentAssessmentController extends Controller
                 'position_total'   => $broadsheet->subject_position_class_total ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-',
                 'arm_position'     => $broadsheet->arm_position ? $this->formatOrdinal($broadsheet->arm_position) : '-',
                 'arm_position_cum' => $broadsheet->arm_position_cum ? $this->formatOrdinal($broadsheet->arm_position_cum) : '-',
+                'is_compulsory'    => in_array((int) $regSubject->subject_id, $compulsoryIds, true),
             ]);
 
             $overallProgress['total_subjects']++;
@@ -471,6 +519,10 @@ class StudentAssessmentController extends Controller
 
         $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
 
+        // Compulsory subject IDs for this class/term/session — used to flag
+        // each row in the PDF table below.
+        $compulsoryIds = $this->getCompulsorySubjectIds($schoolclassId, $selectedTermId, $sessionIdForQuery);
+
         $scores          = collect();
         $totalObtained   = 0;
         $totalObtainable = 0;
@@ -497,6 +549,7 @@ class StudentAssessmentController extends Controller
             $scoreData->subject_name = $regSubject->subject_name;
             $scoreData->subject_code = $regSubject->subject_code;
             $scoreData->total        = $broadsheet->total ?? 0;
+            $scoreData->is_compulsory = in_array((int) $regSubject->subject_id, $compulsoryIds, true);
 
             $bfValue = 0;
             if ($previousTermId) {
