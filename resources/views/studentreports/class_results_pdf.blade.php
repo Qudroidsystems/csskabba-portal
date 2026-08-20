@@ -203,6 +203,28 @@
         .col-grade { width: 32px; }
         .col-position { width: 32px; }
         .col-class-average { width: 34px; }
+        .col-compulsory { width: 34px; }
+
+        /* Always-on marker next to a compulsory subject's name, independent
+           of whether the "Compulsory" column itself is toggled on. */
+        .compulsory-mark {
+            color: #dc2626;
+            font-weight: 900;
+            font-size: 10px;
+            margin-left: 2px;
+            vertical-align: super;
+        }
+
+        .compulsory-badge-yes { color: #dc2626; font-weight: 900; }
+        .compulsory-badge-no  { color: #94a3b8; font-weight: 700; }
+
+        .compulsory-note {
+            font-size: 8px;
+            color: #64748b;
+            font-style: italic;
+            margin: 3px 8px 0 8px;
+            text-align: left;
+        }
 
         .totals-summary {
             width: calc(97% - 16px);
@@ -434,6 +456,10 @@
             $attPct = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
             $attWarn = $attPct < 75;
             $attFound = $attendance['found'] ?? false;
+
+            // Whether any subject on this student's sheet is flagged compulsory —
+            // used to decide whether to print the "* Compulsory Subject" footnote.
+            $hasAnyCompulsory = collect($scores)->contains(fn($s) => $s->is_compulsory ?? false);
             
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$className}\nTerm: {$termName}\nSession: {$sessionName}\nSchool: " . ($schoolInfo->school_name ?? 'School');
             $qrCodeBase64 = base64_encode(
@@ -579,6 +605,9 @@
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
                             @endif
+                            @if(in_array('compulsory_flag', $columnsToShow))
+                                <th class="col-compulsory">Comp.</th>
+                            @endif
                             @if(in_array('arm_position', $columnsToShow))
                                 <th class="col-position">Arm Pos<br>(Total)</th>
                             @endif
@@ -635,6 +664,8 @@
                                     str_starts_with($grade, 'E') => 'grade-D7',
                                     default => 'grade-F9',
                                 };
+
+                                $isCompulsory = $score->is_compulsory ?? false;
                             @endphp
                             <tr>
                                 @if(in_array('sn', $columnsToShow))
@@ -644,7 +675,12 @@
                                     <td>{{ $admNo }}</td>
                                 @endif
                                 @if(in_array('name', $columnsToShow))
-                                    <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
+                                    <td class="subject-name">
+                                        {{ $score->subject_name ?? 'NO INFO' }}
+                                        @if($isCompulsory)
+                                            <span class="compulsory-mark" title="Compulsory Subject">*</span>
+                                        @endif
+                                    </td>
                                 @endif
 
                                 @foreach ($assessments as $assessment)
@@ -689,6 +725,15 @@
                                 @if(in_array('grade', $columnsToShow))
                                     <td class="{{ $gradeClass }}">{{ $grade }}</td>
                                 @endif
+                                @if(in_array('compulsory_flag', $columnsToShow))
+                                    <td>
+                                        @if($isCompulsory)
+                                            <span class="compulsory-badge-yes">YES</span>
+                                        @else
+                                            <span class="compulsory-badge-no">&mdash;</span>
+                                        @endif
+                                    </td>
+                                @endif
                                 @if(in_array('arm_position', $columnsToShow))
                                     <td class="{{ $armPosClass }}">{{ formatOrdinal($armPos) }}</td>
                                 @endif
@@ -712,6 +757,10 @@
                         @endforelse
                     </tbody>
                 </table>
+
+                @if(in_array('name', $columnsToShow) && $hasAnyCompulsory)
+                    <div class="compulsory-note">* Compulsory subject &mdash; must be passed to qualify for promotion.</div>
+                @endif
             </div>
 
             {{-- TOTALS SUMMARY --}}
