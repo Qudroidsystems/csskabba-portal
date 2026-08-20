@@ -778,11 +778,9 @@
                                         <li class="nav-item"><a href="{{ route('attendance.my-classes') }}" class="nav-link">Mark Attendance</a></li>
                                     @endcan
                                     @can('View attendance-class-summary')
-                                        <li class="nav-item"><a href="{{ route('attendance.class-summary') }}" class="nav-link">Class Summary</a></li>
+                                        <li class="nav-item"><a href="{{ route('device-mappings.index') }}" class="nav-link">Device Mappings</a></li>
                                     @endcan
-                                    @can('View attendance-student-report')
-                                        <li class="nav-item"><a href="{{ route('attendance.student-report') }}" class="nav-link">Student Report</a></li>
-                                    @endcan
+                                    
                                 </ul>
                             </div>
                         </li>
