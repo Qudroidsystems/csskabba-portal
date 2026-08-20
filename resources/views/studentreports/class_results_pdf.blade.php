@@ -721,6 +721,8 @@
                 TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }}
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                GRADED ON: {{ ($studentData['grade_basis'] ?? $gradeBasis) === 'cum_ave' ? 'CUMULATIVE AVERAGE' : 'TERM TOTAL' }}
             </div>
 
             {{-- PROMOTION BADGE --}}
