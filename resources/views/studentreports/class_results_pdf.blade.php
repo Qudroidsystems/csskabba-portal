@@ -206,17 +206,26 @@
         .col-compulsory { width: 34px; }
 
         /* Always-on marker next to a compulsory subject's name, independent
-           of whether the "Compulsory" column itself is toggled on. */
+           of whether the "Compulsory" column itself is toggled on. Colour
+           reflects whether the student passed (green) or failed (red) that
+           compulsory subject, not merely whether it's compulsory. */
         .compulsory-mark {
-            color: #dc2626;
+            display: inline-block;
+            font-size: 6.5px;
             font-weight: 900;
-            font-size: 10px;
-            margin-left: 2px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-left: 3px;
             vertical-align: super;
+            line-height: 1.3;
+            letter-spacing: .02em;
         }
+        .compulsory-mark-pass { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .compulsory-mark-fail { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
-        .compulsory-badge-yes { color: #dc2626; font-weight: 900; }
-        .compulsory-badge-no  { color: #94a3b8; font-weight: 700; }
+        .compulsory-badge-pass { color: #16a34a; font-weight: 900; }
+        .compulsory-badge-fail { color: #dc2626; font-weight: 900; }
+        .compulsory-badge-no   { color: #94a3b8; font-weight: 700; }
 
         .compulsory-note {
             font-size: 8px;
@@ -666,6 +675,10 @@
                                 };
 
                                 $isCompulsory = $score->is_compulsory ?? false;
+                                // Reuses the gradeClass already computed above rather than
+                                // re-deriving pass/fail from the raw grade string — 'grade-F9'
+                                // is the default (fail) bucket in the match() above.
+                                $isFailingGrade = $gradeClass === 'grade-F9';
                             @endphp
                             <tr>
                                 @if(in_array('sn', $columnsToShow))
@@ -678,7 +691,8 @@
                                     <td class="subject-name">
                                         {{ $score->subject_name ?? 'NO INFO' }}
                                         @if($isCompulsory)
-                                            <span class="compulsory-mark" title="Compulsory Subject">*</span>
+                                            <span class="compulsory-mark {{ $isFailingGrade ? 'compulsory-mark-fail' : 'compulsory-mark-pass' }}"
+                                                  title="Compulsory Subject — {{ $isFailingGrade ? 'Failed' : 'Passed' }}">C</span>
                                         @endif
                                     </td>
                                 @endif
@@ -727,10 +741,12 @@
                                 @endif
                                 @if(in_array('compulsory_flag', $columnsToShow))
                                     <td>
-                                        @if($isCompulsory)
-                                            <span class="compulsory-badge-yes">YES</span>
-                                        @else
+                                        @if(!$isCompulsory)
                                             <span class="compulsory-badge-no">&mdash;</span>
+                                        @elseif($isFailingGrade)
+                                            <span class="compulsory-badge-fail">NO</span>
+                                        @else
+                                            <span class="compulsory-badge-pass">YES</span>
                                         @endif
                                     </td>
                                 @endif
@@ -759,7 +775,10 @@
                 </table>
 
                 @if(in_array('name', $columnsToShow) && $hasAnyCompulsory)
-                    <div class="compulsory-note">* Compulsory subject &mdash; must be passed to qualify for promotion.</div>
+                    <div class="compulsory-note">
+                        <span class="compulsory-mark compulsory-mark-pass" style="margin-left:0;">C</span> Compulsory subject &mdash;
+                        green = passed, red = failed. Must be passed to qualify for promotion.
+                    </div>
                 @endif
             </div>
 
