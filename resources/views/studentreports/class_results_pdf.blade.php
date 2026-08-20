@@ -230,7 +230,7 @@
         .grade-F9 { color: #dc2626; font-weight: 900; }
 
         .promo-card {
-            width: calc(97% - 16px);
+            width: calc(96% - 16px);
             margin: 6px 8px 8px 8px;
             padding: 8px 12px;
             border-radius: 6px;
