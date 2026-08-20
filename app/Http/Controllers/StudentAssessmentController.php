@@ -210,13 +210,6 @@ class StudentAssessmentController extends Controller
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-            // FIX: previously unfiltered by term, so this always resolved to
-            // whichever studentclass row the query happened to return first
-            // for the session (in practice, always the same fixed term)
-            // regardless of what was picked in the Term filter. The "Term"
-            // label and the class used for every score lookup below silently
-            // ignored the selection as a result.
-            ->when($selectedTermId, fn ($q) => $q->where('schoolterm.id', $selectedTermId))
             ->select(
                 'schoolclass.id as class_id',
                 'schoolclass.schoolclass as class_name',
@@ -230,7 +223,7 @@ class StudentAssessmentController extends Controller
 
         if (!$studentClassData) {
             return view('student.assessments.index', compact(
-                'pagetitle', 'student', 'terms', 'sessions', 'userSelectedTermId', 'selectedTermId', 'selectedSessionId'
+                'pagetitle', 'student', 'terms', 'sessions', 'userSelectedTermId', 'selectedSessionId'
             ))->with('error', 'No class registration found for the selected term and session.');
         }
 
@@ -247,7 +240,7 @@ class StudentAssessmentController extends Controller
 
         if (!$schoolclass || $schoolclass->classcategories->isEmpty()) {
             return view('student.assessments.index', compact(
-                'pagetitle', 'student', 'class', 'term', 'session', 'terms', 'sessions', 'userSelectedTermId', 'selectedTermId', 'selectedSessionId'
+                'pagetitle', 'student', 'class', 'term', 'session', 'terms', 'sessions', 'userSelectedTermId', 'selectedSessionId'
             ))->with('error', 'Class category not found.');
         }
 
@@ -475,10 +468,6 @@ class StudentAssessmentController extends Controller
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-            // Same fix as index(): filter by the requested term so the
-            // resolved class/term row actually matches what was selected,
-            // instead of an arbitrary studentclass row for the session.
-            ->when($selectedTermId, fn ($q) => $q->where('schoolterm.id', $selectedTermId))
             ->select(
                 'schoolclass.id as class_id',
                 'schoolclass.schoolclass as class_name',
@@ -771,9 +760,6 @@ class StudentAssessmentController extends Controller
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-            // Same fix as index(): filter by the requested term so the
-            // resolved class/term row actually matches what was selected.
-            ->when($selectedTermId, fn ($q) => $q->where('schoolterm.id', $selectedTermId))
             ->select(
                 'schoolclass.id as class_id',
                 'schoolclass.schoolclass as class_name',

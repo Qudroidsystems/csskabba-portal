@@ -75,33 +75,11 @@
                 .ap-accordion-item { background:var(--paper); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
                 .ap-accordion-item.is-open { box-shadow:0 4px 12px rgba(0,0,0,.1); }
                 .ap-accordion-trigger { width:100%; display:flex; justify-content:space-between; align-items:center; padding:18px 22px; background:none; border:none; cursor:pointer; text-align:left; }
-                .ap-subject-name { font-size:15px; font-weight:700; color:var(--navy); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+                .ap-subject-name { font-size:15px; font-weight:700; color:var(--navy); }
                 .ap-subject-code { font-size:11px; color:#7b85a3; margin-top:2px; }
                 .ap-grade-pill { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
                 .ap-panel { display:none; border-top:1px solid var(--border); padding:22px; background:#fdf6e3; }
                 .ap-accordion-item.is-open .ap-panel { display:block; }
-
-                /* Compulsory subject indicator — colour reflects whether the
-                   student passed (green) or failed (red) that compulsory
-                   subject, not merely whether it's flagged compulsory. */
-                .compulsory-pill {
-                    font-size: 9px;
-                    font-weight: 800;
-                    padding: 2px 9px;
-                    border-radius: 20px;
-                    text-transform: uppercase;
-                    letter-spacing: .04em;
-                    line-height: 1.6;
-                    white-space: nowrap;
-                }
-                .compulsory-pill-pass { background:#d4edda; color:#0e6b46; }
-                .compulsory-pill-fail { background:#fee2e2; color:#b91c1c; }
-                .ap-metric-box.compulsory-status { border-left:3px solid #7b85a3; }
-                .ap-metric-box.compulsory-status.status-pass { border-left-color:#16a34a; }
-                .ap-metric-box.compulsory-status.status-fail { border-left-color:#dc2626; }
-                .ap-metric-box.compulsory-status span.yes { color:#16a34a; }
-                .ap-metric-box.compulsory-status span.no  { color:#dc2626; }
-                .ap-metric-box.compulsory-status span.na  { color:#7b85a3; }
 
                 /* Grade colours */
                 .grade-A1,.grade-A { background:#d4edda; color:#0e6b46; }
@@ -215,7 +193,7 @@
                         <select name="term_id" class="ap-filter-select" id="termSelect">
                             <option value="">All Terms</option>
                             @foreach($terms as $t)
-                                <option value="{{ $t->id }}" {{ ($selectedTermId ?? null) == $t->id ? 'selected' : '' }}>
+                                <option value="{{ $t->id }}" {{ ($userSelectedTermId ?? null) == $t->id ? 'selected' : '' }}>
                                     {{ $t->term }}
                                 </option>
                             @endforeach
@@ -399,24 +377,13 @@
                             };
                             $icons = ['📐','📚','🔬','🌍','💻','🎨','⚗️','📊','🏛️','🌿'];
                             $icon  = $icons[$idx % count($icons)];
-                            $isCompulsory = $subject['is_compulsory'] ?? false;
-                            // Reuses the gradeClass already computed above — 'grade-F9'
-                            // is the default (fail) bucket in the match() above.
-                            $isFailingGrade = $gradeClass === 'grade-F9';
                         @endphp
                         <div class="ap-accordion-item {{ $idx === 0 ? 'is-open' : '' }}" id="item-{{ $idx }}">
                             <button class="ap-accordion-trigger" onclick="toggleItem({{ $idx }})">
                                 <div style="display:flex;align-items:center;gap:14px;">
                                     <div style="width:40px;height:40px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">{{ $icon }}</div>
                                     <div>
-                                        <p class="ap-subject-name">
-                                            {{ $subject['subject_name'] ?? 'Unknown Subject' }}
-                                            @if($isCompulsory)
-                                                <span class="compulsory-pill {{ $isFailingGrade ? 'compulsory-pill-fail' : 'compulsory-pill-pass' }}">
-                                                    Compulsory &middot; {{ $isFailingGrade ? 'Failed' : 'Passed' }}
-                                                </span>
-                                            @endif
-                                        </p>
+                                        <p class="ap-subject-name">{{ $subject['subject_name'] ?? 'Unknown Subject' }}</p>
                                         <p class="ap-subject-code">{{ $subject['subject_code'] ?? '' }}</p>
                                     </div>
                                 </div>
@@ -433,16 +400,6 @@
                                     <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format(round($subject['cum'] ?? 0)) }}</span></div>
                                     <div class="ap-metric-box"><strong>Cum. Average</strong><span>{{ number_format(round($subject['cum_ave'] ?? 0)) }}</span></div>
                                     <div class="ap-metric-box"><strong>Subject GPA</strong><span>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</span></div>
-                                    <div class="ap-metric-box compulsory-status {{ !$isCompulsory ? '' : ($isFailingGrade ? 'status-fail' : 'status-pass') }}">
-                                        <strong>Compulsory</strong>
-                                        @if(!$isCompulsory)
-                                            <span class="na">No</span>
-                                        @elseif($isFailingGrade)
-                                            <span class="no">Failed</span>
-                                        @else
-                                            <span class="yes">Passed</span>
-                                        @endif
-                                    </div>
                                     <!-- REORDERED: Arm positions first -->
                                     <div class="ap-metric-box pos-arm-total"><strong>Arm Pos (Total)</strong><span>{{ $subject['arm_position'] ?? '—' }}</span></div>
                                     <div class="ap-metric-box pos-arm-cum"><strong>Arm Pos (Cum)</strong><span>{{ $subject['arm_position_cum'] ?? '—' }}</span></div>
@@ -677,7 +634,6 @@
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="cum" checked> Cumulative</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="cum_ave" checked> Cum. Average</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="grade" checked> Grade</label></div>
-                                        <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="compulsory_flag" checked> Compulsory</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="class_average" checked> Class Average</label></div>
                                     </div>
                                 </div>
