@@ -783,12 +783,6 @@
                                     @can('View attendance-student-report')
                                         <li class="nav-item"><a href="{{ route('attendance.student-report') }}" class="nav-link">Student Report</a></li>
                                     @endcan
-                                    @can('View device-mappings')
-                                        <li class="nav-item"><a href="{{ route('device-mappings.index') }}" class="nav-link">Device Mappings</a></li>
-                                    @endcan
-                                    @can('View staff-attendance')
-                                        <li class="nav-item"><a href="{{ route('staff-attendance.index') }}" class="nav-link">Staff Attendance</a></li>
-                                    @endcan
                                 </ul>
                             </div>
                         </li>
@@ -1065,8 +1059,9 @@
                     @endif
 
                     {{-- ATTENDANCE ADMIN --}}
-                    @if(auth()->user()->can('View attendance-settings') || auth()->user()->can('View attendance-holidays') || auth()->user()->can('View attendance-school-report') ||
-                        auth()->user()->can('View device-mappings') || auth()->user()->can('View staff-attendance'))
+                    @if(auth()->user()->can('View attendance-settings') || auth()->user()->can('View attendance-holidays') || 
+                        auth()->user()->can('View attendance-school-report') || auth()->user()->can('View device-mappings') || 
+                        auth()->user()->can('View staff-attendance'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>ATTENDANCE ADMIN</span></li>
                         <li class="nav-item">
                             <a href="#sidebarAttendanceAdmin" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAttendanceAdmin">
@@ -1749,11 +1744,13 @@
 
         /* ── Attendance ── */
         {title:'Mark Attendance',                       url:'{{ route("attendance.my-classes") }}',                          icon:'mdi-clipboard-check',         category:'Attendance',          keywords:['attendance','present','absent','mark']},
-        {title:'Attendance Term Settings',              url:'{{ route("attendance.settings") }}',                            icon:'mdi-cog',                     category:'Attendance',          keywords:['attendance','settings','term','configure']},
-        {title:'Attendance Holidays & Breaks',          url:'{{ route("attendance.holidays") }}',                            icon:'mdi-calendar-remove',         category:'Attendance',          keywords:['attendance','holiday','break']},
-        {title:'Attendance School Report',              url:'{{ route("attendance.school-report") }}',                       icon:'mdi-chart-bar',               category:'Attendance',          keywords:['attendance','report','school','summary']},
-        {title:'Device Mappings',                       url:'{{ route("device-mappings.index") }}',                          icon:'mdi-devices',                  category:'Attendance',          keywords:['device','map','attendance','hardware','biometric']},
-        {title:'Staff Attendance',                      url:'{{ route("staff-attendance.index") }}',                        icon:'mdi-account-clock',            category:'Attendance',          keywords:['staff','attendance','clock','in','out','time']},
+        {title:'Attendance Class Summary',              url:'{{ route("attendance.class-summary") }}',                       icon:'mdi-chart-bar',               category:'Attendance',          keywords:['attendance','class','summary','report']},
+        {title:'Attendance Student Report',             url:'{{ route("attendance.student-report") }}',                      icon:'mdi-file-document',           category:'Attendance',          keywords:['attendance','student','report','record']},
+        {title:'Attendance Term Settings',              url:'{{ route("attendance.settings") }}',                            icon:'mdi-cog',                     category:'Attendance Admin',    keywords:['attendance','settings','term','configure']},
+        {title:'Attendance Holidays & Breaks',          url:'{{ route("attendance.holidays") }}',                            icon:'mdi-calendar-remove',         category:'Attendance Admin',    keywords:['attendance','holiday','break']},
+        {title:'Attendance School Report',              url:'{{ route("attendance.school-report") }}',                       icon:'mdi-chart-bar',               category:'Attendance Admin',    keywords:['attendance','report','school','summary']},
+        {title:'Device Mappings',                       url:'{{ route("device-mappings.index") }}',                          icon:'mdi-devices',                  category:'Attendance Admin',    keywords:['device','map','attendance','hardware','biometric']},
+        {title:'Staff Attendance',                      url:'{{ route("staff-attendance.index") }}',                        icon:'mdi-account-clock',            category:'Attendance Admin',    keywords:['staff','attendance','clock','in','out','time']},
 
         /* ── Records & Results ── */
         {title:'Terminal Records',                      url:'{{ route("myresultroom.index") }}',                             icon:'mdi-file-chart',              category:'Records & Results',   keywords:['result','terminal','record','scores']},
@@ -1841,9 +1838,9 @@
         'Dashboards':'#4f8ef7','Users & Privileges':'#405189','Students':'#e76f51','My Account':'#2a9d8f',
         'School Settings':'#6a0572','Subjects':'#e9c46a','Classes & Records':'#0a9396','Records & Results':'#457b9d',
         'Promotions':'#2a9d8f','Finance':'#10b981','Payroll':'#e76f51','Staff Payments':'#e76f51',
-        'Exams & CBT':'#f4a261','Timetable':'#4f8ef7','Attendance':'#e9c46a','Accounting':'#10b981',
-        'Transcripts':'#457b9d','Admin Tools':'#ef4444','Parents':'#6c757d','Student Portal':'#20c997',
-        'Subject Registration':'#a8dadc','Vettings':'#e63946','School Bills':'#457b9d'
+        'Exams & CBT':'#f4a261','Timetable':'#4f8ef7','Attendance':'#e9c46a','Attendance Admin':'#e76f51',
+        'Accounting':'#10b981','Transcripts':'#457b9d','Admin Tools':'#ef4444','Parents':'#6c757d',
+        'Student Portal':'#20c997','Subject Registration':'#a8dadc','Vettings':'#e63946','School Bills':'#457b9d'
     };
 
     /* ── popular / suggestion chips ── */
