@@ -205,7 +205,7 @@
         .col-class-average { width: 34px; }
 
         .totals-summary {
-            width: calc(97% - 12px);
+            width: calc(96.5% - 16px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
@@ -230,7 +230,7 @@
         .grade-F9 { color: #dc2626; font-weight: 900; }
 
         .promo-card {
-            width: calc(100% - 16px);
+            width: calc(96.5% - 16px);
             margin: 6px 8px 8px 8px;
             padding: 8px 12px;
             border-radius: 6px;
