@@ -1518,35 +1518,28 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     // Spotlight Search API
    Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
 
-   /// API
-        /*
-        |--------------------------------------------------------------------------
-        | routes/web.php  — admin UI (protected by your normal auth + permission
-        | middleware, applied inside each controller's constructor)
-        |--------------------------------------------------------------------------
-        */
-
-        // Device PIN mappings
-        Route::prefix('attendance/device-mappings')->name('device-mappings.')->group(function () {
-            Route::get('/',              [DeviceUserMappingController::class, 'index'])->name('index');
-            Route::post('/',              [DeviceUserMappingController::class, 'store'])->name('store');
-            Route::delete('/{id}',        [DeviceUserMappingController::class, 'destroy'])->name('destroy');
-            Route::get('/search',         [DeviceUserMappingController::class, 'search'])->name('search');
-            Route::post('/bulk-import',   [DeviceUserMappingController::class, 'bulkImport'])->name('bulk-import');
-            Route::get('/unmapped',       [DeviceUserMappingController::class, 'unmapped'])->name('unmapped');
-            Route::post('/quick-assign',  [DeviceUserMappingController::class, 'quickAssign'])->name('quick-assign');
-        });
-
-        // Staff attendance (read-only reporting + outage management)
-        Route::prefix('attendance/staff')->name('staff-attendance.')->group(function () {
-            Route::get('/',                [StaffAttendanceController::class, 'index'])->name('index');
-            Route::get('/{staffId}',       [StaffAttendanceController::class, 'report'])->name('report');
-            Route::post('/outage',         [StaffAttendanceController::class, 'storeOutage'])->name('outage.store');
-            Route::delete('/outage/{id}',  [StaffAttendanceController::class, 'destroyOutage'])->name('outage.destroy');
-        });
-
-        // Live attendance feed (polling)
-        Route::get('/attendance/live-feed', [LiveAttendanceController::class, 'feed'])->name('attendance.live-feed');
+    Route::prefix('attendance')->group(function () {
+    
+        // PIN ↔ person mappings
+        Route::resource('device-mappings', DeviceUserMappingController::class)->except(['show']);
+        Route::get('device-mappings/search', [DeviceUserMappingController::class, 'search'])->name('device-mappings.search');
+        Route::get('device-mappings/unmapped', [DeviceUserMappingController::class, 'unmapped'])->name('device-mappings.unmapped');
+        Route::post('device-mappings/quick-assign', [DeviceUserMappingController::class, 'quickAssign'])->name('device-mappings.quick-assign');
+        Route::post('device-mappings/bulk-import', [DeviceUserMappingController::class, 'bulkImport'])->name('device-mappings.bulk-import');
+        Route::post('device-mappings/bulk-manual', [DeviceUserMappingController::class, 'bulkManualAssign'])->name('device-mappings.bulk-manual');
+    
+        // Device outage dates
+        Route::post('device-outages', [StaffAttendanceController::class, 'storeOutage'])->name('device-outages.store');
+        Route::delete('device-outages/{id}', [StaffAttendanceController::class, 'destroyOutage'])->name('device-outages.destroy');
+    
+        // Staff attendance reporting
+        Route::get('staff-attendance', [StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
+        Route::get('staff-attendance/{staffId}', [StaffAttendanceController::class, 'report'])->name('staff-attendance.report');
+    
+        // Live feed polling (used by the admin dashboard)
+        Route::get('live-feed', [LiveAttendanceController::class, 'feed'])->name('attendance.live-feed');
+    });
+    
 
 });
 

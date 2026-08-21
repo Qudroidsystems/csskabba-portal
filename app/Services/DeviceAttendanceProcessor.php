@@ -18,9 +18,10 @@ use Illuminate\Support\Carbon;
  * Turns a single raw device punch (DeviceAttendanceLog) into either a
  * StudentAttendance row or a StaffAttendance row, based on the PIN mapping.
  *
- * Called synchronously from DeviceAttendanceController::store() at current
- * volumes (~1,200 mapped users). If punch volume grows significantly,
- * dispatch process() from a queued Job instead of calling it inline.
+ * Called synchronously from Api\DeviceAttendanceController::store() and from
+ * DeviceUserMappingController::reprocessPendingLogs() at current volumes
+ * (~1,200 mapped users). If punch volume grows significantly, dispatch
+ * process() from a queued Job instead of calling it inline.
  */
 class DeviceAttendanceProcessor
 {
@@ -91,37 +92,35 @@ class DeviceAttendanceProcessor
         $period = ($time >= self::AFTERNOON_START && $setting->track_afternoon) ? 'afternoon' : 'morning';
         $status = ($period === 'morning' && $time > self::MORNING_CUTOFF) ? 'late' : 'present';
 
-        $existing = StudentAttendance::where([
+        $keys = [
             'student_id'      => $studentId,
             'schoolclass_id'  => $studentClass->schoolclassid,
             'term_id'         => $term->id,
             'session_id'      => $session->id,
             'attendance_date' => $date,
             'period'          => $period,
-        ])->first();
+        ];
 
         // First punch of the period sets status + time_in and is never downgraded
         // by a later duplicate punch; every subsequent punch that day updates time_out.
-        StudentAttendance::updateOrCreate(
-            [
-                'student_id'      => $studentId,
-                'schoolclass_id'  => $studentClass->schoolclassid,
-                'term_id'         => $term->id,
-                'session_id'      => $session->id,
-                'attendance_date' => $date,
-                'period'          => $period,
-            ],
-            [
-                'status'   => $existing->status ?? $status,
-                'time_in'  => $existing->time_in ?? $time,
-                'time_out' => $time,
-                'source'   => 'device',
-            ]
-        );
+        $existing = StudentAttendance::where($keys)->first();
 
-        AttendanceSettingController::rebuildSummary(
-            $studentId, $studentClass->schoolclassid, $term->id, $session->id
-        );
+        $attendance = StudentAttendance::updateOrCreate($keys, [
+            'status'   => $existing->status ?? $status,
+            'time_in'  => $existing->time_in ?? $time,
+            'time_out' => $time,
+            'source'   => 'device',
+        ]);
+
+        // Only rebuild when this punch could actually have changed the summary:
+        // a brand-new row, or a status change. Every later "time_out only"
+        // punch for an already-recorded student/period skips this entirely —
+        // this is what keeps a morning rush of repeat punches cheap.
+        if (!$existing || $existing->status !== $attendance->status) {
+            AttendanceSettingController::rebuildSummary(
+                $studentId, $studentClass->schoolclassid, $term->id, $session->id
+            );
+        }
     }
 
     private function processStaff(int $staffId, DeviceAttendanceLog $log): void

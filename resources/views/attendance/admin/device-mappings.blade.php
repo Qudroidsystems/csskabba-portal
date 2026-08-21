@@ -1,7 +1,8 @@
-{{-- resources/views/device-mappings/index.blade.php --}}
+{{-- resources/views/attendance/admin/device-mappings.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet">
 <style>
 :root {
     --bill-primary: #1e3a5f;
@@ -61,6 +62,15 @@
 }
 .bill-table tr:hover td { background:#eff6ff; }
 
+.avatar-sm {
+    width:32px; height:32px; border-radius:50%; object-fit:cover;
+}
+.avatar-fallback {
+    width:32px; height:32px; border-radius:50%; background:#e2e8f0;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:11px; color:#64748b; font-weight:600;
+}
+
 .form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
 .form-control, .form-select {
     border:1.5px solid var(--bill-border); border-radius:8px;
@@ -86,6 +96,19 @@
 
 #importResult .text-success { color: var(--bill-success) !important; font-weight:600; }
 #importResult .text-danger  { color: var(--bill-danger) !important; font-weight:600; }
+
+/* Select2 tweaks to match the bill-* form controls */
+.select2-container .select2-selection--single,
+.select2-container .select2-selection--multiple {
+    border:1.5px solid var(--bill-border) !important;
+    border-radius:8px !important;
+    min-height:36px;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height:34px; font-size:13px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow { height:34px; }
+.select2-dropdown { border-color: var(--bill-border) !important; }
 </style>
 
 <div class="main-content">
@@ -117,14 +140,14 @@
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-graduation-cap-line"></i></div>
-                <div class="stat-value text-primary">{{ $studentCount ?? '—' }}</div>
+                <div class="stat-value text-primary">{{ $studentCount }}</div>
                 <div class="stat-label">Student Mappings</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-briefcase-line"></i></div>
-                <div class="stat-value text-info">{{ $staffCount ?? '—' }}</div>
+                <div class="stat-value text-info">{{ $staffCount }}</div>
                 <div class="stat-label">Staff Mappings</div>
             </div>
         </div>
@@ -138,7 +161,7 @@
     </div>
 
     {{-- Bulk import + manual add --}}
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-3">
         <div class="col-lg-6">
             <div class="bill-card h-100">
                 <div class="card-header"><i class="ri-file-upload-line me-2"></i>Bulk Import (CSV)</div>
@@ -183,15 +206,47 @@
                             </div>
                             <div class="col-6">
                                 <label class="form-label">Person</label>
-                                <select name="person_id" id="personSelect" class="form-select form-select-sm" required>
-                                    <option value="">Type to search…</option>
-                                </select>
+                                <select name="person_id" id="personSelect" style="width:100%;" required></select>
                             </div>
                         </div>
                         <button class="btn btn-success btn-sm mt-3" type="submit"><i class="ri-add-line me-1"></i>Add Mapping</button>
                     </form>
                 </div>
             </div>
+        </div>
+    </div>
+
+    {{-- Bulk manual assign (multi-select) --}}
+    <div class="bill-card mb-4">
+        <div class="card-header"><i class="ri-group-line me-2"></i>Bulk Manual Assign (Multiple People)</div>
+        <div class="card-body">
+            <p class="text-muted" style="font-size:12px;">
+                Pick several students or staff and a starting PIN — each person gets the next available PIN in sequence on this device. Useful for onboarding a class or department at once without a CSV.
+            </p>
+            <form id="bulkManualForm">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Device Serial</label>
+                        <input type="text" name="device_serial" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Starting PIN</label>
+                        <input type="number" name="starting_pin" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Person Type</label>
+                        <select id="bulkPersonType" class="form-select form-select-sm">
+                            <option value="student">Student</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">People</label>
+                        <select id="personMultiSelect" multiple style="width:100%;"></select>
+                    </div>
+                </div>
+                <button class="btn btn-success btn-sm mt-3" type="submit"><i class="ri-add-line me-1"></i>Assign All</button>
+            </form>
         </div>
     </div>
 
@@ -227,6 +282,7 @@
                 <table class="table bill-table w-100 mb-0">
                     <thead>
                         <tr>
+                            <th></th>
                             <th>Device</th>
                             <th>PIN</th>
                             <th>Type</th>
@@ -238,6 +294,13 @@
                     <tbody>
                     @forelse($mappings as $m)
                         <tr>
+                            <td>
+                                @if($m->photo_url)
+                                    <img src="{{ $m->photo_url }}" class="avatar-sm" alt="">
+                                @else
+                                    <div class="avatar-fallback">{{ strtoupper(substr($m->display_name, 0, 2)) }}</div>
+                                @endif
+                            </td>
                             <td class="text-muted" style="font-size:12px;">{{ $m->device_serial }}</td>
                             <td class="fw-semibold">{{ $m->device_pin }}</td>
                             <td><span class="badge bg-{{ $m->person_type==='student'?'primary':'info' }}-subtle text-{{ $m->person_type==='student'?'primary':'info' }}">{{ ucfirst($m->person_type) }}</span></td>
@@ -252,7 +315,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center py-4 text-muted">No mappings yet.</td></tr>
+                        <tr><td colspan="7" class="text-center py-4 text-muted">No mappings yet.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
@@ -265,21 +328,58 @@
 </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
 <script>
 function csrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
 
-const personSelect = document.getElementById('personSelect');
-const personType = document.getElementById('personType');
-
-async function loadOptions(q) {
-    const res = await fetch(`{{ route('device-mappings.search') }}?type=${personType.value}&q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    personSelect.innerHTML = '<option value="">Select…</option>' + data.map(o => `<option value="${o.id}">${o.text}</option>`).join('');
+// ── Rich Select2 template: avatar + name + subtitle/meta line ──────────────
+function personTemplate(item) {
+    if (!item.id) return item.text;
+    const photo = item.photo
+        ? `<img src="${item.photo}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:8px;">`
+        : `<div style="width:32px;height:32px;border-radius:50%;background:#e2e8f0;display:inline-flex;align-items:center;justify-content:center;margin-right:8px;font-size:11px;color:#64748b;">${item.text.slice(0,2).toUpperCase()}</div>`;
+    const meta = item.meta ? Object.entries(item.meta).map(([k, v]) => `${k}: ${v}`).join(' · ') : '';
+    return $(`
+        <div style="display:flex;align-items:center;padding:2px 0;">
+            ${photo}
+            <div>
+                <div style="font-weight:600;font-size:13px;">${item.text}</div>
+                <div style="font-size:11px;color:#6b7280;">${item.subtitle || ''}${meta ? ' · ' + meta : ''}</div>
+            </div>
+        </div>
+    `);
 }
-personType.addEventListener('change', () => loadOptions(''));
-document.addEventListener('DOMContentLoaded', () => loadOptions(''));
 
-document.getElementById('addMappingForm').addEventListener('submit', function(e) {
+// ── AJAX-backed, paginated, live-search person picker ───────────────────────
+function initPersonSelect(selectEl, typeEl, opts = {}) {
+    $(selectEl).select2({
+        ajax: {
+            url: "{{ route('device-mappings.search') }}",
+            dataType: 'json',
+            delay: 300,
+            data: params => ({ q: params.term || '', type: $(typeEl).val(), page: params.page || 1 }),
+            processResults: data => ({ results: data.results, pagination: data.pagination }),
+            cache: true,
+        },
+        minimumInputLength: 0,
+        placeholder: opts.multiple ? 'Search and select people…' : 'Search…',
+        multiple: !!opts.multiple,
+        templateResult: personTemplate,
+        templateSelection: item => item.text || item.id,
+        width: '100%',
+    });
+    // Whenever the type toggle changes, clear the current selection so we
+    // don't accidentally submit a student id while "Staff" is selected.
+    $(typeEl).on('change', () => $(selectEl).val(null).trigger('change'));
+}
+
+$(document).ready(() => {
+    initPersonSelect('#personSelect', '#personType');
+    initPersonSelect('#personMultiSelect', '#bulkPersonType', { multiple: true });
+});
+
+// ── Single mapping form ──────────────────────────────────────────────────
+document.getElementById('addMappingForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const fd = new FormData(this);
     fetch('{{ route('device-mappings.store') }}', {
@@ -292,7 +392,29 @@ document.getElementById('addMappingForm').addEventListener('submit', function(e)
     });
 });
 
-document.getElementById('bulkImportForm').addEventListener('submit', function(e) {
+// ── Bulk manual assign form ──────────────────────────────────────────────
+document.getElementById('bulkManualForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const payload = {
+        device_serial: this.device_serial.value,
+        starting_pin: this.starting_pin.value,
+        person_type: document.getElementById('bulkPersonType').value,
+        person_ids: $('#personMultiSelect').val() || [],
+    };
+    if (!payload.person_ids.length) { alert('Select at least one person.'); return; }
+
+    fetch('{{ route('device-mappings.bulk-manual') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+        body: JSON.stringify(payload),
+    }).then(r => r.json()).then(d => {
+        alert(d.message);
+        if (d.success) location.reload();
+    });
+});
+
+// ── CSV import form ───────────────────────────────────────────────────────
+document.getElementById('bulkImportForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const fd = new FormData(this);
     const resultEl = document.getElementById('importResult');
