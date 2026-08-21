@@ -10,14 +10,33 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Manages the PIN → student/staff mapping table that lets the device
+ * ingest pipeline (see App\Services\DeviceAttendanceProcessor) know who a
+ * given (device_serial, device_pin) punch belongs to.
+ *
+ * Three ways an admin creates mappings:
+ *  1. Single manual add (one PIN, one person) — store()
+ *  2. Bulk manual assign (many people, sequential PINs) — bulkManualAssign()
+ *  3. CSV import (device_pin, person_type, identifier columns) — bulkImport()
+ *
+ * Plus a queue view (unmapped()) for punches that arrived before a PIN was
+ * mapped to anyone, so they can be resolved after the fact.
+ */
 class DeviceUserMappingController extends Controller
 {
+    private const SEARCH_PER_PAGE = 20;
+
     public function __construct()
     {
         $this->middleware('permission:View device-mappings',   ['only' => ['index', 'unmapped', 'search']]);
-        $this->middleware('permission:Create device-mappings', ['only' => ['store', 'bulkImport', 'quickAssign']]);
+        $this->middleware('permission:Create device-mappings', ['only' => ['store', 'bulkImport', 'bulkManualAssign', 'quickAssign']]);
         $this->middleware('permission:Delete device-mappings', ['only' => ['destroy']]);
     }
+
+    // =========================================================================
+    // MAPPINGS TABLE
+    // =========================================================================
 
     public function index(Request $request)
     {
@@ -32,66 +51,116 @@ class DeviceUserMappingController extends Controller
 
         $mappings = $query->paginate(50)->withQueryString();
 
-        // Attach display names without N+1 across two different source tables
         $studentIds = $mappings->where('person_type', 'student')->pluck('person_id');
         $staffIds   = $mappings->where('person_type', 'staff')->pluck('person_id');
 
-        $students = Student::whereIn('id', $studentIds)->get()->keyBy('id');
+        $students = Student::with('picture')->whereIn('id', $studentIds)->get()->keyBy('id');
         $staff    = Staff::with('user')->whereIn('id', $staffIds)->get()->keyBy('id');
 
         $mappings->getCollection()->transform(function ($m) use ($students, $staff) {
             if ($m->person_type === 'student') {
                 $p = $students->get($m->person_id);
                 $m->display_name = $p ? "{$p->lastname} {$p->firstname} ({$p->admissionNo})" : 'Unknown student';
+                $m->photo_url    = $p?->picture?->picture ? asset('storage/student_avatars/' . $p->picture->picture) : null;
             } else {
                 $p = $staff->get($m->person_id);
                 $m->display_name = $p ? ($p->full_name . " ({$p->employmentid})") : 'Unknown staff';
+                $m->photo_url    = $p?->user?->avatar_url;
             }
             return $m;
         });
 
+        $studentCount  = DeviceUserMapping::where('person_type', 'student')->count();
+        $staffCount    = DeviceUserMapping::where('person_type', 'staff')->count();
         $unmappedCount = $this->unmappedPinsQuery()->count();
 
         $pagetitle = 'Device PIN Mappings';
-        return view('attendance.admin.device-mappings', compact('mappings', 'unmappedCount', 'pagetitle'));
+        return view('attendance.admin.device-mappings', compact(
+            'mappings', 'studentCount', 'staffCount', 'unmappedCount', 'pagetitle'
+        ));
     }
 
-    // ── Searchable dropdown source for the manual-add form ──────────────
+    // =========================================================================
+    // AJAX PERSON SEARCH (backs the Select2 widgets in both blades)
+    // =========================================================================
+
     public function search(Request $request)
     {
-        $type = $request->input('type');
-        $q    = $request->input('q', '');
+        $type    = $request->input('type', 'student');
+        $q       = trim((string) $request->input('q', ''));
+        $page    = max((int) $request->input('page', 1), 1);
+        $perPage = self::SEARCH_PER_PAGE;
 
-        if ($type === 'student') {
-            $results = Student::where(function ($qq) use ($q) {
-                    $qq->where('firstname', 'like', "%{$q}%")
-                       ->orWhere('lastname', 'like', "%{$q}%")
-                       ->orWhere('admissionNo', 'like', "%{$q}%");
+        if ($type === 'staff') {
+            $query = Staff::query()
+                ->with('user')
+                ->active()
+                ->when($q !== '', function ($qq) use ($q) {
+                    $qq->where(function ($w) use ($q) {
+                        $w->whereHas('user', fn($uq) => $uq->where('name', 'like', "%{$q}%"))
+                          ->orWhere('employmentid', 'like', "%{$q}%")
+                          ->orWhere('department', 'like', "%{$q}%");
+                    });
                 })
-                ->limit(20)
-                ->get(['id', 'firstname', 'lastname', 'admissionNo'])
-                ->map(fn($s) => [
-                    'id'   => $s->id,
-                    'text' => "{$s->lastname} {$s->firstname} ({$s->admissionNo})",
-                ]);
+                ->orderBy('employmentid');
+
+            $total = (clone $query)->count();
+            $rows  = $query->forPage($page, $perPage)->get();
+
+            $results = $rows->map(fn($s) => [
+                'id'       => $s->id,
+                'text'     => $s->full_name . " ({$s->employmentid})",
+                'photo'    => $s->user?->avatar_url,
+                'subtitle' => $s->job_title ?? $s->position ?? 'Staff',
+                'meta'     => [
+                    'Staff ID'   => $s->employmentid ?? '—',
+                    'Department' => $s->department ?? '—',
+                ],
+            ])->values();
         } else {
-            $results = Staff::with('user')
-                ->where(function ($qq) use ($q) {
-                    $qq->whereHas('user', fn($uq) => $uq->where('name', 'like', "%{$q}%"))
-                       ->orWhere('employmentid', 'like', "%{$q}%");
+            $query = Student::query()
+                ->with(['picture', 'schoolClass.schoolclass.armRelation'])
+                ->when($q !== '', function ($qq) use ($q) {
+                    $qq->where(function ($w) use ($q) {
+                        $w->where('firstname', 'like', "%{$q}%")
+                          ->orWhere('lastname', 'like', "%{$q}%")
+                          ->orWhere('admissionNo', 'like', "%{$q}%");
+                    });
                 })
-                ->limit(20)
-                ->get()
-                ->map(fn($s) => [
-                    'id'   => $s->id,
-                    'text' => $s->full_name . " ({$s->employmentid})",
-                ]);
+                ->orderBy('lastname');
+
+            $total = (clone $query)->count();
+            $rows  = $query->forPage($page, $perPage)->get();
+
+            $results = $rows->map(function ($s) {
+                $schoolclass = $s->schoolClass?->schoolclass;   // Schoolclass model, via Studentclass
+                $className   = $schoolclass?->schoolclass;       // class name column, e.g. "JSS1"
+                $armName     = $schoolclass?->armRelation?->arm; // adjust if Schoolarm's name column differs
+
+                return [
+                    'id'       => $s->id,
+                    'text'     => "{$s->lastname} {$s->firstname} ({$s->admissionNo})",
+                    'photo'    => $s->picture?->picture ? asset('storage/student_avatars/' . $s->picture->picture) : null,
+                    'subtitle' => 'Student',
+                    'meta'     => [
+                        'Admission No' => $s->admissionNo ?? '—',
+                        'Class'        => trim(($className ?? '') . ' ' . ($armName ?? '')) ?: '—',
+                    ],
+                ];
+            })->values();
         }
 
-        return response()->json($results);
+        return response()->json([
+            'results'    => $results,
+            'pagination' => ['more' => ($page * $perPage) < $total],
+        ]);
     }
 
-    // ── Manual single add ────────────────────────────────────────────────
+    // =========================================================================
+    // CREATE MAPPINGS
+    // =========================================================================
+
+    // Single manual add: one device_pin, one person.
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -107,7 +176,6 @@ class DeviceUserMappingController extends Controller
                 ['person_type' => $validated['person_type'], 'person_id' => $validated['person_id'], 'active' => true]
             );
 
-            // Retroactively process any pending/unmapped logs for this pin now that it's mapped
             $this->reprocessPendingLogs($validated['device_serial'], $validated['device_pin']);
 
             return response()->json(['success' => true, 'message' => 'Mapping saved.', 'data' => $mapping]);
@@ -117,15 +185,60 @@ class DeviceUserMappingController extends Controller
         }
     }
 
-    public function destroy($id)
+    // Bulk manual assign: many people, one device, sequential PINs starting
+    // at `starting_pin`. Skips over any PIN already taken on that device.
+    public function bulkManualAssign(Request $request)
     {
-        DeviceUserMapping::findOrFail($id)->delete();
-        return response()->json(['success' => true, 'message' => 'Mapping removed.']);
+        $validated = $request->validate([
+            'device_serial' => 'required|string',
+            'starting_pin'  => 'required|integer|min:1',
+            'person_type'   => 'required|in:student,staff',
+            'person_ids'    => 'required|array|min:1',
+            'person_ids.*'  => 'required|integer',
+        ]);
+
+        $created = [];
+        $pin     = $validated['starting_pin'];
+
+        DB::beginTransaction();
+        try {
+            foreach ($validated['person_ids'] as $personId) {
+                while (DeviceUserMapping::where('device_serial', $validated['device_serial'])
+                        ->where('device_pin', $pin)->exists()) {
+                    $pin++;
+                }
+
+                DeviceUserMapping::create([
+                    'device_serial' => $validated['device_serial'],
+                    'device_pin'    => $pin,
+                    'person_type'   => $validated['person_type'],
+                    'person_id'     => $personId,
+                    'active'        => true,
+                ]);
+
+                $created[] = ['person_id' => $personId, 'pin' => $pin];
+                $pin++;
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Bulk manual assign error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+
+        foreach ($created as $row) {
+            $this->reprocessPendingLogs($validated['device_serial'], $row['pin']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => count($created) . ' mapping(s) created, starting at PIN ' . $validated['starting_pin'] . '.',
+            'data'    => $created,
+        ]);
     }
 
-    // ── Bulk CSV import ───────────────────────────────────────────────────
-    // Expected CSV columns: device_pin, person_type, identifier
-    // identifier = admissionNo for students, employmentid for staff
+    // CSV bulk import. Expected columns: device_pin, person_type, identifier
+    // identifier = admissionNo for students, employmentid for staff.
     public function bulkImport(Request $request)
     {
         $request->validate([
@@ -187,7 +300,16 @@ class DeviceUserMappingController extends Controller
         ]);
     }
 
-    // ── Unmapped PIN queue ────────────────────────────────────────────────
+    public function destroy($id)
+    {
+        DeviceUserMapping::findOrFail($id)->delete();
+        return response()->json(['success' => true, 'message' => 'Mapping removed.']);
+    }
+
+    // =========================================================================
+    // UNMAPPED PIN QUEUE
+    // =========================================================================
+
     private function unmappedPinsQuery()
     {
         return DeviceAttendanceLog::where('processing_status', 'unmapped')
@@ -223,6 +345,8 @@ class DeviceUserMappingController extends Controller
         return response()->json(['success' => true, 'message' => 'Assigned and past punches reprocessed.']);
     }
 
+    // Re-runs any logs that arrived before this PIN had a mapping (or that
+    // previously errored) now that we know who they belong to.
     private function reprocessPendingLogs(string $deviceSerial, int $pin): void
     {
         $logs = DeviceAttendanceLog::where('device_serial', $deviceSerial)
