@@ -90,7 +90,11 @@ class DeviceUserMappingController extends Controller
         $type    = $request->input('type', 'student');
         $q       = trim((string) $request->input('q', ''));
         $page    = max((int) $request->input('page', 1), 1);
-        $perPage = self::SEARCH_PER_PAGE;
+        // picker=1 is used by the Bulk Assign modal's table, which fetches
+        // once and filters client-side — same pattern as the Mass Student
+        // modal's loadStudents(). Everything else (Select2 dropdowns) keeps
+        // the normal small page size.
+        $perPage = $request->boolean('picker') ? 500 : self::SEARCH_PER_PAGE;
 
         if ($type === 'staff') {
             // Staff accounts live on `users` (role = 'Staff'); `staffbioinfo`
@@ -131,7 +135,10 @@ class DeviceUserMappingController extends Controller
                         'photo'    => $u->avatar_url,
                         'subtitle' => $staff?->job_title ?? $staff?->position ?? 'Staff',
                         'meta'     => [
-                            'Staff ID'   => $staff?->employmentid ?? '—',
+                            // employmentid isn't populated yet for most staff — fall
+                            // back to the users.id so the picker still shows a
+                            // stable identifier instead of a blank "—".
+                            'Staff ID'   => $staff?->employmentid ?: ('U-' . $u->id),
                             'Department' => $staff?->department ?? '—',
                         ],
                     ];

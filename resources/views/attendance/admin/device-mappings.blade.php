@@ -109,6 +109,18 @@
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow { height:34px; }
 .select2-dropdown { border-color: var(--bill-border) !important; }
+
+/* Bulk Assign step bar (mirrors the Mass Student modal pattern) */
+.dm-step { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:#94a3b8; }
+.dm-step.active { color:var(--bill-accent); }
+.dm-step.done   { color:var(--bill-success); }
+.dm-step-circle { width:28px; height:28px; border-radius:50%; background:#e2e8f0; color:#94a3b8; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+.dm-step.active .dm-step-circle { background:var(--bill-accent); color:#fff; box-shadow:0 0 0 3px rgba(37,99,235,.2); }
+.dm-step.done   .dm-step-circle { background:var(--bill-success); color:#fff; }
+.dm-step-line { flex:1; height:2px; background:#e2e8f0; margin:0 12px; max-width:80px; }
+/* Select2 is parented to <body> (see JS) to escape the modal's clipping —
+   this keeps its dropdown panel visually above the modal itself. */
+.select2-container--open { z-index: 1090; }
 </style>
 
 <div class="main-content">
@@ -231,46 +243,116 @@
         </div>
     </div>
 
-    {{-- ── Bulk Assign (modal, multi-select, room to breathe) ────────────── --}}
-    <div class="modal fade" id="bulkAssignModal" tabindex="-1" aria-hidden="true">
+    {{-- ── Bulk Assign (checkbox table, mirrors Mass Student modal pattern) ── --}}
+    <div class="modal fade" id="bulkAssignModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content" style="border-radius:var(--bill-radius);border:none;">
-                <div class="modal-header" style="border-bottom:1px solid var(--bill-border);">
-                    <h5 class="modal-title fw-bold" style="color:var(--bill-primary);"><i class="ri-group-line me-2"></i>Bulk Assign — Multiple People</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content" style="border-radius:18px;border:none;overflow:hidden;">
+                <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 60%,#4f46e5 100%);border:none;padding:20px 24px;position:relative;">
+                    <div>
+                        <h5 class="modal-title fw-bold text-white mb-0"><i class="ri-group-line me-2"></i>Bulk Assign — Multiple People</h5>
+                        <p class="mb-0" style="color:rgba(255,255,255,.72);font-size:12px;">Select everyone at once, then assign sequential device PINs</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="position:absolute;top:18px;right:20px;"></button>
                 </div>
-                <form id="bulkManualForm">
-                    <div class="modal-body">
-                        <p class="text-muted" style="font-size:12px;">
-                            Pick as many students or staff as you like and a starting PIN — each person gets the next available PIN in sequence on this device.
-                        </p>
-                        <div class="row g-3 mb-3">
+
+                {{-- Step bar --}}
+                <div style="display:flex;align-items:center;justify-content:center;padding:14px 24px;background:#f1f5f9;border-bottom:1px solid var(--bill-border);">
+                    <div class="dm-step active" id="dmStepBar1"><div class="dm-step-circle">1</div><span>Select People</span></div>
+                    <div class="dm-step-line"></div>
+                    <div class="dm-step" id="dmStepBar2"><div class="dm-step-circle">2</div><span>Assign PINs</span></div>
+                </div>
+
+                <div class="modal-body" style="padding:20px 24px;background:#f8fafc;max-height:70vh;overflow-y:auto;">
+
+                    {{-- STEP 1: filter + checkbox table --}}
+                    <div id="dmStep1">
+                        <div class="row g-2 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label">Device Serial</label>
-                                <input type="text" name="device_serial" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Starting PIN</label>
-                                <input type="number" name="starting_pin" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="col-md-5">
-                                <label class="form-label">Person Type</label>
-                                <select id="bulkPersonType" class="form-select form-select-sm">
+                                <label class="form-label">Type</label>
+                                <select id="dmType" class="form-select form-select-sm">
                                     <option value="student">Student</option>
                                     <option value="staff">Staff</option>
                                 </select>
                             </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Search</label>
+                                <input type="text" id="dmSearch" class="form-control form-control-sm" placeholder="Filter by name, ID, department, class…">
+                            </div>
                         </div>
-                        <label class="form-label">
-                            People <span id="selectedCount" class="badge bg-primary-subtle text-primary">0 selected</span>
-                        </label>
-                        <select id="personMultiSelect" multiple style="width:100%;"></select>
+
+                        <div class="bill-card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="ri-list-check-2 me-2"></i>People</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary-subtle text-primary" id="dmSelectedCount">0 selected</span>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="dmSelectAll">Select All</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="dmClearAll">Clear</button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div style="max-height:340px;overflow-y:auto;">
+                                    <table class="table bill-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th width="36"><input type="checkbox" id="dmCheckAll"></th>
+                                                <th></th>
+                                                <th>Name</th>
+                                                <th>ID / Department</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dmPeopleList">
+                                            <tr><td colspan="4" class="text-center py-4 text-muted">
+                                                <div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading…
+                                            </td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" class="btn btn-primary btn-sm" id="dmProceed" disabled>
+                                Continue <i class="ri-arrow-right-line ms-1"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="modal-footer" style="border-top:1px solid var(--bill-border);">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button class="btn btn-success btn-sm" type="submit"><i class="ri-add-line me-1"></i>Assign All</button>
+
+                    {{-- STEP 2: device + starting pin + confirm --}}
+                    <div id="dmStep2" style="display:none;">
+                        <div class="bill-card mb-3">
+                            <div class="card-header">
+                                <i class="ri-check-double-line me-2"></i>Selected — <span id="dmStep2Count" class="fw-bold">0</span> people
+                            </div>
+                            <div class="card-body p-0">
+                                <div style="max-height:220px;overflow-y:auto;">
+                                    <table class="table bill-table mb-0" id="dmSummaryTable">
+                                        <thead><tr><th></th><th>Name</th><th>ID / Department</th><th>Will get PIN</th></tr></thead>
+                                        <tbody id="dmSummaryBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Device Serial</label>
+                                <input type="text" id="dmDeviceSerial" class="form-control form-control-sm" placeholder="e.g. PKD7022588362" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Starting PIN</label>
+                                <input type="number" id="dmStartingPin" class="form-control form-control-sm" required>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="dmBack">
+                                <i class="ri-arrow-left-line me-1"></i>Back
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" id="dmSubmit">
+                                <i class="ri-add-line me-1"></i>Assign All
+                            </button>
+                        </div>
                     </div>
-                </form>
+
+                </div>
             </div>
         </div>
     </div>
@@ -375,9 +457,11 @@ function personTemplate(item) {
     `);
 }
 
-// ── AJAX-backed, paginated, live-search person picker ───────────────────────
-// dropdownParent is required inside a Bootstrap modal — otherwise the
-// results panel renders behind the modal's own stacking context.
+// ── AJAX-backed live-search person picker (single "Add Mapping" modal only
+// — Bulk Assign now uses the checkbox-table approach below instead). --
+// dropdownParent deliberately targets document.body, not the modal itself —
+// Select2's results panel gets clipped/hidden if it's parented inside a
+// Bootstrap modal.
 function initPersonSelect(selectEl, typeEl, opts = {}) {
     $(selectEl).select2({
         ajax: {
@@ -386,35 +470,191 @@ function initPersonSelect(selectEl, typeEl, opts = {}) {
             delay: 300,
             data: params => ({ q: params.term || '', type: $(typeEl).val(), page: params.page || 1 }),
             processResults: data => ({ results: data.results, pagination: data.pagination }),
-            cache: true,
+            cache: false, // avoid any stale-result-across-type-switch edge case
         },
         minimumInputLength: 0,
-        placeholder: opts.multiple ? 'Search and select people…' : 'Search…',
-        multiple: !!opts.multiple,
+        placeholder: 'Search…',
         templateResult: personTemplate,
         templateSelection: item => item.text || item.id,
         width: '100%',
-        dropdownParent: opts.dropdownParent ? $(opts.dropdownParent) : $(document.body),
+        dropdownParent: $(document.body),
     });
-    // Whenever the type toggle changes, clear the current selection so we
-    // don't accidentally submit a student id while "Staff" is selected.
     $(typeEl).on('change', () => $(selectEl).val(null).trigger('change'));
 }
 
 $(document).ready(() => {
-    initPersonSelect('#personSelect', '#personType', { dropdownParent: '#addMappingModal' });
-    initPersonSelect('#personMultiSelect', '#bulkPersonType', { multiple: true, dropdownParent: '#bulkAssignModal' });
+    initPersonSelect('#personSelect', '#personType');
+});
 
-    $('#personMultiSelect').on('change', function () {
-        const n = ($(this).val() || []).length;
-        $('#selectedCount').text(n + ' selected');
+// ── Bulk Assign: fetch-once, filter client-side, checkbox table ────────────
+// Mirrors the Mass Student Account Management modal pattern already in this
+// codebase — idKey() exists specifically because that modal already hit
+// (and documented) a real bug where strict `===` comparisons between string
+// and number ids silently broke checkbox state. Same guard applied here.
+function idKey(v) { return v === null || v === undefined ? '' : String(v); }
+
+let dmAllPeople = [];
+let dmSelected = [];
+
+function dmLoadPeople() {
+    const type = document.getElementById('dmType').value;
+    const listEl = document.getElementById('dmPeopleList');
+    listEl.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading…</td></tr>';
+
+    fetch(`{{ route('device-mappings.search') }}?type=${type}&q=&page=1&picker=1`)
+        .then(r => r.json())
+        .then(data => {
+            dmAllPeople = data.results || [];
+            const keptIds = new Set(dmSelected.map(p => idKey(p.id)));
+            dmSelected = dmAllPeople.filter(p => keptIds.has(idKey(p.id)));
+            dmRenderTable(dmAllPeople);
+        })
+        .catch(() => {
+            listEl.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-danger">Failed to load. Try again.</td></tr>';
+        });
+}
+
+function dmRenderTable(people) {
+    const listEl = document.getElementById('dmPeopleList');
+    if (!people.length) {
+        listEl.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No matches.</td></tr>';
+        dmUpdateCount();
+        return;
+    }
+
+    listEl.innerHTML = people.map(p => {
+        const meta = p.meta ? Object.values(p.meta).filter(v => v && v !== '—').join(' · ') : '';
+        const photo = p.photo
+            ? `<img src="${p.photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`
+            : `<div style="width:28px;height:28px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;">${p.text.slice(0,2).toUpperCase()}</div>`;
+        return `<tr>
+            <td><input type="checkbox" class="dm-person-check" data-id="${p.id}"></td>
+            <td>${photo}</td>
+            <td class="fw-semibold" style="font-size:12.5px;">${p.text}</td>
+            <td class="text-muted" style="font-size:12px;">${meta || '—'}</td>
+        </tr>`;
+    }).join('');
+
+    document.querySelectorAll('.dm-person-check').forEach(cb => {
+        const id = cb.dataset.id;
+        cb.checked = dmSelected.some(s => idKey(s.id) === idKey(id));
+        cb.addEventListener('change', function () {
+            const person = dmAllPeople.find(p => idKey(p.id) === idKey(id));
+            if (!person) return;
+            if (this.checked) {
+                if (!dmSelected.some(s => idKey(s.id) === idKey(id))) dmSelected.push(person);
+            } else {
+                dmSelected = dmSelected.filter(s => idKey(s.id) !== idKey(id));
+            }
+            dmUpdateCount();
+        });
     });
 
-    // Select2 needs a nudge to size correctly the first time a hidden
-    // modal becomes visible.
-    $('#addMappingModal').on('shown.bs.modal', () => $('#personSelect').select2('open') && $('#personSelect').select2('close'));
-    $('#bulkAssignModal').on('shown.bs.modal', () => $('#personMultiSelect').select2('open') && $('#personMultiSelect').select2('close'));
+    dmUpdateCount();
+}
+
+function dmUpdateCount() {
+    document.getElementById('dmSelectedCount').textContent = dmSelected.length + ' selected';
+    document.getElementById('dmProceed').disabled = dmSelected.length === 0;
+    const checkAll = document.getElementById('dmCheckAll');
+    if (checkAll) checkAll.checked = dmAllPeople.length > 0 && dmSelected.length === dmAllPeople.length;
+}
+
+function dmApplyClientFilter() {
+    const q = (document.getElementById('dmSearch').value || '').toLowerCase();
+    if (!q) { dmRenderTable(dmAllPeople); return; }
+    const filtered = dmAllPeople.filter(p => {
+        const meta = p.meta ? Object.values(p.meta).join(' ').toLowerCase() : '';
+        return p.text.toLowerCase().includes(q) || meta.includes(q);
+    });
+    dmRenderTable(filtered);
+}
+
+document.getElementById('dmType').addEventListener('change', () => { dmSelected = []; dmLoadPeople(); });
+document.getElementById('dmSearch').addEventListener('input', dmApplyClientFilter);
+document.getElementById('dmSelectAll').addEventListener('click', () => { dmSelected = [...dmAllPeople]; dmRenderTable(dmAllPeople); });
+document.getElementById('dmClearAll').addEventListener('click', () => { dmSelected = []; dmRenderTable(dmAllPeople); });
+document.getElementById('dmCheckAll').addEventListener('change', function () {
+    dmSelected = this.checked ? [...dmAllPeople] : [];
+    dmRenderTable(dmAllPeople);
 });
+
+function dmSetStep(n) {
+    [1, 2].forEach(i => {
+        const el = document.getElementById('dmStepBar' + i);
+        const circle = el.querySelector('.dm-step-circle');
+        el.classList.remove('active', 'done');
+        if (i < n) { el.classList.add('done'); circle.innerHTML = '<i class="ri-check-line"></i>'; }
+        else { circle.textContent = i; if (i === n) el.classList.add('active'); }
+    });
+}
+
+document.getElementById('dmProceed').addEventListener('click', () => {
+    document.getElementById('dmStep2Count').textContent = dmSelected.length;
+    document.getElementById('dmSummaryBody').innerHTML = dmSelected.map((p, i) => {
+        const startPin = document.getElementById('dmStartingPin').value || '?';
+        const pin = startPin !== '?' ? (parseInt(startPin) + i) : '?';
+        const meta = p.meta ? Object.values(p.meta).filter(v => v && v !== '—').join(' · ') : '';
+        return `<tr><td>${p.photo ? `<img src="${p.photo}" style="width:24px;height:24px;border-radius:50%;">` : ''}</td>
+                    <td>${p.text}</td><td class="text-muted" style="font-size:12px;">${meta || '—'}</td>
+                    <td class="fw-semibold text-primary dm-pin-preview">${pin}</td></tr>`;
+    }).join('');
+    document.getElementById('dmStep1').style.display = 'none';
+    document.getElementById('dmStep2').style.display = '';
+    dmSetStep(2);
+});
+
+document.getElementById('dmStartingPin').addEventListener('input', function () {
+    const start = parseInt(this.value);
+    document.querySelectorAll('.dm-pin-preview').forEach((el, i) => {
+        el.textContent = isNaN(start) ? '?' : start + i;
+    });
+});
+
+document.getElementById('dmBack').addEventListener('click', () => {
+    document.getElementById('dmStep2').style.display = 'none';
+    document.getElementById('dmStep1').style.display = '';
+    dmSetStep(1);
+});
+
+document.getElementById('dmSubmit').addEventListener('click', function () {
+    const deviceSerial = document.getElementById('dmDeviceSerial').value.trim();
+    const startingPin = document.getElementById('dmStartingPin').value;
+    if (!deviceSerial || !startingPin) { alert('Enter device serial and starting PIN.'); return; }
+
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning…';
+
+    fetch('{{ route('device-mappings.bulk-manual') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+        body: JSON.stringify({
+            device_serial: deviceSerial,
+            starting_pin: startingPin,
+            person_type: document.getElementById('dmType').value,
+            person_ids: dmSelected.map(p => p.id),
+        }),
+    }).then(r => r.json()).then(d => {
+        alert(d.message);
+        if (d.success) location.reload();
+    }).finally(() => {
+        this.disabled = false;
+        this.innerHTML = '<i class="ri-add-line me-1"></i>Assign All';
+    });
+});
+
+function dmResetModal() {
+    dmSelected = [];
+    document.getElementById('dmStep1').style.display = '';
+    document.getElementById('dmStep2').style.display = 'none';
+    document.getElementById('dmSearch').value = '';
+    document.getElementById('dmDeviceSerial').value = '';
+    document.getElementById('dmStartingPin').value = '';
+    dmSetStep(1);
+    dmLoadPeople();
+}
+
+document.getElementById('bulkAssignModal').addEventListener('show.bs.modal', dmResetModal);
 
 // ── Single mapping form ──────────────────────────────────────────────────
 document.getElementById('addMappingForm').addEventListener('submit', function (e) {
@@ -430,37 +670,12 @@ document.getElementById('addMappingForm').addEventListener('submit', function (e
     });
 });
 
-// ── Bulk manual assign form ──────────────────────────────────────────────
-document.getElementById('bulkManualForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const payload = {
-        device_serial: this.device_serial.value,
-        starting_pin: this.starting_pin.value,
-        person_type: document.getElementById('bulkPersonType').value,
-        person_ids: $('#personMultiSelect').val() || [],
-    };
-    if (!payload.person_ids.length) { alert('Select at least one person.'); return; }
-
-    fetch('{{ route('device-mappings.bulk-manual') }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
-        body: JSON.stringify(payload),
-    }).then(r => r.json()).then(d => {
-        alert(d.message);
-        if (d.success) location.reload();
-    });
-});
-
-// Reset each form + its Select2 state whenever its modal is closed, so a
-// cancelled entry doesn't linger the next time it's opened.
+// Reset the single-add form + its Select2 state whenever its modal closes,
+// so a cancelled entry doesn't linger next time it's opened. (Bulk Assign
+// resets itself via dmResetModal() on show.bs.modal, above.)
 document.getElementById('addMappingModal').addEventListener('hidden.bs.modal', function () {
     document.getElementById('addMappingForm').reset();
     $('#personSelect').val(null).trigger('change');
-});
-document.getElementById('bulkAssignModal').addEventListener('hidden.bs.modal', function () {
-    document.getElementById('bulkManualForm').reset();
-    $('#personMultiSelect').val(null).trigger('change');
-    $('#selectedCount').text('0 selected');
 });
 
 // ── CSV import form ───────────────────────────────────────────────────────
