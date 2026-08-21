@@ -1516,8 +1516,9 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
     
     // Spotlight Search API
-    Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
+   Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
 
+   
     Route::prefix('attendance')->group(function () {
 
         // Explicit/static routes MUST come before the resource route,
@@ -1534,9 +1535,9 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             ->whereNumber('device_mapping'); // belt-and-suspenders: never match non-numeric segments
 
         // Device outage dates
-        Route::post('device-outages', [StaffAttendanceController::class, 'storeOutage'])->name('device-outages.store');
-        Route::delete('device-outages/{id}', [StaffAttendanceController::class, 'destroyOutage'])->name('device-outages.destroy');
-
+         Route::post('staff/outage', [StaffAttendanceController::class, 'storeOutage'])->name('staff-attendance.outage.store');
+         Route::delete('staff/outage/{id}', [StaffAttendanceController::class, 'destroyOutage'])->name('staff-attendance.outage.destroy');
+         
         // Staff attendance reporting
         Route::get('staff-attendance', [StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
         Route::get('staff-attendance/{staffId}', [StaffAttendanceController::class, 'report'])->name('staff-attendance.report');
@@ -1544,6 +1545,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         // Live feed polling (used by the admin dashboard)
         Route::get('live-feed', [LiveAttendanceController::class, 'feed'])->name('attendance.live-feed');
     });
+    
 
 });
 
