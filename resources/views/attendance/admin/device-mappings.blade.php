@@ -458,6 +458,21 @@ function jsonHeaders(extra = {}) {
 }
 
 async function handleJsonResponse(r) {
+    // fetch() silently follows 302/303 redirects and, per spec, converts
+    // the method to GET when it does. If that happens here it means the
+    // session/CSRF token went stale mid-request (or, previously, a route
+    // ambiguity made the redirect land on a URI with no GET handler) —
+    // either way the original POST never actually executed, so don't try
+    // to interpret whatever body came back.
+    if (r.redirected) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Session expired',
+            text: 'Your session or security token expired. Please refresh the page and try again.',
+            confirmButtonColor: '#2563eb',
+        });
+        throw new Error('Redirected — session expired');
+    }
     if (r.status === 401 || r.status === 419) {
         await Swal.fire({
             icon: 'warning',
