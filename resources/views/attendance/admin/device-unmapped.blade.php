@@ -10,6 +10,7 @@
     line-height:29px; font-size:12px;
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow { height:29px; }
+.swal2-container { z-index: 2000 !important; }
 </style>
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
@@ -64,8 +65,67 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function csrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
+
+// Same JSON-safety helper as device-mappings.blade.php: forces Laravel to
+// respond with JSON (422/401/419) instead of an HTML redirect on failure,
+// which is what caused "Unexpected token '<'" parse errors on this page too.
+function jsonHeaders(extra = {}) {
+    return Object.assign({
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': csrfToken(),
+    }, extra);
+}
+
+async function handleJsonResponse(r) {
+    if (r.status === 401 || r.status === 419) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Session expired',
+            text: 'Please refresh the page and log in again.',
+            confirmButtonColor: '#1e3a5f',
+        });
+        throw new Error('Session expired');
+    }
+    if (r.status === 422) {
+        const err = await r.json();
+        const msgs = Object.values(err.errors || {}).flat().join('<br>');
+        await Swal.fire({
+            icon: 'error',
+            title: 'Please fix the following',
+            html: msgs || err.message || 'Validation failed.',
+            confirmButtonColor: '#1e3a5f',
+        });
+        throw new Error('Validation failed');
+    }
+    if (!r.ok) {
+        const text = await r.text();
+        console.error('Request failed:', r.status, text);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Something went wrong',
+            text: 'Server responded with ' + r.status + '. Check the console for details.',
+            confirmButtonColor: '#1e3a5f',
+        });
+        throw new Error('Server error (' + r.status + ')');
+    }
+    return r.json();
+}
+
+function toast(icon, title) {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon,
+        title,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+    });
+}
 
 function personTemplate(item) {
     if (!item.id) return item.text;
@@ -115,23 +175,44 @@ document.querySelectorAll('tbody tr').forEach(row => {
 
 document.querySelectorAll('.assign-btn').forEach(btn => {
     btn.addEventListener('click', function () {
-        const row      = this.closest('tr');
-        const personId = $(row.querySelector('.assign-person')).val();
+        const row        = this.closest('tr');
+        const personId   = $(row.querySelector('.assign-person')).val();
         const personType = row.querySelector('.assign-type').value;
-        if (!personId) { alert('Select a person first.'); return; }
+
+        if (!personId) {
+            Swal.fire({ icon: 'warning', title: 'Select a person first.', confirmButtonColor: '#1e3a5f' });
+            return;
+        }
+
+        const originalHtml = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
         fetch('{{ route('device-mappings.quick-assign') }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+            headers: jsonHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({
                 device_serial: this.dataset.device,
                 device_pin: this.dataset.pin,
                 person_type: personType,
                 person_id: personId,
             }),
-        }).then(r => r.json()).then(d => {
-            if (d.success) row.remove();
-            else alert(d.message);
+        })
+        .then(handleJsonResponse)
+        .then(d => {
+            if (d.success) {
+                toast('success', d.message || 'Assigned.');
+                row.remove();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Failed', text: d.message, confirmButtonColor: '#1e3a5f' });
+                this.disabled = false;
+                this.innerHTML = originalHtml;
+            }
+        })
+        .catch(e => {
+            console.error(e);
+            this.disabled = false;
+            this.innerHTML = originalHtml;
         });
     });
 });

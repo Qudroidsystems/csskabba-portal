@@ -121,6 +121,9 @@
 /* Select2 is parented to <body> (see JS) to escape the modal's clipping —
    this keeps its dropdown panel visually above the modal itself. */
 .select2-container--open { z-index: 1090; }
+
+/* Keep SweetAlert2 above Bootstrap modals (modal z-index is 1055/1090 here) */
+.swal2-container { z-index: 2000 !important; }
 </style>
 
 <div class="main-content">
@@ -437,8 +440,69 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function csrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
+
+// ── Shared fetch helper ─────────────────────────────────────────────────
+// Always sends Accept: application/json so Laravel returns JSON (422 on
+// validation failure, etc.) instead of redirecting to an HTML page when
+// validation fails or the session/CSRF token has expired — that redirect
+// was the root cause of "Unexpected token '<'" JSON parse errors.
+function jsonHeaders(extra = {}) {
+    return Object.assign({
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': csrfToken(),
+    }, extra);
+}
+
+async function handleJsonResponse(r) {
+    if (r.status === 401 || r.status === 419) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Session expired',
+            text: 'Please refresh the page and log in again.',
+            confirmButtonColor: '#2563eb',
+        });
+        throw new Error('Session expired');
+    }
+    if (r.status === 422) {
+        const err = await r.json();
+        const msgs = Object.values(err.errors || {}).flat().join('<br>');
+        await Swal.fire({
+            icon: 'error',
+            title: 'Please fix the following',
+            html: msgs || err.message || 'Validation failed.',
+            confirmButtonColor: '#2563eb',
+        });
+        throw new Error('Validation failed');
+    }
+    if (!r.ok) {
+        const text = await r.text();
+        console.error('Request failed:', r.status, text);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Something went wrong',
+            text: 'Server responded with ' + r.status + '. Check the console for details.',
+            confirmButtonColor: '#2563eb',
+        });
+        throw new Error('Server error (' + r.status + ')');
+    }
+    return r.json();
+}
+
+function toast(icon, title) {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon,
+        title,
+        showConfirmButton: false,
+        timer: 2200,
+        timerProgressBar: true,
+    });
+}
 
 // ── Rich Select2 template: avatar + name + subtitle/meta line ──────────────
 function personTemplate(item) {
@@ -502,8 +566,10 @@ function dmLoadPeople() {
     const listEl = document.getElementById('dmPeopleList');
     listEl.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading…</td></tr>';
 
-    fetch(`{{ route('device-mappings.search') }}?type=${type}&q=&page=1&picker=1`)
-        .then(r => r.json())
+    fetch(`{{ route('device-mappings.search') }}?type=${type}&q=&page=1&picker=1`, {
+        headers: jsonHeaders(),
+    })
+        .then(handleJsonResponse)
         .then(data => {
             dmAllPeople = data.results || [];
             const keptIds = new Set(dmSelected.map(p => idKey(p.id)));
@@ -621,26 +687,58 @@ document.getElementById('dmBack').addEventListener('click', () => {
 document.getElementById('dmSubmit').addEventListener('click', function () {
     const deviceSerial = document.getElementById('dmDeviceSerial').value.trim();
     const startingPin = document.getElementById('dmStartingPin').value;
-    if (!deviceSerial || !startingPin) { alert('Enter device serial and starting PIN.'); return; }
 
-    this.disabled = true;
-    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning…';
+    if (!deviceSerial || !startingPin) {
+        Swal.fire({ icon: 'warning', title: 'Missing info', text: 'Enter device serial and starting PIN.', confirmButtonColor: '#2563eb' });
+        return;
+    }
+    if (!dmSelected.length) {
+        Swal.fire({ icon: 'warning', title: 'No one selected', text: 'Go back and select at least one person.', confirmButtonColor: '#2563eb' });
+        return;
+    }
+    // Guard against the known staffbioinfo edge case: a staff user whose
+    // employment-details row hasn't been backfilled yet has id === null in
+    // the picker payload (see search() in the controller), so it never
+    // gets rendered as a checkbox row in the first place — but double check
+    // here too in case dmSelected was populated from a stale fetch.
+    const invalid = dmSelected.filter(p => p.id === null || p.id === undefined);
+    if (invalid.length) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Some selections are incomplete',
+            text: invalid.length + ' selected record(s) are missing a valid ID and were skipped. Please reload and try again.',
+            confirmButtonColor: '#2563eb',
+        });
+        return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning…';
 
     fetch('{{ route('device-mappings.bulk-manual') }}', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+        headers: jsonHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
             device_serial: deviceSerial,
             starting_pin: startingPin,
             person_type: document.getElementById('dmType').value,
             person_ids: dmSelected.map(p => p.id),
         }),
-    }).then(r => r.json()).then(d => {
-        alert(d.message);
-        if (d.success) location.reload();
-    }).finally(() => {
-        this.disabled = false;
-        this.innerHTML = '<i class="ri-add-line me-1"></i>Assign All';
+    })
+    .then(handleJsonResponse)
+    .then(d => {
+        Swal.fire({
+            icon: d.success ? 'success' : 'error',
+            title: d.success ? 'Assigned!' : 'Failed',
+            text: d.message,
+            confirmButtonColor: '#2563eb',
+        }).then(() => { if (d.success) location.reload(); });
+    })
+    .catch(e => { console.error(e); })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ri-add-line me-1"></i>Assign All';
     });
 });
 
@@ -663,12 +761,19 @@ document.getElementById('addMappingForm').addEventListener('submit', function (e
     const fd = new FormData(this);
     fetch('{{ route('device-mappings.store') }}', {
         method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrfToken() },
+        headers: jsonHeaders(),
         body: fd,
-    }).then(r => r.json()).then(d => {
-        if (d.success) location.reload();
-        else alert(d.message);
-    });
+    })
+    .then(handleJsonResponse)
+    .then(d => {
+        if (d.success) {
+            toast('success', d.message || 'Mapping saved.');
+            setTimeout(() => location.reload(), 900);
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed', text: d.message, confirmButtonColor: '#2563eb' });
+        }
+    })
+    .catch(e => console.error(e));
 });
 
 // Reset the single-add form + its Select2 state whenever its modal closes,
@@ -687,21 +792,50 @@ document.getElementById('bulkImportForm').addEventListener('submit', function (e
     resultEl.innerHTML = 'Importing…';
     fetch('{{ route('device-mappings.bulk-import') }}', {
         method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrfToken() },
+        headers: jsonHeaders(),
         body: fd,
-    }).then(r => r.json()).then(d => {
+    })
+    .then(handleJsonResponse)
+    .then(d => {
         resultEl.innerHTML = `<span class="text-${d.success?'success':'danger'}">${d.message}</span>`;
         if (d.errors && d.errors.length) resultEl.innerHTML += '<br>' + d.errors.join('<br>');
-        if (d.success) setTimeout(() => location.reload(), 1500);
+        if (d.success) {
+            toast('success', d.message);
+            setTimeout(() => location.reload(), 1500);
+        }
+    })
+    .catch(e => {
+        console.error(e);
+        resultEl.innerHTML = '';
     });
 });
 
 function deleteMapping(id) {
-    if (!confirm('Remove this mapping?')) return;
-    fetch(`/attendance/device-mappings/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': csrfToken() },
-    }).then(r => r.json()).then(d => { if (d.success) location.reload(); });
+    Swal.fire({
+        icon: 'warning',
+        title: 'Remove this mapping?',
+        text: 'This cannot be undone.',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, remove it',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        fetch(`/attendance/device-mappings/${id}`, {
+            method: 'DELETE',
+            headers: jsonHeaders(),
+        })
+        .then(handleJsonResponse)
+        .then(d => {
+            if (d.success) {
+                toast('success', d.message || 'Mapping removed.');
+                setTimeout(() => location.reload(), 700);
+            } else {
+                Swal.fire({ icon: 'error', title: 'Failed', text: d.message, confirmButtonColor: '#2563eb' });
+            }
+        })
+        .catch(e => console.error(e));
+    });
 }
 </script>
 @endsection
