@@ -1535,6 +1535,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         // Staff attendance reporting
         Route::get('staff-attendance', [StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
         Route::get('staff-attendance/{staffId}', [StaffAttendanceController::class, 'report'])->name('staff-attendance.report');
+        Route::post('device-mappings/bulk-manual', [DeviceUserMappingController::class, 'bulkManualAssign'])->name('device-mappings.bulk-manual');
     
         // Live feed polling (used by the admin dashboard)
         Route::get('live-feed', [LiveAttendanceController::class, 'feed'])->name('attendance.live-feed');
