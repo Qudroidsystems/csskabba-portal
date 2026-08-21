@@ -6,6 +6,7 @@ use App\Models\DeviceAttendanceLog;
 use App\Models\DeviceUserMapping;
 use App\Models\Staff;
 use App\Models\Student;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -92,31 +93,51 @@ class DeviceUserMappingController extends Controller
         $perPage = self::SEARCH_PER_PAGE;
 
         if ($type === 'staff') {
-            $query = Staff::query()
-                ->with('user')
-                ->active()
+            // Staff accounts live on `users` (role = 'Staff'); `staffbioinfo`
+            // is a separate, often-incomplete details table. Source the
+            // people from User so we find everyone who's actually a staff
+            // member, and explicitly exclude anyone who's also a student
+            // (dual-role edge case) — "staff who are not students".
+            $query = User::query()
+                ->staff() // scopeStaff(): whereHas('roles', fn($q) => $q->where('name', 'Staff'))
+                ->whereDoesntHave('roles', fn($r) => $r->where('name', 'Student'))
+                ->whereNull('student_id')
+                ->with('staffemploymentDetails')
                 ->when($q !== '', function ($qq) use ($q) {
                     $qq->where(function ($w) use ($q) {
-                        $w->whereHas('user', fn($uq) => $uq->where('name', 'like', "%{$q}%"))
-                          ->orWhere('employmentid', 'like', "%{$q}%")
-                          ->orWhere('department', 'like', "%{$q}%");
+                        $w->where('name', 'like', "%{$q}%")
+                          ->orWhere('email', 'like', "%{$q}%")
+                          ->orWhereHas('staffemploymentDetails', fn($sq) => $sq
+                              ->where('employmentid', 'like', "%{$q}%")
+                              ->orWhere('department', 'like', "%{$q}%"));
                     });
                 })
-                ->orderBy('employmentid');
+                ->orderBy('name');
 
             $total = (clone $query)->count();
-            $rows  = $query->forPage($page, $perPage)->get();
+            $users = $query->forPage($page, $perPage)->get();
 
-            $results = $rows->map(fn($s) => [
-                'id'       => $s->id,
-                'text'     => $s->full_name . " ({$s->employmentid})",
-                'photo'    => $s->user?->avatar_url,
-                'subtitle' => $s->job_title ?? $s->position ?? 'Staff',
-                'meta'     => [
-                    'Staff ID'   => $s->employmentid ?? '—',
-                    'Department' => $s->department ?? '—',
-                ],
-            ])->values();
+            // staffbioinfo.id is what the rest of the pipeline (StaffAttendance,
+            // StaffAttendanceController, DeviceAttendanceProcessor) keys off,
+            // so a staff user without that row yet can't be mapped safely.
+            // Run `php artisan staff:backfill-bioinfo` to fix any that show
+            // up filtered out here.
+            $results = $users
+                ->map(function ($u) {
+                    $staff = $u->staffemploymentDetails;
+                    return [
+                        'id'       => $staff?->id,
+                        'text'     => $u->name . ($staff?->employmentid ? " ({$staff->employmentid})" : ''),
+                        'photo'    => $u->avatar_url,
+                        'subtitle' => $staff?->job_title ?? $staff?->position ?? 'Staff',
+                        'meta'     => [
+                            'Staff ID'   => $staff?->employmentid ?? '—',
+                            'Department' => $staff?->department ?? '—',
+                        ],
+                    ];
+                })
+                ->filter(fn($r) => $r['id'] !== null)
+                ->values();
         } else {
             $query = Student::query()
                 ->with(['picture', 'schoolClass.schoolclass.armRelation'])

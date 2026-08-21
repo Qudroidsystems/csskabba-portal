@@ -121,11 +121,19 @@
             <h1><i class="ri-fingerprint-line me-2"></i>Device PIN Mappings</h1>
             <p>Link biometric device PINs to students and staff, import in bulk, or resolve unmapped punches.</p>
         </div>
-        @if($unmappedCount > 0)
-        <a href="{{ route('device-mappings.unmapped') }}" class="btn btn-light btn-sm fw-semibold">
-            <i class="ri-alert-line me-1"></i>{{ $unmappedCount }} Unmapped PIN(s)
-        </a>
-        @endif
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-light btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addMappingModal">
+                <i class="ri-user-add-line me-1"></i>Add Mapping
+            </button>
+            <button type="button" class="btn btn-light btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#bulkAssignModal">
+                <i class="ri-group-line me-1"></i>Bulk Assign
+            </button>
+            @if($unmappedCount > 0)
+            <a href="{{ route('device-mappings.unmapped') }}" class="btn btn-light btn-sm fw-semibold">
+                <i class="ri-alert-line me-1"></i>{{ $unmappedCount }} Unmapped PIN(s)
+            </a>
+            @endif
+        </div>
     </div>
 
     {{-- Stat cards --}}
@@ -160,35 +168,39 @@
         </div>
     </div>
 
-    {{-- Bulk import + manual add --}}
-    <div class="row g-3 mb-3">
-        <div class="col-lg-6">
-            <div class="bill-card h-100">
-                <div class="card-header"><i class="ri-file-upload-line me-2"></i>Bulk Import (CSV)</div>
-                <div class="card-body">
-                    <p class="text-muted" style="font-size:12px;">Columns: <code>device_pin, person_type, identifier</code>. identifier = admission number for students, staff ID for staff.</p>
-                    <form id="bulkImportForm" enctype="multipart/form-data">
-                        <div class="mb-2">
-                            <label class="form-label">Device Serial</label>
-                            <input type="text" name="device_serial" class="form-control form-control-sm" placeholder="e.g. PKD7022588362" required>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">CSV File</label>
-                            <input type="file" name="csv_file" class="form-control form-control-sm" accept=".csv" required>
-                        </div>
-                        <button class="btn btn-primary btn-sm" type="submit"><i class="ri-upload-2-line me-1"></i>Import</button>
-                    </form>
-                    <div id="importResult" class="mt-2" style="font-size:12px;"></div>
+    {{-- Bulk import (kept inline — single form, no benefit from a modal) --}}
+    <div class="bill-card mb-4">
+        <div class="card-header"><i class="ri-file-upload-line me-2"></i>Bulk Import (CSV)</div>
+        <div class="card-body">
+            <p class="text-muted" style="font-size:12px;">Columns: <code>device_pin, person_type, identifier</code>. identifier = admission number for students, staff ID for staff.</p>
+            <form id="bulkImportForm" enctype="multipart/form-data" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Device Serial</label>
+                    <input type="text" name="device_serial" class="form-control form-control-sm" placeholder="e.g. PKD7022588362" required>
                 </div>
-            </div>
+                <div class="col-md-4">
+                    <label class="form-label">CSV File</label>
+                    <input type="file" name="csv_file" class="form-control form-control-sm" accept=".csv" required>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary btn-sm w-100" type="submit"><i class="ri-upload-2-line me-1"></i>Import</button>
+                </div>
+            </form>
+            <div id="importResult" class="mt-2" style="font-size:12px;"></div>
         </div>
+    </div>
 
-        <div class="col-lg-6">
-            <div class="bill-card h-100">
-                <div class="card-header"><i class="ri-user-add-line me-2"></i>Add Single Mapping</div>
-                <div class="card-body">
-                    <form id="addMappingForm">
-                        <div class="row g-2">
+    {{-- ── Add Single Mapping (modal) ─────────────────────────────────── --}}
+    <div class="modal fade" id="addMappingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius:var(--bill-radius);border:none;">
+                <div class="modal-header" style="border-bottom:1px solid var(--bill-border);">
+                    <h5 class="modal-title fw-bold" style="color:var(--bill-primary);"><i class="ri-user-add-line me-2"></i>Add Single Mapping</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="addMappingForm">
+                    <div class="modal-body">
+                        <div class="row g-3">
                             <div class="col-6">
                                 <label class="form-label">Device Serial</label>
                                 <input type="text" name="device_serial" class="form-control form-control-sm" placeholder="Device Serial" required>
@@ -209,44 +221,57 @@
                                 <select name="person_id" id="personSelect" style="width:100%;" required></select>
                             </div>
                         </div>
-                        <button class="btn btn-success btn-sm mt-3" type="submit"><i class="ri-add-line me-1"></i>Add Mapping</button>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer" style="border-top:1px solid var(--bill-border);">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-success btn-sm" type="submit"><i class="ri-add-line me-1"></i>Add Mapping</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    {{-- Bulk manual assign (multi-select) --}}
-    <div class="bill-card mb-4">
-        <div class="card-header"><i class="ri-group-line me-2"></i>Bulk Manual Assign (Multiple People)</div>
-        <div class="card-body">
-            <p class="text-muted" style="font-size:12px;">
-                Pick several students or staff and a starting PIN — each person gets the next available PIN in sequence on this device. Useful for onboarding a class or department at once without a CSV.
-            </p>
-            <form id="bulkManualForm">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Device Serial</label>
-                        <input type="text" name="device_serial" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Starting PIN</label>
-                        <input type="number" name="starting_pin" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Person Type</label>
-                        <select id="bulkPersonType" class="form-select form-select-sm">
-                            <option value="student">Student</option>
-                            <option value="staff">Staff</option>
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label">People</label>
+    {{-- ── Bulk Assign (modal, multi-select, room to breathe) ────────────── --}}
+    <div class="modal fade" id="bulkAssignModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content" style="border-radius:var(--bill-radius);border:none;">
+                <div class="modal-header" style="border-bottom:1px solid var(--bill-border);">
+                    <h5 class="modal-title fw-bold" style="color:var(--bill-primary);"><i class="ri-group-line me-2"></i>Bulk Assign — Multiple People</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="bulkManualForm">
+                    <div class="modal-body">
+                        <p class="text-muted" style="font-size:12px;">
+                            Pick as many students or staff as you like and a starting PIN — each person gets the next available PIN in sequence on this device.
+                        </p>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Device Serial</label>
+                                <input type="text" name="device_serial" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Starting PIN</label>
+                                <input type="number" name="starting_pin" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Person Type</label>
+                                <select id="bulkPersonType" class="form-select form-select-sm">
+                                    <option value="student">Student</option>
+                                    <option value="staff">Staff</option>
+                                </select>
+                            </div>
+                        </div>
+                        <label class="form-label">
+                            People <span id="selectedCount" class="badge bg-primary-subtle text-primary">0 selected</span>
+                        </label>
                         <select id="personMultiSelect" multiple style="width:100%;"></select>
                     </div>
-                </div>
-                <button class="btn btn-success btn-sm mt-3" type="submit"><i class="ri-add-line me-1"></i>Assign All</button>
-            </form>
+                    <div class="modal-footer" style="border-top:1px solid var(--bill-border);">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-success btn-sm" type="submit"><i class="ri-add-line me-1"></i>Assign All</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -351,6 +376,8 @@ function personTemplate(item) {
 }
 
 // ── AJAX-backed, paginated, live-search person picker ───────────────────────
+// dropdownParent is required inside a Bootstrap modal — otherwise the
+// results panel renders behind the modal's own stacking context.
 function initPersonSelect(selectEl, typeEl, opts = {}) {
     $(selectEl).select2({
         ajax: {
@@ -367,6 +394,7 @@ function initPersonSelect(selectEl, typeEl, opts = {}) {
         templateResult: personTemplate,
         templateSelection: item => item.text || item.id,
         width: '100%',
+        dropdownParent: opts.dropdownParent ? $(opts.dropdownParent) : $(document.body),
     });
     // Whenever the type toggle changes, clear the current selection so we
     // don't accidentally submit a student id while "Staff" is selected.
@@ -374,8 +402,18 @@ function initPersonSelect(selectEl, typeEl, opts = {}) {
 }
 
 $(document).ready(() => {
-    initPersonSelect('#personSelect', '#personType');
-    initPersonSelect('#personMultiSelect', '#bulkPersonType', { multiple: true });
+    initPersonSelect('#personSelect', '#personType', { dropdownParent: '#addMappingModal' });
+    initPersonSelect('#personMultiSelect', '#bulkPersonType', { multiple: true, dropdownParent: '#bulkAssignModal' });
+
+    $('#personMultiSelect').on('change', function () {
+        const n = ($(this).val() || []).length;
+        $('#selectedCount').text(n + ' selected');
+    });
+
+    // Select2 needs a nudge to size correctly the first time a hidden
+    // modal becomes visible.
+    $('#addMappingModal').on('shown.bs.modal', () => $('#personSelect').select2('open') && $('#personSelect').select2('close'));
+    $('#bulkAssignModal').on('shown.bs.modal', () => $('#personMultiSelect').select2('open') && $('#personMultiSelect').select2('close'));
 });
 
 // ── Single mapping form ──────────────────────────────────────────────────
@@ -411,6 +449,18 @@ document.getElementById('bulkManualForm').addEventListener('submit', function (e
         alert(d.message);
         if (d.success) location.reload();
     });
+});
+
+// Reset each form + its Select2 state whenever its modal is closed, so a
+// cancelled entry doesn't linger the next time it's opened.
+document.getElementById('addMappingModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('addMappingForm').reset();
+    $('#personSelect').val(null).trigger('change');
+});
+document.getElementById('bulkAssignModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('bulkManualForm').reset();
+    $('#personMultiSelect').val(null).trigger('change');
+    $('#selectedCount').text('0 selected');
 });
 
 // ── CSV import form ───────────────────────────────────────────────────────

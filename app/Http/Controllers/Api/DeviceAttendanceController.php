@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Ingestion endpoint the Python agent (running on the school LAN) POSTs to.
+ * Ingestion endpoint the Python agent (running on the school LAN) POSTs to,
+ * in batches of ~25 records at a time.
  * Protected by the 'device.auth' middleware (X-Device-Key header).
  *
  * Route (routes/api.php):
@@ -20,7 +21,7 @@ class DeviceAttendanceController extends Controller
     public function store(Request $request, DeviceAttendanceProcessor $processor)
     {
         $validated = $request->validate([
-            'device_serial'      => 'required|string',
+            'device_serial'       => 'required|string',
             'logs'                => 'required|array|min:1',
             'logs.*.pin'          => 'required|integer',
             'logs.*.timestamp'    => 'required|date',
