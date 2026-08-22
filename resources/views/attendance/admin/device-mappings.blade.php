@@ -205,12 +205,13 @@
     max-width:80px;
 }
 
-/* Form controls */
+/* Form controls - labels above inputs */
 .dm-form-label {
     font-size:13px;
     font-weight:600;
     color:#374151;
     margin-bottom:6px;
+    display:block;
 }
 .dm-form-control, .dm-form-select {
     border:1.5px solid var(--dm-border);
@@ -218,6 +219,7 @@
     font-size:13px;
     padding:9px 14px;
     transition:border .15s;
+    width:100%;
 }
 .dm-form-control:focus, .dm-form-select:focus {
     border-color:var(--dm-accent);
@@ -364,7 +366,7 @@
         <div class="card-header"><i class="ri-file-upload-line me-2"></i>Bulk Import (CSV)</div>
         <div class="card-body">
             <p class="text-muted" style="font-size:12px;">Columns: <code>device_pin, person_type, identifier</code>. identifier = admission number for students, staff ID for staff.</p>
-            <form id="bulkImportForm" enctype="multipart/form-data" class="row g-2 align-items-end">
+            <form id="bulkImportForm" enctype="multipart/form-data" class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label class="dm-form-label">Device Serial</label>
                     <input type="text" name="device_serial" class="dm-form-control dm-form-control-sm" placeholder="e.g. PKD7022588362" required>
@@ -445,7 +447,7 @@
 
                     {{-- STEP 1: filter + checkbox table --}}
                     <div id="dmStep1">
-                        <div class="row g-2 mb-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="dm-form-label">Type</label>
                                 <select id="dmType" class="dm-form-select dm-form-select-sm">
@@ -511,7 +513,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row g-2">
+                        <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="dm-form-label">Device Serial</label>
                                 <input type="text" id="dmDeviceSerial" class="dm-form-control dm-form-control-sm" placeholder="e.g. PKD7022588362" required>

@@ -70,6 +70,28 @@
     overflow:hidden;
 }
 
+/* Form controls - labels above */
+.du-form-label {
+    font-size:12px;
+    font-weight:600;
+    color:#374151;
+    margin-bottom:4px;
+    display:block;
+}
+.du-form-control {
+    border:1.5px solid var(--du-border);
+    border-radius:8px;
+    font-size:13px;
+    padding:6px 10px;
+    transition:border .15s;
+    width:100%;
+}
+.du-form-control:focus {
+    border-color:var(--du-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
+    outline:none;
+}
+
 /* Select2 overrides */
 .select2-container .select2-selection--single {
     border:1.5px solid var(--du-border) !important;
@@ -140,16 +162,24 @@
                     <td><span class="badge bg-warning-subtle text-warning">{{ $row->punch_count }}</span></td>
                     <td>{{ \Carbon\Carbon::parse($row->last_seen)->diffForHumans() }}</td>
                     <td>
-                        <div class="d-flex gap-2">
-                            <select class="form-select form-select-sm assign-type" style="width:100px;">
-                                <option value="student">Student</option>
-                                <option value="staff">Staff</option>
-                            </select>
-                            <select class="assign-person" style="width:240px;"></select>
-                            <button class="btn btn-primary btn-sm assign-btn"
-                                    data-device="{{ $row->device_serial }}" data-pin="{{ $row->device_pin }}">
-                                <i class="ri-check-line me-1"></i>Assign
-                            </button>
+                        <div class="row g-2">
+                            <div class="col-3">
+                                <label class="du-form-label">Type</label>
+                                <select class="du-form-control assign-type" style="width:100%;">
+                                    <option value="student">Student</option>
+                                    <option value="staff">Staff</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="du-form-label">Person</label>
+                                <select class="assign-person" style="width:100%;"></select>
+                            </div>
+                            <div class="col-3" style="display:flex;align-items:flex-end;">
+                                <button class="btn btn-primary btn-sm assign-btn w-100"
+                                        data-device="{{ $row->device_serial }}" data-pin="{{ $row->device_pin }}">
+                                    <i class="ri-check-line me-1"></i>Assign
+                                </button>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -273,7 +303,7 @@ document.querySelectorAll('tbody tr').forEach(row => {
         placeholder: 'Search…',
         templateResult: personTemplate,
         templateSelection: item => item.text || item.id,
-        width: '240px',
+        width: '100%',
         dropdownAutoWidth: true,
     });
 
