@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             // Device authentication
-            'device.auth' => \App\Http\Middleware\DeviceAuth::class,
+            'device.auth' => \App\Http\Middleware\DeviceAuthMiddleware::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

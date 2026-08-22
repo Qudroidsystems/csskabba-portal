@@ -1,35 +1,135 @@
 {{-- resources/views/attendance/admin/device-unmapped.blade.php --}}
 @extends('layouts.master')
 @section('content')
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet">
 <style>
+/* ── Consistent with device-mappings ── */
+:root {
+    --du-primary: #1e3a5f;
+    --du-accent:  #2563eb;
+    --du-success: #16a34a;
+    --du-danger:  #dc2626;
+    --du-border:  #e2e8f0;
+    --du-radius:  10px;
+    --du-shadow:  0 1px 4px rgba(0,0,0,.08);
+}
+
+.du-hero {
+    background: linear-gradient(135deg, var(--du-primary) 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--du-radius);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.du-hero::before {
+    content:'';
+    position:absolute;
+    top:-60px;
+    right:-60px;
+    width:220px;
+    height:220px;
+    background:rgba(255,255,255,.06);
+    border-radius:50%;
+}
+.du-hero h4 {
+    color:#fff;
+    font-weight:700;
+    margin:0;
+    position:relative;
+}
+.du-hero p {
+    color:rgba(255,255,255,.75);
+    margin:0;
+    font-size:13px;
+    position:relative;
+}
+
+.du-table th {
+    background:var(--du-primary);
+    color:#fff;
+    padding:12px 16px;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+}
+.du-table td {
+    padding:12px 16px;
+    vertical-align:middle;
+    border-bottom:1px solid var(--du-border);
+    font-size:13px;
+}
+.du-table tr:hover td {
+    background:#eff6ff;
+}
+
+.du-card {
+    background:#fff;
+    border:1px solid var(--du-border);
+    border-radius:var(--du-radius);
+    box-shadow:var(--du-shadow);
+    overflow:hidden;
+}
+
+/* Select2 overrides */
 .select2-container .select2-selection--single {
-    border:1.5px solid #e2e8f0 !important; border-radius:7px !important; min-height:31px;
+    border:1.5px solid var(--du-border) !important;
+    border-radius:8px !important;
+    min-height:36px;
 }
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height:29px; font-size:12px;
+    line-height:34px;
+    font-size:13px;
 }
-.select2-container--default .select2-selection--single .select2-selection__arrow { height:29px; }
-.swal2-container { z-index: 2000 !important; }
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height:34px;
+}
+.swal2-container {
+    z-index: 2000 !important;
+}
+
+.du-toast {
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    z-index:99999;
+    padding:14px 20px;
+    border-radius:10px;
+    background:#fff;
+    box-shadow:0 4px 20px rgba(0,0,0,.12);
+    font-weight:600;
+    font-size:13px;
+    animation: duToastIn .3s ease;
+}
+@keyframes duToastIn {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+}
 </style>
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
 
-    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-        <h4 class="mb-sm-0">Unmapped Device PINs</h4>
-        <a href="{{ route('device-mappings.index') }}" class="btn btn-outline-secondary btn-sm">Back to Mappings</a>
+    {{-- ══ HERO ═══════════════════════════════════════════════════════════ --}}
+    <div class="du-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h4><i class="ri-alert-line me-2"></i>Unmapped Device PINs</h4>
+            <p>{{ $unmapped->count() }} PINs found without an assigned person</p>
+        </div>
+        <a href="{{ route('device-mappings.index') }}" class="btn btn-light btn-sm">
+            <i class="ri-arrow-left-line me-1"></i>Back to Mappings
+        </a>
     </div>
 
-    <div class="card shadow-sm mt-3">
-        <div class="card-body p-0">
-            <table class="table table-nowrap align-middle mb-0">
-                <thead style="background:#1e3a5f;">
+    {{-- ══ TABLE ════════════════════════════════════════════════════════ --}}
+    <div class="du-card">
+        <div class="table-responsive">
+            <table class="table du-table mb-0">
+                <thead>
                     <tr>
-                        <th class="text-white">Device</th>
-                        <th class="text-white">PIN</th>
-                        <th class="text-white">Punches</th>
-                        <th class="text-white">Last Seen</th>
-                        <th class="text-white">Assign To</th>
+                        <th>Device</th>
+                        <th>PIN</th>
+                        <th>Punches</th>
+                        <th>Last Seen</th>
+                        <th style="min-width:380px;">Assign To</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,7 +139,7 @@
                     <td class="fw-semibold">{{ $row->device_pin }}</td>
                     <td><span class="badge bg-warning-subtle text-warning">{{ $row->punch_count }}</span></td>
                     <td>{{ \Carbon\Carbon::parse($row->last_seen)->diffForHumans() }}</td>
-                    <td style="min-width:380px;">
+                    <td>
                         <div class="d-flex gap-2">
                             <select class="form-select form-select-sm assign-type" style="width:100px;">
                                 <option value="student">Student</option>
@@ -48,13 +148,16 @@
                             <select class="assign-person" style="width:240px;"></select>
                             <button class="btn btn-primary btn-sm assign-btn"
                                     data-device="{{ $row->device_serial }}" data-pin="{{ $row->device_pin }}">
-                                Assign
+                                <i class="ri-check-line me-1"></i>Assign
                             </button>
                         </div>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="5" class="text-center py-4 text-muted">No unmapped PINs. All punches are matched.</td></tr>
+                <tr><td colspan="5" class="text-center py-5 text-muted">
+                    <i class="ri-check-double-line ri-2x d-block mb-2 text-success"></i>
+                    All PINs are mapped!
+                </td></tr>
                 @endforelse
                 </tbody>
             </table>
@@ -67,11 +170,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-function csrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
+function csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
 
-// Same JSON-safety helper as device-mappings.blade.php: forces Laravel to
-// respond with JSON (422/401/419) instead of an HTML redirect on failure,
-// which is what caused "Unexpected token '<'" parse errors on this page too.
+function duToast(msg, type = 'success') {
+    const colors = { success:'#16a34a', danger:'#dc2626', warning:'#d97706', info:'#2563eb' };
+    const id = 'du_toast_' + Date.now();
+    document.body.insertAdjacentHTML('beforeend',
+        `<div id="${id}" class="du-toast" style="background:${colors[type] || colors.success};color:#fff;min-width:220px;border-radius:10px;padding:14px 20px;box-shadow:0 4px 20px rgba(0,0,0,.12);font-weight:600;font-size:13px;animation:duToastIn .3s ease;">
+            ${msg}
+            <button onclick="document.getElementById('${id}').remove()" style="background:none;border:none;color:#fff;float:right;margin-left:12px;font-size:16px;cursor:pointer;">×</button>
+        </div>`
+    );
+    setTimeout(() => document.getElementById(id)?.remove(), 4500);
+}
+
 function jsonHeaders(extra = {}) {
     return Object.assign({
         'Accept': 'application/json',
@@ -81,10 +195,6 @@ function jsonHeaders(extra = {}) {
 }
 
 async function handleJsonResponse(r) {
-    // fetch() silently follows 302/303 redirects and, per spec, converts
-    // the method to GET when it does. If that happens here it means the
-    // session/CSRF token went stale mid-request — the original POST never
-    // actually executed, so don't try to interpret whatever body came back.
     if (r.redirected) {
         await Swal.fire({
             icon: 'warning',
@@ -128,18 +238,6 @@ async function handleJsonResponse(r) {
     return r.json();
 }
 
-function toast(icon, title) {
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon,
-        title,
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-    });
-}
-
 function personTemplate(item) {
     if (!item.id) return item.text;
     const photo = item.photo
@@ -157,10 +255,6 @@ function personTemplate(item) {
     `);
 }
 
-// Each row gets its own independent Select2 instance, scoped to that row's
-// type toggle — this is what fixes both the "only 20 ever load" issue
-// (now a live AJAX search) and the "staff shows nothing" issue (each
-// instance re-queries fresh instead of relying on a stale one-time fetch).
 document.querySelectorAll('tbody tr').forEach(row => {
     const typeSel   = row.querySelector('.assign-type');
     const personSel = row.querySelector('.assign-person');
@@ -214,7 +308,7 @@ document.querySelectorAll('.assign-btn').forEach(btn => {
         .then(handleJsonResponse)
         .then(d => {
             if (d.success) {
-                toast('success', d.message || 'Assigned.');
+                duToast(d.message || 'Assigned.', 'success');
                 row.remove();
             } else {
                 Swal.fire({ icon: 'error', title: 'Failed', text: d.message, confirmButtonColor: '#1e3a5f' });

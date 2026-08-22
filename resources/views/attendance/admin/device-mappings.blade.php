@@ -2,136 +2,312 @@
 @extends('layouts.master')
 
 @section('content')
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet">
 <style>
+/* ── Complete redesign with subjectscoresheet patterns ── */
 :root {
-    --bill-primary: #1e3a5f;
-    --bill-accent:  #2563eb;
-    --bill-success: #16a34a;
-    --bill-warning: #d97706;
-    --bill-danger:  #dc2626;
-    --bill-muted:   #6b7280;
-    --bill-border:  #e2e8f0;
-    --bill-bg:      #f8fafc;
-    --bill-radius:  12px;
-    --bill-shadow:  0 2px 8px rgba(0,0,0,.08);
+    --dm-primary: #1e3a5f;
+    --dm-accent:  #2563eb;
+    --dm-success: #16a34a;
+    --dm-warning: #d97706;
+    --dm-danger:  #dc2626;
+    --dm-muted:   #6b7280;
+    --dm-border:  #e2e8f0;
+    --dm-bg:      #f8fafc;
+    --dm-radius:  10px;
+    --dm-shadow:  0 1px 4px rgba(0,0,0,.08);
 }
 
-.bill-hero {
-    background: linear-gradient(135deg, var(--bill-primary) 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--bill-radius);
-    padding: 28px 32px; margin-bottom: 24px;
-    position: relative; overflow: hidden;
+/* Hero - same as scoresheet */
+.dm-hero {
+    background: linear-gradient(135deg, var(--dm-primary) 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--dm-radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
 }
-.bill-hero::before {
-    content:''; position:absolute; top:-60px; right:-60px;
-    width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
+.dm-hero::before {
+    content:'';
+    position:absolute;
+    top:-60px;
+    right:-60px;
+    width:220px;
+    height:220px;
+    background:rgba(255,255,255,.06);
+    border-radius:50%;
 }
-.bill-hero::after {
-    content:''; position:absolute; bottom:-80px; left:-30px;
-    width:260px; height:260px; background:rgba(255,255,255,.03); border-radius:50%;
+.dm-hero::after {
+    content:'';
+    position:absolute;
+    bottom:-80px;
+    left:-30px;
+    width:260px;
+    height:260px;
+    background:rgba(255,255,255,.03);
+    border-radius:50%;
 }
-.bill-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
-.bill-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
-.bill-hero .btn-light { position:relative; }
+.dm-hero h1 {
+    font-size:22px;
+    font-weight:700;
+    color:#fff;
+    margin:0 0 6px;
+    position:relative;
+}
+.dm-hero p {
+    font-size:13px;
+    color:rgba(255,255,255,.75);
+    margin:0;
+    position:relative;
+}
+.dm-hero .btn-light {
+    position:relative;
+}
 
-.stat-card {
-    background:#fff; border:1px solid var(--bill-border);
-    border-radius:var(--bill-radius); padding:18px 20px;
+/* Stat cards - matching scoresheet exactly */
+.dm-stat-card {
+    background:#fff;
+    border:1px solid var(--dm-border);
+    border-radius:var(--dm-radius);
+    padding:18px 20px;
     transition:transform .15s, box-shadow .15s;
 }
-.stat-card:hover { transform:translateY(-2px); box-shadow:var(--bill-shadow); }
-.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--bill-primary); }
-.stat-card .stat-label { font-size:12px; color:var(--bill-muted); margin-top:4px; }
-.stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
-
-.filter-card {
-    background:#fff; border:1px solid var(--bill-border);
-    border-radius:var(--bill-radius); padding:20px 24px;
-    margin-bottom:24px; box-shadow:var(--bill-shadow);
+.dm-stat-card:hover {
+    transform:translateY(-2px);
+    box-shadow:var(--dm-shadow);
+}
+.dm-stat-card .stat-value {
+    font-size:28px;
+    font-weight:700;
+    color:var(--dm-primary);
+}
+.dm-stat-card .stat-label {
+    font-size:12px;
+    color:var(--dm-muted);
+    margin-top:4px;
+}
+.dm-stat-card .stat-icon {
+    font-size:32px;
+    opacity:.12;
+    float:right;
+    margin-top:-8px;
 }
 
-.bill-table th {
-    background:var(--bill-primary); color:#fff;
-    padding:12px 16px; font-weight:600; font-size:13px;
-    white-space:nowrap; border:none;
-}
-.bill-table td {
-    padding:12px 16px; vertical-align:middle;
-    border-bottom:1px solid var(--bill-border); font-size:13px;
-}
-.bill-table tr:hover td { background:#eff6ff; }
-
-.avatar-sm {
-    width:32px; height:32px; border-radius:50%; object-fit:cover;
-}
-.avatar-fallback {
-    width:32px; height:32px; border-radius:50%; background:#e2e8f0;
-    display:inline-flex; align-items:center; justify-content:center;
-    font-size:11px; color:#64748b; font-weight:600;
+/* Filter card */
+.dm-filter-card {
+    background:#fff;
+    border:1px solid var(--dm-border);
+    border-radius:var(--dm-radius);
+    padding:20px 24px;
+    margin-bottom:24px;
+    box-shadow:var(--dm-shadow);
 }
 
-.form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
-.form-control, .form-select {
-    border:1.5px solid var(--bill-border); border-radius:8px;
-    font-size:13px; padding:9px 14px; transition:border .15s;
+/* Bill table - consistent with scoresheet */
+.dm-table th {
+    background:var(--dm-primary);
+    color:#fff;
+    padding:12px 16px;
+    font-weight:600;
+    font-size:13px;
+    white-space:nowrap;
+    border:none;
 }
-.form-control:focus, .form-select:focus {
-    border-color:var(--bill-accent);
+.dm-table td {
+    padding:12px 16px;
+    vertical-align:middle;
+    border-bottom:1px solid var(--dm-border);
+    font-size:13px;
+}
+.dm-table tr:hover td {
+    background:#eff6ff;
+}
+
+.dm-card {
+    background:#fff;
+    border:1px solid var(--dm-border);
+    border-radius:var(--dm-radius);
+    box-shadow:var(--dm-shadow);
+    overflow:hidden;
+}
+.dm-card .card-header {
+    background:#fff;
+    border-bottom:1px solid var(--dm-border);
+    padding:16px 20px;
+    font-weight:700;
+    font-size:14px;
+    color:var(--dm-primary);
+}
+.dm-card .card-body {
+    padding:20px;
+}
+
+/* Avatar styles */
+.dm-avatar {
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid var(--dm-border);
+}
+.dm-avatar-fallback {
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:#e2e8f0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    color:#64748b;
+    font-weight:600;
+}
+
+/* Step bar - matching mass student modal */
+.dm-step {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    font-weight:600;
+    color:#94a3b8;
+}
+.dm-step.active {
+    color:var(--dm-accent);
+}
+.dm-step.done {
+    color:var(--dm-success);
+}
+.dm-step-circle {
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:#e2e8f0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:700;
+}
+.dm-step.active .dm-step-circle {
+    background:var(--dm-accent);
+    color:#fff;
+    box-shadow:0 0 0 3px rgba(37,99,235,.2);
+}
+.dm-step.done .dm-step-circle {
+    background:var(--dm-success);
+    color:#fff;
+}
+.dm-step-line {
+    flex:1;
+    height:2px;
+    background:#e2e8f0;
+    margin:0 12px;
+    max-width:80px;
+}
+
+/* Form controls */
+.dm-form-label {
+    font-size:13px;
+    font-weight:600;
+    color:#374151;
+    margin-bottom:6px;
+}
+.dm-form-control, .dm-form-select {
+    border:1.5px solid var(--dm-border);
+    border-radius:8px;
+    font-size:13px;
+    padding:9px 14px;
+    transition:border .15s;
+}
+.dm-form-control:focus, .dm-form-select:focus {
+    border-color:var(--dm-accent);
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
     outline:none;
 }
-.form-control-sm, .form-select-sm { padding:6px 10px; border-radius:7px; }
-
-.bill-card {
-    background:#fff; border:1px solid var(--bill-border);
-    border-radius:var(--bill-radius); box-shadow:var(--bill-shadow);
-    overflow:hidden;
+.dm-form-control-sm, .dm-form-select-sm {
+    padding:6px 10px;
+    border-radius:7px;
 }
-.bill-card .card-header {
-    background:#fff; border-bottom:1px solid var(--bill-border);
-    padding:16px 20px; font-weight:700; font-size:14px; color:var(--bill-primary);
+
+/* Toast animations - matching scoresheet */
+.dm-toast {
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    z-index:99999;
+    padding:14px 20px;
+    border-radius:10px;
+    background:#fff;
+    box-shadow:0 4px 20px rgba(0,0,0,.12);
+    font-weight:600;
+    font-size:13px;
+    animation: dmToastIn .3s ease;
 }
-.bill-card .card-body { padding:20px; }
+@keyframes dmToastIn {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+}
 
-#importResult .text-success { color: var(--bill-success) !important; font-weight:600; }
-#importResult .text-danger  { color: var(--bill-danger) !important; font-weight:600; }
+/* Import result */
+.dm-import-result .text-success {
+    color: var(--dm-success) !important;
+    font-weight:600;
+}
+.dm-import-result .text-danger {
+    color: var(--dm-danger) !important;
+    font-weight:600;
+}
 
-/* Select2 tweaks to match the bill-* form controls */
+/* Select2 overrides */
 .select2-container .select2-selection--single,
 .select2-container .select2-selection--multiple {
-    border:1.5px solid var(--bill-border) !important;
+    border:1.5px solid var(--dm-border) !important;
     border-radius:8px !important;
     min-height:36px;
 }
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height:34px; font-size:13px;
+    line-height:34px;
+    font-size:13px;
 }
-.select2-container--default .select2-selection--single .select2-selection__arrow { height:34px; }
-.select2-dropdown { border-color: var(--bill-border) !important; }
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height:34px;
+}
+.select2-dropdown {
+    border-color: var(--dm-border) !important;
+}
+.select2-container--open {
+    z-index: 1090;
+}
 
-/* Bulk Assign step bar (mirrors the Mass Student modal pattern) */
-.dm-step { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:#94a3b8; }
-.dm-step.active { color:var(--bill-accent); }
-.dm-step.done   { color:var(--bill-success); }
-.dm-step-circle { width:28px; height:28px; border-radius:50%; background:#e2e8f0; color:#94a3b8; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
-.dm-step.active .dm-step-circle { background:var(--bill-accent); color:#fff; box-shadow:0 0 0 3px rgba(37,99,235,.2); }
-.dm-step.done   .dm-step-circle { background:var(--bill-success); color:#fff; }
-.dm-step-line { flex:1; height:2px; background:#e2e8f0; margin:0 12px; max-width:80px; }
-/* Select2 is parented to <body> (see JS) to escape the modal's clipping —
-   this keeps its dropdown panel visually above the modal itself. */
-.select2-container--open { z-index: 1090; }
+/* SweetAlert2 above modals */
+.swal2-container {
+    z-index: 2000 !important;
+}
 
-/* Keep SweetAlert2 above Bootstrap modals (modal z-index is 1055/1090 here) */
-.swal2-container { z-index: 2000 !important; }
+/* Responsive */
+@media (max-width: 768px) {
+    .dm-hero {
+        padding:20px;
+    }
+    .dm-hero h1 {
+        font-size:18px;
+    }
+    .dm-stat-card .stat-value {
+        font-size:22px;
+    }
+    .dm-table th, .dm-table td {
+        padding:8px 10px;
+        font-size:12px;
+    }
+}
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- Hero --}}
-    <div class="bill-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
+    {{-- ══ HERO ═══════════════════════════════════════════════════════════ --}}
+    <div class="dm-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
             <h1><i class="ri-fingerprint-line me-2"></i>Device PIN Mappings</h1>
             <p>Link biometric device PINs to students and staff, import in bulk, or resolve unmapped punches.</p>
@@ -151,31 +327,31 @@
         </div>
     </div>
 
-    {{-- Stat cards --}}
+    {{-- ══ STAT CARDS ════════════════════════════════════════════════════ --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="stat-card">
+            <div class="dm-stat-card">
                 <div class="stat-icon"><i class="ri-links-line"></i></div>
                 <div class="stat-value">{{ $mappings->total() }}</div>
                 <div class="stat-label">Total Mappings</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card">
+            <div class="dm-stat-card">
                 <div class="stat-icon"><i class="ri-graduation-cap-line"></i></div>
                 <div class="stat-value text-primary">{{ $studentCount }}</div>
                 <div class="stat-label">Student Mappings</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card">
+            <div class="dm-stat-card">
                 <div class="stat-icon"><i class="ri-briefcase-line"></i></div>
                 <div class="stat-value text-info">{{ $staffCount }}</div>
                 <div class="stat-label">Staff Mappings</div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stat-card">
+            <div class="dm-stat-card">
                 <div class="stat-icon"><i class="ri-alert-line"></i></div>
                 <div class="stat-value text-warning">{{ $unmappedCount }}</div>
                 <div class="stat-label">Unmapped PINs</div>
@@ -183,61 +359,61 @@
         </div>
     </div>
 
-    {{-- Bulk import (kept inline — single form, no benefit from a modal) --}}
-    <div class="bill-card mb-4">
+    {{-- ══ BULK IMPORT ══════════════════════════════════════════════════ --}}
+    <div class="dm-card mb-4">
         <div class="card-header"><i class="ri-file-upload-line me-2"></i>Bulk Import (CSV)</div>
         <div class="card-body">
             <p class="text-muted" style="font-size:12px;">Columns: <code>device_pin, person_type, identifier</code>. identifier = admission number for students, staff ID for staff.</p>
             <form id="bulkImportForm" enctype="multipart/form-data" class="row g-2 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label">Device Serial</label>
-                    <input type="text" name="device_serial" class="form-control form-control-sm" placeholder="e.g. PKD7022588362" required>
+                    <label class="dm-form-label">Device Serial</label>
+                    <input type="text" name="device_serial" class="dm-form-control dm-form-control-sm" placeholder="e.g. PKD7022588362" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">CSV File</label>
-                    <input type="file" name="csv_file" class="form-control form-control-sm" accept=".csv" required>
+                    <label class="dm-form-label">CSV File</label>
+                    <input type="file" name="csv_file" class="dm-form-control dm-form-control-sm" accept=".csv" required>
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-primary btn-sm w-100" type="submit"><i class="ri-upload-2-line me-1"></i>Import</button>
                 </div>
             </form>
-            <div id="importResult" class="mt-2" style="font-size:12px;"></div>
+            <div id="importResult" class="dm-import-result mt-2" style="font-size:12px;"></div>
         </div>
     </div>
 
     {{-- ── Add Single Mapping (modal) ─────────────────────────────────── --}}
     <div class="modal fade" id="addMappingModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content" style="border-radius:var(--bill-radius);border:none;">
-                <div class="modal-header" style="border-bottom:1px solid var(--bill-border);">
-                    <h5 class="modal-title fw-bold" style="color:var(--bill-primary);"><i class="ri-user-add-line me-2"></i>Add Single Mapping</h5>
+            <div class="modal-content" style="border-radius:var(--dm-radius);border:none;">
+                <div class="modal-header" style="border-bottom:1px solid var(--dm-border);">
+                    <h5 class="modal-title fw-bold" style="color:var(--dm-primary);"><i class="ri-user-add-line me-2"></i>Add Single Mapping</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="addMappingForm">
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-6">
-                                <label class="form-label">Device Serial</label>
-                                <input type="text" name="device_serial" class="form-control form-control-sm" placeholder="Device Serial" required>
+                                <label class="dm-form-label">Device Serial</label>
+                                <input type="text" name="device_serial" class="dm-form-control dm-form-control-sm" placeholder="Device Serial" required>
                             </div>
                             <div class="col-6">
-                                <label class="form-label">Device PIN</label>
-                                <input type="number" name="device_pin" class="form-control form-control-sm" placeholder="Device PIN" required>
+                                <label class="dm-form-label">Device PIN</label>
+                                <input type="number" name="device_pin" class="dm-form-control dm-form-control-sm" placeholder="Device PIN" required>
                             </div>
                             <div class="col-6">
-                                <label class="form-label">Person Type</label>
-                                <select name="person_type" id="personType" class="form-select form-select-sm" required>
+                                <label class="dm-form-label">Person Type</label>
+                                <select name="person_type" id="personType" class="dm-form-select dm-form-select-sm" required>
                                     <option value="student">Student</option>
                                     <option value="staff">Staff</option>
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="form-label">Person</label>
+                                <label class="dm-form-label">Person</label>
                                 <select name="person_id" id="personSelect" style="width:100%;" required></select>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer" style="border-top:1px solid var(--bill-border);">
+                    <div class="modal-footer" style="border-top:1px solid var(--dm-border);">
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                         <button class="btn btn-success btn-sm" type="submit"><i class="ri-add-line me-1"></i>Add Mapping</button>
                     </div>
@@ -259,7 +435,7 @@
                 </div>
 
                 {{-- Step bar --}}
-                <div style="display:flex;align-items:center;justify-content:center;padding:14px 24px;background:#f1f5f9;border-bottom:1px solid var(--bill-border);">
+                <div style="display:flex;align-items:center;justify-content:center;padding:14px 24px;background:#f1f5f9;border-bottom:1px solid var(--dm-border);">
                     <div class="dm-step active" id="dmStepBar1"><div class="dm-step-circle">1</div><span>Select People</span></div>
                     <div class="dm-step-line"></div>
                     <div class="dm-step" id="dmStepBar2"><div class="dm-step-circle">2</div><span>Assign PINs</span></div>
@@ -271,19 +447,19 @@
                     <div id="dmStep1">
                         <div class="row g-2 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label">Type</label>
-                                <select id="dmType" class="form-select form-select-sm">
+                                <label class="dm-form-label">Type</label>
+                                <select id="dmType" class="dm-form-select dm-form-select-sm">
                                     <option value="student">Student</option>
                                     <option value="staff">Staff</option>
                                 </select>
                             </div>
                             <div class="col-md-8">
-                                <label class="form-label">Search</label>
-                                <input type="text" id="dmSearch" class="form-control form-control-sm" placeholder="Filter by name, ID, department, class…">
+                                <label class="dm-form-label">Search</label>
+                                <input type="text" id="dmSearch" class="dm-form-control dm-form-control-sm" placeholder="Filter by name, ID, department, class…">
                             </div>
                         </div>
 
-                        <div class="bill-card mb-3">
+                        <div class="dm-card mb-3">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <span><i class="ri-list-check-2 me-2"></i>People</span>
                                 <div class="d-flex align-items-center gap-2">
@@ -294,7 +470,7 @@
                             </div>
                             <div class="card-body p-0">
                                 <div style="max-height:340px;overflow-y:auto;">
-                                    <table class="table bill-table mb-0">
+                                    <table class="table dm-table mb-0">
                                         <thead>
                                             <tr>
                                                 <th width="36"><input type="checkbox" id="dmCheckAll"></th>
@@ -322,13 +498,13 @@
 
                     {{-- STEP 2: device + starting pin + confirm --}}
                     <div id="dmStep2" style="display:none;">
-                        <div class="bill-card mb-3">
+                        <div class="dm-card mb-3">
                             <div class="card-header">
                                 <i class="ri-check-double-line me-2"></i>Selected — <span id="dmStep2Count" class="fw-bold">0</span> people
                             </div>
                             <div class="card-body p-0">
                                 <div style="max-height:220px;overflow-y:auto;">
-                                    <table class="table bill-table mb-0" id="dmSummaryTable">
+                                    <table class="table dm-table mb-0" id="dmSummaryTable">
                                         <thead><tr><th></th><th>Name</th><th>ID / Department</th><th>Will get PIN</th></tr></thead>
                                         <tbody id="dmSummaryBody"></tbody>
                                     </table>
@@ -337,12 +513,12 @@
                         </div>
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label">Device Serial</label>
-                                <input type="text" id="dmDeviceSerial" class="form-control form-control-sm" placeholder="e.g. PKD7022588362" required>
+                                <label class="dm-form-label">Device Serial</label>
+                                <input type="text" id="dmDeviceSerial" class="dm-form-control dm-form-control-sm" placeholder="e.g. PKD7022588362" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Starting PIN</label>
-                                <input type="number" id="dmStartingPin" class="form-control form-control-sm" required>
+                                <label class="dm-form-label">Starting PIN</label>
+                                <input type="number" id="dmStartingPin" class="dm-form-control dm-form-control-sm" required>
                             </div>
                         </div>
                         <div class="d-flex justify-content-between mt-3">
@@ -360,20 +536,20 @@
         </div>
     </div>
 
-    {{-- Filter --}}
-    <div class="filter-card">
+    {{-- ══ FILTER ════════════════════════════════════════════════════════ --}}
+    <div class="dm-filter-card">
         <form method="GET" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label"><i class="ri-filter-3-line me-1"></i>Type</label>
-                <select name="type" class="form-select" onchange="this.form.submit()">
+                <label class="dm-form-label"><i class="ri-filter-3-line me-1"></i>Type</label>
+                <select name="type" class="dm-form-select" onchange="this.form.submit()">
                     <option value="">All types</option>
                     <option value="student" {{ request('type')==='student'?'selected':'' }}>Students</option>
                     <option value="staff" {{ request('type')==='staff'?'selected':'' }}>Staff</option>
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label"><i class="ri-search-line me-1"></i>Search</label>
-                <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Search PIN…">
+                <label class="dm-form-label"><i class="ri-search-line me-1"></i>Search</label>
+                <input type="text" name="q" value="{{ request('q') }}" class="dm-form-control" placeholder="Search PIN…">
             </div>
             <div class="col-md-2">
                 <button class="btn btn-primary w-100" type="submit"><i class="ri-search-line me-1"></i>Search</button>
@@ -381,15 +557,15 @@
         </form>
     </div>
 
-    {{-- Table --}}
-    <div class="bill-card">
+    {{-- ══ TABLE ════════════════════════════════════════════════════════ --}}
+    <div class="dm-card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span><i class="ri-list-check-2 me-2"></i>Mapped Users</span>
             <span class="badge bg-primary">{{ $mappings->total() }}</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table bill-table w-100 mb-0">
+                <table class="table dm-table w-100 mb-0">
                     <thead>
                         <tr>
                             <th></th>
@@ -406,9 +582,9 @@
                         <tr>
                             <td>
                                 @if($m->photo_url)
-                                    <img src="{{ $m->photo_url }}" class="avatar-sm" alt="">
+                                    <img src="{{ $m->photo_url }}" class="dm-avatar" alt="">
                                 @else
-                                    <div class="avatar-fallback">{{ strtoupper(substr($m->display_name, 0, 2)) }}</div>
+                                    <div class="dm-avatar-fallback">{{ strtoupper(substr($m->display_name, 0, 2)) }}</div>
                                 @endif
                             </td>
                             <td class="text-muted" style="font-size:12px;">{{ $m->device_serial }}</td>
@@ -442,13 +618,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-function csrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
+function csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
+function dmToast(msg, type = 'success') {
+    const colors = { success:'#16a34a', danger:'#dc2626', warning:'#d97706', info:'#2563eb' };
+    const id = 'dm_toast_' + Date.now();
+    document.body.insertAdjacentHTML('beforeend',
+        `<div id="${id}" class="dm-toast" style="background:${colors[type] || colors.success};color:#fff;min-width:220px;border-radius:10px;padding:14px 20px;box-shadow:0 4px 20px rgba(0,0,0,.12);font-weight:600;font-size:13px;animation:dmToastIn .3s ease;">
+            ${msg}
+            <button onclick="document.getElementById('${id}').remove()" style="background:none;border:none;color:#fff;float:right;margin-left:12px;font-size:16px;cursor:pointer;">×</button>
+        </div>`
+    );
+    setTimeout(() => document.getElementById(id)?.remove(), 4500);
+}
 
 // ── Shared fetch helper ─────────────────────────────────────────────────
-// Always sends Accept: application/json so Laravel returns JSON (422 on
-// validation failure, etc.) instead of redirecting to an HTML page when
-// validation fails or the session/CSRF token has expired — that redirect
-// was the root cause of "Unexpected token '<'" JSON parse errors.
 function jsonHeaders(extra = {}) {
     return Object.assign({
         'Accept': 'application/json',
@@ -458,12 +644,6 @@ function jsonHeaders(extra = {}) {
 }
 
 async function handleJsonResponse(r) {
-    // fetch() silently follows 302/303 redirects and, per spec, converts
-    // the method to GET when it does. If that happens here it means the
-    // session/CSRF token went stale mid-request (or, previously, a route
-    // ambiguity made the redirect land on a URI with no GET handler) —
-    // either way the original POST never actually executed, so don't try
-    // to interpret whatever body came back.
     if (r.redirected) {
         await Swal.fire({
             icon: 'warning',
@@ -507,18 +687,6 @@ async function handleJsonResponse(r) {
     return r.json();
 }
 
-function toast(icon, title) {
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon,
-        title,
-        showConfirmButton: false,
-        timer: 2200,
-        timerProgressBar: true,
-    });
-}
-
 // ── Rich Select2 template: avatar + name + subtitle/meta line ──────────────
 function personTemplate(item) {
     if (!item.id) return item.text;
@@ -537,11 +705,7 @@ function personTemplate(item) {
     `);
 }
 
-// ── AJAX-backed live-search person picker (single "Add Mapping" modal only
-// — Bulk Assign now uses the checkbox-table approach below instead). --
-// dropdownParent deliberately targets document.body, not the modal itself —
-// Select2's results panel gets clipped/hidden if it's parented inside a
-// Bootstrap modal.
+// ── AJAX-backed live-search person picker ──────────────────────────────
 function initPersonSelect(selectEl, typeEl, opts = {}) {
     $(selectEl).select2({
         ajax: {
@@ -550,7 +714,7 @@ function initPersonSelect(selectEl, typeEl, opts = {}) {
             delay: 300,
             data: params => ({ q: params.term || '', type: $(typeEl).val(), page: params.page || 1 }),
             processResults: data => ({ results: data.results, pagination: data.pagination }),
-            cache: false, // avoid any stale-result-across-type-switch edge case
+            cache: false,
         },
         minimumInputLength: 0,
         placeholder: 'Search…',
@@ -567,11 +731,9 @@ $(document).ready(() => {
 });
 
 // ── Bulk Assign: fetch-once, filter client-side, checkbox table ────────────
-// Mirrors the Mass Student Account Management modal pattern already in this
-// codebase — idKey() exists specifically because that modal already hit
-// (and documented) a real bug where strict `===` comparisons between string
-// and number ids silently broke checkbox state. Same guard applied here.
-function idKey(v) { return v === null || v === undefined ? '' : String(v); }
+function idKey(v) {
+    return v === null || v === undefined ? '' : String(v);
+}
 
 let dmAllPeople = [];
 let dmSelected = [];
@@ -584,16 +746,16 @@ function dmLoadPeople() {
     fetch(`{{ route('device-mappings.search') }}?type=${type}&q=&page=1&picker=1`, {
         headers: jsonHeaders(),
     })
-        .then(handleJsonResponse)
-        .then(data => {
-            dmAllPeople = data.results || [];
-            const keptIds = new Set(dmSelected.map(p => idKey(p.id)));
-            dmSelected = dmAllPeople.filter(p => keptIds.has(idKey(p.id)));
-            dmRenderTable(dmAllPeople);
-        })
-        .catch(() => {
-            listEl.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-danger">Failed to load. Try again.</td></tr>';
-        });
+    .then(handleJsonResponse)
+    .then(data => {
+        dmAllPeople = data.results || [];
+        const keptIds = new Set(dmSelected.map(p => idKey(p.id)));
+        dmSelected = dmAllPeople.filter(p => keptIds.has(idKey(p.id)));
+        dmRenderTable(dmAllPeople);
+    })
+    .catch(() => {
+        listEl.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-danger">Failed to load. Try again.</td></tr>';
+    });
 }
 
 function dmRenderTable(people) {
@@ -711,11 +873,6 @@ document.getElementById('dmSubmit').addEventListener('click', function () {
         Swal.fire({ icon: 'warning', title: 'No one selected', text: 'Go back and select at least one person.', confirmButtonColor: '#2563eb' });
         return;
     }
-    // Guard against the known staffbioinfo edge case: a staff user whose
-    // employment-details row hasn't been backfilled yet has id === null in
-    // the picker payload (see search() in the controller), so it never
-    // gets rendered as a checkbox row in the first place — but double check
-    // here too in case dmSelected was populated from a stale fetch.
     const invalid = dmSelected.filter(p => p.id === null || p.id === undefined);
     if (invalid.length) {
         Swal.fire({
@@ -782,7 +939,7 @@ document.getElementById('addMappingForm').addEventListener('submit', function (e
     .then(handleJsonResponse)
     .then(d => {
         if (d.success) {
-            toast('success', d.message || 'Mapping saved.');
+            dmToast(d.message || 'Mapping saved.', 'success');
             setTimeout(() => location.reload(), 900);
         } else {
             Swal.fire({ icon: 'error', title: 'Failed', text: d.message, confirmButtonColor: '#2563eb' });
@@ -791,9 +948,6 @@ document.getElementById('addMappingForm').addEventListener('submit', function (e
     .catch(e => console.error(e));
 });
 
-// Reset the single-add form + its Select2 state whenever its modal closes,
-// so a cancelled entry doesn't linger next time it's opened. (Bulk Assign
-// resets itself via dmResetModal() on show.bs.modal, above.)
 document.getElementById('addMappingModal').addEventListener('hidden.bs.modal', function () {
     document.getElementById('addMappingForm').reset();
     $('#personSelect').val(null).trigger('change');
@@ -815,7 +969,7 @@ document.getElementById('bulkImportForm').addEventListener('submit', function (e
         resultEl.innerHTML = `<span class="text-${d.success?'success':'danger'}">${d.message}</span>`;
         if (d.errors && d.errors.length) resultEl.innerHTML += '<br>' + d.errors.join('<br>');
         if (d.success) {
-            toast('success', d.message);
+            dmToast(d.message, 'success');
             setTimeout(() => location.reload(), 1500);
         }
     })
@@ -843,7 +997,7 @@ function deleteMapping(id) {
         .then(handleJsonResponse)
         .then(d => {
             if (d.success) {
-                toast('success', d.message || 'Mapping removed.');
+                dmToast(d.message || 'Mapping removed.', 'success');
                 setTimeout(() => location.reload(), 700);
             } else {
                 Swal.fire({ icon: 'error', title: 'Failed', text: d.message, confirmButtonColor: '#2563eb' });

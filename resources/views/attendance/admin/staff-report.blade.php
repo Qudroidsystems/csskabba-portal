@@ -1,24 +1,152 @@
+{{-- resources/views/attendance/staff/staff-attendance-detail.blade.php --}}
 @extends('layouts.master')
 @section('content')
+<style>
+:root {
+    --sad-primary: #1e3a5f;
+    --sad-accent:  #2563eb;
+    --sad-success: #16a34a;
+    --sad-warning: #d97706;
+    --sad-danger:  #dc2626;
+    --sad-muted:   #6b7280;
+    --sad-border:  #e2e8f0;
+    --sad-radius:  10px;
+    --sad-shadow:  0 1px 4px rgba(0,0,0,.08);
+}
+
+.sad-hero {
+    background: linear-gradient(135deg, var(--sad-primary) 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--sad-radius);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.sad-hero::before {
+    content:'';
+    position:absolute;
+    top:-60px;
+    right:-60px;
+    width:220px;
+    height:220px;
+    background:rgba(255,255,255,.06);
+    border-radius:50%;
+}
+.sad-hero h4 {
+    color:#fff;
+    font-weight:700;
+    margin:0;
+    position:relative;
+}
+.sad-hero p {
+    color:rgba(255,255,255,.75);
+    margin:0;
+    font-size:13px;
+    position:relative;
+}
+
+.sad-stat-card {
+    background:#fff;
+    border:1px solid var(--sad-border);
+    border-radius:var(--sad-radius);
+    padding:14px 16px;
+    text-align:center;
+    transition:transform .15s, box-shadow .15s;
+}
+.sad-stat-card:hover {
+    transform:translateY(-2px);
+    box-shadow:var(--sad-shadow);
+}
+.sad-stat-card .stat-value {
+    font-size:20px;
+    font-weight:700;
+}
+.sad-stat-card .stat-label {
+    font-size:11px;
+    color:var(--sad-muted);
+    margin-top:2px;
+}
+
+.sad-card {
+    background:#fff;
+    border:1px solid var(--sad-border);
+    border-radius:var(--sad-radius);
+    box-shadow:var(--sad-shadow);
+    overflow:hidden;
+}
+.sad-card .card-header {
+    background:#fff;
+    border-bottom:1px solid var(--sad-border);
+    padding:16px 20px;
+    font-weight:700;
+    font-size:14px;
+    color:var(--sad-primary);
+}
+
+.sad-table th {
+    background:var(--sad-primary);
+    color:#fff;
+    padding:12px 16px;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+}
+.sad-table td {
+    padding:12px 16px;
+    vertical-align:middle;
+    border-bottom:1px solid var(--sad-border);
+    font-size:13px;
+}
+.sad-table tr:hover td {
+    background:#eff6ff;
+}
+
+.sad-form-control {
+    border:1.5px solid var(--sad-border);
+    border-radius:8px;
+    font-size:13px;
+    padding:9px 14px;
+    transition:border .15s;
+}
+.sad-form-control:focus {
+    border-color:var(--sad-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
+    outline:none;
+}
+.sad-form-control-sm {
+    padding:6px 10px;
+    border-radius:7px;
+}
+</style>
+
 <div class="main-content"><div class="page-content"><div class="container-fluid">
 
-    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-        <h4 class="mb-sm-0">Staff Attendance – {{ $staff->full_name }}</h4>
-        <a href="{{ route('staff-attendance.index') }}" class="btn btn-outline-secondary btn-sm">
+    {{-- ══ HERO ═══════════════════════════════════════════════════════════ --}}
+    <div class="sad-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h4><i class="ri-user-line me-2"></i>Staff Attendance – {{ $staff->full_name }}</h4>
+            <p>{{ $staff->employmentid }} · {{ $staff->department ?? '—' }}</p>
+        </div>
+        <a href="{{ route('staff-attendance.index') }}" class="btn btn-light btn-sm">
             <i class="ri-arrow-left-line me-1"></i>Back to Report
         </a>
     </div>
 
-    <div class="row g-3 mt-1 mb-3">
+    {{-- ══ STATS + FILTER ═══════════════════════════════════════════════ --}}
+    <div class="row g-3 mb-3">
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm mb-0" style="border-left:4px solid #2563eb !important;">
+            <div class="sad-card">
                 <div class="card-body py-3">
-                    <h5 class="fw-bold mb-1">{{ $staff->full_name }}</h5>
-                    <div class="text-muted mb-2" style="font-size:13px;">{{ $staff->employmentid }} · {{ $staff->department ?? '—' }}</div>
                     <form method="GET" class="d-flex gap-2 align-items-end">
-                        <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control form-control-sm" style="width:150px;">
-                        <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control form-control-sm" style="width:150px;">
-                        <button class="btn btn-primary btn-sm">Filter</button>
+                        <div>
+                            <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">From</label>
+                            <input type="date" name="date_from" value="{{ $dateFrom }}" class="sad-form-control sad-form-control-sm" style="width:150px;">
+                        </div>
+                        <div>
+                            <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">To</label>
+                            <input type="date" name="date_to" value="{{ $dateTo }}" class="sad-form-control sad-form-control-sm" style="width:150px;">
+                        </div>
+                        <button class="btn btn-primary btn-sm"><i class="ri-search-line me-1"></i>Filter</button>
                     </form>
                 </div>
             </div>
@@ -32,9 +160,9 @@
                     ['Absent', $absent, 'danger'],
                 ] as [$label, $val, $color])
                 <div class="col-3">
-                    <div class="card border text-center mb-0 py-2">
-                        <div class="fw-bold fs-5 text-{{ $color }}">{{ $val }}</div>
-                        <div class="text-muted" style="font-size:11px;">{{ $label }}</div>
+                    <div class="sad-stat-card">
+                        <div class="stat-value text-{{ $color }}">{{ $val }}</div>
+                        <div class="stat-label">{{ $label }}</div>
                     </div>
                 </div>
                 @endforeach
@@ -42,20 +170,21 @@
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header d-flex align-items-center py-3">
+    {{-- ══ DAILY LOG TABLE ══════════════════════════════════════════════ --}}
+    <div class="sad-card">
+        <div class="card-header d-flex align-items-center">
             <h5 class="card-title mb-0 flex-grow-1"><i class="ri-calendar-line me-2 text-primary"></i>Daily Log</h5>
             <span class="fw-bold text-{{ $pct >= 80 ? 'success' : ($pct >= 60 ? 'warning' : 'danger') }}">{{ $pct }}% attendance</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-nowrap align-middle mb-0">
-                    <thead style="background:#1e3a5f;">
+                <table class="table sad-table mb-0">
+                    <thead>
                         <tr>
-                            <th class="text-white">Date</th>
-                            <th class="text-white">Status</th>
-                            <th class="text-white">Time In</th>
-                            <th class="text-white">Time Out</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -71,7 +200,9 @@
                             <td class="text-muted">{{ $day['time_out'] ?? '—' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="text-center py-4 text-muted">No working days in this range.</td></tr>
+                        <tr><td colspan="4" class="text-center py-5 text-muted">
+                            <i class="ri-inbox-line ri-2x d-block mb-2"></i>No working days in this range.
+                        </td></tr>
                     @endforelse
                     </tbody>
                 </table>
