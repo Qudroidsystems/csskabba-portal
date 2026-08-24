@@ -103,20 +103,6 @@
     background:#eff6ff;
 }
 
-.sar-avatar {
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-size:13px;
-    font-weight:700;
-    color:#fff;
-    border:2px solid var(--sar-border);
-    flex-shrink:0;
-}
-
 .sar-form-label {
     font-size:13px;
     font-weight:600;
@@ -177,6 +163,8 @@
     border-radius:8px;
     padding:12px 14px;
     margin-top:10px;
+    max-height:160px;
+    overflow-y:auto;
 }
 .sar-exclude-panel.open { display:block; }
 .sar-exclude-day {
@@ -186,9 +174,9 @@
     background:#fff;
     border:1px solid var(--sar-border);
     border-radius:20px;
-    padding:5px 12px;
+    padding:4px 10px;
     margin:3px 4px 3px 0;
-    font-size:12px;
+    font-size:11.5px;
     cursor:pointer;
     user-select:none;
 }
@@ -197,14 +185,30 @@
 
 /* ── Chart panel ── */
 .sar-chart-panel { padding:16px 20px 20px; }
-</style>
 
-@php
-    $sarWeekdays = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
-    $sarCheckedWeekdays = collect(request('excluded_weekdays', []))->map(fn($d) => (int) $d)->all();
-    $sarHasExcludedWeekdays = count($sarCheckedWeekdays) > 0;
-    $sarAvatarColors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a','#30cfd0'];
-@endphp
+/* ── Avatar, matching the Users blade treatment ── */
+.sar-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid var(--sar-border);
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+/* ── Weekday exclusion chips ── */
+.sar-weekday-row { display:flex; gap:6px; flex-wrap:wrap; }
+.sar-weekday-chip {
+    display:inline-flex; align-items:center; gap:5px;
+    background:#fff; border:1px solid var(--sar-border);
+    border-radius:20px; padding:5px 12px;
+    font-size:11.5px; cursor:pointer; user-select:none;
+}
+.sar-weekday-chip input { accent-color:#dc2626; }
+.sar-weekday-chip.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
+</style>
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
 
@@ -220,7 +224,19 @@
                 <i class="ri-settings-3-line me-1"></i>Lateness Settings
             </a>
             @endcan
-            <a href="{{ route('staff-attendance.export') }}?date_from={{ $dateFrom }}&date_to={{ $dateTo }}{{ request('excluded_weekdays') ? '&' . http_build_query(['excluded_weekdays' => request('excluded_weekdays')]) : '' }}"
+            @php
+                // Carries every active filter (date range, excluded weekdays, ad-hoc
+                // excluded dates) straight through to the export — nothing to keep
+                // in sync by hand if another filter gets added later.
+                $exportParams = array_filter([
+                    'date_from'                 => $dateFrom,
+                    'date_to'                   => $dateTo,
+                    'excluded_dates'             => request('excluded_dates'),
+                    'excluded_weekdays'          => request('excluded_weekdays'),
+                    'weekday_filter_submitted'   => request('weekday_filter_submitted'),
+                ], fn($v) => $v !== null && $v !== '' && $v !== []);
+            @endphp
+            <a href="{{ route('staff-attendance.export') }}?{{ http_build_query($exportParams) }}"
                class="btn btn-light btn-sm">
                 <i class="ri-file-excel-2-line me-1"></i>Export Excel
             </a>
@@ -232,6 +248,7 @@
     <div class="sar-card mb-3">
         <div class="card-body py-3">
             <form method="GET" class="d-flex align-items-end gap-3 flex-wrap" id="reportFilterForm">
+                <input type="hidden" name="weekday_filter_submitted" value="1">
                 <div>
                     <label class="sar-form-label mb-1" style="font-size:11px;text-transform:uppercase;">From</label>
                     <input type="date" name="date_from" id="dateFromInput" value="{{ $dateFrom }}" class="sar-form-control sar-form-control-sm" style="width:160px;">
@@ -240,9 +257,26 @@
                     <label class="sar-form-label mb-1" style="font-size:11px;text-transform:uppercase;">To</label>
                     <input type="date" name="date_to" id="dateToInput" value="{{ $dateTo }}" class="sar-form-control sar-form-control-sm" style="width:160px;">
                 </div>
+                <div>
+                    <label class="sar-form-label mb-1" style="font-size:11px;text-transform:uppercase;">Exclude Weekdays</label>
+                    @php
+                        $weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                        $excludedWeekdaysSet = collect($excludedWeekdays ?? [])->map(fn($d) => (int) $d);
+                    @endphp
+                    <div class="sar-weekday-row">
+                        @foreach($weekdayLabels as $dayNum => $dayLabel)
+                        <label class="sar-weekday-chip {{ $excludedWeekdaysSet->contains($dayNum) ? 'checked' : '' }}">
+                            <input type="checkbox" name="excluded_weekdays[]" value="{{ $dayNum }}"
+                                   {{ $excludedWeekdaysSet->contains($dayNum) ? 'checked' : '' }}
+                                   onchange="this.closest('label').classList.toggle('checked', this.checked)">
+                            {{ $dayLabel }}
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
                 <button class="btn btn-primary btn-sm"><i class="ri-search-line me-1"></i>Filter</button>
                 <button type="button" class="btn btn-outline-danger btn-sm" onclick="toggleExcludePanel()">
-                    <i class="ri-calendar-close-line me-1"></i>Exclude Days
+                    <i class="ri-calendar-close-line me-1"></i>Exclude Specific Days
                 </button>
                 <div class="ms-auto d-flex gap-4">
                     <div class="text-center">
@@ -255,24 +289,15 @@
                     </div>
                 </div>
 
-                {{-- Exclude-days panel: tick a weekday and every occurrence of it in
-                     the selected range is left out of working days, attendance
-                     counts, and the export — e.g. tick "Monday" to drop every
-                     Monday. Saturday/Sunday are ordinary working days unless
-                     ticked here; nothing is excluded by default. Request-scoped
-                     only — nothing here is persisted, unlike device outages below. --}}
+                {{-- Exclude-days panel: ticked dates ride along as excluded_dates[] on the
+                     same GET request. Your controller's working-day / per-staff calculation
+                     needs to subtract these — same idea as the outage dates below, just
+                     scoped to this one report view instead of being saved permanently. --}}
                 <div class="sar-exclude-panel w-100" id="excludePanel">
                     <div class="mb-2" style="font-size:11.5px;color:var(--sar-muted);">
-                        Tick a weekday to leave every occurrence of it out of the calculation for this range.
+                        Tick any specific dates in this range to leave out of the calculation (e.g. a one-off holiday). For recurring days like every Saturday, use "Exclude Weekdays" above instead.
                     </div>
-                    <div id="excludeDayList">
-                        @foreach($sarWeekdays as $iso => $label)
-                        <label class="sar-exclude-day {{ in_array($iso, $sarCheckedWeekdays) ? 'checked' : '' }}">
-                            <input type="checkbox" name="excluded_weekdays[]" value="{{ $iso }}" {{ in_array($iso, $sarCheckedWeekdays) ? 'checked' : '' }}>
-                            {{ $label }}
-                        </label>
-                        @endforeach
-                    </div>
+                    <div id="excludeDayList"></div>
                 </div>
             </form>
         </div>
@@ -404,7 +429,6 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th width="46"></th>
                             <th>Staff</th>
                             <th>Department</th>
                             <th class="text-center">Present</th>
@@ -416,23 +440,28 @@
                         </tr>
                     </thead>
                     <tbody id="rows">
+                    @php $avatarColors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a','#30cfd0']; @endphp
                     @forelse($rows as $i => $r)
                         @php
                             $col = $r->attendance_percentage >= 80 ? 'success' : ($r->attendance_percentage >= 60 ? 'warning' : 'danger');
-                            $sarInitials = collect(explode(' ', trim($r->full_name)))->map(fn($p) => strtoupper(substr($p, 0, 1)))->take(2)->implode('');
-                            $sarColorA = $sarAvatarColors[$i % count($sarAvatarColors)];
-                            $sarColorB = $sarAvatarColors[($i + 2) % count($sarAvatarColors)];
+                            $initials = strtoupper(substr($r->full_name,0,1) . (strpos($r->full_name,' ')!==false ? substr($r->full_name, strpos($r->full_name,' ')+1, 1) : ''));
+                            $avatarFrom = $avatarColors[$i % count($avatarColors)];
+                            $avatarTo   = $avatarColors[($i + 2) % count($avatarColors)];
                         @endphp
                         <tr data-name="{{ strtolower($r->full_name . ' ' . $r->employmentid) }}">
                             <td class="text-muted">{{ $i+1 }}</td>
                             <td>
-                                <div class="sar-avatar" style="background:linear-gradient(135deg,{{ $sarColorA }} 0%,{{ $sarColorB }} 100%)">
-                                    {{ $sarInitials ?: 'S' }}
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($r->avatar_url)
+                                    <img src="{{ $r->avatar_url }}" class="sar-avatar" alt="{{ $r->full_name }}">
+                                    @else
+                                    <div class="sar-avatar" style="background:linear-gradient(135deg,{{ $avatarFrom }} 0%,{{ $avatarTo }} 100%)">{{ $initials ?: 'S' }}</div>
+                                    @endif
+                                    <div>
+                                        <div class="fw-semibold" style="font-size:13px;">{{ $r->full_name }}</div>
+                                        <div class="text-muted" style="font-size:11px;">{{ $r->employmentid }}</div>
+                                    </div>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="fw-semibold" style="font-size:13px;">{{ $r->full_name }}</div>
-                                <div class="text-muted" style="font-size:11px;">{{ $r->employmentid }}</div>
                             </td>
                             <td class="text-muted" style="font-size:12px;">{{ $r->department ?? '—' }}</td>
                             <td class="text-center"><span class="badge bg-success-subtle text-success">{{ $r->days_present }}</span></td>
@@ -448,14 +477,23 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="{{ route('staff-attendance.report', $r->staff_id) }}?date_from={{ $dateFrom }}&date_to={{ $dateTo }}"
+                                @php
+                                    $detailParams = array_filter([
+                                        'date_from'                 => $dateFrom,
+                                        'date_to'                   => $dateTo,
+                                        'excluded_dates'             => request('excluded_dates'),
+                                        'excluded_weekdays'          => request('excluded_weekdays'),
+                                        'weekday_filter_submitted'   => request('weekday_filter_submitted'),
+                                    ], fn($v) => $v !== null && $v !== '' && $v !== []);
+                                @endphp
+                                <a href="{{ route('staff-attendance.report', $r->staff_id) }}?{{ http_build_query($detailParams) }}"
                                    class="btn btn-outline-primary btn-sm" style="font-size:11px;">
                                     Details <i class="ri-arrow-right-line ms-1"></i>
                                 </a>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="10" class="text-center py-5 text-muted">
+                        <tr><td colspan="9" class="text-center py-5 text-muted">
                             <i class="ri-inbox-line ri-2x d-block mb-2"></i>No staff records found.
                         </td></tr>
                     @endforelse
@@ -542,21 +580,70 @@ function removeOutage(id) {
 }
 
 /* ── Exclude-days panel ──
-   Static Mon–Sun checkboxes submit natively as excluded_weekdays[] with
-   the rest of the filter form — no per-date list to build anymore. */
-function toggleExcludePanel() {
-    document.getElementById('excludePanel').classList.toggle('open');
+   Builds a checkbox per date in the currently selected range. Checked
+   dates are appended to the filter form as excluded_dates[] hidden inputs
+   right before submit. Already-checked dates from the URL (e.g. after a
+   filter round-trip) are restored on load. */
+const alreadyExcluded = new Set(@json(request('excluded_dates', [])));
+
+function buildExcludeList() {
+    const from = document.getElementById('dateFromInput').value;
+    const to   = document.getElementById('dateToInput').value;
+    const list = document.getElementById('excludeDayList');
+    list.innerHTML = '';
+
+    if (!from || !to) return;
+
+    let cur = new Date(from + 'T00:00:00');
+    const end = new Date(to + 'T00:00:00');
+
+    // Cap at 62 days so this stays a checklist, not a wall of text, for
+    // very wide ranges.
+    let guard = 0;
+    while (cur <= end && guard < 62) {
+        const iso = cur.toISOString().slice(0, 10);
+        const label = cur.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
+        const checked = alreadyExcluded.has(iso);
+
+        const wrap = document.createElement('label');
+        wrap.className = 'sar-exclude-day' + (checked ? ' checked' : '');
+        wrap.innerHTML = `<input type="checkbox" value="${iso}" ${checked ? 'checked' : ''}> ${label}`;
+        wrap.querySelector('input').addEventListener('change', function() {
+            wrap.classList.toggle('checked', this.checked);
+        });
+
+        list.appendChild(wrap);
+        cur.setDate(cur.getDate() + 1);
+        guard++;
+    }
 }
 
-document.querySelectorAll('#excludeDayList input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', function() {
-        this.closest('.sar-exclude-day').classList.toggle('checked', this.checked);
+function toggleExcludePanel() {
+    const panel = document.getElementById('excludePanel');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) buildExcludeList();
+}
+
+document.getElementById('dateFromInput').addEventListener('change', buildExcludeList);
+document.getElementById('dateToInput').addEventListener('change', buildExcludeList);
+
+document.getElementById('reportFilterForm').addEventListener('submit', function() {
+    // Strip any stale hidden inputs from a previous submit, then add one
+    // per currently-checked exclude-day box.
+    this.querySelectorAll('input[name="excluded_dates[]"]').forEach(el => el.remove());
+    document.querySelectorAll('#excludeDayList input:checked').forEach(cb => {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'excluded_dates[]';
+        hidden.value = cb.value;
+        this.appendChild(hidden);
     });
 });
 
-@if($sarHasExcludedWeekdays)
-document.getElementById('excludePanel').classList.add('open');
-@endif
+if (alreadyExcluded.size) {
+    document.getElementById('excludePanel').classList.add('open');
+    buildExcludeList();
+}
 
 /* ── Optional charts (only run if the controller passed the data) ── */
 @if(isset($dailyTrend) && count($dailyTrend))

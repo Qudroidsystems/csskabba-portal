@@ -46,21 +46,15 @@
     font-size:13px;
     position:relative;
 }
-
-.sad-avatar {
-    width:44px;
-    height:44px;
-    border-radius:50%;
+.sad-hero-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-size:15px;
-    font-weight:700;
-    color:#fff;
-    border:2px solid rgba(255,255,255,.4);
-    flex-shrink:0;
-    position:relative;
+    border: 2px solid rgba(255,255,255,.4);
+    flex-shrink: 0;
+    object-fit: cover;
 }
 
 .sad-stat-card {
@@ -135,17 +129,30 @@
     padding:6px 10px;
     border-radius:7px;
 }
+.sad-weekday-row { display:flex; gap:6px; flex-wrap:wrap; }
+.sad-weekday-chip {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#fff; border:1px solid var(--sad-border);
+    border-radius:20px; padding:4px 10px;
+    font-size:11px; cursor:pointer; user-select:none;
+}
+.sad-weekday-chip input { accent-color:#dc2626; }
+.sad-weekday-chip.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
 </style>
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
 
     {{-- ══ HERO ═══════════════════════════════════════════════════════════ --}}
     <div class="sad-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
+        @php
+            $initials = strtoupper(substr($staff->full_name,0,1) . (strpos($staff->full_name,' ')!==false ? substr($staff->full_name, strpos($staff->full_name,' ')+1, 1) : ''));
+        @endphp
         <div class="d-flex align-items-center gap-3">
-            @php
-                $sadInitials = collect(explode(' ', trim($staff->full_name)))->map(fn($p) => strtoupper(substr($p, 0, 1)))->take(2)->implode('');
-            @endphp
-            <div class="sad-avatar">{{ $sadInitials ?: 'S' }}</div>
+            @if($staff->user?->avatar_url)
+            <img src="{{ $staff->user->avatar_url }}" class="sad-hero-avatar" alt="{{ $staff->full_name }}">
+            @else
+            <div class="sad-hero-avatar">{{ $initials ?: 'S' }}</div>
+            @endif
             <div>
                 <h4><i class="ri-user-line me-2"></i>Staff Attendance – {{ $staff->full_name }}</h4>
                 <p>{{ $staff->employmentid }} · {{ $staff->department ?? '—' }}</p>
@@ -161,7 +168,8 @@
         <div class="col-lg-7">
             <div class="sad-card">
                 <div class="card-body py-3">
-                    <form method="GET" class="d-flex gap-2 align-items-end">
+                    <form method="GET" class="d-flex gap-2 align-items-end flex-wrap">
+                        <input type="hidden" name="weekday_filter_submitted" value="1">
                         <div>
                             <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">From</label>
                             <input type="date" name="date_from" value="{{ $dateFrom }}" class="sad-form-control sad-form-control-sm" style="width:150px;">
@@ -169,6 +177,23 @@
                         <div>
                             <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">To</label>
                             <input type="date" name="date_to" value="{{ $dateTo }}" class="sad-form-control sad-form-control-sm" style="width:150px;">
+                        </div>
+                        <div>
+                            <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">Exclude Weekdays</label>
+                            @php
+                                $weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                $excludedWeekdaysSet = collect($excludedWeekdays ?? [])->map(fn($d) => (int) $d);
+                            @endphp
+                            <div class="sad-weekday-row">
+                                @foreach($weekdayLabels as $dayNum => $dayLabel)
+                                <label class="sad-weekday-chip {{ $excludedWeekdaysSet->contains($dayNum) ? 'checked' : '' }}">
+                                    <input type="checkbox" name="excluded_weekdays[]" value="{{ $dayNum }}"
+                                           {{ $excludedWeekdaysSet->contains($dayNum) ? 'checked' : '' }}
+                                           onchange="this.closest('label').classList.toggle('checked', this.checked)">
+                                    {{ $dayLabel }}
+                                </label>
+                                @endforeach
+                            </div>
                         </div>
                         <button class="btn btn-primary btn-sm"><i class="ri-search-line me-1"></i>Filter</button>
                     </form>
@@ -214,9 +239,8 @@
                     <tbody>
                     @forelse($calendar as $day)
                         @php
-                            // 'excluded' = the weekday this date falls on was ticked in the
-                            // Exclude Days panel for this report only (see
-                            // StaffAttendanceController::resolveExcludedDates).
+                            // 'excluded' = admin ticked this date in the Exclude Days panel
+                            // for this report only (see StaffAttendanceController::resolveExcludedDates).
                             // 'outage'   = a persisted DeviceOutageDate.
                             $sc = ['present'=>'success','late'=>'secondary','excused'=>'info','absent'=>'danger','outage'=>'dark','excluded'=>'warning'];
                             $c  = $sc[$day['status']] ?? 'secondary';

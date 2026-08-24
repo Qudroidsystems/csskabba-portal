@@ -17,13 +17,23 @@ use Maatwebsite\Excel\Facades\Excel;
  * DeviceAttendanceProcessor::processStaff(), plus admin management of
  * device-outage dates so outages don't get counted as mass absence.
  *
- * Also supports the report's Exclude Days panel: weekdays ticked there
- * (submitted as excluded_weekdays[] on the GET request, ISO weekday
- * numbers 1=Monday..7=Sunday) exclude every date in the selected range
- * that falls on that weekday. Unlike DeviceOutageDate, these are NOT
- * persisted — they only apply to the report being viewed right now.
- * Saturday and Sunday are ordinary working days unless the admin
- * explicitly ticks them here — nothing is excluded by default.
+ * Exclusions come from three sources, all merged into one date set for
+ * every query/count/export in this controller:
+ *
+ *   1. DeviceOutageDate  — persisted, admin-managed device downtime.
+ *   2. Weekday pattern   — excluded_weekdays[] (0=Sun..6=Sat) on the
+ *      request. Defaults to [0, 6] (Sat/Sun) when the filter form hasn't
+ *      been submitted yet, matching the old hardcoded isWeekend() behavior.
+ *      Once submitted (weekday_filter_submitted=1 is present), whatever
+ *      the admin actually ticked is used verbatim — including an empty
+ *      set, which means "don't exclude any weekday".
+ *   3. Ad-hoc dates      — excluded_dates[] on the request, from the
+ *      report's Exclude Days panel. Request-scoped, never persisted.
+ *
+ * Weekday-pattern dates are hidden from the daily calendar entirely (they
+ * never had a row before either). Outage/ad-hoc dates still render as a
+ * visible row labeled 'outage' or 'excluded' so it's clear why a specific
+ * date has no attendance data.
  */
 class StaffAttendanceController extends Controller
 {
@@ -53,7 +63,7 @@ class StaffAttendanceController extends Controller
     /**
      * Renders through the exact same buildSchoolReportData() as index(), so
      * the download can never show different numbers than what's on screen —
-     * same date range, same excluded weekdays, same query.
+     * same date range, same excluded weekdays, same excluded dates.
      */
     public function exportExcel(Request $request)
     {
@@ -76,13 +86,13 @@ class StaffAttendanceController extends Controller
     {
         [$dateFrom, $dateTo] = $this->resolveDateRange($request);
 
-        $excludedDates = $this->resolveExcludedDates($request, $dateFrom, $dateTo);
-        $workingDays   = $this->getWorkingDays($dateFrom, $dateTo, $excludedDates);
+        $excl        = $this->resolveExclusions($request, $dateFrom, $dateTo);
+        $workingDays = $this->getWorkingDays($dateFrom, $dateTo, $excl['all']);
 
         // Aggregate per staff from raw device-driven rows — no separate summary
         // table needed at this volume (~200 staff).
         $records = StaffAttendance::whereBetween('attendance_date', [$dateFrom, $dateTo])
-            ->whereNotIn('attendance_date', $excludedDates)
+            ->whereNotIn('attendance_date', $excl['all'])
             ->select('staff_id')
             ->selectRaw("COUNT(CASE WHEN status = 'present' THEN 1 END) as days_present")
             ->selectRaw("COUNT(CASE WHEN status = 'late' THEN 1 END) as days_late")
@@ -106,6 +116,7 @@ class StaffAttendanceController extends Controller
                 'full_name'             => $staff->full_name,
                 'employmentid'          => $staff->employmentid,
                 'department'            => $staff->department,
+                'avatar_url'            => $staff->user?->avatar_url,
                 'days_present'          => $present,
                 'days_late'             => $late,
                 'days_excused'          => $excused,
@@ -117,13 +128,14 @@ class StaffAttendanceController extends Controller
         $avgPct = $rows->count() > 0 ? round($rows->avg('attendance_percentage'), 1) : 0;
 
         // Only persisted device outages show in the outage-badge list —
-        // ad-hoc excluded weekdays are request-scoped and intentionally don't
-        // appear there (see resolveExcludedDates() docblock).
+        // weekday-pattern and ad-hoc excludes are request-scoped and
+        // intentionally don't appear there.
         $outages = DeviceOutageDate::whereBetween('outage_date', [$dateFrom, $dateTo])
             ->orderByDesc('outage_date')
             ->get();
 
-        return compact('rows', 'workingDays', 'avgPct', 'dateFrom', 'dateTo', 'outages');
+        return compact('rows', 'workingDays', 'avgPct', 'dateFrom', 'dateTo', 'outages')
+            + ['excludedWeekdays' => $excl['weekdays']];
     }
 
     // =========================================================================
@@ -134,16 +146,16 @@ class StaffAttendanceController extends Controller
     {
         [$dateFrom, $dateTo] = $this->resolveDateRange($request);
 
-        $staff         = Staff::with('user')->findOrFail($staffId);
-        $excludedDates = $this->resolveExcludedDates($request, $dateFrom, $dateTo);
+        $staff = Staff::with('user')->findOrFail($staffId);
+        $excl  = $this->resolveExclusions($request, $dateFrom, $dateTo);
 
         $records = StaffAttendance::where('staff_id', $staffId)
             ->whereBetween('attendance_date', [$dateFrom, $dateTo])
-            ->whereNotIn('attendance_date', $excludedDates)
+            ->whereNotIn('attendance_date', $excl['all'])
             ->orderBy('attendance_date')
             ->get();
 
-        $workingDays = $this->getWorkingDays($dateFrom, $dateTo, $excludedDates);
+        $workingDays = $this->getWorkingDays($dateFrom, $dateTo, $excl['all']);
         $present     = $records->where('status', 'present')->count();
         $late        = $records->where('status', 'late')->count();
         $excused     = $records->where('status', 'excused')->count();
@@ -151,7 +163,7 @@ class StaffAttendanceController extends Controller
         $absent      = max($workingDays - $attended, 0);
         $pct         = $workingDays > 0 ? round(($attended / $workingDays) * 100, 2) : 0;
 
-        $calendar = $this->buildCalendarWithRecords($dateFrom, $dateTo, $records, $excludedDates);
+        $calendar = $this->buildCalendarWithRecords($dateFrom, $dateTo, $records, $excl);
 
         $pagetitle = "Attendance – {$staff->full_name}";
 
@@ -159,7 +171,7 @@ class StaffAttendanceController extends Controller
             'staff', 'records', 'calendar', 'workingDays',
             'present', 'late', 'excused', 'absent', 'pct',
             'dateFrom', 'dateTo', 'pagetitle'
-        ));
+        ) + ['excludedWeekdays' => $excl['weekdays']]);
     }
 
     // =========================================================================
@@ -216,58 +228,85 @@ class StaffAttendanceController extends Controller
     }
 
     /**
-     * Reads excluded_weekdays[] from the request — ISO weekday numbers
-     * (1 = Monday ... 7 = Sunday) ticked in the report's Exclude Days
-     * panel. Invalid/out-of-range values are silently dropped; this is a
-     * convenience UI control, not a place that needs strict validation
-     * errors surfaced back to the admin.
+     * Which weekdays (0=Sun..6=Sat, matching Carbon::dayOfWeek) are excluded
+     * for this request. Defaults to [0, 6] — Sunday & Saturday — UNLESS the
+     * filter form was actually submitted (weekday_filter_submitted=1),
+     * in which case excluded_weekdays[] is used exactly as given, even if
+     * that means an empty array (admin wants every day of the week counted).
      */
-    private function resolveExcludedWeekdays(Request $request): array
+    private function resolveExcludedWeekdays(Request $request): Collection
     {
+        if (!$request->has('weekday_filter_submitted')) {
+            return collect([0, 6]);
+        }
+
         return collect($request->input('excluded_weekdays', []))
             ->map(fn($d) => (int) $d)
-            ->filter(fn($d) => $d >= 1 && $d <= 7)
+            ->filter(fn($d) => $d >= 0 && $d <= 6)
             ->unique()
-            ->values()
-            ->all();
+            ->values();
     }
 
     /**
-     * Merges persisted device outages with every date in the selected range
-     * that falls on a weekday ticked in the Exclude Days panel. A single
-     * "Monday" tick expands to every Monday between $dateFrom and $dateTo —
-     * the admin doesn't have to pick individual dates.
+     * Merges all three exclusion sources (device outages, weekday pattern,
+     * ad-hoc dates) into a single date set for query filtering / working-day
+     * counting, while also splitting out which of those dates should render
+     * as a visible calendar row ('outage' / 'excluded') versus be hidden
+     * from the calendar entirely (the weekday pattern — same as the old
+     * isWeekend() behavior, just configurable now).
+     *
+     * Returns:
+     *   'all'       — every excluded date string, for whereNotIn() / working-day counts
+     *   'visible'   — outages + ad-hoc dates, rendered as a labeled row
+     *   'hidden'    — weekday-pattern dates, never rendered as a row at all
+     *   'outages'   — persisted DeviceOutageDate rows only, to pick the row label
+     *   'weekdays'  — the resolved excluded-weekday ints, for checkbox pre-check in the view
      */
-    private function resolveExcludedDates(Request $request, string $dateFrom, string $dateTo): Collection
+    private function resolveExclusions(Request $request, string $dateFrom, string $dateTo): array
     {
         $deviceOutages    = $this->getOutageDates($dateFrom, $dateTo);
         $excludedWeekdays = $this->resolveExcludedWeekdays($request);
 
         $weekdayDates = collect();
-
-        if (!empty($excludedWeekdays)) {
+        if ($excludedWeekdays->isNotEmpty()) {
             $cursor = Carbon::parse($dateFrom);
             $end    = Carbon::parse($dateTo);
-
             while ($cursor->lte($end)) {
-                if (in_array($cursor->isoWeekday(), $excludedWeekdays, true)) {
+                if ($excludedWeekdays->contains($cursor->dayOfWeek)) {
                     $weekdayDates->push($cursor->toDateString());
                 }
                 $cursor->addDay();
             }
         }
 
-        return $deviceOutages->merge($weekdayDates)->unique()->values();
+        $adHoc = collect($request->input('excluded_dates', []))
+            ->filter()
+            ->map(function ($d) {
+                try {
+                    return Carbon::parse($d)->toDateString();
+                } catch (\Exception $e) {
+                    return null;
+                }
+            })
+            ->filter()
+            ->filter(fn($d) => $d >= $dateFrom && $d <= $dateTo);
+
+        $visible = $deviceOutages->merge($adHoc)->unique()->values();
+        $all     = $visible->merge($weekdayDates)->unique()->values();
+        $hidden  = $weekdayDates->diff($visible)->values();
+
+        return [
+            'all'      => $all,
+            'visible'  => $visible,
+            'hidden'   => $hidden,
+            'outages'  => $deviceOutages,
+            'weekdays' => $excludedWeekdays,
+        ];
     }
 
-    /**
-     * Every date in the range counts as a working day by default —
-     * including Saturday and Sunday — unless it's a persisted device
-     * outage or falls on a weekday the admin excluded for this view.
-     */
     private function getWorkingDays(string $dateFrom, string $dateTo, ?Collection $excludedDates = null): int
     {
-        $excludedDates ??= $this->getOutageDates($dateFrom, $dateTo);
+        $excludedDates ??= collect();
 
         $count   = 0;
         $current = Carbon::parse($dateFrom);
@@ -283,28 +322,31 @@ class StaffAttendanceController extends Controller
         return $count;
     }
 
-    private function buildCalendarWithRecords(string $dateFrom, string $dateTo, $records, ?Collection $excludedDates = null): array
+    private function buildCalendarWithRecords(string $dateFrom, string $dateTo, $records, array $excl): array
     {
-        $excludedDates ??= $this->getOutageDates($dateFrom, $dateTo);
-        $deviceOutages  = $this->getOutageDates($dateFrom, $dateTo); // distinguishes real outages from weekday-excludes below
-        $byDate         = $records->keyBy(fn($r) => $r->attendance_date->toDateString());
+        $byDate = $records->keyBy(fn($r) => Carbon::parse($r->attendance_date)->toDateString());
 
         $days    = [];
         $current = Carbon::parse($dateFrom);
         $end     = Carbon::parse($dateTo);
 
-        // No weekend skip here anymore — Saturday/Sunday punches (including
-        // late ones) now show up like any other day unless excluded above.
         while ($current->lte($end) && $current->lte(now())) {
             $key = $current->toDateString();
 
-            if ($excludedDates->contains($key)) {
+            // Weekday-pattern exclusion (e.g. default Sat/Sun) — never shown as a row,
+            // same as the old hardcoded isWeekend() skip.
+            if ($excl['hidden']->contains($key)) {
+                $current->addDay();
+                continue;
+            }
+
+            if ($excl['visible']->contains($key)) {
                 $days[] = [
-                    'date'   => $key,
-                    'label'  => $current->format('D, d M'),
-                    // 'outage' = flagged device downtime, 'excluded' = admin ticked
-                    // this weekday in the report's Exclude Days panel for this view only.
-                    'status'   => $deviceOutages->contains($key) ? 'outage' : 'excluded',
+                    'date'     => $key,
+                    'label'    => $current->format('D, d M'),
+                    // 'outage' = flagged device downtime, 'excluded' = admin ticked it
+                    // in the report's Exclude Days panel for this view only.
+                    'status'   => $excl['outages']->contains($key) ? 'outage' : 'excluded',
                     'time_in'  => null,
                     'time_out' => null,
                 ];
