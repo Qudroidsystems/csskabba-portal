@@ -1518,7 +1518,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     // Spotlight Search API
    Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
 
-   
+    
     Route::prefix('attendance')->group(function () {
 
         // Explicit/static routes MUST come before the resource route,
@@ -1535,12 +1535,26 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
             ->whereNumber('device_mapping'); // belt-and-suspenders: never match non-numeric segments
 
         // Device outage dates
-         Route::post('staff/outage', [StaffAttendanceController::class, 'storeOutage'])->name('staff-attendance.outage.store');
-         Route::delete('staff/outage/{id}', [StaffAttendanceController::class, 'destroyOutage'])->name('staff-attendance.outage.destroy');
-         
+        Route::post('staff/outage', [StaffAttendanceController::class, 'storeOutage'])->name('staff-attendance.outage.store');
+        Route::delete('staff/outage/{id}', [StaffAttendanceController::class, 'destroyOutage'])->name('staff-attendance.outage.destroy');
+
+        // Staff attendance lateness cutoff — same "static before wildcard" reasoning
+        // as device-mappings above; harmless here since these live under a
+        // different first segment (staff-attendance/time-settings vs
+        // staff-attendance/{staffId}), but grouped together for discoverability.
+        Route::get('staff-attendance/time-settings', [StaffAttendanceTimeSettingController::class, 'edit'])->name('staff-attendance.time-settings.edit');
+        Route::post('staff-attendance/time-settings', [StaffAttendanceTimeSettingController::class, 'update'])->name('staff-attendance.time-settings.update');
+
+        // Excel export — MUST come before staff-attendance/{staffId} below, or
+        // "export" gets swallowed as a {staffId} value (same trap the
+        // device-mappings comment above already warns about).
+        Route::get('staff-attendance/export', [StaffAttendanceController::class, 'exportExcel'])->name('staff-attendance.export');
+
         // Staff attendance reporting
         Route::get('staff-attendance', [StaffAttendanceController::class, 'index'])->name('staff-attendance.index');
-        Route::get('staff-attendance/{staffId}', [StaffAttendanceController::class, 'report'])->name('staff-attendance.report');
+        Route::get('staff-attendance/{staffId}', [StaffAttendanceController::class, 'report'])
+            ->whereNumber('staffId')
+            ->name('staff-attendance.report');
 
         // Live feed polling (used by the admin dashboard)
         Route::get('live-feed', [LiveAttendanceController::class, 'feed'])->name('attendance.live-feed');

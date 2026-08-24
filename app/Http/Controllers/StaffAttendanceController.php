@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StaffAttendanceExport;
 use App\Models\DeviceOutageDate;
 use App\Models\Staff;
 use App\Models\StaffAttendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Staff attendance is purely device-driven — there is no manual register
@@ -28,7 +30,7 @@ class StaffAttendanceController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View staff-attendance-school-report', ['only' => ['index']]);
+        $this->middleware('permission:View staff-attendance-school-report', ['only' => ['index', 'exportExcel']]);
         $this->middleware('permission:View staff-attendance-report',        ['only' => ['report']]);
         $this->middleware('permission:Create device-outages',               ['only' => ['storeOutage']]);
         $this->middleware('permission:Delete device-outages',               ['only' => ['destroyOutage']]);
@@ -39,6 +41,39 @@ class StaffAttendanceController extends Controller
     // =========================================================================
 
     public function index(Request $request)
+    {
+        $data = $this->buildSchoolReportData($request);
+
+        return view('attendance.admin.staff-school-report', $data + ['pagetitle' => 'Staff Attendance Report']);
+    }
+
+    // =========================================================================
+    // EXCEL EXPORT
+    // =========================================================================
+
+    /**
+     * Renders through the exact same buildSchoolReportData() as index(), so
+     * the download can never show different numbers than what's on screen —
+     * same date range, same excluded dates, same query.
+     */
+    public function exportExcel(Request $request)
+    {
+        $data = $this->buildSchoolReportData($request);
+
+        $filename = "staff-attendance-{$data['dateFrom']}-to-{$data['dateTo']}.xlsx";
+
+        return Excel::download(
+            new StaffAttendanceExport($data['rows'], $data['dateFrom'], $data['dateTo']),
+            $filename
+        );
+    }
+
+    /**
+     * Shared by index() and exportExcel(). Returns everything the
+     * staff-school-report view (and the export) needs, keyed to match the
+     * view's expected variable names.
+     */
+    private function buildSchoolReportData(Request $request): array
     {
         [$dateFrom, $dateTo] = $this->resolveDateRange($request);
 
@@ -82,18 +117,14 @@ class StaffAttendanceController extends Controller
 
         $avgPct = $rows->count() > 0 ? round($rows->avg('attendance_percentage'), 1) : 0;
 
-        // Only persisted device outages show in the outage-badge list below —
+        // Only persisted device outages show in the outage-badge list —
         // ad-hoc excluded_dates are request-scoped and intentionally don't
         // appear there (see resolveExcludedDates() docblock).
         $outages = DeviceOutageDate::whereBetween('outage_date', [$dateFrom, $dateTo])
             ->orderByDesc('outage_date')
             ->get();
 
-        $pagetitle = 'Staff Attendance Report';
-
-        return view('attendance.admin.staff-school-report', compact(
-            'rows', 'workingDays', 'avgPct', 'dateFrom', 'dateTo', 'outages', 'pagetitle'
-        ));
+        return compact('rows', 'workingDays', 'avgPct', 'dateFrom', 'dateTo', 'outages');
     }
 
     // =========================================================================
