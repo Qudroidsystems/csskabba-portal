@@ -103,6 +103,20 @@
     background:#eff6ff;
 }
 
+.sar-avatar {
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:700;
+    color:#fff;
+    border:2px solid var(--sar-border);
+    flex-shrink:0;
+}
+
 .sar-form-label {
     font-size:13px;
     font-weight:600;
@@ -163,8 +177,6 @@
     border-radius:8px;
     padding:12px 14px;
     margin-top:10px;
-    max-height:160px;
-    overflow-y:auto;
 }
 .sar-exclude-panel.open { display:block; }
 .sar-exclude-day {
@@ -174,9 +186,9 @@
     background:#fff;
     border:1px solid var(--sar-border);
     border-radius:20px;
-    padding:4px 10px;
+    padding:5px 12px;
     margin:3px 4px 3px 0;
-    font-size:11.5px;
+    font-size:12px;
     cursor:pointer;
     user-select:none;
 }
@@ -186,6 +198,13 @@
 /* ── Chart panel ── */
 .sar-chart-panel { padding:16px 20px 20px; }
 </style>
+
+@php
+    $sarWeekdays = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
+    $sarCheckedWeekdays = collect(request('excluded_weekdays', []))->map(fn($d) => (int) $d)->all();
+    $sarHasExcludedWeekdays = count($sarCheckedWeekdays) > 0;
+    $sarAvatarColors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a','#30cfd0'];
+@endphp
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
 
@@ -201,7 +220,7 @@
                 <i class="ri-settings-3-line me-1"></i>Lateness Settings
             </a>
             @endcan
-            <a href="{{ route('staff-attendance.export') }}?date_from={{ $dateFrom }}&date_to={{ $dateTo }}{{ request('excluded_dates') ? '&' . http_build_query(['excluded_dates' => request('excluded_dates')]) : '' }}"
+            <a href="{{ route('staff-attendance.export') }}?date_from={{ $dateFrom }}&date_to={{ $dateTo }}{{ request('excluded_weekdays') ? '&' . http_build_query(['excluded_weekdays' => request('excluded_weekdays')]) : '' }}"
                class="btn btn-light btn-sm">
                 <i class="ri-file-excel-2-line me-1"></i>Export Excel
             </a>
@@ -236,15 +255,24 @@
                     </div>
                 </div>
 
-                {{-- Exclude-days panel: ticked dates ride along as excluded_dates[] on the
-                     same GET request. Your controller's working-day / per-staff calculation
-                     needs to subtract these — same idea as the outage dates below, just
-                     scoped to this one report view instead of being saved permanently. --}}
+                {{-- Exclude-days panel: tick a weekday and every occurrence of it in
+                     the selected range is left out of working days, attendance
+                     counts, and the export — e.g. tick "Monday" to drop every
+                     Monday. Saturday/Sunday are ordinary working days unless
+                     ticked here; nothing is excluded by default. Request-scoped
+                     only — nothing here is persisted, unlike device outages below. --}}
                 <div class="sar-exclude-panel w-100" id="excludePanel">
                     <div class="mb-2" style="font-size:11.5px;color:var(--sar-muted);">
-                        Tick any dates in this range to leave out of the calculation (e.g. a one-off holiday that isn't a device outage).
+                        Tick a weekday to leave every occurrence of it out of the calculation for this range.
                     </div>
-                    <div id="excludeDayList"></div>
+                    <div id="excludeDayList">
+                        @foreach($sarWeekdays as $iso => $label)
+                        <label class="sar-exclude-day {{ in_array($iso, $sarCheckedWeekdays) ? 'checked' : '' }}">
+                            <input type="checkbox" name="excluded_weekdays[]" value="{{ $iso }}" {{ in_array($iso, $sarCheckedWeekdays) ? 'checked' : '' }}>
+                            {{ $label }}
+                        </label>
+                        @endforeach
+                    </div>
                 </div>
             </form>
         </div>
@@ -376,6 +404,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th width="46"></th>
                             <th>Staff</th>
                             <th>Department</th>
                             <th class="text-center">Present</th>
@@ -390,9 +419,17 @@
                     @forelse($rows as $i => $r)
                         @php
                             $col = $r->attendance_percentage >= 80 ? 'success' : ($r->attendance_percentage >= 60 ? 'warning' : 'danger');
+                            $sarInitials = collect(explode(' ', trim($r->full_name)))->map(fn($p) => strtoupper(substr($p, 0, 1)))->take(2)->implode('');
+                            $sarColorA = $sarAvatarColors[$i % count($sarAvatarColors)];
+                            $sarColorB = $sarAvatarColors[($i + 2) % count($sarAvatarColors)];
                         @endphp
                         <tr data-name="{{ strtolower($r->full_name . ' ' . $r->employmentid) }}">
                             <td class="text-muted">{{ $i+1 }}</td>
+                            <td>
+                                <div class="sar-avatar" style="background:linear-gradient(135deg,{{ $sarColorA }} 0%,{{ $sarColorB }} 100%)">
+                                    {{ $sarInitials ?: 'S' }}
+                                </div>
+                            </td>
                             <td>
                                 <div class="fw-semibold" style="font-size:13px;">{{ $r->full_name }}</div>
                                 <div class="text-muted" style="font-size:11px;">{{ $r->employmentid }}</div>
@@ -418,7 +455,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="text-center py-5 text-muted">
+                        <tr><td colspan="10" class="text-center py-5 text-muted">
                             <i class="ri-inbox-line ri-2x d-block mb-2"></i>No staff records found.
                         </td></tr>
                     @endforelse
@@ -505,70 +542,21 @@ function removeOutage(id) {
 }
 
 /* ── Exclude-days panel ──
-   Builds a checkbox per date in the currently selected range. Checked
-   dates are appended to the filter form as excluded_dates[] hidden inputs
-   right before submit. Already-checked dates from the URL (e.g. after a
-   filter round-trip) are restored on load. */
-const alreadyExcluded = new Set(@json(request('excluded_dates', [])));
-
-function buildExcludeList() {
-    const from = document.getElementById('dateFromInput').value;
-    const to   = document.getElementById('dateToInput').value;
-    const list = document.getElementById('excludeDayList');
-    list.innerHTML = '';
-
-    if (!from || !to) return;
-
-    let cur = new Date(from + 'T00:00:00');
-    const end = new Date(to + 'T00:00:00');
-
-    // Cap at 62 days so this stays a checklist, not a wall of text, for
-    // very wide ranges.
-    let guard = 0;
-    while (cur <= end && guard < 62) {
-        const iso = cur.toISOString().slice(0, 10);
-        const label = cur.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
-        const checked = alreadyExcluded.has(iso);
-
-        const wrap = document.createElement('label');
-        wrap.className = 'sar-exclude-day' + (checked ? ' checked' : '');
-        wrap.innerHTML = `<input type="checkbox" value="${iso}" ${checked ? 'checked' : ''}> ${label}`;
-        wrap.querySelector('input').addEventListener('change', function() {
-            wrap.classList.toggle('checked', this.checked);
-        });
-
-        list.appendChild(wrap);
-        cur.setDate(cur.getDate() + 1);
-        guard++;
-    }
-}
-
+   Static Mon–Sun checkboxes submit natively as excluded_weekdays[] with
+   the rest of the filter form — no per-date list to build anymore. */
 function toggleExcludePanel() {
-    const panel = document.getElementById('excludePanel');
-    panel.classList.toggle('open');
-    if (panel.classList.contains('open')) buildExcludeList();
+    document.getElementById('excludePanel').classList.toggle('open');
 }
 
-document.getElementById('dateFromInput').addEventListener('change', buildExcludeList);
-document.getElementById('dateToInput').addEventListener('change', buildExcludeList);
-
-document.getElementById('reportFilterForm').addEventListener('submit', function() {
-    // Strip any stale hidden inputs from a previous submit, then add one
-    // per currently-checked exclude-day box.
-    this.querySelectorAll('input[name="excluded_dates[]"]').forEach(el => el.remove());
-    document.querySelectorAll('#excludeDayList input:checked').forEach(cb => {
-        const hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = 'excluded_dates[]';
-        hidden.value = cb.value;
-        this.appendChild(hidden);
+document.querySelectorAll('#excludeDayList input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', function() {
+        this.closest('.sar-exclude-day').classList.toggle('checked', this.checked);
     });
 });
 
-if (alreadyExcluded.size) {
-    document.getElementById('excludePanel').classList.add('open');
-    buildExcludeList();
-}
+@if($sarHasExcludedWeekdays)
+document.getElementById('excludePanel').classList.add('open');
+@endif
 
 /* ── Optional charts (only run if the controller passed the data) ── */
 @if(isset($dailyTrend) && count($dailyTrend))

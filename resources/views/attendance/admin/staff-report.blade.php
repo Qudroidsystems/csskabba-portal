@@ -47,6 +47,22 @@
     position:relative;
 }
 
+.sad-avatar {
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
+    font-weight:700;
+    color:#fff;
+    border:2px solid rgba(255,255,255,.4);
+    flex-shrink:0;
+    position:relative;
+}
+
 .sad-stat-card {
     background:#fff;
     border:1px solid var(--sad-border);
@@ -125,9 +141,15 @@
 
     {{-- ══ HERO ═══════════════════════════════════════════════════════════ --}}
     <div class="sad-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-            <h4><i class="ri-user-line me-2"></i>Staff Attendance – {{ $staff->full_name }}</h4>
-            <p>{{ $staff->employmentid }} · {{ $staff->department ?? '—' }}</p>
+        <div class="d-flex align-items-center gap-3">
+            @php
+                $sadInitials = collect(explode(' ', trim($staff->full_name)))->map(fn($p) => strtoupper(substr($p, 0, 1)))->take(2)->implode('');
+            @endphp
+            <div class="sad-avatar">{{ $sadInitials ?: 'S' }}</div>
+            <div>
+                <h4><i class="ri-user-line me-2"></i>Staff Attendance – {{ $staff->full_name }}</h4>
+                <p>{{ $staff->employmentid }} · {{ $staff->department ?? '—' }}</p>
+            </div>
         </div>
         <a href="{{ route('staff-attendance.index') }}" class="btn btn-light btn-sm">
             <i class="ri-arrow-left-line me-1"></i>Back to Report
@@ -192,8 +214,9 @@
                     <tbody>
                     @forelse($calendar as $day)
                         @php
-                            // 'excluded' = admin ticked this date in the Exclude Days panel
-                            // for this report only (see StaffAttendanceController::resolveExcludedDates).
+                            // 'excluded' = the weekday this date falls on was ticked in the
+                            // Exclude Days panel for this report only (see
+                            // StaffAttendanceController::resolveExcludedDates).
                             // 'outage'   = a persisted DeviceOutageDate.
                             $sc = ['present'=>'success','late'=>'secondary','excused'=>'info','absent'=>'danger','outage'=>'dark','excluded'=>'warning'];
                             $c  = $sc[$day['status']] ?? 'secondary';

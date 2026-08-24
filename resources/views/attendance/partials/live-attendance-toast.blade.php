@@ -7,8 +7,8 @@
 <style>
 .lat-toast {
     background:#fff; border-left:4px solid #4f5fff; border-radius:10px;
-    box-shadow:0 8px 24px rgba(0,0,0,.12); padding:12px 16px;
-    display:flex; align-items:center; gap:10px; font-family:'Outfit',sans-serif;
+    box-shadow:0 8px 24px rgba(0,0,0,.12); padding:12px 14px 12px 16px;
+    display:flex; align-items:flex-start; gap:10px; font-family:'Outfit',sans-serif;
     animation:latIn .25s ease;
 }
 .lat-toast.late { border-left-color:#d97706; }
@@ -18,8 +18,15 @@
     background:#eef2ff; color:#4f5fff; font-size:15px;
 }
 .lat-toast.late .lat-toast-icon { background:#fef3c7; color:#d97706; }
+.lat-toast-body { flex:1; min-width:0; }
 .lat-toast-name { font-weight:600; font-size:13px; color:#1e2a3a; }
 .lat-toast-sub  { font-size:11.5px; color:#6b7280; }
+.lat-toast-close {
+    background:none; border:none; cursor:pointer;
+    color:#9ca3af; font-size:16px; line-height:1;
+    padding:0 0 0 6px; flex-shrink:0;
+}
+.lat-toast-close:hover { color:#374151; }
 @keyframes latIn { from{opacity:0;transform:translateX(24px);} to{opacity:1;transform:translateX(0);} }
 </style>
 
@@ -34,18 +41,27 @@
         const stack = document.getElementById('latToastStack');
         if (!stack) return;
 
+        const id = 'lat_toast_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         const el = document.createElement('div');
+        el.id = id;
         el.className = 'lat-toast' + (item.is_late ? ' late' : '');
         el.innerHTML = `
             <div class="lat-toast-icon"><i class="ri-${item.is_late ? 'time-line' : 'checkbox-circle-line'}"></i></div>
-            <div>
+            <div class="lat-toast-body">
                 <div class="lat-toast-name">${item.name}</div>
                 <div class="lat-toast-sub">${item.type === 'staff' ? 'Staff' : 'Student'} clocked in at ${item.punch_time}${item.is_late ? ' — Late' : ''}</div>
             </div>
+            <button type="button" class="lat-toast-close" onclick="document.getElementById('${id}')?.remove()" aria-label="Close">×</button>
         `;
         stack.appendChild(el);
-        setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 5000);
-        setTimeout(() => el.remove(), 5400);
+
+        // Auto-dismiss still applies — manual close just lets the admin
+        // clear it early instead of waiting it out.
+        setTimeout(() => {
+            const live = document.getElementById(id);
+            if (live) { live.style.opacity = '0'; live.style.transition = 'opacity .3s'; }
+        }, 5000);
+        setTimeout(() => document.getElementById(id)?.remove(), 5400);
     }
 
     function poll() {
