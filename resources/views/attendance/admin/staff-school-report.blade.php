@@ -1,4 +1,6 @@
-{{-- resources/views/attendance/staff/staff-attendance-report.blade.php --}}
+{{-- resources/views/attendance/admin/staff-school-report.blade.php
+     This is the view StaffAttendanceController@index() actually renders
+     ('attendance.admin.staff-school-report') — NOT attendance/staff/staff-attendance-report.blade.php. --}}
 @extends('layouts.master')
 @section('content')
 <style>
@@ -152,6 +154,37 @@
     from { opacity:0; transform:translateY(20px); }
     to { opacity:1; transform:translateY(0); }
 }
+
+/* ── Exclude-days panel ── */
+.sar-exclude-panel {
+    display:none;
+    background:#f8fafc;
+    border:1px dashed var(--sar-border);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-top:10px;
+    max-height:160px;
+    overflow-y:auto;
+}
+.sar-exclude-panel.open { display:block; }
+.sar-exclude-day {
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    background:#fff;
+    border:1px solid var(--sar-border);
+    border-radius:20px;
+    padding:4px 10px;
+    margin:3px 4px 3px 0;
+    font-size:11.5px;
+    cursor:pointer;
+    user-select:none;
+}
+.sar-exclude-day input { accent-color:#dc2626; }
+.sar-exclude-day.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
+
+/* ── Chart panel ── */
+.sar-chart-panel { padding:16px 20px 20px; }
 </style>
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
@@ -162,22 +195,36 @@
             <h4><i class="ri-briefcase-line me-2"></i>Staff Attendance Report</h4>
             <p>Device-driven attendance tracking — no manual entries</p>
         </div>
-        <span class="badge bg-light text-dark">Device-driven</span>
+        <div class="d-flex gap-2">
+            @can('View attendance-time-settings')
+            <a href="{{ route('staff-attendance.time-settings.edit') }}" class="btn btn-light btn-sm">
+                <i class="ri-settings-3-line me-1"></i>Lateness Settings
+            </a>
+            @endcan
+            <a href="{{ route('staff-attendance.export') }}?date_from={{ $dateFrom }}&date_to={{ $dateTo }}{{ request('excluded_dates') ? '&' . http_build_query(['excluded_dates' => request('excluded_dates')]) : '' }}"
+               class="btn btn-light btn-sm">
+                <i class="ri-file-excel-2-line me-1"></i>Export Excel
+            </a>
+            <span class="badge bg-light text-dark align-self-center">Device-driven</span>
+        </div>
     </div>
 
     {{-- ══ FILTER ════════════════════════════════════════════════════════ --}}
     <div class="sar-card mb-3">
         <div class="card-body py-3">
-            <form method="GET" class="d-flex align-items-end gap-3 flex-wrap">
+            <form method="GET" class="d-flex align-items-end gap-3 flex-wrap" id="reportFilterForm">
                 <div>
                     <label class="sar-form-label mb-1" style="font-size:11px;text-transform:uppercase;">From</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom }}" class="sar-form-control sar-form-control-sm" style="width:160px;">
+                    <input type="date" name="date_from" id="dateFromInput" value="{{ $dateFrom }}" class="sar-form-control sar-form-control-sm" style="width:160px;">
                 </div>
                 <div>
                     <label class="sar-form-label mb-1" style="font-size:11px;text-transform:uppercase;">To</label>
-                    <input type="date" name="date_to" value="{{ $dateTo }}" class="sar-form-control sar-form-control-sm" style="width:160px;">
+                    <input type="date" name="date_to" id="dateToInput" value="{{ $dateTo }}" class="sar-form-control sar-form-control-sm" style="width:160px;">
                 </div>
                 <button class="btn btn-primary btn-sm"><i class="ri-search-line me-1"></i>Filter</button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="toggleExcludePanel()">
+                    <i class="ri-calendar-close-line me-1"></i>Exclude Days
+                </button>
                 <div class="ms-auto d-flex gap-4">
                     <div class="text-center">
                         <div class="fw-bold fs-5 text-secondary">{{ $workingDays }}</div>
@@ -188,9 +235,95 @@
                         <div class="text-muted" style="font-size:11px;">Staff Avg</div>
                     </div>
                 </div>
+
+                {{-- Exclude-days panel: ticked dates ride along as excluded_dates[] on the
+                     same GET request. Your controller's working-day / per-staff calculation
+                     needs to subtract these — same idea as the outage dates below, just
+                     scoped to this one report view instead of being saved permanently. --}}
+                <div class="sar-exclude-panel w-100" id="excludePanel">
+                    <div class="mb-2" style="font-size:11.5px;color:var(--sar-muted);">
+                        Tick any dates in this range to leave out of the calculation (e.g. a one-off holiday that isn't a device outage).
+                    </div>
+                    <div id="excludeDayList"></div>
+                </div>
             </form>
         </div>
     </div>
+
+    {{-- ══ SUMMARY STATS ═══════════════════════════════════════════════════
+         Computed straight from $rows below — no new controller variables
+         needed for this row. --}}
+    @php
+        $totalStaffCount = $rows->count();
+        $sumPresent = $rows->sum('days_present');
+        $sumLate    = $rows->sum('days_late');
+        $sumExcused = $rows->sum('days_excused');
+        $sumAbsent  = $rows->sum('days_absent');
+    @endphp
+    <div class="row g-3 mb-3">
+        <div class="col-lg-2 col-6">
+            <div class="sar-stat-card">
+                <div class="stat-value text-dark">{{ $totalStaffCount }}</div>
+                <div class="stat-label">Staff Tracked</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="sar-stat-card">
+                <div class="stat-value text-success">{{ $sumPresent }}</div>
+                <div class="stat-label">Present (days)</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="sar-stat-card">
+                <div class="stat-value text-warning">{{ $sumLate }}</div>
+                <div class="stat-label">Late (days)</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="sar-stat-card">
+                <div class="stat-value" style="color:#0ea5e9;">{{ $sumExcused }}</div>
+                <div class="stat-label">Excused (days)</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="sar-stat-card">
+                <div class="stat-value text-danger">{{ $sumAbsent }}</div>
+                <div class="stat-label">Absent (days)</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="sar-stat-card">
+                <div class="stat-value text-{{ $avgPct >= 80 ? 'success' : ($avgPct >= 60 ? 'warning' : 'danger') }}">{{ $avgPct }}%</div>
+                <div class="stat-label">Overall Avg</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ══ TREND CHART ═══════════════════════════════════════════════════
+         Optional — only renders if the controller passes $dailyTrend, e.g.:
+         $dailyTrend = [['date' => '2026-08-01', 'rate' => 82], ...]
+         Same shape as $attendance_trend already used on the dashboard, so
+         you likely already have a query that produces this. --}}
+    @if(isset($dailyTrend) && count($dailyTrend))
+    <div class="sar-card mb-3">
+        <div class="card-header">Attendance Trend — {{ $dateFrom }} to {{ $dateTo }}</div>
+        <div class="sar-chart-panel">
+            <div style="height:240px;"><canvas id="sarTrendChart"></canvas></div>
+        </div>
+    </div>
+    @endif
+
+    {{-- ══ DEPARTMENT BREAKDOWN ═════════════════════════════════════════
+         Optional — only renders if the controller passes $deptBreakdown, e.g.:
+         $deptBreakdown = [['department' => 'Academics', 'avg' => 88, 'count' => 24], ...] --}}
+    @if(isset($deptBreakdown) && count($deptBreakdown))
+    <div class="sar-card mb-3">
+        <div class="card-header">Attendance by Department</div>
+        <div class="sar-chart-panel">
+            <div style="height:220px;"><canvas id="sarDeptChart"></canvas></div>
+        </div>
+    </div>
+    @endif
 
     {{-- ══ DEVICE OUTAGE MANAGER ════════════════════════════════════════ --}}
     <div class="sar-card mb-3">
@@ -298,6 +431,9 @@
 
 </div></div></div>
 
+@include('partials.live-attendance-toast')
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -367,5 +503,113 @@ function removeOutage(id) {
     })
     .catch(e => console.error(e));
 }
+
+/* ── Exclude-days panel ──
+   Builds a checkbox per date in the currently selected range. Checked
+   dates are appended to the filter form as excluded_dates[] hidden inputs
+   right before submit. Already-checked dates from the URL (e.g. after a
+   filter round-trip) are restored on load. */
+const alreadyExcluded = new Set(@json(request('excluded_dates', [])));
+
+function buildExcludeList() {
+    const from = document.getElementById('dateFromInput').value;
+    const to   = document.getElementById('dateToInput').value;
+    const list = document.getElementById('excludeDayList');
+    list.innerHTML = '';
+
+    if (!from || !to) return;
+
+    let cur = new Date(from + 'T00:00:00');
+    const end = new Date(to + 'T00:00:00');
+
+    // Cap at 62 days so this stays a checklist, not a wall of text, for
+    // very wide ranges.
+    let guard = 0;
+    while (cur <= end && guard < 62) {
+        const iso = cur.toISOString().slice(0, 10);
+        const label = cur.toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' });
+        const checked = alreadyExcluded.has(iso);
+
+        const wrap = document.createElement('label');
+        wrap.className = 'sar-exclude-day' + (checked ? ' checked' : '');
+        wrap.innerHTML = `<input type="checkbox" value="${iso}" ${checked ? 'checked' : ''}> ${label}`;
+        wrap.querySelector('input').addEventListener('change', function() {
+            wrap.classList.toggle('checked', this.checked);
+        });
+
+        list.appendChild(wrap);
+        cur.setDate(cur.getDate() + 1);
+        guard++;
+    }
+}
+
+function toggleExcludePanel() {
+    const panel = document.getElementById('excludePanel');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) buildExcludeList();
+}
+
+document.getElementById('dateFromInput').addEventListener('change', buildExcludeList);
+document.getElementById('dateToInput').addEventListener('change', buildExcludeList);
+
+document.getElementById('reportFilterForm').addEventListener('submit', function() {
+    // Strip any stale hidden inputs from a previous submit, then add one
+    // per currently-checked exclude-day box.
+    this.querySelectorAll('input[name="excluded_dates[]"]').forEach(el => el.remove());
+    document.querySelectorAll('#excludeDayList input:checked').forEach(cb => {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'excluded_dates[]';
+        hidden.value = cb.value;
+        this.appendChild(hidden);
+    });
+});
+
+if (alreadyExcluded.size) {
+    document.getElementById('excludePanel').classList.add('open');
+    buildExcludeList();
+}
+
+/* ── Optional charts (only run if the controller passed the data) ── */
+@if(isset($dailyTrend) && count($dailyTrend))
+new Chart(document.getElementById('sarTrendChart'), {
+    type: 'line',
+    data: {
+        labels: @json(array_column($dailyTrend, 'date')),
+        datasets: [{
+            label: 'Attendance Rate',
+            data: @json(array_column($dailyTrend, 'rate')),
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,.08)',
+            fill: true, tension: .4, pointRadius: 3,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
+    }
+});
+@endif
+
+@if(isset($deptBreakdown) && count($deptBreakdown))
+new Chart(document.getElementById('sarDeptChart'), {
+    type: 'bar',
+    data: {
+        labels: @json(array_column($deptBreakdown, 'department')),
+        datasets: [{
+            label: 'Avg Attendance',
+            data: @json(array_column($deptBreakdown, 'avg')),
+            backgroundColor: '#4f5fff',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
+    }
+});
+@endif
 </script>
 @endsection

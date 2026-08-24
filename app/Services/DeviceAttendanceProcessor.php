@@ -10,6 +10,7 @@ use App\Models\DeviceUserMapping;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\StaffAttendance;
+use App\Models\StaffAttendanceTimeSetting;
 use App\Models\Studentclass;
 use App\Models\StudentAttendance;
 use Illuminate\Support\Carbon;
@@ -27,9 +28,12 @@ class DeviceAttendanceProcessor
 {
     // Adjust these to match the school's actual bell schedule, or move to a
     // settings table later if different periods need different cutoffs.
-    const MORNING_CUTOFF   = '08:00:00'; // punch after this = 'late' for students (morning period)
-    const AFTERNOON_START  = '12:00:00'; // punches after this go to the afternoon period
-    const STAFF_LATE_AFTER = '08:30:00';
+    const MORNING_CUTOFF  = '08:00:00'; // punch after this = 'late' for students (morning period)
+    const AFTERNOON_START = '12:00:00'; // punches after this go to the afternoon period
+
+    // Staff lateness now comes from StaffAttendanceTimeSetting::current()
+    // (admin-configurable, see StaffAttendanceTimeSettingController) instead
+    // of a hardcoded cutoff.
 
     public function process(DeviceAttendanceLog $log): void
     {
@@ -133,8 +137,16 @@ class DeviceAttendanceProcessor
             ->where('attendance_date', $date)
             ->first();
 
-        $status = $existing?->status
-            ?? ($time > self::STAFF_LATE_AFTER ? 'late' : 'present');
+        // Status is decided once, on the FIRST punch of the day, exactly like
+        // the student path above — a later time_out-only punch never
+        // downgrades an already-recorded 'present' to 'late' or vice versa.
+        if ($existing) {
+            $status = $existing->status;
+        } else {
+            $settings = StaffAttendanceTimeSetting::current();
+            $cutoff   = $settings->cutoffFor($punch->copy()->startOfDay());
+            $status   = $punch->gt($cutoff) ? 'late' : 'present';
+        }
 
         StaffAttendance::updateOrCreate(
             ['staff_id' => $staffId, 'attendance_date' => $date],

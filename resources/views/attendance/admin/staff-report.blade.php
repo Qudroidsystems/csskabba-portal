@@ -1,4 +1,6 @@
-{{-- resources/views/attendance/staff/staff-attendance-detail.blade.php --}}
+{{-- resources/views/attendance/admin/staff-report.blade.php
+     This is the view StaffAttendanceController@report() actually renders
+     ('attendance.admin.staff-report') — NOT attendance/staff/staff-attendance-detail.blade.php. --}}
 @extends('layouts.master')
 @section('content')
 <style>
@@ -190,12 +192,16 @@
                     <tbody>
                     @forelse($calendar as $day)
                         @php
-                            $sc = ['present'=>'success','late'=>'secondary','excused'=>'info','absent'=>'danger','outage'=>'dark'];
+                            // 'excluded' = admin ticked this date in the Exclude Days panel
+                            // for this report only (see StaffAttendanceController::resolveExcludedDates).
+                            // 'outage'   = a persisted DeviceOutageDate.
+                            $sc = ['present'=>'success','late'=>'secondary','excused'=>'info','absent'=>'danger','outage'=>'dark','excluded'=>'warning'];
                             $c  = $sc[$day['status']] ?? 'secondary';
+                            $statusLabel = $day['status'] === 'excluded' ? 'Excluded' : ucfirst($day['status']);
                         @endphp
                         <tr>
                             <td><strong>{{ $day['label'] }}</strong></td>
-                            <td><span class="badge bg-{{ $c }}-subtle text-{{ $c }} fw-semibold">{{ ucfirst($day['status']) }}</span></td>
+                            <td><span class="badge bg-{{ $c }}-subtle text-{{ $c }} fw-semibold">{{ $statusLabel }}</span></td>
                             <td class="text-muted">{{ $day['time_in'] ?? '—' }}</td>
                             <td class="text-muted">{{ $day['time_out'] ?? '—' }}</td>
                         </tr>
