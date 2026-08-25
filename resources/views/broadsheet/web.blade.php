@@ -812,10 +812,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     $showNumSub  = in_array('num_subjects', $selected);
     $showTotalGP = in_array('total_grade_points', $selected);
 
-    // Promotion columns
+    // Promotion columns - include rule by default
     $showPromoStatus = $showAll || in_array('promotion_status', $selected);
     $showPromoLabel  = in_array('promotion_label', $selected);
-    $showPromoRule   = in_array('promotion_rule_applied', $selected);
+    $showPromoRule   = $showAll || in_array('promotion_rule_applied', $selected);
 
     $promoColspan = ($showPromoStatus ? 1 : 0)
                   + ($showPromoLabel  ? 1 : 0)
@@ -973,7 +973,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         <th style="background:#3b0764;color:#d8b4fe;min-width:130px;">Label</th>
                     @endif
                     @if($showPromoRule)
-                        <th style="background:#3b0764;color:#d8b4fe;min-width:100px;">Rule</th>
+                        <th style="background:#3b0764;color:#d8b4fe;min-width:100px;">Rule Applied</th>
                     @endif
                 </tr>
             </thead>
@@ -1401,6 +1401,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         ['key' => 'arm',           'label' => 'Arm / Class',      'default' => true],
                         ['key' => 'total_cum',     'label' => 'Cum Total Score',  'default' => true],
                         ['key' => 'total_term',    'label' => 'Term Total Score', 'default' => false],
+                        ['key' => 'cum_ave',       'label' => 'Cumulative Average','default' => true],
                         ['key' => 'position_cum',  'label' => 'Overall Pos (Cum)','default' => true],
                         ['key' => 'position_term', 'label' => 'Overall Pos (Term)','default'=> false],
                         ['key' => 'gpa',           'label' => 'GPA',              'default' => false],

@@ -993,7 +993,7 @@ td.sn-cell {
         'arm'           => 'Arm',
         'total_cum'     => 'Cum Total',
         'total_term'    => 'Term Total',
-        'cum_ave'       => 'Cum Avg',
+        'cum_ave'       => 'Cum Ave',
         'position_cum'  => 'Overall Pos (Cum)',
         'position_term' => 'Overall Pos (Term)',
         'gpa'           => 'GPA',
@@ -1075,8 +1075,6 @@ td.sn-cell {
                                     $hasPic = !empty($stu['picture']) && $stu['picture'] !== 'unnamed.jpg';
                                     $imgSrc = $hasPic ? asset('storage/student_avatars/' . basename($stu['picture'])) : null;
                                     $initials = strtoupper(substr($stu['lastname']??'',0,1) . substr($stu['firstname']??'',0,1)) ?: 'ST';
-                                    // Calculate cumulative average if not directly available
-                                    $cumAve = $stu['cum_ave'] ?? ($stu['total_cum'] > 0 && $schoolterm->id > 0 ? round($stu['total_cum'] / $schoolterm->id, 1) : 0);
                                 @endphp
                                 <tr>
                                     @if($show_sn)
@@ -1134,7 +1132,7 @@ td.sn-cell {
                                         @elseif($field === 'total_term')
                                             <td style="text-align:center;font-weight:700;">{{ $stu['total_term'] ?? '—' }}</td>
                                         @elseif($field === 'cum_ave')
-                                            <td style="text-align:center;font-weight:700;color:#7c3aed;">{{ $cumAve ?: '—' }}</td>
+                                            <td style="text-align:center;font-weight:700;color:#7c3aed;">{{ $stu['cum_ave'] ?? '—' }}</td>
                                         @elseif($field === 'position_cum')
                                             <td style="text-align:center;font-weight:700;color:#1e40af;">{{ listOrdinal($stu['position_cum'] ?? null) }}</td>
                                         @elseif($field === 'position_term')

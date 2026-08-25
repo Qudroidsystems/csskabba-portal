@@ -132,7 +132,7 @@ class BroadsheetController extends Controller
                 ],
                 'promotion_rule_applied' => [
                     'label'   => 'Rule Applied',
-                    'default' => false,
+                    'default' => true,
                 ],
             ],
         ];
@@ -155,9 +155,6 @@ class BroadsheetController extends Controller
             'subject_count'       => $actualSubjectCount,
             'assessment_count'    => count($columns['assessments']),
             'is_promotional_term' => $isPromotionalTerm,
-            // Which figure the "Grade" column is based on can be toggled by the
-            // caller via the grade_basis param ('total' or 'cum_ave') on every
-            // web/pdf/excel export endpoint below. Default is 'cum_ave'.
             'grade_basis_options' => ['total' => 'Term Total', 'cum_ave' => 'Cumulative Average'],
             'default_grade_basis' => 'cum_ave',
         ]);
@@ -320,10 +317,6 @@ class BroadsheetController extends Controller
             );
         }
 
-        // Category used to (re)compute a grade from a raw score — needed because
-        // only the total-based grade is persisted on broadsheets.grade; the
-        // cum_ave-based grade is derived here, the same way MyScoreSheetController
-        // derives grades from cum_ave.
         $gradeCategory = $schoolclass && $schoolclass->classcategories->isNotEmpty()
             ? $schoolclass->classcategories->first()
             : null;
@@ -394,8 +387,6 @@ class BroadsheetController extends Controller
 
             $rawTotal = (float)($row->total ?? 0);
 
-            // BF always comes from the previous term's raw "cum" (running sum),
-            // never from cum_ave — matching MyScoreSheetController::getPreviousTermCum().
             $prevCum = $prevCumMap[$sid][$sub] ?? null;
             if ($prevCum !== null && $prevCum > 0) {
                 $bf = $prevCum;
@@ -405,21 +396,12 @@ class BroadsheetController extends Controller
                 $bf = 0.0;
             }
 
-            // "cum" = raw cumulative sum (BF + this term's total), matching the
-            // broadsheets.cum column MyScoreSheetController writes.
-            // "cum_ave" = that sum divided by the term number — the figure used
-            // for grading/positions/colour-coding wherever it applies.
             $cum    = round($bf + $rawTotal, 2);
             $cumAve = $termid > 0 ? round($cum / $termid, 2) : $cum;
 
             $totalGrade = $row->grade ?? ($gradeCategory ? $gradeCategory->calculateGrade($rawTotal) : '-');
             $cumGrade   = $gradeCategory ? $gradeCategory->calculateGrade($cumAve) : $totalGrade;
 
-            // The "grade" a subject row is annotated with follows the Grade Basis
-            // toggle: 'total' shows the persisted total-based grade, 'cum_ave'
-            // shows the grade derived from the cumulative average. Both values
-            // are always available under total_grade / cum_grade for callers
-            // (e.g. blades) that want to display both side by side.
             $displayGrade = $gradeBasis === 'total' ? $totalGrade : $cumGrade;
 
             $studentSubjectMap[$sid][$sub] = [
@@ -494,7 +476,6 @@ class BroadsheetController extends Controller
             ->orderBy('studentRegistration.firstname')
             ->get();
 
-        // Determine whether to run promotion evaluation
         $termid          = $schoolterm ? $schoolterm->id : null;
         $shouldEvalPromo = $termid && $sessionid;
 
@@ -508,18 +489,12 @@ class BroadsheetController extends Controller
             $gradePointsA = [];
 
             foreach ($subScores as $subData) {
-                // Aggregate totals rank on cum_ave (the per-term-averaged figure),
-                // not the raw running "cum" sum — matching MyScoreSheetController's
-                // convention of ranking positions on cum_ave.
                 if (($subData['cum_ave'] ?? 0) > 0) {
                     $cumValues[] = $subData['cum_ave'];
                 }
                 if (($subData['total'] ?? 0) > 0) {
                     $totalValues[] = $subData['total'];
                 }
-                // GPA follows the Grade Basis toggle: grade points are computed
-                // from whichever figure ('total' or 'cum_ave') is currently
-                // selected as the grading basis.
                 $gpaSourceScore = $gradeBasis === 'total'
                     ? ($subData['total']   ?? 0)
                     : ($subData['cum_ave'] ?? 0);
@@ -540,19 +515,20 @@ class BroadsheetController extends Controller
             if ($isCombined && $studentClassMap && isset($studentClassMap[$sid])) {
                 $armLabel = $armLabels[$studentClassMap[$sid]] ?? '';
             } elseif ($schoolclassid) {
-                // For single class, try to get arm from student's class record
                 $studentClass = Studentclass::where('studentId', $sid)
                     ->where('sessionid', $sessionid)
                     ->first();
                 if ($studentClass && $studentClass->schoolclassid) {
-                    $class = Schoolclass::find($studentClass->schoolclassid);
+                    $class = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                        ->where('schoolclass.id', $studentClass->schoolclassid)
+                        ->first(['schoolclass.*', 'schoolarm.arm as arm_name']);
                     if ($class && $class->arm_name) {
                         $armLabel = $class->arm_name;
                     }
                 }
             }
 
-            // ── Promotion evaluation ─────────────────────────────────────────
+            // ── Promotion evaluation ──
             $promoResult = null;
             if ($shouldEvalPromo) {
                 $scoresForPromo = [];
@@ -599,6 +575,7 @@ class BroadsheetController extends Controller
                 'subjects'               => $subScores,
                 'total_cum'              => round($totalCum, 1),
                 'total_term'             => round($totalTerm, 1),
+                'cum_ave'                => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
                 'num_subjects'           => $numSubjects,
                 'class_average'          => $classAvgScore,
                 'gpa'                    => $gpa,
@@ -638,9 +615,6 @@ class BroadsheetController extends Controller
             'selectedColumns' => $selectedColumns,
             'totalStudents'   => count($studentRows),
             'generatedAt'     => now()->format('d M Y, H:i'),
-            // 'total' = grade/GPA/ranking based on this term's raw total;
-            // 'cum_ave' = based on the cumulative average. Drives which figure
-            // blades label as "the" grade/GPA and which the footer note shows.
             'grade_basis'     => $gradeBasis,
         ];
 
@@ -768,7 +742,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // STUDENT LIST (Printable promotion-ordered list) - UPDATED
+    // STUDENT LIST (Printable promotion-ordered list)
     // =========================================================================
 
     public function studentList(Request $request): View|JsonResponse|RedirectResponse
@@ -791,14 +765,13 @@ class BroadsheetController extends Controller
                 (int)$validated['schoolclassid'],
                 (int)$validated['sessionid'],
                 (int)$validated['termid'],
-                [], // all columns — we only need student rows + promotion
+                [],
                 $gradeBasis
             );
 
-            // Merge list_fields from request with defaults
             $listFields = $request->input('list_fields', []);
             if (empty($listFields)) {
-                $listFields = ['admissionno', 'firstname', 'lastname', 'gender', 'total_cum', 'position_cum'];
+                $listFields = ['admissionno', 'firstname', 'lastname', 'arm', 'total_cum', 'cum_ave', 'position_cum', 'gpa_grade'];
             }
 
             $recommendationOrder = $request->input('recommendation_order', [
@@ -807,7 +780,6 @@ class BroadsheetController extends Controller
             $showPhotos = filter_var($request->input('show_photos', false), FILTER_VALIDATE_BOOLEAN);
             $showSn     = filter_var($request->input('show_sn', true), FILTER_VALIDATE_BOOLEAN);
 
-            // Group students by promotion_status in admin-specified order
             $grouped = [];
             foreach ($recommendationOrder as $status) {
                 $grouped[$status] = [];
@@ -823,7 +795,6 @@ class BroadsheetController extends Controller
                 }
             }
 
-            // Remove empty groups
             $grouped = array_filter($grouped, fn($g) => count($g) > 0);
 
             $data['grouped_students']     = $grouped;
@@ -833,6 +804,9 @@ class BroadsheetController extends Controller
             $data['show_sn']              = $showSn;
             $data['school_logo_base64']   = $this->getLogoBase64($data['schoolInfo']);
             $data['pagetitle']            = 'Student Promotion List';
+            $data['request_schoolclassid'] = (int)$validated['schoolclassid'];
+            $data['request_sessionid']     = (int)$validated['sessionid'];
+            $data['request_termid']        = (int)$validated['termid'];
 
             return view('broadsheet.student_list', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1195,7 +1169,6 @@ class BroadsheetController extends Controller
                 $bf = 0.0;
             }
 
-            // Same raw-sum / averaged-figure split as the single-class builder.
             $cum    = round($bf + $rawTotal, 2);
             $cumAve = $termid > 0 ? round($cum / $termid, 2) : $cum;
 
