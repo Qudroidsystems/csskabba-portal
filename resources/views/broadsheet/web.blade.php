@@ -47,6 +47,35 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 .spin { animation:spin .8s linear infinite; }
 
+/* ── Grade Basis Toggle ── */
+.gb-toggle { 
+    display:inline-flex; 
+    background:#e6fffa; 
+    border:1px solid #99f6e4; 
+    border-radius:20px; 
+    padding:2px; 
+}
+.gb-toggle-btn { 
+    border:none; 
+    background:transparent; 
+    padding:6px 16px; 
+    font-size:12px; 
+    font-weight:700; 
+    border-radius:18px; 
+    cursor:pointer; 
+    color:var(--cb-muted); 
+    transition:all .25s ease; 
+}
+.gb-toggle-btn.active { 
+    background:var(--cb-teal); 
+    color:#fff; 
+    box-shadow:0 2px 6px rgba(13,148,136,.35); 
+}
+.gb-toggle-btn:hover:not(.active) { 
+    color:var(--cb-teal); 
+}
+#printGradeBasisNote { display:none; }
+
 /* ── Hero ── */
 .cb-hero {
     background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%);
@@ -119,7 +148,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .meta-label { font-size:10px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.4px; display:block; }
 .meta-value { font-size:13px; font-weight:700; color:var(--cb-navy); }
 
-/* ── Grade basis indicator ── */
+/* ── Grade basis strip ── */
 .grade-basis-strip {
     text-align:center; font-size:12px; color:var(--cb-muted);
     margin-bottom:14px; padding:6px 14px;
@@ -456,7 +485,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .gpop-scroll { max-height:260px; overflow-y:auto; border:1px solid var(--cb-border); border-radius:10px; }
 .gpop-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
 .gpop-table thead th { background:var(--cb-navy); color:#fff; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; padding:9px 8px; border-right:1px solid rgba(255,255,255,.08); text-align:center; position:sticky; top:0; z-index:2; }
-.gpop-table thead th:first-child { text-align:left; padding-left:12px; width:26%; }
+.gpop-table thead th:first-child { text-align:left; padding-left:12px; width:22%; }
 .gpop-table tbody td { padding:8px 6px; border-bottom:1px solid #f1f5f9; font-weight:500; text-align:center; vertical-align:middle; }
 .gpop-table tbody td:first-child { text-align:left; font-weight:600; color:var(--cb-navy); padding-left:12px; }
 .gpop-table tbody tr:hover td { background:#f0fdf9; }
@@ -527,6 +556,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     .cb-stat, .cb-card { box-shadow:none !important; animation:none !important; }
     .broadsheet-table tbody tr { animation:none !important; }
     #cbGradePopup, #cbPopupBackdrop { display:none !important; }
+    #printGradeBasisNote { display:block !important; }
+    .gb-toggle { display:none !important; }
     @page { margin:1.5cm 1.2cm; }
 }
 </style>
@@ -615,12 +646,40 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     @if(!empty($is_combined))<span style="font-size:11px;opacity:.7;font-weight:400;margin-left:10px;">— Combined Arms</span>@endif
 </div>
 
-{{-- ── Grade Basis Indicator ── --}}
-<div class="grade-basis-strip">
-    <i class="ri-scales-3-line me-1"></i>
-    Grades, GPA &amp; rankings on this sheet are based on:
+{{-- ── Grade Basis Toggle ── --}}
+<div class="grade-basis-strip no-print" style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:10px 16px;">
+    <span style="font-weight:500;"><i class="ri-scales-3-line me-1"></i>Grades, GPA &amp; rankings based on:</span>
+    <div class="gb-toggle" role="group" aria-label="Grade basis toggle">
+        <button type="button"
+                class="gb-toggle-btn {{ ($grade_basis ?? 'cum_ave') === 'cum_ave' ? 'active' : '' }}"
+                onclick="switchGradeBasis('cum_ave')">Cumulative Average</button>
+        <button type="button"
+                class="gb-toggle-btn {{ ($grade_basis ?? 'cum_ave') === 'total' ? 'active' : '' }}"
+                onclick="switchGradeBasis('total')">Term Total</button>
+    </div>
+</div>
+
+{{-- Print-only static version --}}
+<div class="grade-basis-strip" id="printGradeBasisNote">
+    <i class="ri-scales-3-line me-1"></i>Grades, GPA &amp; rankings on this sheet are based on:
     <strong>{{ ($grade_basis ?? 'cum_ave') === 'total' ? 'Term Total' : 'Cumulative Average' }}</strong>
 </div>
+
+{{-- Hidden form for resubmission --}}
+<form id="gradeBasisForm" method="POST" action="{{ url()->current() }}" style="display:none;">
+    @csrf
+    @if(!empty($is_combined))
+        <input type="hidden" name="classgroup" value="{{ request('classgroup') }}">
+    @else
+        <input type="hidden" name="schoolclassid" value="{{ request('schoolclassid') }}">
+    @endif
+    <input type="hidden" name="sessionid" value="{{ request('sessionid') }}">
+    <input type="hidden" name="termid" value="{{ request('termid') }}">
+    <input type="hidden" name="grade_basis" id="gb_input" value="{{ $grade_basis ?? 'cum_ave' }}">
+    @foreach(request('selectedColumns', []) as $i => $col)
+        <input type="hidden" name="selectedColumns[{{ $i }}]" value="{{ $col }}">
+    @endforeach
+</form>
 
 {{-- ── Meta Grid ── --}}
 <div class="meta-grid">
@@ -731,8 +790,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     $showTotal   = $showAll || in_array('total',          $selected);
     $showBF      = $showAll || in_array('bf',             $selected);
     $showCum     = $showAll || in_array('cum',            $selected);
-    // Cum Ave — the per-term-averaged figure. Was previously never rendered
-    // even though it was selectable and already computed by the controller.
     $showCumAve  = $showAll || in_array('cum_ave',         $selected);
     $showGrade   = $showAll || in_array('grade',          $selected);
     $showAvg     = $showAll || in_array('class_average',  $selected);
@@ -950,10 +1007,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         $cumPct  = $totalObtainable > 0 ? round(($totalObtained / $totalObtainable) * 100, 1) : 0;
                         $posTotal = count($studentRows);
 
-                        // Build grades array for popup — now includes both the raw
-                        // cumulative sum ("cum_score") AND the per-term-averaged
-                        // figure ("cum_ave_score"), so the popup can show both,
-                        // matching what the main table columns show.
+                        // Build grades array for popup - now includes both term and cum grades
                         $gradesForPopup = [];
                         foreach ($subjects as $subId => $subInfo) {
                             $sd = $stu['subjects'][$subId] ?? [];
@@ -964,6 +1018,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 'cum_ave_score'   => $sd['cum_ave'] ?? 0,
                                 'bf_score'        => $sd['bf']      ?? 0,
                                 'grade'           => $sd['grade']   ?? '-',
+                                'term_grade'      => $sd['total_grade'] ?? '-',
+                                'cum_grade'       => $sd['cum_grade']   ?? '-',
                                 'pos_class_cum'   => $sd['pos_class_cum']   ?? null,
                                 'pos_class_total' => $sd['pos_class_total'] ?? null,
                                 'pos_arm_total'   => $sd['pos_arm_total']   ?? null,
@@ -1068,18 +1124,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </td>
                             @endif
 
-                            {{-- Cumulative — raw running sum (BF + Total). Not
-                                 colour-coded against 0-100 grade bands since it
-                                 isn't itself a 0-100 figure. --}}
+                            {{-- Cumulative — raw running sum (BF + Total) --}}
                             @if($showCum)
                                 <td class="score-cell" style="font-weight:700;">
                                     {{ ($sd['cum']??0) > 0 ? number_format($sd['cum'],1) : '—' }}
                                 </td>
                             @endif
 
-                            {{-- Cumulative Average — Cum ÷ term number. This IS
-                                 the 0-100 figure grades/positions are based on,
-                                 so it keeps the grade colour class. --}}
+                            {{-- Cumulative Average --}}
                             @if($showCumAve)
                                 <td class="score-cell {{ $gc }}" style="font-weight:700;">
                                     {{ $cumAveVal > 0 ? number_format($cumAveVal,1) : '—' }}
@@ -1297,7 +1349,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 {{-- Signature Block --}}
 <div class="cb-card mb-4 no-print" style="animation:fadeInUp .5s ease .5s both;">
     <div class="cb-card-header">
-        <h6 style="margin:0;font-size:13px;font-weight:700;color:var(--cb-navy);"><i class="ri-pen-nib-line me-1" style="color:var(--cb-teal)"></i>Authorisation Signatures</h6>
+        <h6 style="margin:0;font-size:13px;font-weight:700;color:var(--cb-navy);;"><i class="ri-pen-nib-line me-1" style="color:var(--cb-teal)"></i>Authorisation Signatures</h6>
     </div>
     <div class="card-body p-4">
         <div class="row">
@@ -1346,12 +1398,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         ['key' => 'firstname',     'label' => 'First Name',       'default' => true],
                         ['key' => 'gender',        'label' => 'Gender',           'default' => false],
                         ['key' => 'dateofbirth',   'label' => 'Date of Birth',    'default' => false],
-                        ['key' => 'arm',           'label' => 'Arm / Class',      'default' => false],
+                        ['key' => 'arm',           'label' => 'Arm / Class',      'default' => true],
                         ['key' => 'total_cum',     'label' => 'Cum Total Score',  'default' => true],
                         ['key' => 'total_term',    'label' => 'Term Total Score', 'default' => false],
                         ['key' => 'position_cum',  'label' => 'Overall Pos (Cum)','default' => true],
                         ['key' => 'position_term', 'label' => 'Overall Pos (Term)','default'=> false],
                         ['key' => 'gpa',           'label' => 'GPA',              'default' => false],
+                        ['key' => 'gpa_grade',     'label' => 'GPA Grade (Cum)',  'default' => true],
                     ];
                     @endphp
                     @foreach($fieldOptions as $fo)
@@ -1432,9 +1485,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     <input type="hidden" name="schoolclassid" value="{{ request('schoolclassid') }}">
     <input type="hidden" name="sessionid"     value="{{ request('sessionid') }}">
     <input type="hidden" name="termid"        value="{{ request('termid') }}">
-    {{-- Forward the active grade basis so the printable student list honours
-         whatever toggle was selected on this page, instead of silently
-         reverting to the controller default. --}}
     <input type="hidden" name="grade_basis"   value="{{ $grade_basis ?? 'cum_ave' }}">
     <input type="hidden" name="show_photos"   id="sf_show_photos" value="0">
     <input type="hidden" name="show_sn"       id="sf_show_sn"     value="1">
@@ -1502,6 +1552,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (backdrop) backdrop.style.display = 'none';
     }
 
+    function gradeBadge(val) {
+        return (val && val !== '-')
+            ? '<span class="badge ' + (GRADE_COLORS[val] || '') + '" style="font-size:9px;border-radius:6px;">' + esc(val) + '</span>'
+            : '<span style="color:#94a3b8;">—</span>';
+    }
+
     function openGradePop(btn) {
         var gpop = document.getElementById('cbGradePopup');
         if (!gpop) return;
@@ -1540,9 +1596,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             grades.forEach(function (g) {
                 var tC = g.term_score > 0 ? (g.term_score < 50 ? 'score-red' : (g.term_score >= 70 ? 'score-green' : 'score-amber')) : '';
                 var caC = g.cum_ave_score > 0 ? (g.cum_ave_score < 50 ? 'score-red' : (g.cum_ave_score >= 70 ? 'score-green' : 'score-amber')) : '';
-                var grBadge = (g.grade && g.grade !== '-')
-                    ? '<span class="badge ' + (GRADE_COLORS[g.grade] || '') + '" style="font-size:9px;border-radius:6px;">' + esc(g.grade) + '</span>'
-                    : '<span style="color:#94a3b8;">—</span>';
+                
+                var termGrBadge = gradeBadge(g.term_grade || g.grade);
+                var cumGrBadge = gradeBadge(g.cum_grade || g.grade);
+                
                 var tS  = g.term_score    > 0 ? parseFloat(g.term_score).toFixed(1)    : '—';
                 var cS  = g.cum_score     > 0 ? parseFloat(g.cum_score).toFixed(1)     : '—';
                 var caS = g.cum_ave_score > 0 ? parseFloat(g.cum_ave_score).toFixed(1) : '—';
@@ -1569,12 +1626,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         '</div></td>' +
                         '<td><div class="score-cell-inner cum" style="justify-content:center;"><span style="font-size:8px;opacity:.7;">C</span><span>' + cS + '</span></div></td>' +
                         '<td><div class="score-cell-inner cumave" style="justify-content:center;"><span style="font-size:8px;opacity:.7;">CA</span><span class="' + caC + '">' + caS + '</span></div></td>' +
-                        '<td>' + grBadge + '</td>' +
+                        '<td>' + termGrBadge + '</td>' +
+                        '<td>' + cumGrBadge + '</td>' +
                         '<td>' + subPos + '</td>' +
                         '</tr>';
             });
         } else {
-            rows = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#94a3b8;">No subject records</td></tr>';
+            rows = '<tr><td colspan="7" style="text-align:center;padding:16px;color:#94a3b8;">No subject records</td></tr>';
         }
 
         var body = document.getElementById('gpopBody');
@@ -1611,12 +1669,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             '</div>' +
             '<div class="gpop-scroll">' +
             '<table class="gpop-table"><thead><tr>' +
-            '<th style="text-align:left;padding-left:12px;width:24%;">Subject</th>' +
-            '<th style="width:16%;">Term / BF</th>' +
-            '<th style="width:14%;">Cum</th>' +
-            '<th style="width:14%;">Cum Ave</th>' +
-            '<th style="width:10%;">Grade</th>' +
-            '<th style="width:22%;">Positions<br><small style="opacity:.65;font-weight:400;font-size:8px;">CC · CT · AC · AK</small></th>' +
+            '<th style="text-align:left;padding-left:12px;width:22%;">Subject</th>' +
+            '<th style="width:14%;">Term / BF</th>' +
+            '<th style="width:12%;">Cum</th>' +
+            '<th style="width:12%;">Cum Ave</th>' +
+            '<th style="width:10%;">T.Grd</th>' +
+            '<th style="width:10%;">C.Grd</th>' +
+            '<th style="width:20%;">Positions<br><small style="opacity:.65;font-weight:400;font-size:8px;">CC · CT · AC · AK</small></th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table>' +
             '</div>' +
             '<div class="gpop-summary">' +
@@ -1814,6 +1873,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     window.scrollToTop = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
     window.closeSlistModal = function() { document.getElementById('slistModalOverlay').classList.remove('open'); };
     window.openStudentListModal = function() { document.getElementById('slistModalOverlay').classList.add('open'); };
+    
+    window.switchGradeBasis = function (basis) {
+        document.getElementById('gb_input').value = basis;
+        document.getElementById('gradeBasisForm').submit();
+    };
+
     window.generateStudentList = function() {
         var btn = document.getElementById('generateListBtn');
         if (!btn) return;
