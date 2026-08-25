@@ -907,9 +907,11 @@ td.sn-cell {
                     'arm' => 'Arm/Class',
                     'total_cum' => 'Cumulative Total',
                     'total_term' => 'Term Total',
+                    'cum_ave' => 'Cumulative Average',
                     'position_cum' => 'Overall Position (Cum)',
                     'position_term' => 'Overall Position (Term)',
                     'gpa' => 'GPA',
+                    'gpa_grade' => 'GPA Grade (Cum)',
                 ];
                 @endphp
                 @foreach($columnOptions as $key => $label)
@@ -968,6 +970,10 @@ td.sn-cell {
             <span class="meta-value">{{ $schoolterm->term ?? '-' }}</span>
         </div>
         <div class="meta-cell">
+            <span class="meta-label">Grade Basis</span>
+            <span class="meta-value" style="font-size:12px;">{{ ($grade_basis ?? 'cum_ave') === 'total' ? 'Term Total' : 'Cumulative Avg' }}</span>
+        </div>
+        <div class="meta-cell">
             <span class="meta-label">Total Students</span>
             <span class="meta-value">{{ $totalStudents }}</span>
         </div>
@@ -987,9 +993,11 @@ td.sn-cell {
         'arm'           => 'Arm',
         'total_cum'     => 'Cum Total',
         'total_term'    => 'Term Total',
+        'cum_ave'       => 'Cum Avg',
         'position_cum'  => 'Overall Pos (Cum)',
         'position_term' => 'Overall Pos (Term)',
         'gpa'           => 'GPA',
+        'gpa_grade'     => 'GPA Grade',
     ];
 
     $statusMeta = [
@@ -1067,6 +1075,8 @@ td.sn-cell {
                                     $hasPic = !empty($stu['picture']) && $stu['picture'] !== 'unnamed.jpg';
                                     $imgSrc = $hasPic ? asset('storage/student_avatars/' . basename($stu['picture'])) : null;
                                     $initials = strtoupper(substr($stu['lastname']??'',0,1) . substr($stu['firstname']??'',0,1)) ?: 'ST';
+                                    // Calculate cumulative average if not directly available
+                                    $cumAve = $stu['cum_ave'] ?? ($stu['total_cum'] > 0 && $schoolterm->id > 0 ? round($stu['total_cum'] / $schoolterm->id, 1) : 0);
                                 @endphp
                                 <tr>
                                     @if($show_sn)
@@ -1123,12 +1133,16 @@ td.sn-cell {
                                             <td style="text-align:center;font-weight:700;">{{ $stu['total_cum'] ?? '—' }}</td>
                                         @elseif($field === 'total_term')
                                             <td style="text-align:center;font-weight:700;">{{ $stu['total_term'] ?? '—' }}</td>
+                                        @elseif($field === 'cum_ave')
+                                            <td style="text-align:center;font-weight:700;color:#7c3aed;">{{ $cumAve ?: '—' }}</td>
                                         @elseif($field === 'position_cum')
                                             <td style="text-align:center;font-weight:700;color:#1e40af;">{{ listOrdinal($stu['position_cum'] ?? null) }}</td>
                                         @elseif($field === 'position_term')
                                             <td style="text-align:center;font-weight:700;color:#92400e;">{{ listOrdinal($stu['position_term'] ?? null) }}</td>
                                         @elseif($field === 'gpa')
                                             <td style="text-align:center;">{{ number_format($stu['gpa'] ?? 0, 2) }}</td>
+                                        @elseif($field === 'gpa_grade')
+                                            <td style="text-align:center;font-weight:700;">{{ $stu['gpa_grade'] ?? '—' }}</td>
                                         @endif
                                     @endforeach
                                 </tr>
@@ -1290,7 +1304,7 @@ function exportToPDF() {
     }, 500);
 }
 
-// Apply settings and refresh
+// Apply settings and refresh - FIXED to use POST
 function applySettingsAndRefresh() {
     var selectedColumns = [];
     document.querySelectorAll('.column-checkbox:checked').forEach(function(cb) {
@@ -1310,20 +1324,51 @@ function applySettingsAndRefresh() {
     localStorage.setItem('student_list_paper_size', paperSize);
     localStorage.setItem('new_page_per_group', newPagePerGroup);
 
-    var url = window.location.pathname;
-    var params = new URLSearchParams();
-    params.set('list_fields', selectedColumns.join(','));
-    params.set('show_photos', showPhotos ? '1' : '0');
-    params.set('show_sn', showSn ? '1' : '0');
-
-    var existingParams = new URLSearchParams(window.location.search);
-    for (var pair of existingParams.entries()) {
-        if (!params.has(pair[0]) && pair[0] !== 'list_fields' && pair[0] !== 'show_photos' && pair[0] !== 'show_sn') {
-            params.set(pair[0], pair[1]);
+    // Build a POST form and submit it
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = window.location.pathname;
+    
+    var csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = document.querySelector('input[name="_token"]').value;
+    form.appendChild(csrf);
+    
+    // Add required fields from the hidden data passed by the controller
+    var requiredFields = ['schoolclassid', 'sessionid', 'termid', 'grade_basis'];
+    requiredFields.forEach(function(name) {
+        var hidden = document.querySelector('input[name="' + name + '"]');
+        if (hidden) {
+            var clone = hidden.cloneNode(true);
+            form.appendChild(clone);
         }
-    }
-
-    window.location.href = url + '?' + params.toString();
+    });
+    
+    // Add list fields
+    selectedColumns.forEach(function(val, idx) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'list_fields[' + idx + ']';
+        input.value = val;
+        form.appendChild(input);
+    });
+    
+    // Add show_photos, show_sn
+    var photoInput = document.createElement('input');
+    photoInput.type = 'hidden';
+    photoInput.name = 'show_photos';
+    photoInput.value = showPhotos ? '1' : '0';
+    form.appendChild(photoInput);
+    
+    var snInput = document.createElement('input');
+    snInput.type = 'hidden';
+    snInput.name = 'show_sn';
+    snInput.value = showSn ? '1' : '0';
+    form.appendChild(snInput);
+    
+    document.body.appendChild(form);
+    form.submit();
 }
 
 // Load saved preferences
