@@ -84,7 +84,6 @@ class BroadsheetController extends Controller
             ->distinct()
             ->count('sc.subjectid');
 
-        // Check if this is a promotional term
         $term              = Schoolterm::find($termid);
         $isPromotionalTerm = $term && $term->is_promotional;
 
@@ -556,10 +555,54 @@ class BroadsheetController extends Controller
                         $scoresForPromo,
                         $classAvgScore > 0 ? $classAvgScore : null
                     );
+                    
+                    // Log the promotion result for debugging
+                    Log::debug('Promotion result for student ' . $sid, [
+                        'status' => $promoResult['status'] ?? 'unknown',
+                        'has_applied_rule' => isset($promoResult['applied_rule']),
+                        'applied_rule' => $promoResult['applied_rule'] ?? null,
+                    ]);
+                    
                 } catch (\Exception $e) {
                     Log::warning('Promotion eval failed for student ' . $sid . ': ' . $e->getMessage());
                     $promoResult = $this->promotionEvaluator->awaitingResult($classAvgScore ?: null);
                 }
+            }
+
+            // ── Extract the applied rule name ──
+            $ruleApplied = null;
+            if ($promoResult && isset($promoResult['applied_rule'])) {
+                $appliedRule = $promoResult['applied_rule'];
+                
+                // Handle different possible structures
+                if (is_array($appliedRule)) {
+                    // Try various possible keys
+                    $ruleApplied = $appliedRule['name'] ?? 
+                                  $appliedRule['rule'] ?? 
+                                  $appliedRule['label'] ?? 
+                                  $appliedRule['rule_name'] ?? 
+                                  null;
+                    
+                    // If still null but we have a description, use that as fallback
+                    if (!$ruleApplied && isset($appliedRule['description'])) {
+                        $ruleApplied = $appliedRule['description'];
+                    }
+                } elseif (is_string($appliedRule)) {
+                    $ruleApplied = $appliedRule;
+                }
+            }
+            
+            // ── FALLBACK: If no rule was applied but we have a status, map it ──
+            if (!$ruleApplied && $promoResult && isset($promoResult['status'])) {
+                $status = $promoResult['status'];
+                $statusRuleMap = [
+                    'promoted' => 'Standard Promotion',
+                    'trial' => 'Trial Promotion',
+                    'see_principal' => 'Principal Review Required',
+                    'repeated' => 'Repeat Year',
+                    'awaiting' => 'Awaiting Decision'
+                ];
+                $ruleApplied = $statusRuleMap[$status] ?? 'Unknown Rule';
             }
 
             $studentRows[$sid] = [
@@ -585,8 +628,8 @@ class BroadsheetController extends Controller
                 'position_cum'           => 0,
                 'position_term'          => 0,
                 'promotion_status'       => $promoResult['status']       ?? 'awaiting',
-                'promotion_label'        => $promoResult['status_label'] ?? 'Awaiting Decision',
-                'promotion_rule_applied' => $promoResult['applied_rule']['name'] ?? null,
+                'promotion_label'        => $promoResult['status_label'] ?? $promoResult['label'] ?? 'Awaiting Decision',
+                'promotion_rule_applied' => $ruleApplied,
                 'promotion_data'         => $promoResult,
             ];
         }
