@@ -22,6 +22,7 @@
     --cb-radius:    14px;
     --cb-shadow:    0 4px 16px rgba(15,35,66,.10);
     --cb-shadow-lg: 0 8px 32px rgba(15,35,66,.14);
+    --cumave-color: #7c3aed;
 }
 *, *::before, *::after { box-sizing: border-box; }
 body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
@@ -48,47 +49,65 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @keyframes rowSlide    { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
 @keyframes backdropIn  { from { opacity:0; } to { opacity:1; } }
 
-/* ── Comment display styles ── */
-.comment-display, .comment-display-mobile {
-    transition: all 0.2s ease;
-    word-break: break-word;
-    white-space: normal;
-    line-height: 1.5;
-    cursor: pointer;
+/* ── Grade Basis Toggle Bar ── */
+.grade-basis-bar {
+    background: #fff;
+    border: 1px solid var(--cb-border);
+    border-radius: var(--cb-radius);
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: var(--cb-shadow);
+    animation: fadeInUp .5s ease .1s both;
 }
-.comment-display:hover, .comment-display-mobile:hover {
-    background: #e8f0fe !important;
-    border-color: var(--cb-teal) !important;
-    transform: translateY(-1px);
+.grade-basis-bar .mode-label { font-size:13px; font-weight:600; color:var(--cb-navy); white-space:nowrap; }
+.grade-basis-toggle {
+    display: flex;
+    background: var(--cb-surface);
+    border: 1.5px solid var(--cb-border);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
 }
-
-/* ── Serial Number Cell ── */
-.sn-cell {
-    text-align: center;
-    font-weight: 700;
+.grade-basis-toggle .basis-btn {
+    padding: 7px 18px;
     font-size: 13px;
-    color: var(--cb-navy);
-    background-color: #f8fafc;
-    border-right: 1px solid var(--cb-border);
-    width: 45px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--cb-muted);
+    cursor: pointer;
+    transition: all .2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
 }
-
-/* ── Position Cell ── */
-.pos-cell {
-    text-align: center;
-    vertical-align: middle;
-    width: 80px;
+.grade-basis-toggle .basis-btn:hover { background:#e9ecef; color:var(--cb-navy); }
+.grade-basis-toggle .basis-btn.active-cumave { background:linear-gradient(135deg,var(--cumave-color),#a855f7); color:#fff; }
+.grade-basis-toggle .basis-btn.active-total  { background:linear-gradient(135deg,#0891b2,#06b6d4); color:#fff; }
+.basis-hint {
+    font-size:12px; color:var(--cb-muted);
+    background:var(--cb-surface);
+    border:1px dashed var(--cb-border);
+    border-radius:6px; padding:5px 10px;
 }
+.basis-hint strong { color:var(--cb-navy); }
 
-/* ── Shimmer skeleton ── */
-.shimmer-skeleton {
-    background: linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
-    background-size: 800px 100%;
-    animation: shimmer 1.4s infinite linear;
-    border-radius: 4px;
+/* ── Cum Ave Badge ── */
+.cumave-badge {
+    display:inline-block;
+    background:#ede9fe;
+    color:#5b21b6;
+    padding:2px 10px;
+    border-radius:12px;
+    font-size:10px;
+    font-weight:700;
+    border:1px solid #c4b5fd;
 }
-
-.spin { animation:spin .8s linear infinite; }
 
 /* ── Hero ── */
 .cb-hero {
@@ -161,56 +180,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding:2px 10px; border-radius:20px;
 }
 .stat-pct-term { background:rgba(14,165,233,.12); color:#0369a1; }
-.stat-pct-cum  { background:rgba(34,197,94,.12);  color:#15803d; }
+.stat-pct-cum  { background:rgba(15,35,66,.08);  color:var(--cb-navy); }
 .stat-pct-cumave { background:rgba(124,58,237,.12); color:#5b21b6; }
-
-/* ── Grade Basis Toggle Bar ── */
-.grade-basis-bar {
-    background: #fff;
-    border: 1px solid var(--cb-border);
-    border-radius: var(--cb-radius);
-    padding: 14px 20px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    box-shadow: var(--cb-shadow);
-    animation: fadeInUp .5s ease .1s both;
-}
-.grade-basis-bar .mode-label { font-size:13px; font-weight:600; color:var(--cb-navy); white-space:nowrap; }
-.grade-basis-toggle {
-    display: flex;
-    background: var(--cb-surface);
-    border: 1.5px solid var(--cb-border);
-    border-radius: 8px;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-.grade-basis-toggle .basis-btn {
-    padding: 7px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    background: transparent;
-    color: var(--cb-muted);
-    cursor: pointer;
-    transition: all .2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-}
-.grade-basis-toggle .basis-btn:hover { background:#e9ecef; color:var(--cb-navy); }
-.grade-basis-toggle .basis-btn.active-cumave { background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; }
-.grade-basis-toggle .basis-btn.active-total  { background:linear-gradient(135deg,#0891b2,#06b6d4); color:#fff; }
-.basis-hint {
-    font-size:12px; color:var(--cb-muted);
-    background:var(--cb-surface);
-    border:1px dashed var(--cb-border);
-    border-radius:6px; padding:5px 10px;
-}
-.basis-hint strong { color:var(--cb-navy); }
 
 /* ── Column Toggle Panel ── */
 .col-toggle-panel {
@@ -583,6 +554,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <span class="cb-meta-pill"><i class="ri-building-line"></i>{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</span>
                 <span class="cb-meta-pill"><i class="ri-calendar-line"></i>{{ $schoolterm }}</span>
                 <span class="cb-meta-pill"><i class="ri-calendar-event-line"></i>{{ $schoolsession }}</span>
+                <span class="cb-meta-pill" style="background:rgba(124,58,237,.2);border-color:rgba(124,58,237,.4);">
+                    <i class="ri-bar-chart-line"></i> Cum Ave: {{ $avgCumAvePercentage ?? 0 }}%
+                </span>
             </div>
         </div>
         <a href="{{ route('myclass.index') }}" class="btn-back"><i class="ri-arrow-left-line"></i> Back to My Classes</a>
@@ -661,7 +635,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             Grades based on <strong>Term Total</strong> scores only
         @endif
     </span>
-    <span class="ms-auto badge" style="background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#2563eb' : '#0891b2' }};color:#fff;font-size:11px;padding:6px 14px;">
+    <span class="ms-auto badge" style="background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#7c3aed' : '#0891b2' }};color:#fff;font-size:11px;padding:6px 14px;">
         @if(($gradeBasis ?? 'cum_ave') === 'cum_ave')
             <i class="ri-bar-chart-line me-1"></i> Cum Ave
         @else
@@ -734,6 +708,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <i class="ri-table-alt-line me-1" style="color:var(--cb-teal)"></i>
             Student Performance &amp; Comments
             <span class="badge ms-2" style="background:var(--cb-teal);color:#fff;font-size:11px;border-radius:20px;padding:3px 10px;">{{ $students->count() }} Students</span>
+            <span class="badge ms-2" style="background:#7c3aed;color:#fff;font-size:11px;border-radius:20px;padding:3px 10px;">
+                <i class="ri-bar-chart-line me-1"></i> Cum Ave
+            </span>
         </h5>
         <div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="cb-search" style="max-width:240px;">
@@ -766,7 +743,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         @foreach ($subjects as $subject)
                             <th class="cbcol-scores" style="min-width:120px; text-align:center;">{{ $subject->subject }}</th>
                         @endforeach
-                        <th class="cbcol-summary" style="min-width:240px;">Summary</th>
+                        <th class="cbcol-summary" style="min-width:260px;">Summary</th>
                         <th class="cbcol-teacher" style="min-width:240px;">Teacher's Comment</th>
                         <th class="cbcol-guidance" style="min-width:220px;">Counselor's Comment</th>
                         <th class="cbcol-activities" style="min-width:240px;">Remark on Activities</th>
@@ -791,6 +768,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             $termPct    = $an['term_percentage'] ?? 0;
                             $cumPct     = $an['cum_percentage'] ?? 0;
                             $cumAvePct  = $an['cum_ave_percentage'] ?? 0;
+                            $cumAveAvg  = $an['cum_ave_average'] ?? 0;
                             $termColor  = $termPct < 40 ? '#f43f5e' : ($termPct < 70 ? '#f59e0b' : '#22c55e');
                             $cumColor   = $cumPct  < 40 ? '#f43f5e' : ($cumPct  < 70 ? '#f59e0b' : '#22c55e');
                             $cumAveColor = $cumAvePct < 40 ? '#f43f5e' : ($cumAvePct < 70 ? '#f59e0b' : '#7c3aed');
@@ -834,6 +812,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                     <div>
                                         <div class="student-name-text">{{ $fullName }}</div>
                                         <div class="student-adm">{{ $student->admissionNo }} · {{ $student->gender ?? '' }}</div>
+                                        <span class="cumave-badge">
+                                            <i class="ri-bar-chart-line me-1"></i> Cum Ave: {{ number_format($cumAveAvg, 1) }}%
+                                        </span>
                                         <span class="comment-status-dot {{ $hasComment ? 'dot-saved' : 'dot-unsaved' }}" id="status-{{ $sid }}">{{ $hasComment ? '✓ Commented' : '○ No comment' }}</span>
                                         <span class="autosave-chip ac-idle" id="autosave-{{ $sid }}"></span>
                                     </div>
@@ -890,7 +871,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                         <div class="score-row score-row-cumave">
                                             <span class="score-lbl" style="color:#7c3aed;">CA</span>
                                             <span class="{{ $caC }}">{{ $caScore ? number_format($caScore, 1) : '—' }}</span>
-                                            @if($caGrade !== '-')<span class="grade-badge g-{{ strtolower($caGrade) }}">{{ $caGrade }}</span>@endif
+                                            @if($caGrade !== '-')<span class="grade-badge g-{{ strtolower($caGrade) }}" style="background:#7c3aed;color:#fff;">{{ $caGrade }}</span>@endif
                                             @if($gradeBasis === 'cum_ave')<span style="font-size:8px;color:#7c3aed;">★</span>@endif
                                         </div>
                                         @if($bf > 0)
@@ -910,9 +891,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                     <span class="analytics-lbl">Obtained (Cum)</span>
                                     <span class="analytics-val">{{ number_format($an['cum_total'] ?? 0, 1) }}</span>
                                 </div>
-                                <div class="analytics-row">
-                                    <span class="analytics-lbl">Obtained (Cum Ave)</span>
-                                    <span class="analytics-val" style="color:#7c3aed;">{{ number_format($an['cum_ave_total'] ?? 0, 1) }}</span>
+                                <div class="analytics-row" style="background:#ede9fe;border-radius:4px;padding:2px 6px;">
+                                    <span class="analytics-lbl" style="color:#5b21b6;"><i class="ri-bar-chart-line me-1"></i> Cum Ave ★</span>
+                                    <span class="analytics-val" style="color:#7c3aed;">
+                                        {{ number_format($an['cum_ave_average'] ?? 0, 1) }}
+                                    </span>
                                 </div>
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">% ({{ $gradeBasis === 'total' ? 'Term' : 'Cum Ave' }})</span>
@@ -934,7 +917,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                              data-final-color="{{ $cumColor }}"
                                              style="width:{{ $cumPct }}%;animation-delay:{{ $rowDelay + 0.1 }}s;"></div>
                                     </div>
-                                    <div style="font-size:9px;color:var(--cb-muted);margin:3px 0 2px;">Cum Ave ★</div>
+                                    <div style="font-size:9px;color:var(--cb-muted);margin:3px 0 2px;background:#ede9fe;padding:0 4px;border-radius:4px;">
+                                        Cum Ave ★
+                                    </div>
                                     <div class="pct-bar-wrap">
                                         <div class="pct-bar"
                                              data-final-color="{{ $cumAveColor }}"
@@ -1020,6 +1005,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     $termPct = $an['term_percentage'] ?? 0;
                     $cumPct = $an['cum_percentage'] ?? 0;
                     $cumAvePct = $an['cum_ave_percentage'] ?? 0;
+                    $cumAveAvg = $an['cum_ave_average'] ?? 0;
 
                     $teacherComment = $profile ? $profile->classteachercomment : '';
                     $guidanceComment = $profile ? $profile->guidancescomment : '';
@@ -1037,6 +1023,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         <div style="flex:1;">
                             <div style="font-weight:700;font-size:14px;color:var(--cb-navy);">{{ $fullName }}</div>
                             <div style="font-size:11px;color:var(--cb-muted);">{{ $student->admissionNo }}</div>
+                            <div style="font-size:10px;color:#7c3aed;background:#ede9fe;padding:2px 8px;border-radius:12px;display:inline-block;margin-top:2px;">
+                                <i class="ri-bar-chart-line me-1"></i> Cum Ave: {{ number_format($cumAveAvg, 1) }}%
+                            </div>
                         </div>
                         <div class="pos-badge {{ $posClass }}">{{ $pos }}</div>
                     </div>
@@ -1172,8 +1161,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Cum</div>
                             <div id="modalCumTotal" style="font-size:20px;font-weight:700;margin-top:5px;">0.0</div>
                         </div>
-                        <div style="text-align:center;background:rgba(255,255,255,.12);border-radius:10px;padding:10px;">
-                            <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Cum Ave</div>
+                        <div style="text-align:center;background:rgba(124,58,237,.2);border-radius:10px;padding:10px;">
+                            <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;color:#c4b5fd;">Cum Ave ★</div>
                             <div id="modalCumAveTotal" style="font-size:20px;font-weight:700;margin-top:5px;color:#c4b5fd;">0.0</div>
                         </div>
                         <div style="text-align:center;background:rgba(255,255,255,.12);border-radius:10px;padding:10px;">
@@ -1429,7 +1418,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
         document.getElementById('modalTermTotal').textContent = parseFloat(analyticsData.term_total || 0).toFixed(1);
         document.getElementById('modalCumTotal').textContent  = parseFloat(analyticsData.cum_total || 0).toFixed(1);
-        document.getElementById('modalCumAveTotal').textContent = parseFloat(analyticsData.cum_ave_total || 0).toFixed(1);
+        document.getElementById('modalCumAveTotal').textContent = parseFloat(analyticsData.cum_ave_average || 0).toFixed(1);
         document.getElementById('modalSubjects').textContent   = analyticsData.subject_count || 0;
         document.getElementById('modalGradeBasis').textContent = GRADE_BASIS === 'total' ? 'Term Total' : 'Cumulative Average';
 
@@ -1585,10 +1574,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             '<div class="gpop-summary">' +
             '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtained (Term)</div><div class="gpop-sum-val">' + parseFloat(an.term_total || 0).toFixed(1) + '</div></div>' +
             '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtained (Cum)</div><div class="gpop-sum-val">' + parseFloat(an.cum_total || 0).toFixed(1) + '</div></div>' +
-            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtained (Cum Ave)</div><div class="gpop-sum-val score-purple">' + parseFloat(an.cum_ave_total || 0).toFixed(1) + '</div></div>' +
+            '<div class="gpop-sum-item" style="border-color:#7c3aed;background:#ede9fe;"><div class="gpop-sum-lbl" style="color:#5b21b6;">Cum Ave ★</div><div class="gpop-sum-val score-purple">' + parseFloat(an.cum_ave_average || 0).toFixed(1) + '</div></div>' +
             '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Term)</div><div class="gpop-sum-val ' + getPctClass(tPct) + '">' + tPct.toFixed(1) + '%</div></div>' +
             '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Cum)</div><div class="gpop-sum-val ' + getPctClass(cPct) + '">' + cPct.toFixed(1) + '%</div></div>' +
-            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Cum Ave ★)</div><div class="gpop-sum-val ' + getPctClass(caPct) + '" style="color:#7c3aed;">' + caPct.toFixed(1) + '%</div></div>' +
+            '<div class="gpop-sum-item" style="border-color:#7c3aed;background:#ede9fe;"><div class="gpop-sum-lbl" style="color:#5b21b6;">% (Cum Ave ★)</div><div class="gpop-sum-val score-purple">' + caPct.toFixed(1) + '%</div></div>' +
             '</div>';
 
         var rect = triggerEl.getBoundingClientRect();

@@ -126,6 +126,18 @@
 .principal-badge-cumave   { background:#ede9fe; color:#5b21b6; }
 .principal-badge-total    { background:#dbeafe; color:#0891b2; }
 
+/* Cum Ave badge */
+.cumave-badge {
+    display:inline-block;
+    background:#ede9fe;
+    color:#5b21b6;
+    padding:2px 10px;
+    border-radius:12px;
+    font-size:10px;
+    font-weight:700;
+    border:1px solid #c4b5fd;
+}
+
 /* Avatar */
 .avatar-clickable { cursor:pointer; transition:transform .2s ease, opacity .2s ease; }
 .avatar-clickable:hover { transform:scale(1.1); opacity:.9; }
@@ -169,7 +181,7 @@
 .score-row-cum { background:rgba(30,58,95,.07); border-radius:6px; padding:4px 5px; margin-bottom:4px; border-left:3px solid var(--principal-primary); }
 .score-row-cum .score-type-label { font-size:.55rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--principal-primary); margin-bottom:1px; }
 
-/* Cum Ave row (NEW) */
+/* Cum Ave row */
 .score-row-cumave { background:rgba(124,58,237,.07); border-radius:6px; padding:4px 5px; margin-bottom:4px; border-left:3px solid #7c3aed; }
 .score-row-cumave .score-type-label { font-size:.55rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#7c3aed; margin-bottom:1px; }
 
@@ -245,7 +257,7 @@
     border:2px solid var(--principal-accent);
     border-radius:16px;
     box-shadow:0 20px 60px rgba(0,0,0,.3);
-    width:620px;
+    width:680px;
     max-height:620px;
     overflow:hidden;
     z-index:10050;
@@ -420,7 +432,7 @@
                         Grades based on <strong>Term Total</strong> scores only
                     @endif
                 </span>
-                <span class="ms-auto badge" style="background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#2563eb' : '#0891b2' }};color:#fff;font-size:11px;padding:6px 14px;">
+                <span class="ms-auto badge" style="background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#7c3aed' : '#0891b2' }};color:#fff;font-size:11px;padding:6px 14px;">
                     @if(($gradeBasis ?? 'cum_ave') === 'cum_ave')
                         <i class="ri-bar-chart-line me-1"></i> Cum Ave
                     @else
@@ -615,6 +627,8 @@
                                                     $hasWeakAdvice       = !empty($studentGradeAnalysis[$sid]['weak_subjects'] ?? []);
                                                     $analytics           = $studentAnalytics[$sid] ?? [];
                                                     $basisLabel = ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total';
+                                                    $cumAveAvg = $analytics['cum_ave_average'] ?? 0;
+                                                    $cumAvePct = $analytics['cum_ave_percentage'] ?? 0;
                                                 @endphp
                                                 <tr data-student-id="{{ $sid }}" class="student-row">
                                                     <td class="fw-bold">{{ $index + 1 }}</td>
@@ -654,7 +668,7 @@
                                                         @endif
                                                         <small class="d-block mt-1">
                                                             <span class="cumave-badge">
-                                                                <i class="ri-bar-chart-line me-1"></i> {{ $basisLabel }}
+                                                                <i class="ri-bar-chart-line me-1"></i> {{ $basisLabel }}: {{ number_format($cumAveAvg, 1) }}%
                                                             </span>
                                                         </small>
                                                     </td>
@@ -726,7 +740,7 @@
                                                                         <span class="bf-value"><i class="ri-arrow-left-right-line"></i> BF: {{ $bf }}</span>
                                                                     </div>
                                                                     @endif
-                                                                    {{-- Cum Ave row (NEW - highlighted) --}}
+                                                                    {{-- Cum Ave row --}}
                                                                     <div class="score-row-cumave">
                                                                         <div class="score-type-label">
                                                                             <i class="ri-bar-chart-line"></i> Cum Ave
@@ -734,7 +748,7 @@
                                                                         </div>
                                                                         <div>
                                                                             <span class="score-value {{ $caColor }}" style="color:{{ $cumAve >= 70 ? '#7c3aed' : ($cumAve >= 50 ? '#7c3aed' : '#dc2626') }}">{{ $cumAve ?: '—' }}</span>
-                                                                            @if($caGrade)<span class="score-grade-badge grade-{{ $caGL }}">{{ $caGrade }}</span>@endif
+                                                                            @if($caGrade)<span class="score-grade-badge grade-{{ $caGL }}" style="background:#7c3aed;color:#fff;">{{ $caGrade }}</span>@endif
                                                                         </div>
                                                                     </div>
                                                                     {{-- Cum row --}}
@@ -862,7 +876,7 @@
                                                                     <div class="col-3">
                                                                         <div class="stat-card" style="border:2px solid #7c3aed;padding:10px;">
                                                                             <small style="color:#7c3aed;" class="fw-bold"><i class="ri-bar-chart-line"></i> Cum Ave</small>
-                                                                            <h4 class="mb-0" style="color:#7c3aed;">{{ $analytics['cum_ave_total'] ?? 0 }}</h4>
+                                                                            <h4 class="mb-0" style="color:#7c3aed;">{{ $analytics['cum_ave_average'] ?? 0 }}</h4>
                                                                             <small class="text-muted">Avg: {{ $analytics['cum_ave_average'] ?? 0 }}</small>
                                                                         </div>
                                                                     </div>
@@ -974,6 +988,7 @@
                                         $intelligentComment  = $intelligentComments[$sid] ?? '';
                                         $analytics           = $studentAnalytics[$sid] ?? [];
                                         $basisLabel = ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total';
+                                        $cumAveAvg = $analytics['cum_ave_average'] ?? 0;
                                     @endphp
                                     <div class="student-card" data-student-id="{{ $sid }}">
                                         <div class="student-header">
@@ -1010,7 +1025,7 @@
                                                         <i class="ri-id-card-line"></i> {{ $student->admissionNo }} |
                                                         <i class="ri-user-line"></i> {{ $student->gender ?? 'N/A' }}
                                                         <span class="badge ms-1" style="background:#7c3aed;color:#fff;font-size:9px;">
-                                                            {{ $basisLabel }}
+                                                            {{ $basisLabel }}: {{ number_format($cumAveAvg, 1) }}%
                                                         </span>
                                                     </div>
                                                 </div>
@@ -1040,7 +1055,7 @@
                                                         <div class="summary-label">Term Avg</div>
                                                         <div class="summary-value">{{ $analytics['term_average'] ?? 0 }}</div>
                                                     </div>
-                                                    <div class="summary-item">
+                                                    <div class="summary-item" style="background:rgba(124,58,237,.3);">
                                                         <div class="summary-label" style="color:#c4b5fd;">Cum Ave ★</div>
                                                         <div class="summary-value" style="color:#c4b5fd;">{{ $analytics['cum_ave_average'] ?? 0 }}</div>
                                                     </div>
@@ -1291,7 +1306,6 @@ function showTooltip(tooltipId, studentId, studentName) {
                     const caGC   = getGradeClass(g.cum_ave_grade);
                     const cGC    = getGradeClass(g.cum_grade);
 
-                    // Highlight the active basis
                     const isCumAveActive = basis === 'cum_ave';
                     const isTotalActive = basis === 'total';
 

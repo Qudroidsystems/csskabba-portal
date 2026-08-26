@@ -204,7 +204,7 @@ class ClassBroadsheetController extends Controller
         // Build term score map, cum score map, and cum_ave map
         $termScoreMap = [];
         $cumScoreMap = [];
-        $cumAveMap = [];  // ← NEW: Cumulative Average
+        $cumAveMap = [];
         $bfMap = [];
         $positionMaps = [];
         $studentSubjectData = [];
@@ -229,7 +229,8 @@ class ClassBroadsheetController extends Controller
             // CUM: BF + Total (raw sum)
             $cum = round($bf + $rawTotal, 2);
             
-            // CUM AVE: Cum ÷ term number (the per-term averaged figure)
+            // CUM AVE: Cum ÷ term number → (BF + Total) ÷ Term Number
+            // Example: 181.0 ÷ 3 = 60.3
             $cumAve = $termid > 0 ? round($cum / $termid, 2) : $cum;
 
             $termScoreMap[$sid][$subjName] = $rawTotal;
@@ -291,6 +292,7 @@ class ClassBroadsheetController extends Controller
             $termTotal = 0;
             $cumTotal = 0;
             $cumAveTotal = 0;
+            $cumAveCount = 0;
             $subjectCount = 0;
             $grades = [];
             $gradePoints = [];
@@ -307,7 +309,12 @@ class ClassBroadsheetController extends Controller
                     if ($termScore > 0 || $cumScore > 0) $subjectCount++;
                     $termTotal += $termScore;
                     $cumTotal += $cumScore;
-                    $cumAveTotal += $cumAveScore;
+                    
+                    // Only add to cumAveTotal if the score is valid
+                    if ($cumAveScore > 0) {
+                        $cumAveTotal += $cumAveScore;
+                        $cumAveCount++;
+                    }
 
                     [$termGrade, $termGradeLetter] = $this->gradeFromScore((float)$termScore, $isSenior);
                     [$cumGrade, $cumGradeLetter] = $this->gradeFromScore((float)$cumScore, $isSenior);
@@ -352,17 +359,21 @@ class ClassBroadsheetController extends Controller
             $totalObtainable = $subjectCount * 100;
             $termPercentage = $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0;
             $cumPercentage = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
-            $cumAvePercentage = $totalObtainable > 0 ? round(($cumAveTotal / $totalObtainable) * 100, 1) : 0;
+            
+            // Cum Ave: Average of all subject Cum Aves
+            // Example: 884.3 ÷ 15 = 59.0%
+            $cumAveAverage = $cumAveCount > 0 ? round($cumAveTotal / $cumAveCount, 1) : 0;
+            $cumAvePercentage = $cumAveAverage; // Already a percentage (0-100 scale)
 
             $gpa = count($gradePoints) > 0 ? round(array_sum($gradePoints) / count($gradePoints), 2) : 0;
 
             $studentAnalytics[$sid] = [
                 'term_total' => round($termTotal, 1),
                 'cum_total' => round($cumTotal, 1),
-                'cum_ave_total' => round($cumAveTotal, 1),
+                'cum_ave_total' => round($cumAveTotal, 1),  // Sum of subject Cum Aves (for reference)
+                'cum_ave_average' => $cumAveAverage,  // Average of subject Cum Aves
                 'term_average' => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
                 'cum_average' => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
-                'cum_ave_average' => $subjectCount > 0 ? round($cumAveTotal / $subjectCount, 1) : 0,
                 'subject_count' => $subjectCount,
                 'total_obtainable' => $totalObtainable,
                 'term_percentage' => $termPercentage,
