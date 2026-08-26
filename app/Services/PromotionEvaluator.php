@@ -80,7 +80,6 @@ class PromotionEvaluator
         ]);
 
         // ── Step 3: Does ANY active setting exist for this class? ─────────────
-        // If zero rows → no rules configured at all → awaiting.
         $anySettingsExist = PromotionSetting::where('schoolclass_id', $schoolclassid)
             ->where('is_active', true)
             ->exists();
@@ -102,15 +101,6 @@ class PromotionEvaluator
             'rules_count' => $settings ? count($settings->promotion_rules ?? []) : 0,
         ]);
 
-        // ── KEY FIX: Settings exist for the class but NONE match this
-        //    session/term combination → the admin hasn't configured rules
-        //    for this specific term yet. Return awaiting rather than
-        //    falling through to legacy evaluation.
-        //
-        //    Legacy is only appropriate when there are genuinely NO settings
-        //    at all for the class (handled in Step 3 above). When settings
-        //    exist but don't cover this term, we treat it as "not configured
-        //    for this term" = awaiting.
         if (!$settings) {
             Log::warning('Settings exist for class but none match this session/term — returning awaiting', [
                 'class_id'   => $schoolclassid,
@@ -146,14 +136,17 @@ class PromotionEvaluator
         $matchedRule   = null;
         $matchedStatus = null;
         $matchedIndex  = null;
+        $matchedRuleName = null;
 
         if (in_array($ruleLogic, ['grade_count', 'both'])) {
             foreach ($rules as $idx => $rule) {
-                $ruleName = $rule['rule_name'] ?? 'Unnamed';
+                // Get rule name - try multiple possible keys
+                $ruleName = $rule['rule_name'] ?? $rule['name'] ?? $rule['label'] ?? 'Unnamed Rule';
 
-                if (empty($rule['rule_name'])) {
-                    Log::warning('Rule ' . ($idx + 1) . ' has no name, skipping');
-                    continue;
+                if (empty($rule['rule_name']) && empty($rule['name']) && empty($rule['label'])) {
+                    Log::warning('Rule ' . ($idx + 1) . ' has no name, using fallback', [
+                        'rule_keys' => array_keys($rule)
+                    ]);
                 }
 
                 Log::info('Checking rule ' . ($idx + 1), [
@@ -170,11 +163,13 @@ class PromotionEvaluator
                 ]);
 
                 if ($matches) {
-                    $matchedRule   = $rule;
+                    $matchedRule = $rule;
                     $matchedStatus = $rule['status_label'] ?? self::STATUS_PROMOTED;
-                    $matchedIndex  = $idx;
+                    $matchedIndex = $idx;
+                    $matchedRuleName = $ruleName; // Store the actual rule name
+                    
                     Log::info('Rule MATCHED!', [
-                        'rule_name' => $ruleName,
+                        'rule_name' => $matchedRuleName,
                         'status'    => $matchedStatus,
                     ]);
                     break;
@@ -205,7 +200,8 @@ class PromotionEvaluator
 
         Log::info('Final status resolved', [
             'final_status'      => $finalStatus,
-            'matched_rule_name' => $matchedRule['rule_name'] ?? null,
+            'matched_rule_name' => $matchedRuleName,
+            'matched_status'    => $matchedStatus,
         ]);
 
         [$failedCompulsory, $compulsoryDetail, $passedCount, $totalCount]
@@ -213,10 +209,22 @@ class PromotionEvaluator
                 $schoolclassid, $termid, $sessionid, $scoreMap, $usesSeniorGrading
             );
 
+        // ── Build applied rule summary with the actual rule name ──
         $appliedRuleSummary = null;
-        if ($matchedRule !== null) {
+        if ($matchedRule !== null && $matchedRuleName !== null) {
             $appliedRuleSummary = [
-                'name'        => $matchedRule['rule_name'],
+                'name'        => $matchedRuleName,
+                'description' => $this->describeRule($matchedRule, $usesSeniorGrading),
+                'index'       => $matchedIndex + 1,
+            ];
+        } elseif ($matchedRule !== null) {
+            // Fallback: try to extract name from the rule array
+            $fallbackName = $matchedRule['rule_name'] ?? 
+                           $matchedRule['name'] ?? 
+                           $matchedRule['label'] ?? 
+                           'Unknown Rule';
+            $appliedRuleSummary = [
+                'name'        => $fallbackName,
                 'description' => $this->describeRule($matchedRule, $usesSeniorGrading),
                 'index'       => $matchedIndex + 1,
             ];
@@ -224,6 +232,7 @@ class PromotionEvaluator
 
         Log::info('========== PROMOTION EVALUATION END ==========', [
             'final_status' => $finalStatus,
+            'applied_rule_name' => $appliedRuleSummary['name'] ?? null,
         ]);
 
         return [
@@ -353,6 +362,7 @@ class PromotionEvaluator
                 'session_id'  => $s->session_id,
                 'term_id'     => $s->term_id,
                 'priority'    => $s->priority,
+                'rule_set_name' => $s->rule_set_name,
                 'rules_count' => count($s->promotion_rules ?? []),
             ])->toArray(),
         ]);
@@ -368,36 +378,23 @@ class PromotionEvaluator
             $matchType = '';
 
             if ($setting->session_id == $sessionid && $setting->term_id == $termid) {
-                // Exact match: correct session AND correct term
                 $score = 100; $matchType = 'exact_session_term';
-
             } elseif ($setting->session_id == $sessionid && $setting->term_id === null) {
-                // Correct session, term is null = applies to all terms in this session
                 $score = 90; $matchType = 'session_only_null_term';
-
             } elseif ($setting->session_id == $sessionid && $setting->term_id !== null
                       && $setting->term_id != $termid) {
-                // Correct session but explicitly a DIFFERENT term → not a match
                 $score = 0; $matchType = 'wrong_term';
-
             } elseif ($setting->session_id === null && $setting->term_id == $termid) {
-                // No session constraint, correct term
                 $score = 80; $matchType = 'term_only';
-
             } elseif ($setting->session_id === null && $setting->term_id === null) {
-                // Global fallback — applies to any class/session/term
                 $score = 70; $matchType = 'global';
-
             } elseif ($setting->session_id !== null
                       && $setting->session_id != $sessionid
                       && $setting->term_id === null) {
-                // Different session, no term constraint — weakest fallback
                 $score = 60; $matchType = 'different_session_null_term';
-
             } elseif ($setting->session_id === null
                       && $setting->term_id !== null
                       && $setting->term_id != $termid) {
-                // No session constraint but explicitly a different term → not a match
                 $score = 0; $matchType = 'wrong_term_null_session';
             }
 
@@ -427,6 +424,7 @@ class PromotionEvaluator
 
         Log::info('Selected best setting', [
             'setting_id' => $best->id,
+            'rule_set_name' => $best->rule_set_name,
             'match_type' => $scored[0]['match_type'],
             'score'      => $scored[0]['score'],
             'session_id' => $best->session_id,
