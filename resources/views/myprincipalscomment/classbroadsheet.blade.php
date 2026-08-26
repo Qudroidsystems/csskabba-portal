@@ -16,6 +16,7 @@
     --principal-shadow:  0 2px 8px rgba(0,0,0,.08);
     --mock-color:        #7c3aed;
     --mock-light:        #ede9fe;
+    --cumave-color:      #7c3aed;
 }
 
 /* Hero */
@@ -86,6 +87,9 @@
 .scoring-mode-toggle .mode-btn.active         { background: var(--principal-primary); color:#fff; }
 .scoring-mode-toggle .mode-btn.active-term    { background: #0891b2; color:#fff; }
 .scoring-mode-toggle .mode-btn.active-mock    { background: var(--mock-color); color:#fff; }
+.scoring-mode-toggle .mode-btn.active-cumave  { background: linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; }
+.scoring-mode-toggle .mode-btn.active-total   { background: linear-gradient(135deg,#0891b2,#06b6d4); color:#fff; }
+
 .mode-hint {
     font-size:12px; color:var(--principal-muted);
     background:var(--principal-bg);
@@ -94,10 +98,12 @@
 }
 .mode-hint strong { color:var(--principal-primary); }
 
-/* Mode badge */
-.principal-badge-mode-cum  { background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
-.principal-badge-mode-term { background:linear-gradient(135deg,#0891b2,#06b6d4); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
-.principal-badge-mode-mock { background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+/* Mode badges */
+.principal-badge-mode-cum   { background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.principal-badge-mode-term  { background:linear-gradient(135deg,#0891b2,#06b6d4); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.principal-badge-mode-mock  { background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.principal-badge-mode-cumave { background:linear-gradient(135deg,#1e3a5f,#2563eb); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.principal-badge-mode-total  { background:linear-gradient(135deg,#0891b2,#06b6d4); color:#fff; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; }
 
 /* Stat cards */
 .stat-card {
@@ -117,6 +123,8 @@
 .principal-badge-senior   { background:#fef3c7; color:#d97706; }
 .principal-badge-junior   { background:#dbeafe; color:#2563eb; }
 .principal-badge-cumulative { background:linear-gradient(135deg,#17a2b8,#0d6efd); color:#fff; }
+.principal-badge-cumave   { background:#ede9fe; color:#5b21b6; }
+.principal-badge-total    { background:#dbeafe; color:#0891b2; }
 
 /* Avatar */
 .avatar-clickable { cursor:pointer; transition:transform .2s ease, opacity .2s ease; }
@@ -161,6 +169,10 @@
 .score-row-cum { background:rgba(30,58,95,.07); border-radius:6px; padding:4px 5px; margin-bottom:4px; border-left:3px solid var(--principal-primary); }
 .score-row-cum .score-type-label { font-size:.55rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--principal-primary); margin-bottom:1px; }
 
+/* Cum Ave row (NEW) */
+.score-row-cumave { background:rgba(124,58,237,.07); border-radius:6px; padding:4px 5px; margin-bottom:4px; border-left:3px solid #7c3aed; }
+.score-row-cumave .score-type-label { font-size:.55rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#7c3aed; margin-bottom:1px; }
+
 /* Mock row */
 .score-row-mock { background:rgba(124,58,237,.07); border-radius:6px; padding:4px 5px; border-left:3px solid var(--mock-color); }
 .score-row-mock .score-type-label { font-size:.55rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--mock-color); margin-bottom:1px; }
@@ -168,10 +180,11 @@
 .score-value { font-size:1rem; font-weight:700; line-height:1; }
 .score-grade-badge { display:inline-block; padding:1px 6px; border-radius:10px; font-size:.6rem; font-weight:700; margin-left:3px; vertical-align:middle; }
 
-/* Active mode highlight on card */
+/* Active mode highlight */
 .subject-score-card.mode-cum .score-row-cum   { background:rgba(30,58,95,.13); box-shadow:0 1px 4px rgba(30,58,95,.1); }
 .subject-score-card.mode-term .score-row-term { background:rgba(8,145,178,.14); box-shadow:0 1px 4px rgba(8,145,178,.12); }
 .subject-score-card.mode-mock .score-row-mock { background:rgba(124,58,237,.14); box-shadow:0 1px 4px rgba(124,58,237,.12); }
+.subject-score-card.mode-cumave .score-row-cumave { background:rgba(124,58,237,.14); box-shadow:0 1px 4px rgba(124,58,237,.12); }
 
 /* Grade colours */
 .grade-a,.grade-a1  { background:#16a34a; color:#fff; }
@@ -232,7 +245,7 @@
     border:2px solid var(--principal-accent);
     border-radius:16px;
     box-shadow:0 20px 60px rgba(0,0,0,.3);
-    width:580px;
+    width:620px;
     max-height:620px;
     overflow:hidden;
     z-index:10050;
@@ -251,10 +264,10 @@
 .grades-tooltip .tooltip-close  { position:absolute; right:15px; top:50%; transform:translateY(-50%); width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.2); color:#fff; font-size:1.2rem; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; }
 .grades-tooltip .tooltip-body   { padding:0 15px 15px 15px; max-height:500px; overflow-y:auto; }
 
-/* Tooltip col colours */
 .tooltip-grade-header { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
 .tooltip-col-term   { color:#0891b2; }
 .tooltip-col-cum    { color:var(--principal-primary); }
+.tooltip-col-cumave { color:#7c3aed; }
 .tooltip-col-mock   { color:var(--mock-color); }
 .tooltip-col-pos    { color:#6b7280; }
 
@@ -279,6 +292,8 @@
 .subject-name { font-size:.7rem; font-weight:700; color:#495057; margin-bottom:6px; line-height:1.2; }
 .performance-summary { background:linear-gradient(135deg,var(--principal-primary) 0%,var(--principal-accent) 100%); border-radius:12px; padding:15px; margin-bottom:15px; color:#fff; }
 .performance-summary.mock-mode { background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%); }
+.performance-summary.cumave-mode { background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); }
+.performance-summary.total-mode { background:linear-gradient(135deg,#0891b2 0%,#06b6d4 100%); }
 .summary-title { font-weight:600; font-size:.85rem; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
 .summary-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; text-align:center; }
 .summary-item { padding:8px; background:rgba(255,255,255,.15); border-radius:8px; backdrop-filter:blur(5px); }
@@ -295,6 +310,18 @@
 .class-arm-badge  { font-size:10px; padding:2px 7px; background:#e0f2fe; color:#0369a1; border-radius:12px; font-weight:600; margin-left:6px; }
 .comment-saved-badge { font-size:11px; color:#16a34a; }
 .auto-save-comment { transition:all .3s ease; }
+
+/* Cum Ave badge */
+.cumave-badge {
+    display:inline-block;
+    background:#ede9fe;
+    color:#5b21b6;
+    padding:2px 10px;
+    border-radius:12px;
+    font-size:10px;
+    font-weight:700;
+    border:1px solid #c4b5fd;
+}
 </style>
 
 <div class="main-content class-broadsheet">
@@ -335,7 +362,7 @@
                         <i class="ri-file-list-3-line"></i> Mock
                     </a>
                     @else
-                    <span class="mode-btn text-muted" style="cursor:not-allowed;opacity:.5;" title="No mock data available for this class/term/session">
+                    <span class="mode-btn text-muted" style="cursor:not-allowed;opacity:.5;" title="No mock data available">
                         <i class="ri-file-list-3-line"></i> Mock
                     </span>
                     @endif
@@ -365,6 +392,39 @@
                         <i class="ri-calendar-check-line me-1"></i> Term Mode
                     @else
                         <i class="ri-file-list-3-line me-1"></i> Mock Mode
+                    @endif
+                </span>
+            </div>
+
+            {{-- ── Grade Basis Toggle ── --}}
+            <div class="scoring-mode-bar" style="border-left:4px solid #7c3aed;">
+                <span class="mode-label">
+                    <i class="ri-scales-3-line me-1"></i>
+                    Grade Basis:
+                </span>
+                <div class="scoring-mode-toggle">
+                    <a href="{{ request()->fullUrlWithQuery(['grade_basis' => 'cum_ave', 'scoring_mode' => $scoringMode]) }}"
+                       class="mode-btn {{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'active-cumave' : '' }}">
+                        <i class="ri-bar-chart-line"></i> Cumulative Average
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['grade_basis' => 'total', 'scoring_mode' => $scoringMode]) }}"
+                       class="mode-btn {{ ($gradeBasis ?? 'cum_ave') === 'total' ? 'active-total' : '' }}">
+                        <i class="ri-calendar-check-line"></i> Term Total
+                    </a>
+                </div>
+                <span class="mode-hint">
+                    <i class="ri-information-line text-primary"></i>
+                    @if(($gradeBasis ?? 'cum_ave') === 'cum_ave')
+                        Grades based on <strong>Cumulative Average</strong> (BF + Term ÷ term number)
+                    @else
+                        Grades based on <strong>Term Total</strong> scores only
+                    @endif
+                </span>
+                <span class="ms-auto badge" style="background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#2563eb' : '#0891b2' }};color:#fff;font-size:11px;padding:6px 14px;">
+                    @if(($gradeBasis ?? 'cum_ave') === 'cum_ave')
+                        <i class="ri-bar-chart-line me-1"></i> Cum Ave
+                    @else
+                        <i class="ri-calendar-check-line me-1"></i> Term Total
                     @endif
                 </span>
             </div>
@@ -413,6 +473,10 @@
                                   style="font-size:.65rem; background:{{ $scoringMode==='term' ? '#0891b2' : ($scoringMode==='mock' ? '#7c3aed' : '#2563eb') }}; color:#fff;">
                                 {{ ucfirst($scoringMode) }}
                             </span>
+                            <span class="badge ms-1"
+                                  style="font-size:.65rem; background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#7c3aed' : '#0891b2' }}; color:#fff;">
+                                {{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total' }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -421,11 +485,13 @@
                         <div class="stat-icon"><i class="ri-award-line"></i></div>
                         <div class="stat-value text-warning" style="font-size:16px;">
                             @php
-                                $topStudent = $students->sortByDesc(function($s) use ($scoringMode, $studentAnalytics) {
+                                $topStudent = $students->sortByDesc(function($s) use ($scoringMode, $gradeBasis, $studentAnalytics) {
                                     return match($scoringMode) {
                                         'term' => $studentAnalytics[$s->id]['term_average'] ?? 0,
                                         'mock' => $studentAnalytics[$s->id]['mock_average'] ?? 0,
-                                        default => $studentAnalytics[$s->id]['average'] ?? 0,
+                                        default => ($gradeBasis ?? 'cum_ave') === 'total' 
+                                            ? ($studentAnalytics[$s->id]['term_average'] ?? 0)
+                                            : ($studentAnalytics[$s->id]['cum_ave_average'] ?? 0),
                                     };
                                 })->first();
                             @endphp
@@ -462,6 +528,12 @@
                                     @else
                                         <span class="principal-badge principal-badge-junior ms-2">Junior (A–F)</span>
                                     @endif
+                                    <span class="principal-badge principal-badge-cumave ms-1">
+                                        <i class="ri-bar-chart-line me-1"></i> Cum Ave
+                                    </span>
+                                    <span class="principal-badge principal-badge-total ms-1">
+                                        <i class="ri-calendar-check-line me-1"></i> Term Total
+                                    </span>
                                 </h5>
                                 <div class="d-flex gap-1 flex-wrap">
                                     @if($scoringMode !== 'mock')
@@ -470,6 +542,9 @@
                                     </span>
                                     <span class="principal-badge" style="background:#dbeafe;color:#1e3a5f;">
                                         <i class="ri-bar-chart-line me-1"></i> BF
+                                    </span>
+                                    <span class="principal-badge" style="background:#ede9fe;color:#5b21b6;">
+                                        <i class="ri-bar-chart-line me-1"></i> Cum Ave
                                     </span>
                                     <span class="principal-badge principal-badge-cumulative">
                                         <i class="ri-bar-chart-line me-1"></i> Cumulative
@@ -510,7 +585,8 @@
                                                     <small class="d-block fw-normal opacity-75" style="font-size:.6rem;margin-top:2px;">
                                                         @if($scoringMode !== 'mock')
                                                             <span style="color:#90cdf4;">■ Term</span> &nbsp;
-                                                            <span style="color:#bfdbfe;">■ Cum (BF+Term÷2)</span>
+                                                            <span style="color:#c4b5fd;">■ Cum Ave</span> &nbsp;
+                                                            <span style="color:#bfdbfe;">■ Cum</span>
                                                         @else
                                                             <span style="color:#c4b5fd;">■ Mock Score</span>
                                                         @endif
@@ -538,6 +614,7 @@
                                                     $intelligentComment  = $intelligentComments[$sid] ?? '';
                                                     $hasWeakAdvice       = !empty($studentGradeAnalysis[$sid]['weak_subjects'] ?? []);
                                                     $analytics           = $studentAnalytics[$sid] ?? [];
+                                                    $basisLabel = ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total';
                                                 @endphp
                                                 <tr data-student-id="{{ $sid }}" class="student-row">
                                                     <td class="fw-bold">{{ $index + 1 }}</td>
@@ -575,6 +652,11 @@
                                                                 <i class="ri-check-double-line"></i> Comment Saved
                                                             </small>
                                                         @endif
+                                                        <small class="d-block mt-1">
+                                                            <span class="cumave-badge">
+                                                                <i class="ri-bar-chart-line me-1"></i> {{ $basisLabel }}
+                                                            </span>
+                                                        </small>
                                                     </td>
                                                     <td>
                                                         <span class="badge bg-light text-dark">
@@ -590,10 +672,10 @@
                                                                 @php
                                                                     $termTotal = $termScoreMap[$sid][$subject] ?? 0;
                                                                     $cumTotal  = $cumScoreMap[$sid][$subject]  ?? 0;
+                                                                    $cumAve    = $cumAveMap[$sid][$subject]    ?? 0;
                                                                     $bf        = $bfMap[$sid][$subject]        ?? 0;
                                                                     $mockTotal = $mockScoreMap[$sid][$subject] ?? 0;
 
-                                                                    // helper inline grade
                                                                     $inlineGrade = function($val) use ($isSenior) {
                                                                         if ($val <= 0) return [null, null];
                                                                         if ($isSenior) {
@@ -616,14 +698,15 @@
 
                                                                     [$tGrade,$tGL]   = $inlineGrade($termTotal);
                                                                     [$cGrade,$cGL]   = $inlineGrade($cumTotal);
+                                                                    [$caGrade,$caGL] = $inlineGrade($cumAve);
                                                                     [$mGrade,$mGL]   = $inlineGrade($mockTotal);
 
                                                                     $tColor = $termTotal < 40 ? 'highlight-red' : ($termTotal < 50 ? 'highlight-orange' : ($termTotal >= 70 ? 'highlight-green' : ''));
                                                                     $cColor = $cumTotal  < 40 ? 'highlight-red' : ($cumTotal  < 50 ? 'highlight-orange' : ($cumTotal  >= 70 ? 'highlight-green' : ''));
-                                                                    $mColor = $mockTotal < 40 ? 'highlight-red' : ($mockTotal < 50 ? 'highlight-orange' : ($mockTotal >= 70 ? 'highlight-green' : 'highlight-purple'));
-                                                                    $modeClass = match($scoringMode) { 'term' => 'mode-term', 'mock' => 'mode-mock', default => 'mode-cum' };
+                                                                    $caColor = $cumAve < 40 ? 'highlight-red' : ($cumAve < 50 ? 'highlight-orange' : ($cumAve >= 70 ? 'highlight-purple' : ''));
+                                                                    $mColor = $mockTotal < 40 ? 'highlight-red' : ($mockTotal < 50 ? 'highlight-orange' : ($mockTotal >= 70 ? 'highlight-purple' : ''));
                                                                 @endphp
-                                                                <div class="subject-score-card {{ $modeClass }}">
+                                                                <div class="subject-score-card mode-cumave">
                                                                     <div class="score-subject-name">{{ $subject }}</div>
 
                                                                     @if($scoringMode !== 'mock')
@@ -631,24 +714,33 @@
                                                                     <div class="score-row-term">
                                                                         <div class="score-type-label">
                                                                             <i class="ri-calendar-check-line"></i> Term
-                                                                            @if($scoringMode==='term') <span style="color:#ea580c;font-size:.55rem;">★</span> @endif
                                                                         </div>
                                                                         <div>
                                                                             <span class="score-value {{ $tColor }}">{{ $termTotal ?: '—' }}</span>
                                                                             @if($tGrade)<span class="score-grade-badge grade-{{ $tGL }}">{{ $tGrade }}</span>@endif
                                                                         </div>
                                                                     </div>
-                                                                    {{-- BF row (small) --}}
+                                                                    {{-- BF row --}}
                                                                     @if($bf > 0)
                                                                     <div style="text-align:left;padding:2px 5px;">
                                                                         <span class="bf-value"><i class="ri-arrow-left-right-line"></i> BF: {{ $bf }}</span>
                                                                     </div>
                                                                     @endif
-                                                                    {{-- Cumulative row --}}
+                                                                    {{-- Cum Ave row (NEW - highlighted) --}}
+                                                                    <div class="score-row-cumave">
+                                                                        <div class="score-type-label">
+                                                                            <i class="ri-bar-chart-line"></i> Cum Ave
+                                                                            @if(($gradeBasis ?? 'cum_ave') === 'cum_ave') <span style="color:#ea580c;font-size:.55rem;">★</span> @endif
+                                                                        </div>
+                                                                        <div>
+                                                                            <span class="score-value {{ $caColor }}" style="color:{{ $cumAve >= 70 ? '#7c3aed' : ($cumAve >= 50 ? '#7c3aed' : '#dc2626') }}">{{ $cumAve ?: '—' }}</span>
+                                                                            @if($caGrade)<span class="score-grade-badge grade-{{ $caGL }}">{{ $caGrade }}</span>@endif
+                                                                        </div>
+                                                                    </div>
+                                                                    {{-- Cum row --}}
                                                                     <div class="score-row-cum">
                                                                         <div class="score-type-label">
                                                                             <i class="ri-bar-chart-line"></i> Cum
-                                                                            @if($scoringMode==='cumulative') <span style="color:#ea580c;font-size:.55rem;">★</span> @endif
                                                                         </div>
                                                                         <div>
                                                                             <span class="score-value {{ $cColor }}">{{ $cumTotal ?: '—' }}</span>
@@ -659,7 +751,7 @@
                                                                     {{-- Mock row --}}
                                                                     <div class="score-row-mock">
                                                                         <div class="score-type-label">
-                                                                            <i class="ri-file-list-3-line"></i> Mock <span style="color:#ea580c;font-size:.55rem;">★</span>
+                                                                            <i class="ri-file-list-3-line"></i> Mock
                                                                         </div>
                                                                         <div>
                                                                             <span class="score-value {{ $mColor }}">{{ $mockTotal ?: '—' }}</span>
@@ -690,6 +782,10 @@
                                                                     <span class="badge ms-1"
                                                                           style="font-size:.6rem;background:{{ $scoringMode==='mock' ? '#7c3aed' : ($scoringMode==='term' ? '#0891b2' : '#2563eb') }};color:#fff;">
                                                                         Based on {{ ucfirst($scoringMode) }}
+                                                                    </span>
+                                                                    <span class="badge ms-1"
+                                                                          style="font-size:.6rem;background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#7c3aed' : '#0891b2' }};color:#fff;">
+                                                                        {{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total' }}
                                                                     </span>
                                                                 </small>
                                                                 <div class="intelligent-comment-preview">
@@ -754,33 +850,39 @@
                                                                 <button type="button" class="tooltip-close"><i class="ri-close-line"></i></button>
                                                             </div>
                                                             <div class="tooltip-body">
-                                                                {{-- Summary stats --}}
                                                                 <div class="row mb-2 g-2">
                                                                     @if($scoringMode !== 'mock')
-                                                                    <div class="col-4">
+                                                                    <div class="col-3">
                                                                         <div class="stat-card" style="border:2px solid #0891b2;padding:10px;">
-                                                                            <small class="text-info fw-bold"><i class="ri-calendar-check-line"></i> Term Total</small>
-                                                                            <h4 class="mb-0 {{ ($analytics['term_total'] ?? 0) < 50 ? 'text-danger' : 'text-info' }}">{{ $analytics['term_total'] ?? 0 }}</h4>
+                                                                            <small class="text-info fw-bold"><i class="ri-calendar-check-line"></i> Term</small>
+                                                                            <h4 class="mb-0">{{ $analytics['term_total'] ?? 0 }}</h4>
                                                                             <small class="text-muted">Avg: {{ $analytics['term_average'] ?? 0 }}</small>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-4">
+                                                                    <div class="col-3">
+                                                                        <div class="stat-card" style="border:2px solid #7c3aed;padding:10px;">
+                                                                            <small style="color:#7c3aed;" class="fw-bold"><i class="ri-bar-chart-line"></i> Cum Ave</small>
+                                                                            <h4 class="mb-0" style="color:#7c3aed;">{{ $analytics['cum_ave_total'] ?? 0 }}</h4>
+                                                                            <small class="text-muted">Avg: {{ $analytics['cum_ave_average'] ?? 0 }}</small>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-3">
                                                                         <div class="stat-card" style="border:2px solid var(--principal-primary);padding:10px;">
-                                                                            <small style="color:var(--principal-primary);" class="fw-bold"><i class="ri-bar-chart-line"></i> Cum Total</small>
-                                                                            <h4 class="mb-0 {{ ($analytics['total_score'] ?? 0) < 50 ? 'text-danger' : '' }}" style="color:var(--principal-primary);">{{ $analytics['total_score'] ?? 0 }}</h4>
+                                                                            <small style="color:var(--principal-primary);" class="fw-bold"><i class="ri-bar-chart-line"></i> Cum</small>
+                                                                            <h4 class="mb-0">{{ $analytics['total_score'] ?? 0 }}</h4>
                                                                             <small class="text-muted">Avg: {{ $analytics['average'] ?? 0 }}</small>
                                                                         </div>
                                                                     </div>
                                                                     @else
-                                                                    <div class="col-6">
+                                                                    <div class="col-4">
                                                                         <div class="stat-card" style="border:2px solid var(--mock-color);padding:10px;">
-                                                                            <small style="color:var(--mock-color);" class="fw-bold"><i class="ri-file-list-3-line"></i> Mock Total</small>
-                                                                            <h4 class="mb-0 {{ ($analytics['mock_total'] ?? 0) < 50 ? 'text-danger' : '' }}" style="color:var(--mock-color);">{{ $analytics['mock_total'] ?? 0 }}</h4>
+                                                                            <small style="color:var(--mock-color);" class="fw-bold"><i class="ri-file-list-3-line"></i> Mock</small>
+                                                                            <h4 class="mb-0">{{ $analytics['mock_total'] ?? 0 }}</h4>
                                                                             <small class="text-muted">Avg: {{ $analytics['mock_average'] ?? 0 }}</small>
                                                                         </div>
                                                                     </div>
                                                                     @endif
-                                                                    <div class="{{ $scoringMode !== 'mock' ? 'col-4' : 'col-6' }}">
+                                                                    <div class="{{ $scoringMode !== 'mock' ? 'col-3' : 'col-4' }}">
                                                                         <div class="stat-card" style="padding:10px;">
                                                                             <small>Position</small>
                                                                             <strong class="d-block text-primary fs-5">{{ $analytics['position_text'] ?? '—' }}</strong>
@@ -794,11 +896,16 @@
                                                                         Class Avg ({{ ucfirst($scoringMode) }}):
                                                                         <strong>{{ $classAnalytics['average'] }}</strong>
                                                                     </small>
+                                                                    <span class="ms-2 badge" style="background:#7c3aed;color:#fff;">
+                                                                        {{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total' }}
+                                                                    </span>
                                                                     @php
                                                                         $myAvg = match($scoringMode) {
                                                                             'term' => $analytics['term_average'] ?? 0,
                                                                             'mock' => $analytics['mock_average'] ?? 0,
-                                                                            default => $analytics['average'] ?? 0,
+                                                                            default => ($gradeBasis ?? 'cum_ave') === 'total' 
+                                                                                ? ($analytics['term_average'] ?? 0)
+                                                                                : ($analytics['cum_ave_average'] ?? 0),
                                                                         };
                                                                         $diff = $myAvg - $classAnalytics['average'];
                                                                     @endphp
@@ -817,6 +924,8 @@
                                                                             @if($scoringMode !== 'mock')
                                                                             <th class="tooltip-grade-header tooltip-col-term text-center">Term</th>
                                                                             <th class="tooltip-grade-header tooltip-col-term text-center">T.Grade</th>
+                                                                            <th class="tooltip-grade-header tooltip-col-cumave text-center" style="color:#7c3aed;">Cum Ave</th>
+                                                                            <th class="tooltip-grade-header tooltip-col-cumave text-center" style="color:#7c3aed;">CA.Grade</th>
                                                                             <th class="tooltip-grade-header tooltip-col-pos text-center" title="BF (Brought Forward)">BF</th>
                                                                             <th class="tooltip-grade-header tooltip-col-cum text-center">Cum</th>
                                                                             <th class="tooltip-grade-header tooltip-col-cum text-center">C.Grade</th>
@@ -864,6 +973,7 @@
                                         $currentCommentPlain = strip_tags($currentComment);
                                         $intelligentComment  = $intelligentComments[$sid] ?? '';
                                         $analytics           = $studentAnalytics[$sid] ?? [];
+                                        $basisLabel = ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total';
                                     @endphp
                                     <div class="student-card" data-student-id="{{ $sid }}">
                                         <div class="student-header">
@@ -899,17 +1009,20 @@
                                                     <div class="student-meta">
                                                         <i class="ri-id-card-line"></i> {{ $student->admissionNo }} |
                                                         <i class="ri-user-line"></i> {{ $student->gender ?? 'N/A' }}
+                                                        <span class="badge ms-1" style="background:#7c3aed;color:#fff;font-size:9px;">
+                                                            {{ $basisLabel }}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="student-body">
-                                            <div class="performance-summary {{ $scoringMode === 'mock' ? 'mock-mode' : '' }}">
+                                            <div class="performance-summary {{ $scoringMode === 'mock' ? 'mock-mode' : (($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'cumave-mode' : 'total-mode') }}">
                                                 <div class="summary-title">
                                                     <i class="ri-bar-chart-line"></i>
                                                     Performance Summary
                                                     <span class="badge bg-light text-dark ms-auto" style="font-size:.65rem;">
-                                                        {{ ucfirst($scoringMode) }} Mode
+                                                        {{ ucfirst($scoringMode) }} / {{ $basisLabel }}
                                                     </span>
                                                 </div>
                                                 <div class="summary-grid">
@@ -928,8 +1041,8 @@
                                                         <div class="summary-value">{{ $analytics['term_average'] ?? 0 }}</div>
                                                     </div>
                                                     <div class="summary-item">
-                                                        <div class="summary-label">Cum Avg</div>
-                                                        <div class="summary-value">{{ $analytics['average'] ?? 0 }}</div>
+                                                        <div class="summary-label" style="color:#c4b5fd;">Cum Ave ★</div>
+                                                        <div class="summary-value" style="color:#c4b5fd;">{{ $analytics['cum_ave_average'] ?? 0 }}</div>
                                                     </div>
                                                     @endif
                                                     <div class="summary-item">
@@ -948,12 +1061,14 @@
                                                 @foreach ($subjects as $subject)
                                                     @php
                                                         $termTotal = $termScoreMap[$sid][$subject] ?? 0;
+                                                        $cumAve    = $cumAveMap[$sid][$subject]    ?? 0;
                                                         $cumTotal  = $cumScoreMap[$sid][$subject]  ?? 0;
                                                         $bf        = $bfMap[$sid][$subject]        ?? 0;
                                                         $mockTotal = $mockScoreMap[$sid][$subject] ?? 0;
-                                                        $modeClass = match($scoringMode) { 'term' => 'mode-term', 'mock' => 'mode-mock', default => 'mode-cum' };
+                                                        $displayScore = ($gradeBasis ?? 'cum_ave') === 'total' ? $termTotal : $cumAve;
+                                                        $displayColor = $displayScore < 40 ? 'text-danger' : ($displayScore < 50 ? 'text-warning' : (($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'text-purple' : 'text-success'));
                                                     @endphp
-                                                    <div class="subject-item {{ $modeClass }}">
+                                                    <div class="subject-item">
                                                         <div class="subject-name">{{ $subject }}</div>
                                                         @if($scoringMode !== 'mock')
                                                         <div class="score-row-term mb-1" style="border-radius:5px;padding:3px 4px;">
@@ -963,9 +1078,10 @@
                                                         @if($bf > 0)
                                                         <div style="font-size:.55rem;color:var(--principal-muted);text-align:left;padding:0 4px;">BF: {{ $bf }}</div>
                                                         @endif
-                                                        <div class="score-row-cum" style="border-radius:5px;padding:3px 4px;">
-                                                            <div style="font-size:.55rem;font-weight:700;color:var(--principal-primary);text-transform:uppercase;">Cum</div>
-                                                            <span class="fw-bold {{ $cumTotal < 50 ? 'text-danger' : 'text-success' }}" style="font-size:.85rem;">{{ $cumTotal ?: '—' }}</span>
+                                                        <div class="score-row-cumave" style="border-radius:5px;padding:3px 4px;border-left:3px solid #7c3aed;background:rgba(124,58,237,.07);">
+                                                            <div style="font-size:.55rem;font-weight:700;color:#7c3aed;text-transform:uppercase;">Cum Ave</div>
+                                                            <span class="fw-bold {{ $cumAve < 50 ? 'text-danger' : 'text-success' }}" style="font-size:.85rem;color:{{ $cumAve >= 50 ? '#7c3aed' : '' }}">{{ $cumAve ?: '—' }}</span>
+                                                            @if(($gradeBasis ?? 'cum_ave') === 'cum_ave')<span style="font-size:.6rem;color:#ea580c;">★</span>@endif
                                                         </div>
                                                         @else
                                                         <div class="score-row-mock" style="border-radius:5px;padding:3px 4px;">
@@ -984,6 +1100,9 @@
                                                         <strong>AI Suggestion</strong>
                                                         <span class="badge ms-1" style="font-size:.6rem;background:{{ $scoringMode==='mock' ? '#7c3aed' : ($scoringMode==='term' ? '#0891b2' : '#2563eb') }};color:#fff;">
                                                             {{ ucfirst($scoringMode) }}
+                                                        </span>
+                                                        <span class="badge ms-1" style="font-size:.6rem;background:{{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? '#7c3aed' : '#0891b2' }};color:#fff;">
+                                                            {{ ($gradeBasis ?? 'cum_ave') === 'cum_ave' ? 'Cum Ave' : 'Term Total' }}
                                                         </span>
                                                     </small>
                                                     <div class="small mt-1 text-muted">{{ \Illuminate\Support\Str::limit($intelligentComment, 100) }}</div>
@@ -1071,6 +1190,7 @@
 window.studentGradesData = @json($studentGrades);
 window.termScoreMap      = @json($termScoreMap);
 window.cumScoreMap       = @json($cumScoreMap);
+window.cumAveMap         = @json($cumAveMap);
 window.bfMap             = @json($bfMap);
 window.mockScoreMap      = @json($mockScoreMap);
 window.mockPositionMap   = @json($mockPositionMap);
@@ -1079,6 +1199,7 @@ window.posClassTotalMap  = @json($posClassTotalMap);
 window.posArmTotalMap    = @json($posArmTotalMap);
 window.posArmCumMap      = @json($posArmCumMap);
 window.currentScoringMode = '{{ $scoringMode }}';
+window.currentGradeBasis  = '{{ $gradeBasis ?? 'cum_ave' }}';
 
 let activeTooltip = null;
 
@@ -1127,11 +1248,12 @@ function showTooltip(tooltipId, studentId, studentName) {
     const grades = window.studentGradesData[studentId] || [];
     const tbody  = document.getElementById(`grades-body-${studentId}`);
     const mode   = window.currentScoringMode;
+    const basis  = window.currentGradeBasis;
 
     if (tbody) {
         tbody.innerHTML = '';
         if (!grades.length) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No grades available</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">No grades available</td></tr>';
         } else {
             grades.forEach(g => {
                 const row = document.createElement('tr');
@@ -1141,7 +1263,7 @@ function showTooltip(tooltipId, studentId, studentName) {
                     const mockScore = (window.mockScoreMap[sid] || {})[g.subject] || 0;
                     const mockPos   = (window.mockPositionMap[sid] || {})[g.subject] || '—';
                     const mGradeClass = getGradeClass(g.mock_grade);
-                    const mColor = mockScore < 40 ? 'text-danger' : (mockScore < 50 ? 'text-warning' : '');
+                    const mColor = mockScore < 40 ? 'text-danger' : (mockScore < 50 ? 'text-warning' : 'text-success');
                     row.innerHTML = `
                         <td><strong>${escapeHtml(g.subject)}</strong></td>
                         <td class="text-center fw-bold ${mColor}" style="color:${mockScore>0&&mockScore>=50?'var(--mock-color)':''}">
@@ -1155,6 +1277,7 @@ function showTooltip(tooltipId, studentId, studentName) {
                 } else {
                     const termScore = g.term_score || 0;
                     const cumScore  = g.cum_score  || 0;
+                    const cumAve    = g.cum_ave_score || 0;
                     const bf        = (window.bfMap[sid] || {})[g.subject] || 0;
                     const posCC     = (window.posClassCumMap[sid]   || {})[g.subject] || '—';
                     const posCT     = (window.posClassTotalMap[sid] || {})[g.subject] || '—';
@@ -1162,15 +1285,31 @@ function showTooltip(tooltipId, studentId, studentName) {
                     const posAC     = (window.posArmCumMap[sid]     || {})[g.subject] || '—';
 
                     const tColor = termScore < 40 ? 'text-danger' : (termScore < 50 ? 'text-warning' : 'text-success');
-                    const cColor = cumScore  < 40 ? 'text-danger' : (cumScore  < 50 ? 'text-warning' : '');
+                    const caColor = cumAve < 40 ? 'text-danger' : (cumAve < 50 ? 'text-warning' : '');
+                    const cColor = cumScore < 40 ? 'text-danger' : (cumScore < 50 ? 'text-warning' : '');
                     const tGC    = getGradeClass(g.term_grade);
+                    const caGC   = getGradeClass(g.cum_ave_grade);
                     const cGC    = getGradeClass(g.cum_grade);
+
+                    // Highlight the active basis
+                    const isCumAveActive = basis === 'cum_ave';
+                    const isTotalActive = basis === 'total';
 
                     row.innerHTML = `
                         <td><strong>${escapeHtml(g.subject)}</strong></td>
-                        <td class="text-center fw-bold ${tColor}" style="color:#0891b2!important">${termScore || '—'}</td>
+                        <td class="text-center fw-bold ${tColor}" style="color:#0891b2!important;${isTotalActive ? 'background:rgba(8,145,178,.1);border-radius:4px;' : ''}">
+                            ${termScore || '—'}
+                            ${isTotalActive ? '★' : ''}
+                        </td>
                         <td class="text-center">
                             ${g.term_grade ? `<span class="score-grade-badge ${tGC}">${escapeHtml(g.term_grade)}</span>` : '—'}
+                        </td>
+                        <td class="text-center fw-bold ${caColor}" style="color:${cumAve>=50?'#7c3aed':''};${isCumAveActive ? 'background:rgba(124,58,237,.1);border-radius:4px;' : ''}">
+                            ${cumAve || '—'}
+                            ${isCumAveActive ? '★' : ''}
+                        </td>
+                        <td class="text-center">
+                            ${g.cum_ave_grade ? `<span class="score-grade-badge ${caGC}" style="background:#7c3aed;color:#fff;">${escapeHtml(g.cum_ave_grade)}</span>` : '—'}
                         </td>
                         <td class="text-center" style="color:var(--principal-muted);font-size:.75rem">${bf > 0 ? bf : '—'}</td>
                         <td class="text-center fw-bold ${cColor}">${cumScore || '—'}</td>

@@ -116,9 +116,15 @@ class ClassBroadsheetController extends Controller
         return $map;
     }
 
-    public function classBroadsheet($schoolclassid, $sessionid, $termid)
+    public function classBroadsheet($schoolclassid, $sessionid, $termid, Request $request)
     {
         $pagetitle = "Class Broadsheet";
+
+        // Grade basis: 'cum_ave' (default) or 'total'
+        $gradeBasis = $request->get('grade_basis', 'cum_ave');
+        if (!in_array($gradeBasis, ['cum_ave', 'total'])) {
+            $gradeBasis = 'cum_ave';
+        }
 
         // Get students in the class
         $students = Studentclass::where('studentclass.schoolclassid', $schoolclassid)
@@ -195,9 +201,11 @@ class ClassBroadsheetController extends Controller
             ? ($schoolclassModel->classcategories->first()->is_senior ?? false)
             : false;
 
-        // Build term score map and cum score map with proper BF calculation
+        // Build term score map, cum score map, and cum_ave map
         $termScoreMap = [];
         $cumScoreMap = [];
+        $cumAveMap = [];  // ← NEW: Cumulative Average
+        $bfMap = [];
         $positionMaps = [];
         $studentSubjectData = [];
 
@@ -218,17 +226,28 @@ class ClassBroadsheetController extends Controller
                 $bf = 0.0;
             }
 
-            // CUM rule: BF > 0 → (BF + Total) ÷ 2, BF = 0 → Total
-            $cum = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
+            // CUM: BF + Total (raw sum)
+            $cum = round($bf + $rawTotal, 2);
+            
+            // CUM AVE: Cum ÷ term number (the per-term averaged figure)
+            $cumAve = $termid > 0 ? round($cum / $termid, 2) : $cum;
 
             $termScoreMap[$sid][$subjName] = $rawTotal;
             $cumScoreMap[$sid][$subjName] = $cum;
+            $cumAveMap[$sid][$subjName] = $cumAve;
+            $bfMap[$sid][$subjName] = $bf;
+
+            // Determine which score to use for display based on grade basis
+            $displayScore = $gradeBasis === 'total' ? $rawTotal : $cumAve;
+            [$displayGrade, $displayGradeLetter] = $this->gradeFromScore((float)$displayScore, $isSenior);
 
             $studentSubjectData[$sid][$subjName] = [
                 'total' => $rawTotal,
                 'bf' => $bf,
                 'cum' => $cum,
-                'grade' => $row->grade ?? '-',
+                'cum_ave' => $cumAve,
+                'grade' => $displayGrade,
+                'grade_letter' => $displayGradeLetter,
                 'pos_class_cum' => $row->pos_class_cum ?? null,
                 'pos_class_total' => $row->pos_class_total ?? null,
                 'pos_arm_total' => $row->pos_arm_total ?? null,
@@ -271,6 +290,7 @@ class ClassBroadsheetController extends Controller
             $sid = $student->id;
             $termTotal = 0;
             $cumTotal = 0;
+            $cumAveTotal = 0;
             $subjectCount = 0;
             $grades = [];
             $gradePoints = [];
@@ -282,23 +302,29 @@ class ClassBroadsheetController extends Controller
                 if ($data) {
                     $termScore = $data['total'] ?? 0;
                     $cumScore = $data['cum'] ?? 0;
+                    $cumAveScore = $data['cum_ave'] ?? 0;
 
                     if ($termScore > 0 || $cumScore > 0) $subjectCount++;
                     $termTotal += $termScore;
                     $cumTotal += $cumScore;
+                    $cumAveTotal += $cumAveScore;
 
-                    [$termGrade, $cumGradeLetter] = $this->gradeFromScore((float)$termScore, $isSenior);
-                    [$cumGrade, $cumGradeLetter2] = $this->gradeFromScore((float)$cumScore, $isSenior);
+                    [$termGrade, $termGradeLetter] = $this->gradeFromScore((float)$termScore, $isSenior);
+                    [$cumGrade, $cumGradeLetter] = $this->gradeFromScore((float)$cumScore, $isSenior);
+                    [$cumAveGrade, $cumAveGradeLetter] = $this->gradeFromScore((float)$cumAveScore, $isSenior);
 
-                    $gradePoints[] = $this->getGradePoint($termScore);
+                    $gradePoints[] = $this->getGradePoint($gradeBasis === 'total' ? $termScore : $cumAveScore);
 
                     $grades[] = [
                         'subject' => $subjName,
                         'term_score' => $termScore,
                         'cum_score' => $cumScore,
+                        'cum_ave_score' => $cumAveScore,
                         'bf_score' => $data['bf'] ?? 0,
                         'term_grade' => $termGrade,
                         'cum_grade' => $cumGrade,
+                        'cum_ave_grade' => $cumAveGrade,
+                        'display_grade' => $gradeBasis === 'total' ? $termGrade : $cumAveGrade,
                         'pos_class_cum' => $data['pos_class_cum'] ?? null,
                         'pos_class_total' => $data['pos_class_total'] ?? null,
                         'pos_arm_total' => $data['pos_arm_total'] ?? null,
@@ -309,9 +335,12 @@ class ClassBroadsheetController extends Controller
                         'subject' => $subjName,
                         'term_score' => 0,
                         'cum_score' => 0,
+                        'cum_ave_score' => 0,
                         'bf_score' => 0,
                         'term_grade' => '-',
                         'cum_grade' => '-',
+                        'cum_ave_grade' => '-',
+                        'display_grade' => '-',
                         'pos_class_cum' => null,
                         'pos_class_total' => null,
                         'pos_arm_total' => null,
@@ -323,46 +352,52 @@ class ClassBroadsheetController extends Controller
             $totalObtainable = $subjectCount * 100;
             $termPercentage = $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0;
             $cumPercentage = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
+            $cumAvePercentage = $totalObtainable > 0 ? round(($cumAveTotal / $totalObtainable) * 100, 1) : 0;
 
             $gpa = count($gradePoints) > 0 ? round(array_sum($gradePoints) / count($gradePoints), 2) : 0;
 
             $studentAnalytics[$sid] = [
                 'term_total' => round($termTotal, 1),
                 'cum_total' => round($cumTotal, 1),
+                'cum_ave_total' => round($cumAveTotal, 1),
                 'term_average' => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
                 'cum_average' => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
+                'cum_ave_average' => $subjectCount > 0 ? round($cumAveTotal / $subjectCount, 1) : 0,
                 'subject_count' => $subjectCount,
                 'total_obtainable' => $totalObtainable,
                 'term_percentage' => $termPercentage,
                 'cum_percentage' => $cumPercentage,
+                'cum_ave_percentage' => $cumAvePercentage,
                 'gpa' => $gpa,
                 'gpa_grade' => $this->getGpaGrade($gpa),
                 'grades' => $grades,
+                'grade_basis' => $gradeBasis,
             ];
 
             // Calculate positions after we have all percentages
         }
 
-        // Calculate positions (ranking)
+        // Calculate positions (ranking) based on the selected grade basis
         $positionMap = [];
-        $rankedByCum = collect($studentAnalytics)->sortByDesc('cum_percentage')->values();
+        $rankKey = $gradeBasis === 'total' ? 'term_percentage' : 'cum_ave_percentage';
+        $rankedBySelected = collect($studentAnalytics)->sortByDesc($rankKey)->values();
         $prevPct = null;
         $prevPos = 0;
         $counter = 0;
-        foreach ($rankedByCum as $an) {
+        foreach ($rankedBySelected as $an) {
             $counter++;
             $sid = null;
             foreach ($studentAnalytics as $s => $a) {
                 if ($a === $an) { $sid = $s; break; }
             }
             if ($sid) {
-                if ($prevPct !== null && $an['cum_percentage'] == $prevPct) {
+                if ($prevPct !== null && $an[$rankKey] == $prevPct) {
                     $positionMap[$sid] = $prevPos;
                 } else {
                     $positionMap[$sid] = $counter;
                     $prevPos = $counter;
                 }
-                $prevPct = $an['cum_percentage'];
+                $prevPct = $an[$rankKey];
             }
         }
 
@@ -370,8 +405,8 @@ class ClassBroadsheetController extends Controller
         foreach ($studentAnalytics as $sid => &$an) {
             $an['position'] = $positionMap[$sid] ?? 0;
 
-            if ($an['cum_percentage'] > $topCumPercentage) {
-                $topCumPercentage = $an['cum_percentage'];
+            if ($an['cum_ave_percentage'] > $topCumPercentage) {
+                $topCumPercentage = $an['cum_ave_percentage'];
                 $student = $students->firstWhere('id', $sid);
                 if ($student) {
                     $topPerformerByCum = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
@@ -402,21 +437,26 @@ class ClassBroadsheetController extends Controller
 
         $avgTermPercentage = 0;
         $avgCumPercentage = 0;
+        $avgCumAvePercentage = 0;
         if (count($studentAnalytics) > 0) {
             $totalTermPct = array_sum(array_column($studentAnalytics, 'term_percentage'));
             $totalCumPct = array_sum(array_column($studentAnalytics, 'cum_percentage'));
+            $totalCumAvePct = array_sum(array_column($studentAnalytics, 'cum_ave_percentage'));
             $avgTermPercentage = round($totalTermPct / count($studentAnalytics), 1);
             $avgCumPercentage = round($totalCumPct / count($studentAnalytics), 1);
+            $avgCumAvePercentage = round($totalCumAvePct / count($studentAnalytics), 1);
         }
 
         return view('classbroadsheet.classbroadsheet', compact(
             'students', 'subjects', 'assessments',
-            'termScoreMap', 'cumScoreMap', 'personalityProfiles',
+            'termScoreMap', 'cumScoreMap', 'cumAveMap', 'bfMap',
+            'personalityProfiles',
             'schoolclass', 'schoolterm', 'schoolsession',
             'schoolclassid', 'sessionid', 'termid',
             'isSenior', 'studentAnalytics', 'pagetitle', 'positionMap',
             'topPerformerByCum', 'topPerformerByTerm', 'topPerformerPicture',
-            'avgTermPercentage', 'avgCumPercentage'
+            'avgTermPercentage', 'avgCumPercentage', 'avgCumAvePercentage',
+            'gradeBasis'
         ));
     }
 
