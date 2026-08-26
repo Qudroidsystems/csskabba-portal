@@ -317,6 +317,7 @@
 }
 .rule-match-banner.matched   { background: #dcfce7; color: #15803d; border-color: #86efac; }
 .rule-match-banner.unmatched { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.rule-match-banner.info      { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
 .rule-match-banner .top      { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-weight: 600; }
 .rule-match-banner .sub      { font-size: 11.5px; opacity: .85; }
 
@@ -1235,12 +1236,16 @@ function buildSubjectsTable(allSubjects, result) {
     const optPass   = optList.filter(s  => isPass(s.grade) || s.pass_status === 'optional_pass').length;
     const optFail   = optList.filter(s  => isFail(s.grade) || s.pass_status === 'optional_fail').length;
 
-    const appliedRule = result?.applied_rule || null;
-    const ruleStatus  = result?.status || null;
+    const appliedRule   = result?.applied_rule || null;
+    const ruleStatus    = result?.status || null;
+    // rule_logic tells us WHICH evaluation mode actually decided this
+    // student's outcome — this drives which banner variant we show below.
+    const ruleLogicMode = result?.rule_logic || result?.settings?.rule_logic || 'grade_count';
 
     // ── Rule match banner
     let html = '';
     if (appliedRule) {
+        // A rule genuinely matched (grade_count or both mode) — show which one.
         const statusBg = { promoted:'matched', trial:'matched', see_principal:'matched', repeated:'unmatched' }[ruleStatus] || 'matched';
         html += `<div class="rule-match-banner ${statusBg}">
             <div class="top">
@@ -1250,7 +1255,34 @@ function buildSubjectsTable(allSubjects, result) {
             </div>
             <div class="sub"><i class="ri-information-line me-1"></i>Credit grades (${creditLabel}) contribute to grade-count conditions. Each subject's contribution is shown below.</div>
         </div>`;
+    } else if (ruleLogicMode === 'average_only') {
+        // No rule is EVER matched in average_only mode by design — the
+        // per-rule conditions are not evaluated at all in this mode. Showing
+        // "No rule matched" here would be misleading, since the outcome is
+        // driven entirely by the Global Minimum Average comparison instead.
+        const requiredAvg = result?.required_average;
+        const actualAvg   = result?.actual_average;
+        const hasBoth      = requiredAvg !== null && requiredAvg !== undefined
+                           && actualAvg   !== null && actualAvg   !== undefined;
+        const metAvg       = hasBoth && actualAvg >= requiredAvg;
+        const outcomeLabelMap = {
+            promoted: 'Promoted', trial: 'Promoted on Trial',
+            see_principal: 'Advised to See Principal',
+            repeated: 'Advice to Repeat', awaiting: 'Awaiting Decision',
+        };
+        const bannerCls = !hasBoth ? 'info' : (metAvg ? 'matched' : 'unmatched');
+
+        html += `<div class="rule-match-banner ${bannerCls}">
+            <div class="top">
+                <i class="ri-percent-line"></i>
+                Average-only mode: <strong>${hasBoth ? actualAvg + '%' : '—'}</strong>
+                vs required <strong>${hasBoth ? requiredAvg + '%' : '— (not configured)'}</strong>
+                → <strong>${outcomeLabelMap[ruleStatus] || ruleStatus || '—'}</strong>
+            </div>
+            <div class="sub"><i class="ri-information-line me-1"></i>This rule set's Evaluation Mode is "Minimum Average Only" — grade-count rules and per-subject minimums below are informational only and are not evaluated. Only the Global Minimum Average decides the outcome in this mode.</div>
+        </div>`;
     } else {
+        // grade_count or both mode, and genuinely no rule matched.
         html += `<div class="rule-match-banner unmatched">
             <div class="top"><i class="ri-close-circle-line"></i>No rule matched — result is Advice to Repeat.</div>
             <div class="sub"><i class="ri-information-line me-1"></i>Check compulsory subject min grades and whether credit counts reach rule thresholds.</div>
@@ -1554,6 +1586,11 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
                     <strong>Matched rule:</strong>
                     <span class="badge bg-primary">${escapeHtml(result.applied_rule.name)}</span>
                     ${result.applied_rule.description ? `<span class="small text-muted">— ${escapeHtml(formatRuleDescription(result.applied_rule.description))}</span>` : ''}
+                </div>`;
+            } else if (result.rule_logic === 'average_only') {
+                html += `<div class="mt-3 pt-3 border-top d-flex align-items-center flex-wrap gap-2">
+                    <i class="ri-percent-line text-info"></i>
+                    <span class="small text-muted">Determined by Global Minimum Average only — grade-count rules were not evaluated for this class's current Evaluation Mode.</span>
                 </div>`;
             }
             if (result.compulsory_count > 0) {

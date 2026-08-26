@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/PromotionSettingController.php
 
 namespace App\Http\Controllers;
 
@@ -119,6 +118,31 @@ class PromotionSettingController extends Controller
         }
     }
 
+    /**
+     * Detect whether the given decoded rules array contains at least one rule
+     * with real, evaluatable conditions — i.e. anything beyond an empty
+     * shell. Used to warn when those conditions are about to be saved under
+     * an Evaluation Mode ('average_only') that will never evaluate them.
+     */
+    private function rulesHaveSubstantiveConditions(array $rules): bool
+    {
+        foreach ($rules as $rule) {
+            $hasCompSubjGrades = !empty(array_filter(
+                $rule['compulsory_section']['subjects'] ?? [],
+                fn($s) => !empty($s['min_grade'])
+            ));
+            $hasCompConds  = !empty($rule['compulsory_section']['count_conditions'] ?? []);
+            $hasOtherConds = !empty($rule['other_section']['count_conditions'] ?? []);
+            $hasAvgCond    = !empty($rule['average_condition']['enabled'] ?? false);
+
+            if ($hasCompSubjGrades || $hasCompConds || $hasOtherConds || $hasAvgCond) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // ── Store ─────────────────────────────────────────────────────────────────
     public function store(Request $request)
     {
@@ -163,6 +187,28 @@ class PromotionSettingController extends Controller
 
             if (empty($rules)) {
                 return response()->json(['success' => false, 'message' => 'At least one promotion rule is required.'], 422);
+            }
+
+            $ruleLogic = $request->rule_logic ?? 'grade_count';
+
+            // ── Guard: average_only mode makes per-rule conditions dead code ──
+            // If the caller has built out rules with real conditions but chose
+            // "Minimum Average Only" as the Evaluation Mode, those conditions
+            // will never be evaluated by PromotionEvaluator — only the global
+            // promotion_pass_average decides the outcome in that mode. Warn
+            // loudly (server log) and surface a non-blocking notice in the
+            // response so the UI can flag it without blocking the save.
+            $averageOnlyWarning = null;
+            if ($ruleLogic === 'average_only' && $this->rulesHaveSubstantiveConditions($rules)) {
+                $averageOnlyWarning = 'Evaluation Mode is "Minimum Average Only" — the compulsory subject grades, '
+                    . 'count conditions, and per-rule average conditions in the rules below will NOT be evaluated. '
+                    . 'Only the Global Minimum Average field decides the outcome in this mode. '
+                    . 'Switch to "Grade Count AND/OR Average" if you want the rules below to apply.';
+
+                Log::warning('Saving rule set in average_only mode with fully-configured rules — those rules will be ignored at evaluation time', [
+                    'schoolclass_id' => $request->schoolclass_id,
+                    'rule_set_name'  => $request->rule_set_name,
+                ]);
             }
 
             $isActive = filter_var($request->input('is_active', true), FILTER_VALIDATE_BOOLEAN);
@@ -214,7 +260,7 @@ class PromotionSettingController extends Controller
                 'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
                 'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
                 'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
-                'rule_logic'             => $request->rule_logic          ?? 'grade_count',
+                'rule_logic'             => $ruleLogic,
                 'promotion_pass_average' => $avgValue,  // FIXED: Don't use ?: null operator
                 'is_active'              => $isActive,
                 'is_default'             => $isDefault,
@@ -232,11 +278,17 @@ class PromotionSettingController extends Controller
             ]);
 
             Log::info('New promotion rule set created', ['id' => $setting->id, 'name' => $ruleSetName]);
-            return response()->json([
+
+            $response = [
                 'success' => true,
                 'message' => "Rule set '{$ruleSetName}' created with " . count($rules) . ' rules.',
                 'data' => $setting
-            ]);
+            ];
+            if ($averageOnlyWarning) {
+                $response['warning'] = $averageOnlyWarning;
+            }
+
+            return response()->json($response);
         } catch (\Exception $e) {
             Log::error('Store Error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -290,6 +342,22 @@ class PromotionSettingController extends Controller
                 return response()->json(['success' => false, 'message' => 'At least one promotion rule is required.'], 422);
             }
 
+            $ruleLogic = $request->rule_logic ?? 'grade_count';
+
+            // ── Guard: average_only mode makes per-rule conditions dead code ──
+            $averageOnlyWarning = null;
+            if ($ruleLogic === 'average_only' && $this->rulesHaveSubstantiveConditions($rules)) {
+                $averageOnlyWarning = 'Evaluation Mode is "Minimum Average Only" — the compulsory subject grades, '
+                    . 'count conditions, and per-rule average conditions in the rules below will NOT be evaluated. '
+                    . 'Only the Global Minimum Average field decides the outcome in this mode. '
+                    . 'Switch to "Grade Count AND/OR Average" if you want the rules below to apply.';
+
+                Log::warning('Updating rule set into average_only mode with fully-configured rules — those rules will be ignored at evaluation time', [
+                    'settings_id'   => $id,
+                    'rule_set_name' => $request->rule_set_name ?? $setting->rule_set_name,
+                ]);
+            }
+
             $isActive = filter_var($request->input('is_active', $setting->is_active), FILTER_VALIDATE_BOOLEAN);
             $isDefault = filter_var($request->input('is_default', $setting->is_default), FILTER_VALIDATE_BOOLEAN);
 
@@ -326,7 +394,7 @@ class PromotionSettingController extends Controller
                 'trial_label'            => $request->trial_label         ?? 'Promoted on Trial',
                 'see_principal_label'    => $request->see_principal_label ?? 'Advised to See Principal',
                 'repeat_label'           => $request->repeat_label        ?? 'Advice to Repeat',
-                'rule_logic'             => $request->rule_logic          ?? 'grade_count',
+                'rule_logic'             => $ruleLogic,
                 'promotion_pass_average' => $avgValue,  // FIXED: Don't use ?: null operator
                 'is_active'              => $isActive,
                 'is_default'             => $isDefault,
@@ -343,11 +411,16 @@ class PromotionSettingController extends Controller
                 'rules_count' => count($setting->promotion_rules),
             ]);
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'message' => "Rule set '{$setting->rule_set_name}' updated with " . count($rules) . ' rules.',
                 'data' => $setting
-            ]);
+            ];
+            if ($averageOnlyWarning) {
+                $response['warning'] = $averageOnlyWarning;
+            }
+
+            return response()->json($response);
         } catch (\Exception $e) {
             Log::error('Update Error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -503,6 +576,9 @@ class PromotionSettingController extends Controller
             'rule_logic' => $setting->rule_logic,
             'promotion_pass_average' => $setting->promotion_pass_average,
             'rules_count' => count($setting->promotion_rules ?? []),
+            'average_only_but_has_substantive_rules' =>
+                ($setting->rule_logic === 'average_only')
+                    && $this->rulesHaveSubstantiveConditions($setting->promotion_rules ?? []),
             'rules' => []
         ];
 
