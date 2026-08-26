@@ -102,6 +102,14 @@ class PromotionEvaluator
             }, $rules),
         ]);
 
+        if (empty($compulsoryIds)) {
+            Log::warning('No compulsory subjects resolved for this class/term/session combination — any rule condition scoped to compulsory_only can never match', [
+                'schoolclass_id' => $schoolclassid,
+                'term_id'        => $termid,
+                'session_id'     => $sessionid,
+            ]);
+        }
+
         $matchedRule   = null;
         $matchedStatus = null;
         $matchedIndex  = null;
@@ -125,7 +133,9 @@ class PromotionEvaluator
                     'status_label' => $rule['status_label'] ?? 'unknown',
                 ]);
 
-                $matches = $this->ruleMatches($rule, $scoreMap, $compulsoryIds, $usesSeniorGrading);
+                $matches = $this->ruleMatches(
+                    $rule, $scoreMap, $compulsoryIds, $usesSeniorGrading, $overallAverage
+                );
 
                 if ($matches) {
                     $matchedRule = $rule;
@@ -226,7 +236,7 @@ class PromotionEvaluator
     }
 
     // =========================================================================
-    // PRIVATE METHODS (unchanged from your version - keeping them concise)
+    // PRIVATE METHODS
     // =========================================================================
 
     private function getClassCategory(int $schoolclassid): ?object
@@ -330,17 +340,36 @@ class PromotionEvaluator
         return $scored[0]['setting'];
     }
 
+    /**
+     * Determine whether a single rule matches this student's scores.
+     *
+     * A rule is made up of up to three independent sections:
+     *   1. compulsory_section.subjects        — per-subject min grades
+     *   2. compulsory_section.count_conditions — grade-count thresholds (compulsory scope)
+     *      + other_section.count_conditions    — grade-count thresholds (other/all scope)
+     *   3. average_condition                   — a min overall-average requirement,
+     *                                             combinable with AND/OR against 1+2.
+     *
+     * Sections 1+2 are combined internally as $gradeConditionsMet (all must pass —
+     * they always behave like AND with each other). Section 3, when enabled, is then
+     * combined against that result using its own 'logic' field:
+     *   - AND (default): average must ALSO be met, on top of 1+2.
+     *   - OR: meeting the average alone is enough, even if 1+2 failed.
+     */
     private function ruleMatches(
         array      $rule,
         Collection $scoreMap,
         array      $compulsoryIds,
-        bool       $isSenior
+        bool       $isSenior,
+        ?float     $overallAverage = null
     ): bool {
         $grouping = $rule['grade_grouping'] ?? 'grouped';
 
         if ($isSenior && $grouping === 'grouped') {
             $grouping = 'exact';
         }
+
+        $gradeConditionsMet = true;
 
         // Section 1: Per-subject minimum grade
         foreach ($rule['compulsory_section']['subjects'] ?? [] as $subjectRule) {
@@ -357,27 +386,55 @@ class PromotionEvaluator
             $normalizedMin = $this->normalizeGrade($minGrade, $isSenior);
 
             if ($this->gradeFails($normalizedStudent, $normalizedMin, $isSenior, $grouping)) {
-                return false;
+                $gradeConditionsMet = false;
+                break;
             }
         }
 
-        // Section 2: Count conditions on compulsory subjects
-        if (!$this->evaluateCountConditions(
-            $rule['compulsory_section']['count_conditions'] ?? [],
-            $scoreMap, $compulsoryIds, $grouping, $isSenior
-        )) {
-            return false;
+        // Section 2a: Count conditions on compulsory subjects
+        if ($gradeConditionsMet) {
+            $gradeConditionsMet = $this->evaluateCountConditions(
+                $rule['compulsory_section']['count_conditions'] ?? [],
+                $scoreMap, $compulsoryIds, $grouping, $isSenior
+            );
         }
 
-        // Section 3: Count conditions on other/all subjects
-        if (!$this->evaluateCountConditions(
-            $rule['other_section']['count_conditions'] ?? [],
-            $scoreMap, $compulsoryIds, $grouping, $isSenior
-        )) {
-            return false;
+        // Section 2b: Count conditions on other/all subjects
+        if ($gradeConditionsMet) {
+            $gradeConditionsMet = $this->evaluateCountConditions(
+                $rule['other_section']['count_conditions'] ?? [],
+                $scoreMap, $compulsoryIds, $grouping, $isSenior
+            );
         }
 
-        return true;
+        // Section 3: Per-rule average condition
+        $avgCond = $rule['average_condition'] ?? null;
+
+        if (!empty($avgCond['enabled'])) {
+            $minAvg = isset($avgCond['min_average']) && $avgCond['min_average'] !== ''
+                ? (float) $avgCond['min_average']
+                : null;
+
+            $avgConditionMet = ($minAvg !== null && $overallAverage !== null)
+                && ($overallAverage >= $minAvg);
+
+            $logic = strtoupper($avgCond['logic'] ?? 'AND');
+
+            Log::info('Evaluating per-rule average condition', [
+                'rule_name'         => $rule['rule_name'] ?? null,
+                'min_average'       => $minAvg,
+                'overall_average'   => $overallAverage,
+                'logic'             => $logic,
+                'grade_conditions_met' => $gradeConditionsMet,
+                'avg_condition_met'    => $avgConditionMet,
+            ]);
+
+            return $logic === 'OR'
+                ? ($gradeConditionsMet || $avgConditionMet)
+                : ($gradeConditionsMet && $avgConditionMet);
+        }
+
+        return $gradeConditionsMet;
     }
 
     private function evaluateCountConditions(
@@ -396,6 +453,20 @@ class PromotionEvaluator
             $scope = $cond['scope'] ?? 'all';
 
             if (!$grade) continue;
+
+            // Flag conditions that can structurally never be satisfied —
+            // e.g. scope is compulsory_only but no compulsory subjects are
+            // configured for this class/term/session, so the scoped set is
+            // always empty and a ">= 1" (or similar) threshold can never pass.
+            if ($scope === 'compulsory_only'
+                && empty($compulsoryIds)
+                && in_array($operator, ['>=', '>'], true)
+                && $required > 0
+            ) {
+                Log::warning('Unreachable count condition detected: compulsory_only scope with no compulsory subjects configured', [
+                    'condition' => $cond,
+                ]);
+            }
 
             $scopedScores = $this->filterByScope($scoreMap, $scope, $compulsoryIds);
             $actual = $this->countMatchingGrade($scopedScores, $grade, $grouping, $isSenior);
