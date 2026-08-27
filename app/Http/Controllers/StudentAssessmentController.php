@@ -647,297 +647,304 @@ class StudentAssessmentController extends Controller
     // PRINT TERMINAL RESULT (PDF)
     // =========================================================================
 
-    public function printResult(Request $request)
-    {
-        ini_set('max_execution_time', 120);
-        ini_set('memory_limit', '512M');
+  public function printResult(Request $request)
+{
+    ini_set('max_execution_time', 120);
+    ini_set('memory_limit', '512M');
 
-        $studentId         = auth()->user()->student_id;
-        $selectedSessionId = $request->get('session_id');
-        $selectedTermId    = $request->get('term_id');
-        $selectedColumns   = $request->get('selected_columns', []);
+    $studentId         = auth()->user()->student_id;
+    $selectedSessionId = $request->get('session_id');
+    $selectedTermId    = $request->get('term_id');
+    $selectedColumns   = $request->get('selected_columns', []);
 
-        if (!$studentId) {
-            return back()->with('error', 'Student profile not found.');
-        }
+    if (!$studentId) {
+        return back()->with('error', 'Student profile not found.');
+    }
 
-        $student = Student::where('id', $studentId)
-            ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
-            ->first();
+    $student = Student::where('id', $studentId)
+        ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
+        ->first();
 
-        if (!$student || !$student->can_view_assessments) {
-            return back()->with('error', 'You do not have permission to print assessments.');
-        }
+    if (!$student || !$student->can_view_assessments) {
+        return back()->with('error', 'You do not have permission to print assessments.');
+    }
 
-        $studentClassData = DB::table('studentclass')
-            ->where('studentclass.studentId', $studentId)
-            ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-            ->select(
-                'schoolclass.id as class_id',
-                'schoolclass.schoolclass as class_name',
-                'schoolarm.arm as arm_name',
-                'schoolterm.id as term_id',
-                'schoolterm.term as term_name',
-                'schoolsession.id as session_id',
-                'schoolsession.session as session_name'
-            )
-            ->first();
+    $studentClassData = DB::table('studentclass')
+        ->where('studentclass.studentId', $studentId)
+        ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+        ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
+        ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
+        ->select(
+            'schoolclass.id as class_id',
+            'schoolclass.schoolclass as class_name',
+            'schoolarm.arm as arm_name',
+            'schoolterm.id as term_id',
+            'schoolterm.term as term_name',
+            'schoolsession.id as session_id',
+            'schoolsession.session as session_name'
+        )
+        ->first();
 
-        if (!$studentClassData) {
-            return back()->with('error', 'No class data found.');
-        }
+    if (!$studentClassData) {
+        return back()->with('error', 'No class data found.');
+    }
 
-        if (!$selectedTermId) {
-            $selectedTermId = $studentClassData->term_id;
-        }
+    if (!$selectedTermId) {
+        $selectedTermId = $studentClassData->term_id;
+    }
 
-        $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;
-        $schoolclassId     = $studentClassData->class_id;
+    $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;
+    $schoolclassId     = $studentClassData->class_id;
 
-        // Ensure positions/averages are current
-        $this->positionService->recalculate($schoolclassId, $sessionIdForQuery, $selectedTermId);
+    // Ensure positions/averages are current
+    $this->positionService->recalculate($schoolclassId, $sessionIdForQuery, $selectedTermId);
 
-        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
-        $isSenior    = $schoolclass?->classcategories->first()?->is_senior ?? false;
-        $categoryIds = $schoolclass?->classcategories->pluck('id') ?? collect();
-        $gradeCategory = $schoolclass?->classcategories->first();
+    $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
+    $isSenior    = $schoolclass?->classcategories->first()?->is_senior ?? false;
+    $categoryIds = $schoolclass?->classcategories->pluck('id') ?? collect();
+    $gradeCategory = $schoolclass?->classcategories->first();
 
-        $termModel    = Schoolterm::find($selectedTermId);
-        $sessionModel = Schoolsession::find($sessionIdForQuery);
+    $termModel    = Schoolterm::find($selectedTermId);
+    $sessionModel = Schoolsession::find($sessionIdForQuery);
 
-        $previousTermId = Schoolterm::where('id', '<', $selectedTermId)->orderBy('id', 'desc')->first()?->id;
+    $previousTermId = Schoolterm::where('id', '<', $selectedTermId)->orderBy('id', 'desc')->first()?->id;
 
-        // Get compulsory subjects for this class
-        $compulsorySubjectIds = CompulsorySubjectClass::where('schoolclassid', $schoolclassId)
-            ->pluck('subjectId')
-            ->toArray();
+    // Get compulsory subjects for this class - FIX: Make sure we get the subject IDs
+    $compulsorySubjectIds = CompulsorySubjectClass::where('schoolclassid', $schoolclassId)
+        ->pluck('subjectId')
+        ->toArray();
 
-        $registeredSubjects = DB::table('student_subject_register_record as ssrr')
-            ->where('ssrr.studentId', $studentId)
-            ->leftJoin('subjectclass', 'subjectclass.id', '=', 'ssrr.subjectclassid')
-            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'ssrr.session')
-            ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-            ->when($selectedTermId, fn ($q) => $q->where('subjectteacher.termid', $selectedTermId))
-            ->where('schoolsession.status', '!=', 'Archived')
-            ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-            ->select('subject.id as subject_id', 'subject.subject as subject_name', 'subject.subject_code')
-            ->distinct()->get();
+    // Log for debugging
+    \Log::info('Compulsory subjects for PDF', [
+        'schoolclassid' => $schoolclassId,
+        'subject_ids' => $compulsorySubjectIds
+    ]);
 
-        $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
+    $registeredSubjects = DB::table('student_subject_register_record as ssrr')
+        ->where('ssrr.studentId', $studentId)
+        ->leftJoin('subjectclass', 'subjectclass.id', '=', 'ssrr.subjectclassid')
+        ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+        ->leftJoin('schoolsession', 'schoolsession.id', '=', 'ssrr.session')
+        ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
+        ->when($selectedTermId, fn ($q) => $q->where('subjectteacher.termid', $selectedTermId))
+        ->where('schoolsession.status', '!=', 'Archived')
+        ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+        ->select('subject.id as subject_id', 'subject.subject as subject_name', 'subject.subject_code')
+        ->distinct()->get();
 
-        $scores          = collect();
-        $totalObtained   = 0;
-        $totalObtainable = 0;
+    $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
 
-        foreach ($registeredSubjects as $regSubject) {
-            $broadsheetRecord = BroadsheetRecord::where('student_id', $studentId)
-                ->where('subject_id', $regSubject->subject_id)
-                ->where('schoolclass_id', $schoolclassId)
-                ->where('session_id', $sessionIdForQuery)
-                ->first();
+    $scores          = collect();
+    $totalObtained   = 0;
+    $totalObtainable = 0;
 
-            if (!$broadsheetRecord) continue;
-
-            $broadsheet = Broadsheets::where('broadSheet_record_id', $broadsheetRecord->id)
-                ->where('term_id', $selectedTermId)
-                ->first();
-
-            if (!$broadsheet) continue;
-
-            $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
-
-            $scoreData               = new \stdClass();
-            $scoreData->subject_id   = $regSubject->subject_id;
-            $scoreData->subject_name = $regSubject->subject_name;
-            $scoreData->subject_code = $regSubject->subject_code;
-            $scoreData->total        = $broadsheet->total ?? 0;
-
-            $bfValue = 0;
-            if ($previousTermId) {
-                $previousBroadsheet = Broadsheets::where('broadSheet_record_id', $broadsheetRecord->id)
-                    ->where('term_id', $previousTermId)
-                    ->first();
-                $bfValue = $previousBroadsheet ? ($previousBroadsheet->cum ?? 0) : 0;
-            }
-            $scoreData->bf = $bfValue;
-
-            $cumRaw = $broadsheet->cum ?? 0;
-            $cumAve = $broadsheet->cum_ave ?? 0;
-
-            $gradeSource = round($cumAve);
-
-            $scoreData->cum           = $cumRaw;
-            $scoreData->cum_ave       = $cumAve;
-            $scoreData->grade         = $gradeCategory ? $gradeCategory->calculateGrade($gradeSource) : ($broadsheet->grade ?? '-');
-            $scoreData->class_average = $broadsheet->avg ?? 0;
-
-            $scoreData->position                     = $broadsheet->subject_position_class ?? null;
-            $scoreData->position_total               = $broadsheet->subject_position_class_total ?? null;
-            $scoreData->arm_position                 = $broadsheet->arm_position ?? null;
-            $scoreData->arm_position_cum             = $broadsheet->arm_position_cum ?? null;
-            $scoreData->subject_position_class       = $broadsheet->subject_position_class ?? null;
-            $scoreData->subject_position_class_total = $broadsheet->subject_position_class_total ?? null;
-
-            $scoreData->position_formatted         = $broadsheet->subject_position_class ? $this->formatOrdinal($broadsheet->subject_position_class) : '-';
-            $scoreData->position_total_formatted   = $broadsheet->subject_position_class_total ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-';
-            $scoreData->arm_position_formatted     = $broadsheet->arm_position ? $this->formatOrdinal($broadsheet->arm_position) : '-';
-            $scoreData->arm_position_cum_formatted = $broadsheet->arm_position_cum ? $this->formatOrdinal($broadsheet->arm_position_cum) : '-';
-
-            // Check if compulsory
-            $scoreData->is_compulsory = in_array($regSubject->subject_id, $compulsorySubjectIds);
-
-            $scoreData->assessment_scores = collect();
-            foreach ($allAssessments as $assessment) {
-                $scoreObj = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
-                $scoreData->assessment_scores->push((object) [
-                    'assessment_id' => $assessment->id,
-                    'score'         => $scoreObj ? $scoreObj->score : 0,
-                    'max_score'     => $assessment->max_score,
-                    'name'          => $assessment->name,
-                ]);
-            }
-
-            $scores->push($scoreData);
-            $totalObtained   += (float) $scoreData->total;
-            $totalObtainable += 100;
-        }
-
-        $percentage = $totalObtainable > 0 ? round(($totalObtained / $totalObtainable) * 100, 1) : 0;
-
-        $gpaData = $this->computeOverallForStudent(
-            $studentId, $schoolclass, $selectedTermId,
-            $sessionIdForQuery, $isSenior
-        );
-
-        // Promotion Evaluation
-        $evaluator = new PromotionEvaluator();
-        $promotionResult = $evaluator->evaluate(
-            studentId:      $studentId,
-            schoolclassid:  $schoolclassId,
-            termid:         $selectedTermId,
-            sessionid:      $sessionIdForQuery,
-            scores:         $scores,
-            overallAverage: $percentage
-        );
-
-        Log::info('Promotion evaluation result for student PDF', [
-            'student_id' => $studentId,
-            'status' => $promotionResult['status'] ?? 'unknown',
-            'status_label' => $promotionResult['status_label'] ?? 'unknown',
-        ]);
-
-        $schoolInfo    = SchoolInformation::first();
-        $logoBase64    = $this->logoToBase64($schoolInfo);
-        $pictureBase64 = $this->imageToBase64ForPdf(
-            DB::table('studentpicture')->where('studentid', $studentId)->value('picture')
-        );
-        $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
-
-        $numberOfStudents = DB::table('studentclass')
-            ->where('schoolclassid', $schoolclassId)
-            ->where('sessionid', $sessionIdForQuery)
-            ->where('termid', $selectedTermId)
-            ->count();
-
-        $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery, $schoolclassId);
-
-        $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
-            ->where('term_id', $selectedTermId)
+    foreach ($registeredSubjects as $regSubject) {
+        $broadsheetRecord = BroadsheetRecord::where('student_id', $studentId)
+            ->where('subject_id', $regSubject->subject_id)
+            ->where('schoolclass_id', $schoolclassId)
             ->where('session_id', $sessionIdForQuery)
             ->first();
 
-        $attendanceData = [];
-        if ($attendanceSummary) {
-            $attendanceData = [
-                'found'                 => true,
-                'total_school_days'     => $attendanceSummary->total_school_days ?? 0,
-                'days_present'          => $attendanceSummary->days_present ?? 0,
-                'days_absent'           => $attendanceSummary->days_absent ?? 0,
-                'days_late'             => $attendanceSummary->days_late ?? 0,
-                'days_sick_leave'       => $attendanceSummary->days_sick_leave ?? 0,
-                'days_excused'          => $attendanceSummary->days_excused ?? 0,
-                'attendance_percentage' => $attendanceSummary->attendance_percentage ?? 0,
-            ];
-        } else {
-            $attendanceData = ['found' => false];
+        if (!$broadsheetRecord) continue;
+
+        $broadsheet = Broadsheets::where('broadSheet_record_id', $broadsheetRecord->id)
+            ->where('term_id', $selectedTermId)
+            ->first();
+
+        if (!$broadsheet) continue;
+
+        $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
+
+        $scoreData               = new \stdClass();
+        $scoreData->subject_id   = $regSubject->subject_id;
+        $scoreData->subject_name = $regSubject->subject_name;
+        $scoreData->subject_code = $regSubject->subject_code;
+        $scoreData->total        = $broadsheet->total ?? 0;
+
+        $bfValue = 0;
+        if ($previousTermId) {
+            $previousBroadsheet = Broadsheets::where('broadSheet_record_id', $broadsheetRecord->id)
+                ->where('term_id', $previousTermId)
+                ->first();
+            $bfValue = $previousBroadsheet ? ($previousBroadsheet->cum ?? 0) : 0;
         }
+        $scoreData->bf = $bfValue;
 
-        $mockRows            = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
-        $mockTotalObtained   = $mockRows->sum(fn ($r) => (float) ($r->total ?? 0));
-        $mockTotalObtainable = $mockRows->count() * 100;
-        $mockPercentage      = $mockTotalObtainable > 0
-            ? round(($mockTotalObtained / $mockTotalObtainable) * 100, 1)
-            : 0;
-        $mockSummaryForPdf = [
-            'obtained'   => round($mockTotalObtained, 1),
-            'obtainable' => $mockTotalObtainable,
-            'percentage' => $mockPercentage,
-        ];
+        $cumRaw = $broadsheet->cum ?? 0;
+        $cumAve = $broadsheet->cum_ave ?? 0;
 
-        // Get selected term/session names for display
-        $selectedTermName = $termModel ? $termModel->term : ($studentClassData->term_name ?? 'Term');
-        $selectedSessionName = $sessionModel ? $sessionModel->session : ($studentClassData->session_name ?? 'Session');
+        $gradeSource = round($cumAve);
 
-        $metadata = [
-            'term'             => $selectedTermName,
-            'session'          => $selectedSessionName,
-            'selected_columns' => $selectedColumns,
-            'grade_basis'      => 'cum_ave',
-        ];
+        $scoreData->cum           = $cumRaw;
+        $scoreData->cum_ave       = $cumAve;
+        $scoreData->grade         = $gradeCategory ? $gradeCategory->calculateGrade($gradeSource) : ($broadsheet->grade ?? '-');
+        $scoreData->class_average = $broadsheet->avg ?? 0;
 
-        $schoolclassWithArms              = new \stdClass();
-        $schoolclassWithArms->schoolclass = $studentClassData->class_name ?? '';
-        $schoolclassWithArms->arms        = new \stdClass();
-        $schoolclassWithArms->arms->arm   = $studentClassData->arm_name ?? '';
+        $scoreData->position                     = $broadsheet->subject_position_class ?? null;
+        $scoreData->position_total               = $broadsheet->subject_position_class_total ?? null;
+        $scoreData->arm_position                 = $broadsheet->arm_position ?? null;
+        $scoreData->arm_position_cum             = $broadsheet->arm_position_cum ?? null;
+        $scoreData->subject_position_class       = $broadsheet->subject_position_class ?? null;
+        $scoreData->subject_position_class_total = $broadsheet->subject_position_class_total ?? null;
 
-        $allStudentData = [[
-            'students'             => collect([$student]),
-            'schoolclass'          => $schoolclassWithArms,
-            'scores'               => $scores,
-            'assessments'          => $allAssessments,
-            'gpa_data'             => $gpaData,
-            'totals_summary'       => [
-                'obtained'   => $totalObtained,
-                'obtainable' => $totalObtainable,
-                'percentage' => $percentage,
-            ],
-            'schoolInfo'           => $schoolInfo,
-            'school_logo_base64'   => $logoBase64,
-            'school_stamp_base64'  => $stampBase64,
-            'student_image_base64' => $pictureBase64,
-            'numberOfStudents'     => $numberOfStudents,
-            'studentpp'            => $studentProfileData,
-            'attendance_summary'   => $attendanceData,
-            'promotion_result'     => $promotionResult,
-            'mock_results'         => $mockRows,
-            'mock_summary'         => $mockSummaryForPdf,
-            'compulsory_subject_ids' => $compulsorySubjectIds,
-        ]];
+        $scoreData->position_formatted         = $broadsheet->subject_position_class ? $this->formatOrdinal($broadsheet->subject_position_class) : '-';
+        $scoreData->position_total_formatted   = $broadsheet->subject_position_class_total ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-';
+        $scoreData->arm_position_formatted     = $broadsheet->arm_position ? $this->formatOrdinal($broadsheet->arm_position) : '-';
+        $scoreData->arm_position_cum_formatted = $broadsheet->arm_position_cum ? $this->formatOrdinal($broadsheet->arm_position_cum) : '-';
 
-        $safeAdmissionNo = preg_replace('/[^A-Za-z0-9\-]/', '_', $student->admissionNo ?? 'student');
-        $safeTerm        = preg_replace('/[^A-Za-z0-9\-]/', '_', $selectedTermName);
-        $filename        = 'Terminal_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
+        // Check if compulsory - FIX: Use in_array with proper subject_id
+        $scoreData->is_compulsory = in_array($regSubject->subject_id, $compulsorySubjectIds);
 
-        $pdf = Pdf::loadView('student.assessments.print-pdf', [
-            'allStudentData' => $allStudentData,
-            'metadata'       => $metadata,
-        ])
-        ->setPaper('A4', 'portrait')
-        ->setOptions([
-            'dpi'                  => 150,
-            'defaultFont'          => 'DejaVu Sans',
-            'isRemoteEnabled'      => true,
-            'isHtml5ParserEnabled' => true,
+        // Log individual subject compulsory status
+        \Log::info('Subject compulsory status', [
+            'subject_id' => $regSubject->subject_id,
+            'subject_name' => $regSubject->subject_name,
+            'is_compulsory' => $scoreData->is_compulsory,
+            'compulsory_list' => $compulsorySubjectIds
         ]);
 
-        return $pdf->stream($filename);
+        $scoreData->assessment_scores = collect();
+        foreach ($allAssessments as $assessment) {
+            $scoreObj = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
+            $scoreData->assessment_scores->push((object) [
+                'assessment_id' => $assessment->id,
+                'score'         => $scoreObj ? $scoreObj->score : 0,
+                'max_score'     => $assessment->max_score,
+                'name'          => $assessment->name,
+            ]);
+        }
+
+        $scores->push($scoreData);
+        $totalObtained   += (float) $scoreData->total;
+        $totalObtainable += 100;
     }
 
+    $percentage = $totalObtainable > 0 ? round(($totalObtained / $totalObtainable) * 100, 1) : 0;
+
+    $gpaData = $this->computeOverallForStudent(
+        $studentId, $schoolclass, $selectedTermId,
+        $sessionIdForQuery, $isSenior
+    );
+
+    // Promotion Evaluation
+    $evaluator = new PromotionEvaluator();
+    $promotionResult = $evaluator->evaluate(
+        studentId:      $studentId,
+        schoolclassid:  $schoolclassId,
+        termid:         $selectedTermId,
+        sessionid:      $sessionIdForQuery,
+        scores:         $scores,
+        overallAverage: $percentage
+    );
+
+    $schoolInfo    = SchoolInformation::first();
+    $logoBase64    = $this->logoToBase64($schoolInfo);
+    $pictureBase64 = $this->imageToBase64ForPdf(
+        DB::table('studentpicture')->where('studentid', $studentId)->value('picture')
+    );
+    $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
+
+    $numberOfStudents = DB::table('studentclass')
+        ->where('schoolclassid', $schoolclassId)
+        ->where('sessionid', $sessionIdForQuery)
+        ->where('termid', $selectedTermId)
+        ->count();
+
+    $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery, $schoolclassId);
+
+    $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
+        ->where('term_id', $selectedTermId)
+        ->where('session_id', $sessionIdForQuery)
+        ->first();
+
+    $attendanceData = [];
+    if ($attendanceSummary) {
+        $attendanceData = [
+            'found'                 => true,
+            'total_school_days'     => $attendanceSummary->total_school_days ?? 0,
+            'days_present'          => $attendanceSummary->days_present ?? 0,
+            'days_absent'           => $attendanceSummary->days_absent ?? 0,
+            'days_late'             => $attendanceSummary->days_late ?? 0,
+            'days_sick_leave'       => $attendanceSummary->days_sick_leave ?? 0,
+            'days_excused'          => $attendanceSummary->days_excused ?? 0,
+            'attendance_percentage' => $attendanceSummary->attendance_percentage ?? 0,
+        ];
+    } else {
+        $attendanceData = ['found' => false];
+    }
+
+    $mockRows            = $this->getMockData($studentId, $schoolclassId, $sessionIdForQuery, $selectedTermId);
+    $mockTotalObtained   = $mockRows->sum(fn ($r) => (float) ($r->total ?? 0));
+    $mockTotalObtainable = $mockRows->count() * 100;
+    $mockPercentage      = $mockTotalObtainable > 0
+        ? round(($mockTotalObtained / $mockTotalObtainable) * 100, 1)
+        : 0;
+    $mockSummaryForPdf = [
+        'obtained'   => round($mockTotalObtained, 1),
+        'obtainable' => $mockTotalObtainable,
+        'percentage' => $mockPercentage,
+    ];
+
+    // Get selected term/session names for display
+    $selectedTermName = $termModel ? $termModel->term : ($studentClassData->term_name ?? 'Term');
+    $selectedSessionName = $sessionModel ? $sessionModel->session : ($studentClassData->session_name ?? 'Session');
+
+    $metadata = [
+        'term'             => $selectedTermName,
+        'session'          => $selectedSessionName,
+        'selected_columns' => $selectedColumns,
+        'grade_basis'      => 'cum_ave',
+    ];
+
+    $schoolclassWithArms              = new \stdClass();
+    $schoolclassWithArms->schoolclass = $studentClassData->class_name ?? '';
+    $schoolclassWithArms->arms        = new \stdClass();
+    $schoolclassWithArms->arms->arm   = $studentClassData->arm_name ?? '';
+
+    $allStudentData = [[
+        'students'             => collect([$student]),
+        'schoolclass'          => $schoolclassWithArms,
+        'scores'               => $scores,
+        'assessments'          => $allAssessments,
+        'gpa_data'             => $gpaData,
+        'totals_summary'       => [
+            'obtained'   => $totalObtained,
+            'obtainable' => $totalObtainable,
+            'percentage' => $percentage,
+        ],
+        'schoolInfo'           => $schoolInfo,
+        'school_logo_base64'   => $logoBase64,
+        'school_stamp_base64'  => $stampBase64,
+        'student_image_base64' => $pictureBase64,
+        'numberOfStudents'     => $numberOfStudents,
+        'studentpp'            => $studentProfileData,
+        'attendance_summary'   => $attendanceData,
+        'promotion_result'     => $promotionResult,
+        'mock_results'         => $mockRows,
+        'mock_summary'         => $mockSummaryForPdf,
+        'compulsory_subject_ids' => $compulsorySubjectIds, // Add this explicitly
+    ]];
+
+    $safeAdmissionNo = preg_replace('/[^A-Za-z0-9\-]/', '_', $student->admissionNo ?? 'student');
+    $safeTerm        = preg_replace('/[^A-Za-z0-9\-]/', '_', $selectedTermName);
+    $filename        = 'Terminal_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
+
+    $pdf = Pdf::loadView('student.assessments.print-pdf', [
+        'allStudentData' => $allStudentData,
+        'metadata'       => $metadata,
+    ])
+    ->setPaper('A4', 'portrait')
+    ->setOptions([
+        'dpi'                  => 150,
+        'defaultFont'          => 'DejaVu Sans',
+        'isRemoteEnabled'      => true,
+        'isHtml5ParserEnabled' => true,
+    ]);
+
+    return $pdf->stream($filename);
+}
     // =========================================================================
     // PRINT MOCK RESULT (PDF)
     // =========================================================================
