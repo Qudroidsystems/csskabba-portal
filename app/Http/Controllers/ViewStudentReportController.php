@@ -703,7 +703,7 @@ class ViewStudentReportController extends Controller
         $columns = [
             'student_info' => [
                 'sn'           => ['label' => 'SN',            'default' => true],
-                'admission_no' => ['label' => 'Admission No',  'default' => true],
+                // 'admission_no' => ['label' => 'Admission No',  'default' => true],
                 'name'         => ['label' => 'Name',          'default' => true],
                 'picture'      => ['label' => 'Picture',       'default' => true],
                 'gender'       => ['label' => 'Gender',        'default' => false],

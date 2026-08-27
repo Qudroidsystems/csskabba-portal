@@ -81,12 +81,16 @@
                 .ap-panel { display:none; border-top:1px solid var(--border); padding:22px; background:#fdf6e3; }
                 .ap-accordion-item.is-open .ap-panel { display:block; }
 
-                /* Grade colours - enhanced with background */
-                .grade-A1 { color: #16a34a; font-weight: 900; background: #dcfce7; }
-                .grade-B2, .grade-B3 { color: #2563eb; font-weight: 900; background: #dbeafe; }
-                .grade-C4, .grade-C5, .grade-C6 { color: #ca8a04; font-weight: 900; background: #fef3c7; }
-                .grade-D7, .grade-E8 { color: #ea580c; font-weight: 900; background: #ffedd5; }
-                .grade-F9, .grade-F { color: #dc2626; font-weight: 900; background: #fee2e2; }
+                /* Grade colours - distinct and easily distinguishable */
+                .grade-A1 { color: #0b8a2e; font-weight: 900; background: #e6f7ec; }
+                .grade-B2 { color: #1a6bc4; font-weight: 900; background: #e3edfc; }
+                .grade-B3 { color: #4a7bc4; font-weight: 900; background: #ecf1fa; }
+                .grade-C4 { color: #c97d0e; font-weight: 900; background: #fdf3e0; }
+                .grade-C5 { color: #d49a1a; font-weight: 900; background: #fef8e6; }
+                .grade-C6 { color: #e0b02a; font-weight: 900; background: #fefce8; }
+                .grade-D7 { color: #c05a1a; font-weight: 900; background: #fdf0e5; }
+                .grade-E8 { color: #b84a2a; font-weight: 900; background: #fce8e0; }
+                .grade-F9 { color: #c0392b; font-weight: 900; background: #fce4e2; }
 
                 /* Compulsory subject indicators */
                 .compulsory-pass {
@@ -334,7 +338,7 @@
                         </div>
                         <div class="ap-stat-card">
                             <div class="ap-stat-value">
-                                <span class="ap-grade-pill {{ $overallProgress['gpa_grade'] == 'A1' ? 'grade-A1' : ($overallProgress['gpa_grade'] == 'B2' || $overallProgress['gpa_grade'] == 'B3' ? 'grade-B2' : ($overallProgress['gpa_grade'] == 'C4' || $overallProgress['gpa_grade'] == 'C5' || $overallProgress['gpa_grade'] == 'C6' ? 'grade-C4' : ($overallProgress['gpa_grade'] == 'D7' || $overallProgress['gpa_grade'] == 'E8' ? 'grade-D7' : 'grade-F9'))) }}">
+                                <span class="ap-grade-pill {{ $overallProgress['gpa_grade'] == 'A1' ? 'grade-A1' : ($overallProgress['gpa_grade'] == 'B2' ? 'grade-B2' : ($overallProgress['gpa_grade'] == 'B3' ? 'grade-B3' : ($overallProgress['gpa_grade'] == 'C4' ? 'grade-C4' : ($overallProgress['gpa_grade'] == 'C5' ? 'grade-C5' : ($overallProgress['gpa_grade'] == 'C6' ? 'grade-C6' : ($overallProgress['gpa_grade'] == 'D7' ? 'grade-D7' : ($overallProgress['gpa_grade'] == 'E8' ? 'grade-E8' : 'grade-F9'))))))) }}">
                                     {{ $overallProgress['gpa_grade'] ?? '-' }}
                                 </span>
                             </div>
@@ -409,11 +413,14 @@
                         @php
                             $grade = $subject['grade'] ?? '-';
                             $gradeClass = match(true) {
-                                str_starts_with($grade, 'A') => 'grade-A1',
-                                str_starts_with($grade, 'B') => 'grade-B2',
-                                str_starts_with($grade, 'C') => 'grade-C4',
-                                str_starts_with($grade, 'D') => 'grade-D7',
-                                str_starts_with($grade, 'E') => 'grade-D7',
+                                str_starts_with($grade, 'A1') => 'grade-A1',
+                                str_starts_with($grade, 'B2') => 'grade-B2',
+                                str_starts_with($grade, 'B3') => 'grade-B3',
+                                str_starts_with($grade, 'C4') => 'grade-C4',
+                                str_starts_with($grade, 'C5') => 'grade-C5',
+                                str_starts_with($grade, 'C6') => 'grade-C6',
+                                str_starts_with($grade, 'D7') => 'grade-D7',
+                                str_starts_with($grade, 'E8') => 'grade-E8',
                                 default => 'grade-F9',
                             };
                             $icons = ['📐','📚','🔬','🌍','💻','🎨','⚗️','📊','🏛️','🌿'];
@@ -551,11 +558,14 @@
                                 @php
                                     $mg = $mock->grade ?? '-';
                                     $mgClass = match(true) {
-                                        str_starts_with($mg,'A') => 'grade-A1',
-                                        str_starts_with($mg,'B') => 'grade-B2',
-                                        str_starts_with($mg,'C') => 'grade-C4',
-                                        str_starts_with($mg,'D') => 'grade-D7',
-                                        str_starts_with($mg,'E') => 'grade-D7',
+                                        str_starts_with($mg, 'A1') => 'grade-A1',
+                                        str_starts_with($mg, 'B2') => 'grade-B2',
+                                        str_starts_with($mg, 'B3') => 'grade-B3',
+                                        str_starts_with($mg, 'C4') => 'grade-C4',
+                                        str_starts_with($mg, 'C5') => 'grade-C5',
+                                        str_starts_with($mg, 'C6') => 'grade-C6',
+                                        str_starts_with($mg, 'D7') => 'grade-D7',
+                                        str_starts_with($mg, 'E8') => 'grade-E8',
                                         default => 'grade-F9',
                                     };
                                     $mTotal    = (float)($mock->total ?? 0);
@@ -679,7 +689,6 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-4"><label><input type="checkbox" class="col-checkbox" value="picture" checked> Student Picture</label></div>
-                                        <div class="col-md-4"><label><input type="checkbox" class="col-checkbox" value="admission_no" checked> Admission Number</label></div>
                                         <div class="col-md-4"><label><input type="checkbox" class="col-checkbox" value="gender"> Gender</label></div>
                                     </div>
                                 </div>
@@ -716,6 +725,7 @@
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="cum_ave" checked> Cum. Average</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="grade" checked> Grade</label></div>
                                         <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="class_average" checked> Class Average</label></div>
+                                        <div class="col-md-3"><label><input type="checkbox" class="col-checkbox" value="compulsory_flag"> Compulsory</label></div>
                                     </div>
                                 </div>
                             </div>

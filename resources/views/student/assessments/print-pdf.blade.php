@@ -201,14 +201,11 @@
         .col-bf { width: 30px; }
         .col-cum { width: 34px; }
         .col-grade { width: 32px; }
+        .col-compulsory { width: 34px; }
         .col-position { width: 32px; }
         .col-class-average { width: 34px; }
-        .col-compulsory { width: 34px; }
 
-        /* Always-on marker next to a compulsory subject's name, independent
-           of whether the "Compulsory" column itself is toggled on. Colour
-           reflects whether the student passed (green) or failed (red) that
-           compulsory subject, not merely whether it's compulsory. */
+        /* Always-on marker next to a compulsory subject's name */
         .compulsory-mark {
             font-weight: 900;
             font-size: 10px;
@@ -230,6 +227,17 @@
             text-align: left;
         }
 
+        /* Grade colours - distinct and easily distinguishable */
+        .grade-A1 { color: #0b8a2e; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-B2 { color: #1a6bc4; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-B3 { color: #4a7bc4; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C4 { color: #c97d0e; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C5 { color: #d49a1a; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C6 { color: #e0b02a; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-D7 { color: #c05a1a; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-E8 { color: #b84a2a; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-F9 { color: #c0392b; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+
         .totals-summary {
             width: calc(97% - 16px);
             background: #0d1a3d;
@@ -248,12 +256,6 @@
         .position-2 { background-color: #C0C0C0; color: #000000; font-weight: 900; }
         .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
         td.position-1, td.position-2, td.position-3 { color: #000000 !important; }
-
-        .grade-A1 { color: #16a34a; font-weight: 900; }
-        .grade-B2, .grade-B3 { color: #2563eb; font-weight: 900; }
-        .grade-C4, .grade-C5, .grade-C6 { color: #ca8a04; font-weight: 900; }
-        .grade-D7, .grade-E8 { color: #ea580c; font-weight: 900; }
-        .grade-F9 { color: #dc2626; font-weight: 900; }
 
         .promo-card {
             width: calc(96% - 16px);
@@ -382,7 +384,6 @@
 
         .powered-by { font-size: 9px; margin-top: 3px; color: #64748b; }
 
-        /* Mock results section */
         .mock-section {
             margin: 8px 8px 4px 8px;
             border: 2px solid #000000;
@@ -471,7 +472,7 @@
         $gradeBasis = $metadata['grade_basis'] ?? 'cum_ave';
         
         $defaultColumns = [
-            'sn', 'admission_no', 'name',
+            'sn', 'name',
             'total', 'bf', 'cum', 'cum_ave', 'grade',
             'arm_position', 'arm_position_cum', 'position_total', 'position',
             'class_average'
@@ -481,7 +482,6 @@
 
     @foreach ($allStudentData as $index => $studentData)
         @php
-            // Get data from the correct array keys
             $schoolInfo = $studentData['schoolInfo'] ?? null;
             $student = $studentData['students'] && $studentData['students']->isNotEmpty() 
                 ? $studentData['students']->first() 
@@ -527,7 +527,6 @@
             $attWarn = $attPct < 75;
             $attFound = $attendance['found'] ?? false;
 
-            // Whether any subject on this student's sheet is flagged compulsory
             $hasAnyCompulsory = collect($scores)->contains(fn($s) => $s->is_compulsory ?? false);
             
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$className}\nTerm: {$termName}\nSession: {$sessionName}\nSchool: " . ($schoolInfo->school_name ?? 'School');
@@ -561,7 +560,6 @@
             
             $studentImage = $studentData['student_image_base64'] ?? null;
             
-            // Include mock results if available and selected
             $showMock = in_array('include_mock', $columnsToShow) && $mockResults->isNotEmpty();
         @endphp
 
@@ -646,9 +644,6 @@
                             @if(in_array('sn', $columnsToShow))
                                 <th class="col-sn">S/N</th>
                             @endif
-                            @if(in_array('admission_no', $columnsToShow))
-                                <th class="col-admissionno">Adm No</th>
-                            @endif
                             @if(in_array('name', $columnsToShow))
                                 <th class="col-name">Subject</th>
                             @endif
@@ -715,11 +710,14 @@
                                 
                                 $grade = $score->grade ?? '-';
                                 $gradeClass = match(true) {
-                                    str_starts_with($grade, 'A') => 'grade-A1',
-                                    str_starts_with($grade, 'B') => 'grade-B2',
-                                    str_starts_with($grade, 'C') => 'grade-C4',
-                                    str_starts_with($grade, 'D') => 'grade-D7',
-                                    str_starts_with($grade, 'E') => 'grade-D7',
+                                    str_starts_with($grade, 'A1') => 'grade-A1',
+                                    str_starts_with($grade, 'B2') => 'grade-B2',
+                                    str_starts_with($grade, 'B3') => 'grade-B3',
+                                    str_starts_with($grade, 'C4') => 'grade-C4',
+                                    str_starts_with($grade, 'C5') => 'grade-C5',
+                                    str_starts_with($grade, 'C6') => 'grade-C6',
+                                    str_starts_with($grade, 'D7') => 'grade-D7',
+                                    str_starts_with($grade, 'E8') => 'grade-E8',
                                     default => 'grade-F9',
                                 };
 
@@ -729,9 +727,6 @@
                             <tr>
                                 @if(in_array('sn', $columnsToShow))
                                     <td>{{ $scoreIndex + 1 }}</td>
-                                @endif
-                                @if(in_array('admission_no', $columnsToShow))
-                                    <td>{{ $admNo }}</td>
                                 @endif
                                 @if(in_array('name', $columnsToShow))
                                     <td class="subject-name">
@@ -903,7 +898,7 @@
                 </div>
             @endif
 
-            {{-- MOCK RESULTS SECTION (if available and selected) --}}
+            {{-- MOCK RESULTS SECTION --}}
             @if($showMock)
                 <div class="mock-section">
                     <div class="mock-header">📝 MOCK EXAMINATION RESULTS</div>
@@ -924,11 +919,14 @@
                                 @php
                                     $mockGrade = $mock->grade ?? '-';
                                     $mockGradeClass = match(true) {
-                                        str_starts_with($mockGrade, 'A') => 'grade-A1',
-                                        str_starts_with($mockGrade, 'B') => 'grade-B2',
-                                        str_starts_with($mockGrade, 'C') => 'grade-C4',
-                                        str_starts_with($mockGrade, 'D') => 'grade-D7',
-                                        str_starts_with($mockGrade, 'E') => 'grade-D7',
+                                        str_starts_with($mockGrade, 'A1') => 'grade-A1',
+                                        str_starts_with($mockGrade, 'B2') => 'grade-B2',
+                                        str_starts_with($mockGrade, 'B3') => 'grade-B3',
+                                        str_starts_with($mockGrade, 'C4') => 'grade-C4',
+                                        str_starts_with($mockGrade, 'C5') => 'grade-C5',
+                                        str_starts_with($mockGrade, 'C6') => 'grade-C6',
+                                        str_starts_with($mockGrade, 'D7') => 'grade-D7',
+                                        str_starts_with($mockGrade, 'E8') => 'grade-E8',
                                         default => 'grade-F9',
                                     };
                                 @endphp
