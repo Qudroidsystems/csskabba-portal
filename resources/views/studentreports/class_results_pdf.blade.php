@@ -12,7 +12,7 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 13px;
+            font-size: 11px;
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
@@ -66,7 +66,7 @@
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 23px;
+            font-size: 20px;
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -74,7 +74,7 @@
         }
 
         .school-name-header .motto {
-            font-size: 12.5px;
+            font-size: 10.5px;
             font-weight: 700;
             letter-spacing: 2px;
             opacity: 0.95;
@@ -132,7 +132,7 @@
             background: #111827;
             color: white;
             padding: 5px 8px;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
             text-align: center;
         }
@@ -143,14 +143,14 @@
             border-radius: 6px;
             padding: 5px 10px;
             margin: 5px 8px;
-            font-size: 12px;
+            font-size: 10px;
             text-align: center;
         }
 
         .info-table { width: 100%; margin: 0 auto; }
         .info-table td { padding: 2px 6px; text-align: center; }
-        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 11.5px; white-space: nowrap; }
-        .info-bar-value { font-weight: 900; font-size: 12.5px; padding-left: 3px; }
+        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 9.5px; white-space: nowrap; }
+        .info-bar-value { font-weight: 900; font-size: 10.5px; padding-left: 3px; }
 
         .result-table { padding: 0 8px; margin: 5px 0; }
 
@@ -158,7 +158,7 @@
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 9px;
             margin: 0;
         }
 
@@ -168,7 +168,7 @@
             font-weight: 800;
             border: 1px solid #000000;
             padding: 3px 2px;
-            font-size: 10px;
+            font-size: 8.2px;
             text-align: center;
             line-height: 1.2;
         }
@@ -177,7 +177,7 @@
             border: 1px solid #000000;
             padding: 2px 2px;
             text-align: center;
-            font-size: 11px;
+            font-size: 9px;
             background: white;
             font-weight: 800;
             height: 15px;
@@ -187,7 +187,7 @@
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 800;
-            font-size: 11px;
+            font-size: 9px;
             padding-left: 6px;
         }
 
@@ -211,7 +211,7 @@
            compulsory subject, not merely whether it's compulsory. */
         .compulsory-mark {
             font-weight: 900;
-            font-size: 12px;
+            font-size: 10px;
             margin-left: 2px;
             vertical-align: super;
         }
@@ -223,7 +223,7 @@
         .compulsory-badge-no   { color: #94a3b8; font-weight: 700; }
 
         .compulsory-note {
-            font-size: 9.5px;
+            font-size: 8px;
             color: #64748b;
             font-style: italic;
             margin: 3px 8px 0 8px;
@@ -235,7 +235,7 @@
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 11px;
+            font-size: 9px;
             padding: 4px 8px;
             border: 2px solid #000000;
             border-top: none;
@@ -249,11 +249,10 @@
         .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
         td.position-1, td.position-2, td.position-3 { color: #000000 !important; }
 
-        /* Grade colours - A=Green, B=Blue, C=Pink, D/E=Purple, F=Red */
-        .grade-A1 { color: #15803d; font-weight: 900; }
-        .grade-B2, .grade-B3 { color: #1d4ed8; font-weight: 900; }
-        .grade-C4, .grade-C5, .grade-C6 { color: #db2777; font-weight: 900; }
-        .grade-D7, .grade-E8 { color: #7e22ce; font-weight: 900; }
+        .grade-A1 { color: #16a34a; font-weight: 900; }
+        .grade-B2, .grade-B3 { color: #2563eb; font-weight: 900; }
+        .grade-C4, .grade-C5, .grade-C6 { color: #ca8a04; font-weight: 900; }
+        .grade-D7, .grade-E8 { color: #ea580c; font-weight: 900; }
         .grade-F9 { color: #dc2626; font-weight: 900; }
 
         .promo-card {
@@ -267,7 +266,7 @@
         }
 
         .promo-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 900;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
@@ -275,7 +274,7 @@
         }
 
         .promo-message {
-            font-size: 9.5px;
+            font-size: 8px;
             font-weight: 500;
             margin-top: 2px;
             line-height: 1.3;
@@ -341,7 +340,7 @@
 
         .bottom-strip .cell-footer {
             text-align: center;
-            font-size: 11.5px;
+            font-size: 9.5px;
             vertical-align: middle;
         }
 
@@ -359,7 +358,7 @@
         }
 
         .qr-label {
-            font-size: 9px;
+            font-size: 7.5px;
             color: #333;
             font-weight: 600;
             text-align: center;
@@ -381,7 +380,7 @@
             margin: 0 4px;
         }
 
-        .powered-by { font-size: 11px; margin-top: 3px; color: #64748b; }
+        .powered-by { font-size: 9px; margin-top: 3px; color: #64748b; }
 
         @media print {
             body { background: white; padding: 0; }
@@ -514,7 +513,7 @@
                         </div>
                     </td>
                     <td style="vertical-align:top; padding: 4px 7px;">
-                        <table style="border:none; border-collapse:collapse; width:100%; font-size:12px;">
+                        <table style="border:none; border-collapse:collapse; width:100%; font-size:10px;">
                             <tr>
                                 <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
@@ -590,13 +589,13 @@
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     <th class="col-assessment">
                                         {{ $assessment->name }}<br>
-                                        <span style="font-size:8px;">({{ $assessment->max_score }})</span>
+                                        <span style="font-size:6.5px;">({{ $assessment->max_score }})</span>
                                     </th>
                                 @endif
                             @endforeach
 
                             @if(in_array('total', $columnsToShow))
-                                <th class="col-total">Total<br><span style="font-size:8px;">(100)</span></th>
+                                <th class="col-total">Total<br><span style="font-size:6.5px;">(100)</span></th>
                             @endif
                             @if(in_array('bf', $columnsToShow))
                                 <th class="col-bf">BF</th>
@@ -605,7 +604,7 @@
                                 <th class="col-cum">Cum</th>
                             @endif
                             @if(in_array('cum_ave', $columnsToShow))
-                                <th class="col-cum">Cum<br><span style="font-size:8px;">Ave</span></th>
+                                <th class="col-cum">Cum<br><span style="font-size:6.5px;">Ave</span></th>
                             @endif
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
@@ -626,7 +625,7 @@
                                 <th class="col-position">Class Pos<br>(Cum)</th>
                             @endif
                             @if(in_array('class_average', $columnsToShow))
-                                <th class="col-class-average">Subject<br><span style="font-size:8px;">Ave</span></th>
+                                <th class="col-class-average">Subject<br><span style="font-size:6.5px;">Ave</span></th>
                             @endif
                         </tr>
                     </thead>
@@ -854,12 +853,12 @@
             <table style="width:calc(100% - 16px); border:2px solid #000000; border-collapse:collapse; margin:5px 8px 3px;">
                 <tbody>
                     <tr>
-                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
-                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
+                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:9.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:10px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
                             <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
-                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
-                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
+                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:9.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:10px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
                             <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
                     </tr>
