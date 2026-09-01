@@ -12,11 +12,11 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 10px;
-            line-height: 1.2;
+            font-size: 13px;
+            line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 1mm 0;
+            padding: 2mm 0;
             text-align: center;
         }
 
@@ -25,7 +25,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 55px;
+            font-size: 65px;
             font-weight: 900;
             color: rgba(0, 0, 0, 0.04);
             font-family: 'Arial Black', sans-serif;
@@ -56,7 +56,7 @@
             width: 96.5%;
             background: #111827;
             color: white;
-            padding: 4px 8px 3px 8px;
+            padding: 7px 10px 5px 10px;
             border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
@@ -64,7 +64,7 @@
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 18px;
+            font-size: 23px;
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -72,26 +72,26 @@
         }
 
         .school-name-header .motto {
-            font-size: 10px;
+            font-size: 12.5px;
             font-weight: 700;
             letter-spacing: 2px;
             opacity: 0.95;
-            margin-top: 1px;
+            margin-top: 2px;
         }
 
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            padding: 2px 5px 2px 5px;
+            padding: 3px 7px 3px 7px;
         }
 
         .school-logo {
-            width: 55px;
-            height: 62px;
+            width: 68px;
+            height: 76px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
-            padding: 2px;
+            padding: 3px;
             overflow: hidden;
             display: block;
             text-align: center;
@@ -104,8 +104,8 @@
         }
 
         .photo-frame {
-            width: 55px;
-            height: 62px;
+            width: 68px;
+            height: 76px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: #e2e8f0;
@@ -123,14 +123,14 @@
             display: block;
         }
 
-        .header-divider { height: 1px; background: #1e40af; width: 100%; }
+        .header-divider { height: 2px; background: #1e40af; width: 100%; }
         .header-divider2 { height: 1px; background: #64748b; width: 100%; margin: 1px 0; }
 
         .report-title {
             background: #111827;
             color: white;
-            padding: 3px 6px;
-            font-size: 11px;
+            padding: 5px 8px;
+            font-size: 14px;
             font-weight: 700;
             text-align: center;
         }
@@ -138,17 +138,17 @@
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
-            border-radius: 4px;
-            padding: 3px 8px;
-            margin: 3px 8px;
-            font-size: 10px;
+            border-radius: 6px;
+            padding: 4px 10px;
+            margin: 4px 8px;
+            font-size: 12px;
             text-align: center;
         }
 
         .info-table { width: 100%; margin: 0 auto; }
-        .info-table td { padding: 1px 4px; text-align: center; }
-        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 9.5px; white-space: nowrap; }
-        .info-bar-value { font-weight: 900; font-size: 10.5px; padding-left: 3px; }
+        .info-table td { padding: 1px 6px; text-align: center; }
+        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 11.5px; white-space: nowrap; }
+        .info-bar-value { font-weight: 900; font-size: 12.5px; padding-left: 3px; }
 
         .result-table { padding: 0 8px; margin: 3px 0; }
 
@@ -156,7 +156,7 @@
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 9px;
+            font-size: 10px;
             margin: 0;
         }
 
@@ -165,48 +165,48 @@
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
-            padding: 2px 1px;
-            font-size: 7.5px;
+            padding: 2px 2px;
+            font-size: 8.5px;
             text-align: center;
-            line-height: 1.1;
+            line-height: 1.2;
         }
 
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 1px 1px;
+            padding: 1px 2px;
             text-align: center;
-            font-size: 8.5px;
+            font-size: 9.5px;
             background: white;
             font-weight: 700;
-            height: 13px;
-            line-height: 13px;
+            height: 14px;
+            line-height: 14px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 700;
-            font-size: 8.5px;
-            padding-left: 4px;
+            font-size: 9.5px;
+            padding-left: 6px;
         }
 
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        .col-sn { width: 16px; }
-        .col-admissionno { width: 55px; }
-        .col-name { width: 120px; }
-        .col-assessment { width: 30px; }
-        .col-total { width: 30px; }
-        .col-bf { width: 25px; }
-        .col-cum { width: 28px; }
-        .col-grade { width: 26px; }
-        .col-compulsory { width: 28px; }
+        .col-sn { width: 18px; }
+        .col-admissionno { width: 65px; }
+        .col-name { width: 130px; }
+        .col-assessment { width: 32px; }
+        .col-total { width: 32px; }
+        .col-bf { width: 28px; }
+        .col-cum { width: 30px; }
+        .col-grade { width: 28px; }
+        .col-compulsory { width: 30px; }
         .col-position { width: 28px; }
-        .col-class-average { width: 28px; }
+        .col-class-average { width: 30px; }
 
         .compulsory-mark {
             font-weight: 900;
-            font-size: 9px;
-            margin-left: 1px;
+            font-size: 11px;
+            margin-left: 2px;
             vertical-align: super;
         }
         .compulsory-mark-pass { color: #16a34a; }
@@ -217,37 +217,37 @@
         .compulsory-badge-no   { color: #94a3b8; font-weight: 700; }
 
         .compulsory-note {
-            font-size: 7.5px;
+            font-size: 8.5px;
             color: #64748b;
             font-style: italic;
             margin: 2px 8px 0 8px;
             text-align: left;
         }
 
-        .grade-A1 { color: #15803d; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-B2 { color: #1d4ed8; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-B3 { color: #1d4ed8; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-C4 { color: #db2777; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-C5 { color: #db2777; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-C6 { color: #db2777; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-D7 { color: #7e22ce; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-E8 { color: #7e22ce; font-weight: 900; padding: 0 4px; border-radius: 3px; }
-        .grade-F9 { color: #dc2626; font-weight: 900; padding: 0 4px; border-radius: 3px; }
+        .grade-A1 { color: #15803d; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-B2 { color: #1d4ed8; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-B3 { color: #1d4ed8; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C4 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C5 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C6 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-D7 { color: #7e22ce; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-E8 { color: #7e22ce; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-F9 { color: #dc2626; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
 
         .totals-summary {
             width: calc(97% - 16px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 8.5px;
-            padding: 2px 6px;
+            font-size: 9.5px;
+            padding: 3px 8px;
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 0 8px 3px 8px;
+            margin: 0 8px 4px 8px;
         }
 
-        .position-cell { font-weight: 900; text-align: center; padding: 1px 3px; }
+        .position-cell { font-weight: 900; text-align: center; padding: 2px 4px; }
         .position-1 { background-color: #FFD700; color: #000000; font-weight: 900; }
         .position-2 { background-color: #C0C0C0; color: #000000; font-weight: 900; }
         .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
@@ -256,26 +256,26 @@
         .promo-card {
             width: calc(96% - 16px);
             margin: 4px 8px 5px 8px;
-            padding: 5px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             text-align: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             clear: both;
         }
 
         .promo-title {
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 900;
             letter-spacing: 0.5px;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
             text-transform: uppercase;
         }
 
         .promo-message {
-            font-size: 8px;
+            font-size: 9px;
             font-weight: 500;
-            margin-top: 1px;
-            line-height: 1.2;
+            margin-top: 2px;
+            line-height: 1.3;
         }
 
         .promo-promoted {
@@ -317,7 +317,7 @@
             width: 100%;
             border-top: 1px solid #cbd5e1;
             background: #f1f5f9;
-            margin-top: 2px;
+            margin-top: 3px;
         }
 
         .bottom-strip table {
@@ -326,45 +326,45 @@
         }
 
         .bottom-strip td {
-            padding: 3px 6px;
+            padding: 4px 8px;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-qr {
-            width: 65px;
+            width: 75px;
             text-align: center;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-footer {
             text-align: center;
-            font-size: 9.5px;
+            font-size: 10.5px;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-stamp {
-            width: 90px;
+            width: 100px;
             text-align: center;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-qr img {
-            width: 50px;
-            height: 50px;
+            width: 58px;
+            height: 58px;
             display: block;
-            margin: 0 auto 1px;
+            margin: 0 auto 2px;
         }
 
         .qr-label {
-            font-size: 7px;
+            font-size: 8px;
             color: #333;
             font-weight: 600;
             text-align: center;
         }
 
         .bottom-strip .cell-stamp img {
-            width: 75px;
-            height: 75px;
+            width: 85px;
+            height: 85px;
             transform: rotate(-8deg);
             display: block;
             margin: 0 auto;
@@ -373,15 +373,15 @@
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
-            min-width: 90px;
+            min-width: 100px;
             font-weight: bold;
-            margin: 0 3px;
+            margin: 0 4px;
         }
 
-        .powered-by { font-size: 9px; margin-top: 2px; color: #64748b; }
+        .powered-by { font-size: 10px; margin-top: 3px; color: #64748b; }
 
         .mock-section {
-            margin: 4px 8px 3px 8px;
+            margin: 5px 8px 3px 8px;
             border: 2px solid #000000;
             border-radius: 4px;
             overflow: hidden;
@@ -390,8 +390,8 @@
         .mock-header {
             background: #111827;
             color: white;
-            padding: 2px 8px;
-            font-size: 10px;
+            padding: 3px 10px;
+            font-size: 11px;
             font-weight: 700;
             text-align: center;
             border-bottom: 1px solid #000;
@@ -400,39 +400,39 @@
         .mock-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8.5px;
+            font-size: 9px;
         }
 
         .mock-table th {
             background: #1a2f55;
             color: white;
             border: 1px solid #000000;
-            padding: 2px 1px;
-            font-size: 7.5px;
+            padding: 2px 2px;
+            font-size: 8px;
             text-align: center;
             font-weight: 800;
         }
 
         .mock-table td {
             border: 1px solid #000000;
-            padding: 1px 1px;
+            padding: 1px 2px;
             text-align: center;
-            font-size: 8.5px;
+            font-size: 9px;
             background: white;
             font-weight: 700;
         }
 
         .mock-table td.subject-name {
             text-align: left;
-            padding-left: 4px;
+            padding-left: 6px;
         }
 
         .mock-summary {
             background: #0d1a3d;
             color: white;
             font-weight: 900;
-            font-size: 7.5px;
-            padding: 2px 6px;
+            font-size: 8.5px;
+            padding: 2px 8px;
             text-align: center;
         }
 
@@ -440,22 +440,22 @@
             width: calc(100% - 16px);
             border: 2px solid #000000;
             border-collapse: collapse;
-            margin: 3px 8px 3px 8px;
+            margin: 4px 8px 3px 8px;
         }
 
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 3px 5px;
+            padding: 4px 6px;
             background: white;
             vertical-align: top;
-            font-size: 10px;
+            font-size: 11px;
             width: 50%;
         }
 
         .remarks-table .remark-label {
             font-weight: 700;
             margin-bottom: 2px;
-            font-size: 10.5px;
+            font-size: 11.5px;
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
@@ -593,32 +593,32 @@
             {{-- HEADER: Logo + Contact + Photo --}}
             <table class="header-table">
                 <tr>
-                    <td width="18%" style="text-align:center; padding: 3px 4px; vertical-align:middle;">
+                    <td width="18%" style="text-align:center; padding: 4px 6px; vertical-align:middle;">
                         <div class="school-logo">
                             <img src="{{ $logoSrc }}" alt="School Logo">
                         </div>
                     </td>
-                    <td style="vertical-align:top; padding: 3px 5px;">
-                        <table style="border:none; border-collapse:collapse; width:100%; font-size:10px;">
+                    <td style="vertical-align:top; padding: 4px 7px;">
+                        <table style="border:none; border-collapse:collapse; width:100%; font-size:12px;">
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 3px 0 0;">Address:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
                             </tr>
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 3px 0 0;">Phone:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->formatted_phones ?? '—' }}</td>
                             </tr>
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 3px 0 0;">Email:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_email ?? '—' }}</td>
                             </tr>
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 3px 0 0;">Website:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_website ?? '—' }}</td>
                             </tr>
                         </table>
                     </td>
-                    <td width="20%" style="text-align:right; padding: 3px 4px 3px 0; vertical-align:middle;">
+                    <td width="20%" style="text-align:right; padding: 4px 6px 4px 0; vertical-align:middle;">
                         <div class="photo-frame">
                             @if(!empty($studentImage))
                                 <img src="{{ $studentImage }}" alt="Student Photo">
@@ -672,13 +672,13 @@
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     <th class="col-assessment">
                                         {{ $assessment->name }}<br>
-                                        <span style="font-size:6.5px;">({{ $assessment->max_score }})</span>
+                                        <span style="font-size:7px;">({{ $assessment->max_score }})</span>
                                     </th>
                                 @endif
                             @endforeach
 
                             @if(in_array('total', $columnsToShow))
-                                <th class="col-total">Total<br><span style="font-size:6.5px;">(100)</span></th>
+                                <th class="col-total">Total<br><span style="font-size:7px;">(100)</span></th>
                             @endif
                             @if(in_array('bf', $columnsToShow))
                                 <th class="col-bf">BF</th>
@@ -687,7 +687,7 @@
                                 <th class="col-cum">Cum</th>
                             @endif
                             @if(in_array('cum_ave', $columnsToShow))
-                                <th class="col-cum">Cum<br><span style="font-size:6.5px;">Ave</span></th>
+                                <th class="col-cum">Cum<br><span style="font-size:7px;">Ave</span></th>
                             @endif
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
@@ -708,7 +708,7 @@
                                 <th class="col-position">Cls<br>Cum</th>
                             @endif
                             @if(in_array('class_average', $columnsToShow))
-                                <th class="col-class-average">Subj<br><span style="font-size:6.5px;">Ave</span></th>
+                                <th class="col-class-average">Subj<br><span style="font-size:7px;">Ave</span></th>
                             @endif
                         </tr>
                     </thead>
@@ -786,8 +786,7 @@
                                 @endif
                                 @if(in_array('cum', $columnsToShow))
                                     <td>{{ number_format(round($score->cum ?? 0), 0) }}</td>
-                                @endif
-                                @if(in_array('cum_ave', $columnsToShow))
+                                @endif                                @if(in_array('cum_ave', $columnsToShow))
                                     <td>{{ number_format(round($score->cum_ave ?? 0), 0) }}</td>
                                 @endif
                                 @if(in_array('grade', $columnsToShow))
@@ -863,7 +862,7 @@
                                 (Required: {{ number_format($reqAvg, 1) }}%) ✓
                             @endif
                             @if(!empty($ruleDisplay))
-                                <br><span style="font-size:7.5px; opacity:0.8;">{{ $ruleDisplay }}</span>
+                                <br><span style="font-size:8px; opacity:0.8;">{{ $ruleDisplay }}</span>
                             @endif
                         </div>
                     </div>
@@ -876,7 +875,7 @@
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
                         @endif
                         @if(!empty($ruleDisplay))
-                            <div style="font-size:7.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
+                            <div style="font-size:8px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
                         @endif
                     </div>
                 @elseif($promoStatus === 'see_principal')
@@ -888,7 +887,7 @@
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
                         @endif
                         @if(!empty($ruleDisplay))
-                            <div style="font-size:7.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
+                            <div style="font-size:8px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
                         @endif
                     </div>
                 @elseif($promoStatus === 'repeated' || $promoStatus === 'repeat')
@@ -904,7 +903,7 @@
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
                         @endif
                         @if(!empty($ruleDisplay))
-                            <div style="font-size:7.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
+                            <div style="font-size:8px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
                         @endif
                     </div>
                 @else
@@ -927,13 +926,13 @@
                     <table class="mock-table">
                         <thead>
                             <tr>
-                                <th style="width:20px;">S/N</th>
-                                <th style="text-align:left; padding-left:4px;">Subject</th>
-                                <th style="width:35px;">Exam</th>
-                                <th style="width:35px;">Total</th>
-                                <th style="width:30px;">Grade</th>
-                                <th style="width:30px;">Pos</th>
-                                <th style="width:35px;">Avg</th>
+                                <th style="width:22px;">S/N</th>
+                                <th style="text-align:left; padding-left:6px;">Subject</th>
+                                <th style="width:38px;">Exam</th>
+                                <th style="width:38px;">Total</th>
+                                <th style="width:32px;">Grade</th>
+                                <th style="width:32px;">Pos</th>
+                                <th style="width:38px;">Avg</th>
                             </tr>
                         </thead>
                         <tbody>
