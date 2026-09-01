@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <title>Student Progress Report - {{ $metadata['session'] ?? '2025/2026' }}</title>
     <style>
+        @page {
+            size: A4 portrait;
+            margin: 8mm 7mm;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -16,7 +21,7 @@
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 2mm 0;
+            padding: 0;
             text-align: center;
         }
 
@@ -45,7 +50,6 @@
             margin: 0 auto;
             position: relative;
             text-align: left;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
         .student-section:last-child {
@@ -56,7 +60,7 @@
             width: 96.5%;
             background: #111827;
             color: white;
-            padding: 7px 10px 5px 10px;
+            padding: 5px 10px 4px 10px;
             border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
@@ -82,7 +86,6 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            padding: 3px 7px 3px 7px;
         }
 
         .school-logo {
@@ -129,7 +132,7 @@
         .report-title {
             background: #111827;
             color: white;
-            padding: 5px 8px;
+            padding: 4px 8px;
             font-size: 14px;
             font-weight: 700;
             text-align: center;
@@ -139,18 +142,20 @@
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
             border-radius: 6px;
-            padding: 5px 10px;
-            margin: 5px 8px;
+            padding: 4px 10px;
+            margin: 4px 8px;
             font-size: 12px;
             text-align: center;
         }
 
-        .info-table { width: 100%; margin: 0 auto; }
-        .info-table td { padding: 2px 6px; text-align: center; }
+        /* Fixed 4-column grid so NAME/SESSION/TERM/CLASS (and the row below)
+           always line up regardless of how long any individual value is. */
+        .info-table { width: 100%; margin: 0 auto; table-layout: fixed; }
+        .info-table td { padding: 2px 6px; text-align: left; width: 25%; overflow: hidden; }
         .info-bar-label { color: #1e40af; font-weight: 900; font-size: 11.5px; white-space: nowrap; }
         .info-bar-value { font-weight: 900; font-size: 12.5px; padding-left: 3px; }
 
-        .result-table { padding: 0 8px; margin: 5px 0; }
+        .result-table { padding: 0 8px; margin: 3px 0; }
 
         .result-table table {
             width: 100%;
@@ -242,11 +247,11 @@
             color: #ffffff;
             font-weight: 900;
             font-size: 11px;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 0 8px 5px 8px;
+            margin: 0 8px 4px 8px;
         }
 
         .position-cell { font-weight: 900; text-align: center; padding: 2px 4px; }
@@ -257,11 +262,10 @@
 
         .promo-card {
             width: calc(96% - 16px);
-            margin: 6px 8px 8px 8px;
-            padding: 8px 12px;
+            margin: 4px 8px 5px 8px;
+            padding: 6px 12px;
             border-radius: 6px;
             text-align: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             clear: both;
         }
 
@@ -315,6 +319,15 @@
             color: #475569;
         }
 
+        /* Remarks table + bottom strip are wrapped together in .footer-block
+           (see markup below) so dompdf either keeps the whole thing on the
+           current page or pushes the whole thing to the next page as one
+           unit — never splits the QR/stamp row away from the remarks table
+           the way the old markup allowed. */
+        .footer-block {
+            page-break-inside: avoid;
+        }
+
         .bottom-strip {
             width: 100%;
             border-top: 1px solid #cbd5e1;
@@ -328,12 +341,12 @@
         }
 
         .bottom-strip td {
-            padding: 5px 8px;
+            padding: 4px 8px;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-qr {
-            width: 80px;
+            width: 70px;
             text-align: center;
             vertical-align: middle;
         }
@@ -345,14 +358,14 @@
         }
 
         .bottom-strip .cell-stamp {
-            width: 110px;
+            width: 95px;
             text-align: center;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-qr img {
-            width: 65px;
-            height: 65px;
+            width: 55px;
+            height: 55px;
             display: block;
             margin: 0 auto 2px;
         }
@@ -365,8 +378,8 @@
         }
 
         .bottom-strip .cell-stamp img {
-            width: 95px;
-            height: 95px;
+            width: 80px;
+            height: 80px;
             transform: rotate(-8deg);
             display: block;
             margin: 0 auto;
@@ -383,7 +396,7 @@
         .powered-by { font-size: 11px; margin-top: 3px; color: #64748b; }
 
         .mock-section {
-            margin: 8px 8px 4px 8px;
+            margin: 6px 8px 4px 8px;
             border: 2px solid #000000;
             border-radius: 4px;
             overflow: hidden;
@@ -441,7 +454,6 @@
         @media print {
             body { background: white; padding: 0; }
             .student-section {
-                box-shadow: none;
                 page-break-inside: avoid;
                 page-break-after: always;
             }
@@ -953,46 +965,48 @@
                 </div>
             @endif
 
-            {{-- REMARKS --}}
-            <table style="width:calc(100% - 16px); border:2px solid #000000; border-collapse:collapse; margin:5px 8px 3px;">
-                <tbody>
-                    <tr>
-                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
-                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
-                            <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
-                        </td>
-                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
-                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
-                            <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            {{-- BOTTOM STRIP --}}
-            <div class="bottom-strip">
-                <table>
-                    <tr>
-                        <td class="cell-qr">
-                            <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
-                            <div class="qr-label">Scan for Verification</div>
-                        </td>
-                        <td class="cell-footer">
-                            <div><strong>Issued:</strong> <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span></div>
-                            <div style="margin-top:3px;"><strong>Collected by:</strong> <span class="text-dot-space2">.......................................</span></div>
-                            <div style="margin-top:3px;"><strong>Next Term Begins:</strong> <span class="text-dot-space2">
-                                @php
-                                    $nextTerm = $schoolInfo->date_next_term_begins ?? null;
-                                    echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
-                                @endphp
-                            </span></div>
-                            <div class="powered-by">Powered by Qudroid Systems</div>
-                        </td>
-                        <td class="cell-stamp">
-                            <img src="{{ $stampSrc }}" alt="School Stamp">
-                        </td>
-                    </tr>
+            {{-- REMARKS + BOTTOM STRIP, kept together as one atomic block so
+                 dompdf never splits the QR/stamp row away from the rest --}}
+            <div class="footer-block">
+                <table style="width:calc(100% - 16px); border:2px solid #000000; border-collapse:collapse; margin:4px 8px 3px;">
+                    <tbody>
+                        <tr>
+                            <td style="border:1px solid #000000; padding:3px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
+                                <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
+                                <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
+                            </td>
+                            <td style="border:1px solid #000000; padding:3px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
+                                <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
+                                <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
+
+                <div class="bottom-strip">
+                    <table>
+                        <tr>
+                            <td class="cell-qr">
+                                <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
+                                <div class="qr-label">Scan for Verification</div>
+                            </td>
+                            <td class="cell-footer">
+                                <div><strong>Issued:</strong> <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span></div>
+                                <div style="margin-top:3px;"><strong>Collected by:</strong> <span class="text-dot-space2">.......................................</span></div>
+                                <div style="margin-top:3px;"><strong>Next Term Begins:</strong> <span class="text-dot-space2">
+                                    @php
+                                        $nextTerm = $schoolInfo->date_next_term_begins ?? null;
+                                        echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
+                                    @endphp
+                                </span></div>
+                                <div class="powered-by">Powered by Qudroid Systems</div>
+                            </td>
+                            <td class="cell-stamp">
+                                <img src="{{ $stampSrc }}" alt="School Stamp">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>
         </div>
     @endforeach
