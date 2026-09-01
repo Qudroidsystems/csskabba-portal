@@ -10,20 +10,20 @@
             box-sizing: border-box;
         }
 
-        @page {
-            size: A4;
-            margin: 5mm 6mm;
-        }
-
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11.5px;
-            line-height: 1.3;
+            font-size: 12.5px;
+            line-height: 1.35;
             color: #000;
-            background: #fff;
-            margin: 0;
+            background: #f5f5f5;
             padding: 0;
+            margin: 0;
             text-align: center;
+        }
+
+        @page {
+            size: A4;
+            margin: 4mm 5mm;
         }
 
         .watermark-text {
@@ -31,11 +31,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 68px;
+            font-size: 72px;
             font-weight: 900;
-            color: rgba(0, 0, 0, 0.035);
+            color: rgba(0, 0, 0, 0.04);
             font-family: 'Arial Black', sans-serif;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             white-space: nowrap;
             pointer-events: none;
             z-index: 1000;
@@ -43,62 +43,64 @@
         }
 
         .student-section {
-            width: 198mm;
-            max-width: 198mm;
+            width: 200mm;
+            max-width: 200mm;
             page-break-after: always;
-            page-break-inside: avoid !important;
+            page-break-inside: avoid;
             break-after: page;
-            break-inside: avoid !important;
+            break-inside: avoid;
             background: #ffffff;
-            border: 2.5px double #000000;
+            border: 3px double #000000;
             margin: 0 auto;
             position: relative;
             text-align: left;
+            box-shadow: none;
         }
 
         .student-section:last-child {
-            page-break-after: auto;
+            page-break-after: avoid;
         }
 
-        /* ===== HEADER ===== */
         .school-name-header {
             width: 100%;
             background: #111827;
             color: white;
-            padding: 6px 8px 4px;
+            padding: 8px 10px 6px 10px;
+            border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
         }
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 19px;
+            font-size: 22px;
             font-weight: 900;
-            letter-spacing: 1.2px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-            line-height: 1.1;
+            line-height: 1.05;
         }
 
         .school-name-header .motto {
-            font-size: 10px;
+            font-size: 11.5px;
             font-weight: 700;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             opacity: 0.95;
-            margin-top: 1px;
+            margin-top: 2px;
         }
 
         .header-table {
             width: 100%;
             border-collapse: collapse;
+            padding: 3px 7px 3px 7px;
         }
 
         .school-logo {
-            width: 62px;
-            height: 70px;
-            border: 1.5px solid #47b492;
-            border-radius: 5px;
+            width: 74px;
+            height: 82px;
+            border: 2px solid #47b492;
+            border-radius: 6px;
             background: white;
-            padding: 2px;
+            padding: 3px;
             overflow: hidden;
             display: block;
             text-align: center;
@@ -111,16 +113,16 @@
         }
 
         .photo-frame {
-            width: 62px;
-            height: 70px;
-            border: 1.5px solid #47b492;
-            border-radius: 5px;
+            width: 74px;
+            height: 82px;
+            border: 2px solid #47b492;
+            border-radius: 6px;
             background: #e2e8f0;
             padding: 0;
             overflow: hidden;
             display: block;
             margin-left: auto;
-            margin-right: 3px;
+            margin-right: 4px;
         }
 
         .photo-frame img {
@@ -130,73 +132,40 @@
             display: block;
         }
 
-        .header-divider {
-            height: 1.5px;
-            background: #1e40af;
-            width: 100%;
-        }
-
-        .header-divider2 {
-            height: 1px;
-            background: #64748b;
-            width: 100%;
-            margin: 1px 0;
-        }
+        .header-divider { height: 2px; background: #1e40af; width: 100%; }
+        .header-divider2 { height: 1px; background: #64748b; width: 100%; margin: 1px 0; }
 
         .report-title {
             background: #111827;
             color: white;
-            padding: 4px 6px;
-            font-size: 11.5px;
+            padding: 6px 8px;
+            font-size: 13.5px;
             font-weight: 700;
             text-align: center;
         }
 
-        /* ===== STUDENT INFO ===== */
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
-            border: 1.5px solid #2aa886;
-            border-radius: 5px;
-            padding: 4px 8px;
-            margin: 4px 6px;
-            font-size: 10px;
+            border: 2px solid #2aa886;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin: 6px 8px;
+            font-size: 11px;
             text-align: center;
         }
 
-        .info-table {
-            width: 100%;
-            margin: 0 auto;
-        }
+        .info-table { width: 100%; margin: 0 auto; }
+        .info-table td { padding: 2px 6px; text-align: center; }
+        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 10.5px; white-space: nowrap; }
+        .info-bar-value { font-weight: 900; font-size: 11.5px; padding-left: 3px; }
 
-        .info-table td {
-            padding: 1px 4px;
-            text-align: center;
-        }
-
-        .info-bar-label {
-            color: #1e40af;
-            font-weight: 900;
-            font-size: 9.5px;
-            white-space: nowrap;
-        }
-
-        .info-bar-value {
-            font-weight: 900;
-            font-size: 10.5px;
-            padding-left: 2px;
-        }
-
-        /* ===== RESULT TABLE ===== */
-        .result-table {
-            padding: 0 6px;
-            margin: 3px 0;
-        }
+        .result-table { padding: 0 8px; margin: 6px 0; }
 
         .result-table table {
             width: 100%;
-            border: 1.5px solid #000000;
+            border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 9px;
+            font-size: 10px;
             margin: 0;
         }
 
@@ -205,51 +174,49 @@
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
-            padding: 3px 1px;
-            font-size: 7.8px;
+            padding: 4px 3px;
+            font-size: 9px;
             text-align: center;
-            line-height: 1.15;
+            line-height: 1.2;
         }
 
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 2px 1px;
+            padding: 3px 2px;
             text-align: center;
-            font-size: 9px;
+            font-size: 10px;
             background: white;
             font-weight: 800;
-            height: 14.5px;
-            line-height: 14.5px;
+            height: 17px;
+            line-height: 17px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 800;
-            font-size: 9px;
-            padding-left: 4px;
+            font-size: 10px;
+            padding-left: 6px;
         }
 
-        .highlight-red {
-            color: #dc2626;
-            font-weight: 900;
-        }
+        .highlight-red { color: #dc2626; font-weight: 900; }
 
-        .col-sn { width: 18px; }
-        .col-admissionno { width: 65px; }
-        .col-name { width: 140px; }
-        .col-assessment { width: 34px; }
-        .col-total { width: 34px; }
-        .col-bf { width: 28px; }
-        .col-cum { width: 32px; }
-        .col-grade { width: 30px; }
-        .col-position { width: 30px; }
-        .col-class-average { width: 32px; }
-        .col-compulsory { width: 32px; }
+        .col-sn { width: 22px; }
+        .col-admissionno { width: 72px; }
+        .col-name { width: 155px; }
+        .col-assessment { width: 38px; }
+        .col-total { width: 38px; }
+        .col-bf { width: 32px; }
+        .col-cum { width: 36px; }
+        .col-grade { width: 34px; }
+        .col-position { width: 34px; }
+        .col-class-average { width: 36px; }
+        .col-compulsory { width: 36px; }
 
+        /* Always-on marker next to a compulsory subject's name */
         .compulsory-mark {
             font-weight: 900;
-            font-size: 9.5px;
-            margin-left: 1px;
+            font-size: 11px;
+            margin-left: 2px;
             vertical-align: super;
         }
         .compulsory-mark-pass { color: #16a34a; }
@@ -260,27 +227,27 @@
         .compulsory-badge-no   { color: #94a3b8; font-weight: 700; }
 
         .compulsory-note {
-            font-size: 7.5px;
+            font-size: 8.5px;
             color: #64748b;
             font-style: italic;
-            margin: 2px 6px 0;
+            margin: 3px 8px 0 8px;
             text-align: left;
         }
 
-        /* ===== TOTALS ===== */
         .totals-summary {
-            width: calc(100% - 12px);
+            width: calc(97% - 16px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 9px;
-            padding: 3.5px 6px;
-            border: 1.5px solid #000000;
+            font-size: 10px;
+            padding: 5px 8px;
+            border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 0 6px 3px;
+            margin: 0 8px 5px 8px;
         }
 
+        .position-cell { font-weight: 900; text-align: center; padding: 2px 4px; }
         .position-1 { background-color: #FFD700; color: #000000; font-weight: 900; }
         .position-2 { background-color: #C0C0C0; color: #000000; font-weight: 900; }
         .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
@@ -292,27 +259,29 @@
         .grade-D7, .grade-E8 { color: #ea580c; font-weight: 900; }
         .grade-F9 { color: #dc2626; font-weight: 900; }
 
-        /* ===== PROMOTION ===== */
         .promo-card {
-            width: calc(100% - 12px);
-            margin: 4px 6px 4px;
-            padding: 5px 10px;
-            border-radius: 5px;
+            width: calc(96% - 16px);
+            margin: 7px 8px 9px 8px;
+            padding: 9px 12px;
+            border-radius: 6px;
             text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            clear: both;
         }
 
         .promo-title {
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 900;
-            letter-spacing: 0.3px;
-            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
             text-transform: uppercase;
         }
 
         .promo-message {
-            font-size: 8px;
+            font-size: 9px;
             font-weight: 500;
-            line-height: 1.25;
+            margin-top: 2px;
+            line-height: 1.3;
         }
 
         .promo-promoted {
@@ -350,37 +319,11 @@
             color: #475569;
         }
 
-        /* ===== REMARKS ===== */
-        .remarks-table {
-            width: calc(100% - 12px);
-            border: 1.5px solid #000000;
-            border-collapse: collapse;
-            margin: 3px 6px 2px;
-        }
-
-        .remarks-table td {
-            border: 1px solid #000000;
-            padding: 3px 5px;
-            background: white;
-            vertical-align: top;
-            font-size: 9.5px;
-            width: 50%;
-        }
-
-        .remarks-label {
-            font-weight: 700;
-            margin-bottom: 2px;
-            font-size: 9.5px;
-            border-bottom: 1px solid #ccc;
-            display: inline-block;
-        }
-
-        /* ===== BOTTOM STRIP ===== */
         .bottom-strip {
             width: 100%;
             border-top: 1px solid #cbd5e1;
             background: #f1f5f9;
-            margin-top: 2px;
+            margin-top: 4px;
         }
 
         .bottom-strip table {
@@ -389,42 +332,45 @@
         }
 
         .bottom-strip td {
-            padding: 3px 6px;
+            padding: 5px 8px;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-qr {
-            width: 70px;
+            width: 80px;
             text-align: center;
+            vertical-align: middle;
         }
 
         .bottom-strip .cell-footer {
             text-align: center;
-            font-size: 9px;
+            font-size: 10.5px;
+            vertical-align: middle;
         }
 
         .bottom-strip .cell-stamp {
-            width: 95px;
+            width: 110px;
             text-align: center;
+            vertical-align: middle;
         }
 
         .bottom-strip .cell-qr img {
-            width: 58px;
-            height: 58px;
+            width: 70px;
+            height: 70px;
             display: block;
-            margin: 0 auto 1px;
+            margin: 0 auto 2px;
         }
 
         .qr-label {
-            font-size: 7px;
+            font-size: 8px;
             color: #333;
             font-weight: 600;
             text-align: center;
         }
 
         .bottom-strip .cell-stamp img {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             transform: rotate(-8deg);
             display: block;
             margin: 0 auto;
@@ -433,29 +379,26 @@
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
-            min-width: 95px;
+            min-width: 110px;
             font-weight: bold;
-            margin: 0 3px;
+            margin: 0 4px;
         }
 
-        .powered-by {
-            font-size: 8px;
-            margin-top: 1px;
-            color: #64748b;
-        }
+        .powered-by { font-size: 9.5px; margin-top: 3px; color: #64748b; }
 
         @media print {
             body {
                 background: white;
-                margin: 0;
                 padding: 0;
+                margin: 0;
             }
             .student-section {
-                width: 198mm;
-                max-width: 198mm;
+                width: 200mm;
+                max-width: 200mm;
                 box-shadow: none;
                 page-break-inside: avoid !important;
                 page-break-after: always;
+                break-after: page;
                 break-inside: avoid !important;
             }
             .student-section:last-child {
@@ -495,6 +438,7 @@
 
     @foreach ($allStudentData as $index => $studentData)
         @php
+            // Get data from the correct array keys
             $schoolInfo = $studentData['schoolInfo'] ?? null;
             $student = $studentData['students'] && $studentData['students']->isNotEmpty() 
                 ? $studentData['students']->first() 
@@ -527,12 +471,17 @@
             $promoTotal = $promotionResult['compulsory_count'] ?? 0;
             $promoPassed = $promotionResult['passed_compulsory'] ?? 0;
             
+            $attPct = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
+            $attWarn = $attPct < 75;
+            $attFound = $attendance['found'] ?? false;
+
+            // Whether any subject on this student's sheet is flagged compulsory
             $hasAnyCompulsory = collect($scores)->contains(fn($s) => $s->is_compulsory ?? false);
             
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$className}\nTerm: {$termName}\nSession: {$sessionName}\nSchool: " . ($schoolInfo->school_name ?? 'School');
             $qrCodeBase64 = base64_encode(
                 \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                    ->size(240)
+                    ->size(280)
                     ->errorCorrection('H')
                     ->generate($qrData)
             );
@@ -571,32 +520,32 @@
             {{-- HEADER: Logo + Contact + Photo --}}
             <table class="header-table">
                 <tr>
-                    <td width="16%" style="text-align:center; padding: 3px 5px; vertical-align:middle;">
+                    <td width="18%" style="text-align:center; padding: 4px 6px; vertical-align:middle;">
                         <div class="school-logo">
                             <img src="{{ $logoSrc }}" alt="School Logo">
                         </div>
                     </td>
-                    <td style="vertical-align:top; padding: 3px 5px;">
-                        <table style="border:none; border-collapse:collapse; width:100%; font-size:9.5px;">
+                    <td style="vertical-align:top; padding: 4px 7px;">
+                        <table style="border:none; border-collapse:collapse; width:100%; font-size:10.5px;">
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 3px 0 0;">Address:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
                             </tr>
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 3px 0 0;">Phone:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->formatted_phones ?? '—' }}</td>
                             </tr>
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 3px 0 0;">Email:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_email ?? '—' }}</td>
                             </tr>
                             <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 3px 0 0;">Website:</td>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_website ?? '—' }}</td>
                             </tr>
                         </table>
                     </td>
-                    <td width="16%" style="text-align:right; padding: 3px 5px 3px 0; vertical-align:middle;">
+                    <td width="20%" style="text-align:right; padding: 4px 6px 4px 0; vertical-align:middle;">
                         <div class="photo-frame">
                             @if(!empty($studentImage))
                                 <img src="{{ $studentImage }}" alt="Student Photo">
@@ -653,13 +602,13 @@
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     <th class="col-assessment">
                                         {{ $assessment->name }}<br>
-                                        <span style="font-size:6.5px;">({{ $assessment->max_score }})</span>
+                                        <span style="font-size:7px;">({{ $assessment->max_score }})</span>
                                     </th>
                                 @endif
                             @endforeach
 
                             @if(in_array('total', $columnsToShow))
-                                <th class="col-total">Total<br><span style="font-size:6.5px;">(100)</span></th>
+                                <th class="col-total">Total<br><span style="font-size:7px;">(100)</span></th>
                             @endif
                             @if(in_array('bf', $columnsToShow))
                                 <th class="col-bf">BF</th>
@@ -668,7 +617,7 @@
                                 <th class="col-cum">Cum</th>
                             @endif
                             @if(in_array('cum_ave', $columnsToShow))
-                                <th class="col-cum">Cum<br><span style="font-size:6.5px;">Ave</span></th>
+                                <th class="col-cum">Cum<br><span style="font-size:7px;">Ave</span></th>
                             @endif
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
@@ -689,16 +638,18 @@
                                 <th class="col-position">Class Pos<br>(Cum)</th>
                             @endif
                             @if(in_array('class_average', $columnsToShow))
-                                <th class="col-class-average">Subject<br><span style="font-size:6.5px;">Ave</span></th>
+                                <th class="col-class-average">Subject<br><span style="font-size:7px;">Ave</span></th>
                             @endif
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($scores as $scoreIndex => $score)
                             @php
+                                // Calculate total from individual scores if available
                                 $total = (float)($score->total ?? 0);
                                 $isFailing = $total < 50 && $total > 0;
                                 
+                                // If we have individual scores, use them to calculate total
                                 if (isset($score->ca1) && isset($score->ca2) && isset($score->exam)) {
                                     $ca1 = (float)($score->ca1 ?? 0);
                                     $ca2 = (float)($score->ca2 ?? 0);
@@ -813,7 +764,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="30" style="text-align:center; padding:6px;">No scores available.</td>
+                                <td colspan="30" style="text-align:center; padding:8px;">No scores available.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -821,7 +772,8 @@
 
                 @if(in_array('name', $columnsToShow) && $hasAnyCompulsory)
                     <div class="compulsory-note">
-                        <span class="compulsory-mark compulsory-mark-pass" style="margin-left:0;">*</span> Compulsory subject — green = passed, red = failed. Must be passed to qualify for promotion.
+                        <span class="compulsory-mark compulsory-mark-pass" style="margin-left:0;">*</span> Compulsory subject &mdash;
+                        green = passed, red = failed. Must be passed to qualify for promotion.
                     </div>
                 @endif
             </div>
@@ -899,15 +851,15 @@
             @endif
 
             {{-- REMARKS --}}
-            <table class="remarks-table">
+            <table style="width:calc(100% - 16px); border:2px solid #000000; border-collapse:collapse; margin:5px 8px 3px;">
                 <tbody>
                     <tr>
-                        <td>
-                            <div class="remarks-label">Class Teacher's Remark</div>
+                        <td style="border:1px solid #000000; padding:5px 7px; background:white; vertical-align:top; font-size:10.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:11px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
                             <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
-                        <td>
-                            <div class="remarks-label">Principal's Remark</div>
+                        <td style="border:1px solid #000000; padding:5px 7px; background:white; vertical-align:top; font-size:10.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:11px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
                             <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
                     </tr>
@@ -924,8 +876,8 @@
                         </td>
                         <td class="cell-footer">
                             <div><strong>Issued:</strong> <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span></div>
-                            <div style="margin-top:2px;"><strong>Collected by:</strong> <span class="text-dot-space2">.......................................</span></div>
-                            <div style="margin-top:2px;"><strong>Next Term Begins:</strong> <span class="text-dot-space2">
+                            <div style="margin-top:3px;"><strong>Collected by:</strong> <span class="text-dot-space2">.......................................</span></div>
+                            <div style="margin-top:3px;"><strong>Next Term Begins:</strong> <span class="text-dot-space2">
                                 @php
                                     $nextTerm = $schoolInfo->date_next_term_begins ?? null;
                                     echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
