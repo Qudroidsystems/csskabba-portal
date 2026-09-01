@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Class Results - {{ $metadata['class_name'] }}</title>
+    <title>Student Progress Report - {{ $metadata['session'] ?? '2025/2026' }}</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11px;
+            font-size: 13px;
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
@@ -21,7 +21,7 @@
         }
 
         .watermark-text {
-            position: fixed;
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
@@ -32,7 +32,7 @@
             letter-spacing: 5px;
             white-space: nowrap;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 1;
             text-transform: uppercase;
         }
 
@@ -40,8 +40,6 @@
             width: 190mm;
             page-break-after: always;
             page-break-inside: avoid;
-            break-after: page;
-            break-inside: avoid;
             background: #ffffff;
             border: 3px double #000000;
             margin: 0 auto;
@@ -66,7 +64,7 @@
 
         .school-name-header .school-full-name {
             font-family: 'Arial Black', sans-serif;
-            font-size: 20px;
+            font-size: 23px;
             font-weight: 900;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -74,7 +72,7 @@
         }
 
         .school-name-header .motto {
-            font-size: 10.5px;
+            font-size: 12.5px;
             font-weight: 700;
             letter-spacing: 2px;
             opacity: 0.95;
@@ -132,7 +130,7 @@
             background: #111827;
             color: white;
             padding: 5px 8px;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             text-align: center;
         }
@@ -143,14 +141,14 @@
             border-radius: 6px;
             padding: 5px 10px;
             margin: 5px 8px;
-            font-size: 10px;
+            font-size: 12px;
             text-align: center;
         }
 
         .info-table { width: 100%; margin: 0 auto; }
         .info-table td { padding: 2px 6px; text-align: center; }
-        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 9.5px; white-space: nowrap; }
-        .info-bar-value { font-weight: 900; font-size: 10.5px; padding-left: 3px; }
+        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 11.5px; white-space: nowrap; }
+        .info-bar-value { font-weight: 900; font-size: 12.5px; padding-left: 3px; }
 
         .result-table { padding: 0 8px; margin: 5px 0; }
 
@@ -158,7 +156,7 @@
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 9px;
+            font-size: 11px;
             margin: 0;
         }
 
@@ -168,7 +166,7 @@
             font-weight: 800;
             border: 1px solid #000000;
             padding: 3px 2px;
-            font-size: 8.2px;
+            font-size: 10px;
             text-align: center;
             line-height: 1.2;
         }
@@ -177,7 +175,7 @@
             border: 1px solid #000000;
             padding: 2px 2px;
             text-align: center;
-            font-size: 9px;
+            font-size: 11px;
             background: white;
             font-weight: 800;
             height: 15px;
@@ -187,7 +185,7 @@
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 800;
-            font-size: 9px;
+            font-size: 11px;
             padding-left: 6px;
         }
 
@@ -201,17 +199,14 @@
         .col-bf { width: 30px; }
         .col-cum { width: 34px; }
         .col-grade { width: 32px; }
+        .col-compulsory { width: 34px; }
         .col-position { width: 32px; }
         .col-class-average { width: 34px; }
-        .col-compulsory { width: 34px; }
 
-        /* Always-on marker next to a compulsory subject's name, independent
-           of whether the "Compulsory" column itself is toggled on. Colour
-           reflects whether the student passed (green) or failed (red) that
-           compulsory subject, not merely whether it's compulsory. */
+        /* Always-on marker next to a compulsory subject's name */
         .compulsory-mark {
             font-weight: 900;
-            font-size: 10px;
+            font-size: 12px;
             margin-left: 2px;
             vertical-align: super;
         }
@@ -223,19 +218,30 @@
         .compulsory-badge-no   { color: #94a3b8; font-weight: 700; }
 
         .compulsory-note {
-            font-size: 8px;
+            font-size: 9.5px;
             color: #64748b;
             font-style: italic;
             margin: 3px 8px 0 8px;
             text-align: left;
         }
 
+        /* Grade colours - A=Green, B=Blue, C=Pink, D/E=Purple, F=Red */
+        .grade-A1 { color: #15803d; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-B2 { color: #1d4ed8; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-B3 { color: #1d4ed8; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C4 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C5 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-C6 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-D7 { color: #7e22ce; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-E8 { color: #7e22ce; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+        .grade-F9 { color: #dc2626; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
+
         .totals-summary {
             width: calc(97% - 16px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 9px;
+            font-size: 11px;
             padding: 4px 8px;
             border: 2px solid #000000;
             border-top: none;
@@ -249,12 +255,6 @@
         .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
         td.position-1, td.position-2, td.position-3 { color: #000000 !important; }
 
-        .grade-A1 { color: #16a34a; font-weight: 900; }
-        .grade-B2, .grade-B3 { color: #2563eb; font-weight: 900; }
-        .grade-C4, .grade-C5, .grade-C6 { color: #ca8a04; font-weight: 900; }
-        .grade-D7, .grade-E8 { color: #ea580c; font-weight: 900; }
-        .grade-F9 { color: #dc2626; font-weight: 900; }
-
         .promo-card {
             width: calc(96% - 16px);
             margin: 6px 8px 8px 8px;
@@ -266,7 +266,7 @@
         }
 
         .promo-title {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 900;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
@@ -274,7 +274,7 @@
         }
 
         .promo-message {
-            font-size: 8px;
+            font-size: 9.5px;
             font-weight: 500;
             margin-top: 2px;
             line-height: 1.3;
@@ -340,7 +340,7 @@
 
         .bottom-strip .cell-footer {
             text-align: center;
-            font-size: 9.5px;
+            font-size: 11.5px;
             vertical-align: middle;
         }
 
@@ -358,7 +358,7 @@
         }
 
         .qr-label {
-            font-size: 7.5px;
+            font-size: 9px;
             color: #333;
             font-weight: 600;
             text-align: center;
@@ -380,7 +380,63 @@
             margin: 0 4px;
         }
 
-        .powered-by { font-size: 9px; margin-top: 3px; color: #64748b; }
+        .powered-by { font-size: 11px; margin-top: 3px; color: #64748b; }
+
+        .mock-section {
+            margin: 8px 8px 4px 8px;
+            border: 2px solid #000000;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .mock-header {
+            background: #111827;
+            color: white;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            border-bottom: 1px solid #000;
+        }
+
+        .mock-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+        }
+
+        .mock-table th {
+            background: #1a2f55;
+            color: white;
+            border: 1px solid #000000;
+            padding: 3px 2px;
+            font-size: 9px;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .mock-table td {
+            border: 1px solid #000000;
+            padding: 2px 2px;
+            text-align: center;
+            font-size: 10.5px;
+            background: white;
+            font-weight: 700;
+        }
+
+        .mock-table td.subject-name {
+            text-align: left;
+            padding-left: 6px;
+        }
+
+        .mock-summary {
+            background: #0d1a3d;
+            color: white;
+            font-weight: 900;
+            font-size: 9.5px;
+            padding: 3px 8px;
+            text-align: center;
+        }
 
         @media print {
             body { background: white; padding: 0; }
@@ -388,13 +444,11 @@
                 box-shadow: none;
                 page-break-inside: avoid;
                 page-break-after: always;
-                break-after: page;
             }
         }
     </style>
 </head>
 <body>
-    <div class="watermark-text">CLASS COPY</div>
 
     @php
         function formatOrdinal($number) {
@@ -411,10 +465,10 @@
         }
 
         $selectedColumns = $metadata['selected_columns'] ?? [];
-        $gradeBasis = $metadata['grade_basis'] ?? 'total';
+        $gradeBasis = $metadata['grade_basis'] ?? 'cum_ave';
         
         $defaultColumns = [
-            'sn', 'admission_no', 'name',
+            'sn', 'name',
             'total', 'bf', 'cum', 'cum_ave', 'grade',
             'arm_position', 'arm_position_cum', 'position_total', 'position',
             'class_average'
@@ -424,7 +478,6 @@
 
     @foreach ($allStudentData as $index => $studentData)
         @php
-            // Get data from the correct array keys
             $schoolInfo = $studentData['schoolInfo'] ?? null;
             $student = $studentData['students'] && $studentData['students']->isNotEmpty() 
                 ? $studentData['students']->first() 
@@ -437,14 +490,14 @@
             $studentpp = $studentData['studentpp'] ?? collect();
             $numberOfStudents = $studentData['numberOfStudents'] ?? 0;
             $schoolclass = $studentData['schoolclass'] ?? null;
-            $schoolterm = $studentData['schoolterm'] ?? null;
-            $schoolsession = $studentData['schoolsession'] ?? null;
+            $mockResults = $studentData['mock_results'] ?? collect();
+            $mockSummary = $studentData['mock_summary'] ?? [];
 
             $admNo = $student->admissionNo ?? 'N/A';
-            $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
+            $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? ''));
             $className = $schoolclass ? trim(($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arms->arm ?? '')) : 'N/A';
-            $termName = $schoolterm->term ?? 'Third Term';
-            $sessionName = $schoolsession->session ?? '2025/2026';
+            $termName = $metadata['term'] ?? 'Third Term';
+            $sessionName = $metadata['session'] ?? '2025/2026';
             
             $profile = $studentpp && $studentpp->isNotEmpty() ? $studentpp->first() : null;
             
@@ -456,13 +509,20 @@
             $actAvg = $promotionResult['actual_average'] ?? null;
             $promoTotal = $promotionResult['compulsory_count'] ?? 0;
             $promoPassed = $promotionResult['passed_compulsory'] ?? 0;
+            $appliedRule = $promotionResult['applied_rule']['name'] ?? null;
+            $ruleDisplay = '';
+            if ($appliedRule) {
+                $ruleDisplay = preg_replace('/^Rule\s+\d+\s*[-:.]?\s*/i', '', $appliedRule);
+                $ruleDisplay = trim($ruleDisplay);
+                if (empty($ruleDisplay) || $ruleDisplay === 'null') {
+                    $ruleDisplay = '';
+                }
+            }
             
             $attPct = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
             $attWarn = $attPct < 75;
             $attFound = $attendance['found'] ?? false;
 
-            // Whether any subject on this student's sheet is flagged compulsory —
-            // used to decide whether to print the "* Compulsory Subject" footnote.
             $hasAnyCompulsory = collect($scores)->contains(fn($s) => $s->is_compulsory ?? false);
             
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$className}\nTerm: {$termName}\nSession: {$sessionName}\nSchool: " . ($schoolInfo->school_name ?? 'School');
@@ -495,9 +555,12 @@
             }
             
             $studentImage = $studentData['student_image_base64'] ?? null;
+            
+            $showMock = in_array('include_mock', $columnsToShow) && $mockResults->isNotEmpty();
         @endphp
 
         <div class="student-section">
+            <div class="watermark-text">STUDENT COPY</div>
             {{-- SCHOOL NAME HEADER --}}
             <div class="school-name-header">
                 <div class="school-full-name">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</div>
@@ -513,7 +576,7 @@
                         </div>
                     </td>
                     <td style="vertical-align:top; padding: 4px 7px;">
-                        <table style="border:none; border-collapse:collapse; width:100%; font-size:10px;">
+                        <table style="border:none; border-collapse:collapse; width:100%; font-size:12px;">
                             <tr>
                                 <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
                                 <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
@@ -578,9 +641,6 @@
                             @if(in_array('sn', $columnsToShow))
                                 <th class="col-sn">S/N</th>
                             @endif
-                            @if(in_array('admission_no', $columnsToShow))
-                                <th class="col-admissionno">Adm No</th>
-                            @endif
                             @if(in_array('name', $columnsToShow))
                                 <th class="col-name">Subject</th>
                             @endif
@@ -589,13 +649,13 @@
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     <th class="col-assessment">
                                         {{ $assessment->name }}<br>
-                                        <span style="font-size:6.5px;">({{ $assessment->max_score }})</span>
+                                        <span style="font-size:8px;">({{ $assessment->max_score }})</span>
                                     </th>
                                 @endif
                             @endforeach
 
                             @if(in_array('total', $columnsToShow))
-                                <th class="col-total">Total<br><span style="font-size:6.5px;">(100)</span></th>
+                                <th class="col-total">Total<br><span style="font-size:8px;">(100)</span></th>
                             @endif
                             @if(in_array('bf', $columnsToShow))
                                 <th class="col-bf">BF</th>
@@ -604,7 +664,7 @@
                                 <th class="col-cum">Cum</th>
                             @endif
                             @if(in_array('cum_ave', $columnsToShow))
-                                <th class="col-cum">Cum<br><span style="font-size:6.5px;">Ave</span></th>
+                                <th class="col-cum">Cum<br><span style="font-size:8px;">Ave</span></th>
                             @endif
                             @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
@@ -625,29 +685,15 @@
                                 <th class="col-position">Class Pos<br>(Cum)</th>
                             @endif
                             @if(in_array('class_average', $columnsToShow))
-                                <th class="col-class-average">Subject<br><span style="font-size:6.5px;">Ave</span></th>
+                                <th class="col-class-average">Subject<br><span style="font-size:8px;">Ave</span></th>
                             @endif
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($scores as $scoreIndex => $score)
                             @php
-                                // Calculate total from individual scores if available
                                 $total = (float)($score->total ?? 0);
                                 $isFailing = $total < 50 && $total > 0;
-                                
-                                // If we have individual scores, use them to calculate total
-                                if (isset($score->ca1) && isset($score->ca2) && isset($score->exam)) {
-                                    $ca1 = (float)($score->ca1 ?? 0);
-                                    $ca2 = (float)($score->ca2 ?? 0);
-                                    $ca3 = (float)($score->ca3 ?? 0);
-                                    $exam = (float)($score->exam ?? 0);
-                                    $calculatedTotal = $ca1 + $ca2 + $ca3 + $exam;
-                                    if (abs($calculatedTotal - $total) > 0.01) {
-                                        $total = $calculatedTotal;
-                                        $isFailing = $total < 50 && $total > 0;
-                                    }
-                                }
                                 
                                 $posCum = $score->position ?? null;
                                 $posTotal = $score->position_total ?? null;
@@ -662,25 +708,24 @@
                                 $grade = $score->grade ?? '-';
                                 $gradeClass = match(true) {
                                     str_starts_with($grade, 'A') => 'grade-A1',
+                                    str_starts_with($grade, 'B2') => 'grade-B2',
+                                    str_starts_with($grade, 'B3') => 'grade-B3',
                                     str_starts_with($grade, 'B') => 'grade-B2',
+                                    str_starts_with($grade, 'C4') => 'grade-C4',
+                                    str_starts_with($grade, 'C5') => 'grade-C5',
+                                    str_starts_with($grade, 'C6') => 'grade-C6',
                                     str_starts_with($grade, 'C') => 'grade-C4',
                                     str_starts_with($grade, 'D') => 'grade-D7',
-                                    str_starts_with($grade, 'E') => 'grade-D7',
+                                    str_starts_with($grade, 'E') => 'grade-E8',
                                     default => 'grade-F9',
                                 };
 
                                 $isCompulsory = $score->is_compulsory ?? false;
-                                // Reuses the gradeClass already computed above rather than
-                                // re-deriving pass/fail from the raw grade string — 'grade-F9'
-                                // is the default (fail) bucket in the match() above.
                                 $isFailingGrade = $gradeClass === 'grade-F9';
                             @endphp
                             <tr>
                                 @if(in_array('sn', $columnsToShow))
                                     <td>{{ $scoreIndex + 1 }}</td>
-                                @endif
-                                @if(in_array('admission_no', $columnsToShow))
-                                    <td>{{ $admNo }}</td>
                                 @endif
                                 @if(in_array('name', $columnsToShow))
                                     <td class="subject-name">
@@ -702,15 +747,6 @@
                                             }
                                             $isLow = $assessmentScore < ($assessment->max_score * 0.5);
                                         @endphp
-                                        {{--
-                                            FIX: previously number_format($assessmentScore, 0) rounded the
-                                            displayed value to a whole number while the Total column used the
-                                            full-precision score underneath. That mismatch made rows that
-                                            visually summed to one number show a different Total (e.g. a
-                                            displayed "11" that was actually 10.5, making 11+12+27=50 look
-                                            wrong next to a Total of 49.5). Displaying to 1 decimal place
-                                            keeps what's shown consistent with what's summed.
-                                        --}}
                                         <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>
                                             {{ $assessmentScore !== null && $assessmentScore !== '' ? number_format($assessmentScore, 1) : '-' }}
                                         </td>
@@ -803,6 +839,9 @@
                                 <br>Average: {{ number_format($actAvg, 1) }}%
                                 (Required: {{ number_format($reqAvg, 1) }}%) ✓
                             @endif
+                            @if(!empty($ruleDisplay))
+                                <br><span style="font-size:8.5px; opacity:0.8;">{{ $ruleDisplay }}</span>
+                            @endif
                         </div>
                     </div>
                 @elseif($promoStatus === 'trial')
@@ -813,6 +852,9 @@
                             <div>Average: {{ number_format($actAvg, 1) }}%
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
                         @endif
+                        @if(!empty($ruleDisplay))
+                            <div style="font-size:8.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
+                        @endif
                     </div>
                 @elseif($promoStatus === 'see_principal')
                     <div class="promo-card promo-principal">
@@ -821,6 +863,9 @@
                         @if($reqAvg !== null && $actAvg !== null)
                             <div>Average: {{ number_format($actAvg, 1) }}%
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
+                        @endif
+                        @if(!empty($ruleDisplay))
+                            <div style="font-size:8.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
                         @endif
                     </div>
                 @elseif($promoStatus === 'repeated' || $promoStatus === 'repeat')
@@ -834,6 +879,9 @@
                         @if($reqAvg !== null && $actAvg !== null)
                             <div>Average: {{ number_format($actAvg, 1) }}%
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
+                        @endif
+                        @if(!empty($ruleDisplay))
+                            <div style="font-size:8.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
                         @endif
                     </div>
                 @else
@@ -849,16 +897,72 @@
                 </div>
             @endif
 
+            {{-- MOCK RESULTS SECTION --}}
+            @if($showMock)
+                <div class="mock-section">
+                    <div class="mock-header">📝 MOCK EXAMINATION RESULTS</div>
+                    <table class="mock-table">
+                        <thead>
+                            <tr>
+                                <th style="width:25px;">S/N</th>
+                                <th style="text-align:left; padding-left:6px;">Subject</th>
+                                <th style="width:45px;">Exam</th>
+                                <th style="width:45px;">Total</th>
+                                <th style="width:40px;">Grade</th>
+                                <th style="width:40px;">Position</th>
+                                <th style="width:45px;">Class Avg</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($mockResults as $mockIndex => $mock)
+                                @php
+                                    $mockGrade = $mock->grade ?? '-';
+                                    $mockGradeClass = match(true) {
+                                        str_starts_with($mockGrade, 'A') => 'grade-A1',
+                                        str_starts_with($mockGrade, 'B2') => 'grade-B2',
+                                        str_starts_with($mockGrade, 'B3') => 'grade-B3',
+                                        str_starts_with($mockGrade, 'B') => 'grade-B2',
+                                        str_starts_with($mockGrade, 'C4') => 'grade-C4',
+                                        str_starts_with($mockGrade, 'C5') => 'grade-C5',
+                                        str_starts_with($mockGrade, 'C6') => 'grade-C6',
+                                        str_starts_with($mockGrade, 'C') => 'grade-C4',
+                                        str_starts_with($mockGrade, 'D') => 'grade-D7',
+                                        str_starts_with($mockGrade, 'E') => 'grade-E8',
+                                        default => 'grade-F9',
+                                    };
+                                @endphp
+                                <tr>
+                                    <td>{{ $mockIndex + 1 }}</td>
+                                    <td class="subject-name">{{ $mock->subject_name ?? 'Unknown' }}</td>
+                                    <td>{{ number_format($mock->exam ?? 0, 1) }}</td>
+                                    <td>{{ number_format($mock->total ?? 0, 1) }}</td>
+                                    <td class="{{ $mockGradeClass }}">{{ $mockGrade }}</td>
+                                    <td>{{ formatOrdinal($mock->position ?? null) }}</td>
+                                    <td>{{ number_format($mock->class_average ?? 0, 1) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    <div class="mock-summary">
+                        TOTAL OBTAINED: {{ number_format($mockSummary['obtained'] ?? 0, 1) }}
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                        TOTAL OBTAINABLE: {{ $mockSummary['obtainable'] ?? 0 }}
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                        PERCENTAGE: {{ $mockSummary['percentage'] ?? 0 }}%
+                    </div>
+                </div>
+            @endif
+
             {{-- REMARKS --}}
             <table style="width:calc(100% - 16px); border:2px solid #000000; border-collapse:collapse; margin:5px 8px 3px;">
                 <tbody>
                     <tr>
-                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:9.5px; width:50%;">
-                            <div style="font-weight:700; margin-bottom:3px; font-size:10px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
+                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
                             <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
-                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:9.5px; width:50%;">
-                            <div style="font-weight:700; margin-bottom:3px; font-size:10px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
+                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
                             <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
                     </tr>
