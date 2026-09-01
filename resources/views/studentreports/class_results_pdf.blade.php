@@ -2,13 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Student Progress Report - {{ $metadata['session'] ?? '2025/2026' }}</title>
+    <title>Class Results - {{ $metadata['class_name'] }}</title>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 8mm 7mm;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -21,12 +16,12 @@
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 0;
+            padding: 2mm 0;
             text-align: center;
         }
 
         .watermark-text {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
@@ -37,7 +32,7 @@
             letter-spacing: 5px;
             white-space: nowrap;
             pointer-events: none;
-            z-index: 1;
+            z-index: 1000;
             text-transform: uppercase;
         }
 
@@ -45,11 +40,14 @@
             width: 190mm;
             page-break-after: always;
             page-break-inside: avoid;
+            break-after: page;
+            break-inside: avoid;
             background: #ffffff;
             border: 3px double #000000;
             margin: 0 auto;
             position: relative;
             text-align: left;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
         .student-section:last-child {
@@ -60,7 +58,7 @@
             width: 96.5%;
             background: #111827;
             color: white;
-            padding: 5px 10px 4px 10px;
+            padding: 7px 10px 5px 10px;
             border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
@@ -86,6 +84,7 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
+            padding: 3px 7px 3px 7px;
         }
 
         .school-logo {
@@ -132,7 +131,7 @@
         .report-title {
             background: #111827;
             color: white;
-            padding: 4px 8px;
+            padding: 5px 8px;
             font-size: 14px;
             font-weight: 700;
             text-align: center;
@@ -142,20 +141,18 @@
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
             border-radius: 6px;
-            padding: 4px 10px;
-            margin: 4px 8px;
+            padding: 5px 10px;
+            margin: 5px 8px;
             font-size: 12px;
             text-align: center;
         }
 
-        /* Fixed 4-column grid so NAME/SESSION/TERM/CLASS (and the row below)
-           always line up regardless of how long any individual value is. */
-        .info-table { width: 100%; margin: 0 auto; table-layout: fixed; }
-        .info-table td { padding: 2px 6px; text-align: left; width: 25%; overflow: hidden; }
+        .info-table { width: 100%; margin: 0 auto; }
+        .info-table td { padding: 2px 6px; text-align: center; }
         .info-bar-label { color: #1e40af; font-weight: 900; font-size: 11.5px; white-space: nowrap; }
         .info-bar-value { font-weight: 900; font-size: 12.5px; padding-left: 3px; }
 
-        .result-table { padding: 0 8px; margin: 3px 0; }
+        .result-table { padding: 0 8px; margin: 5px 0; }
 
         .result-table table {
             width: 100%;
@@ -204,11 +201,14 @@
         .col-bf { width: 30px; }
         .col-cum { width: 34px; }
         .col-grade { width: 32px; }
-        .col-compulsory { width: 34px; }
         .col-position { width: 32px; }
         .col-class-average { width: 34px; }
+        .col-compulsory { width: 34px; }
 
-        /* Always-on marker next to a compulsory subject's name */
+        /* Always-on marker next to a compulsory subject's name, independent
+           of whether the "Compulsory" column itself is toggled on. Colour
+           reflects whether the student passed (green) or failed (red) that
+           compulsory subject, not merely whether it's compulsory. */
         .compulsory-mark {
             font-weight: 900;
             font-size: 12px;
@@ -230,28 +230,17 @@
             text-align: left;
         }
 
-        /* Grade colours - A=Green, B=Blue, C=Pink, D/E=Purple, F=Red */
-        .grade-A1 { color: #15803d; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-B2 { color: #1d4ed8; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-B3 { color: #1d4ed8; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-C4 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-C5 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-C6 { color: #db2777; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-D7 { color: #7e22ce; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-E8 { color: #7e22ce; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-        .grade-F9 { color: #dc2626; font-weight: 900; padding: 1px 6px; border-radius: 4px; }
-
         .totals-summary {
             width: calc(97% - 16px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
             font-size: 11px;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 0 8px 4px 8px;
+            margin: 0 8px 5px 8px;
         }
 
         .position-cell { font-weight: 900; text-align: center; padding: 2px 4px; }
@@ -260,12 +249,20 @@
         .position-3 { background-color: #CD7F32; color: #000000; font-weight: 900; }
         td.position-1, td.position-2, td.position-3 { color: #000000 !important; }
 
+        /* Grade colours - A=Green, B=Blue, C=Pink, D/E=Purple, F=Red */
+        .grade-A1 { color: #15803d; font-weight: 900; }
+        .grade-B2, .grade-B3 { color: #1d4ed8; font-weight: 900; }
+        .grade-C4, .grade-C5, .grade-C6 { color: #db2777; font-weight: 900; }
+        .grade-D7, .grade-E8 { color: #7e22ce; font-weight: 900; }
+        .grade-F9 { color: #dc2626; font-weight: 900; }
+
         .promo-card {
             width: calc(96% - 16px);
-            margin: 4px 8px 5px 8px;
-            padding: 6px 12px;
+            margin: 6px 8px 8px 8px;
+            padding: 8px 12px;
             border-radius: 6px;
             text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             clear: both;
         }
 
@@ -319,15 +316,6 @@
             color: #475569;
         }
 
-        /* Remarks table + bottom strip are wrapped together in .footer-block
-           (see markup below) so dompdf either keeps the whole thing on the
-           current page or pushes the whole thing to the next page as one
-           unit — never splits the QR/stamp row away from the remarks table
-           the way the old markup allowed. */
-        .footer-block {
-            page-break-inside: avoid;
-        }
-
         .bottom-strip {
             width: 100%;
             border-top: 1px solid #cbd5e1;
@@ -341,12 +329,12 @@
         }
 
         .bottom-strip td {
-            padding: 4px 8px;
+            padding: 5px 8px;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-qr {
-            width: 70px;
+            width: 80px;
             text-align: center;
             vertical-align: middle;
         }
@@ -358,14 +346,14 @@
         }
 
         .bottom-strip .cell-stamp {
-            width: 95px;
+            width: 110px;
             text-align: center;
             vertical-align: middle;
         }
 
         .bottom-strip .cell-qr img {
-            width: 55px;
-            height: 55px;
+            width: 65px;
+            height: 65px;
             display: block;
             margin: 0 auto 2px;
         }
@@ -378,8 +366,8 @@
         }
 
         .bottom-strip .cell-stamp img {
-            width: 80px;
-            height: 80px;
+            width: 95px;
+            height: 95px;
             transform: rotate(-8deg);
             display: block;
             margin: 0 auto;
@@ -395,72 +383,19 @@
 
         .powered-by { font-size: 11px; margin-top: 3px; color: #64748b; }
 
-        .mock-section {
-            margin: 6px 8px 4px 8px;
-            border: 2px solid #000000;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .mock-header {
-            background: #111827;
-            color: white;
-            padding: 4px 10px;
-            font-size: 12px;
-            font-weight: 700;
-            text-align: center;
-            border-bottom: 1px solid #000;
-        }
-
-        .mock-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10.5px;
-        }
-
-        .mock-table th {
-            background: #1a2f55;
-            color: white;
-            border: 1px solid #000000;
-            padding: 3px 2px;
-            font-size: 9px;
-            text-align: center;
-            font-weight: 800;
-        }
-
-        .mock-table td {
-            border: 1px solid #000000;
-            padding: 2px 2px;
-            text-align: center;
-            font-size: 10.5px;
-            background: white;
-            font-weight: 700;
-        }
-
-        .mock-table td.subject-name {
-            text-align: left;
-            padding-left: 6px;
-        }
-
-        .mock-summary {
-            background: #0d1a3d;
-            color: white;
-            font-weight: 900;
-            font-size: 9.5px;
-            padding: 3px 8px;
-            text-align: center;
-        }
-
         @media print {
             body { background: white; padding: 0; }
             .student-section {
+                box-shadow: none;
                 page-break-inside: avoid;
                 page-break-after: always;
+                break-after: page;
             }
         }
     </style>
 </head>
 <body>
+    <div class="watermark-text">CLASS COPY</div>
 
     @php
         function formatOrdinal($number) {
@@ -477,10 +412,10 @@
         }
 
         $selectedColumns = $metadata['selected_columns'] ?? [];
-        $gradeBasis = $metadata['grade_basis'] ?? 'cum_ave';
+        $gradeBasis = $metadata['grade_basis'] ?? 'total';
         
         $defaultColumns = [
-            'sn', 'name',
+            'sn', 'admission_no', 'name',
             'total', 'bf', 'cum', 'cum_ave', 'grade',
             'arm_position', 'arm_position_cum', 'position_total', 'position',
             'class_average'
@@ -490,6 +425,7 @@
 
     @foreach ($allStudentData as $index => $studentData)
         @php
+            // Get data from the correct array keys
             $schoolInfo = $studentData['schoolInfo'] ?? null;
             $student = $studentData['students'] && $studentData['students']->isNotEmpty() 
                 ? $studentData['students']->first() 
@@ -502,14 +438,14 @@
             $studentpp = $studentData['studentpp'] ?? collect();
             $numberOfStudents = $studentData['numberOfStudents'] ?? 0;
             $schoolclass = $studentData['schoolclass'] ?? null;
-            $mockResults = $studentData['mock_results'] ?? collect();
-            $mockSummary = $studentData['mock_summary'] ?? [];
+            $schoolterm = $studentData['schoolterm'] ?? null;
+            $schoolsession = $studentData['schoolsession'] ?? null;
 
             $admNo = $student->admissionNo ?? 'N/A';
-            $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? ''));
+            $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
             $className = $schoolclass ? trim(($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arms->arm ?? '')) : 'N/A';
-            $termName = $metadata['term'] ?? 'Third Term';
-            $sessionName = $metadata['session'] ?? '2025/2026';
+            $termName = $schoolterm->term ?? 'Third Term';
+            $sessionName = $schoolsession->session ?? '2025/2026';
             
             $profile = $studentpp && $studentpp->isNotEmpty() ? $studentpp->first() : null;
             
@@ -521,20 +457,13 @@
             $actAvg = $promotionResult['actual_average'] ?? null;
             $promoTotal = $promotionResult['compulsory_count'] ?? 0;
             $promoPassed = $promotionResult['passed_compulsory'] ?? 0;
-            $appliedRule = $promotionResult['applied_rule']['name'] ?? null;
-            $ruleDisplay = '';
-            if ($appliedRule) {
-                $ruleDisplay = preg_replace('/^Rule\s+\d+\s*[-:.]?\s*/i', '', $appliedRule);
-                $ruleDisplay = trim($ruleDisplay);
-                if (empty($ruleDisplay) || $ruleDisplay === 'null') {
-                    $ruleDisplay = '';
-                }
-            }
             
             $attPct = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
             $attWarn = $attPct < 75;
             $attFound = $attendance['found'] ?? false;
 
+            // Whether any subject on this student's sheet is flagged compulsory —
+            // used to decide whether to print the "* Compulsory Subject" footnote.
             $hasAnyCompulsory = collect($scores)->contains(fn($s) => $s->is_compulsory ?? false);
             
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$className}\nTerm: {$termName}\nSession: {$sessionName}\nSchool: " . ($schoolInfo->school_name ?? 'School');
@@ -567,12 +496,9 @@
             }
             
             $studentImage = $studentData['student_image_base64'] ?? null;
-            
-            $showMock = in_array('include_mock', $columnsToShow) && $mockResults->isNotEmpty();
         @endphp
 
         <div class="student-section">
-            <div class="watermark-text">STUDENT COPY</div>
             {{-- SCHOOL NAME HEADER --}}
             <div class="school-name-header">
                 <div class="school-full-name">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</div>
@@ -653,6 +579,9 @@
                             @if(in_array('sn', $columnsToShow))
                                 <th class="col-sn">S/N</th>
                             @endif
+                            @if(in_array('admission_no', $columnsToShow))
+                                <th class="col-admissionno">Adm No</th>
+                            @endif
                             @if(in_array('name', $columnsToShow))
                                 <th class="col-name">Subject</th>
                             @endif
@@ -704,8 +633,22 @@
                     <tbody>
                         @forelse ($scores as $scoreIndex => $score)
                             @php
+                                // Calculate total from individual scores if available
                                 $total = (float)($score->total ?? 0);
                                 $isFailing = $total < 50 && $total > 0;
+                                
+                                // If we have individual scores, use them to calculate total
+                                if (isset($score->ca1) && isset($score->ca2) && isset($score->exam)) {
+                                    $ca1 = (float)($score->ca1 ?? 0);
+                                    $ca2 = (float)($score->ca2 ?? 0);
+                                    $ca3 = (float)($score->ca3 ?? 0);
+                                    $exam = (float)($score->exam ?? 0);
+                                    $calculatedTotal = $ca1 + $ca2 + $ca3 + $exam;
+                                    if (abs($calculatedTotal - $total) > 0.01) {
+                                        $total = $calculatedTotal;
+                                        $isFailing = $total < 50 && $total > 0;
+                                    }
+                                }
                                 
                                 $posCum = $score->position ?? null;
                                 $posTotal = $score->position_total ?? null;
@@ -720,24 +663,25 @@
                                 $grade = $score->grade ?? '-';
                                 $gradeClass = match(true) {
                                     str_starts_with($grade, 'A') => 'grade-A1',
-                                    str_starts_with($grade, 'B2') => 'grade-B2',
-                                    str_starts_with($grade, 'B3') => 'grade-B3',
                                     str_starts_with($grade, 'B') => 'grade-B2',
-                                    str_starts_with($grade, 'C4') => 'grade-C4',
-                                    str_starts_with($grade, 'C5') => 'grade-C5',
-                                    str_starts_with($grade, 'C6') => 'grade-C6',
                                     str_starts_with($grade, 'C') => 'grade-C4',
                                     str_starts_with($grade, 'D') => 'grade-D7',
-                                    str_starts_with($grade, 'E') => 'grade-E8',
+                                    str_starts_with($grade, 'E') => 'grade-D7',
                                     default => 'grade-F9',
                                 };
 
                                 $isCompulsory = $score->is_compulsory ?? false;
+                                // Reuses the gradeClass already computed above rather than
+                                // re-deriving pass/fail from the raw grade string — 'grade-F9'
+                                // is the default (fail) bucket in the match() above.
                                 $isFailingGrade = $gradeClass === 'grade-F9';
                             @endphp
                             <tr>
                                 @if(in_array('sn', $columnsToShow))
                                     <td>{{ $scoreIndex + 1 }}</td>
+                                @endif
+                                @if(in_array('admission_no', $columnsToShow))
+                                    <td>{{ $admNo }}</td>
                                 @endif
                                 @if(in_array('name', $columnsToShow))
                                     <td class="subject-name">
@@ -759,6 +703,15 @@
                                             }
                                             $isLow = $assessmentScore < ($assessment->max_score * 0.5);
                                         @endphp
+                                        {{--
+                                            FIX: previously number_format($assessmentScore, 0) rounded the
+                                            displayed value to a whole number while the Total column used the
+                                            full-precision score underneath. That mismatch made rows that
+                                            visually summed to one number show a different Total (e.g. a
+                                            displayed "11" that was actually 10.5, making 11+12+27=50 look
+                                            wrong next to a Total of 49.5). Displaying to 1 decimal place
+                                            keeps what's shown consistent with what's summed.
+                                        --}}
                                         <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>
                                             {{ $assessmentScore !== null && $assessmentScore !== '' ? number_format($assessmentScore, 1) : '-' }}
                                         </td>
@@ -851,9 +804,6 @@
                                 <br>Average: {{ number_format($actAvg, 1) }}%
                                 (Required: {{ number_format($reqAvg, 1) }}%) ✓
                             @endif
-                            @if(!empty($ruleDisplay))
-                                <br><span style="font-size:8.5px; opacity:0.8;">{{ $ruleDisplay }}</span>
-                            @endif
                         </div>
                     </div>
                 @elseif($promoStatus === 'trial')
@@ -864,9 +814,6 @@
                             <div>Average: {{ number_format($actAvg, 1) }}%
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
                         @endif
-                        @if(!empty($ruleDisplay))
-                            <div style="font-size:8.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
-                        @endif
                     </div>
                 @elseif($promoStatus === 'see_principal')
                     <div class="promo-card promo-principal">
@@ -875,9 +822,6 @@
                         @if($reqAvg !== null && $actAvg !== null)
                             <div>Average: {{ number_format($actAvg, 1) }}%
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
-                        @endif
-                        @if(!empty($ruleDisplay))
-                            <div style="font-size:8.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
                         @endif
                     </div>
                 @elseif($promoStatus === 'repeated' || $promoStatus === 'repeat')
@@ -891,9 +835,6 @@
                         @if($reqAvg !== null && $actAvg !== null)
                             <div>Average: {{ number_format($actAvg, 1) }}%
                             (Required: {{ number_format($reqAvg, 1) }}%)</div>
-                        @endif
-                        @if(!empty($ruleDisplay))
-                            <div style="font-size:8.5px; opacity:0.8; margin-top:2px;">{{ $ruleDisplay }}</div>
                         @endif
                     </div>
                 @else
@@ -909,104 +850,46 @@
                 </div>
             @endif
 
-            {{-- MOCK RESULTS SECTION --}}
-            @if($showMock)
-                <div class="mock-section">
-                    <div class="mock-header">📝 MOCK EXAMINATION RESULTS</div>
-                    <table class="mock-table">
-                        <thead>
-                            <tr>
-                                <th style="width:25px;">S/N</th>
-                                <th style="text-align:left; padding-left:6px;">Subject</th>
-                                <th style="width:45px;">Exam</th>
-                                <th style="width:45px;">Total</th>
-                                <th style="width:40px;">Grade</th>
-                                <th style="width:40px;">Position</th>
-                                <th style="width:45px;">Class Avg</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($mockResults as $mockIndex => $mock)
+            {{-- REMARKS --}}
+            <table style="width:calc(100% - 16px); border:2px solid #000000; border-collapse:collapse; margin:5px 8px 3px;">
+                <tbody>
+                    <tr>
+                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
+                            <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
+                        </td>
+                        <td style="border:1px solid #000000; padding:4px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
+                            <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
+                            <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {{-- BOTTOM STRIP --}}
+            <div class="bottom-strip">
+                <table>
+                    <tr>
+                        <td class="cell-qr">
+                            <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
+                            <div class="qr-label">Scan for Verification</div>
+                        </td>
+                        <td class="cell-footer">
+                            <div><strong>Issued:</strong> <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span></div>
+                            <div style="margin-top:3px;"><strong>Collected by:</strong> <span class="text-dot-space2">.......................................</span></div>
+                            <div style="margin-top:3px;"><strong>Next Term Begins:</strong> <span class="text-dot-space2">
                                 @php
-                                    $mockGrade = $mock->grade ?? '-';
-                                    $mockGradeClass = match(true) {
-                                        str_starts_with($mockGrade, 'A') => 'grade-A1',
-                                        str_starts_with($mockGrade, 'B2') => 'grade-B2',
-                                        str_starts_with($mockGrade, 'B3') => 'grade-B3',
-                                        str_starts_with($mockGrade, 'B') => 'grade-B2',
-                                        str_starts_with($mockGrade, 'C4') => 'grade-C4',
-                                        str_starts_with($mockGrade, 'C5') => 'grade-C5',
-                                        str_starts_with($mockGrade, 'C6') => 'grade-C6',
-                                        str_starts_with($mockGrade, 'C') => 'grade-C4',
-                                        str_starts_with($mockGrade, 'D') => 'grade-D7',
-                                        str_starts_with($mockGrade, 'E') => 'grade-E8',
-                                        default => 'grade-F9',
-                                    };
+                                    $nextTerm = $schoolInfo->date_next_term_begins ?? null;
+                                    echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
                                 @endphp
-                                <tr>
-                                    <td>{{ $mockIndex + 1 }}</td>
-                                    <td class="subject-name">{{ $mock->subject_name ?? 'Unknown' }}</td>
-                                    <td>{{ number_format($mock->exam ?? 0, 1) }}</td>
-                                    <td>{{ number_format($mock->total ?? 0, 1) }}</td>
-                                    <td class="{{ $mockGradeClass }}">{{ $mockGrade }}</td>
-                                    <td>{{ formatOrdinal($mock->position ?? null) }}</td>
-                                    <td>{{ number_format($mock->class_average ?? 0, 1) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                    <div class="mock-summary">
-                        TOTAL OBTAINED: {{ number_format($mockSummary['obtained'] ?? 0, 1) }}
-                        &nbsp;&nbsp;|&nbsp;&nbsp;
-                        TOTAL OBTAINABLE: {{ $mockSummary['obtainable'] ?? 0 }}
-                        &nbsp;&nbsp;|&nbsp;&nbsp;
-                        PERCENTAGE: {{ $mockSummary['percentage'] ?? 0 }}%
-                    </div>
-                </div>
-            @endif
-
-            {{-- REMARKS + BOTTOM STRIP, kept together as one atomic block so
-                 dompdf never splits the QR/stamp row away from the rest --}}
-            <div class="footer-block">
-                <table style="width:calc(100% - 16px); border:2px solid #000000; border-collapse:collapse; margin:4px 8px 3px;">
-                    <tbody>
-                        <tr>
-                            <td style="border:1px solid #000000; padding:3px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
-                                <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Class Teacher's Remark</div>
-                                <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
-                            </td>
-                            <td style="border:1px solid #000000; padding:3px 6px; background:white; vertical-align:top; font-size:11.5px; width:50%;">
-                                <div style="font-weight:700; margin-bottom:3px; font-size:12px; border-bottom:1px solid #ccc; display:inline-block;">Principal's Remark</div>
-                                <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
-                            </td>
-                        </tr>
-                    </tbody>
+                            </span></div>
+                            <div class="powered-by">Powered by Qudroid Systems</div>
+                        </td>
+                        <td class="cell-stamp">
+                            <img src="{{ $stampSrc }}" alt="School Stamp">
+                        </td>
+                    </tr>
                 </table>
-
-                <div class="bottom-strip">
-                    <table>
-                        <tr>
-                            <td class="cell-qr">
-                                <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
-                                <div class="qr-label">Scan for Verification</div>
-                            </td>
-                            <td class="cell-footer">
-                                <div><strong>Issued:</strong> <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span></div>
-                                <div style="margin-top:3px;"><strong>Collected by:</strong> <span class="text-dot-space2">.......................................</span></div>
-                                <div style="margin-top:3px;"><strong>Next Term Begins:</strong> <span class="text-dot-space2">
-                                    @php
-                                        $nextTerm = $schoolInfo->date_next_term_begins ?? null;
-                                        echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
-                                    @endphp
-                                </span></div>
-                                <div class="powered-by">Powered by Qudroid Systems</div>
-                            </td>
-                            <td class="cell-stamp">
-                                <img src="{{ $stampSrc }}" alt="School Stamp">
-                            </td>
-                        </tr>
-                    </table>
-                </div>
             </div>
         </div>
     @endforeach
