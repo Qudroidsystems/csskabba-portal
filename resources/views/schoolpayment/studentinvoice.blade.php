@@ -22,6 +22,51 @@
     background: #f0f2f5;
     padding: 30px 0;
     min-height: 100vh;
+    padding-top: 100px; /* Added: Push content below header */
+}
+
+/* Action Buttons - Fixed visibility */
+.action-buttons {
+    position: sticky;
+    top: 85px; /* Adjust based on your header height */
+    z-index: 999;
+    background: rgba(240, 242, 245, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    border: 1px solid rgba(255,255,255,0.6);
+}
+
+.action-buttons .btn {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.action-buttons .btn-light {
+    background: #fff;
+    border-color: #dee2e6;
+}
+
+.action-buttons .btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    border: none;
+}
+
+.action-buttons .btn-success {
+    background: linear-gradient(135deg, #198754, #157347);
+    border: none;
 }
 
 .invoice-card {
@@ -31,6 +76,7 @@
     overflow: hidden;
     background: #fff;
     transition: all 0.3s ease;
+    margin-top: 0;
 }
 
 .invoice-header {
@@ -357,66 +403,185 @@
     margin-top: 30px;
 }
 
-/* Action Buttons */
-.action-buttons {
-    position: sticky;
-    top: 20px;
-    z-index: 100;
-    margin-bottom: 20px;
-}
-
-/* Print Styles */
+/* ============================================
+   PRINT STYLES - Complete Fix
+   ============================================ */
 @media print {
-    .action-buttons,
-    .d-print-none {
+    /* Hide ALL site headers, navigation, and sidebars */
+    header, 
+    nav, 
+    .main-header, 
+    .navbar, 
+    #header, 
+    .site-header,
+    .topbar,
+    .sidebar,
+    .main-sidebar,
+    .app-header,
+    .app-sidebar,
+    .nav-header,
+    .header-nav,
+    .navigation,
+    .menu,
+    .page-header,
+    .breadcrumb,
+    .footer,
+    .site-footer,
+    .app-footer {
         display: none !important;
     }
 
+    /* Hide action buttons and print-only elements */
+    .action-buttons,
+    .d-print-none,
+    .no-print {
+        display: none !important;
+    }
+
+    /* Reset body and main content */
+    body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     .invoice-wrapper {
-        background: #fff;
-        padding: 0;
+        background: #fff !important;
+        padding: 20px !important;
+        padding-top: 20px !important;
+        min-height: auto !important;
+        margin: 0 !important;
+    }
+
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .row {
+        margin: 0 !important;
+    }
+
+    .col-xxl-10,
+    .col-xl-11 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
     }
 
     .invoice-card {
-        box-shadow: none;
-        border-radius: 0;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        border: 1px solid #dee2e6 !important;
+        margin: 0 !important;
     }
 
     .invoice-header {
-        background: #1e3a5f;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        background: #1e3a5f !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        padding: 20px !important;
+    }
+
+    .invoice-body {
+        padding: 20px !important;
+    }
+
+    .student-profile-section {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     .meta-card,
     .student-profile-section,
     .totals-panel,
     .invoice-footer {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     .invoice-table thead th {
-        background: #1e3a5f;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        background: #1e3a5f !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color: #fff !important;
     }
 
     .totals-grand {
-        background: #1e3a5f;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        background: #1e3a5f !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .payment-badge {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .meta-badge {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Page break control */
+    .invoice-card {
+        page-break-inside: avoid;
+    }
+
+    .invoice-table tbody tr {
+        page-break-inside: avoid;
     }
 }
 
-/* Responsive */
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+@media (max-width: 992px) {
+    .invoice-wrapper {
+        padding-top: 80px;
+    }
+
+    .action-buttons {
+        top: 70px;
+        padding: 10px 15px;
+    }
+}
+
 @media (max-width: 768px) {
+    .invoice-wrapper {
+        padding: 15px 0;
+        padding-top: 70px;
+    }
+
+    .action-buttons {
+        top: 60px;
+        padding: 10px 12px;
+        gap: 6px;
+        justify-content: center !important;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .action-buttons .btn {
+        font-size: 11px;
+        padding: 5px 10px;
+        flex: 1 1 auto;
+        min-width: 80px;
+        justify-content: center;
+    }
+
+    .action-buttons .btn i {
+        margin-right: 4px !important;
+        font-size: 12px;
+    }
+
     .invoice-header {
         padding: 20px;
     }
 
     .invoice-body {
-        padding: 20px;
+        padding: 15px;
     }
 
     .meta-info-grid {
@@ -429,13 +594,163 @@
         text-align: center;
     }
 
+    .student-profile-section .col-auto {
+        margin-bottom: 15px;
+    }
+
+    .student-avatar-large,
+    .avatar-placeholder-large {
+        width: 70px;
+        height: 70px;
+        font-size: 26px;
+    }
+
     .invoice-table {
         font-size: 11px;
     }
 
     .invoice-table thead th,
     .invoice-table tbody td {
-        padding: 8px;
+        padding: 8px 6px;
+    }
+
+    .invoice-table thead th {
+        font-size: 10px;
+    }
+
+    .invoice-footer {
+        padding: 15px 20px;
+    }
+
+    .totals-panel {
+        padding: 15px;
+    }
+
+    .totals-row {
+        font-size: 13px;
+        padding: 8px 0;
+    }
+
+    .totals-value {
+        font-size: 14px;
+    }
+
+    .student-info-card {
+        padding: 10px 15px;
+    }
+
+    .meta-card {
+        padding: 10px 15px;
+    }
+
+    .meta-value {
+        font-size: 16px;
+    }
+
+    .invoice-title {
+        font-size: 20px;
+    }
+
+    .invoice-subtitle {
+        font-size: 12px;
+    }
+
+    .signature-line {
+        width: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .invoice-wrapper {
+        padding-top: 60px;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .action-buttons {
+        top: 55px;
+        padding: 8px 10px;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons .btn {
+        font-size: 10px;
+        padding: 4px 8px;
+        min-width: 60px;
+    }
+
+    .action-buttons .btn i {
+        font-size: 10px;
+        margin-right: 3px !important;
+    }
+
+    .meta-info-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .invoice-table {
+        font-size: 9px;
+    }
+
+    .invoice-table thead th,
+    .invoice-table tbody td {
+        padding: 5px 4px;
+    }
+
+    .invoice-table thead th {
+        font-size: 8px;
+        padding: 6px 4px;
+    }
+
+    .payment-badge {
+        font-size: 8px;
+        padding: 3px 6px;
+    }
+
+    .payment-badge i {
+        font-size: 8px !important;
+    }
+
+    .meta-value {
+        font-size: 13px;
+    }
+
+    .meta-label {
+        font-size: 9px;
+    }
+
+    .invoice-title {
+        font-size: 16px;
+    }
+
+    .invoice-body {
+        padding: 10px;
+    }
+
+    .student-info-value {
+        font-size: 12px;
+    }
+
+    .student-info-label {
+        font-size: 9px;
+    }
+
+    .totals-label {
+        font-size: 11px;
+    }
+
+    .totals-value {
+        font-size: 12px;
+    }
+
+    .totals-grand {
+        padding: 10px 15px;
+    }
+
+    .student-profile-section {
+        padding: 15px;
     }
 }
 </style>
