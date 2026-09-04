@@ -4,30 +4,22 @@
 namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
-use App\Services\Analysis\SchoolAnalysisService;
+use App\Models\DiscountAssignment;
+use App\Models\ScholarshipAssignment;
 use App\Models\SchoolInformation;
+use App\Services\Billing\BillAdjustmentService;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AnalysisReportController extends Controller
 {
-    protected $analysisService;
+    protected BillAdjustmentService $billAdjustment;
 
-    public function __construct(SchoolAnalysisService $analysisService)
+    public function __construct(BillAdjustmentService $billAdjustment)
     {
-        $this->analysisService = $analysisService;
-
-        // Permissions
-        // $this->middleware('permission:View analysis reports')->only([
-        //     'index',
-        //     'getClassAnalysisData',
-        //     'studentPaymentDetails'
-        // ]);
-
-        // $this->middleware('permission:Export analysis reports')->only([
-        //     'exportClassAnalysis'
-        // ]);
+        $this->billAdjustment = $billAdjustment;
     }
 
     /**
@@ -35,7 +27,7 @@ class AnalysisReportController extends Controller
      */
     public function index()
     {
-        $pagetitle = 'Class Financial Analysis';
+        $pagetitle  = 'Class Financial Analysis';
         $schoolInfo = SchoolInformation::getActiveSchool();
 
         $classes = DB::table('schoolclass')
@@ -47,52 +39,48 @@ class AnalysisReportController extends Controller
             ->orderBy('schoolclass.schoolclass')
             ->get();
 
-        $terms = DB::table('schoolterm')->orderBy('id')->get();
+        $terms    = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.analysis.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions', 'schoolInfo'));
+        return view('reports.analysis.class-analysis', compact(
+            'pagetitle', 'classes', 'terms', 'sessions', 'schoolInfo'
+        ));
     }
 
     /**
-     * Get class analysis data for AJAX DataTable
+     * Core data endpoint used by both Class Analysis and School-wide Analysis.
+     *
+     * KEY FIX vs. the old version: every eligible bill for every student is
+     * run through BillAdjustmentService::buildBillAdjustment() regardless of
+     * whether a student_bill_payment_book row exists yet. Previously, a
+     * student with an active scholarship/discount but zero payments made
+     * showed the FULL undiscounted bill here, because the old code only
+     * read scholarship_deduction/discount_deduction off the payment book.
      */
     public function getClassAnalysisData(Request $request)
     {
-        $classId = $request->input('class_id');
-        $termId = $request->input('term_id');
+        $classId   = $request->input('class_id');
+        $termId    = $request->input('term_id');
         $sessionId = $request->input('session_id');
 
         if (!$termId || !$sessionId) {
             return response()->json([
-                'data' => [],
-                'recordsTotal' => 0,
+                'data'            => [],
+                'recordsTotal'    => 0,
                 'recordsFiltered' => 0,
-                'message' => 'Missing required parameters: term and session are required'
+                'message'         => 'Term and Session are required',
             ]);
         }
 
         try {
-            // Build query - if class_id is empty or null, get all classes
             $studentsQuery = DB::table('studentRegistration as s')
                 ->join('studentclass as sc', 'sc.studentId', '=', 's.id')
                 ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
                 ->where('sc.termid', $termId)
                 ->where('sc.sessionid', $sessionId);
 
-            // Only filter by class if class_id is provided and not empty
             if ($classId && $classId !== '') {
                 $studentsQuery->where('sc.schoolclassid', $classId);
-            }
-
-            // Get class name for display
-            $className = 'All Classes';
-            if ($classId && $classId !== '') {
-                $classInfo = DB::table('schoolclass')
-                    ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
-                    ->where('schoolclass.id', $classId)
-                    ->select(DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as class_name"))
-                    ->first();
-                $className = $classInfo->class_name ?? 'N/A';
             }
 
             $students = $studentsQuery->select(
@@ -102,129 +90,278 @@ class AnalysisReportController extends Controller
                 's.othername',
                 's.admissionNo',
                 's.gender',
-                'sp.picture as avatar'
+                's.statusId',
+                'sp.picture as avatar',
+                'sc.schoolclassid as class_id'
             )->get();
 
-            // Get scholarship assignments for these students
-            $studentIds = $students->pluck('student_id')->toArray();
-            $scholarshipStudents = DB::table('scholarship_assignments')
-                ->whereIn('student_id', $studentIds)
-                ->where('status', 'active')
-                ->pluck('student_id')
-                ->toArray();
-
-            $discountStudents = DB::table('discount_assignments')
-                ->whereIn('student_id', $studentIds)
-                ->where('status', 'active')
-                ->pluck('student_id')
-                ->toArray();
-
-            // Get all bill information once
-            $allBills = DB::table('school_bill_class_term_session as sbcts')
-                ->where('sbcts.termid_id', $termId)
-                ->where('sbcts.session_id', $sessionId);
-
-            // Filter bills by class if specific class selected
-            if ($classId && $classId !== '') {
-                $allBills->where('sbcts.class_id', $classId);
+            if ($students->isEmpty()) {
+                return response()->json([
+                    'data'            => [],
+                    'recordsTotal'    => 0,
+                    'recordsFiltered' => 0,
+                ]);
             }
 
-            $allBills = $allBills->join('school_bill', 'school_bill.id', '=', 'sbcts.bill_id')
-                ->select('school_bill.id as bill_id', 'school_bill.title', 'school_bill.bill_amount')
-                ->get();
+            $studentIds = $students->pluck('student_id')->toArray();
+            $now        = now();
+
+            // Pre-load scholarship/discount assignments once (avoids N+1)
+            $allScholarships = ScholarshipAssignment::whereIn('student_id', $studentIds)
+                ->where('status', 'active')
+                ->where('effective_from', '<=', $now)
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
+                })
+                ->with('scholarship')
+                ->get()
+                ->keyBy('student_id');
+
+            $allDiscounts = DiscountAssignment::whereIn('student_id', $studentIds)
+                ->where('status', 'active')
+                ->where('effective_from', '<=', $now)
+                ->where(function ($q) use ($now) {
+                    $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
+                })
+                ->with('discount')
+                ->get()
+                ->groupBy('student_id');
+
+            // Bills assigned to each class for this term/session
+            $billsQuery = DB::table('school_bill_class_term_session as sbcts')
+                ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
+                ->where('sbcts.termid_id', $termId)
+                ->where('sbcts.session_id', $sessionId)
+                ->whereNull('sbcts.deleted_at')
+                ->select(
+                    'sbcts.class_id',
+                    'sb.id as bill_id',
+                    'sb.title',
+                    'sb.bill_amount',
+                    'sb.statusId as bill_status_id',
+                    'sb.category'
+                );
+
+            if ($classId && $classId !== '') {
+                $billsQuery->where('sbcts.class_id', $classId);
+            }
+
+            $allBillsByClass = $billsQuery->get()->groupBy('class_id');
+
+            // Payment books, keyed for O(1) lookup per student+bill
+            $paymentBooks = DB::table('student_bill_payment_book')
+                ->whereIn('student_id', $studentIds)
+                ->where('term_id', $termId)
+                ->where('session_id', $sessionId)
+                ->when($classId && $classId !== '', fn ($q) => $q->where('class_id', $classId))
+                ->get()
+                ->keyBy(fn ($row) => $row->student_id . '_' . $row->school_bill_id);
 
             $data = [];
+
             foreach ($students as $student) {
-                $paymentBookQuery = DB::table('student_bill_payment_book')
-                    ->where('student_id', $student->student_id)
-                    ->where('term_id', $termId)
-                    ->where('session_id', $sessionId);
+                $classBills = $allBillsByClass->get($student->class_id, collect());
 
-                if ($classId && $classId !== '') {
-                    $paymentBookQuery->where('class_id', $classId);
+                $eligibleBills = $this->billAdjustment->filterBillsByStudentStatus(
+                    $classBills,
+                    $student->statusId
+                );
+
+                $scholarship = $allScholarships->get($student->student_id);
+                $discounts   = $allDiscounts->get($student->student_id, collect());
+
+                $adjustedTotal = 0.0;
+                $totalSavings  = 0.0;
+                $totalPaid     = 0.0;
+                $studentBills  = [];
+
+                foreach ($eligibleBills as $bill) {
+                    // Recompute the adjustment for THIS bill regardless of
+                    // whether a payment book row exists — this is what makes
+                    // discounts/scholarships show up even before any payment.
+                    $adj = $this->billAdjustment->buildBillAdjustment(
+                        $student->student_id,
+                        $bill->bill_id,
+                        (float) $bill->bill_amount,
+                        $scholarship,
+                        $discounts
+                    );
+
+                    $adjustedTotal += $adj['adjusted_amount'];
+                    $totalSavings  += $adj['total_savings'];
+
+                    $bookKey  = $student->student_id . '_' . $bill->bill_id;
+                    $billBook = $paymentBooks->get($bookKey);
+                    $paidHere = $billBook ? (float) $billBook->amount_paid : 0.0;
+                    $totalPaid += $paidHere;
+
+                    $studentBills[] = [
+                        'title'                 => $bill->title,
+                        'amount'                => $adj['adjusted_amount'],
+                        'original_amount'       => $adj['original_amount'],
+                        'scholarship_deduction' => $adj['scholarship_deduction'],
+                        'discount_deduction'    => $adj['discount_deduction'],
+                        'paid'                  => $paidHere,
+                        'balance'               => max(0, $adj['adjusted_amount'] - $paidHere),
+                    ];
                 }
 
-                $paymentBook = $paymentBookQuery->first();
+                $outstanding = max(0.0, $adjustedTotal - $totalPaid);
+                $completion  = $adjustedTotal > 0
+                    ? round(($totalPaid / $adjustedTotal) * 100, 1)
+                    : 0;
 
-                $totalBilledQuery = DB::table('school_bill_class_term_session as sbcts')
-                    ->where('sbcts.termid_id', $termId)
-                    ->where('sbcts.session_id', $sessionId);
-
-                if ($classId && $classId !== '') {
-                    $totalBilledQuery->where('sbcts.class_id', $classId);
-                }
-
-                $totalBilled = (float) $totalBilledQuery->join('school_bill', 'school_bill.id', '=', 'sbcts.bill_id')
-                    ->sum('school_bill.bill_amount');
-
-                $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
-                $adjustedBilled = max(0, $totalBilled - $totalSavings);
-                $totalPaid = $paymentBook ? (float)$paymentBook->amount_paid : 0;
-                $outstanding = max(0, $adjustedBilled - $totalPaid);
-                $completion = $adjustedBilled > 0 ? round(($totalPaid / $adjustedBilled) * 100, 1) : 0;
-                $status = $outstanding <= 0 && $totalPaid > 0 ? 'Fully Paid' : ($totalPaid > 0 ? 'Partial' : 'Unpaid');
+                $status = ($outstanding <= 0 && $totalPaid > 0)
+                    ? 'Fully Paid'
+                    : ($totalPaid > 0 ? 'Partial' : 'Unpaid');
 
                 $studentName = trim($student->firstname . ' ' . $student->lastname);
                 if (!empty($student->othername)) {
                     $studentName .= ' (' . $student->othername . ')';
                 }
 
-                // Get individual bills for this student
-                $studentBills = [];
-                foreach ($allBills as $bill) {
-                    $billPaymentBook = DB::table('student_bill_payment_book')
-                        ->where('student_id', $student->student_id)
-                        ->where('term_id', $termId)
-                        ->where('session_id', $sessionId)
-                        ->where('school_bill_id', $bill->bill_id);
-
-                    if ($classId && $classId !== '') {
-                        $billPaymentBook->where('class_id', $classId);
-                    }
-
-                    $billPaymentBook = $billPaymentBook->first();
-
-                    $studentBills[] = [
-                        'title' => $bill->title,
-                        'amount' => $bill->bill_amount,
-                        'paid' => $billPaymentBook ? $billPaymentBook->amount_paid : 0,
-                        'balance' => $billPaymentBook ? $billPaymentBook->amount_owed : $bill->bill_amount
-                    ];
-                }
-
                 $data[] = [
-                    'student_id' => $student->student_id,
-                    'student_name' => $studentName,
-                    'admission_no' => $student->admissionNo ?? 'N/A',
-                    'gender' => $student->gender ?? 'N/A',
-                    'total_billed' => $adjustedBilled,
-                    'total_paid' => $totalPaid,
-                    'outstanding' => $outstanding,
-                    'completion' => $completion,
-                    'status' => $status,
-                    'total_savings' => $totalSavings,
-                    'has_scholarship' => in_array($student->student_id, $scholarshipStudents),
-                    'has_discount' => in_array($student->student_id, $discountStudents),
-                    'avatar' => $student->avatar,
-                    'class_name' => $className,
-                    'bills' => $studentBills
+                    'student_id'      => $student->student_id,
+                    'student_name'    => $studentName,
+                    'admission_no'    => $student->admissionNo ?? 'N/A',
+                    'gender'          => $student->gender ?? 'N/A',
+                    'total_billed'    => round($adjustedTotal, 2),
+                    'total_paid'      => round($totalPaid, 2),
+                    'outstanding'     => round($outstanding, 2),
+                    'completion'      => $completion,
+                    'status'          => $status,
+                    'total_savings'   => round($totalSavings, 2),
+                    'has_scholarship' => $scholarship !== null,
+                    'has_discount'    => $discounts->isNotEmpty(),
+                    'avatar'          => $student->avatar,
+                    'bills'           => $studentBills,
                 ];
             }
 
             return response()->json([
-                'data' => $data,
-                'recordsTotal' => count($data),
-                'recordsFiltered' => count($data)
+                'data'            => $data,
+                'recordsTotal'    => count($data),
+                'recordsFiltered' => count($data),
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Class Analysis Error: ' . $e->getMessage());
+            Log::error('Class Analysis Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
-                'error' => true,
+                'error'   => true,
                 'message' => $e->getMessage(),
-                'data' => []
+                'data'    => [],
             ], 500);
         }
+    }
+
+    public function schoolWideAnalysis(Request $request)
+    {
+        $pagetitle  = 'School-Wide Fee Collection Analysis';
+        $schoolInfo = SchoolInformation::getActiveSchool();
+        $terms      = DB::table('schoolterm')->orderBy('id')->get();
+        $sessions   = DB::table('schoolsession')->orderBy('session', 'desc')->get();
+
+        if ($request->ajax()) {
+            $request->merge(['class_id' => null]);
+            return $this->getClassAnalysisData($request);
+        }
+
+        return view('reports.analysis.school-wide', compact(
+            'pagetitle', 'terms', 'sessions', 'schoolInfo'
+        ));
+    }
+
+    /**
+     * Scholarship & Discount Impact — driven off the same computed per-bill
+     * adjustments instead of only summing whatever is already stored in
+     * student_bill_payment_book (which under-counts unpaid bills).
+     */
+    public function scholarshipImpactAnalysis(Request $request)
+    {
+        $pagetitle  = 'Scholarship & Discount Impact Report';
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if (!$request->ajax()) {
+            $terms    = DB::table('schoolterm')->orderBy('id')->get();
+            $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
+            return view('reports.financial.scholarship-impact', compact('pagetitle', 'schoolInfo', 'terms', 'sessions'));
+        }
+
+        $termId    = $request->input('term_id');
+        $sessionId = $request->input('session_id');
+        $now       = now();
+
+        $scholarships = DB::table('scholarship_assignments as sa')
+            ->join('scholarships as s', 's.id', '=', 'sa.scholarship_id')
+            ->where('sa.status', 'active')
+            ->where('sa.effective_from', '<=', $now)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('sa.effective_to')->orWhere('sa.effective_to', '>=', $now);
+            })
+            ->select('s.title as scholarship_name', 'sa.student_id')
+            ->get();
+
+        $discounts = DB::table('discount_assignments as da')
+            ->join('discounts as d', 'd.id', '=', 'da.discount_id')
+            ->where('da.status', 'active')
+            ->where('da.effective_from', '<=', $now)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('da.effective_to')->orWhere('da.effective_to', '>=', $now);
+            })
+            ->select('d.title as discount_name', 'da.student_id')
+            ->get();
+
+        $beneficiaryIds = $scholarships->pluck('student_id')
+            ->merge($discounts->pluck('student_id'))
+            ->unique()
+            ->values();
+
+        // Real total savings across every bill for every beneficiary
+        $billsQuery = DB::table('school_bill_class_term_session as sbcts')
+            ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id');
+        if ($termId)    $billsQuery->where('sbcts.termid_id', $termId);
+        if ($sessionId) $billsQuery->where('sbcts.session_id', $sessionId);
+        $bills = $billsQuery->select('sbcts.class_id', 'sb.id as bill_id', 'sb.bill_amount')->get();
+
+        $totalSavings = 0.0;
+        foreach ($beneficiaryIds as $studentId) {
+            foreach ($bills as $bill) {
+                $adj = $this->billAdjustment->buildBillAdjustment($studentId, $bill->bill_id, (float) $bill->bill_amount);
+                $totalSavings += $adj['total_savings'];
+            }
+        }
+
+        // Impact by class (still useful for the chart breakdown)
+        $impactByClass = DB::table('student_bill_payment_book as sbpb')
+            ->join('schoolclass as sc', 'sc.id', '=', 'sbpb.class_id')
+            ->leftJoin('schoolarm as sa', 'sa.id', '=', 'sc.arm')
+            ->select(
+                DB::raw("CONCAT(sc.schoolclass, ' ', COALESCE(sa.arm, '')) as class_name"),
+                DB::raw('SUM(sbpb.scholarship_deduction) as scholarship_value'),
+                DB::raw('SUM(sbpb.discount_deduction) as discount_value'),
+                DB::raw('COUNT(DISTINCT CASE WHEN sbpb.scholarship_deduction > 0 THEN sbpb.student_id END) as scholarship_students'),
+                DB::raw('COUNT(DISTINCT CASE WHEN sbpb.discount_deduction > 0 THEN sbpb.student_id END) as discount_students')
+            )
+            ->when($termId, fn ($q) => $q->where('sbpb.term_id', $termId))
+            ->when($sessionId, fn ($q) => $q->where('sbpb.session_id', $sessionId))
+            ->groupBy('sbpb.class_id', 'sc.schoolclass', 'sa.arm')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'total_scholarships'  => $scholarships->count(),
+                'total_discounts'     => $discounts->count(),
+                'total_beneficiaries' => $beneficiaryIds->count(),
+                'total_savings'       => round($totalSavings, 2),
+                'scholarship_by_type' => $scholarships->groupBy('scholarship_name')->map->count(),
+                'discount_by_type'    => $discounts->groupBy('discount_name')->map->count(),
+                'impact_by_class'     => $impactByClass,
+            ],
+        ]);
     }
 
     /**
@@ -232,10 +369,10 @@ class AnalysisReportController extends Controller
      */
     public function exportClassAnalysis(Request $request)
     {
-        $classId = $request->input('class_id');
-        $termId = $request->input('term_id');
+        $classId   = $request->input('class_id');
+        $termId    = $request->input('term_id');
         $sessionId = $request->input('session_id');
-        $format = $request->input('format', 'pdf');
+        $format    = $request->input('format', 'pdf');
 
         if (!$termId || !$sessionId) {
             return redirect()->back()->with('error', 'Please select term and session');
@@ -249,13 +386,14 @@ class AnalysisReportController extends Controller
     }
 
     /**
-     * Export PDF
+     * Export PDF — per-student totals now computed via buildBillAdjustment()
+     * for every eligible bill, so scholarships/discounts show correctly even
+     * for students who have not yet made a payment.
      */
     public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
     {
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        // Fetch students
         $studentsQuery = DB::table('studentclass')
             ->where('termid', $termid_id)
             ->where('sessionid', $session_id);
@@ -273,7 +411,9 @@ class AnalysisReportController extends Controller
                 'studentRegistration.id as stid',
                 'studentRegistration.othername as othername',
                 'studentRegistration.gender as gender',
-                'studentpicture.picture as picture'
+                'studentRegistration.statusId as statusId',
+                'studentpicture.picture as picture',
+                'studentclass.schoolclassid as schoolclassid',
             ])
             ->get();
 
@@ -281,10 +421,10 @@ class AnalysisReportController extends Controller
             return redirect()->route('reports.analysis.index')->with('error', 'No students found.');
         }
 
-        // Fetch bill information
         $billQuery = DB::table('school_bill_class_term_session')
             ->where('school_bill_class_term_session.termid_id', $termid_id)
-            ->where('school_bill_class_term_session.session_id', $session_id);
+            ->where('school_bill_class_term_session.session_id', $session_id)
+            ->whereNull('school_bill_class_term_session.deleted_at');
 
         if ($class_id && $class_id !== '') {
             $billQuery->where('school_bill_class_term_session.class_id', $class_id);
@@ -295,110 +435,123 @@ class AnalysisReportController extends Controller
                 'school_bill.id as schoolbillid',
                 'school_bill.title as title',
                 'school_bill.description as description',
-                'school_bill.bill_amount as amount'
+                'school_bill.bill_amount as amount',
+                'school_bill.statusId as billStatusId',
             ])
             ->get();
 
-        // Fetch payment records
-        $paymentQuery = DB::table('student_bill_payment')
-            ->where('student_bill_payment.termid_id', $termid_id)
-            ->where('student_bill_payment.session_id', $session_id);
-
-        if ($class_id && $class_id !== '') {
-            $paymentQuery->where('student_bill_payment.class_id', $class_id);
-        }
-
-        $studentPayments = $paymentQuery->leftJoin('student_bill_payment_record', 'student_bill_payment_record.student_bill_payment_id', '=', 'student_bill_payment.id')
-            ->select([
-                'student_bill_payment.student_id as stid',
-                'student_bill_payment.school_bill_id as schoolbillid',
-                'student_bill_payment_record.amount_paid as totalAmountPaid',
-                'student_bill_payment_record.amount_owed as balance'
-            ])
-            ->get();
-
-        // Fetch scholarship assignments
         $studentIds = $students->pluck('stid')->toArray();
-        $scholarshipAssignments = DB::table('scholarship_assignments')
-            ->whereIn('student_id', $studentIds)
-            ->where('status', 'active')
-            ->get();
+        $now        = now();
 
-        $discountAssignments = DB::table('discount_assignments')
-            ->whereIn('student_id', $studentIds)
+        $scholarshipAssignments = ScholarshipAssignment::whereIn('student_id', $studentIds)
             ->where('status', 'active')
-            ->get();
+            ->where('effective_from', '<=', $now)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
+            })
+            ->with('scholarship')
+            ->get()
+            ->keyBy('student_id');
 
-        // Fetch class, term, and session details
+        $discountAssignments = DiscountAssignment::whereIn('student_id', $studentIds)
+            ->where('status', 'active')
+            ->where('effective_from', '<=', $now)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
+            })
+            ->with('discount')
+            ->get()
+            ->groupBy('student_id');
+
+        $paymentBooks = DB::table('student_bill_payment_book')
+            ->whereIn('student_id', $studentIds)
+            ->where('term_id', $termid_id)
+            ->where('session_id', $session_id)
+            ->when($class_id && $class_id !== '', fn ($q) => $q->where('class_id', $class_id))
+            ->get()
+            ->keyBy(fn ($row) => $row->student_id . '_' . $row->school_bill_id);
+
         if ($class_id && $class_id !== '') {
             $schoolClass = DB::table('schoolclass')
                 ->where('schoolclass.id', $class_id)
                 ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
                 ->first();
         } else {
-            $schoolClass = (object)['schoolclass' => 'All Classes', 'arm' => ''];
+            $schoolClass = (object) ['schoolclass' => 'All Classes', 'arm' => ''];
         }
 
-        $schoolTerm = DB::table('schoolterm')->where('id', $termid_id)->value('term');
+        $schoolTerm    = DB::table('schoolterm')->where('id', $termid_id)->value('term');
         $schoolSession = DB::table('schoolsession')->where('id', $session_id)->value('session');
 
-        // Calculate student totals
-        $studentTotals = [];
-        $totalPaidSum = 0;
-        $totalBalanceSum = 0;
+        $studentTotals    = [];
+        $totalPaidSum     = 0;
+        $totalBalanceSum  = 0;
+        $totalSavingsSum  = 0;
 
         foreach ($students as $student) {
-            $totalPaid = 0;
-            $totalBalance = 0;
+            $scholarship = $scholarshipAssignments->get($student->stid);
+            $discounts   = $discountAssignments->get($student->stid, collect());
 
-            foreach ($studentBillInfo as $bill) {
-                $payment = $studentPayments
-                    ->where('stid', $student->stid)
-                    ->where('schoolbillid', $bill->schoolbillid)
-                    ->first();
+            $eligibleBills = $this->billAdjustment->filterBillsByStudentStatus($studentBillInfo, $student->statusId);
 
-                if ($payment) {
-                    $totalPaid += $payment->totalAmountPaid ?? 0;
-                    $totalBalance += $payment->balance ?? 0;
-                } else {
-                    $totalBalance += $bill->amount ?? 0;
-                }
+            $adjustedTotal = 0.0;
+            $totalPaid     = 0.0;
+            $totalSavings  = 0.0;
+
+            foreach ($eligibleBills as $bill) {
+                $adj = $this->billAdjustment->buildBillAdjustment(
+                    $student->stid, $bill->schoolbillid, (float) $bill->amount, $scholarship, $discounts
+                );
+                $adjustedTotal += $adj['adjusted_amount'];
+                $totalSavings  += $adj['total_savings'];
+
+                $book = $paymentBooks->get($student->stid . '_' . $bill->schoolbillid);
+                $totalPaid += $book ? (float) $book->amount_paid : 0.0;
             }
 
-            $totalPaidSum += $totalPaid;
+            $totalBalance = max(0, $adjustedTotal - $totalPaid);
+
+            $totalPaidSum    += $totalPaid;
             $totalBalanceSum += $totalBalance;
+            $totalSavingsSum += $totalSavings;
 
             $studentTotals[$student->stid] = [
-                'totalPaid' => $totalPaid,
+                'totalPaid'    => $totalPaid,
+                'totalBilled'  => $adjustedTotal,
                 'totalBalance' => $totalBalance,
-                'status' => $totalPaid > 0 ? ($totalBalance > 0 ? 'partial' : 'paid') : 'unpaid'
+                'totalSavings' => $totalSavings,
+                'status'       => $totalPaid > 0 ? ($totalBalance > 0 ? 'partial' : 'paid') : 'unpaid',
             ];
         }
 
-        $collectionRate = ($totalPaidSum + $totalBalanceSum) > 0 ? round(($totalPaidSum / ($totalPaidSum + $totalBalanceSum)) * 100, 1) : 0;
+        $collectionRate = ($totalPaidSum + $totalBalanceSum) > 0
+            ? round(($totalPaidSum / ($totalPaidSum + $totalBalanceSum)) * 100, 1)
+            : 0;
 
         $data = [
-            'schoolInfo' => $schoolInfo,
-            'students' => $students,
-            'studentBillInfo' => $studentBillInfo,
-            'studentPayments' => $studentPayments,
-            'studentTotals' => $studentTotals,
-            'schoolClass' => $schoolClass,
-            'schoolTerm' => $schoolTerm,
-            'schoolSession' => $schoolSession,
-            'scholarshipAssignments' => $scholarshipAssignments,
-            'discountAssignments' => $discountAssignments,
-            'totalPaidSum' => $totalPaidSum,
-            'totalBalanceSum' => $totalBalanceSum,
-            'collectionRate' => $collectionRate,
-            'generatedAt' => now()->format('d F, Y H:i:s'),
+            'schoolInfo'              => $schoolInfo,
+            'students'                => $students,
+            'studentBillInfo'         => $studentBillInfo,
+            'studentTotals'           => $studentTotals,
+            'schoolClass'             => $schoolClass,
+            'schoolTerm'              => $schoolTerm,
+            'schoolSession'           => $schoolSession,
+            'scholarshipAssignments'  => $scholarshipAssignments,
+            'discountAssignments'     => $discountAssignments,
+            'totalPaidSum'            => $totalPaidSum,
+            'totalBalanceSum'         => $totalBalanceSum,
+            'totalSavingsSum'         => $totalSavingsSum,
+            'collectionRate'          => $collectionRate,
+            'generatedAt'             => now()->format('d F, Y H:i:s'),
         ];
 
         $pdf = PDF::loadView('reports.analysis.pdf.class-analysis', $data);
         $pdf->setPaper('a3', 'landscape');
 
-        $className = $class_id && $class_id !== '' ? str_replace(['/', '\\'], '_', ($schoolClass->schoolclass ?? '') . ' ' . ($schoolClass->arm ?? '')) : 'All_Classes';
-        $termName = str_replace(['/', '\\'], '_', $schoolTerm ?? 'N/A');
+        $className   = $class_id && $class_id !== ''
+            ? str_replace(['/', '\\'], '_', ($schoolClass->schoolclass ?? '') . ' ' . ($schoolClass->arm ?? ''))
+            : 'All_Classes';
+        $termName    = str_replace(['/', '\\'], '_', $schoolTerm ?? 'N/A');
         $sessionName = str_replace(['/', '\\'], '_', $schoolSession ?? 'N/A');
 
         $filename = "Payment_Analysis_{$className}_{$termName}_{$sessionName}.pdf";
@@ -410,7 +563,7 @@ class AnalysisReportController extends Controller
     }
 
     /**
-     * Export CSV
+     * Export CSV — same per-bill adjustment logic as exportPDF()
      */
     private function exportCSV($classId, $termId, $sessionId)
     {
@@ -424,7 +577,7 @@ class AnalysisReportController extends Controller
             $className = 'All_Classes';
         }
 
-        $termName = DB::table('schoolterm')->where('id', $termId)->value('term');
+        $termName    = DB::table('schoolterm')->where('id', $termId)->value('term');
         $sessionName = DB::table('schoolsession')->where('id', $sessionId)->value('session');
 
         $studentsQuery = DB::table('studentclass')
@@ -436,37 +589,79 @@ class AnalysisReportController extends Controller
         }
 
         $students = $studentsQuery->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-            ->select('studentRegistration.admissionNo', 'studentRegistration.firstname', 'studentRegistration.lastname', 'studentRegistration.othername', 'studentRegistration.id as stid', 'studentRegistration.gender')
+            ->select(
+                'studentRegistration.admissionNo',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.othername',
+                'studentRegistration.id as stid',
+                'studentRegistration.gender',
+                'studentRegistration.statusId',
+                'studentclass.schoolclassid'
+            )
             ->get();
 
+        $billQuery = DB::table('school_bill_class_term_session')
+            ->where('termid_id', $termId)
+            ->where('session_id', $sessionId)
+            ->whereNull('deleted_at');
+
+        if ($classId && $classId !== '') {
+            $billQuery->where('class_id', $classId);
+        }
+
+        $bills = $billQuery->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+            ->select('school_bill.id as schoolbillid', 'school_bill.bill_amount as amount', 'school_bill.statusId as billStatusId')
+            ->get();
+
+        $studentIds = $students->pluck('stid')->toArray();
+        $now        = now();
+
+        $scholarshipAssignments = ScholarshipAssignment::whereIn('student_id', $studentIds)
+            ->where('status', 'active')
+            ->where('effective_from', '<=', $now)
+            ->where(function ($q) use ($now) { $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now); })
+            ->with('scholarship')
+            ->get()
+            ->keyBy('student_id');
+
+        $discountAssignments = DiscountAssignment::whereIn('student_id', $studentIds)
+            ->where('status', 'active')
+            ->where('effective_from', '<=', $now)
+            ->where(function ($q) use ($now) { $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now); })
+            ->with('discount')
+            ->get()
+            ->groupBy('student_id');
+
+        $paymentBooks = DB::table('student_bill_payment_book')
+            ->whereIn('student_id', $studentIds)
+            ->where('term_id', $termId)
+            ->where('session_id', $sessionId)
+            ->when($classId && $classId !== '', fn ($q) => $q->where('class_id', $classId))
+            ->get()
+            ->keyBy(fn ($row) => $row->student_id . '_' . $row->school_bill_id);
+
         $reportData = [];
+
         foreach ($students as $student) {
-            $paymentBookQuery = DB::table('student_bill_payment_book')
-                ->where('student_id', $student->stid)
-                ->where('term_id', $termId)
-                ->where('session_id', $sessionId);
+            $scholarship   = $scholarshipAssignments->get($student->stid);
+            $discounts     = $discountAssignments->get($student->stid, collect());
+            $eligibleBills = $this->billAdjustment->filterBillsByStudentStatus($bills, $student->statusId);
 
-            if ($classId && $classId !== '') {
-                $paymentBookQuery->where('class_id', $classId);
+            $adjustedTotal = 0.0;
+            $totalPaid     = 0.0;
+
+            foreach ($eligibleBills as $bill) {
+                $adj = $this->billAdjustment->buildBillAdjustment(
+                    $student->stid, $bill->schoolbillid, (float) $bill->amount, $scholarship, $discounts
+                );
+                $adjustedTotal += $adj['adjusted_amount'];
+
+                $book = $paymentBooks->get($student->stid . '_' . $bill->schoolbillid);
+                $totalPaid += $book ? (float) $book->amount_paid : 0.0;
             }
 
-            $paymentBook = $paymentBookQuery->first();
-
-            $totalBilledQuery = DB::table('school_bill_class_term_session as sbcts')
-                ->where('sbcts.termid_id', $termId)
-                ->where('sbcts.session_id', $sessionId);
-
-            if ($classId && $classId !== '') {
-                $totalBilledQuery->where('sbcts.class_id', $classId);
-            }
-
-            $totalBilled = (float) $totalBilledQuery->join('school_bill', 'school_bill.id', '=', 'sbcts.bill_id')
-                ->sum('school_bill.bill_amount');
-
-            $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
-            $adjustedBilled = max(0, $totalBilled - $totalSavings);
-            $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
-            $outstanding = max(0, $adjustedBilled - $totalPaid);
+            $outstanding = max(0, $adjustedTotal - $totalPaid);
 
             $studentName = trim($student->firstname . ' ' . $student->lastname);
             if (!empty($student->othername)) {
@@ -476,14 +671,17 @@ class AnalysisReportController extends Controller
             $reportData[] = [
                 'student_name' => $studentName,
                 'admission_no' => $student->admissionNo ?? 'N/A',
-                'gender' => $student->gender ?? 'N/A',
-                'total_billed' => number_format($adjustedBilled, 2),
-                'total_paid' => number_format($totalPaid, 2),
-                'outstanding' => number_format($outstanding, 2),
+                'gender'       => $student->gender ?? 'N/A',
+                'total_billed' => number_format($adjustedTotal, 2),
+                'total_paid'   => number_format($totalPaid, 2),
+                'outstanding'  => number_format($outstanding, 2),
             ];
         }
 
-        $filename = "class_analysis_" . str_replace(['/', '\\'], '_', $className) . "_" . str_replace(['/', '\\'], '_', $termName) . "_" . str_replace(['/', '\\'], '_', $sessionName) . "_" . date('Y-m-d') . ".csv";
+        $filename = "class_analysis_" . str_replace(['/', '\\'], '_', $className) . "_"
+            . str_replace(['/', '\\'], '_', $termName) . "_"
+            . str_replace(['/', '\\'], '_', $sessionName) . "_" . date('Y-m-d') . ".csv";
+
         $handle = fopen('php://output', 'w');
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -491,12 +689,8 @@ class AnalysisReportController extends Controller
         fputcsv($handle, ['Student Name', 'Admission No', 'Gender', 'Total Billed (₦)', 'Total Paid (₦)', 'Outstanding (₦)']);
         foreach ($reportData as $row) {
             fputcsv($handle, [
-                $row['student_name'],
-                $row['admission_no'],
-                $row['gender'],
-                $row['total_billed'],
-                $row['total_paid'],
-                $row['outstanding'],
+                $row['student_name'], $row['admission_no'], $row['gender'],
+                $row['total_billed'], $row['total_paid'], $row['outstanding'],
             ]);
         }
         fclose($handle);
@@ -508,7 +702,7 @@ class AnalysisReportController extends Controller
      */
     public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
     {
-        $pagetitle = 'Student Payment Details';
+        $pagetitle  = 'Student Payment Details';
         $schoolInfo = SchoolInformation::getActiveSchool();
 
         $student = DB::table('studentRegistration as s')
@@ -526,19 +720,27 @@ class AnalysisReportController extends Controller
             $studentName .= ' (' . $student->othername . ')';
         }
 
-        $classInfo = DB::table('schoolclass')
+        $classInfo   = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->where('schoolclass.id', $classId)
             ->first();
 
-        $termInfo = DB::table('schoolterm')->where('id', $termId)->first();
+        $termInfo    = DB::table('schoolterm')->where('id', $termId)->first();
         $sessionInfo = DB::table('schoolsession')->where('id', $sessionId)->first();
 
+        // Aggregate across all bills for the student (multiple bill rows summed)
         $paymentBook = DB::table('student_bill_payment_book')
             ->where('student_id', $studentId)
-            ->where('class_id', $classId)
             ->where('term_id', $termId)
             ->where('session_id', $sessionId)
+            ->when($classId, fn ($q) => $q->where('class_id', $classId))
+            ->selectRaw('
+                SUM(amount_paid) as amount_paid,
+                SUM(amount_owed) as amount_owed,
+                SUM(COALESCE(scholarship_deduction,0)) as scholarship_deduction,
+                SUM(COALESCE(discount_deduction,0)) as discount_deduction,
+                SUM(COALESCE(adjusted_amount, original_amount, 0)) as adjusted_amount
+            ')
             ->first();
 
         $bills = DB::table('school_bill_class_term_session as sbcts')
@@ -568,20 +770,9 @@ class AnalysisReportController extends Controller
             ->get();
 
         return view('reports.analysis.student-payment-details', compact(
-            'pagetitle',
-            'schoolInfo',
-            'student',
-            'studentName',
-            'classInfo',
-            'termInfo',
-            'sessionInfo',
-            'paymentBook',
-            'bills',
-            'paymentRecords',
-            'studentId',
-            'classId',
-            'termId',
-            'sessionId'
+            'pagetitle', 'schoolInfo', 'student', 'studentName',
+            'classInfo', 'termInfo', 'sessionInfo', 'paymentBook',
+            'bills', 'paymentRecords', 'studentId', 'classId', 'termId', 'sessionId'
         ));
     }
 }
