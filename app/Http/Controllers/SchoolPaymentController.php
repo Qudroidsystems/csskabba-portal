@@ -2,28 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use PDF;
-use Carbon\Carbon;
-use App\Models\Student;
-use App\Models\Schoolterm;
-use App\Models\Schoolclass;
-use Illuminate\Http\Request;
-use App\Models\Schoolsession;
-use App\Models\SchoolBillModel;
-use App\Models\SchoolInformation;
-use App\Models\StudentBillPayment;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use App\Models\SchoolBillTermSession;
-use App\Models\StudentBillPaymentBook;
-use App\Models\StudentBillPaymentRecord;
-use App\Models\ScholarshipAssignment;
+use App\Models\Discount;
 use App\Models\DiscountAssignment;
 use App\Models\Scholarship;
-use App\Models\Discount;
+use App\Models\ScholarshipAssignment;
+use App\Models\SchoolBillModel;
+use App\Models\SchoolBillTermSession;
+use App\Models\Schoolclass;
+use App\Models\SchoolInformation;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
+use App\Models\Student;
+use App\Models\StudentBillPayment;
+use App\Models\StudentBillPaymentBook;
+use App\Models\StudentBillPaymentRecord;
 use App\Models\Studentpicture;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use PDF;
 use Yajra\DataTables\Facades\DataTables;
 
 class SchoolPaymentController extends Controller
