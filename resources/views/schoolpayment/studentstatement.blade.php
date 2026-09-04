@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <style>
-    body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color:#1f2937; margin:0; padding:0; }
+    body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color:#1f2937; margin:0; padding:0; }
     .header-table { width:100%; border-collapse:collapse; margin-bottom: 18px; }
     .header-table td { vertical-align: top; padding:0; }
+    .logo-img { max-height: 55px; max-width: 180px; }
     .school-name { font-size:18px; font-weight:bold; color:#1e3a5f; }
     .doc-title { font-size:20px; font-weight:bold; color:#1e3a5f; text-align:right; }
     .doc-sub { font-size:11px; color:#6b7280; text-align:right; }
@@ -33,10 +34,15 @@
     <table class="header-table">
         <tr>
             <td style="width:60%;">
-                <div class="school-name">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</div>
+                @if($schoolInfo && $schoolInfo->logo_base64)
+                    <img src="{{ $schoolInfo->logo_base64 }}" class="logo-img" alt="School Logo">
+                @else
+                    <div class="school-name">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</div>
+                @endif
                 <div style="font-size:10px;color:#6b7280;margin-top:4px;">
                     {{ $schoolInfo->school_address ?? '' }}<br>
-                    {{ $schoolInfo->school_email ?? '' }} @if($schoolInfo->school_phone ?? false) | {{ $schoolInfo->school_phone }} @endif
+                    {{ $schoolInfo->school_email ?? '' }}
+                    @if($schoolInfo->formatted_phones ?? false) | {{ $schoolInfo->formatted_phones }} @endif
                 </div>
             </td>
             <td style="width:40%;">

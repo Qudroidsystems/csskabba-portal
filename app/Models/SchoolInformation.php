@@ -158,4 +158,48 @@ class SchoolInformation extends Model
             Storage::disk('public')->delete($this->getOriginal('school_stamp'));
         }
     }
+
+    /**
+ * Add these methods to app/Models/SchoolInformation.php, alongside the
+ * existing getLogoUrlAttribute() / getStampUrlAttribute() methods.
+ *
+ * Why: DomPDF cannot reliably fetch images over HTTP (asset() URLs) unless
+ * 'isRemoteEnabled' is explicitly turned on in config/dompdf.php, and even
+ * then remote fetches during PDF rendering are slow and can fail silently,
+ * leaving the logo blank. Embedding the image as a base64 data URI avoids
+ * the network round-trip entirely and always renders.
+ */
+ 
+/**
+ * Get the school logo as a base64 data URI, safe for embedding in PDFs.
+ */
+public function getLogoBase64Attribute()
+{
+    if (!$this->school_logo || !\Illuminate\Support\Facades\Storage::disk('public')->exists($this->school_logo)) {
+        return null;
+    }
+ 
+    $path = \Illuminate\Support\Facades\Storage::disk('public')->path($this->school_logo);
+    $mime = mime_content_type($path) ?: 'image/png';
+    $data = base64_encode(file_get_contents($path));
+ 
+    return "data:{$mime};base64,{$data}";
+}
+ 
+/**
+ * Get the school stamp as a base64 data URI, safe for embedding in PDFs.
+ */
+public function getStampBase64Attribute()
+{
+    if (!$this->school_stamp || !\Illuminate\Support\Facades\Storage::disk('public')->exists($this->school_stamp)) {
+        return null;
+    }
+ 
+    $path = \Illuminate\Support\Facades\Storage::disk('public')->path($this->school_stamp);
+    $mime = mime_content_type($path) ?: 'image/png';
+    $data = base64_encode(file_get_contents($path));
+ 
+    return "data:{$mime};base64,{$data}";
+}
+
 }
