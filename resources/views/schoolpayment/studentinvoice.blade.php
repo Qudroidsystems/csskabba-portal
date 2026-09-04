@@ -23,13 +23,13 @@
     background: #f0f2f5;
     padding: 30px 0;
     min-height: 100vh;
-    padding-top: 100px; /* Added: Push content below header */
+    padding-top: 100px;
 }
 
 /* Action Buttons - Fixed visibility */
 .action-buttons {
     position: sticky;
-    top: 85px; /* Adjust based on your header height */
+    top: 85px;
     z-index: 999;
     background: rgba(240, 242, 245, 0.95);
     backdrop-filter: blur(10px);

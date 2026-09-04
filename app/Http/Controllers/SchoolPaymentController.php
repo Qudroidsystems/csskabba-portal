@@ -1117,7 +1117,16 @@ class SchoolPaymentController extends Controller
         }
 
         $safeAdmission = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
-        $invoiceNumber = 'INV-' . $safeAdmission . '-' . date('Ymd');
+        
+        // ================================================================
+        // INVOICE NUMBER GENERATION - UNIQUE WITH TIMESTAMP
+        // ================================================================
+        // Format: INV-[ADMISSION]-[YYYYMMDDHHMMSS]-[UNIQUE_ID]
+        // Example: INV-STU123-20260304143215-A7B3
+        // ================================================================
+        $timestamp = date('YmdHis'); // YearMonthDayHourMinuteSecond
+        $uniqueId = strtoupper(substr(uniqid(), -4)); // Last 4 chars of unique ID
+        $invoiceNumber = 'INV-' . $safeAdmission . '-' . $timestamp . '-' . $uniqueId;
 
         try {
             $allClassBills = DB::table('school_bill_class_term_session')
@@ -1311,7 +1320,9 @@ class SchoolPaymentController extends Controller
                 'entity_type'=> 'invoice',
             ], null, ['invoice_number' => $invoiceNumber], 'Invoice generated via PDF download');
 
-            $safeFilename = 'invoice_' . preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId) . '.pdf';
+            // Unique filename with timestamp
+            $safeFilename = 'invoice_' . preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId) . '_' . date('Ymd_His') . '.pdf';
+            
             $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data)
                 ->setOptions([
                     'defaultFont' => 'DejaVu Sans',
@@ -1454,7 +1465,7 @@ class SchoolPaymentController extends Controller
         $schoolInfo = $this->prepareSchoolInfoForPdf($schoolInfo);
 
         $safeAdmission   = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
-        $statementNumber = 'STMT-' . $safeAdmission . '-' . date('Ymd');
+        $statementNumber = 'STMT-' . $safeAdmission . '-' . date('YmdHis') . '-' . strtoupper(substr(uniqid(), -4));
 
         $schoolterm    = optional(Schoolterm::find($termid))->term    ?? 'N/A';
         $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
@@ -1478,7 +1489,7 @@ class SchoolPaymentController extends Controller
             'studentFullName'    => $fullName,
         ];
 
-        $safeFilename = 'statement_' . $safeAdmission . '.pdf';
+        $safeFilename = 'statement_' . $safeAdmission . '_' . date('Ymd_His') . '.pdf';
         $pdf = PDF::loadView('schoolpayment.studentstatement', $data)
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
