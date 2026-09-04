@@ -295,64 +295,27 @@ class SchoolPaymentController extends Controller
     // ── Fetch student data helper ─────────────────────────────────────────
 
     /**
-     * FIX #9: Returns a status flag alongside the student so callers know
-     * whether the result came from the requested term/session or from the
-     * Current-session fallback, allowing them to warn the user.
+     * `studentclass` has `studentId` as its PRIMARY KEY — there is exactly ONE
+     * row per student, ever. It is not a per-term or per-session history table;
+     * it just holds whatever the student's class assignment currently is, and
+     * gets overwritten (not inserted) whenever that changes. There is no way
+     * to look up "what class was this student in during a past term" because
+     * that history is never kept.
+     *
+     * So: we always join on studentId only, and take whatever class is on
+     * that single row. The $termid/$sessionid the caller passes in are used
+     * ONLY for looking up bills and payment history for that term/session —
+     * never for deciding whether the studentclass row is valid. There is
+     * nothing to "fall back" from; this is the only data that exists.
      */
     private function fetchStudentData(int $studentId, int $termid, int $sessionid): ?object
     {
-        $student = Student::where('studentRegistration.id', $studentId)
-            ->leftJoin('studentclass', function ($join) use ($termid, $sessionid) {
-                $join->on('studentclass.studentId', '=', 'studentRegistration.id')
-                     ->where('studentclass.termid', $termid)
-                     ->where('studentclass.sessionid', $sessionid);
-            })
-            ->leftJoin('parentRegistration', 'parentRegistration.id', '=', 'studentRegistration.id')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionNo',
-                'studentRegistration.firstname as firstname',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.othername as othername',
-                'studentRegistration.home_address2 as homeadd',
-                'parentRegistration.father_phone as phone',
-                'studentRegistration.statusId as statusId',
-                'studentRegistration.student_status as student_status',
-                'studentpicture.picture as avatar',
-                'schoolclass.schoolclass as schoolclass',
-                'schoolarm.arm as arm',
-                'schoolterm.term as term',
-                'schoolsession.session as session',
-                'studentclass.schoolclassid as schoolclassId',
-            ])
-            ->first();
-
-        if ($student && $student->schoolclassId) {
-            $student->used_fallback = false;
-            return $student;
-        }
-
-        // FIX #9: Fallback is logged AND flagged so AJAX/views can surface a warning.
-        Log::info('SchoolPayment: falling back to Current session for student', [
-            'studentId' => $studentId,
-            'termid'    => $termid,
-            'sessionid' => $sessionid,
-        ]);
-
-        $student = Student::where('studentRegistration.id', $studentId)
+        return Student::where('studentRegistration.id', $studentId)
             ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
             ->leftJoin('parentRegistration', 'parentRegistration.id', '=', 'studentRegistration.id')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
             ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->where('schoolsession.status', 'Current')
             ->select([
                 'studentRegistration.id as id',
                 'studentRegistration.admissionNo as admissionNo',
@@ -366,17 +329,9 @@ class SchoolPaymentController extends Controller
                 'studentpicture.picture as avatar',
                 'schoolclass.schoolclass as schoolclass',
                 'schoolarm.arm as arm',
-                'schoolterm.term as term',
-                'schoolsession.session as session',
                 'studentclass.schoolclassid as schoolclassId',
             ])
             ->first();
-
-        if ($student) {
-            $student->used_fallback = true;
-        }
-
-        return $student;
     }
 
     // ── AJAX: Get payment details ─────────────────────────────────────────
@@ -575,9 +530,8 @@ class SchoolPaymentController extends Controller
             $fullName = $this->getFullNameWithOther($studentdata->firstname, $studentdata->lastname, $studentdata->othername ?? '');
 
             return response()->json([
-                'success'      => true,
-                'used_fallback' => $studentdata->used_fallback ?? false,
-                'data'         => [
+                'success' => true,
+                'data'    => [
                     'student' => [
                         'id'             => $studentdata->id,
                         'name'           => $fullName,
