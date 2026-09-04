@@ -3,756 +3,485 @@
 
 @section('content')
 <style>
-:root {
-    --tb-primary: #0d6efd;
-    --tb-secondary: #6c757d;
-    --tb-success: #198754;
-    --tb-danger: #dc3545;
-    --tb-warning: #ffc107;
-    --tb-info: #0dcaf0;
-    --tb-light: #f8f9fa;
-    --tb-dark: #212529;
-    --tb-border: #dee2e6;
-    --tb-success-subtle: rgba(25,135,84,0.1);
-    --tb-primary-subtle: rgba(13,110,253,0.1);
-}
-
-/* Professional Invoice Styles */
-.invoice-wrapper {
-    background: #f0f2f5;
-    padding: 30px 0;
-    min-height: 100vh;
-    padding-top: 100px; /* Added: Push content below header */
-}
-
-/* Action Buttons - Fixed visibility */
-.action-buttons {
-    position: sticky;
-    top: 85px; /* Adjust based on your header height */
-    z-index: 999;
-    background: rgba(240, 242, 245, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 12px 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 10px;
-    border: 1px solid rgba(255,255,255,0.6);
-}
-
-.action-buttons .btn {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: all 0.2s ease;
-    font-weight: 500;
-}
-
-.action-buttons .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-}
-
-.action-buttons .btn-light {
-    background: #fff;
-    border-color: #dee2e6;
-}
-
-.action-buttons .btn-primary {
-    background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    border: none;
-}
-
-.action-buttons .btn-success {
-    background: linear-gradient(135deg, #198754, #157347);
-    border: none;
-}
-
-.invoice-card {
-    border: none;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-    overflow: hidden;
-    background: #fff;
-    transition: all 0.3s ease;
-    margin-top: 0;
-}
-
-.invoice-header {
-    background: linear-gradient(135deg, #1e3a5f 0%, #0d6efd 100%);
-    padding: 30px 40px;
-    position: relative;
-    overflow: hidden;
-}
-
-.invoice-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 50%;
-}
-
-.invoice-header::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: -10%;
-    width: 250px;
-    height: 250px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 50%;
-}
-
-.invoice-logo {
-    position: relative;
-    z-index: 1;
-}
-
-.invoice-logo img {
-    height: 50px;
-    filter: brightness(0) invert(1);
-}
-
-.invoice-title {
-    color: #fff;
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0;
-    letter-spacing: 1px;
-}
-
-.invoice-subtitle {
-    color: rgba(255,255,255,0.8);
-    font-size: 14px;
-    margin-top: 5px;
-}
-
-.invoice-body {
-    padding: 40px;
-}
-
-/* Student Profile Section */
-.student-profile-section {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 16px;
-    padding: 25px;
-    margin-bottom: 30px;
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-.student-avatar-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid #fff;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    background: #fff;
-}
-
-.avatar-placeholder-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 36px;
-    font-weight: 700;
-    color: #fff;
-    border: 4px solid #fff;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.student-info-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 15px 20px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.student-info-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.student-info-value {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1e3a5f;
-    margin-bottom: 0;
-}
-
-/* Meta Info Grid */
-.meta-info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.meta-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 15px 20px;
-    border: 1px solid #e9ecef;
-    transition: all 0.2s ease;
-}
-
-.meta-card:hover {
-    border-color: #0d6efd;
-    box-shadow: 0 5px 15px rgba(13,110,253,0.1);
-}
-
-.meta-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    font-weight: 600;
-    margin-bottom: 8px;
-}
-
-.meta-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1e3a5f;
-    margin-bottom: 0;
-}
-
-.meta-badge {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.meta-badge-success {
-    background: #d1e7dd;
-    color: #0f5132;
-}
-
-.meta-badge-warning {
-    background: #fff3cd;
-    color: #856404;
-}
-
-/* Invoice Table */
-.invoice-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin-bottom: 30px;
-}
-
-.invoice-table thead th {
-    background: #1e3a5f;
-    color: #fff;
-    padding: 15px;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: none;
-}
-
-.invoice-table thead th:first-child {
-    border-radius: 10px 0 0 10px;
-}
-
-.invoice-table thead th:last-child {
-    border-radius: 0 10px 10px 0;
-}
-
-.invoice-table tbody tr {
-    transition: background 0.2s ease;
-}
-
-.invoice-table tbody tr:hover {
-    background: #f8f9fa;
-}
-
-.invoice-table tbody td {
-    padding: 15px;
-    border-bottom: 1px solid #e9ecef;
-    font-size: 13px;
-    vertical-align: middle;
-}
-
-.invoice-table tfoot tr {
-    background: #f8f9fa;
-}
-
-.invoice-table tfoot td {
-    padding: 15px;
-    font-weight: 600;
-    border-top: 2px solid #dee2e6;
-}
-
-/* Payment Method Badges */
-.payment-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.payment-badge-transfer {
-    background: #e7f1ff;
-    color: #084298;
-}
-
-.payment-badge-pos {
-    background: #d1e7dd;
-    color: #0f5132;
-}
-
-.payment-badge-deposit {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.payment-badge-cheque {
-    background: #e2e3e5;
-    color: #41464b;
-}
-
-/* Totals Panel */
-.totals-panel {
-    background: #f8f9fa;
-    border-radius: 16px;
-    padding: 25px;
-    margin-top: 20px;
-}
-
-.totals-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.totals-row:last-child {
-    border-bottom: none;
-}
-
-.totals-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #495057;
-}
-
-.totals-value {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1e3a5f;
-}
-
-.totals-grand {
-    background: linear-gradient(135deg, #1e3a5f, #0d6efd);
-    color: #fff;
-    padding: 15px 20px;
-    border-radius: 12px;
-    margin-top: 15px;
-}
-
-.totals-grand .totals-label,
-.totals-grand .totals-value {
-    color: #fff;
-}
-
-/* Footer Section */
-.invoice-footer {
-    background: #f8f9fa;
-    padding: 25px 40px;
-    text-align: center;
-    border-top: 1px solid #e9ecef;
-}
-
-.invoice-footer p {
-    margin: 0;
-    font-size: 12px;
-    color: #6c757d;
-}
-
-.invoice-signature {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px dashed #dee2e6;
-}
-
-.signature-line {
-    display: inline-block;
-    width: 200px;
-    border-bottom: 2px solid #1e3a5f;
-    margin-top: 30px;
-}
-
-/* ============================================
-   PRINT STYLES - Complete Fix
-   ============================================ */
-@media print {
-    /* Hide ALL site headers, navigation, and sidebars */
-    header, 
-    nav, 
-    .main-header, 
-    .navbar, 
-    #header, 
-    .site-header,
-    .topbar,
-    .sidebar,
-    .main-sidebar,
-    .app-header,
-    .app-sidebar,
-    .nav-header,
-    .header-nav,
-    .navigation,
-    .menu,
-    .page-header,
-    .breadcrumb,
-    .footer,
-    .site-footer,
-    .app-footer {
-        display: none !important;
+    :root {
+        --tb-primary: #0d6efd;
+        --tb-secondary: #1e3a5f;
+        --tb-success: #198754;
+        --tb-danger: #dc3545;
+        --tb-warning: #ffc107;
+        --tb-info: #0dcaf0;
+        --tb-light: #f8f9fa;
+        --tb-dark: #212529;
+        --tb-border: #dee2e6;
+        --tb-success-subtle: rgba(25, 135, 84, 0.1);
+        --tb-primary-subtle: rgba(13, 110, 253, 0.1);
     }
 
-    /* Hide action buttons and print-only elements */
-    .action-buttons,
-    .d-print-none,
-    .no-print {
-        display: none !important;
-    }
-
-    /* Reset body and main content */
-    body {
-        background: #fff !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
+    /* Professional Invoice Styles */
     .invoice-wrapper {
-        background: #fff !important;
-        padding: 20px !important;
-        padding-top: 20px !important;
-        min-height: auto !important;
-        margin: 0 !important;
-    }
-
-    .container {
-        max-width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    .row {
-        margin: 0 !important;
-    }
-
-    .col-xxl-10,
-    .col-xl-11 {
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
-        padding: 0 !important;
+        background: #f0f2f5;
+        padding: 30px 0;
+        min-height: 100vh;
     }
 
     .invoice-card {
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        border: 1px solid #dee2e6 !important;
-        margin: 0 !important;
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        background: #fff;
+        transition: all 0.3s ease;
     }
 
     .invoice-header {
-        background: #1e3a5f !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        padding: 20px !important;
+        background: linear-gradient(135deg, #1e3a5f 0%, #0d6efd 100%);
+        padding: 30px 40px;
+        position: relative;
+        overflow: hidden;
     }
 
-    .invoice-body {
-        padding: 20px !important;
+    .invoice-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
     }
 
-    .student-profile-section {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+    .invoice-header::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 50%;
     }
 
-    .meta-card,
-    .student-profile-section,
-    .totals-panel,
-    .invoice-footer {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    .invoice-table thead th {
-        background: #1e3a5f !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color: #fff !important;
-    }
-
-    .totals-grand {
-        background: #1e3a5f !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    .payment-badge {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    .meta-badge {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* Page break control */
-    .invoice-card {
-        page-break-inside: avoid;
-    }
-
-    .invoice-table tbody tr {
-        page-break-inside: avoid;
-    }
-}
-
-/* ============================================
-   RESPONSIVE STYLES
-   ============================================ */
-@media (max-width: 992px) {
-    .invoice-wrapper {
-        padding-top: 80px;
-    }
-
-    .action-buttons {
-        top: 70px;
-        padding: 10px 15px;
-    }
-}
-
-@media (max-width: 768px) {
-    .invoice-wrapper {
-        padding: 15px 0;
-        padding-top: 70px;
-    }
-
-    .action-buttons {
-        top: 60px;
-        padding: 10px 12px;
-        gap: 6px;
-        justify-content: center !important;
-        border-radius: 8px;
-        margin-bottom: 15px;
-    }
-
-    .action-buttons .btn {
-        font-size: 11px;
-        padding: 5px 10px;
-        flex: 1 1 auto;
-        min-width: 80px;
-        justify-content: center;
-    }
-
-    .action-buttons .btn i {
-        margin-right: 4px !important;
-        font-size: 12px;
-    }
-
-    .invoice-header {
-        padding: 20px;
-    }
-
-    .invoice-body {
-        padding: 15px;
-    }
-
-    .meta-info-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    .student-profile-section .row {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .student-profile-section .col-auto {
-        margin-bottom: 15px;
-    }
-
-    .student-avatar-large,
-    .avatar-placeholder-large {
-        width: 70px;
-        height: 70px;
-        font-size: 26px;
-    }
-
-    .invoice-table {
-        font-size: 11px;
-    }
-
-    .invoice-table thead th,
-    .invoice-table tbody td {
-        padding: 8px 6px;
-    }
-
-    .invoice-table thead th {
-        font-size: 10px;
-    }
-
-    .invoice-footer {
-        padding: 15px 20px;
-    }
-
-    .totals-panel {
-        padding: 15px;
-    }
-
-    .totals-row {
-        font-size: 13px;
-        padding: 8px 0;
-    }
-
-    .totals-value {
-        font-size: 14px;
-    }
-
-    .student-info-card {
-        padding: 10px 15px;
-    }
-
-    .meta-card {
-        padding: 10px 15px;
-    }
-
-    .meta-value {
-        font-size: 16px;
+    .invoice-logo img {
+        height: 50px;
+        filter: brightness(0) invert(1);
     }
 
     .invoice-title {
-        font-size: 20px;
+        color: #fff;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 1px;
     }
 
     .invoice-subtitle {
-        font-size: 12px;
-    }
-
-    .signature-line {
-        width: 120px;
-    }
-}
-
-@media (max-width: 480px) {
-    .invoice-wrapper {
-        padding-top: 60px;
-        padding-left: 8px;
-        padding-right: 8px;
-    }
-
-    .action-buttons {
-        top: 55px;
-        padding: 8px 10px;
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-
-    .action-buttons .btn {
-        font-size: 10px;
-        padding: 4px 8px;
-        min-width: 60px;
-    }
-
-    .action-buttons .btn i {
-        font-size: 10px;
-        margin-right: 3px !important;
-    }
-
-    .meta-info-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
-    }
-
-    .invoice-table {
-        font-size: 9px;
-    }
-
-    .invoice-table thead th,
-    .invoice-table tbody td {
-        padding: 5px 4px;
-    }
-
-    .invoice-table thead th {
-        font-size: 8px;
-        padding: 6px 4px;
-    }
-
-    .payment-badge {
-        font-size: 8px;
-        padding: 3px 6px;
-    }
-
-    .payment-badge i {
-        font-size: 8px !important;
-    }
-
-    .meta-value {
-        font-size: 13px;
-    }
-
-    .meta-label {
-        font-size: 9px;
-    }
-
-    .invoice-title {
-        font-size: 16px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        margin-top: 5px;
     }
 
     .invoice-body {
-        padding: 10px;
+        padding: 40px;
     }
 
-    .student-info-value {
-        font-size: 12px;
+    /* Student Profile Section */
+    .student-profile-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .student-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        background: #fff;
+    }
+
+    .avatar-placeholder-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0d6efd, #0a58ca);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 700;
+        color: #fff;
+        border: 4px solid #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .student-info-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .student-info-label {
-        font-size: 9px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .student-info-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e3a5f;
+        margin-bottom: 0;
+    }
+
+    /* Meta Info Grid */
+    .meta-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .meta-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 15px 20px;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+
+    .meta-card:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.1);
+    }
+
+    .meta-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .meta-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e3a5f;
+        margin-bottom: 0;
+    }
+
+    .meta-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .meta-badge-success {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .meta-badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    /* Invoice Table */
+    .invoice-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 30px;
+    }
+
+    .invoice-table thead th {
+        background: #1e3a5f;
+        color: #fff;
+        padding: 15px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+    }
+
+    .invoice-table thead th:first-child {
+        border-radius: 10px 0 0 10px;
+    }
+
+    .invoice-table thead th:last-child {
+        border-radius: 0 10px 10px 0;
+    }
+
+    .invoice-table tbody tr {
+        transition: background 0.2s ease;
+    }
+
+    .invoice-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .invoice-table tbody td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+
+    /* Payment Method Badges */
+    .payment-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .payment-badge-transfer {
+        background: #e7f1ff;
+        color: #084298;
+    }
+
+    .payment-badge-pos {
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .payment-badge-deposit {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .payment-badge-cheque {
+        background: #e2e3e5;
+        color: #41464b;
+    }
+
+    /* Totals Panel */
+    .totals-panel {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 25px;
+        margin-top: 20px;
+    }
+
+    .totals-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .totals-row:last-child {
+        border-bottom: none;
     }
 
     .totals-label {
-        font-size: 11px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
     }
 
     .totals-value {
-        font-size: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e3a5f;
     }
 
     .totals-grand {
-        padding: 10px 15px;
+        background: linear-gradient(135deg, #1e3a5f, #0d6efd);
+        color: #fff;
+        padding: 15px 20px;
+        border-radius: 12px;
+        margin-top: 15px;
     }
 
-    .student-profile-section {
-        padding: 15px;
+    .totals-grand .totals-label,
+    .totals-grand .totals-value {
+        color: #fff;
     }
-}
+
+    /* Footer Section */
+    .invoice-footer {
+        background: #f8f9fa;
+        padding: 25px 40px;
+        text-align: center;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .invoice-signature {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px dashed #dee2e6;
+    }
+
+    .signature-line {
+        display: inline-block;
+        width: 200px;
+        border-bottom: 2px solid #1e3a5f;
+        margin-top: 30px;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+        margin-bottom: 20px;
+    }
+
+    /* School Header */
+    .school-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .school-info {
+        text-align: right;
+    }
+
+    .school-info h6 {
+        margin-bottom: 5px;
+        font-size: 12px;
+    }
+
+    .school-info .text-muted {
+        color: #6c757d !important;
+    }
+
+    .address-wrap {
+        max-width: 250px;
+        display: inline-block;
+        word-break: break-word;
+    }
+
+    /* Status banner (finalized vs pending) */
+    .invoice-status-banner {
+        border-radius: 12px;
+        padding: 12px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .invoice-status-banner.finalized {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #a7d7bd;
+    }
+    .invoice-status-banner.pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffe69c;
+    }
+
+    /* Print Styles */
+    @media print {
+        .action-buttons,
+        .d-print-none,
+        .invoice-status-banner {
+            display: none !important;
+        }
+
+        .invoice-wrapper {
+            background: #fff;
+            padding: 0;
+        }
+
+        .invoice-card {
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        .invoice-header {
+            background: #1e3a5f;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .meta-card,
+        .student-profile-section,
+        .totals-panel,
+        .invoice-footer {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .invoice-table thead th {
+            background: #1e3a5f;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .totals-grand {
+            background: #1e3a5f;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .invoice-header {
+            padding: 20px;
+        }
+
+        .invoice-body {
+            padding: 20px;
+        }
+
+        .meta-info-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .student-profile-section .row {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .school-header {
+            flex-direction: column;
+        }
+
+        .school-info {
+            text-align: left;
+            margin-top: 15px;
+        }
+
+        .address-wrap {
+            max-width: 100%;
+        }
+
+        .action-buttons {
+            top: 10px;
+        }
+
+        .action-buttons .btn {
+            font-size: 11px;
+            padding: 6px 10px;
+        }
+    }
 </style>
 
 <div class="invoice-wrapper">
@@ -761,7 +490,7 @@
             <div class="col-xxl-10 col-xl-11">
 
                 {{-- Action Buttons --}}
-                <div class="action-buttons d-flex gap-2 justify-content-end mb-3">
+                <div class="action-buttons d-flex gap-2 justify-content-end flex-wrap mb-3">
                     <a href="{{ route('schoolpayment.termsessionpayments', [
                         'studentId' => $studentId,
                         'termid' => $termid,
@@ -769,6 +498,9 @@
                     ]) }}" class="btn btn-light btn-sm">
                         <i class="fas fa-arrow-left me-1"></i> Back
                     </a>
+                    <button type="button" id="confirm-invoice-button" class="btn btn-warning btn-sm">
+                        <i class="fas fa-check-double me-1"></i> Confirm & Move to History
+                    </button>
                     <button type="button" id="print-button" class="btn btn-primary btn-sm">
                         <i class="fas fa-print me-1"></i> Print Invoice
                     </button>
@@ -802,6 +534,25 @@
 
                     {{-- Body --}}
                     <div class="invoice-body">
+
+                        {{-- Finalize status banner --}}
+                        @php
+                            $hasPendingRecords = \App\Models\StudentBillPayment::where('student_id', $studentId)
+                                ->where('class_id', $schoolclassid)
+                                ->where('termid_id', $termid)
+                                ->where('session_id', $sessionid)
+                                ->where('delete_status', '1')
+                                ->exists();
+                        @endphp
+                        <div class="invoice-status-banner d-print-none {{ $hasPendingRecords ? 'pending' : 'finalized' }}">
+                            @if($hasPendingRecords)
+                                <i class="fas fa-hourglass-half"></i>
+                                This invoice has payments still pending finalization. Click <strong>Confirm & Move to History</strong> or download the PDF to finalize.
+                            @else
+                                <i class="fas fa-check-circle"></i>
+                                All payments for this invoice have been finalized and moved to History.
+                            @endif
+                        </div>
 
                         {{-- Student Profile Section --}}
                         @php
@@ -859,6 +610,20 @@
                             </div>
                         </div>
 
+                        {{-- School Information Row --}}
+                        <div class="school-header">
+                            <div>
+                                <h6><span class="text-muted fw-normal">Invoice No:</span> {{ $invoiceNumber }}</h6>
+                                <h6><span class="text-muted fw-normal">Date Issued:</span> {{ \Carbon\Carbon::now()->format('d F, Y') }}</h6>
+                                <h6><span class="text-muted fw-normal">Due Date:</span> {{ \Carbon\Carbon::now()->addDays(7)->format('d F, Y') }}</h6>
+                            </div>
+                            <div class="school-info">
+                                <h6><span class="text-muted fw-normal">Email:</span> {{ $schoolInfo->school_email ?? 'info@school.edu' }}</h6>
+                                <h6><span class="text-muted fw-normal">Phone:</span> {{ $schoolInfo->school_phone ?? 'N/A' }}</h6>
+                                <h6><span class="text-muted fw-normal">Address:</span> <span class="address-wrap">{{ $schoolInfo->school_address ?? 'School Address' }}</span></h6>
+                            </div>
+                        </div>
+
                         {{-- Meta Information Grid --}}
                         <div class="meta-info-grid">
                             <div class="meta-card">
@@ -913,7 +678,7 @@
                                                     <i class="fas fa-gift me-1"></i>Savings: ₦{{ number_format($sp->total_savings, 2) }}
                                                 </small>
                                             @endif
-                                        </td>
+                                         </td>
                                         <td class="text-end">₦{{ number_format($sp->amount, 2) }}</td>
                                         <td class="text-end">₦{{ number_format($sp->previousPaid, 2) }}</td>
                                         <td class="text-end text-success">₦{{ number_format($sp->todayPaid, 2) }}</td>
@@ -1056,6 +821,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const originalTitle = document.title;
@@ -1077,6 +843,56 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.addEventListener('beforeprint', () => { document.title = customFilename; });
     window.addEventListener('afterprint', () => { setTimeout(() => { document.title = originalTitle; }, 500); });
+
+    // ── Confirm & finalize invoice (moves pending payments into History) ──
+    document.getElementById('confirm-invoice-button')?.addEventListener('click', function () {
+        Swal.fire({
+            title: 'Finalize this invoice?',
+            text: 'This will move all pending payments for this term/session into History. This cannot be undone.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, finalize',
+            confirmButtonColor: '#0d6efd',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Confirming...';
+
+            fetch('{{ route("schoolpayment.invoice.confirm", [$studentId, $schoolclassid, $termid, $sessionid]) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Finalized!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false,
+                    }).then(() => {
+                        window.location.href = '{{ route("schoolpayment.termsessionpayments") }}?studentId={{ $studentId }}&termid={{ $termid }}&sessionid={{ $sessionid }}';
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Something went wrong.', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Confirm & Move to History';
+                }
+            })
+            .catch(() => {
+                Swal.fire('Error', 'Failed to confirm invoice. Please try again.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-double me-1"></i> Confirm & Move to History';
+            });
+        });
+    });
 });
 </script>
 @endsection

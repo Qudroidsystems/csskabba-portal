@@ -24,17 +24,91 @@ use App\Models\DiscountAssignment;
 use App\Models\Scholarship;
 use App\Models\Discount;
 use App\Models\Studentpicture;
+use Yajra\DataTables\Facades\DataTables;
 
 class SchoolPaymentController extends Controller
 {
     /**
-     * Display student list for payment selection.
+     * Display student list for payment selection (initial page shell only;
+     * the table itself is populated by data() via server-side DataTables).
      */
     public function index(Request $request)
     {
-        $pagetitle = 'Student Payments';
+        $pagetitle      = 'Student Payments';
+        $schoolterms    = Schoolterm::all();
+        $schoolsessions = Schoolsession::all();
 
-        $student = Student::leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+        $classOptions = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['schoolclass.schoolclass as schoolclass'])
+            ->distinct()
+            ->orderBy('schoolclass')
+            ->pluck('schoolclass')
+            ->filter()
+            ->values();
+
+        $statusOptions = Student::whereNotNull('student_status')
+            ->where('student_status', '!=', '')
+            ->distinct()
+            ->orderBy('student_status')
+            ->pluck('student_status');
+
+        return view('schoolpayment.index', compact(
+            'pagetitle', 'schoolterms', 'schoolsessions', 'classOptions', 'statusOptions'
+        ));
+    }
+
+    /**
+     * Stat card counts for the student payments index (AJAX).
+     */
+    public function stats()
+    {
+        $now = now();
+
+        $base = Student::leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+            ->where('schoolsession.status', 'Current');
+
+        $total  = (clone $base)->count('studentRegistration.id');
+        $active = (clone $base)->where('studentRegistration.student_status', 'Active')->count('studentRegistration.id');
+
+        $studentIds = (clone $base)->pluck('studentRegistration.id');
+
+        $scholarshipCount = ScholarshipAssignment::whereIn('student_id', $studentIds)
+            ->where('status', 'active')
+            ->where('effective_from', '<=', $now)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
+            })
+            ->distinct('student_id')
+            ->count('student_id');
+
+        $discountCount = DiscountAssignment::whereIn('student_id', $studentIds)
+            ->where('status', 'active')
+            ->where('effective_from', '<=', $now)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
+            })
+            ->distinct('student_id')
+            ->count('student_id');
+
+        return response()->json([
+            'stats' => [
+                'total'       => $total,
+                'active'      => $active,
+                'scholarship' => $scholarshipCount,
+                'discount'    => $discountCount,
+            ],
+        ]);
+    }
+
+    /**
+     * Server-side DataTables endpoint for the student payments index.
+     */
+    public function data(Request $request)
+    {
+        $now = now();
+
+        $query = Student::leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
             ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
@@ -49,46 +123,91 @@ class SchoolPaymentController extends Controller
                 'studentRegistration.othername as othername',
                 'studentRegistration.gender as gender',
                 'studentRegistration.student_status as student_status',
-                'schoolclass.id as schoolclassid',
                 'schoolclass.schoolclass as schoolclass',
                 'schoolarm.arm as arm',
                 'schoolterm.term as term',
                 'schoolsession.session as session',
                 'studentpicture.picture as picture',
-            ])
-            ->get();
+            ]);
 
-        // Bulk-fetch scholarship and discount student IDs to avoid N+1 per student
-        $studentIds = $student->pluck('id')->toArray();
-        $now = now();
-
-        $scholarshipStudentIds = ScholarshipAssignment::whereIn('student_id', $studentIds)
-            ->where('status', 'active')
+        $scholarshipIds = ScholarshipAssignment::where('status', 'active')
             ->where('effective_from', '<=', $now)
             ->where(function ($q) use ($now) {
                 $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
             })
             ->pluck('student_id')
-            ->flip()
-            ->toArray();
+            ->flip();
 
-        $discountStudentIds = DiscountAssignment::whereIn('student_id', $studentIds)
-            ->where('status', 'active')
+        $discountIds = DiscountAssignment::where('status', 'active')
             ->where('effective_from', '<=', $now)
             ->where(function ($q) use ($now) {
                 $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
             })
             ->pluck('student_id')
-            ->flip()
-            ->toArray();
+            ->flip();
 
-        foreach ($student as $s) {
-            $s->has_scholarship = isset($scholarshipStudentIds[$s->id]);
-            $s->has_discount    = isset($discountStudentIds[$s->id]);
-            $s->full_name       = $this->getFullNameWithOther($s->firstname, $s->lastname, $s->othername);
-        }
-
-        return view('schoolpayment.index', compact('pagetitle', 'student'));
+        return DataTables::of($query)
+            ->filter(function ($q) use ($request) {
+                if ($search = $request->input('search.value')) {
+                    $q->where(function ($qq) use ($search) {
+                        $qq->where('studentRegistration.firstname', 'like', "%{$search}%")
+                            ->orWhere('studentRegistration.lastname', 'like', "%{$search}%")
+                            ->orWhere('studentRegistration.admissionNo', 'like', "%{$search}%")
+                            ->orWhere('schoolclass.schoolclass', 'like', "%{$search}%");
+                    });
+                }
+                if ($class = $request->input('class_filter')) {
+                    $q->where('schoolclass.schoolclass', $class);
+                }
+                if ($status = $request->input('status_filter')) {
+                    $q->where('studentRegistration.student_status', $status);
+                }
+            })
+            ->addColumn('avatar', function ($s) {
+                $initials = strtoupper(substr($s->firstname ?? '', 0, 1) . substr($s->lastname ?? '', 0, 1)) ?: 'ST';
+                if ($s->picture && $s->picture !== 'unnamed.jpg' && $s->picture !== '') {
+                    $url = asset('storage/images/student_avatars/' . $s->picture);
+                    return '<div class="p-avatar"><img src="' . $url . '" alt="" onerror="this.remove()"></div>';
+                }
+                return '<div class="p-avatar">' . e($initials) . '</div>';
+            })
+            ->addColumn('full_name', function ($s) {
+                $name = trim(($s->firstname ?? '') . ' ' . ($s->lastname ?? ''));
+                return '<div class="fw-semibold" style="color:var(--p-primary)">' . e($name) . '</div>'
+                    . '<div class="text-muted small">' . e($s->gender) . '</div>';
+            })
+            ->addColumn('class_display', function ($s) {
+                $val = trim(($s->schoolclass ?? '') . ' ' . ($s->arm ?? ''));
+                return $val !== '' ? e($val) : '—';
+            })
+            ->addColumn('term_session_display', function ($s) {
+                return e(($s->term ?: '—') . ' · ' . ($s->session ?: '—'));
+            })
+            ->addColumn('status_badge', function ($s) {
+                if (!$s->student_status) {
+                    return '<span class="p-pill status-default"><i class="bi bi-dash"></i>Unknown</span>';
+                }
+                $cls = strtolower($s->student_status) === 'active' ? 'status-active' : 'status-inactive';
+                return '<span class="p-pill ' . $cls . '"><i class="bi bi-circle-fill" style="font-size:6px"></i>' . e($s->student_status) . '</span>';
+            })
+            ->addColumn('adjustments', function ($s) use ($scholarshipIds, $discountIds) {
+                $out = '';
+                if (isset($scholarshipIds[$s->id])) {
+                    $out .= '<span class="p-pill scholarship"><i class="bi bi-award-fill"></i>Scholarship</span> ';
+                }
+                if (isset($discountIds[$s->id])) {
+                    $out .= '<span class="p-pill discount"><i class="bi bi-tag-fill"></i>Discount</span>';
+                }
+                return $out !== '' ? $out : '<span class="p-pill none"><i class="bi bi-dash"></i>None</span>';
+            })
+            ->addColumn('action', function ($s) {
+                $name = trim(($s->firstname ?? '') . ' ' . ($s->lastname ?? ''));
+                return '<button type="button" class="p-action-btn pay select-term-session-btn" '
+                    . 'data-student-id="' . $s->id . '" data-student-name="' . e($name) . '" title="Manage Payment">'
+                    . '<i class="bi bi-cash-coin"></i></button>';
+            })
+            ->rawColumns(['avatar', 'full_name', 'class_display', 'term_session_display', 'status_badge', 'adjustments', 'action'])
+            ->make(true);
     }
 
     /**
@@ -124,7 +243,7 @@ class SchoolPaymentController extends Controller
     }
 
     /**
-     * Term/Session selector page
+     * Term/Session selector page (legacy fallback — the index now uses a modal instead)
      */
     public function termSession(string $id)
     {
@@ -161,10 +280,6 @@ class SchoolPaymentController extends Controller
 
     // ── Scholarship / discount helpers ────────────────────────────────────
 
-    /**
-     * FIX #6: Accept pre-fetched assignment to avoid N+1 inside loops.
-     * Falls back to a DB query when called standalone (e.g. from store()).
-     */
     private function getScholarshipDeduction(int $studentId, float $billAmount, $preloaded = null): array
     {
         $assignment = $preloaded ?? ScholarshipAssignment::where('student_id', $studentId)
@@ -201,9 +316,6 @@ class SchoolPaymentController extends Controller
         ];
     }
 
-    /**
-     * FIX #6: Accept pre-fetched assignments collection to avoid N+1 inside loops.
-     */
     private function getDiscountDeduction(int $studentId, int $billId, float $billAmount, float $scholarshipDeduction = 0, $preloaded = null): array
     {
         $assignments = $preloaded ?? DiscountAssignment::where('student_id', $studentId)
@@ -248,9 +360,6 @@ class SchoolPaymentController extends Controller
         ];
     }
 
-    /**
-     * FIX #6: Accept pre-fetched scholarship/discount to skip redundant queries in loops.
-     */
     private function buildBillAdjustment(int $studentId, int $billId, float $originalAmount, $scholarshipAssignment = null, $discountAssignments = null): array
     {
         $scholarship = $this->getScholarshipDeduction($studentId, $originalAmount, $scholarshipAssignment);
@@ -294,20 +403,6 @@ class SchoolPaymentController extends Controller
 
     // ── Fetch student data helper ─────────────────────────────────────────
 
-    /**
-     * `studentclass` has `studentId` as its PRIMARY KEY — there is exactly ONE
-     * row per student, ever. It is not a per-term or per-session history table;
-     * it just holds whatever the student's class assignment currently is, and
-     * gets overwritten (not inserted) whenever that changes. There is no way
-     * to look up "what class was this student in during a past term" because
-     * that history is never kept.
-     *
-     * So: we always join on studentId only, and take whatever class is on
-     * that single row. The $termid/$sessionid the caller passes in are used
-     * ONLY for looking up bills and payment history for that term/session —
-     * never for deciding whether the studentclass row is valid. There is
-     * nothing to "fall back" from; this is the only data that exists.
-     */
     private function fetchStudentData(int $studentId, int $termid, int $sessionid): ?object
     {
         return Student::where('studentRegistration.id', $studentId)
@@ -377,7 +472,6 @@ class SchoolPaymentController extends Controller
                 ])
                 ->get();
 
-            // FIX #6: Fetch scholarship and discount assignments once, reuse in the loop.
             $now = now();
             $scholarshipAssignment = ScholarshipAssignment::where('student_id', $studentId)
                 ->where('status', 'active')
@@ -692,7 +786,6 @@ class SchoolPaymentController extends Controller
                         ->where('id', $paymentBook->id)
                         ->update([
                             'amount_paid'           => DB::raw('amount_paid + ' . $paymentAmount),
-                            // FIX #7: derive amount_owed from adjusted total minus all paid so far
                             'amount_owed'           => max(0, $finalAdjustedAmount - ($paymentBook->amount_paid + $paymentAmount)),
                             'payment_status'        => $status,
                             'generated_by'          => $generatedBy,
@@ -785,7 +878,6 @@ class SchoolPaymentController extends Controller
                 'session_id'                            => 'required|integer|exists:schoolsession,id',
                 'payment_amount'                        => 'required|numeric|min:0.01',
                 'payment_method'                        => 'required|string|in:Bank Deposit,School POS,Bank Transfer,Cheque',
-                // FIX #8: title is optional but now explicitly declared
                 'bill_payments'                         => 'required|array|min:1',
                 'bill_payments.*.school_bill_id'        => 'required|integer|exists:school_bill,id',
                 'bill_payments.*.title'                 => 'nullable|string|max:255',
@@ -874,7 +966,6 @@ class SchoolPaymentController extends Controller
                     ])->first();
 
                     if ($paymentBook) {
-                        // FIX #7: re-derive amount_owed from the adjusted total, not a running delta
                         $newTotalPaid = $paymentBook->amount_paid + $paymentForThisBill;
                         DB::table('student_bill_payment_book')
                             ->where('id', $paymentBook->id)
@@ -1003,7 +1094,6 @@ class SchoolPaymentController extends Controller
             ])->first();
 
             if ($paymentBook) {
-                // FIX #7: re-derive balances from the adjusted total rather than adding a stale delta.
                 $adjustedTotal = (float) ($paymentBook->adjusted_amount ?: $paymentBook->original_amount);
                 $newAmountPaid = max(0, (float) $paymentBook->amount_paid - (float) $paymentRecord->amount_paid);
                 $newAmountOwed = max(0, $adjustedTotal - $newAmountPaid);
@@ -1107,7 +1197,6 @@ class SchoolPaymentController extends Controller
             ->get()
             ->keyBy('school_bill_id');
 
-        // FIX #6: Fetch scholarship/discount once for the invoice map.
         $now = now();
         $scholarshipAssignment = ScholarshipAssignment::where('student_id', $studentId)
             ->where('status', 'active')
@@ -1145,9 +1234,6 @@ class SchoolPaymentController extends Controller
                 $previousPaid         = $totalPaidForThisBill - $lastPaymentAmount;
                 $currentBalance       = max(0, $adj['adjusted_amount'] - $totalPaidForThisBill);
 
-                // FIX #10: invoiceNo is stamped only if not already set — but the
-                // delete_status flip is now deferred to a separate explicit action
-                // (confirmInvoice) so a page reload does NOT re-mark payments.
                 if ($lastRecord && !$lastRecord->invoiceNo) {
                     StudentBillPaymentRecord::where('id', $lastRecord->id)
                         ->update(['invoiceNo' => $invoiceNumber]);
@@ -1211,11 +1297,6 @@ class SchoolPaymentController extends Controller
         $schoolterm    = optional(Schoolterm::find($termid))->term    ?? 'N/A';
         $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
-        // FIX #10: delete_status flip is NO LONGER done on GET (page load).
-        // It must be triggered explicitly via confirmInvoice() POST route.
-        // The invoice view should render a "Confirm & Finalise Invoice" button
-        // that POSTs to that route, protecting against accidental re-loads.
-
         $fullName = $this->getFullNameWithOther($student->firstname, $student->lastname, $student->othername ?? '');
 
         $data = [
@@ -1240,6 +1321,16 @@ class SchoolPaymentController extends Controller
         ];
 
         if ($request->has('download_pdf')) {
+            // Downloading the invoice is treated as generating/finalizing it:
+            // move any pending payments for this student/class/term/session
+            // out of "Payment Records" and into "History".
+            StudentBillPayment::where('student_id', $studentId)
+                ->where('class_id', $schoolclassid)
+                ->where('termid_id', $termid)
+                ->where('session_id', $sessionid)
+                ->where('delete_status', '1')
+                ->update(['delete_status' => '0']);
+
             $safeFilename = 'invoice_' . preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId) . '.pdf';
             $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data);
             return $pdf->download($safeFilename);
@@ -1249,9 +1340,10 @@ class SchoolPaymentController extends Controller
     }
 
     /**
-     * FIX #10: Explicit POST action to finalise / confirm an invoice.
-     * This is the ONLY place that flips delete_status from 1 → 0,
-     * so a simple page refresh of the invoice view can never do it accidentally.
+     * Explicit POST action to finalise / confirm an invoice from the web view
+     * (moves delete_status 1 → 0 for this student/class/term/session). This
+     * is the only other place — besides the PDF download above — that flips
+     * this flag, so a page refresh of the invoice view alone can never do it.
      */
     public function confirmInvoice(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
     {
@@ -1284,7 +1376,6 @@ class SchoolPaymentController extends Controller
             return redirect()->route('payment.index')->with('error', 'Student not found.');
         }
 
-        // FIX #5: use class/term/session-specific bills, not all bills in the system.
         $resolvedClassId = $schoolclassid ?: $student->schoolclassId;
 
         $student_bill_info = DB::table('school_bill_class_term_session')
@@ -1333,7 +1424,6 @@ class SchoolPaymentController extends Controller
             ->orderBy('student_bill_payment_record.created_at', 'desc')
             ->get();
 
-        // FIX #5: totals now reflect only this student's class bills for the term/session.
         $now = now();
         $scholarshipAssignment = ScholarshipAssignment::where('student_id', $studentId)
             ->where('status', 'active')

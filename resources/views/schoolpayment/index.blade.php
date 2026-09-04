@@ -5,6 +5,7 @@
 {{-- ═══════════════════════════════════════════════════════════
      STYLES
 ═══════════════════════════════════════════════════════════ --}}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -29,9 +30,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
 @keyframes fadeInUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeInDown { from { opacity:0; transform:translateY(-14px);} to { opacity:1; transform:translateY(0); } }
-@keyframes scaleIn    { from { opacity:0; transform:scale(.92);       } to { opacity:1; transform:scale(1);    } }
 @keyframes pulse      { 0%,100%{transform:scale(1);}50%{transform:scale(1.05);} }
-@keyframes rowIn      { from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);} }
 @keyframes badgePop   { 0%{transform:scale(0.5);}70%{transform:scale(1.15);}100%{transform:scale(1);} }
 
 /* ── Hero ── */
@@ -143,7 +142,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     font-size: 13px;
     transition: background .12s;
 }
-.p-table tbody tr { animation: rowIn .3s ease both; }
 .p-table tbody tr:hover td { background: #f0f9ff; }
 .p-table tbody tr:last-child td { border-bottom: none; }
 
@@ -206,17 +204,26 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 .p-empty { text-align:center; padding:48px 24px; color: var(--p-muted); }
 .p-empty i { font-size:3rem; display:block; margin-bottom:12px; opacity:.3; }
 
-/* ── Stagger animation for rows ── */
-.p-table tbody tr:nth-child(1)  { animation-delay: .03s; }
-.p-table tbody tr:nth-child(2)  { animation-delay: .06s; }
-.p-table tbody tr:nth-child(3)  { animation-delay: .09s; }
-.p-table tbody tr:nth-child(4)  { animation-delay: .12s; }
-.p-table tbody tr:nth-child(5)  { animation-delay: .15s; }
-.p-table tbody tr:nth-child(6)  { animation-delay: .18s; }
-.p-table tbody tr:nth-child(7)  { animation-delay: .21s; }
-.p-table tbody tr:nth-child(8)  { animation-delay: .24s; }
-.p-table tbody tr:nth-child(9)  { animation-delay: .27s; }
-.p-table tbody tr:nth-child(10) { animation-delay: .30s; }
+/* ── DataTables overrides to match theme ── */
+.dataTables_wrapper .dataTables_filter { display:none; } /* using our own search box */
+.dataTables_wrapper .dataTables_length select {
+    border:1.5px solid var(--p-border); border-radius:8px;
+    padding:6px 10px; margin:0 6px; font-size:13px;
+}
+.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--p-muted); padding: 14px 20px; }
+.dataTables_wrapper .dataTables_paginate { padding: 10px 16px 16px; }
+.dataTables_wrapper .paginate_button {
+    border-radius:6px !important; font-size:13px !important;
+    padding:4px 10px !important;
+}
+.dataTables_wrapper .paginate_button.current,
+.dataTables_wrapper .paginate_button.current:hover {
+    background:var(--p-accent) !important;
+    border-color:var(--p-accent) !important; color:#fff !important;
+}
+.dataTables_processing {
+    background: transparent !important; border: none !important; box-shadow:none !important;
+}
 </style>
 
 <div class="main-content">
@@ -258,38 +265,32 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     @endif
 
     {{-- Stat Cards --}}
-    @php
-        $totalStudents      = $student->count();
-        $scholarshipCount   = $student->where('has_scholarship', true)->count();
-        $discountCount      = $student->where('has_discount', true)->count();
-        $activeCount        = $student->filter(fn($s) => strtolower((string) $s->student_status) === 'active')->count();
-    @endphp
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3" style="animation-delay:.05s">
             <div class="p-stat-card">
                 <div class="stat-icon"><i class="ri-group-line"></i></div>
-                <div class="stat-value">{{ $totalStudents }}</div>
+                <div class="stat-value">—</div>
                 <div class="stat-label">Total Students</div>
             </div>
         </div>
         <div class="col-6 col-md-3" style="animation-delay:.08s">
             <div class="p-stat-card">
                 <div class="stat-icon"><i class="ri-user-follow-line"></i></div>
-                <div class="stat-value" style="color:var(--p-success)">{{ $activeCount }}</div>
+                <div class="stat-value" style="color:var(--p-success)">—</div>
                 <div class="stat-label">Active Students</div>
             </div>
         </div>
         <div class="col-6 col-md-3" style="animation-delay:.11s">
             <div class="p-stat-card">
                 <div class="stat-icon"><i class="ri-medal-line"></i></div>
-                <div class="stat-value" style="color:var(--p-warning)">{{ $scholarshipCount }}</div>
+                <div class="stat-value" style="color:var(--p-warning)">—</div>
                 <div class="stat-label">On Scholarship</div>
             </div>
         </div>
         <div class="col-6 col-md-3" style="animation-delay:.14s">
             <div class="p-stat-card">
                 <div class="stat-icon"><i class="ri-price-tag-3-line"></i></div>
-                <div class="stat-value" style="color:var(--p-accent)">{{ $discountCount }}</div>
+                <div class="stat-value" style="color:var(--p-accent)">—</div>
                 <div class="stat-label">On Discount</div>
             </div>
         </div>
@@ -309,8 +310,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <label class="p-form-label">Class</label>
                 <select id="classFilter" class="p-input">
                     <option value="">All Classes</option>
-                    @foreach ($student->pluck('schoolclass')->filter()->unique()->sort() as $className)
-                    <option value="{{ strtolower($className) }}">{{ $className }}</option>
+                    @foreach ($classOptions as $className)
+                    <option value="{{ $className }}">{{ $className }}</option>
                     @endforeach
                 </select>
             </div>
@@ -318,8 +319,8 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <label class="p-form-label">Status</label>
                 <select id="statusFilter" class="p-input">
                     <option value="">All Statuses</option>
-                    @foreach ($student->pluck('student_status')->filter()->unique()->sort() as $status)
-                    <option value="{{ strtolower($status) }}">{{ $status }}</option>
+                    @foreach ($statusOptions as $status)
+                    <option value="{{ $status }}">{{ $status }}</option>
                     @endforeach
                 </select>
             </div>
@@ -337,7 +338,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             <div class="fw-bold" style="color:var(--p-primary);font-size:14px;">
                 <i class="ri-list-check me-2" style="color:var(--p-accent)"></i>
                 Students
-                <span id="studentCountBadge" class="badge ms-2" style="background:var(--p-accent);font-size:11px;font-weight:600;">{{ $totalStudents }}</span>
+                <span id="studentCountBadge" class="badge ms-2" style="background:var(--p-accent);font-size:11px;font-weight:600;">0</span>
             </div>
         </div>
 
@@ -346,7 +347,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <thead>
                     <tr>
                         <th width="50"></th>
-                        <th class="sortable" data-col="name">Name</th>
+                        <th>Name</th>
                         <th>Admission No</th>
                         <th>Class</th>
                         <th>Term / Session</th>
@@ -355,160 +356,161 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                         <th width="90">Action</th>
                     </tr>
                 </thead>
-                <tbody id="studentsTableBody">
-                    @forelse ($student as $key => $s)
-                    @php
-                        $initials = strtoupper(substr($s->firstname ?? '', 0, 1) . substr($s->lastname ?? '', 0, 1));
-                        $avatarUrl = ($s->picture && $s->picture !== 'unnamed.jpg' && $s->picture !== '')
-                            ? asset('storage/images/student_avatars/' . $s->picture)
-                            : null;
-                        $avatarColors = ['#667eea','#f093fb','#4facfe','#43e97b','#fa709a','#30cfd0'];
-                        $avatarColor = $avatarColors[$key % count($avatarColors)];
-                        $statusKey = strtolower((string) $s->student_status);
-                        $statusCls = $statusKey === 'active' ? 'status-active' : ($statusKey === '' ? 'status-default' : 'status-inactive');
-                    @endphp
-                    <tr data-id="{{ $s->id }}"
-                        data-name="{{ strtolower($s->full_name ?? trim(($s->firstname ?? '').' '.($s->lastname ?? ''))) }}"
-                        data-admission="{{ strtolower($s->admissionNo ?? '') }}"
-                        data-class="{{ strtolower($s->schoolclass ?? '') }}"
-                        data-status="{{ strtolower($s->student_status ?? '') }}">
-                        <td>
-                            <div class="p-avatar" style="background:linear-gradient(135deg,{{ $avatarColor }} 0%,{{ $avatarColors[($key+2)%count($avatarColors)] }} 100%)">
-                                @if($avatarUrl)
-                                    <img src="{{ $avatarUrl }}" alt="{{ $s->full_name }}" onerror="this.remove()">
-                                @else
-                                    {{ $initials ?: 'ST' }}
-                                @endif
-                            </div>
-                        </td>
-                        <td>
-                            <div class="fw-semibold" style="color:var(--p-primary)">{{ $s->full_name ?? trim(($s->firstname ?? '').' '.($s->lastname ?? '')) }}</div>
-                            <div class="text-muted small">{{ $s->gender }}</div>
-                        </td>
-                        <td class="text-muted small">{{ $s->admissionNo ?: '—' }}</td>
-                        <td>
-                            <span class="text-muted small">{{ $s->schoolclass ?: '—' }}{{ $s->arm ? ' '.$s->arm : '' }}</span>
-                        </td>
-                        <td class="text-muted small">{{ $s->term ?: '—' }} · {{ $s->session ?: '—' }}</td>
-                        <td>
-                            @if($s->student_status)
-                                <span class="p-pill {{ $statusCls }}"><i class="bi bi-circle-fill" style="font-size:6px"></i>{{ $s->student_status }}</span>
-                            @else
-                                <span class="p-pill status-default"><i class="bi bi-dash"></i>Unknown</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($s->has_scholarship)
-                                <span class="p-pill scholarship"><i class="bi bi-award-fill"></i>Scholarship</span>
-                            @endif
-                            @if($s->has_discount)
-                                <span class="p-pill discount"><i class="bi bi-tag-fill"></i>Discount</span>
-                            @endif
-                            @if(!$s->has_scholarship && !$s->has_discount)
-                                <span class="p-pill none"><i class="bi bi-dash"></i>None</span>
-                            @endif
-                        </td>
-                        <td>
-                            <a href="{{ route('schoolpayment.termsession', $s->id) }}" class="p-action-btn pay" title="Manage Payment">
-                                <i class="bi bi-cash-coin"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr id="emptyRow">
-                        <td colspan="8">
-                            <div class="p-empty">
-                                <i class="ri-user-line"></i>
-                                No students found for the current session
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
+                <tbody id="studentsTableBody"></tbody>
             </table>
         </div>
 
-        <div class="d-flex align-items-center justify-content-between px-4 py-3 border-top" style="background:var(--p-bg);">
-            <div class="text-muted small">
-                Showing <span id="showingCount" class="fw-semibold text-dark">{{ $totalStudents }}</span>
-                of <span id="totalCount" class="fw-semibold text-dark">{{ $totalStudents }}</span> students
-            </div>
-        </div>
     </div>
 
 </div>
 </div>
 </div>
 
+{{-- TERM / SESSION MODAL (fix #1: opens instead of navigating to termSession page) --}}
+<div class="modal fade" id="termSessionModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 20px 60px rgba(0,0,0,.15);">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);border:none;position:relative;">
+        <h5 class="modal-title text-white mb-0" id="tsModalStudentName" style="font-size:15px;">
+            <i class="ri-calendar-2-line me-2"></i>Select Term & Session
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <input type="hidden" id="tsModalStudentId">
+        <div class="mb-3">
+          <label class="p-form-label">Term</label>
+          <select id="tsModalTerm" class="p-input">
+            <option value="">-- Select Term --</option>
+            @foreach($schoolterms as $term)
+                <option value="{{ $term->id }}">{{ $term->term }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="mb-1">
+          <label class="p-form-label">Session</label>
+          <select id="tsModalSession" class="p-input">
+            <option value="">-- Select Session --</option>
+            @foreach($schoolsessions as $session)
+                <option value="{{ $session->id }}">{{ $session->session }}</option>
+            @endforeach
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="p-btn ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="p-btn primary" id="tsModalGoBtn"><i class="bi bi-arrow-right-circle me-1"></i>View Payment Details</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {{-- ══════════════════════════════════════════════════════════════
      SCRIPTS
 ══════════════════════════════════════════════════════════════ --}}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function () {
 
-    const allRows = () => Array.from(document.querySelectorAll('#studentsTableBody tr[data-id]'));
-
-    function applyFilters() {
-        const search = document.getElementById('liveSearch')?.value.toLowerCase().trim() || '';
-        const cls    = document.getElementById('classFilter')?.value.toLowerCase().trim() || '';
-        const status = document.getElementById('statusFilter')?.value.toLowerCase().trim() || '';
-        let shown = 0;
-
-        allRows().forEach(row => {
-            const name = row.dataset.name || '';
-            const admission = row.dataset.admission || '';
-            const rowClass = row.dataset.class || '';
-            const rowStatus = row.dataset.status || '';
-
-            const matchSearch = !search || name.includes(search) || admission.includes(search);
-            const matchClass  = !cls || rowClass === cls;
-            const matchStatus = !status || rowStatus === status;
-            const visible = matchSearch && matchClass && matchStatus;
-
-            row.style.display = visible ? '' : 'none';
-            if (visible) shown++;
-        });
-
-        const showingSpan = document.getElementById('showingCount');
-        if (showingSpan) showingSpan.textContent = shown;
-        const countBadge = document.getElementById('studentCountBadge');
-        if (countBadge) countBadge.textContent = shown;
-
-        let empty = document.getElementById('noResults');
-        if (shown === 0 && allRows().length > 0) {
-            if (!empty) {
-                empty = document.createElement('tr');
-                empty.id = 'noResults';
-                empty.innerHTML = `<td colspan="8"><div class="p-empty"><i class="ri-search-line"></i>No students match your filters</div></td>`;
-                document.getElementById('studentsTableBody')?.appendChild(empty);
+    const table = $('#studentsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("schoolpayment.data") }}',
+            data: function (d) {
+                d.class_filter  = $('#classFilter').val();
+                d.status_filter = $('#statusFilter').val();
+            },
+            error: function (xhr) {
+                console.error('DataTables error:', xhr.status, xhr.responseText);
             }
-        } else if (empty) empty.remove();
+        },
+        columns: [
+            { data: 'avatar',                orderable: false, searchable: false },
+            { data: 'full_name',             orderable: false },
+            { data: 'admissionNo',           orderable: false },
+            { data: 'class_display',         orderable: false, searchable: false },
+            { data: 'term_session_display',  orderable: false, searchable: false },
+            { data: 'status_badge',          orderable: false, searchable: false },
+            { data: 'adjustments',           orderable: false, searchable: false },
+            { data: 'action',                orderable: false, searchable: false },
+        ],
+        order: [],
+        pageLength: 15,
+        dom: 'rtip',
+        language: {
+            processing: '<span class="spinner-border spinner-border-sm text-primary"></span>',
+            emptyTable: '<div class="p-empty"><i class="ri-user-line"></i>No students found for the current session</div>',
+            zeroRecords: '<div class="p-empty"><i class="ri-search-line"></i>No students match your filters</div>',
+        },
+        drawCallback: function () {
+            const info = this.api().page.info();
+            $('#studentCountBadge').text(info.recordsDisplay);
+        },
+    });
+
+    // Debounced live search
+    let searchTimer;
+    $('#liveSearch').on('input', function () {
+        clearTimeout(searchTimer);
+        const val = this.value;
+        searchTimer = setTimeout(() => table.search(val).draw(), 350);
+    });
+
+    $('#classFilter, #statusFilter').on('change', function () {
+        table.draw();
+    });
+
+    $('#clearFilters').on('click', function () {
+        $('#liveSearch').val('');
+        $('#classFilter').val('');
+        $('#statusFilter').val('');
+        table.search('').draw();
+    });
+
+    // Stat cards (AJAX, independent of table draws)
+    function loadStats() {
+        $.get('{{ route("schoolpayment.stats") }}', function (res) {
+            const vals = $('.p-stat-card .stat-value');
+            vals.eq(0).text(res.stats.total);
+            vals.eq(1).text(res.stats.active);
+            vals.eq(2).text(res.stats.scholarship);
+            vals.eq(3).text(res.stats.discount);
+        });
     }
+    loadStats();
 
-    document.getElementById('liveSearch')?.addEventListener('input', applyFilters);
-    document.getElementById('classFilter')?.addEventListener('change', applyFilters);
-    document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
-    document.getElementById('clearFilters')?.addEventListener('click', () => {
-        if (document.getElementById('liveSearch')) document.getElementById('liveSearch').value = '';
-        if (document.getElementById('classFilter')) document.getElementById('classFilter').value = '';
-        if (document.getElementById('statusFilter')) document.getElementById('statusFilter').value = '';
-        applyFilters();
+    // ── Term/Session modal (fix #1) ─────────────────────────────────────
+    $(document).on('click', '.select-term-session-btn', function () {
+        $('#tsModalStudentId').val($(this).data('student-id'));
+        $('#tsModalStudentName').html('<i class="ri-calendar-2-line me-2"></i>' + $(this).data('student-name') + ' — Select Term & Session');
+        $('#tsModalTerm').val('');
+        $('#tsModalSession').val('');
+        new bootstrap.Modal(document.getElementById('termSessionModal')).show();
     });
 
-    // Sort by name
-    document.querySelector('[data-col="name"]')?.addEventListener('click', function() {
-        this.dataset.dir = this.dataset.dir === 'asc' ? 'desc' : 'asc';
-        const dir = this.dataset.dir;
-        const tbody = document.getElementById('studentsTableBody');
-        if (!tbody) return;
-        const rows = allRows();
-        rows.sort((a, b) => dir === 'asc'
-            ? a.dataset.name.localeCompare(b.dataset.name)
-            : b.dataset.name.localeCompare(a.dataset.name));
-        rows.forEach(r => tbody.appendChild(r));
-    });
+    $('#tsModalGoBtn').on('click', function () {
+        const studentId = $('#tsModalStudentId').val();
+        const termid    = $('#tsModalTerm').val();
+        const sessionid = $('#tsModalSession').val();
 
-    applyFilters();
+        if (!termid || !sessionid) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Selection',
+                text: 'Please select both term and session to continue.',
+                confirmButtonColor: '#2563eb',
+            });
+            return;
+        }
+
+        window.location.href = '{{ route("schoolpayment.termsessionpayments") }}'
+            + '?studentId=' + studentId
+            + '&termid='    + termid
+            + '&sessionid=' + sessionid;
+    });
 });
 </script>
 @endsection
