@@ -1,4 +1,3 @@
-{{-- resources/views/schoolpayment/studentstatement.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
