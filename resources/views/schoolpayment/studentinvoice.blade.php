@@ -2,6 +2,7 @@
 @extends('layouts.master')
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
 :root {
     --tb-primary: #0d6efd;
@@ -1065,15 +1066,45 @@ document.addEventListener('DOMContentLoaded', function () {
     const cleanInvoice = invoiceNumber.replace(/[^a-zA-Z0-9\-]/g, '');
     const customFilename = cleanName + '_' + cleanInvoice;
 
-    function handlePrint() {
-        document.title = customFilename;
-        setTimeout(() => {
-            window.print();
-            setTimeout(() => { document.title = originalTitle; }, 1000);
-        }, 100);
+    const printBtn = document.getElementById('print-button');
+    let alreadyConfirmed = false;
+
+    // Fires once per page load: marks the pending payments for this
+    // student/class/term/session as finalized (delete_status 1 -> 0),
+    // same effect as the Download PDF flow. Non-blocking: if this fails,
+    // printing still proceeds, and Download PDF remains the fallback way
+    // to finalize.
+    function confirmInvoiceOnServer() {
+        if (alreadyConfirmed) return Promise.resolve();
+        alreadyConfirmed = true;
+
+        return fetch(`{{ route('schoolpayment.confirmInvoice', [
+                'studentId'     => $studentId,
+                'schoolclassid' => $schoolclassid ?? '',
+                'termid'        => $termid,
+                'sessionid'     => $sessionid,
+            ]) }}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+        }).catch(function (err) {
+            console.error('confirmInvoice failed:', err);
+        });
     }
 
-    document.getElementById('print-button')?.addEventListener('click', handlePrint);
+    function handlePrint() {
+        document.title = customFilename;
+        confirmInvoiceOnServer().finally(function () {
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => { document.title = originalTitle; }, 1000);
+            }, 100);
+        });
+    }
+
+    printBtn?.addEventListener('click', handlePrint);
 
     window.addEventListener('beforeprint', () => { document.title = customFilename; });
     window.addEventListener('afterprint', () => { setTimeout(() => { document.title = originalTitle; }, 500); });
