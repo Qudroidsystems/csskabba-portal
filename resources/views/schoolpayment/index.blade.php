@@ -409,7 +409,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                             @endif
                         </td>
                         <td>
-                            <a href="{{ route('schoolpayment.termSession', $s->id) }}" class="p-action-btn pay" title="Manage Payment">
+                            <a href="{{ route('schoolpayment.termsession', $s->id) }}" class="p-action-btn pay" title="Manage Payment">
                                 <i class="bi bi-cash-coin"></i>
                             </a>
                         </td>
