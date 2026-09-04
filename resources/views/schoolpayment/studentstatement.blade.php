@@ -27,6 +27,7 @@
     .status-paid { color:#16a34a; font-weight:bold; }
     .status-pending { color:#d97706; font-weight:bold; }
     .footer-note { margin-top:30px; font-size:9px; color:#9ca3af; text-align:center; }
+    .naira { font-family: 'DejaVu Sans', sans-serif; }
 </style>
 </head>
 <body>
@@ -42,7 +43,7 @@
                 <div style="font-size:10px;color:#6b7280;margin-top:4px;">
                     {{ $schoolInfo->school_address ?? '' }}<br>
                     {{ $schoolInfo->school_email ?? '' }}
-                    @if($schoolInfo->formatted_phones ?? false) | {{ $schoolInfo->formatted_phones }} @endif
+                    @if($schoolInfo && $schoolInfo->formatted_phones) | {{ $schoolInfo->formatted_phones }} @endif
                 </div>
             </td>
             <td style="width:40%;">
@@ -98,9 +99,9 @@
                     <strong>{{ $p->title }}</strong>
                     @if($p->description)<br><span style="color:#6b7280;">{{ $p->description }}</span>@endif
                 </td>
-                <td class="text-right">&#8358;{{ number_format($p->amount, 2) }}</td>
-                <td class="text-right">&#8358;{{ number_format($p->amount_paid, 2) }}</td>
-                <td class="text-right">&#8358;{{ number_format($p->balance, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($p->amount, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($p->amount_paid, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($p->balance, 2) }}</td>
                 <td>{{ $p->payment_method ?? 'N/A' }}</td>
                 <td>{{ $p->received_by ?? 'N/A' }}</td>
                 <td>{{ $p->payment_date ? \Carbon\Carbon::parse($p->payment_date)->format('d M Y') : 'N/A' }}</td>
@@ -115,15 +116,15 @@
     <table class="totals-table">
         <tr>
             <td class="label">Total Bill Amount</td>
-            <td class="value">&#8358;{{ number_format($totalSchoolBill, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalSchoolBill, 2) }}</td>
         </tr>
         <tr>
             <td class="label">Total Amount Paid</td>
-            <td class="value">&#8358;{{ number_format($totalPaid, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalPaid, 2) }}</td>
         </tr>
         <tr class="grand-row">
             <td class="label">Outstanding Balance</td>
-            <td class="value">&#8358;{{ number_format($totalOutstanding, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalOutstanding, 2) }}</td>
         </tr>
     </table>
 

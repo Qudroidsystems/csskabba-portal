@@ -429,6 +429,43 @@ class SchoolPaymentController extends Controller
             ->first();
     }
 
+    /**
+     * Helper method to prepare school info with base64 images for PDF
+     */
+    private function prepareSchoolInfoForPdf($schoolInfo)
+    {
+        if (!$schoolInfo) {
+            return null;
+        }
+
+        // Get logo base64
+        if ($schoolInfo->school_logo && Storage::disk('public')->exists($schoolInfo->school_logo)) {
+            $path = Storage::disk('public')->path($schoolInfo->school_logo);
+            $mime = mime_content_type($path) ?: 'image/png';
+            $data = base64_encode(file_get_contents($path));
+            $schoolInfo->logo_base64 = "data:{$mime};base64,{$data}";
+        } else {
+            $schoolInfo->logo_base64 = null;
+        }
+
+        // Get stamp base64
+        if ($schoolInfo->school_stamp && Storage::disk('public')->exists($schoolInfo->school_stamp)) {
+            $path = Storage::disk('public')->path($schoolInfo->school_stamp);
+            $mime = mime_content_type($path) ?: 'image/png';
+            $data = base64_encode(file_get_contents($path));
+            $schoolInfo->stamp_base64 = "data:{$mime};base64,{$data}";
+        } else {
+            $schoolInfo->stamp_base64 = null;
+        }
+
+        // Format phones if needed
+        if (empty($schoolInfo->formatted_phones) && !empty($schoolInfo->school_phones)) {
+            $schoolInfo->formatted_phones = implode(', ', $schoolInfo->school_phones);
+        }
+
+        return $schoolInfo;
+    }
+
     // ── AJAX: Get payment details ─────────────────────────────────────────
 
     public function getPaymentDetailsAjax(Request $request)
@@ -1293,7 +1330,10 @@ class SchoolPaymentController extends Controller
         $totalOutstanding  = $payments->sum('balance');
         $totalSavings      = $payments->sum('total_savings');
 
-        $schoolInfo    = SchoolInformation::first();
+        // Get school info and prepare base64 for PDF
+        $schoolInfo = SchoolInformation::first();
+        $schoolInfo = $this->prepareSchoolInfoForPdf($schoolInfo);
+
         $schoolterm    = optional(Schoolterm::find($termid))->term    ?? 'N/A';
         $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
@@ -1332,7 +1372,13 @@ class SchoolPaymentController extends Controller
                 ->update(['delete_status' => '0']);
 
             $safeFilename = 'invoice_' . preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId) . '.pdf';
-            $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data);
+            $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data)
+                ->setOptions([
+                    'defaultFont' => 'DejaVu Sans',
+                    'isRemoteEnabled' => false,
+                    'isHtml5ParserEnabled' => true,
+                    'isPhpEnabled' => false,
+                ]);
             return $pdf->download($safeFilename);
         }
 
@@ -1456,7 +1502,10 @@ class SchoolPaymentController extends Controller
 
         $totalPaid        = $studentpaymentbillbook->sum('amount_paid');
         $totalOutstanding = max(0, $totalSchoolBill - $totalPaid);
-        $schoolInfo       = SchoolInformation::first();
+        
+        // Get school info and prepare base64 for PDF
+        $schoolInfo = SchoolInformation::first();
+        $schoolInfo = $this->prepareSchoolInfoForPdf($schoolInfo);
 
         $safeAdmission   = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
         $statementNumber = 'STMT-' . $safeAdmission . '-' . date('Ymd');
@@ -1484,7 +1533,13 @@ class SchoolPaymentController extends Controller
         ];
 
         $safeFilename = 'statement_' . $safeAdmission . '.pdf';
-        $pdf = PDF::loadView('schoolpayment.studentstatement', $data);
+        $pdf = PDF::loadView('schoolpayment.studentstatement', $data)
+            ->setOptions([
+                'defaultFont' => 'DejaVu Sans',
+                'isRemoteEnabled' => false,
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => false,
+            ]);
         return $pdf->download($safeFilename);
     }
 }

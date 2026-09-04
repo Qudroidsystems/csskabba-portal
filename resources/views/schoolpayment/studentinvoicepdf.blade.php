@@ -52,6 +52,8 @@
 
     .signature-row { width:100%; margin-top:40px; }
     .signature-line { border-top:1px solid #1e3a5f; width:180px; margin-top:35px; }
+    
+    .naira { font-family: 'DejaVu Sans', sans-serif; }
 </style>
 </head>
 <body>
@@ -67,7 +69,7 @@
                 <div class="school-meta">
                     {{ $schoolInfo->school_address ?? '' }}<br>
                     {{ $schoolInfo->school_email ?? '' }}
-                    @if($schoolInfo->formatted_phones ?? false)
+                    @if($schoolInfo && $schoolInfo->formatted_phones)
                         &nbsp;|&nbsp;{{ $schoolInfo->formatted_phones }}
                     @endif
                 </div>
@@ -121,7 +123,7 @@
             </td>
             <td>
                 <div class="meta-label">Total Bill Amount</div>
-                <div class="meta-value">&#8358;{{ number_format($totalBillAmount, 2) }}</div>
+                <div class="meta-value"><span class="naira">&#8358;</span>{{ number_format($totalBillAmount, 2) }}</div>
             </td>
         </tr>
     </table>
@@ -150,15 +152,15 @@
                         <br><span class="muted">{{ $sp->description }}</span>
                     @endif
                     @if(isset($sp->total_savings) && $sp->total_savings > 0)
-                        <br><span class="savings-note">Savings: &#8358;{{ number_format($sp->total_savings, 2) }}</span>
+                        <br><span class="savings-note">Savings: <span class="naira">&#8358;</span>{{ number_format($sp->total_savings, 2) }}</span>
                     @endif
                 </td>
-                <td class="text-right">&#8358;{{ number_format($sp->amount, 2) }}</td>
-                <td class="text-right">&#8358;{{ number_format($sp->previousPaid, 2) }}</td>
-                <td class="text-right">&#8358;{{ number_format($sp->todayPaid, 2) }}</td>
-                <td class="text-right">&#8358;{{ number_format($sp->amountPaid, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($sp->amount, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($sp->previousPaid, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($sp->todayPaid, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($sp->amountPaid, 2) }}</td>
                 <td>{{ $sp->paymentMethod ?? 'N/A' }}</td>
-                <td class="text-right">&#8358;{{ number_format($sp->balance, 2) }}</td>
+                <td class="text-right"><span class="naira">&#8358;</span>{{ number_format($sp->balance, 2) }}</td>
             </tr>
             @empty
             <tr>
@@ -173,29 +175,29 @@
     <table class="totals-table">
         <tr>
             <td class="label">Subtotal (Bill Amount)</td>
-            <td class="value">&#8358;{{ number_format($totalBillAmount, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalBillAmount, 2) }}</td>
         </tr>
         @if(isset($totalSavings) && $totalSavings > 0)
         <tr class="savings-row">
             <td class="label">Total Savings Applied</td>
-            <td class="value">-&#8358;{{ number_format($totalSavings, 2) }}</td>
+            <td class="value">-<span class="naira">&#8358;</span>{{ number_format($totalSavings, 2) }}</td>
         </tr>
         @endif
         <tr>
             <td class="label">Total Previous Payments</td>
-            <td class="value">&#8358;{{ number_format($totalPreviousPaid, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalPreviousPaid, 2) }}</td>
         </tr>
         <tr>
             <td class="label">Today's Payment</td>
-            <td class="value">&#8358;{{ number_format($totalTodayPaid, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalTodayPaid, 2) }}</td>
         </tr>
         <tr>
             <td class="label">Total Amount Paid</td>
-            <td class="value">&#8358;{{ number_format($totalPaid, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalPaid, 2) }}</td>
         </tr>
         <tr class="grand-row">
             <td class="label">Outstanding Balance</td>
-            <td class="value">&#8358;{{ number_format($totalOutstanding, 2) }}</td>
+            <td class="value"><span class="naira">&#8358;</span>{{ number_format($totalOutstanding, 2) }}</td>
         </tr>
     </table>
 
