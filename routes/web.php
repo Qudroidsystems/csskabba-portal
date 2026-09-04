@@ -747,6 +747,8 @@ Route::get('/studentreport/drawer-data/{studentId}/{schoolclassId}/{sessionId}/{
 
         // Invoice and Statement
         Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
+         // 'payment' group
+        Route::post('/invoice/confirm/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'confirmInvoice'])->name('confirmInvoice');
         Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
 
         // Termsession payments (alternative entry)
@@ -765,6 +767,7 @@ Route::get('/studentreport/drawer-data/{studentId}/{schoolclassId}/{sessionId}/{
         Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
         Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
         Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
+       Route::post('/invoice/confirm/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'confirmInvoice'])->name('confirmInvoice');      
         Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
     });
 
