@@ -158,7 +158,9 @@
 .empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
 .empty-state p { margin: 0; font-size: 14px; }
 
-/* Modals */
+/* ============================================
+   PAYMENT MODAL - ENHANCED CURRENCY INPUT
+   ============================================ */
 #paymentModal .modal-content,
 #bulkPaymentModal .modal-content {
     border: none; border-radius: 16px; overflow: hidden;
@@ -194,6 +196,130 @@
 }
 .form-control[readonly] { background: var(--pay-bg); cursor: default; }
 
+/* ============================================
+   CURRENCY INPUT - LIKE OPAY APP
+   ============================================ */
+.currency-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1.5px solid var(--pay-border);
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    overflow: hidden;
+}
+
+.currency-input-wrapper:focus-within {
+    border-color: var(--pay-accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+.currency-input-wrapper .currency-symbol {
+    position: absolute;
+    left: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--pay-primary);
+    pointer-events: none;
+    z-index: 1;
+    font-family: 'DejaVu Sans', sans-serif;
+}
+
+.currency-input-wrapper .currency-amount {
+    width: 100%;
+    border: none;
+    padding: 12px 14px 12px 36px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--pay-primary);
+    background: transparent;
+    outline: none;
+    font-family: 'DejaVu Sans', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.currency-input-wrapper .currency-amount::placeholder {
+    color: #d1d5db;
+    font-weight: 400;
+    font-size: 18px;
+    letter-spacing: normal;
+}
+
+.currency-input-wrapper .currency-amount:focus {
+    box-shadow: none;
+}
+
+/* Amount display in modal */
+.amount-display-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--pay-border);
+    font-size: 13px;
+}
+
+.amount-display-row:last-child {
+    border-bottom: none;
+}
+
+.amount-display-row .label {
+    color: var(--pay-muted);
+}
+
+.amount-display-row .value {
+    font-weight: 700;
+    color: var(--pay-primary);
+}
+
+.amount-display-row .value.text-success {
+    color: var(--pay-success);
+}
+
+.amount-display-row .value.text-danger {
+    color: var(--pay-danger);
+}
+
+/* Amount quick buttons */
+.quick-amount-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.quick-amount-btn {
+    padding: 4px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--pay-border);
+    background: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pay-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.quick-amount-btn:hover {
+    border-color: var(--pay-accent);
+    color: var(--pay-accent);
+    background: #eff6ff;
+}
+
+.quick-amount-btn:active {
+    transform: scale(0.95);
+}
+
+.quick-amount-btn.full-amount {
+    border-color: var(--pay-success);
+    color: var(--pay-success);
+}
+
+.quick-amount-btn.full-amount:hover {
+    background: #f0fdf4;
+}
+
 /* Bulk payment */
 .bulk-summary {
     background: #f0fdf4; border: 1px solid #bbf7d0;
@@ -205,6 +331,24 @@
 }
 .bulk-summary-item:last-child {
     border-bottom: none; font-weight: 700; color: var(--pay-primary);
+}
+
+/* Responsive adjustments for currency input */
+@media (max-width: 576px) {
+    .currency-input-wrapper .currency-amount {
+        font-size: 20px;
+        padding: 10px 12px 10px 34px;
+    }
+    
+    .currency-input-wrapper .currency-symbol {
+        font-size: 16px;
+        left: 10px;
+    }
+    
+    .quick-amount-btn {
+        font-size: 11px;
+        padding: 3px 10px;
+    }
 }
 </style>
 
@@ -273,10 +417,10 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Total Payment Amount <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text fw-semibold">₦</span>
-                        <input type="text" id="bulk_payment_amount" class="form-control"
-                               placeholder="Enter total amount to pay">
+                    <div class="currency-input-wrapper">
+                        <span class="currency-symbol">₦</span>
+                        <input type="text" id="bulk_payment_amount" class="currency-amount"
+                               placeholder="0.00" autocomplete="off">
                     </div>
                     <div class="form-text text-muted">Amount is distributed across selected bills in order.</div>
                 </div>
@@ -307,7 +451,7 @@
 
 {{-- INDIVIDUAL PAYMENT MODAL --}}
 <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:500px">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:520px">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -350,32 +494,44 @@
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-6">
-                            <label class="form-label">Bill Amount</label>
-                            <input type="text" id="amount_d" class="form-control" readonly>
+                    {{-- Amount Display --}}
+                    <div class="bg-light rounded-3 p-3 mb-3">
+                        <div class="amount-display-row">
+                            <span class="label">Bill Amount</span>
+                            <span class="value" id="amount_d">₦0</span>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label">Amount Paid</label>
-                            <input type="text" id="amount_paid_d" class="form-control" readonly>
+                        <div class="amount-display-row">
+                            <span class="label">Amount Paid</span>
+                            <span class="value text-success" id="amount_paid_d">₦0</span>
+                        </div>
+                        <div class="amount-display-row">
+                            <span class="label">Outstanding Balance</span>
+                            <span class="value text-danger" id="balance_d">₦0</span>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Outstanding Balance</label>
-                        <input type="text" id="balance_d" class="form-control" readonly
-                               style="background:#fff3cd;font-weight:700;">
-                        <div class="form-text small text-muted">Payment cannot exceed this balance.</div>
-                    </div>
-                    <div class="mb-3">
+
+                    {{-- Currency Input - Like OPay --}}
+                    <div class="mb-2">
                         <label class="form-label">Enter Payment Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text fw-semibold">₦</span>
+                        <div class="currency-input-wrapper">
+                            <span class="currency-symbol">₦</span>
                             <input type="text" id="payment_amount" name="payment_amount"
-                                   class="form-control" placeholder="0.00" required>
+                                   class="currency-amount" placeholder="0.00"
+                                   autocomplete="off" inputmode="decimal">
                         </div>
                         <div class="invalid-feedback d-block" id="amountError"></div>
                     </div>
-                    <div class="mb-3">
+
+                    {{-- Quick Amount Buttons --}}
+                    <div class="quick-amount-buttons" id="quickAmountButtons">
+                        <button type="button" class="quick-amount-btn" data-percent="25">25%</button>
+                        <button type="button" class="quick-amount-btn" data-percent="50">50%</button>
+                        <button type="button" class="quick-amount-btn" data-percent="75">75%</button>
+                        <button type="button" class="quick-amount-btn full-amount" data-percent="100">100%</button>
+                        <button type="button" class="quick-amount-btn" data-custom="clear">Clear</button>
+                    </div>
+
+                    <div class="mb-3 mt-3">
                         <label class="form-label">Payment Method <span class="text-danger">*</span></label>
                         <select id="payment_method2" name="payment_method2" class="form-select" required>
                             <option value="">— Select Method —</option>
@@ -435,26 +591,177 @@ document.addEventListener('DOMContentLoaded', function () {
     let billsDataGlobal  = [];
     let currentDeleteUrl = '';
 
-    // ── Helpers ───────────────────────────────────────────────────────────
+    // ── Currency Formatting Helpers ──────────────────────────────────────
 
-    function fmt(n) {
-        return Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 0 });
+    /**
+     * Format a number as currency with commas (like OPay)
+     * Examples:
+     *   1234 -> "1,234"
+     *   1234.56 -> "1,234.56"
+     *   1000000 -> "1,000,000"
+     */
+    function formatCurrency(value) {
+        if (value === null || value === undefined || value === '') return '';
+        
+        // Remove any non-numeric characters except decimal point
+        let num = String(value).replace(/[^0-9.]/g, '');
+        
+        // Parse as float
+        let floatNum = parseFloat(num);
+        if (isNaN(floatNum)) return '';
+        
+        // Format with commas
+        let parts = num.split('.');
+        let wholePart = parts[0];
+        let decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+        
+        // Add commas to whole part
+        wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        
+        return wholePart + decimalPart;
     }
 
-    function escapeHtml(str) {
-        if (str === null || str === undefined) return '';
-        return String(str).replace(/[&<>"']/g, function (m) {
-            return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m];
+    /**
+     * Parse formatted currency string back to a number
+     * Example: "1,234.56" -> 1234.56
+     */
+    function parseCurrency(value) {
+        if (!value) return 0;
+        return parseFloat(String(value).replace(/[^0-9.]/g, '')) || 0;
+    }
+
+    /**
+     * Format and display currency in an input field
+     * This is the main handler for the currency input
+     */
+    function formatCurrencyInput(input) {
+        if (!input) return;
+        
+        // Get cursor position before formatting
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const oldValue = input.value;
+        
+        // Parse the numeric value
+        let rawValue = String(input.value).replace(/[^0-9.]/g, '');
+        
+        // Handle decimal points - only allow one
+        let parts = rawValue.split('.');
+        if (parts.length > 2) {
+            rawValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Format with commas
+        let formatted = formatCurrency(rawValue);
+        
+        // Update input value
+        input.value = formatted;
+        
+        // Restore cursor position (adjust for added commas)
+        let newCursorPos = start;
+        let diff = (formatted.length - oldValue.length);
+        newCursorPos = Math.max(0, Math.min(formatted.length, newCursorPos + diff));
+        
+        // If the user is typing, try to maintain position
+        if (document.activeElement === input) {
+            input.setSelectionRange(newCursorPos, newCursorPos);
+        }
+    }
+
+    /**
+     * Handle currency input with proper cursor management
+     */
+    function handleCurrencyInput(e) {
+        const input = e.target;
+        
+        // Save cursor position
+        const start = input.selectionStart;
+        const rawValue = input.value;
+        const numericValue = parseCurrency(rawValue);
+        
+        // Check if user pressed a special key
+        const isSpecialKey = e.key === 'Backspace' || e.key === 'Delete' || 
+                            e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+                            e.key === 'Home' || e.key === 'End' ||
+                            e.key === 'Tab' || e.ctrlKey || e.metaKey;
+        
+        // Allow: numbers, decimal point, backspace, delete, arrow keys
+        if (e.key && !isSpecialKey && !/[0-9.]/.test(e.key)) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Prevent multiple decimal points
+        if (e.key === '.' && rawValue.includes('.')) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Let the browser handle the input, then format
+        setTimeout(() => {
+            formatCurrencyInput(input);
+            
+            // Trigger change event for validation
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }, 0);
+    }
+
+    /**
+     * Set currency input value programmatically
+     */
+    function setCurrencyValue(input, value) {
+        if (!input) return;
+        const formatted = formatCurrency(value);
+        input.value = formatted;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    /**
+     * Get numeric value from currency input
+     */
+    function getCurrencyValue(input) {
+        return parseCurrency(input.value);
+    }
+
+    // ── Quick Amount Buttons ─────────────────────────────────────────────
+
+    function setupQuickAmountButtons() {
+        const buttons = document.querySelectorAll('.quick-amount-btn');
+        const input = document.getElementById('payment_amount');
+        const balanceEl = document.getElementById('balance_d');
+        
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const percent = parseInt(this.dataset.percent);
+                const isClear = this.dataset.custom === 'clear';
+                
+                if (isClear) {
+                    setCurrencyValue(input, '');
+                    return;
+                }
+                
+                // Get the balance from the display
+                const balanceText = balanceEl.textContent.replace(/[^0-9.]/g, '');
+                const balance = parseFloat(balanceText) || 0;
+                
+                if (balance <= 0) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No Balance',
+                        text: 'This bill has no outstanding balance.',
+                        confirmButtonColor: '#2563eb',
+                    });
+                    return;
+                }
+                
+                const amount = (balance * percent / 100);
+                const roundedAmount = Math.round(amount * 100) / 100; // Round to 2 decimal places
+                setCurrencyValue(input, roundedAmount);
+                
+                // Trigger validation
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
         });
-    }
-
-    function showLoading(show) {
-        document.getElementById('loadingOverlay').classList.toggle('active', !!show);
-    }
-
-    function getAvatarUrl(picture) {
-        if (!picture || picture === 'unnamed.jpg' || picture === '') return null;
-        return '/storage/images/student_avatars/' + picture.replace(/^\/+/, '');
     }
 
     // ── Load data ─────────────────────────────────────────────────────────
@@ -858,9 +1165,57 @@ document.addEventListener('DOMContentLoaded', function () {
         attachBillSelectionEvents(bills);
         attachPaymentButtons(bills);
         attachDeleteHandlers();
+        
+        // Setup currency input handlers
+        setupCurrencyInputHandlers();
+        setupQuickAmountButtons();
 
         const bulkBtn = document.getElementById('bulkPaymentBtn');
         if (bulkBtn) bulkBtn.addEventListener('click', () => openBulkPaymentModal());
+    }
+
+    // ── Currency Input Handlers ──────────────────────────────────────────
+
+    function setupCurrencyInputHandlers() {
+        // Individual payment amount input
+        const paymentInput = document.getElementById('payment_amount');
+        if (paymentInput) {
+            // Handle input events for real-time formatting
+            paymentInput.addEventListener('input', handleCurrencyInput);
+            
+            // Handle focus - select all text for easy typing
+            paymentInput.addEventListener('focus', function() {
+                this.select();
+            });
+            
+            // Handle blur - ensure proper formatting
+            paymentInput.addEventListener('blur', function() {
+                formatCurrencyInput(this);
+            });
+            
+            // Handle keydown for special keys
+            paymentInput.addEventListener('keydown', function(e) {
+                // Allow: backspace, delete, tab, escape, enter, arrow keys, home, end
+                if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' ||
+                    e.key === 'Escape' || e.key === 'Enter' || e.key === 'Home' ||
+                    e.key === 'End' || e.key.startsWith('Arrow')) {
+                    return;
+                }
+                
+                // Allow: numbers, decimal point
+                if (!/^[0-9.]$/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        // Bulk payment amount input
+        const bulkInput = document.getElementById('bulk_payment_amount');
+        if (bulkInput) {
+            bulkInput.addEventListener('input', handleCurrencyInput);
+            bulkInput.addEventListener('focus', function() { this.select(); });
+            bulkInput.addEventListener('blur', function() { formatCurrencyInput(this); });
+        }
     }
 
     // ── Bill checkbox selection ───────────────────────────────────────────
@@ -915,11 +1270,15 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('last_amount_paid').value              = bill.amount_paid;
         document.getElementById('scholarship_deduction').value         = bill.scholarship_deduction || 0;
         document.getElementById('discount_deduction').value            = bill.discount_deduction || 0;
-        document.getElementById('amount_d').value                      = '₦' + fmt(bill.adjusted_amount);
-        document.getElementById('amount_paid_d').value                 = '₦' + fmt(bill.amount_paid);
-        document.getElementById('balance_d').value                     = '₦' + fmt(bill.balance);
-        document.getElementById('payment_amount').value                = '';
-        document.getElementById('payment_amount2').value               = '';
+        
+        // Display amounts with proper formatting
+        document.getElementById('amount_d').textContent                = '₦' + fmt(bill.adjusted_amount);
+        document.getElementById('amount_paid_d').textContent           = '₦' + fmt(bill.amount_paid);
+        document.getElementById('balance_d').textContent               = '₦' + fmt(bill.balance);
+        
+        // Clear currency input
+        const paymentInput = document.getElementById('payment_amount');
+        setCurrencyValue(paymentInput, '');
         document.getElementById('payment_method2').value               = '';
         document.getElementById('amountError').textContent             = '';
 
@@ -944,6 +1303,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         new bootstrap.Modal(document.getElementById('paymentModal')).show();
+        
+        // Focus the currency input after modal opens
+        setTimeout(() => {
+            paymentInput.focus();
+        }, 300);
     }
 
     // ── Bulk payment modal ────────────────────────────────────────────────
@@ -981,15 +1345,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('bulkTotalPayable').textContent      = '₦' + fmt(totalPayable);
         document.getElementById('bulkTotalSavings').textContent      = '₦' + fmt(totalSavings);
-        document.getElementById('bulk_payment_amount').value         = '';
+        
+        // Clear bulk currency input
+        const bulkInput = document.getElementById('bulk_payment_amount');
+        setCurrencyValue(bulkInput, '');
         document.getElementById('bulk_payment_method').value         = '';
         document.getElementById('paymentDistribution').style.display = 'none';
 
         new bootstrap.Modal(document.getElementById('bulkPaymentModal')).show();
+        
+        // Focus the currency input after modal opens
+        setTimeout(() => {
+            bulkInput.focus();
+        }, 300);
 
         // Distribution preview
-        document.getElementById('bulk_payment_amount').oninput = function () {
-            const remaining0 = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
+        bulkInput.oninput = function () {
+            const remaining0 = getCurrencyValue(this);
             let remaining = remaining0;
             const dist = [];
             for (const bill of selectedBills) {
@@ -1001,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 remaining -= pay;
             }
             const distDiv = document.getElementById('paymentDistribution');
-            if (dist.length > 0) {
+            if (dist.length > 0 && remaining0 > 0) {
                 document.getElementById('distributionList').innerHTML = dist.map(d => `
                     <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                         <span class="fw-semibold">${escapeHtml(d.title)}</span>
@@ -1024,9 +1396,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Submit bulk payment ───────────────────────────────────────────────
 
     function submitBulkPayment(selectedBills) {
-        const paymentAmount = parseFloat(
-            (document.getElementById('bulk_payment_amount').value || '').replace(/[^0-9.]/g, '')
-        ) || 0;
+        const paymentAmount = getCurrencyValue(document.getElementById('bulk_payment_amount'));
         const paymentMethod = document.getElementById('bulk_payment_method').value;
         const totalPayable  = selectedBills.reduce((s, b) => s + parseFloat(b.balance || 0), 0);
 
@@ -1101,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('paymentForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const amount  = parseFloat(document.getElementById('payment_amount').value.replace(/[^0-9.]/g, '')) || 0;
+        const amount  = getCurrencyValue(document.getElementById('payment_amount'));
         const balance = parseFloat(document.getElementById('balance2').value) || 0;
         const method  = document.getElementById('payment_method2').value;
 
@@ -1177,6 +1547,28 @@ document.addEventListener('DOMContentLoaded', function () {
             currentDeleteUrl = '';
         });
     });
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    function fmt(n) {
+        return Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 0 });
+    }
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>"']/g, function (m) {
+            return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m];
+        });
+    }
+
+    function showLoading(show) {
+        document.getElementById('loadingOverlay').classList.toggle('active', !!show);
+    }
+
+    function getAvatarUrl(picture) {
+        if (!picture || picture === 'unnamed.jpg' || picture === '') return null;
+        return '/storage/images/student_avatars/' + picture.replace(/^\/+/, '');
+    }
 
     // ── Boot ──────────────────────────────────────────────────────────────
     loadPaymentData();
