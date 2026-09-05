@@ -627,6 +627,7 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     function parseCurrency(value) {
         if (!value) return 0;
+        // Remove all commas and non-numeric characters except decimal point
         return parseFloat(String(value).replace(/[^0-9.]/g, '')) || 0;
     }
 
@@ -720,6 +721,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * Get numeric value from currency input
      */
     function getCurrencyValue(input) {
+        if (!input) return 0;
         return parseCurrency(input.value);
     }
 
@@ -737,6 +739,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 if (isClear) {
                     setCurrencyValue(input, '');
+                    // Trigger validation
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
                     return;
                 }
                 
@@ -754,8 +758,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 
+                // Calculate amount and round to 2 decimal places
                 const amount = (balance * percent / 100);
-                const roundedAmount = Math.round(amount * 100) / 100; // Round to 2 decimal places
+                const roundedAmount = Math.round(amount * 100) / 100;
                 setCurrencyValue(input, roundedAmount);
                 
                 // Trigger validation
@@ -1396,7 +1401,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Submit bulk payment ───────────────────────────────────────────────
 
     function submitBulkPayment(selectedBills) {
-        const paymentAmount = getCurrencyValue(document.getElementById('bulk_payment_amount'));
+        const bulkInput = document.getElementById('bulk_payment_amount');
+        const paymentAmount = getCurrencyValue(bulkInput);
         const paymentMethod = document.getElementById('bulk_payment_method').value;
         const totalPayable  = selectedBills.reduce((s, b) => s + parseFloat(b.balance || 0), 0);
 
@@ -1411,6 +1417,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const classId = selectedBills[0]?.class_id || 0;
 
+        const payload = {
+            student_id: studentId,
+            class_id: classId,
+            term_id: termid,
+            session_id: sessionid,
+            payment_amount: paymentAmount,
+            payment_method: paymentMethod,
+            bill_payments: selectedBills.map(b => ({
+                school_bill_id: b.id,
+                title: b.title,
+                adjusted_amount: b.adjusted_amount,
+                balance: b.balance,
+                scholarship_deduction: b.scholarship_deduction || 0,
+                discount_deduction: b.discount_deduction || 0,
+            })),
+        };
+
         fetch('{{ route("schoolpayment.bulk-store") }}', {
             method: 'POST',
             headers: {
@@ -1418,24 +1441,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({
-                student_id:     studentId,
-                class_id:       classId,
-                term_id:        termid,
-                session_id:     sessionid,
-                payment_amount: paymentAmount,
-                payment_method: paymentMethod,
-                bill_payments:  selectedBills.map(b => ({
-                    school_bill_id:        b.id,
-                    title:                 b.title,
-                    adjusted_amount:       b.adjusted_amount,
-                    balance:               b.balance,
-                    scholarship_deduction: b.scholarship_deduction || 0,
-                    discount_deduction:    b.discount_deduction    || 0,
-                })),
-            }),
+            body: JSON.stringify(payload),
         })
-        .then(r => r.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
         .then(result => {
             if (result.success) {
                 Swal.fire({ icon: 'success', title: 'Success!', text: result.message, timer: 2000, showConfirmButton: false })
@@ -1445,10 +1458,19 @@ document.addEventListener('DOMContentLoaded', function () {
                         loadPaymentData();
                     });
             } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.message });
+                Swal.fire({ icon: 'error', title: 'Error', text: result.message || 'Payment failed.' });
             }
         })
-        .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred while processing the payment.' }))
+        .catch(err => {
+            console.error('Bulk payment error:', err);
+            let errorMsg = 'An error occurred.';
+            if (err.errors) {
+                errorMsg = Object.values(err.errors).flat().join('. ');
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+            Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
+        })
         .finally(() => showLoading(false));
     }
 
@@ -1471,9 +1493,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('paymentForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const amount  = getCurrencyValue(document.getElementById('payment_amount'));
+        const amountInput = document.getElementById('payment_amount');
+        const amount = getCurrencyValue(amountInput);
         const balance = parseFloat(document.getElementById('balance2').value) || 0;
-        const method  = document.getElementById('payment_method2').value;
+        const method = document.getElementById('payment_method2').value;
 
         if (amount <= 0)
             return Swal.fire({ icon: 'warning', title: 'Invalid Amount', text: 'Enter a valid amount.', confirmButtonColor: '#2563eb' });
@@ -1482,21 +1505,33 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!method)
             return Swal.fire({ icon: 'warning', title: 'No Method', text: 'Select a payment method.', confirmButtonColor: '#2563eb' });
 
+        // Set the raw numeric value (no commas) for submission
         document.getElementById('payment_amount2').value = amount.toFixed(2);
+        // Also ensure the payment_amount field sends raw value
+        document.getElementById('payment_amount').value = amount.toFixed(2);
 
         const btn = document.getElementById('paySubmitBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing…';
 
+        // Create FormData and ensure the payment_amount is the raw value
+        const formData = new FormData(this);
+        formData.set('payment_amount', amount.toFixed(2));
+
         fetch('{{ route("schoolpayment.store") }}', {
-            method:  'POST',
-            body:    new FormData(this),
+            method: 'POST',
+            body: formData,
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept':       'application/json',
+                'Accept': 'application/json',
             },
         })
-        .then(r => r.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('paymentModal'))?.hide();
@@ -1506,10 +1541,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Payment failed.' });
             }
         })
-        .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'An error occurred.' }))
+        .catch(err => {
+            console.error('Payment error:', err);
+            let errorMsg = 'An error occurred.';
+            if (err.errors) {
+                errorMsg = Object.values(err.errors).flat().join('. ');
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+            Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
+        })
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="ri-wallet-line me-1"></i>Record Payment';
+            // Restore the formatted display
+            const input = document.getElementById('payment_amount');
+            formatCurrencyInput(input);
         });
     });
 
