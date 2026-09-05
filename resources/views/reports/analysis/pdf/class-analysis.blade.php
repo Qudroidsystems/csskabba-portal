@@ -127,6 +127,25 @@
         .benefit-scholarship { background: #fef3c7; color: #b45309; }
         .benefit-discount    { background: #ede9fe; color: #6d28d9; }
 
+        .avatar-cell { width: 32px; }
+        .avatar-img {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #d7e1ef;
+        }
+        .avatar-placeholder {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: #fff;
+            font-size: 8px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 26px;
+            margin: 0 auto;
+        }
+
         .progress-container { width: 42px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 0 auto; }
         .progress-fill { height: 4px; border-radius: 6px; }
         .progress-high { background: #16a34a; }
@@ -246,6 +265,7 @@
     <thead>
         <tr>
             <th rowspan="2">#</th>
+            <th rowspan="2">Photo</th>
             <th rowspan="2">Adm No</th>
             <th rowspan="2">Student Name</th>
             <th rowspan="2">Gender</th>
@@ -278,9 +298,18 @@
                 $completion     = $totalBilledForStudent > 0 ? round(($totalPaid / $totalBilledForStudent) * 100, 1) : 0;
                 $progressClass  = $completion >= 70 ? 'progress-high' : ($completion >= 40 ? 'progress-medium' : 'progress-low');
                 $billsForStudent = $studentBillDetails[$std->stid] ?? [];
+                $fullName = trim($std->firstname . ' ' . $std->lastname);
+                $initials = strtoupper(substr($std->firstname ?? '', 0, 1) . substr($std->lastname ?? '', 0, 1)) ?: 'ST';
             @endphp
             <tr>
                 <td class="text-center">{{ $counter++ }}</td>
+                <td class="text-center avatar-cell">
+                    @if(!empty($std->avatar_base64))
+                        <img src="{{ $std->avatar_base64 }}" class="avatar-img" alt="{{ $fullName }}">
+                    @else
+                        <div class="avatar-placeholder">{{ $initials }}</div>
+                    @endif
+                </td>
                 <td class="text-center">{{ $std->admissionno }}</td>
                 <td class="text-left">{{ $std->lastname }} {{ $std->firstname }} {{ $std->othername }}</td>
                 <td class="text-center">{{ $std->gender }}</td>
@@ -321,7 +350,7 @@
     </tbody>
     <tfoot>
         <tr>
-            <td colspan="5" class="text-end">TOTALS</td>
+            <td colspan="6" class="text-end">TOTALS</td>
             @foreach($studentBillInfo as $bill)
                 @php $bs = $billSummary[$bill->schoolbillid] ?? ['collected' => 0, 'expected' => 0]; @endphp
                 <td class="text-end bill-group-divider">₦{{ number_format($bs['collected'], 2) }}</td>

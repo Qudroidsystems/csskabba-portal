@@ -405,7 +405,30 @@ class AnalysisReportController extends Controller
 
         return $this->exportCSV($classId, $termId, $sessionId);
     }
+/**
+ * Encode a student's avatar as a base64 data URI for embedding in PDFs.
+ * Same reasoning as SchoolInformation::getLogoBase64Attribute() — DomPDF
+ * can't reliably fetch images over HTTP mid-render, so we read the file
+ * straight off the public disk and inline it.
+ */
+private function encodeStudentAvatar(?string $picture): ?string
+{
+    if (!$picture || $picture === 'unnamed.jpg') {
+        return null;
+    }
 
+    $relativePath = 'images/student_avatars/' . $picture;
+
+    if (!Storage::disk('public')->exists($relativePath)) {
+        return null;
+    }
+
+    $fullPath = Storage::disk('public')->path($relativePath);
+    $mime     = mime_content_type($fullPath) ?: 'image/jpeg';
+    $data     = base64_encode(file_get_contents($fullPath));
+
+    return "data:{$mime};base64,{$data}";
+}
   
     /**
  * Export PDF — per-student totals computed via buildBillAdjustment() for
@@ -450,11 +473,16 @@ public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
             'studentclass.schoolclassid as schoolclassid',
         ])
         ->get();
+        
 
     if ($students->isEmpty()) {
         return redirect()->route('reports.analysis.index')->with('error', 'No students found.');
     }
-
+    
+      // ADDED: embed each student's photo as base64 so DomPDF can render it
+        foreach ($students as $std) {
+            $std->avatar_base64 = $this->encodeStudentAvatar($std->picture);
+        }
     $billQuery = DB::table('school_bill_class_term_session')
         ->where('school_bill_class_term_session.termid_id', $termid_id)
         ->where('school_bill_class_term_session.session_id', $session_id)
