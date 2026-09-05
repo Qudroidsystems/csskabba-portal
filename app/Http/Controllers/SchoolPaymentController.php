@@ -774,21 +774,36 @@ class SchoolPaymentController extends Controller
 
     // ── Store individual payment ──────────────────────────────────────────
 
+  
+        // ── Store individual payment ──────────────────────────────────────────
+
     public function store(Request $request)
     {
         try {
+            // Normalize ids and amount before validation (avoid commas / empty strings)
+            $paymentAmountRaw = (float) str_replace(',', '', (string) $request->input('payment_amount', 0));
+
+            $request->merge([
+                'student_id'     => (int) $request->input('student_id'),
+                'class_id'       => (int) $request->input('class_id'),
+                'term_id'        => (int) $request->input('term_id'),
+                'session_id'     => (int) $request->input('session_id'),
+                'school_bill_id' => (int) $request->input('school_bill_id'),
+                'payment_amount' => $paymentAmountRaw,
+            ]);
+
             $request->validate([
                 'student_id'            => 'required|integer|exists:studentRegistration,id',
                 'class_id'              => 'required|integer|exists:schoolclass,id',
                 'term_id'               => 'required|integer|exists:schoolterm,id',
                 'session_id'            => 'required|integer|exists:schoolsession,id',
                 'school_bill_id'        => 'required|integer|exists:school_bill,id',
-                'actual_amount'         => 'required|numeric|min:0.01',
+                'actual_amount'         => 'required|numeric|min:0',
                 'adjusted_amount'       => 'nullable|numeric|min:0',
                 'balance2'              => 'required|numeric|min:0',
                 'last_amount_paid'      => 'required|numeric|min:0',
                 'payment_amount'        => 'required|numeric|min:0.01',
-                'payment_amount2'       => 'nullable|numeric|min:0.01',
+                'payment_amount2'       => 'nullable|numeric|min:0',
                 'payment_method2'       => 'required|string|in:Bank Deposit,School POS,Bank Transfer,Cheque',
                 'scholarship_deduction' => 'nullable|numeric|min:0',
                 'discount_deduction'    => 'nullable|numeric|min:0',
@@ -814,12 +829,21 @@ class SchoolPaymentController extends Controller
                 'session_id'     => $sessionId,
             ])->first();
 
-            if ($studentPayment && $studentPayment->delete_status == '0') {
+            // delete_status = '1' → payment recorded but not yet invoiced (pending invoice).
+            // Block a second payment until the user generates the invoice.
+            // delete_status = '0' → already invoiced. Allow a NEW payment cycle by
+            // starting a fresh shell (do not mix into the old invoice batch).
+            if ($studentPayment && (string) $studentPayment->delete_status === '1') {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot make additional payments until the pending invoice is generated for this bill.',
+                    'message' => 'There is already a payment recorded that has not been invoiced yet. Generate the invoice first, then you can record another payment.',
                 ], 422);
+            }
+
+            if ($studentPayment && (string) $studentPayment->delete_status === '0') {
+                // Previous cycle was invoiced — force create of a new shell below.
+                $studentPayment = null;
             }
 
             $bill = SchoolBillModel::findOrFail($schoolBillId);
@@ -833,8 +857,7 @@ class SchoolPaymentController extends Controller
             );
             $finalAdjustedAmount = $adj['adjusted_amount'];
 
-            // FIX: recompute the amount already paid from the ledger, not
-            // from the (potentially stale) book counter.
+            // Authoritative amount already paid from the ledger.
             $currentPaid    = $this->getTotalPaidForBill($studentId, $schoolBillId, $classId, $termId, $sessionId);
             $currentBalance = max(0, $finalAdjustedAmount - $currentPaid);
 
@@ -847,10 +870,13 @@ class SchoolPaymentController extends Controller
 
             if ($paymentAmount > $currentBalance + 0.01) {
                 DB::rollBack();
-                return response()->json(['success' => false, 'message' => 'Payment amount exceeds the actual outstanding balance.'], 422);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment amount (₦' . number_format($paymentAmount, 2) . ') exceeds the outstanding balance (₦' . number_format($currentBalance, 2) . ').',
+                ], 422);
             }
 
-            $balance         = $currentBalance - $paymentAmount;
+            $balance         = round($currentBalance - $paymentAmount, 2);
             $completePayment = $balance <= 0 ? 1 : 0;
             $status          = $completePayment ? 'Completed' : 'Pending';
             $generatedBy     = Auth::id();
@@ -892,8 +918,7 @@ class SchoolPaymentController extends Controller
                 'generated_by'            => $generatedBy,
             ]);
 
-            // FIX: recompute the book row from the ledger (SUM), instead of
-            // incrementing a counter with a raw string-concatenated value.
+            // Recompute the book row from the ledger (SUM).
             $this->syncPaymentBook(
                 $studentId,
                 $schoolBillId,
@@ -910,15 +935,15 @@ class SchoolPaymentController extends Controller
             DB::commit();
 
             $this->audit->log('recorded', [
-                'student_id'               => $studentId,
-                'school_bill_id'           => $schoolBillId,
-                'student_bill_payment_id'  => $studentPayment->id,
-                'class_id'                 => $classId,
-                'term_id'                  => $termId,
-                'session_id'               => $sessionId,
-                'amount'                   => $paymentAmount,
-                'payment_method'           => $request->payment_method2,
-                'entity_type'              => 'payment',
+                'student_id'              => $studentId,
+                'school_bill_id'          => $schoolBillId,
+                'student_bill_payment_id' => $studentPayment->id,
+                'class_id'                => $classId,
+                'term_id'                 => $termId,
+                'session_id'              => $sessionId,
+                'amount'                  => $paymentAmount,
+                'payment_method'          => $request->payment_method2,
+                'entity_type'             => 'payment',
             ], null, [
                 'amount'                => $paymentAmount,
                 'adjusted_amount'       => $finalAdjustedAmount,
@@ -930,14 +955,239 @@ class SchoolPaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Payment recorded successfully.']);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Payment store error: ', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return response()->json(['success' => false, 'message' => 'Failed to record payment: ' . $e->getMessage()], 500);
+            Log::error('Payment store error: ', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record payment: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
+    // ── Bulk store payment ────────────────────────────────────────────────
+
+    public function bulkStore(Request $request)
+    {
+        try {
+            $paymentAmountRaw = (float) str_replace(',', '', (string) $request->input('payment_amount', 0));
+
+            $request->merge([
+                'student_id'     => (int) $request->input('student_id'),
+                'class_id'       => (int) $request->input('class_id'),
+                'term_id'        => (int) $request->input('term_id'),
+                'session_id'     => (int) $request->input('session_id'),
+                'payment_amount' => $paymentAmountRaw,
+            ]);
+
+            $request->validate([
+                'student_id'                            => 'required|integer|exists:studentRegistration,id',
+                'class_id'                              => 'required|integer|exists:schoolclass,id',
+                'term_id'                               => 'required|integer|exists:schoolterm,id',
+                'session_id'                            => 'required|integer|exists:schoolsession,id',
+                'payment_amount'                        => 'required|numeric|min:0.01',
+                'payment_method'                        => 'required|string|in:Bank Deposit,School POS,Bank Transfer,Cheque',
+                'bill_payments'                         => 'required|array|min:1',
+                'bill_payments.*.school_bill_id'        => 'required|integer|exists:school_bill,id',
+                'bill_payments.*.title'                 => 'nullable|string|max:255',
+                // Client amounts are ignored — kept only so old front-end payloads don't fail validation.
+                'bill_payments.*.adjusted_amount'       => 'nullable|numeric|min:0',
+                'bill_payments.*.balance'               => 'nullable|numeric|min:0',
+                'bill_payments.*.scholarship_deduction' => 'nullable|numeric|min:0',
+                'bill_payments.*.discount_deduction'    => 'nullable|numeric|min:0',
+            ]);
+
+            if (!Auth::check()) {
+                return response()->json(['success' => false, 'message' => 'Not authenticated. Please login again.'], 401);
+            }
+
+            DB::beginTransaction();
+
+            $studentId          = (int) $request->student_id;
+            $classId            = (int) $request->class_id;
+            $termId             = (int) $request->term_id;
+            $sessionId          = (int) $request->session_id;
+            $generatedBy        = Auth::id();
+            $totalPaymentAmount = (float) $request->payment_amount;
+            $remainingAmount    = $totalPaymentAmount;
+            $paymentsProcessed  = [];
+
+            foreach ($request->bill_payments as $billPayment) {
+                if ($remainingAmount <= 0) {
+                    break;
+                }
+
+                $schoolBillId = (int) $billPayment['school_bill_id'];
+                $bill         = SchoolBillModel::findOrFail($schoolBillId);
+
+                // SERVER-SIDE RECOMPUTE — never trust client adjusted amounts.
+                $adj = $this->billAdjustment->buildBillAdjustment(
+                    $studentId,
+                    $schoolBillId,
+                    (float) $bill->bill_amount
+                );
+                $adjustedAmount       = $adj['adjusted_amount'];
+                $scholarshipDeduction = $adj['scholarship_deduction'];
+                $discountDeduction    = $adj['discount_deduction'];
+
+                $alreadyPaid    = $this->getTotalPaidForBill($studentId, $schoolBillId, $classId, $termId, $sessionId);
+                $currentBalance = max(0, $adjustedAmount - $alreadyPaid);
+
+                if ($currentBalance <= 0) {
+                    continue;
+                }
+
+                $paymentForThisBill = min($remainingAmount, $currentBalance);
+                if ($paymentForThisBill <= 0) {
+                    continue;
+                }
+
+                $remainingAmount -= $paymentForThisBill;
+                $newTotalPaid     = $alreadyPaid + $paymentForThisBill;
+                $newBalance       = max(0, round($adjustedAmount - $newTotalPaid, 2));
+                $completePayment  = $newBalance <= 0 ? 1 : 0;
+                $status           = $completePayment ? 'Completed' : 'Pending';
+
+                $studentPayment = StudentBillPayment::where([
+                    'student_id'     => $studentId,
+                    'school_bill_id' => $schoolBillId,
+                    'class_id'       => $classId,
+                    'termid_id'      => $termId,
+                    'session_id'     => $sessionId,
+                ])->first();
+
+                // Same rule as individual store:
+                // '1' = pending invoice → block
+                // '0' = already invoiced → start a new shell
+                if ($studentPayment && (string) $studentPayment->delete_status === '1') {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot make payment — a pending (uninvoiced) payment already exists for one of the selected bills. Generate the invoice first.',
+                    ], 422);
+                }
+
+                if ($studentPayment && (string) $studentPayment->delete_status === '0') {
+                    $studentPayment = null;
+                }
+
+                if ($studentPayment) {
+                    DB::table('student_bill_payment')
+                        ->where('id', $studentPayment->id)
+                        ->update([
+                            'payment_method' => $request->payment_method,
+                            'status'         => $status,
+                            'generated_by'   => $generatedBy,
+                            'delete_status'  => '1',
+                            'updated_at'     => now(),
+                        ]);
+                } else {
+                    $studentPayment = StudentBillPayment::create([
+                        'student_id'     => $studentId,
+                        'school_bill_id' => $schoolBillId,
+                        'class_id'       => $classId,
+                        'termid_id'      => $termId,
+                        'session_id'     => $sessionId,
+                        'payment_method' => $request->payment_method,
+                        'status'         => $status,
+                        'generated_by'   => $generatedBy,
+                        'delete_status'  => '1',
+                    ]);
+                }
+
+                StudentBillPaymentRecord::create([
+                    'student_bill_payment_id' => $studentPayment->id,
+                    'class_id'                => $classId,
+                    'termid_id'               => $termId,
+                    'session_id'              => $sessionId,
+                    'amount_paid'             => $paymentForThisBill,
+                    'last_payment'            => $paymentForThisBill,
+                    'amount_owed'             => $newBalance,
+                    'total_bill'              => $adjustedAmount,
+                    'complete_payment'        => $completePayment,
+                    'generated_by'            => $generatedBy,
+                ]);
+
+                $this->syncPaymentBook(
+                    $studentId,
+                    $schoolBillId,
+                    $classId,
+                    $termId,
+                    $sessionId,
+                    $adjustedAmount,
+                    (float) $bill->bill_amount,
+                    $scholarshipDeduction,
+                    $discountDeduction,
+                    $generatedBy
+                );
+
+                $paymentsProcessed[] = [
+                    'school_bill_id'        => $schoolBillId,
+                    'bill_title'            => $billPayment['title'] ?? $bill->title,
+                    'amount_paid'           => $paymentForThisBill,
+                    'balance'               => $newBalance,
+                    'scholarship_deduction' => $scholarshipDeduction,
+                    'discount_deduction'    => $discountDeduction,
+                ];
+            }
+
+            if (count($paymentsProcessed) === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No payments were applied. Selected bills may already be fully paid.',
+                ], 422);
+            }
+
+            DB::commit();
+
+            $this->audit->log('bulk_recorded', [
+                'student_id'     => $studentId,
+                'class_id'       => $classId,
+                'term_id'        => $termId,
+                'session_id'     => $sessionId,
+                'amount'         => $totalPaymentAmount - $remainingAmount,
+                'payment_method' => $request->payment_method,
+                'entity_type'    => 'bulk_payment',
+            ], null, ['bills' => $paymentsProcessed], 'Bulk payment recorded (server-recomputed adjustments)');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bulk payment recorded successfully.',
+                'data'    => [
+                    'payments_processed' => $paymentsProcessed,
+                    'total_paid'         => $totalPaymentAmount - $remainingAmount,
+                    'remaining_amount'   => $remainingAmount,
+                ],
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Bulk payment store error: ', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record payment: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+    
     // ── Bulk store payment ────────────────────────────────────────────────
 
     public function bulkStore(Request $request)
