@@ -18,6 +18,7 @@ use App\Models\StudentBillPayment;
 use App\Models\StudentBillPaymentBook;
 use App\Models\StudentBillPaymentRecord;
 use App\Models\Studentpicture;
+use App\Services\Billing\ArrearsService;
 use App\Services\Billing\BillAdjustmentService;
 use App\Services\Billing\PaymentAuditService;
 use Carbon\Carbon;
@@ -33,11 +34,16 @@ class SchoolPaymentController extends Controller
 {
     protected BillAdjustmentService $billAdjustment;
     protected PaymentAuditService $audit;
+    protected ArrearsService $arrears;
 
-    public function __construct(BillAdjustmentService $billAdjustment, PaymentAuditService $audit)
-    {
+    public function __construct(
+        BillAdjustmentService $billAdjustment,
+        PaymentAuditService $audit,
+        ArrearsService $arrears
+    ) {
         $this->billAdjustment = $billAdjustment;
         $this->audit          = $audit;
+        $this->arrears        = $arrears;
     }
 
     /**
@@ -269,6 +275,43 @@ class SchoolPaymentController extends Controller
             ->first();
 
         return view('schoolpayment.termSession', compact('pagetitle', 'schoolterms', 'schoolsessions', 'id', 'studentDetails'));
+    }
+
+    /**
+     * Comprehensive arrears / outstanding details page for a student.
+     */
+    public function arrearsDetails(Request $request, $studentId)
+    {
+        $studentId = (int) $studentId;
+
+        $student = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->where('studentRegistration.id', $studentId)
+            ->select('studentRegistration.*', 'studentpicture.picture as avatar')
+            ->firstOrFail();
+
+        $excludeTermId    = (int) $request->get('exclude_term', 0);
+        $excludeSessionId = (int) $request->get('exclude_session', 0);
+
+        $arrears = $this->arrears->getStudentArrears(
+            $studentId,
+            $excludeTermId ?: null,
+            $excludeSessionId ?: null
+        );
+
+        $pagetitle = 'Outstanding Arrears — ' . trim($student->firstname . ' ' . $student->lastname);
+        $fullName  = $this->getFullNameWithOther(
+            $student->firstname,
+            $student->lastname,
+            $student->othername ?? ''
+        );
+
+        return view('schoolpayment.arrears', compact(
+            'pagetitle',
+            'student',
+            'fullName',
+            'arrears',
+            'studentId'
+        ));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────
@@ -672,6 +715,9 @@ class SchoolPaymentController extends Controller
 
             $fullName = $this->getFullNameWithOther($studentdata->firstname, $studentdata->lastname, $studentdata->othername ?? '');
 
+            // Past-term/session arrears (excludes the currently selected term+session)
+            $arrears = $this->arrears->getStudentArrears($studentId, $termid, $sessionid);
+
             return response()->json([
                 'success' => true,
                 'data'    => [
@@ -714,6 +760,7 @@ class SchoolPaymentController extends Controller
                     ],
                     'term'    => optional(Schoolterm::find($termid))->term,
                     'session' => optional(Schoolsession::find($sessionid))->session,
+                    'arrears' => $arrears,
                 ],
             ]);
 
@@ -1170,7 +1217,7 @@ class SchoolPaymentController extends Controller
                 'student_bill_payment_record_id' => $recordIdToCheck,
                 'class_id'                       => $classId,
                 'term_id'                        => $termId,
-                'session_id'                      => $sessionId,
+                'session_id'                     => $sessionId,
                 'amount'                         => $oldValues['amount_paid'],
                 'entity_type'                    => 'payment',
             ], $oldValues, null, 'Payment record deleted');

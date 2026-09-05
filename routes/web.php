@@ -772,6 +772,7 @@ Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
     Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
     Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
     Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
+    Route::get('/arrears/{studentId}', [SchoolPaymentController::class, 'arrearsDetails'])->name('schoolpayment.arrears');
     Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
     Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
     Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
