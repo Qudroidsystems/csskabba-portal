@@ -320,6 +320,35 @@
     background: #f0fdf4;
 }
 
+/* Word equivalent display */
+.word-equivalent {
+    font-size: 12px;
+    color: var(--pay-muted);
+    padding: 6px 12px;
+    background: var(--pay-bg);
+    border-radius: 6px;
+    border: 1px dashed var(--pay-border);
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+.word-equivalent .label {
+    font-weight: 600;
+    color: var(--pay-primary);
+    white-space: nowrap;
+}
+.word-equivalent .value {
+    color: var(--pay-accent);
+    font-weight: 500;
+    word-break: break-word;
+}
+.word-equivalent .empty {
+    color: #b0b8c4;
+    font-style: italic;
+}
+
 /* Bulk payment */
 .bulk-summary {
     background: #f0fdf4; border: 1px solid #bbf7d0;
@@ -348,6 +377,11 @@
     .quick-amount-btn {
         font-size: 11px;
         padding: 3px 10px;
+    }
+    
+    .word-equivalent {
+        font-size: 11px;
+        padding: 4px 10px;
     }
 }
 </style>
@@ -422,6 +456,10 @@
                         <input type="text" id="bulk_payment_amount" class="currency-amount"
                                placeholder="0.00" autocomplete="off">
                     </div>
+                    <div class="word-equivalent">
+                        <span class="label">In Words:</span>
+                        <span class="value" id="bulkWordEquivalent">—</span>
+                    </div>
                     <div class="form-text text-muted">Amount is distributed across selected bills in order.</div>
                 </div>
                 <div class="mb-3">
@@ -451,7 +489,7 @@
 
 {{-- INDIVIDUAL PAYMENT MODAL --}}
 <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:520px">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:540px">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -522,6 +560,12 @@
                         <div class="invalid-feedback d-block" id="amountError"></div>
                     </div>
 
+                    {{-- Word Equivalent Display --}}
+                    <div class="word-equivalent" id="wordEquivalentContainer">
+                        <span class="label">In Words:</span>
+                        <span class="value" id="wordEquivalent">—</span>
+                    </div>
+
                     {{-- Quick Amount Buttons --}}
                     <div class="quick-amount-buttons" id="quickAmountButtons">
                         <button type="button" class="quick-amount-btn" data-percent="25">25%</button>
@@ -590,139 +634,192 @@ document.addEventListener('DOMContentLoaded', function () {
     let selectedBillsMap = {};
     let billsDataGlobal  = [];
     let currentDeleteUrl = '';
+    let deleteInProgress = false;
+
+    // ── Number to Words Converter (Nigerian Naira) ──────────────────────
+
+    function numberToWords(num) {
+        if (num === null || num === undefined || isNaN(num)) return 'Zero';
+        
+        num = Math.round(num * 100) / 100; // Round to 2 decimal places
+        
+        if (num === 0) return 'Zero';
+        
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+                     'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+                     'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const scales = ['', 'Thousand', 'Million', 'Billion', 'Trillion'];
+        
+        function convertHundreds(n) {
+            let word = '';
+            const hundred = Math.floor(n / 100);
+            const remainder = n % 100;
+            
+            if (hundred > 0) {
+                word += ones[hundred] + ' Hundred';
+                if (remainder > 0) word += ' and ';
+            }
+            
+            if (remainder > 0) {
+                if (remainder < 20) {
+                    word += ones[remainder];
+                } else {
+                    const ten = Math.floor(remainder / 10);
+                    const one = remainder % 10;
+                    word += tens[ten];
+                    if (one > 0) word += ' ' + ones[one];
+                }
+            }
+            
+            return word;
+        }
+        
+        function convertNumber(n) {
+            if (n === 0) return 'Zero';
+            
+            let word = '';
+            let scaleIndex = 0;
+            
+            while (n > 0) {
+                const chunk = n % 1000;
+                if (chunk > 0) {
+                    const chunkWords = convertHundreds(chunk);
+                    if (scaleIndex > 0) {
+                        word = chunkWords + ' ' + scales[scaleIndex] + (word ? ' ' + word : '');
+                    } else {
+                        word = chunkWords + (word ? ' ' + word : '');
+                    }
+                }
+                n = Math.floor(n / 1000);
+                scaleIndex++;
+            }
+            
+            return word.trim();
+        }
+        
+        const wholeNumber = Math.floor(num);
+        const decimalPart = Math.round((num - wholeNumber) * 100);
+        
+        let words = convertNumber(wholeNumber);
+        
+        if (decimalPart > 0) {
+            words += ' Naira, ' + convertNumber(decimalPart) + ' Kobo';
+        } else {
+            words += ' Naira';
+        }
+        
+        return words;
+    }
 
     // ── Currency Formatting Helpers ──────────────────────────────────────
 
-    /**
-     * Format a number as currency with commas (like OPay)
-     * Examples:
-     *   1234 -> "1,234"
-     *   1234.56 -> "1,234.56"
-     *   1000000 -> "1,000,000"
-     */
     function formatCurrency(value) {
         if (value === null || value === undefined || value === '') return '';
         
-        // Remove any non-numeric characters except decimal point
         let num = String(value).replace(/[^0-9.]/g, '');
         
-        // Parse as float
         let floatNum = parseFloat(num);
         if (isNaN(floatNum)) return '';
         
-        // Format with commas
         let parts = num.split('.');
         let wholePart = parts[0];
         let decimalPart = parts.length > 1 ? '.' + parts[1] : '';
         
-        // Add commas to whole part
         wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         
         return wholePart + decimalPart;
     }
 
-    /**
-     * Parse formatted currency string back to a number
-     * Example: "1,234.56" -> 1234.56
-     */
     function parseCurrency(value) {
         if (!value) return 0;
-        // Remove all commas and non-numeric characters except decimal point
         return parseFloat(String(value).replace(/[^0-9.]/g, '')) || 0;
     }
 
-    /**
-     * Format and display currency in an input field
-     * This is the main handler for the currency input
-     */
     function formatCurrencyInput(input) {
         if (!input) return;
         
-        // Get cursor position before formatting
         const start = input.selectionStart;
         const end = input.selectionEnd;
         const oldValue = input.value;
         
-        // Parse the numeric value
         let rawValue = String(input.value).replace(/[^0-9.]/g, '');
         
-        // Handle decimal points - only allow one
         let parts = rawValue.split('.');
         if (parts.length > 2) {
             rawValue = parts[0] + '.' + parts.slice(1).join('');
         }
         
-        // Format with commas
         let formatted = formatCurrency(rawValue);
         
-        // Update input value
         input.value = formatted;
         
-        // Restore cursor position (adjust for added commas)
         let newCursorPos = start;
         let diff = (formatted.length - oldValue.length);
         newCursorPos = Math.max(0, Math.min(formatted.length, newCursorPos + diff));
         
-        // If the user is typing, try to maintain position
         if (document.activeElement === input) {
             input.setSelectionRange(newCursorPos, newCursorPos);
         }
+        
+        // Update word equivalent
+        updateWordEquivalent(input);
     }
 
-    /**
-     * Handle currency input with proper cursor management
-     */
     function handleCurrencyInput(e) {
         const input = e.target;
         
-        // Save cursor position
-        const start = input.selectionStart;
-        const rawValue = input.value;
-        const numericValue = parseCurrency(rawValue);
-        
-        // Check if user pressed a special key
         const isSpecialKey = e.key === 'Backspace' || e.key === 'Delete' || 
                             e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
                             e.key === 'Home' || e.key === 'End' ||
                             e.key === 'Tab' || e.ctrlKey || e.metaKey;
         
-        // Allow: numbers, decimal point, backspace, delete, arrow keys
         if (e.key && !isSpecialKey && !/[0-9.]/.test(e.key)) {
             e.preventDefault();
             return;
         }
         
-        // Prevent multiple decimal points
-        if (e.key === '.' && rawValue.includes('.')) {
+        if (e.key === '.' && input.value.includes('.')) {
             e.preventDefault();
             return;
         }
         
-        // Let the browser handle the input, then format
         setTimeout(() => {
             formatCurrencyInput(input);
-            
-            // Trigger change event for validation
             input.dispatchEvent(new Event('change', { bubbles: true }));
         }, 0);
     }
 
-    /**
-     * Set currency input value programmatically
-     */
     function setCurrencyValue(input, value) {
         if (!input) return;
         const formatted = formatCurrency(value);
         input.value = formatted;
+        updateWordEquivalent(input);
         input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    /**
-     * Get numeric value from currency input
-     */
     function getCurrencyValue(input) {
         if (!input) return 0;
         return parseCurrency(input.value);
+    }
+
+    // ── Update Word Equivalent ───────────────────────────────────────────
+
+    function updateWordEquivalent(input) {
+        if (!input) return;
+        
+        const value = getCurrencyValue(input);
+        const wordEl = input.id === 'payment_amount' ? 
+            document.getElementById('wordEquivalent') : 
+            document.getElementById('bulkWordEquivalent');
+        
+        if (wordEl) {
+            if (value > 0) {
+                wordEl.textContent = numberToWords(value);
+            } else {
+                wordEl.textContent = '—';
+            }
+        }
     }
 
     // ── Quick Amount Buttons ─────────────────────────────────────────────
@@ -739,12 +836,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 if (isClear) {
                     setCurrencyValue(input, '');
-                    // Trigger validation
                     input.dispatchEvent(new Event('change', { bubbles: true }));
                     return;
                 }
                 
-                // Get the balance from the display
                 const balanceText = balanceEl.textContent.replace(/[^0-9.]/g, '');
                 const balance = parseFloat(balanceText) || 0;
                 
@@ -758,12 +853,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 
-                // Calculate amount and round to 2 decimal places
                 const amount = (balance * percent / 100);
                 const roundedAmount = Math.round(amount * 100) / 100;
                 setCurrencyValue(input, roundedAmount);
-                
-                // Trigger validation
                 input.dispatchEvent(new Event('change', { bubbles: true }));
             });
         });
@@ -957,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <td class="text-muted small">${sp.receivedDate ? new Date(sp.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</td>
                             <td><span class="badge ${sp.paymentStatus === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${escapeHtml(sp.paymentStatus || 'Pending')}</span></td>
                             <td>${sp.recordId
-                                ? `<button class="btn btn-sm btn-danger delete-payment" data-record-id="${sp.recordId}">
+                                ? `<button class="btn btn-sm btn-danger delete-payment" data-record-id="${sp.recordId}" data-payment-id="${sp.paymentId}">
                                        <i class="ri-delete-bin-line"></i>
                                    </button>`
                                 : '<span class="text-muted small">—</span>'}
@@ -1185,29 +1277,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // Individual payment amount input
         const paymentInput = document.getElementById('payment_amount');
         if (paymentInput) {
-            // Handle input events for real-time formatting
             paymentInput.addEventListener('input', handleCurrencyInput);
-            
-            // Handle focus - select all text for easy typing
-            paymentInput.addEventListener('focus', function() {
-                this.select();
-            });
-            
-            // Handle blur - ensure proper formatting
-            paymentInput.addEventListener('blur', function() {
-                formatCurrencyInput(this);
-            });
-            
-            // Handle keydown for special keys
+            paymentInput.addEventListener('focus', function() { this.select(); });
+            paymentInput.addEventListener('blur', function() { formatCurrencyInput(this); });
             paymentInput.addEventListener('keydown', function(e) {
-                // Allow: backspace, delete, tab, escape, enter, arrow keys, home, end
                 if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab' ||
                     e.key === 'Escape' || e.key === 'Enter' || e.key === 'Home' ||
                     e.key === 'End' || e.key.startsWith('Arrow')) {
                     return;
                 }
-                
-                // Allow: numbers, decimal point
                 if (!/^[0-9.]$/.test(e.key)) {
                     e.preventDefault();
                 }
@@ -1276,12 +1354,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('scholarship_deduction').value         = bill.scholarship_deduction || 0;
         document.getElementById('discount_deduction').value            = bill.discount_deduction || 0;
         
-        // Display amounts with proper formatting
         document.getElementById('amount_d').textContent                = '₦' + fmt(bill.adjusted_amount);
         document.getElementById('amount_paid_d').textContent           = '₦' + fmt(bill.amount_paid);
         document.getElementById('balance_d').textContent               = '₦' + fmt(bill.balance);
         
-        // Clear currency input
         const paymentInput = document.getElementById('payment_amount');
         setCurrencyValue(paymentInput, '');
         document.getElementById('payment_method2').value               = '';
@@ -1309,7 +1385,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         new bootstrap.Modal(document.getElementById('paymentModal')).show();
         
-        // Focus the currency input after modal opens
         setTimeout(() => {
             paymentInput.focus();
         }, 300);
@@ -1351,7 +1426,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('bulkTotalPayable').textContent      = '₦' + fmt(totalPayable);
         document.getElementById('bulkTotalSavings').textContent      = '₦' + fmt(totalSavings);
         
-        // Clear bulk currency input
         const bulkInput = document.getElementById('bulk_payment_amount');
         setCurrencyValue(bulkInput, '');
         document.getElementById('bulk_payment_method').value         = '';
@@ -1359,7 +1433,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         new bootstrap.Modal(document.getElementById('bulkPaymentModal')).show();
         
-        // Focus the currency input after modal opens
         setTimeout(() => {
             bulkInput.focus();
         }, 300);
@@ -1480,8 +1553,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.delete-payment').forEach(btn => {
             btn.addEventListener('click', function () {
                 const recordId = this.dataset.recordId;
+                const paymentId = this.dataset.paymentId;
                 if (recordId) {
                     currentDeleteUrl = '/schoolpayment/delete/' + recordId;
+                    // Store payment ID for reference
+                    document.getElementById('confirmDeleteBtn').dataset.paymentId = paymentId;
                     new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show();
                 }
             });
@@ -1505,16 +1581,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!method)
             return Swal.fire({ icon: 'warning', title: 'No Method', text: 'Select a payment method.', confirmButtonColor: '#2563eb' });
 
-        // Set the raw numeric value (no commas) for submission
         document.getElementById('payment_amount2').value = amount.toFixed(2);
-        // Also ensure the payment_amount field sends raw value
         document.getElementById('payment_amount').value = amount.toFixed(2);
 
         const btn = document.getElementById('paySubmitBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing…';
 
-        // Create FormData and ensure the payment_amount is the raw value
         const formData = new FormData(this);
         formData.set('payment_amount', amount.toFixed(2));
 
@@ -1554,43 +1627,80 @@ document.addEventListener('DOMContentLoaded', function () {
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="ri-wallet-line me-1"></i>Record Payment';
-            // Restore the formatted display
             const input = document.getElementById('payment_amount');
             formatCurrencyInput(input);
         });
     });
 
-    // ── Delete confirm ────────────────────────────────────────────────────
+    // ── Delete confirm - FIXED ────────────────────────────────────────────
 
     document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-        bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))?.hide();
+        if (deleteInProgress) return;
+        deleteInProgress = true;
 
         const self = this;
+        const originalText = self.innerHTML;
         self.disabled = true;
         self.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting…';
 
+        // Close the modal
+        bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))?.hide();
+
         fetch(currentDeleteUrl, {
-            method:  'POST',
+            method: 'POST',
             headers: {
-                'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
-                'Accept':        'application/json',
-                'Content-Type':  'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({}),
         })
-        .then(r => r.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                Swal.fire({ icon: 'success', title: 'Deleted!', text: data.message, timer: 1500, showConfirmButton: false })
-                    .then(() => loadPaymentData());
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: data.message || 'Payment record deleted successfully.',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Force reload the data to refresh everything
+                    loadPaymentData();
+                });
             } else {
-                Swal.fire('Error', data.message, 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Failed to delete payment record.'
+                });
+                // Reload data anyway to ensure consistency
+                loadPaymentData();
             }
         })
-        .catch(() => Swal.fire('Error', 'Failed to delete. Please try again.', 'error'))
+        .catch(err => {
+            console.error('Delete error:', err);
+            let errorMsg = 'Failed to delete. Please try again.';
+            if (err.message) {
+                errorMsg = err.message;
+            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: errorMsg
+            });
+            // Reload data to ensure consistency
+            loadPaymentData();
+        })
         .finally(() => {
             self.disabled = false;
-            self.innerHTML = '<i class="ri-delete-bin-line me-1"></i>Delete';
+            self.innerHTML = originalText;
+            deleteInProgress = false;
             currentDeleteUrl = '';
         });
     });
