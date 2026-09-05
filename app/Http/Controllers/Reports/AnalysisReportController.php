@@ -406,15 +406,25 @@ class AnalysisReportController extends Controller
         return $this->exportCSV($classId, $termId, $sessionId);
     }
 
+  
     /**
-     * Export PDF — per-student totals now computed via buildBillAdjustment()
-     * for every eligible bill, so scholarships/discounts show correctly even
-     * for students who have not yet made a payment. Roster is pulled by
-     * CLASS only (current enrollment) — see the fix note on
-     * getClassAnalysisData() above; bills/payments stay scoped to the
-     * selected term/session.
-     */
-  public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
+ * Export PDF — per-student totals computed via buildBillAdjustment() for
+ * every eligible bill, so scholarships/discounts show correctly even for
+ * students who have not yet made a payment. Roster is pulled by CLASS
+ * only (current enrollment) — see the fix note on getClassAnalysisData()
+ * above; bills/payments stay scoped to the selected term/session.
+ *
+ * ADDED for the redesigned PDF:
+ * - $studentBillDetails: per-student, per-bill adjusted amount / paid /
+ *   balance, so the report can show a real Paid+Balance pair per bill
+ *   instead of just an aggregate total.
+ * - $billSummary: per-bill totals (expected/collected/outstanding),
+ *   summed only across students the bill actually applies to (respects
+ *   filterBillsByStudentStatus and discount/scholarship adjustments) —
+ *   this replaces the old "count($students) * $bill->amount" math, which
+ *   overstated what was expected for anyone on a scholarship/discount.
+ */
+public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
 {
     $schoolInfo = SchoolInformation::getActiveSchool();
 
@@ -507,10 +517,12 @@ class AnalysisReportController extends Controller
     $schoolTerm    = DB::table('schoolterm')->where('id', $termid_id)->value('term');
     $schoolSession = DB::table('schoolsession')->where('id', $session_id)->value('session');
 
-    $studentTotals    = [];
-    $totalPaidSum     = 0;
-    $totalBalanceSum  = 0;
-    $totalSavingsSum  = 0;
+    $studentTotals       = [];
+    $studentBillDetails  = [];   // stid => [ billId => ['adjusted'=>, 'paid'=>, 'balance'=>] ]
+    $billSummary         = [];   // billId => ['title'=>, 'expected'=>, 'collected'=>, 'students'=>]
+    $totalPaidSum        = 0;
+    $totalBalanceSum     = 0;
+    $totalSavingsSum     = 0;
 
     foreach ($students as $student) {
         $scholarship = $scholarshipAssignments->get($student->stid);
@@ -529,8 +541,28 @@ class AnalysisReportController extends Controller
             $adjustedTotal += $adj['adjusted_amount'];
             $totalSavings  += $adj['total_savings'];
 
-            $book = $paymentBooks->get($student->stid . '_' . $bill->schoolbillid);
-            $totalPaid += $book ? (float) $book->amount_paid : 0.0;
+            $book     = $paymentBooks->get($student->stid . '_' . $bill->schoolbillid);
+            $paidHere = $book ? (float) $book->amount_paid : 0.0;
+            $totalPaid += $paidHere;
+
+            $studentBillDetails[$student->stid][$bill->schoolbillid] = [
+                'adjusted' => $adj['adjusted_amount'],
+                'paid'     => $paidHere,
+                'balance'  => max(0, $adj['adjusted_amount'] - $paidHere),
+            ];
+
+            if (!isset($billSummary[$bill->schoolbillid])) {
+                $billSummary[$bill->schoolbillid] = [
+                    'title'     => $bill->title,
+                    'unit_amount' => (float) $bill->amount,
+                    'expected'  => 0.0,
+                    'collected' => 0.0,
+                    'students'  => 0,
+                ];
+            }
+            $billSummary[$bill->schoolbillid]['expected']  += $adj['adjusted_amount'];
+            $billSummary[$bill->schoolbillid]['collected'] += $paidHere;
+            $billSummary[$bill->schoolbillid]['students']  += 1;
         }
 
         $totalBalance = max(0, $adjustedTotal - $totalPaid);
@@ -557,7 +589,9 @@ class AnalysisReportController extends Controller
         'students'                => $students,
         'studentBillInfo'         => $studentBillInfo,
         'studentTotals'           => $studentTotals,
-        'paymentBooks'            => $paymentBooks,   // ← ADDED: fixes undefined $studentPayments
+        'studentBillDetails'      => $studentBillDetails,
+        'billSummary'             => $billSummary,
+        'paymentBooks'            => $paymentBooks,
         'schoolClass'             => $schoolClass,
         'schoolTerm'              => $schoolTerm,
         'schoolSession'           => $schoolSession,
