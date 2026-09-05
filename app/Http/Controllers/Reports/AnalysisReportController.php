@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class AnalysisReportController extends Controller
 {
@@ -478,7 +479,7 @@ public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
     if ($students->isEmpty()) {
         return redirect()->route('reports.analysis.index')->with('error', 'No students found.');
     }
-    
+
       // ADDED: embed each student's photo as base64 so DomPDF can render it
         foreach ($students as $std) {
             $std->avatar_base64 = $this->encodeStudentAvatar($std->picture);
