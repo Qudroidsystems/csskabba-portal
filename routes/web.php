@@ -782,7 +782,7 @@ Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
 
 
 // ============================================
-// FINANCIAL REPORTS ROUTES (FinancialReportController)
+// FINANCIAL REPORTS ROUTES
 // ============================================
 Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
     // Balance Sheet
@@ -802,42 +802,43 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
     // Debtors List
     Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
+    Route::get('/debtors/export/{format}', [FinancialReportController::class, 'exportDebtors'])->name('export');
 
     // Collection Summary
     Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
 
     // Scholarship Impact
     Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
-    // In your financial reports group
-    Route::get('/debtors/export/{report}', [FinancialReportController::class, 'exportDebtors'])->name('export');
-
 });
 
 // ============================================
-// ANALYSIS REPORTS ROUTES (AnalysisReportController)
+// ANALYSIS REPORTS ROUTES
 // ============================================
-// In routes/web.php, update the analysis routes:
-
 Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
-    // Main index page
+    // Main index
     Route::get('/', [AnalysisReportController::class, 'index'])->name('index');
 
-    // Class analysis - FIXED: use the correct method names
+    // Class Analysis
     Route::get('/class', [AnalysisReportController::class, 'getClassAnalysisData'])->name('class');
-    Route::get('/class-details', [AnalysisReportController::class, 'analysisClassTermSession'])->name('class-details');
     Route::get('/class-data', [AnalysisReportController::class, 'getClassAnalysisData'])->name('class-data');
-    Route::get('/export-pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisReportController::class, 'exportPDF'])->name('export-pdf');
+    Route::get('/class-details', [AnalysisReportController::class, 'analysisClassTermSession'])->name('class-details');
     Route::get('/export', [AnalysisReportController::class, 'exportClassAnalysis'])->name('export');
+    Route::get('/export-pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisReportController::class, 'exportPDF'])->name('export-pdf');
 
-    // School wide analysis
+    // School Wide Analysis
     Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
     Route::get('/school-wide/export', [AnalysisReportController::class, 'exportSchoolWideAnalysis'])->name('school-wide.export');
 
-    // Scholarship impact
+    // Scholarship Impact
     Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
 
-    // Student payment details
+    // Student Payment Details
     Route::get('/student/{studentId}/{classId}/{termId}/{sessionId}', [AnalysisReportController::class, 'studentPaymentDetails'])->name('student-details');
+
+    // Additional endpoints
+    Route::get('/high-outstanding', [AnalysisReportController::class, 'getHighOutstandingAlerts'])->name('high-outstanding');
+    Route::post('/send-reminders', [AnalysisReportController::class, 'sendPaymentReminders'])->name('send-reminders');
+    Route::post('/clear-cache', [AnalysisReportController::class, 'clearReportCache'])->name('clear-cache');
 });
 
 

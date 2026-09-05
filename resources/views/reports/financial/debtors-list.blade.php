@@ -1,173 +1,371 @@
+{{-- resources/views/reports/financial/debtors-list.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
 <style>
-/* ── Design System ──────────────────────────────────────────────── */
 :root {
     --ss-primary: #1e3a5f;
-    --ss-accent:  #2563eb;
+    --ss-accent: #2563eb;
     --ss-success: #16a34a;
     --ss-warning: #d97706;
-    --ss-danger:  #dc2626;
-    --ss-muted:   #6b7280;
-    --ss-border:  #e2e8f0;
-    --ss-bg:      #f8fafc;
-    --ss-card:    #ffffff;
-    --ss-radius:  10px;
+    --ss-danger: #dc2626;
+    --ss-muted: #6b7280;
+    --ss-border: #e2e8f0;
+    --ss-bg: #f8fafc;
+    --ss-card: #ffffff;
+    --ss-radius: 12px;
 }
 
-/* Loading Overlay */
-#loadingOverlay {
-    position: fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,.5);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    z-index: 99999; display:none; justify-content:center; align-items:center;
-}
-#loadingOverlay.active { display:flex; }
-.loading-content {
-    background:rgba(255,255,255,.96); border-radius:20px;
-    padding:30px 40px; text-align:center;
-    box-shadow:0 20px 40px rgba(0,0,0,.2);
-}
-.loading-spinner {
-    width:40px; height:40px;
-    border:3px solid #e2e8f0; border-top-color:#2563eb;
-    border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 15px;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
-.loading-text { font-size:14px; color:#1e3a5f; font-weight:500; }
-
-/* Hero */
 .report-hero {
-    background:linear-gradient(135deg,var(--ss-primary) 0%,var(--ss-accent) 60%,#4f46e5 100%);
-    border-radius:var(--ss-radius); padding:28px 32px; margin-bottom:24px;
-    position:relative; overflow:hidden;
+    background: linear-gradient(135deg, var(--ss-primary) 0%, var(--ss-accent) 60%, #4f46e5 100%);
+    border-radius: var(--ss-radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
 }
 .report-hero::before {
-    content:''; position:absolute; top:-60px; right:-60px;
-    width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
 }
-.report-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
-.report-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
+.report-hero h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px;
+    position: relative;
+}
+.report-hero p {
+    font-size: 13px;
+    color: rgba(255,255,255,.75);
+    margin: 0;
+    position: relative;
+}
+
+.filter-bar {
+    background: var(--ss-bg);
+    padding: 20px;
+    border-radius: var(--ss-radius);
+    margin-bottom: 24px;
+}
+.filter-label {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: var(--ss-primary);
+}
+.filter-label .required {
+    color: var(--ss-danger);
+}
 
 /* Stat cards */
 .stat-card {
-    background:var(--ss-card); border:1px solid var(--ss-border);
-    border-radius:var(--ss-radius); padding:16px 18px;
-    transition:transform .15s, box-shadow .15s; height:100%;
+    background: var(--ss-card);
+    border: 1px solid var(--ss-border);
+    border-radius: var(--ss-radius);
+    padding: 18px 20px;
+    transition: transform .15s, box-shadow .15s;
 }
-.stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.1); }
-.stat-card .stat-value { font-size:24px; font-weight:700; color:var(--ss-primary); }
-.stat-card .stat-label { font-size:11.5px; color:var(--ss-muted); margin-top:4px; }
-
-/* Filter bar */
-.filter-bar { background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:24px; }
-.filter-label { font-weight:600; font-size:13px; margin-bottom:8px; color:var(--ss-primary); }
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+}
+.stat-card .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ss-primary);
+}
+.stat-card .stat-label {
+    font-size: 12px;
+    color: var(--ss-muted);
+    margin-top: 4px;
+}
 
 /* Table */
-.report-table th {
-    background:var(--ss-primary); color:#fff;
-    padding:12px 14px; font-size:12.5px; white-space:nowrap; font-weight:600;
+.debtors-table th {
+    background: var(--ss-primary);
+    color: #fff;
+    padding: 12px 16px;
+    font-size: 12px;
+    white-space: nowrap;
+    font-weight: 600;
 }
-.report-table td { padding:11px 14px; border-bottom:1px solid var(--ss-border); vertical-align:middle; }
-
-/* Row entrance animation */
-#debtorsTable tbody tr.student-row {
-    opacity:0; transform:translateY(14px);
-    transition:opacity .38s cubic-bezier(.25,.46,.45,.94),
-               transform .38s cubic-bezier(.25,.46,.45,.94),
-               background .18s ease;
-}
-#debtorsTable tbody tr.student-row.row-visible { opacity:1; transform:translateY(0); }
-
-/* Row hover */
-#debtorsTable tbody tr.student-row:hover {
-    background:#fff5f5 !important;
-    box-shadow:inset 3px 0 0 #dc2626;
+.debtors-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--ss-border);
+    vertical-align: middle;
+    font-size: 13px;
 }
 
-/* Adjustment badges (scholarship / discount) */
-.adj-badges { display:flex; flex-wrap:wrap; gap:4px; max-width:190px; }
-.adj-badge {
-    display:inline-flex; align-items:center; gap:4px;
-    padding:3px 9px; border-radius:20px; font-size:10.5px; font-weight:600;
-    white-space:nowrap;
+/* Badges */
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
 }
-.adj-badge.scholarship { background:linear-gradient(135deg,#fde68a,#fcd34d); color:#92400e; }
-.adj-badge.discount    { background:#dbeafe; color:#1e40af; }
-.adj-badge.none        { background:#f1f5f9; color:#94a3b8; }
-
-/* Bills toggle */
-.bills-toggle {
-    cursor:pointer; user-select:none;
-    display:inline-flex; align-items:center; gap:6px;
-    background:#f1f5f9; border:1px solid var(--ss-border); border-radius:20px;
-    padding:5px 12px; font-size:12px; font-weight:600; color:var(--ss-primary);
-    transition:background .15s;
+.status-active {
+    background: #dcfce7;
+    color: #16a34a;
 }
-.bills-toggle:hover { background:#e2e8f0; }
-.bills-toggle .chevron { transition:transform .2s; font-size:13px; }
-.bills-toggle.open .chevron { transform:rotate(180deg); }
-tr.student-row.shown { background:#f8fafc; }
+.status-inactive {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.status-suspended {
+    background: #fef3c7;
+    color: #d97706;
+}
 
-/* Child (drawer) row */
-.child-row-wrap { padding:14px 20px 14px 74px; background:#f8fafc; }
-.child-row-wrap .child-title { font-size:11px; font-weight:700; color:var(--ss-primary); text-transform:uppercase; letter-spacing:.3px; margin-bottom:8px; }
-table.child-bill-table { width:100%; font-size:12.5px; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; border:1px solid var(--ss-border); }
-table.child-bill-table th { text-align:left; color:var(--ss-muted); font-weight:600; padding:7px 12px; border-bottom:1px solid var(--ss-border); background:#fff; font-size:11px; text-transform:uppercase; }
-table.child-bill-table td { padding:8px 12px; border-bottom:1px solid #eef2f7; }
-table.child-bill-table tr:last-child td { border-bottom:none; }
+.benefit-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    margin: 1px 2px;
+}
+.benefit-scholarship {
+    background: #fef3c7;
+    color: #d97706;
+}
+.benefit-discount {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+.benefit-both {
+    background: linear-gradient(135deg, #fef3c7 50%, #ede9fe 50%);
+    color: #4a3f5f;
+}
 
-/* Progress bar */
-.progress-container { width:80px;background:#e2e8f0;border-radius:10px;overflow:hidden;margin:0 auto; }
-.progress-fill      { height:5px;border-radius:10px;transition:width .3s; }
-.progress-high   { background:#16a34a; }
-.progress-medium { background:#d97706; }
-.progress-low    { background:#dc2626; }
-.progress-text   { font-size:10px;color:#6b7280;margin-top:2px;display:block; }
-
-/* Avatars */
-.student-avatar-table {
-    width:36px;height:36px;border-radius:50%;object-fit:cover;
-    border:2px solid #e2e8f0;cursor:pointer;
-    transition:transform .18s,box-shadow .18s;
+/* Avatar */
+.student-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+    cursor: pointer;
+    transition: transform 0.18s;
+}
+.student-avatar:hover {
+    transform: scale(1.1);
 }
 .student-avatar-placeholder {
-    width:36px;height:36px;border-radius:50%;
-    background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    font-size:12px;font-weight:600;cursor:pointer;
-    transition:transform .18s,box-shadow .18s;
-}
-#debtorsTable tbody tr:hover .student-avatar-table,
-#debtorsTable tbody tr:hover .student-avatar-placeholder {
-    transform:scale(1.1); box-shadow:0 2px 8px rgba(0,0,0,.15);
-}
-
-/* DataTables chrome */
-.dataTables_wrapper .dataTables_length select {
-    border:1.5px solid var(--ss-border);border-radius:8px;
-    padding:6px 10px;margin:0 6px;font-size:13px;
-}
-.dataTables_wrapper .paginate_button.current,
-.dataTables_wrapper .paginate_button.current:hover {
-    background:var(--ss-accent)!important;border-color:var(--ss-accent)!important;color:#fff!important;
-}
-.dataTables_wrapper .dataTables_info { font-size:13px;color:var(--ss-muted); }
-
-/* Image zoom modal */
-.image-zoom-modal .modal-content { background:transparent;border:none; }
-.zoomed-image { max-width:90vw;max-height:75vh;border-radius:16px;border:4px solid #fff;cursor:pointer; }
-.btn-close-zoom {
-    position:absolute;top:20px;right:30px;
-    background:rgba(0,0,0,.7);border:none;border-radius:50%;
-    width:38px;height:38px;color:#fff;font-size:18px;cursor:pointer;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ss-accent), #4f46e5);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
-@media (prefers-reduced-motion:reduce) {
-    #debtorsTable tbody tr.student-row {
-        transition:background .15s!important; transform:none!important; opacity:1!important;
+/* Debt amount colors */
+.amount-high {
+    color: #dc2626;
+    font-weight: 700;
+}
+.amount-medium {
+    color: #d97706;
+    font-weight: 600;
+}
+.amount-low {
+    color: #16a34a;
+    font-weight: 500;
+}
+
+/* Expandable row */
+.expandable-content {
+    background: #f8fafc;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+.expandable-content .bill-item {
+    padding: 6px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+.expandable-content .bill-item:last-child {
+    border-bottom: none;
+}
+
+/* Loading overlay */
+#loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+#loadingOverlay.active {
+    display: flex;
+}
+.loading-content {
+    background: rgba(255,255,255,.96);
+    border-radius: 20px;
+    padding: 30px 40px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,.2);
+}
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--ss-accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto 15px;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.loading-text {
+    font-size: 14px;
+    color: var(--ss-primary);
+    font-weight: 500;
+}
+
+/* Tooltip/Popover */
+#studentPopover {
+    position: fixed;
+    z-index: 999999;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(.92) translateY(6px);
+    transition: opacity .22s cubic-bezier(.4,0,.2,1),
+                transform .22s cubic-bezier(.4,0,.2,1);
+    width: 300px;
+    top: -9999px;
+    left: -9999px;
+}
+#studentPopover.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+.popover-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 0 0 .5px rgba(0,0,0,.1), 0 8px 32px rgba(0,0,0,.2);
+    overflow: hidden;
+}
+.popover-header {
+    background: linear-gradient(135deg, var(--ss-primary), var(--ss-accent));
+    padding: 14px 16px;
+}
+.popover-avatar-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.popover-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,.9);
+}
+.popover-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+}
+.popover-adm {
+    font-size: 10px;
+    color: rgba(255,255,255,.75);
+}
+.popover-body {
+    padding: 12px 16px;
+}
+.popover-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.popover-stat {
+    background: var(--ss-bg);
+    border-radius: 8px;
+    padding: 6px;
+    text-align: center;
+}
+.popover-stat-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ss-primary);
+    display: block;
+}
+.popover-stat-lbl {
+    font-size: 9px;
+    color: #9ca3af;
+    display: block;
+}
+.popover-bill-list {
+    max-height: 120px;
+    overflow-y: auto;
+}
+.popover-bill-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--ss-border);
+    font-size: 11px;
+}
+.popover-benefits {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+/* DataTables customization */
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 15px;
+}
+.dataTables_wrapper .dataTables_filter input {
+    border: 1.5px solid var(--ss-border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-left: 8px;
+    font-size: 13px;
+    width: 250px;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--ss-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .report-hero {
+        padding: 20px;
+    }
+    .report-hero h1 {
+        font-size: 18px;
+    }
+    .stat-card .stat-value {
+        font-size: 20px;
     }
 }
 </style>
@@ -176,6 +374,7 @@ table.child-bill-table tr:last-child td { border-bottom:none; }
 <div class="page-content">
 <div class="container-fluid">
 
+    <!-- Loading Overlay -->
     <div id="loadingOverlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
@@ -183,93 +382,142 @@ table.child-bill-table tr:last-child td { border-bottom:none; }
         </div>
     </div>
 
+    <!-- Hero Section -->
     <div class="report-hero">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <h1><i class="ri-file-list-3-line me-2"></i>Student Debtors Report</h1>
-                <p>Students with outstanding fee balances — one row per student, grouped across every bill they owe</p>
+                <h1><i class="ri-user-unfollow-line me-2"></i>Student Debtors List</h1>
+                <p>View and manage students with outstanding fee balances</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-light btn-sm" onclick="exportReport('csv')"><i class="ri-file-excel-line"></i> Excel/CSV</button>
-                <button class="btn btn-light btn-sm" onclick="exportReport('pdf')"><i class="ri-printer-line"></i> Print / PDF</button>
+                <div class="dropdown">
+                    <button class="btn btn-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="ri-download-line me-1"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" onclick="exportDebtors('pdf')">
+                            <i class="ri-file-pdf-line me-2"></i> PDF
+                        </a></li>
+                        <li><a class="dropdown-item" onclick="exportDebtors('excel')">
+                            <i class="ri-file-excel-line me-2"></i> Excel
+                        </a></li>
+                        <li><a class="dropdown-item" onclick="exportDebtors('csv')">
+                            <i class="ri-file-text-line me-2"></i> CSV
+                        </a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-light btn-sm" onclick="window.print()">
+                    <i class="ri-printer-line"></i> Print
+                </button>
+                <button class="btn btn-light btn-sm" id="sendRemindersBtn">
+                    <i class="ri-mail-send-line"></i> Send Reminders
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Stats -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg"><div class="stat-card"><div class="stat-value" id="totalDebtors">0</div><div class="stat-label">Total Debtors</div></div></div>
-        <div class="col-6 col-lg"><div class="stat-card"><div class="stat-value text-danger" id="totalOutstanding">₦0</div><div class="stat-label">Total Outstanding</div></div></div>
-        <div class="col-6 col-lg"><div class="stat-card"><div class="stat-value text-success" id="totalCollected">₦0</div><div class="stat-label">Total Collected</div></div></div>
-        <div class="col-6 col-lg"><div class="stat-card"><div class="stat-value text-warning" id="totalSavings">₦0</div><div class="stat-label">Scholarship + Discount Savings</div></div></div>
-        <div class="col-6 col-lg"><div class="stat-card"><div class="stat-value" style="color:#7c3aed" id="totalWithAid">0</div><div class="stat-label">Debtors on Scholarship/Discount</div></div></div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value text-danger" id="totalDebtors">0</div>
+                <div class="stat-label">Total Debtors</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value text-warning" id="totalOutstanding">₦0</div>
+                <div class="stat-label">Total Outstanding</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value text-info" id="avgDebt">₦0</div>
+                <div class="stat-label">Average Debt</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value text-success" id="collectionRate">0%</div>
+                <div class="stat-label">Collection Rate</div>
+            </div>
+        </div>
     </div>
 
+    <!-- Filter Bar -->
     <div class="filter-bar">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="filter-label">Search <span class="text-muted fw-normal">(Name or Admission No.)</span></label>
-                <input type="text" class="form-control" id="searchFilter" placeholder="e.g. John, or CSK/2024/001">
-            </div>
-            <div class="col-md-3">
                 <label class="filter-label">Class</label>
-                <select class="form-select" id="classFilter">
-                    <option value="">All Classes</option>
+                <select class="form-select" id="class_id">
+                    <option value="">-- All Classes --</option>
                     @foreach($classes as $class)
                         <option value="{{ $class->id }}">{{ $class->display_name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="filter-label">Term</label>
-                <select class="form-select" id="termFilter">
-                    <option value="">All Terms</option>
+                <select class="form-select" id="term_id">
+                    <option value="">-- All Terms --</option>
                     @foreach($terms as $term)
                         <option value="{{ $term->id }}">{{ $term->term }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="filter-label">Session</label>
-                <select class="form-select" id="sessionFilter">
-                    <option value="">All Sessions</option>
+                <select class="form-select" id="session_id">
+                    <option value="">-- All Sessions --</option>
                     @foreach($sessions as $session)
                         <option value="{{ $session->id }}">{{ $session->session }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary flex-fill" id="applyFilters">
-                    <i class="ri-search-line me-1"></i> Search
+            <div class="col-md-3">
+                <label class="filter-label">Min Outstanding (₦)</label>
+                <input type="number" class="form-control" id="min_outstanding" placeholder="0" min="0">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <button class="btn btn-primary" id="loadReportBtn">
+                    <i class="ri-search-line me-1"></i> Load Report
                 </button>
-                <button class="btn btn-outline-secondary" id="resetFilters" title="Reset filters">
-                    <i class="ri-refresh-line"></i>
+                <button class="btn btn-secondary ms-2" id="resetBtn">
+                    <i class="ri-refresh-line me-1"></i> Reset
                 </button>
+                <span class="ms-3 text-muted small" id="recordCount"></span>
             </div>
         </div>
     </div>
 
+    <!-- Table -->
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 border-bottom">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
             <h5 class="mb-0 fw-semibold"><i class="ri-table-line me-2"></i>Debtors List</h5>
+            <div>
+                <span class="badge bg-primary" id="totalRecords">0</span> records
+            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table report-table w-100" id="debtorsTable">
+                <table class="table debtors-table w-100" id="debtorsTable">
                     <thead>
                         <tr>
-                            <th width="40">#</th>
-                            <th width="55">Photo</th>
+                            <th width="40"><input type="checkbox" id="selectAll"></th>
+                            <th width="50">#</th>
+                            <th width="50">Photo</th>
                             <th>Student</th>
+                            <th>Admission</th>
                             <th>Class</th>
-                            <th>Term / Session</th>
-                            <th>Scholarship / Discount</th>
-                            <th class="text-center">Bills</th>
-                            <th class="text-end">Original (₦)</th>
+                            <th>Term/Session</th>
+                            <th>Benefits</th>
+                            <th class="text-end">Billed (₦)</th>
                             <th class="text-end">Paid (₦)</th>
                             <th class="text-end">Outstanding (₦)</th>
-                            <th class="text-end">Savings (₦)</th>
-                            <th width="90">Rate</th>
-                            <th width="70">Action</th>
+                            <th width="100">Rate</th>
+                            <th width="80">Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -282,305 +530,495 @@ table.child-bill-table tr:last-child td { border-bottom:none; }
 </div>
 </div>
 
-<!-- Image Zoom Modal -->
-<div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-transparent border-0">
-            <button class="btn-close-zoom" data-bs-dismiss="modal">×</button>
-            <div class="modal-body text-center">
-                <img id="zoomedImage" src="" class="zoomed-image">
-                <div id="zoomedImageName" style="color:#fff;margin-top:18px;font-size:14px;"></div>
+<!-- Student Popover -->
+<div id="studentPopover">
+    <div class="popover-card">
+        <div class="popover-header">
+            <div class="popover-avatar-wrapper">
+                <img id="popAvatar" src="" alt="" class="popover-avatar">
+                <div>
+                    <div class="popover-name" id="popName">—</div>
+                    <div class="popover-adm" id="popAdm">—</div>
+                </div>
             </div>
+        </div>
+        <div class="popover-body">
+            <div class="popover-stats-grid">
+                <div class="popover-stat">
+                    <span class="popover-stat-val" id="popBilled">—</span>
+                    <span class="popover-stat-lbl">Billed</span>
+                </div>
+                <div class="popover-stat">
+                    <span class="popover-stat-val" id="popPaid">—</span>
+                    <span class="popover-stat-lbl">Paid</span>
+                </div>
+                <div class="popover-stat">
+                    <span class="popover-stat-val" id="popOwing">—</span>
+                    <span class="popover-stat-lbl">Owing</span>
+                </div>
+            </div>
+            <div class="popover-benefits" id="popBenefits"></div>
+            <div class="popover-bill-list" id="popBillList"></div>
         </div>
     </div>
 </div>
 
+<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-/* ====================================================================
-   STATE
-   ==================================================================== */
-let debtorsTable;
-let allRowData = [];   // the currently-loaded, already-filtered dataset
 
-/* ====================================================================
-   HELPERS
-   ==================================================================== */
+<script>
+// ====================================================================
+// STATE
+// ====================================================================
+let debtorsTable;
+let currentFilters = {};
+let studentData = {};
+let allRowData = [];
+let popTimer = null;
+let hideTimer = null;
+
+// ====================================================================
+// HELPERS
+// ====================================================================
 function fmt(n) {
-    return '₦' + parseFloat(n||0).toLocaleString('en-NG',{minimumFractionDigits:2});
+    return '₦' + parseFloat(n||0).toLocaleString('en-NG', {minimumFractionDigits:2});
 }
+
 function initials(name) {
     if (!name) return 'ST';
     return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
 }
+
 function avatarUrl(pic) {
-    if (!pic || pic==='unnamed.jpg') return null;
-    return '/storage/images/student_avatars/'+pic;
+    if (!pic || pic === 'unnamed.jpg' || pic === '') return null;
+    return '/storage/images/student_avatars/' + pic;
 }
-function progressClass(p) {
-    return p>=70?'progress-high':p>=40?'progress-medium':'progress-low';
-}
-function esc(s) {
+
+function escapeHtml(s) {
     if (!s) return '';
-    return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+    return String(s).replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[m]);
 }
+
 function showLoading(on) {
-    document.getElementById('loadingOverlay').classList.toggle('active',on);
+    document.getElementById('loadingOverlay').classList.toggle('active', on);
 }
 
-/* ====================================================================
-   RENDERS
-   ==================================================================== */
-function renderAvatar(pic, name, adm) {
-    const url=avatarUrl(pic), ini=initials(name);
-    const n=esc(name), a=esc(adm);
-    if (url) return `<img src="${url}" class="student-avatar-table" data-name="${n}" data-admission="${a}" data-avatar="${url}" alt="${n}">`;
-    return `<div class="student-avatar-placeholder" data-name="${n}" data-admission="${a}" data-avatar="">${ini}</div>`;
+function getOutstandingClass(amount) {
+    if (amount >= 100000) return 'amount-high';
+    if (amount >= 50000) return 'amount-medium';
+    return 'amount-low';
 }
 
-function renderProgress(p) {
-    const cls=progressClass(p);
-    return `<div class="progress-container"><div class="progress-fill ${cls}" style="width:${p}%"></div></div><span class="progress-text">${p}%</span>`;
-}
-
-function renderAdjustments(row) {
-    let html = '';
-    if (row.scholarship) {
-        html += `<span class="adj-badge scholarship" title="${esc(row.scholarship.title)}"><i class="ri-award-fill"></i>${esc(row.scholarship.title)}</span>`;
+// ====================================================================
+// RENDER FUNCTIONS
+// ====================================================================
+function renderAvatar(pic, name) {
+    const url = avatarUrl(pic);
+    const ini = initials(name);
+    const n = escapeHtml(name);
+    if (url) {
+        return `<img src="${url}" class="student-avatar" data-name="${n}" data-avatar="${url}" alt="${n}" onerror="this.style.display='none'">`;
     }
-    (row.discounts || []).forEach(d => {
-        html += `<span class="adj-badge discount" title="${esc(d.title)}"><i class="ri-price-tag-3-fill"></i>${esc(d.title)}</span>`;
-    });
-    if (!html) html = '<span class="adj-badge none">—</span>';
-    return `<div class="adj-badges">${html}</div>`;
+    return `<div class="student-avatar-placeholder" data-name="${n}">${ini}</div>`;
 }
 
-function renderBillsToggle(row) {
-    const count = row.bill_count || (row.bills ? row.bills.length : 0);
-    return `<span class="bills-toggle"><i class="ri-file-list-3-line"></i>${count} bill${count===1?'':'s'} <i class="ri-arrow-down-s-line chevron"></i></span>`;
-}
-
-function renderChildBills(row) {
-    if (!row.bills || !row.bills.length) {
-        return '<div class="child-row-wrap text-muted">No bill breakdown available.</div>';
+function renderBenefits(hasScholarship, hasDiscount) {
+    if (hasScholarship && hasDiscount) {
+        return '<span class="benefit-badge benefit-both"><i class="ri-gift-line me-1"></i>Both</span>';
     }
-    const rowsHtml = row.bills.map(b => `
-        <tr>
-            <td>${esc(b.title || 'Bill')}</td>
-            <td class="text-end">${fmt(b.original_amount)}</td>
-            <td class="text-end text-success">${fmt(b.amount_paid)}</td>
-            <td class="text-end text-danger fw-semibold">${fmt(b.outstanding)}</td>
-            <td class="text-end">${parseFloat(b.savings||0) > 0 ? fmt(b.savings) : '—'}</td>
-        </tr>`).join('');
-
-    return `
-        <div class="child-row-wrap">
-            <div class="child-title">Bills owing for ${esc(row.student_name)}</div>
-            <table class="child-bill-table">
-                <thead>
-                    <tr><th>Bill</th><th class="text-end">Original</th><th class="text-end">Paid</th><th class="text-end">Outstanding</th><th class="text-end">Savings</th></tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-            </table>
-        </div>`;
+    if (hasScholarship) {
+        return '<span class="benefit-badge benefit-scholarship"><i class="ri-award-line me-1"></i>Scholarship</span>';
+    }
+    if (hasDiscount) {
+        return '<span class="benefit-badge benefit-discount"><i class="ri-price-tag-3-line me-1"></i>Discount</span>';
+    }
+    return '<span class="text-muted">—</span>';
 }
 
-/* ====================================================================
-   STATS – totals from the currently loaded (already filtered) dataset
-   ==================================================================== */
+function renderStatus(status) {
+    if (!status) return '<span class="status-badge status-inactive">N/A</span>';
+    const cls = status.toLowerCase() === 'active' ? 'status-active' : 
+                status.toLowerCase() === 'suspended' ? 'status-suspended' : 'status-inactive';
+    return `<span class="status-badge ${cls}">${escapeHtml(status)}</span>`;
+}
+
+// ====================================================================
+// STATS UPDATE
+// ====================================================================
 function updateStats() {
-    let outstanding=0, paid=0, savings=0, withAid=0;
-    allRowData.forEach(r=>{
-        outstanding += parseFloat(r.outstanding)||0;
-        paid        += parseFloat(r.amount_paid)||0;
-        savings     += parseFloat(r.savings)    ||0;
-        if (r.scholarship || (r.discounts && r.discounts.length)) withAid++;
+    let totalOutstanding = 0;
+    let totalBilled = 0;
+    let totalPaid = 0;
+    
+    allRowData.forEach(r => {
+        totalBilled += parseFloat(r.original_amount) || 0;
+        totalPaid += parseFloat(r.amount_paid) || 0;
+        totalOutstanding += parseFloat(r.outstanding) || 0;
     });
-    document.getElementById('totalDebtors').textContent     = allRowData.length;
-    document.getElementById('totalOutstanding').textContent = fmt(outstanding);
-    document.getElementById('totalCollected').textContent   = fmt(paid);
-    document.getElementById('totalSavings').textContent     = fmt(savings);
-    document.getElementById('totalWithAid').textContent     = withAid;
+    
+    const rate = totalBilled > 0 ? ((totalPaid / totalBilled) * 100).toFixed(1) : 0;
+    const avg = allRowData.length > 0 ? totalOutstanding / allRowData.length : 0;
+    
+    document.getElementById('totalDebtors').textContent = allRowData.length;
+    document.getElementById('totalOutstanding').textContent = fmt(totalOutstanding);
+    document.getElementById('avgDebt').textContent = fmt(avg);
+    document.getElementById('collectionRate').textContent = rate + '%';
+    document.getElementById('totalRecords').textContent = allRowData.length;
 }
 
-/* ====================================================================
-   ROW ENTRANCE ANIMATION
-   ==================================================================== */
-function initRowEntrance() {
-    const rows=document.querySelectorAll('#debtorsTable tbody tr.student-row');
-    if (!rows.length) return;
-    rows.forEach(r=>r.classList.remove('row-visible'));
-    if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) {
-        rows.forEach(r=>r.classList.add('row-visible')); return;
-    }
-    const obs=new IntersectionObserver(entries=>{
-        entries.forEach(e=>{
-            if (!e.isIntersecting) return;
-            const row=e.target;
-            const idx=Array.from(rows).indexOf(row);
-            setTimeout(()=>row.classList.add('row-visible'), Math.min(idx*38,15*38)+60);
-            obs.unobserve(row);
+// ====================================================================
+// TOOLTIP/POPOVER
+// ====================================================================
+const popEl = document.getElementById('studentPopover');
+
+function fillPopover(id) {
+    const s = studentData[id];
+    if (!s) return;
+    
+    document.getElementById('popName').textContent = s.student_name;
+    document.getElementById('popAdm').textContent = 'Adm: ' + s.admission_no;
+    document.getElementById('popBilled').textContent = fmt(s.original_amount);
+    document.getElementById('popPaid').textContent = fmt(s.amount_paid);
+    document.getElementById('popOwing').textContent = fmt(s.outstanding);
+    
+    const avatar = avatarUrl(s.avatar);
+    document.getElementById('popAvatar').src = avatar || '';
+    document.getElementById('popAvatar').style.display = avatar ? 'block' : 'none';
+    
+    // Benefits
+    const benefits = document.getElementById('popBenefits');
+    benefits.innerHTML = renderBenefits(s.has_scholarship, s.has_discount);
+    
+    // Bills
+    const list = document.getElementById('popBillList');
+    list.innerHTML = '';
+    if (s.bills && s.bills.length) {
+        s.bills.forEach(b => {
+            list.innerHTML += `<div class="popover-bill-row">
+                <span>${escapeHtml(b.title)}</span>
+                <span class="fw-bold">${fmt(b.outstanding)}</span>
+            </div>`;
         });
-    },{threshold:.05,rootMargin:'0px 0px -20px 0px'});
-    rows.forEach(r=>obs.observe(r));
+    } else {
+        list.innerHTML = '<div class="popover-bill-row text-muted">No bills</div>';
+    }
 }
 
-/* ====================================================================
-   DATATABLE
-   ──────────────────────────────────────────────────────────────────────
-   serverSide:false because the controller returns the full grouped
-   dataset for the applied filters at once. Pagination and sorting run
-   client-side; filtering (name/admission/class/term/session) is done
-   server-side via the filter bar so the stat cards stay accurate.
-   ==================================================================== */
-$(document).ready(function(){
+function positionPopover(rect) {
+    const pw = 300, ph = 380;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    
+    let left = rect.left;
+    let top = rect.bottom + 8;
+    
+    if (left + pw > vw - 8) left = vw - pw - 8;
+    if (left < 8) left = 8;
+    if (top + ph > vh - 8) top = rect.top - ph - 8;
+    if (top < 8) top = 8;
+    
+    popEl.style.left = left + 'px';
+    popEl.style.top = top + 'px';
+}
 
+function showPopover(row) {
+    clearTimeout(hideTimer);
+    const id = row.getAttribute('data-student-id');
+    if (!id || !studentData[id]) return;
+    
+    fillPopover(id);
+    positionPopover(row.getBoundingClientRect());
+    popEl.classList.add('visible');
+}
+
+function hidePopover() {
+    hideTimer = setTimeout(() => popEl.classList.remove('visible'), 180);
+}
+
+// ====================================================================
+// ROW EVENTS
+// ====================================================================
+function attachRowEvents() {
+    $('#debtorsTable tbody tr').off('mouseenter mouseleave click');
+    
+    $('#debtorsTable tbody tr').on('mouseenter', function() {
+        const row = this;
+        clearTimeout(popTimer);
+        popTimer = setTimeout(() => showPopover(row), 300);
+    }).on('mouseleave', function() {
+        clearTimeout(popTimer);
+        hidePopover();
+    });
+    
+    // Expand row on click
+    $('#debtorsTable tbody tr').on('click', '.expand-btn', function(e) {
+        e.stopPropagation();
+        const row = $(this).closest('tr');
+        const id = row.data('student-id');
+        const detailRow = row.next('.detail-row');
+        
+        if (detailRow.length) {
+            detailRow.remove();
+            $(this).html('<i class="ri-arrow-down-s-line"></i>');
+            return;
+        }
+        
+        const data = studentData[id];
+        if (!data || !data.bills) return;
+        
+        let html = `<tr class="detail-row">
+            <td colspan="13">
+                <div class="expandable-content">
+                    <h6 class="mb-2"><i class="ri-receipt-line me-2"></i>Bill Details</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="bill-item d-flex justify-content-between">
+                                <span class="fw-semibold">Total Billed:</span>
+                                <span>${fmt(data.original_amount)}</span>
+                            </div>
+                            <div class="bill-item d-flex justify-content-between">
+                                <span class="fw-semibold">Total Paid:</span>
+                                <span class="text-success">${fmt(data.amount_paid)}</span>
+                            </div>
+                            <div class="bill-item d-flex justify-content-between">
+                                <span class="fw-semibold">Outstanding:</span>
+                                <span class="text-danger">${fmt(data.outstanding)}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bill-item d-flex justify-content-between">
+                                <span class="fw-semibold">Collection Rate:</span>
+                                <span>${data.collection_rate}%</span>
+                            </div>
+                            <div class="bill-item d-flex justify-content-between">
+                                <span class="fw-semibold">Scholarship:</span>
+                                <span>${data.has_scholarship ? fmt(data.savings) : 'None'}</span>
+                            </div>
+                            <div class="bill-item d-flex justify-content-between">
+                                <span class="fw-semibold">Discount:</span>
+                                <span>${data.has_discount ? fmt(data.savings) : 'None'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-2">Bill Items</h6>
+                    ${data.bills.map(b => `
+                        <div class="bill-item d-flex justify-content-between align-items-center">
+                            <span>${escapeHtml(b.title)}</span>
+                            <div>
+                                <span class="text-muted me-2">${fmt(b.original_amount)}</span>
+                                <span class="text-success me-2">${fmt(b.amount_paid)}</span>
+                                <span class="text-danger">${fmt(b.outstanding)}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </td>
+        </tr>`;
+        
+        $(row).after(html);
+        $(this).html('<i class="ri-arrow-up-s-line"></i>');
+    });
+}
+
+// ====================================================================
+// EXPORT
+// ====================================================================
+function exportDebtors(format) {
+    const filters = {
+        class_id: currentFilters.class_id || '',
+        term_id: currentFilters.term_id || '',
+        session_id: currentFilters.session_id || '',
+        min_outstanding: currentFilters.min_outstanding || '',
+        search: currentFilters.search || ''
+    };
+    
+    const params = new URLSearchParams(filters);
+    const url = '{{ route("reports.financial.export", ["report" => "debtors"]) }}' + 
+                '/' + format + '?' + params.toString();
+    
+    window.open(url, '_blank');
+}
+
+// ====================================================================
+// SEND REMINDERS
+// ====================================================================
+function sendReminders(studentIds) {
+    if (!studentIds || studentIds.length === 0) {
+        Swal.fire('Warning', 'Please select students first', 'warning');
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Send Payment Reminders?',
+        text: `This will send reminders to ${studentIds.length} student(s) with outstanding balances.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, send now',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const termId = $('#term_id').val();
+            const sessionId = $('#session_id').val();
+            
+            $.ajax({
+                url: '{{ route("reports.analysis.send-reminders") }}',
+                type: 'POST',
+                data: {
+                    student_ids: studentIds,
+                    term_id: termId,
+                    session_id: sessionId,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    Swal.fire('Success', response.message, 'success');
+                },
+                error: function() {
+                    Swal.fire('Error', 'Failed to send reminders', 'error');
+                }
+            });
+        }
+    });
+}
+
+// ====================================================================
+// DATATABLE INITIALIZATION
+// ====================================================================
+$(document).ready(function() {
     debtorsTable = $('#debtorsTable').DataTable({
         processing: false,
         serverSide: false,
-        searching: false,   // custom Search field above replaces the default box
         deferRender: true,
         ajax: {
-            url:  '{{ route("reports.financial.debtors") }}',
+            url: '{{ route("reports.financial.debtors") }}',
             type: 'GET',
-            data: function(d){
-                d.class_id   = $('#classFilter').val()  || '';
-                d.term_id    = $('#termFilter').val()   || '';
-                d.session_id = $('#sessionFilter').val()|| '';
-                d.search     = $('#searchFilter').val() || '';
+            data: function(d) {
+                d.class_id = currentFilters.class_id || '';
+                d.term_id = currentFilters.term_id || '';
+                d.session_id = currentFilters.session_id || '';
+                d.min_outstanding = currentFilters.min_outstanding || '';
+                d.search = d.search.value || '';
             },
-            beforeSend: function(){ showLoading(true); },
-            complete:   function(){ showLoading(false); },
-            dataSrc: function(resp){
+            beforeSend: function() { showLoading(true); },
+            complete: function() { showLoading(false); },
+            dataSrc: function(resp) {
                 allRowData = resp.data || [];
+                studentData = {};
+                allRowData.forEach(item => {
+                    studentData[item.student_id] = item;
+                });
                 updateStats();
                 return allRowData;
             }
         },
         columns: [
-            { data:null, orderable:false, render:(d,t,r,meta)=>meta.row+1 },
-            { data:null, orderable:false, render:(d,t,row)=>renderAvatar(row.avatar, row.student_name, row.admission_no) },
-            { data:null, render:(d,t,row)=>`<div class="fw-semibold" style="color:var(--ss-primary)">${esc(row.student_name)}</div><div class="text-muted small">Adm: ${esc(row.admission_no)}</div>` },
-            { data:'class_name' },
-            { data:null, render:(d,t,row)=>`${esc(row.term_name)}<div class="text-muted small">${esc(row.session_name)}</div>` },
-            { data:null, orderable:false, render:(d,t,row)=>renderAdjustments(row) },
-            { data:null, orderable:false, className:'text-center', render:(d,t,row)=>renderBillsToggle(row) },
-            { data:'original_amount', className:'text-end', render:d=>`<span class="fw-semibold">${fmt(d)}</span>` },
-            { data:'amount_paid', className:'text-end', render:d=>`<span class="text-success">${fmt(d)}</span>` },
-            { data:'outstanding', className:'text-end', render:d=>`<span class="text-danger fw-bold">${fmt(d)}</span>` },
-            { data:'savings', className:'text-end', render:d=>parseFloat(d||0)>0?`<span class="text-warning">${fmt(d)}</span>`:'<span class="text-muted">—</span>' },
-            { data:'collection_rate', render:d=>renderProgress(parseFloat(d)||0) },
-            { data:null, orderable:false,
-              render:(d,t,row)=>`<a href="/reports/analysis/student/${row.student_id}/${row.class_id}/${row.term_id}/${row.session_id}"
-                                     class="btn btn-sm btn-outline-danger" target="_blank" title="View student report">
-                                     <i class="ri-eye-line"></i>
-                                  </a>`
-            }
+            { data: null, orderable: false,
+                render: (d,t,row) => `<input type="checkbox" class="row-selector" data-student-id="${row.student_id}">` },
+            { data: null, orderable: false,
+                render: (d,t,r,meta) => meta.row + 1 },
+            { data: null, orderable: false,
+                render: (d,t,row) => renderAvatar(row.avatar, row.student_name) },
+            { data: 'student_name' },
+            { data: 'admission_no' },
+            { data: 'class_name' },
+            { data: null,
+                render: (d,t,row) => escapeHtml(row.term_name || '') + ' · ' + escapeHtml(row.session_name || '') },
+            { data: null, orderable: false,
+                render: (d,t,row) => renderBenefits(row.has_scholarship, row.has_discount) },
+            { data: 'original_amount', className: 'text-end', render: d => fmt(d) },
+            { data: 'amount_paid', className: 'text-end', render: d => fmt(d) },
+            { data: 'outstanding', className: 'text-end',
+                render: d => `<span class="${getOutstandingClass(d)}">${fmt(d)}</span>` },
+            { data: 'collection_rate', 
+                render: d => `<span class="${d >= 70 ? 'text-success' : d >= 40 ? 'text-warning' : 'text-danger'}">${d}%</span>` },
+            { data: null, orderable: false,
+                render: (d,t,row) => `
+                    <button class="btn btn-sm btn-outline-primary expand-btn" title="View Details">
+                        <i class="ri-arrow-down-s-line"></i>
+                    </button>
+                    <a href="#" class="btn btn-sm btn-outline-success ms-1" 
+                       onclick="sendReminders([${row.student_id}]); return false;" title="Send Reminder">
+                        <i class="ri-mail-send-line"></i>
+                    </a>
+                ` }
         ],
-        createdRow: function(row, data){
-            $(row).addClass('student-row');
-            row.setAttribute('data-student-id', data.student_id || '');
+        createdRow: function(row, data) {
+            row.setAttribute('data-student-id', data.student_id);
         },
-        drawCallback: function(){
-            setTimeout(()=>{ initRowEntrance(); }, 60);
+        drawCallback: function() {
+            setTimeout(() => {
+                attachRowEvents();
+            }, 100);
         },
         language: {
-            emptyTable:   '<div class="text-center py-5 text-muted"><i class="ri-inbox-line" style="font-size:2rem;display:block;margin-bottom:8px"></i>No debtors found for the selected filters.</div>',
-            processing:   '',
-            lengthMenu:   'Show _MENU_ entries',
-            info:         'Showing _START_ to _END_ of _TOTAL_ debtors',
-            infoEmpty:    'No records found',
-            infoFiltered: ''
+            emptyTable: '<div class="text-center py-5 text-muted">' +
+                '<i class="ri-inbox-line" style="font-size:2rem;display:block;margin-bottom:8px"></i>' +
+                'No debtors found. Select filters and click Load Report.' +
+                '</div>',
+            processing: '',
+            search: 'Search:',
+            searchPlaceholder: 'Search by name or admission...',
+            lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_ to _END_ of _TOTAL_ debtors',
+            infoEmpty: 'No debtors found',
+            infoFiltered: '(filtered from _MAX_ total)'
         },
         pageLength: 25,
-        order: [[9,'desc']]   // sort by outstanding desc by default
+        searchDelay: 400,
+        order: [[10, 'desc']]
     });
-
-    /* ── Expand/collapse bills drawer ──────────────────────────────── */
-    $('#debtorsTable tbody').on('click', '.bills-toggle', function () {
-        const tr  = $(this).closest('tr');
-        const row = debtorsTable.row(tr);
-        const btn = $(this);
-
-        if (row.child.isShown()) {
-            row.child.hide();
-            tr.removeClass('shown');
-            btn.removeClass('open');
-        } else {
-            row.child(renderChildBills(row.data())).show();
-            tr.addClass('shown');
-            btn.addClass('open');
+    
+    // Select All
+    $('#selectAll').on('change', function() {
+        $('.row-selector').prop('checked', $(this).is(':checked'));
+    });
+    
+    // Load Report
+    $('#loadReportBtn').on('click', function() {
+        currentFilters = {
+            class_id: $('#class_id').val() || null,
+            term_id: $('#term_id').val() || null,
+            session_id: $('#session_id').val() || null,
+            min_outstanding: $('#min_outstanding').val() || null
+        };
+        allRowData = [];
+        studentData = {};
+        debtorsTable.ajax.reload();
+    });
+    
+    // Reset
+    $('#resetBtn').on('click', function() {
+        $('#class_id, #term_id, #session_id, #min_outstanding').val('');
+        currentFilters = {};
+        allRowData = [];
+        studentData = {};
+        debtersTable.clear().draw();
+        updateStats();
+    });
+    
+    // Send Reminders for selected
+    $('#sendRemindersBtn').on('click', function() {
+        const ids = [];
+        $('.row-selector:checked').each(function() {
+            ids.push($(this).data('student-id'));
+        });
+        sendReminders(ids);
+    });
+    
+    // Enter key for search
+    $('#debtorsTable_filter input').on('keyup', function(e) {
+        if (e.key === 'Enter') {
+            currentFilters.search = $(this).val();
         }
     });
-
-    /* ── Filters ─────────────────────────────────────────────────── */
-    function reloadTable() {
-        debtorsTable.ajax.reload();
-    }
-
-    $('#applyFilters').on('click', reloadTable);
-    $('#classFilter,#termFilter,#sessionFilter').on('change', reloadTable);
-
-    let searchDebounce;
-    $('#searchFilter').on('keyup', function (e) {
-        clearTimeout(searchDebounce);
-        if (e.key === 'Enter') { reloadTable(); return; }
-        searchDebounce = setTimeout(reloadTable, 450);
-    });
-
-    $('#resetFilters').on('click', function () {
-        $('#searchFilter').val('');
-        $('#classFilter,#termFilter,#sessionFilter').val('');
-        reloadTable();
-    });
 });
-
-/* ====================================================================
-   EXPORT / PRINT — reuses whatever filters are currently applied so the
-   PDF/CSV always matches exactly what's on screen.
-   ==================================================================== */
-function exportReport(format) {
-    const params = new URLSearchParams({
-        class_id:   $('#classFilter').val()   || '',
-        term_id:    $('#termFilter').val()    || '',
-        session_id: $('#sessionFilter').val() || '',
-        search:     $('#searchFilter').val()  || '',
-    });
-    const url = '{{ url("reports/financial/export") }}/debtors/' + format + '?' + params.toString();
-    window.open(url, '_blank');
-}
-
-/* ====================================================================
-   AVATAR CLICK → IMAGE ZOOM MODAL
-   ==================================================================== */
-$(document).on('click','.student-avatar-table,.student-avatar-placeholder',function(){
-    const isImg  = $(this).is('img');
-    const imgUrl = isImg ? $(this).attr('src') : null;
-    const name   = $(this).data('name');
-    const adm    = $(this).data('admission');
-
-    $('#zoomedImageName').text(name+' ('+adm+')');
-
-    if (imgUrl) {
-        $('#zoomedImage').attr('src', imgUrl);
-    } else {
-        const ini=initials(name);
-        const cv=document.createElement('canvas');
-        cv.width=cv.height=400;
-        const ctx=cv.getContext('2d');
-        const g=ctx.createLinearGradient(0,0,400,400);
-        g.addColorStop(0,'#dc2626'); g.addColorStop(1,'#7f1d1d');
-        ctx.fillStyle=g; ctx.fillRect(0,0,400,400);
-        ctx.fillStyle='#fff'; ctx.font='bold 160px Arial,sans-serif';
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(ini.substring(0,2),200,200);
-        $('#zoomedImage').attr('src',cv.toDataURL());
-    }
-    $('#imageZoomModal').modal('show');
-});
-$(document).on('click','#zoomedImage',()=>$('#imageZoomModal').modal('hide'));
 </script>
 @endsection
