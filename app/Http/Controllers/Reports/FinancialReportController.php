@@ -8,13 +8,11 @@ use App\Services\Accounting\AccountingService;
 use App\Models\SchoolInformation;
 use App\Models\ScholarshipAssignment;
 use App\Models\DiscountAssignment;
-use App\Models\Student;
-use App\Models\StudentBillPaymentBook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -49,26 +47,49 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Debtors List Report - Enhanced with scholarship/discount info
+     * Debtors List Report
      */
     public function debtorsList(Request $request)
     {
-        $pagetitle = 'Student Debtors List';
+        $pagetitle  = 'Student Debtors List';
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        if ($request->ajax()) {
-            return response()->json([
-                'data' => $this->buildDebtorsDataset($request)->values(),
-            ]);
+        $wantsJson = $request->ajax()
+            || $request->wantsJson()
+            || $request->boolean('ajax')
+            || str_contains((string) $request->header('Accept'), 'application/json');
+
+        if ($wantsJson) {
+            try {
+                $data = $this->buildDebtorsDataset($request)->values();
+
+                return response()->json([
+                    'success' => true,
+                    'data'    => $data,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Debtors list AJAX error: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to load debtors: ' . $e->getMessage(),
+                    'data'    => [],
+                ], 500);
+            }
         }
 
         $classes = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
-            ->select('schoolclass.id', DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as display_name"))
+            ->select(
+                'schoolclass.id',
+                DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as display_name")
+            )
             ->orderBy('schoolclass.schoolclass')
             ->get();
 
-        $terms = DB::table('schoolterm')->orderBy('id')->get();
+        $terms    = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
         return view('reports.financial.debtors-list', compact(
@@ -81,7 +102,7 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Build the grouped debtors dataset
+     * Build grouped debtors dataset
      */
     private function buildDebtorsDataset(Request $request): Collection
     {
@@ -135,7 +156,7 @@ class FinancialReportController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = trim($request->search);
+            $search = trim((string) $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('s.firstname', 'like', "%{$search}%")
                   ->orWhere('s.lastname', 'like', "%{$search}%")
@@ -176,55 +197,55 @@ class FinancialReportController extends Controller
         return $rows
             ->groupBy(fn ($r) => $r->student_id . '_' . $r->class_id . '_' . $r->term_id . '_' . $r->session_id)
             ->map(function ($bills) use ($scholarships, $discounts) {
-                $first = $bills->first();
-                $totalOriginal = (float) $bills->sum('original_amount');
-                $totalPaid = (float) $bills->sum('amount_paid');
+                $first            = $bills->first();
+                $totalOriginal    = (float) $bills->sum('original_amount');
+                $totalPaid        = (float) $bills->sum('amount_paid');
                 $totalOutstanding = (float) $bills->sum('outstanding');
-                $totalSavings = (float) $bills->sum('total_savings');
-                $totalAdjusted = (float) $bills->sum('adjusted_amount');
-                $rate = $totalAdjusted > 0 ? round(($totalPaid / $totalAdjusted) * 100, 1) : 0;
+                $totalSavings     = (float) $bills->sum('total_savings');
+                $totalAdjusted    = (float) $bills->sum('adjusted_amount');
+                $rate             = $totalAdjusted > 0 ? round(($totalPaid / $totalAdjusted) * 100, 1) : 0;
 
-                $sch = $scholarships->get($first->student_id);
+                $sch  = $scholarships->get($first->student_id);
                 $disc = $discounts->get($first->student_id, collect());
 
                 return [
-                    'student_id' => $first->student_id,
-                    'student_name' => $first->student_name,
-                    'admission_no' => $first->admission_no,
-                    'student_status' => $first->student_status ?? 'N/A',
-                    'gender' => $first->gender ?? 'N/A',
-                    'avatar' => $first->avatar,
-                    'class_id' => $first->class_id,
-                    'class_name' => $first->class_name,
-                    'term_id' => $first->term_id,
-                    'term_name' => $first->term_name,
-                    'session_id' => $first->session_id,
-                    'session_name' => $first->session_name,
+                    'student_id'      => $first->student_id,
+                    'student_name'    => $first->student_name,
+                    'admission_no'    => $first->admission_no,
+                    'student_status'  => $first->student_status ?? 'N/A',
+                    'gender'          => $first->gender ?? 'N/A',
+                    'avatar'          => $first->avatar,
+                    'class_id'        => $first->class_id,
+                    'class_name'      => $first->class_name,
+                    'term_id'         => $first->term_id,
+                    'term_name'       => $first->term_name,
+                    'session_id'      => $first->session_id,
+                    'session_name'    => $first->session_name,
                     'original_amount' => $totalOriginal,
-                    'amount_paid' => $totalPaid,
-                    'outstanding' => $totalOutstanding,
-                    'savings' => $totalSavings,
+                    'amount_paid'     => $totalPaid,
+                    'outstanding'     => $totalOutstanding,
+                    'savings'         => $totalSavings,
                     'collection_rate' => $rate,
-                    'bill_count' => $bills->count(),
+                    'bill_count'      => $bills->count(),
                     'has_scholarship' => $sch !== null,
-                    'has_discount' => $disc->isNotEmpty(),
-                    'scholarship' => $sch ? [
-                        'title' => $sch->scholarship->title ?? 'Scholarship',
-                        'value' => $sch->value,
+                    'has_discount'    => $disc->isNotEmpty(),
+                    'scholarship'     => $sch ? [
+                        'title'      => $sch->scholarship->title ?? 'Scholarship',
+                        'value'      => $sch->value,
                         'value_type' => $sch->value_type,
                     ] : null,
                     'discounts' => $disc->map(fn ($d) => [
-                        'title' => $d->discount->title ?? 'Discount',
-                        'value' => $d->value,
+                        'title'      => $d->discount->title ?? 'Discount',
+                        'value'      => $d->value,
                         'value_type' => $d->value_type,
                     ])->values(),
                     'bills' => $bills->map(fn ($b) => [
-                        'bill_id' => $b->bill_id,
-                        'title' => $b->bill_title,
+                        'bill_id'         => $b->bill_id,
+                        'title'           => $b->bill_title,
                         'original_amount' => (float) $b->original_amount,
-                        'amount_paid' => (float) $b->amount_paid,
-                        'outstanding' => (float) $b->outstanding,
-                        'savings' => (float) ($b->scholarship_deduction + $b->discount_deduction),
+                        'amount_paid'     => (float) $b->amount_paid,
+                        'outstanding'     => (float) $b->outstanding,
+                        'savings'         => (float) ($b->scholarship_deduction + $b->discount_deduction),
                     ])->values(),
                 ];
             })
@@ -232,9 +253,7 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Export endpoint matching route:
-     * GET reports/financial/export/{report}/{format}
-     * name: reports.financial.export
+     * Export: reports/financial/export/{report}/{format}
      */
     public function exportDebtors($report, $format, Request $request)
     {
@@ -249,7 +268,7 @@ class FinancialReportController extends Controller
             abort(404, 'Unsupported export format: ' . $format);
         }
 
-        $dataset = $this->buildDebtorsDataset($request)->values();
+        $dataset  = $this->buildDebtorsDataset($request)->values();
         $filename = 'debtors_list_' . date('Y-m-d_H-i-s');
 
         if ($format === 'excel' || $format === 'csv') {
@@ -259,9 +278,6 @@ class FinancialReportController extends Controller
         return $this->exportDebtorsPDF($dataset, $filename, $request);
     }
 
-    /**
-     * Export Debtors CSV / Excel-compatible CSV
-     */
     private function exportDebtorsCSV($dataset, $filename)
     {
         $fullFilename = $filename . '.csv';
@@ -312,9 +328,6 @@ class FinancialReportController extends Controller
         exit;
     }
 
-    /**
-     * Export Debtors PDF
-     */
     private function exportDebtorsPDF($dataset, $filename, $request)
     {
         $dataset = $dataset->map(function ($row) {
@@ -342,21 +355,21 @@ class FinancialReportController extends Controller
         ];
 
         $totals = [
-            'debtors' => $dataset->count(),
-            'original' => $dataset->sum('original_amount'),
-            'paid' => $dataset->sum('amount_paid'),
+            'debtors'     => $dataset->count(),
+            'original'    => $dataset->sum('original_amount'),
+            'paid'        => $dataset->sum('amount_paid'),
             'outstanding' => $dataset->sum('outstanding'),
-            'savings' => $dataset->sum('savings'),
+            'savings'     => $dataset->sum('savings'),
         ];
 
         $pdf = PDF::loadView(
             'reports.financial.pdf.debtors',
             compact('dataset', 'schoolInfo', 'filters', 'totals')
         )->setOptions([
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => false,
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => false,
+            'defaultFont'         => 'DejaVu Sans',
+            'isRemoteEnabled'     => false,
+            'isHtml5ParserEnabled'=> true,
+            'isPhpEnabled'        => false,
         ]);
 
         $pdf->setPaper('a4', 'landscape');
@@ -364,16 +377,13 @@ class FinancialReportController extends Controller
         return $pdf->download($filename . '.pdf');
     }
 
-    /**
-     * Balance Sheet
-     */
     public function balanceSheet(Request $request)
     {
-        $pagetitle = 'Balance Sheet';
-        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $pagetitle  = 'Balance Sheet';
+        $asAtDate   = $request->get('as_at_date', now()->format('Y-m-d'));
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $data = $this->financialService->generateBalanceSheet($asAtDate);
             return response()->json(['success' => true, 'data' => $data]);
         }
@@ -385,23 +395,20 @@ class FinancialReportController extends Controller
         return view('reports.financial.balance-sheet', compact('pagetitle', 'asAtDate', 'schoolInfo'));
     }
 
-    /**
-     * Export Balance Sheet
-     */
     public function exportBalanceSheet(Request $request)
     {
-        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $asAtDate   = $request->get('as_at_date', now()->format('Y-m-d'));
         $schoolInfo = $this->prepareSchoolInfoForPdf(SchoolInformation::getActiveSchool());
-        $data = $this->financialService->generateBalanceSheet($asAtDate);
+        $data       = $this->financialService->generateBalanceSheet($asAtDate);
 
         $pdf = PDF::loadView(
             'reports.financial.pdf.balance-sheet',
             compact('data', 'asAtDate', 'schoolInfo')
         )->setOptions([
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => false,
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => false,
+            'defaultFont'         => 'DejaVu Sans',
+            'isRemoteEnabled'     => false,
+            'isHtml5ParserEnabled'=> true,
+            'isPhpEnabled'        => false,
         ]);
 
         $pdf->setPaper('a4', 'portrait');
@@ -409,17 +416,14 @@ class FinancialReportController extends Controller
         return $pdf->download("balance_sheet_{$asAtDate}.pdf");
     }
 
-    /**
-     * Income Statement
-     */
     public function incomeStatement(Request $request)
     {
-        $pagetitle = 'Income Statement';
-        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $pagetitle  = 'Income Statement';
+        $startDate  = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate    = $request->get('end_date', now()->format('Y-m-d'));
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
             return response()->json(['success' => true, 'data' => $data]);
         }
@@ -436,24 +440,21 @@ class FinancialReportController extends Controller
         ));
     }
 
-    /**
-     * Export Income Statement
-     */
     public function exportIncomeStatement(Request $request)
     {
-        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $startDate  = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate    = $request->get('end_date', now()->format('Y-m-d'));
         $schoolInfo = $this->prepareSchoolInfoForPdf(SchoolInformation::getActiveSchool());
-        $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
+        $data       = $this->financialService->generateIncomeStatement($startDate, $endDate);
 
         $pdf = PDF::loadView(
             'reports.financial.pdf.income-statement',
             compact('data', 'startDate', 'endDate', 'schoolInfo')
         )->setOptions([
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => false,
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => false,
+            'defaultFont'         => 'DejaVu Sans',
+            'isRemoteEnabled'     => false,
+            'isHtml5ParserEnabled'=> true,
+            'isPhpEnabled'        => false,
         ]);
 
         $pdf->setPaper('a4', 'portrait');
@@ -461,22 +462,20 @@ class FinancialReportController extends Controller
         return $pdf->download("income_statement_{$startDate}_to_{$endDate}.pdf");
     }
 
-    /**
-     * Trial Balance
-     */
     public function trialBalance(Request $request)
     {
-        $pagetitle = 'Trial Balance';
-        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $pagetitle  = 'Trial Balance';
+        $asAtDate   = $request->get('as_at_date', now()->format('Y-m-d'));
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $trialBalance = $this->accountingService->getTrialBalance($asAtDate);
-            $totalDebit = array_sum(array_column($trialBalance, 'debit'));
-            $totalCredit = array_sum(array_column($trialBalance, 'credit'));
+            $totalDebit   = array_sum(array_column($trialBalance, 'debit'));
+            $totalCredit  = array_sum(array_column($trialBalance, 'credit'));
+
             return response()->json([
                 'success' => true,
-                'data' => compact('trialBalance', 'totalDebit', 'totalCredit'),
+                'data'    => compact('trialBalance', 'totalDebit', 'totalCredit'),
             ]);
         }
 
@@ -487,17 +486,14 @@ class FinancialReportController extends Controller
         return view('reports.financial.trial-balance', compact('pagetitle', 'asAtDate', 'schoolInfo'));
     }
 
-    /**
-     * Cash Flow Statement
-     */
     public function cashFlow(Request $request)
     {
-        $pagetitle = 'Cash Flow Statement';
-        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $pagetitle  = 'Cash Flow Statement';
+        $startDate  = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate    = $request->get('end_date', now()->format('Y-m-d'));
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $data = $this->financialService->generateCashFlow($startDate, $endDate);
             return response()->json(['success' => true, 'data' => $data]);
         }
@@ -514,24 +510,21 @@ class FinancialReportController extends Controller
         ));
     }
 
-    /**
-     * Export Cash Flow
-     */
     public function exportCashFlow(Request $request)
     {
-        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $startDate  = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate    = $request->get('end_date', now()->format('Y-m-d'));
         $schoolInfo = $this->prepareSchoolInfoForPdf(SchoolInformation::getActiveSchool());
-        $data = $this->financialService->generateCashFlow($startDate, $endDate);
+        $data       = $this->financialService->generateCashFlow($startDate, $endDate);
 
         $pdf = PDF::loadView(
             'reports.financial.pdf.cash-flow',
             compact('data', 'startDate', 'endDate', 'schoolInfo')
         )->setOptions([
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => false,
-            'isHtml5ParserEnabled' => true,
-            'isPhpEnabled' => false,
+            'defaultFont'         => 'DejaVu Sans',
+            'isRemoteEnabled'     => false,
+            'isHtml5ParserEnabled'=> true,
+            'isPhpEnabled'        => false,
         ]);
 
         $pdf->setPaper('a4', 'portrait');
@@ -539,15 +532,12 @@ class FinancialReportController extends Controller
         return $pdf->download("cash_flow_{$startDate}_to_{$endDate}.pdf");
     }
 
-    /**
-     * Collection Summary with DataTables
-     */
     public function collectionSummary(Request $request)
     {
-        $pagetitle = 'School Fee Collection Summary';
+        $pagetitle  = 'School Fee Collection Summary';
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $query = DB::table('student_bill_payment_book')
                 ->select(
                     'class_id',
@@ -579,23 +569,23 @@ class FinancialReportController extends Controller
                     ->where('schoolclass.id', $row->class_id)
                     ->select(DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as class_name"))
                     ->first();
-                $term = DB::table('schoolterm')->where('id', $row->term_id)->value('term');
+                $term    = DB::table('schoolterm')->where('id', $row->term_id)->value('term');
                 $session = DB::table('schoolsession')->where('id', $row->session_id)->value('session');
-                $rate = $row->total_adjusted > 0
+                $rate    = $row->total_adjusted > 0
                     ? round(($row->total_collected / $row->total_adjusted) * 100, 2)
                     : 0;
 
                 return [
-                    'class' => $class->class_name ?? 'N/A',
-                    'term' => $term ?? 'N/A',
-                    'session' => $session ?? 'N/A',
-                    'student_count' => $row->student_count,
-                    'total_expected' => number_format($row->total_adjusted, 2),
-                    'total_collected' => number_format($row->total_collected, 2),
-                    'total_outstanding' => number_format($row->total_outstanding, 2),
-                    'total_scholarship' => number_format($row->total_scholarship, 2),
-                    'total_discount' => number_format($row->total_discount, 2),
-                    'collection_rate' => $rate . '%',
+                    'class'              => $class->class_name ?? 'N/A',
+                    'term'               => $term ?? 'N/A',
+                    'session'            => $session ?? 'N/A',
+                    'student_count'      => $row->student_count,
+                    'total_expected'     => number_format($row->total_adjusted, 2),
+                    'total_collected'    => number_format($row->total_collected, 2),
+                    'total_outstanding'  => number_format($row->total_outstanding, 2),
+                    'total_scholarship'  => number_format($row->total_scholarship, 2),
+                    'total_discount'     => number_format($row->total_discount, 2),
+                    'collection_rate'    => $rate . '%',
                 ];
             });
 
@@ -604,10 +594,13 @@ class FinancialReportController extends Controller
 
         $classes = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
-            ->select('schoolclass.id', DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as display_name"))
+            ->select(
+                'schoolclass.id',
+                DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as display_name")
+            )
             ->get();
 
-        $terms = DB::table('schoolterm')->orderBy('id')->get();
+        $terms    = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
         return view('reports.financial.collection-summary', compact(
@@ -619,18 +612,15 @@ class FinancialReportController extends Controller
         ));
     }
 
-    /**
-     * Scholarship Impact Report
-     */
     public function scholarshipImpact(Request $request)
     {
-        $pagetitle = 'Scholarship & Discount Impact Report';
+        $pagetitle  = 'Scholarship & Discount Impact Report';
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        if ($request->ajax()) {
-            $termId = $request->input('term_id');
+        if ($request->ajax() || $request->wantsJson()) {
+            $termId    = $request->input('term_id');
             $sessionId = $request->input('session_id');
-            $now = now();
+            $now       = now();
 
             $scholarshipsQuery = DB::table('scholarship_assignments as sa')
                 ->join('scholarships as s', 's.id', '=', 'sa.scholarship_id')
@@ -713,48 +703,40 @@ class FinancialReportController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'total_scholarships' => $scholarships->count(),
-                    'total_discounts' => $discounts->count(),
+                'data'    => [
+                    'total_scholarships'  => $scholarships->count(),
+                    'total_discounts'     => $discounts->count(),
                     'total_beneficiaries' => $scholarships->pluck('student_id')
                         ->merge($discounts->pluck('student_id'))
                         ->unique()
                         ->count(),
-                    'total_savings' => $totalSavings,
-                    'scholarship_by_type' => $scholarships->groupBy('scholarship_name')->map(function ($items) {
-                        return $items->sum('value');
-                    }),
-                    'discount_by_type' => $discounts->groupBy('discount_name')->map(function ($items) {
-                        return $items->sum('value');
-                    }),
-                    'impact_by_class' => $impactByClass,
-                    'scholarship_beneficiaries' => $scholarships->map(function ($s) {
-                        return [
-                            'student_id' => $s->student_id,
-                            'name' => trim($s->firstname . ' ' . $s->lastname),
-                            'admission_no' => $s->admissionNo,
-                            'avatar' => $s->avatar,
-                            'scholarship' => $s->scholarship_name,
-                            'value' => $s->value,
-                            'value_type' => $s->value_type,
-                        ];
-                    }),
-                    'discount_beneficiaries' => $discounts->map(function ($d) {
-                        return [
-                            'student_id' => $d->student_id,
-                            'name' => trim($d->firstname . ' ' . $d->lastname),
-                            'admission_no' => $d->admissionNo,
-                            'avatar' => $d->avatar,
-                            'discount' => $d->discount_name,
-                            'value' => $d->value,
-                            'value_type' => $d->value_type,
-                        ];
-                    }),
+                    'total_savings'       => $totalSavings,
+                    'scholarship_by_type' => $scholarships->groupBy('scholarship_name')->map(fn ($items) => $items->sum('value')),
+                    'discount_by_type'    => $discounts->groupBy('discount_name')->map(fn ($items) => $items->sum('value')),
+                    'impact_by_class'     => $impactByClass,
+                    'scholarship_beneficiaries' => $scholarships->map(fn ($s) => [
+                        'student_id'   => $s->student_id,
+                        'name'         => trim($s->firstname . ' ' . $s->lastname),
+                        'admission_no' => $s->admissionNo,
+                        'avatar'       => $s->avatar,
+                        'scholarship'  => $s->scholarship_name,
+                        'value'        => $s->value,
+                        'value_type'   => $s->value_type,
+                    ]),
+                    'discount_beneficiaries' => $discounts->map(fn ($d) => [
+                        'student_id'   => $d->student_id,
+                        'name'         => trim($d->firstname . ' ' . $d->lastname),
+                        'admission_no' => $d->admissionNo,
+                        'avatar'       => $d->avatar,
+                        'discount'     => $d->discount_name,
+                        'value'        => $d->value,
+                        'value_type'   => $d->value_type,
+                    ]),
                 ],
             ]);
         }
 
-        $terms = DB::table('schoolterm')->orderBy('id')->get();
+        $terms    = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
         return view('reports.financial.scholarship-impact', compact(
@@ -765,17 +747,14 @@ class FinancialReportController extends Controller
         ));
     }
 
-    /**
-     * Export Trial Balance to Excel/CSV
-     */
     private function exportTrialBalanceExcel($asAtDate)
     {
         $trialBalance = $this->accountingService->getTrialBalance($asAtDate);
-        $totalDebit = array_sum(array_column($trialBalance, 'debit'));
-        $totalCredit = array_sum(array_column($trialBalance, 'credit'));
+        $totalDebit   = array_sum(array_column($trialBalance, 'debit'));
+        $totalCredit  = array_sum(array_column($trialBalance, 'credit'));
 
         $filename = "trial_balance_{$asAtDate}.csv";
-        $handle = fopen('php://output', 'w');
+        $handle   = fopen('php://output', 'w');
 
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -814,9 +793,6 @@ class FinancialReportController extends Controller
         exit;
     }
 
-    /**
-     * Convert avatar to base64
-     */
     private function avatarBase64(?string $picture): ?string
     {
         if (!$picture || $picture === 'unnamed.jpg' || $picture === '') {
@@ -835,9 +811,6 @@ class FinancialReportController extends Controller
         return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
     }
 
-    /**
-     * Prepare school info for PDF
-     */
     private function prepareSchoolInfoForPdf($schoolInfo)
     {
         if (!$schoolInfo) {
