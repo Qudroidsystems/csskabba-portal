@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Reports/FinancialReportController.php
 
 namespace App\Http\Controllers\Reports;
 
@@ -31,7 +30,6 @@ class FinancialReportController extends Controller
         $this->financialService = $financialService;
         $this->accountingService = $accountingService;
 
-        // Permissions
         $this->middleware('permission:View financial reports')->only([
             'debtorsList',
             'balanceSheet',
@@ -39,14 +37,14 @@ class FinancialReportController extends Controller
             'trialBalance',
             'cashFlow',
             'collectionSummary',
-            'scholarshipImpact'
+            'scholarshipImpact',
         ]);
 
         $this->middleware('permission:Export financial reports')->only([
             'exportDebtors',
             'exportBalanceSheet',
             'exportIncomeStatement',
-            'exportCashFlow'
+            'exportCashFlow',
         ]);
     }
 
@@ -67,12 +65,19 @@ class FinancialReportController extends Controller
         $classes = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->select('schoolclass.id', DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as display_name"))
-            ->orderBy('schoolclass.schoolclass')->get();
+            ->orderBy('schoolclass.schoolclass')
+            ->get();
 
         $terms = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.financial.debtors-list', compact('pagetitle', 'classes', 'terms', 'sessions', 'schoolInfo'));
+        return view('reports.financial.debtors-list', compact(
+            'pagetitle',
+            'classes',
+            'terms',
+            'sessions',
+            'schoolInfo'
+        ));
     }
 
     /**
@@ -113,11 +118,21 @@ class FinancialReportController extends Controller
                 DB::raw('(sbpb.scholarship_deduction + sbpb.discount_deduction) as total_savings')
             );
 
-        if ($request->filled('class_id')) $query->where('sbpb.class_id', $request->class_id);
-        if ($request->filled('term_id')) $query->where('sbpb.term_id', $request->term_id);
-        if ($request->filled('session_id')) $query->where('sbpb.session_id', $request->session_id);
-        if ($request->filled('min_outstanding')) $query->where('sbpb.amount_owed', '>=', $request->min_outstanding);
-        if ($request->filled('max_outstanding')) $query->where('sbpb.amount_owed', '<=', $request->max_outstanding);
+        if ($request->filled('class_id')) {
+            $query->where('sbpb.class_id', $request->class_id);
+        }
+        if ($request->filled('term_id')) {
+            $query->where('sbpb.term_id', $request->term_id);
+        }
+        if ($request->filled('session_id')) {
+            $query->where('sbpb.session_id', $request->session_id);
+        }
+        if ($request->filled('min_outstanding')) {
+            $query->where('sbpb.amount_owed', '>=', $request->min_outstanding);
+        }
+        if ($request->filled('max_outstanding')) {
+            $query->where('sbpb.amount_owed', '<=', $request->max_outstanding);
+        }
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -138,7 +153,6 @@ class FinancialReportController extends Controller
         $studentIds = $rows->pluck('student_id')->unique()->values();
         $now = now();
 
-        // Get active scholarships and discounts
         $scholarships = ScholarshipAssignment::whereIn('student_id', $studentIds)
             ->where('status', 'active')
             ->where('effective_from', '<=', $now)
@@ -218,12 +232,24 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Export Debtors List
+     * Export endpoint matching route:
+     * GET reports/financial/export/{report}/{format}
+     * name: reports.financial.export
      */
-    public function exportDebtors($format, Request $request)
+    public function exportDebtors($report, $format, Request $request)
     {
-        $dataset = $this->buildDebtorsDataset($request)->values();
+        $report = strtolower((string) $report);
+        $format = strtolower((string) $format);
 
+        if ($report !== 'debtors') {
+            abort(404, 'Unknown report type: ' . $report);
+        }
+
+        if (!in_array($format, ['pdf', 'excel', 'csv'], true)) {
+            abort(404, 'Unsupported export format: ' . $format);
+        }
+
+        $dataset = $this->buildDebtorsDataset($request)->values();
         $filename = 'debtors_list_' . date('Y-m-d_H-i-s');
 
         if ($format === 'excel' || $format === 'csv') {
@@ -234,19 +260,32 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Export Debtors CSV
+     * Export Debtors CSV / Excel-compatible CSV
      */
     private function exportDebtorsCSV($dataset, $filename)
     {
         $fullFilename = $filename . '.csv';
         $handle = fopen('php://output', 'w');
+
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $fullFilename . '"');
 
         fputcsv($handle, [
-            'Student Name', 'Admission No', 'Class', 'Term', 'Session',
-            'Gender', 'Status', 'Scholarship', 'Discounts', 'Bills Owing',
-            'Original (₦)', 'Paid (₦)', 'Outstanding (₦)', 'Savings (₦)', 'Collection Rate (%)'
+            'Student Name',
+            'Admission No',
+            'Class',
+            'Term',
+            'Session',
+            'Gender',
+            'Status',
+            'Scholarship',
+            'Discounts',
+            'Bills Owing',
+            'Original (₦)',
+            'Paid (₦)',
+            'Outstanding (₦)',
+            'Savings (₦)',
+            'Collection Rate (%)',
         ]);
 
         foreach ($dataset as $row) {
@@ -265,9 +304,10 @@ class FinancialReportController extends Controller
                 number_format($row['amount_paid'], 2),
                 number_format($row['outstanding'], 2),
                 number_format($row['savings'], 2),
-                $row['collection_rate']
+                $row['collection_rate'],
             ]);
         }
+
         fclose($handle);
         exit;
     }
@@ -309,13 +349,16 @@ class FinancialReportController extends Controller
             'savings' => $dataset->sum('savings'),
         ];
 
-        $pdf = PDF::loadView('reports.financial.pdf.debtors', compact('dataset', 'schoolInfo', 'filters', 'totals'))
-            ->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => false,
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => false,
-            ]);
+        $pdf = PDF::loadView(
+            'reports.financial.pdf.debtors',
+            compact('dataset', 'schoolInfo', 'filters', 'totals')
+        )->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+        ]);
+
         $pdf->setPaper('a4', 'landscape');
 
         return $pdf->download($filename . '.pdf');
@@ -351,13 +394,16 @@ class FinancialReportController extends Controller
         $schoolInfo = $this->prepareSchoolInfoForPdf(SchoolInformation::getActiveSchool());
         $data = $this->financialService->generateBalanceSheet($asAtDate);
 
-        $pdf = PDF::loadView('reports.financial.pdf.balance-sheet', compact('data', 'asAtDate', 'schoolInfo'))
-            ->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => false,
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => false,
-            ]);
+        $pdf = PDF::loadView(
+            'reports.financial.pdf.balance-sheet',
+            compact('data', 'asAtDate', 'schoolInfo')
+        )->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+        ]);
+
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download("balance_sheet_{$asAtDate}.pdf");
@@ -382,7 +428,12 @@ class FinancialReportController extends Controller
             return $this->exportIncomeStatement($request);
         }
 
-        return view('reports.financial.income-statement', compact('pagetitle', 'startDate', 'endDate', 'schoolInfo'));
+        return view('reports.financial.income-statement', compact(
+            'pagetitle',
+            'startDate',
+            'endDate',
+            'schoolInfo'
+        ));
     }
 
     /**
@@ -395,13 +446,16 @@ class FinancialReportController extends Controller
         $schoolInfo = $this->prepareSchoolInfoForPdf(SchoolInformation::getActiveSchool());
         $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
 
-        $pdf = PDF::loadView('reports.financial.pdf.income-statement', compact('data', 'startDate', 'endDate', 'schoolInfo'))
-            ->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => false,
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => false,
-            ]);
+        $pdf = PDF::loadView(
+            'reports.financial.pdf.income-statement',
+            compact('data', 'startDate', 'endDate', 'schoolInfo')
+        )->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+        ]);
+
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download("income_statement_{$startDate}_to_{$endDate}.pdf");
@@ -422,7 +476,7 @@ class FinancialReportController extends Controller
             $totalCredit = array_sum(array_column($trialBalance, 'credit'));
             return response()->json([
                 'success' => true,
-                'data' => compact('trialBalance', 'totalDebit', 'totalCredit')
+                'data' => compact('trialBalance', 'totalDebit', 'totalCredit'),
             ]);
         }
 
@@ -452,7 +506,12 @@ class FinancialReportController extends Controller
             return $this->exportCashFlow($request);
         }
 
-        return view('reports.financial.cash-flow', compact('pagetitle', 'startDate', 'endDate', 'schoolInfo'));
+        return view('reports.financial.cash-flow', compact(
+            'pagetitle',
+            'startDate',
+            'endDate',
+            'schoolInfo'
+        ));
     }
 
     /**
@@ -465,13 +524,16 @@ class FinancialReportController extends Controller
         $schoolInfo = $this->prepareSchoolInfoForPdf(SchoolInformation::getActiveSchool());
         $data = $this->financialService->generateCashFlow($startDate, $endDate);
 
-        $pdf = PDF::loadView('reports.financial.pdf.cash-flow', compact('data', 'startDate', 'endDate', 'schoolInfo'))
-            ->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => false,
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => false,
-            ]);
+        $pdf = PDF::loadView(
+            'reports.financial.pdf.cash-flow',
+            compact('data', 'startDate', 'endDate', 'schoolInfo')
+        )->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+        ]);
+
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download("cash_flow_{$startDate}_to_{$endDate}.pdf");
@@ -500,12 +562,18 @@ class FinancialReportController extends Controller
                 )
                 ->groupBy('class_id', 'term_id', 'session_id');
 
-            if ($request->filled('class_id')) $query->where('class_id', $request->class_id);
-            if ($request->filled('term_id')) $query->where('term_id', $request->term_id);
-            if ($request->filled('session_id')) $query->where('session_id', $request->session_id);
+            if ($request->filled('class_id')) {
+                $query->where('class_id', $request->class_id);
+            }
+            if ($request->filled('term_id')) {
+                $query->where('term_id', $request->term_id);
+            }
+            if ($request->filled('session_id')) {
+                $query->where('session_id', $request->session_id);
+            }
 
             $results = $query->get();
-            $data = $results->map(function($row) {
+            $data = $results->map(function ($row) {
                 $class = DB::table('schoolclass')
                     ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
                     ->where('schoolclass.id', $row->class_id)
@@ -513,7 +581,9 @@ class FinancialReportController extends Controller
                     ->first();
                 $term = DB::table('schoolterm')->where('id', $row->term_id)->value('term');
                 $session = DB::table('schoolsession')->where('id', $row->session_id)->value('session');
-                $rate = $row->total_adjusted > 0 ? round(($row->total_collected / $row->total_adjusted) * 100, 2) : 0;
+                $rate = $row->total_adjusted > 0
+                    ? round(($row->total_collected / $row->total_adjusted) * 100, 2)
+                    : 0;
 
                 return [
                     'class' => $class->class_name ?? 'N/A',
@@ -540,7 +610,13 @@ class FinancialReportController extends Controller
         $terms = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.financial.collection-summary', compact('pagetitle', 'classes', 'terms', 'sessions', 'schoolInfo'));
+        return view('reports.financial.collection-summary', compact(
+            'pagetitle',
+            'classes',
+            'terms',
+            'sessions',
+            'schoolInfo'
+        ));
     }
 
     /**
@@ -556,7 +632,6 @@ class FinancialReportController extends Controller
             $sessionId = $request->input('session_id');
             $now = now();
 
-            // Get active scholarships with student details
             $scholarshipsQuery = DB::table('scholarship_assignments as sa')
                 ->join('scholarships as s', 's.id', '=', 'sa.scholarship_id')
                 ->join('studentRegistration as sr', 'sr.id', '=', 'sa.student_id')
@@ -568,8 +643,12 @@ class FinancialReportController extends Controller
                     $q->whereNull('sa.effective_to')->orWhere('sa.effective_to', '>=', $now);
                 });
 
-            if ($termId) $scholarshipsQuery->where('sc.termid', $termId);
-            if ($sessionId) $scholarshipsQuery->where('sc.sessionid', $sessionId);
+            if ($termId) {
+                $scholarshipsQuery->where('sc.termid', $termId);
+            }
+            if ($sessionId) {
+                $scholarshipsQuery->where('sc.sessionid', $sessionId);
+            }
 
             $scholarships = $scholarshipsQuery->select(
                 's.title as scholarship_name',
@@ -582,7 +661,6 @@ class FinancialReportController extends Controller
                 'sp.picture as avatar'
             )->get();
 
-            // Get active discounts
             $discountsQuery = DB::table('discount_assignments as da')
                 ->join('discounts as d', 'd.id', '=', 'da.discount_id')
                 ->join('studentRegistration as sr', 'sr.id', '=', 'da.student_id')
@@ -594,8 +672,12 @@ class FinancialReportController extends Controller
                     $q->whereNull('da.effective_to')->orWhere('da.effective_to', '>=', $now);
                 });
 
-            if ($termId) $discountsQuery->where('sc.termid', $termId);
-            if ($sessionId) $discountsQuery->where('sc.sessionid', $sessionId);
+            if ($termId) {
+                $discountsQuery->where('sc.termid', $termId);
+            }
+            if ($sessionId) {
+                $discountsQuery->where('sc.sessionid', $sessionId);
+            }
 
             $discounts = $discountsQuery->select(
                 'd.title as discount_name',
@@ -608,18 +690,16 @@ class FinancialReportController extends Controller
                 'sp.picture as avatar'
             )->get();
 
-            // Calculate total savings
             $totalSavings = DB::table('student_bill_payment_book')
-                ->when($termId, fn($q) => $q->where('term_id', $termId))
-                ->when($sessionId, fn($q) => $q->where('session_id', $sessionId))
+                ->when($termId, fn ($q) => $q->where('term_id', $termId))
+                ->when($sessionId, fn ($q) => $q->where('session_id', $sessionId))
                 ->sum(DB::raw('scholarship_deduction + discount_deduction'));
 
-            // Impact by class
             $impactByClass = DB::table('student_bill_payment_book as sbpb')
                 ->join('schoolclass as sc', 'sc.id', '=', 'sbpb.class_id')
                 ->leftJoin('schoolarm as sa', 'sa.id', '=', 'sc.arm')
-                ->when($termId, fn($q) => $q->where('sbpb.term_id', $termId))
-                ->when($sessionId, fn($q) => $q->where('sbpb.session_id', $sessionId))
+                ->when($termId, fn ($q) => $q->where('sbpb.term_id', $termId))
+                ->when($sessionId, fn ($q) => $q->where('sbpb.session_id', $sessionId))
                 ->select(
                     'sc.id as class_id',
                     DB::raw("CONCAT(sc.schoolclass, ' ', COALESCE(sa.arm, '')) as class_name"),
@@ -638,16 +718,17 @@ class FinancialReportController extends Controller
                     'total_discounts' => $discounts->count(),
                     'total_beneficiaries' => $scholarships->pluck('student_id')
                         ->merge($discounts->pluck('student_id'))
-                        ->unique()->count(),
+                        ->unique()
+                        ->count(),
                     'total_savings' => $totalSavings,
-                    'scholarship_by_type' => $scholarships->groupBy('scholarship_name')->map(function($items) {
+                    'scholarship_by_type' => $scholarships->groupBy('scholarship_name')->map(function ($items) {
                         return $items->sum('value');
                     }),
-                    'discount_by_type' => $discounts->groupBy('discount_name')->map(function($items) {
+                    'discount_by_type' => $discounts->groupBy('discount_name')->map(function ($items) {
                         return $items->sum('value');
                     }),
                     'impact_by_class' => $impactByClass,
-                    'scholarship_beneficiaries' => $scholarships->map(function($s) {
+                    'scholarship_beneficiaries' => $scholarships->map(function ($s) {
                         return [
                             'student_id' => $s->student_id,
                             'name' => trim($s->firstname . ' ' . $s->lastname),
@@ -658,7 +739,7 @@ class FinancialReportController extends Controller
                             'value_type' => $s->value_type,
                         ];
                     }),
-                    'discount_beneficiaries' => $discounts->map(function($d) {
+                    'discount_beneficiaries' => $discounts->map(function ($d) {
                         return [
                             'student_id' => $d->student_id,
                             'name' => trim($d->firstname . ' ' . $d->lastname),
@@ -669,18 +750,23 @@ class FinancialReportController extends Controller
                             'value_type' => $d->value_type,
                         ];
                     }),
-                ]
+                ],
             ]);
         }
 
         $terms = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.financial.scholarship-impact', compact('pagetitle', 'schoolInfo', 'terms', 'sessions'));
+        return view('reports.financial.scholarship-impact', compact(
+            'pagetitle',
+            'schoolInfo',
+            'terms',
+            'sessions'
+        ));
     }
 
     /**
-     * Export Trial Balance to Excel
+     * Export Trial Balance to Excel/CSV
      */
     private function exportTrialBalanceExcel($asAtDate)
     {
@@ -694,7 +780,14 @@ class FinancialReportController extends Controller
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
 
-        fputcsv($handle, ['Account Code', 'Account Name', 'Account Type', 'Debit (₦)', 'Credit (₦)', 'Balance (₦)']);
+        fputcsv($handle, [
+            'Account Code',
+            'Account Name',
+            'Account Type',
+            'Debit (₦)',
+            'Credit (₦)',
+            'Balance (₦)',
+        ]);
 
         foreach ($trialBalance as $row) {
             fputcsv($handle, [
@@ -708,7 +801,14 @@ class FinancialReportController extends Controller
         }
 
         fputcsv($handle, []);
-        fputcsv($handle, ['TOTALS', '', '', number_format($totalDebit, 2), number_format($totalCredit, 2), '']);
+        fputcsv($handle, [
+            'TOTALS',
+            '',
+            '',
+            number_format($totalDebit, 2),
+            number_format($totalCredit, 2),
+            '',
+        ]);
 
         fclose($handle);
         exit;
