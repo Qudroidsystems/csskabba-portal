@@ -395,13 +395,13 @@
                         <i class="ri-download-line me-1"></i> Export
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" onclick="exportDebtors('pdf')">
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportDebtors('pdf')">
                             <i class="ri-file-pdf-line me-2"></i> PDF
                         </a></li>
-                        <li><a class="dropdown-item" onclick="exportDebtors('excel')">
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportDebtors('excel')">
                             <i class="ri-file-excel-line me-2"></i> Excel
                         </a></li>
-                        <li><a class="dropdown-item" onclick="exportDebtors('csv')">
+                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportDebtors('csv')">
                             <i class="ri-file-text-line me-2"></i> CSV
                         </a></li>
                     </ul>
@@ -580,16 +580,23 @@ let allRowData = [];
 let popTimer = null;
 let hideTimer = null;
 
+// Pre-generated export URLs (format is required by the route)
+const exportUrls = {
+    pdf:   @json(route('reports.financial.export', ['format' => 'pdf'])),
+    excel: @json(route('reports.financial.export', ['format' => 'excel'])),
+    csv:   @json(route('reports.financial.export', ['format' => 'csv'])),
+};
+
 // ====================================================================
 // HELPERS
 // ====================================================================
 function fmt(n) {
-    return '₦' + parseFloat(n||0).toLocaleString('en-NG', {minimumFractionDigits:2});
+    return '₦' + parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
 }
 
 function initials(name) {
     if (!name) return 'ST';
-    return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    return name.split(' ').slice(0, 2).map(function (w) { return w[0] || ''; }).join('').toUpperCase();
 }
 
 function avatarUrl(pic) {
@@ -599,13 +606,15 @@ function avatarUrl(pic) {
 
 function escapeHtml(s) {
     if (!s) return '';
-    return String(s).replace(/[&<>"']/g, m => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    })[m]);
+    return String(s).replace(/[&<>"']/g, function (m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[m];
+    });
 }
 
 function showLoading(on) {
@@ -626,9 +635,9 @@ function renderAvatar(pic, name) {
     const ini = initials(name);
     const n = escapeHtml(name);
     if (url) {
-        return `<img src="${url}" class="student-avatar" data-name="${n}" data-avatar="${url}" alt="${n}" onerror="this.style.display='none'">`;
+        return '<img src="' + url + '" class="student-avatar" data-name="' + n + '" data-avatar="' + url + '" alt="' + n + '" onerror="this.style.display=\'none\'">';
     }
-    return `<div class="student-avatar-placeholder" data-name="${n}">${ini}</div>`;
+    return '<div class="student-avatar-placeholder" data-name="' + n + '">' + ini + '</div>';
 }
 
 function renderBenefits(hasScholarship, hasDiscount) {
@@ -646,9 +655,9 @@ function renderBenefits(hasScholarship, hasDiscount) {
 
 function renderStatus(status) {
     if (!status) return '<span class="status-badge status-inactive">N/A</span>';
-    const cls = status.toLowerCase() === 'active' ? 'status-active' : 
+    const cls = status.toLowerCase() === 'active' ? 'status-active' :
                 status.toLowerCase() === 'suspended' ? 'status-suspended' : 'status-inactive';
-    return `<span class="status-badge ${cls}">${escapeHtml(status)}</span>`;
+    return '<span class="status-badge ' + cls + '">' + escapeHtml(status) + '</span>';
 }
 
 // ====================================================================
@@ -658,16 +667,16 @@ function updateStats() {
     let totalOutstanding = 0;
     let totalBilled = 0;
     let totalPaid = 0;
-    
-    allRowData.forEach(r => {
+
+    allRowData.forEach(function (r) {
         totalBilled += parseFloat(r.original_amount) || 0;
         totalPaid += parseFloat(r.amount_paid) || 0;
         totalOutstanding += parseFloat(r.outstanding) || 0;
     });
-    
+
     const rate = totalBilled > 0 ? ((totalPaid / totalBilled) * 100).toFixed(1) : 0;
     const avg = allRowData.length > 0 ? totalOutstanding / allRowData.length : 0;
-    
+
     document.getElementById('totalDebtors').textContent = allRowData.length;
     document.getElementById('totalOutstanding').textContent = fmt(totalOutstanding);
     document.getElementById('avgDebt').textContent = fmt(avg);
@@ -683,30 +692,28 @@ const popEl = document.getElementById('studentPopover');
 function fillPopover(id) {
     const s = studentData[id];
     if (!s) return;
-    
+
     document.getElementById('popName').textContent = s.student_name;
     document.getElementById('popAdm').textContent = 'Adm: ' + s.admission_no;
     document.getElementById('popBilled').textContent = fmt(s.original_amount);
     document.getElementById('popPaid').textContent = fmt(s.amount_paid);
     document.getElementById('popOwing').textContent = fmt(s.outstanding);
-    
+
     const avatar = avatarUrl(s.avatar);
     document.getElementById('popAvatar').src = avatar || '';
     document.getElementById('popAvatar').style.display = avatar ? 'block' : 'none';
-    
-    // Benefits
+
     const benefits = document.getElementById('popBenefits');
     benefits.innerHTML = renderBenefits(s.has_scholarship, s.has_discount);
-    
-    // Bills
+
     const list = document.getElementById('popBillList');
     list.innerHTML = '';
     if (s.bills && s.bills.length) {
-        s.bills.forEach(b => {
-            list.innerHTML += `<div class="popover-bill-row">
-                <span>${escapeHtml(b.title)}</span>
-                <span class="fw-bold">${fmt(b.outstanding)}</span>
-            </div>`;
+        s.bills.forEach(function (b) {
+            list.innerHTML += '<div class="popover-bill-row">' +
+                '<span>' + escapeHtml(b.title) + '</span>' +
+                '<span class="fw-bold">' + fmt(b.outstanding) + '</span>' +
+                '</div>';
         });
     } else {
         list.innerHTML = '<div class="popover-bill-row text-muted">No bills</div>';
@@ -716,15 +723,15 @@ function fillPopover(id) {
 function positionPopover(rect) {
     const pw = 300, ph = 380;
     const vw = window.innerWidth, vh = window.innerHeight;
-    
+
     let left = rect.left;
     let top = rect.bottom + 8;
-    
+
     if (left + pw > vw - 8) left = vw - pw - 8;
     if (left < 8) left = 8;
     if (top + ph > vh - 8) top = rect.top - ph - 8;
     if (top < 8) top = 8;
-    
+
     popEl.style.left = left + 'px';
     popEl.style.top = top + 'px';
 }
@@ -733,14 +740,16 @@ function showPopover(row) {
     clearTimeout(hideTimer);
     const id = row.getAttribute('data-student-id');
     if (!id || !studentData[id]) return;
-    
+
     fillPopover(id);
     positionPopover(row.getBoundingClientRect());
     popEl.classList.add('visible');
 }
 
 function hidePopover() {
-    hideTimer = setTimeout(() => popEl.classList.remove('visible'), 180);
+    hideTimer = setTimeout(function () {
+        popEl.classList.remove('visible');
+    }, 180);
 }
 
 // ====================================================================
@@ -748,89 +757,75 @@ function hidePopover() {
 // ====================================================================
 function attachRowEvents() {
     $('#debtorsTable tbody tr').off('mouseenter mouseleave click');
-    
-    $('#debtorsTable tbody tr').on('mouseenter', function() {
+
+    $('#debtorsTable tbody tr').on('mouseenter', function () {
         const row = this;
         clearTimeout(popTimer);
-        popTimer = setTimeout(() => showPopover(row), 300);
-    }).on('mouseleave', function() {
+        popTimer = setTimeout(function () {
+            showPopover(row);
+        }, 300);
+    }).on('mouseleave', function () {
         clearTimeout(popTimer);
         hidePopover();
     });
-    
-    // Expand row on click
-    $('#debtorsTable tbody tr').on('click', '.expand-btn', function(e) {
+
+    $('#debtorsTable tbody tr').on('click', '.expand-btn', function (e) {
         e.stopPropagation();
         const row = $(this).closest('tr');
         const id = row.data('student-id');
         const detailRow = row.next('.detail-row');
-        
+
         if (detailRow.length) {
             detailRow.remove();
             $(this).html('<i class="ri-arrow-down-s-line"></i>');
             return;
         }
-        
+
         const data = studentData[id];
         if (!data || !data.bills) return;
-        
-        let html = `<tr class="detail-row">
-            <td colspan="13">
-                <div class="expandable-content">
-                    <h6 class="mb-2"><i class="ri-receipt-line me-2"></i>Bill Details</h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="bill-item d-flex justify-content-between">
-                                <span class="fw-semibold">Total Billed:</span>
-                                <span>${fmt(data.original_amount)}</span>
-                            </div>
-                            <div class="bill-item d-flex justify-content-between">
-                                <span class="fw-semibold">Total Paid:</span>
-                                <span class="text-success">${fmt(data.amount_paid)}</span>
-                            </div>
-                            <div class="bill-item d-flex justify-content-between">
-                                <span class="fw-semibold">Outstanding:</span>
-                                <span class="text-danger">${fmt(data.outstanding)}</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="bill-item d-flex justify-content-between">
-                                <span class="fw-semibold">Collection Rate:</span>
-                                <span>${data.collection_rate}%</span>
-                            </div>
-                            <div class="bill-item d-flex justify-content-between">
-                                <span class="fw-semibold">Scholarship:</span>
-                                <span>${data.has_scholarship ? fmt(data.savings) : 'None'}</span>
-                            </div>
-                            <div class="bill-item d-flex justify-content-between">
-                                <span class="fw-semibold">Discount:</span>
-                                <span>${data.has_discount ? fmt(data.savings) : 'None'}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <h6 class="mb-2">Bill Items</h6>
-                    ${data.bills.map(b => `
-                        <div class="bill-item d-flex justify-content-between align-items-center">
-                            <span>${escapeHtml(b.title)}</span>
-                            <div>
-                                <span class="text-muted me-2">${fmt(b.original_amount)}</span>
-                                <span class="text-success me-2">${fmt(b.amount_paid)}</span>
-                                <span class="text-danger">${fmt(b.outstanding)}</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </td>
-        </tr>`;
-        
+
+        let billsHtml = '';
+        data.bills.forEach(function (b) {
+            billsHtml += '<div class="bill-item d-flex justify-content-between align-items-center">' +
+                '<span>' + escapeHtml(b.title) + '</span>' +
+                '<div>' +
+                '<span class="text-muted me-2">' + fmt(b.original_amount) + '</span>' +
+                '<span class="text-success me-2">' + fmt(b.amount_paid) + '</span>' +
+                '<span class="text-danger">' + fmt(b.outstanding) + '</span>' +
+                '</div></div>';
+        });
+
+        const html = '<tr class="detail-row">' +
+            '<td colspan="13">' +
+            '<div class="expandable-content">' +
+            '<h6 class="mb-2"><i class="ri-receipt-line me-2"></i>Bill Details</h6>' +
+            '<div class="row">' +
+            '<div class="col-md-6">' +
+            '<div class="bill-item d-flex justify-content-between">' +
+            '<span class="fw-semibold">Total Billed:</span><span>' + fmt(data.original_amount) + '</span></div>' +
+            '<div class="bill-item d-flex justify-content-between">' +
+            '<span class="fw-semibold">Total Paid:</span><span class="text-success">' + fmt(data.amount_paid) + '</span></div>' +
+            '<div class="bill-item d-flex justify-content-between">' +
+            '<span class="fw-semibold">Outstanding:</span><span class="text-danger">' + fmt(data.outstanding) + '</span></div>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+            '<div class="bill-item d-flex justify-content-between">' +
+            '<span class="fw-semibold">Collection Rate:</span><span>' + data.collection_rate + '%</span></div>' +
+            '<div class="bill-item d-flex justify-content-between">' +
+            '<span class="fw-semibold">Scholarship:</span><span>' + (data.has_scholarship ? fmt(data.savings) : 'None') + '</span></div>' +
+            '<div class="bill-item d-flex justify-content-between">' +
+            '<span class="fw-semibold">Discount:</span><span>' + (data.has_discount ? fmt(data.savings) : 'None') + '</span></div>' +
+            '</div></div><hr>' +
+            '<h6 class="mb-2">Bill Items</h6>' + billsHtml +
+            '</div></td></tr>';
+
         $(row).after(html);
         $(this).html('<i class="ri-arrow-up-s-line"></i>');
     });
 }
 
 // ====================================================================
-// EXPORT
+// EXPORT — format is required by reports.financial.export route
 // ====================================================================
 function exportDebtors(format) {
     const filters = {
@@ -840,12 +835,16 @@ function exportDebtors(format) {
         min_outstanding: currentFilters.min_outstanding || '',
         search: currentFilters.search || ''
     };
-    
+
     const params = new URLSearchParams(filters);
-    const url = '{{ route("reports.financial.export", ["report" => "debtors"]) }}' + 
-                '/' + format + '?' + params.toString();
-    
-    window.open(url, '_blank');
+    const base = exportUrls[format];
+
+    if (!base) {
+        Swal.fire('Error', 'Unknown export format: ' + format, 'error');
+        return;
+    }
+
+    window.open(base + '?' + params.toString(), '_blank');
 }
 
 // ====================================================================
@@ -856,19 +855,19 @@ function sendReminders(studentIds) {
         Swal.fire('Warning', 'Please select students first', 'warning');
         return;
     }
-    
+
     Swal.fire({
         title: 'Send Payment Reminders?',
-        text: `This will send reminders to ${studentIds.length} student(s) with outstanding balances.`,
+        text: 'This will send reminders to ' + studentIds.length + ' student(s) with outstanding balances.',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, send now',
         cancelButtonText: 'Cancel'
-    }).then((result) => {
+    }).then(function (result) {
         if (result.isConfirmed) {
             const termId = $('#term_id').val();
             const sessionId = $('#session_id').val();
-            
+
             $.ajax({
                 url: '{{ route("reports.analysis.send-reminders") }}',
                 type: 'POST',
@@ -878,10 +877,10 @@ function sendReminders(studentIds) {
                     session_id: sessionId,
                     _token: '{{ csrf_token() }}'
                 },
-                success: function(response) {
+                success: function (response) {
                     Swal.fire('Success', response.message, 'success');
                 },
-                error: function() {
+                error: function () {
                     Swal.fire('Error', 'Failed to send reminders', 'error');
                 }
             });
@@ -892,7 +891,7 @@ function sendReminders(studentIds) {
 // ====================================================================
 // DATATABLE INITIALIZATION
 // ====================================================================
-$(document).ready(function() {
+$(document).ready(function () {
     debtorsTable = $('#debtorsTable').DataTable({
         processing: false,
         serverSide: false,
@@ -900,19 +899,19 @@ $(document).ready(function() {
         ajax: {
             url: '{{ route("reports.financial.debtors") }}',
             type: 'GET',
-            data: function(d) {
+            data: function (d) {
                 d.class_id = currentFilters.class_id || '';
                 d.term_id = currentFilters.term_id || '';
                 d.session_id = currentFilters.session_id || '';
                 d.min_outstanding = currentFilters.min_outstanding || '';
                 d.search = d.search.value || '';
             },
-            beforeSend: function() { showLoading(true); },
-            complete: function() { showLoading(false); },
-            dataSrc: function(resp) {
+            beforeSend: function () { showLoading(true); },
+            complete: function () { showLoading(false); },
+            dataSrc: function (resp) {
                 allRowData = resp.data || [];
                 studentData = {};
-                allRowData.forEach(item => {
+                allRowData.forEach(function (item) {
                     studentData[item.student_id] = item;
                 });
                 updateStats();
@@ -920,41 +919,84 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: null, orderable: false,
-                render: (d,t,row) => `<input type="checkbox" class="row-selector" data-student-id="${row.student_id}">` },
-            { data: null, orderable: false,
-                render: (d,t,r,meta) => meta.row + 1 },
-            { data: null, orderable: false,
-                render: (d,t,row) => renderAvatar(row.avatar, row.student_name) },
+            {
+                data: null,
+                orderable: false,
+                render: function (d, t, row) {
+                    return '<input type="checkbox" class="row-selector" data-student-id="' + row.student_id + '">';
+                }
+            },
+            {
+                data: null,
+                orderable: false,
+                render: function (d, t, r, meta) {
+                    return meta.row + 1;
+                }
+            },
+            {
+                data: null,
+                orderable: false,
+                render: function (d, t, row) {
+                    return renderAvatar(row.avatar, row.student_name);
+                }
+            },
             { data: 'student_name' },
             { data: 'admission_no' },
             { data: 'class_name' },
-            { data: null,
-                render: (d,t,row) => escapeHtml(row.term_name || '') + ' · ' + escapeHtml(row.session_name || '') },
-            { data: null, orderable: false,
-                render: (d,t,row) => renderBenefits(row.has_scholarship, row.has_discount) },
-            { data: 'original_amount', className: 'text-end', render: d => fmt(d) },
-            { data: 'amount_paid', className: 'text-end', render: d => fmt(d) },
-            { data: 'outstanding', className: 'text-end',
-                render: d => `<span class="${getOutstandingClass(d)}">${fmt(d)}</span>` },
-            { data: 'collection_rate', 
-                render: d => `<span class="${d >= 70 ? 'text-success' : d >= 40 ? 'text-warning' : 'text-danger'}">${d}%</span>` },
-            { data: null, orderable: false,
-                render: (d,t,row) => `
-                    <button class="btn btn-sm btn-outline-primary expand-btn" title="View Details">
-                        <i class="ri-arrow-down-s-line"></i>
-                    </button>
-                    <a href="#" class="btn btn-sm btn-outline-success ms-1" 
-                       onclick="sendReminders([${row.student_id}]); return false;" title="Send Reminder">
-                        <i class="ri-mail-send-line"></i>
-                    </a>
-                ` }
+            {
+                data: null,
+                render: function (d, t, row) {
+                    return escapeHtml(row.term_name || '') + ' · ' + escapeHtml(row.session_name || '');
+                }
+            },
+            {
+                data: null,
+                orderable: false,
+                render: function (d, t, row) {
+                    return renderBenefits(row.has_scholarship, row.has_discount);
+                }
+            },
+            {
+                data: 'original_amount',
+                className: 'text-end',
+                render: function (d) { return fmt(d); }
+            },
+            {
+                data: 'amount_paid',
+                className: 'text-end',
+                render: function (d) { return fmt(d); }
+            },
+            {
+                data: 'outstanding',
+                className: 'text-end',
+                render: function (d) {
+                    return '<span class="' + getOutstandingClass(d) + '">' + fmt(d) + '</span>';
+                }
+            },
+            {
+                data: 'collection_rate',
+                render: function (d) {
+                    const cls = d >= 70 ? 'text-success' : (d >= 40 ? 'text-warning' : 'text-danger');
+                    return '<span class="' + cls + '">' + d + '%</span>';
+                }
+            },
+            {
+                data: null,
+                orderable: false,
+                render: function (d, t, row) {
+                    return '<button class="btn btn-sm btn-outline-primary expand-btn" title="View Details">' +
+                        '<i class="ri-arrow-down-s-line"></i></button>' +
+                        '<a href="javascript:void(0)" class="btn btn-sm btn-outline-success ms-1" ' +
+                        'onclick="sendReminders([' + row.student_id + ']); return false;" title="Send Reminder">' +
+                        '<i class="ri-mail-send-line"></i></a>';
+                }
+            }
         ],
-        createdRow: function(row, data) {
+        createdRow: function (row, data) {
             row.setAttribute('data-student-id', data.student_id);
         },
-        drawCallback: function() {
-            setTimeout(() => {
+        drawCallback: function () {
+            setTimeout(function () {
                 attachRowEvents();
             }, 100);
         },
@@ -975,14 +1017,14 @@ $(document).ready(function() {
         searchDelay: 400,
         order: [[10, 'desc']]
     });
-    
+
     // Select All
-    $('#selectAll').on('change', function() {
+    $('#selectAll').on('change', function () {
         $('.row-selector').prop('checked', $(this).is(':checked'));
     });
-    
+
     // Load Report
-    $('#loadReportBtn').on('click', function() {
+    $('#loadReportBtn').on('click', function () {
         currentFilters = {
             class_id: $('#class_id').val() || null,
             term_id: $('#term_id').val() || null,
@@ -993,28 +1035,28 @@ $(document).ready(function() {
         studentData = {};
         debtorsTable.ajax.reload();
     });
-    
+
     // Reset
-    $('#resetBtn').on('click', function() {
+    $('#resetBtn').on('click', function () {
         $('#class_id, #term_id, #session_id, #min_outstanding').val('');
         currentFilters = {};
         allRowData = [];
         studentData = {};
-        debtersTable.clear().draw();
+        debtorsTable.clear().draw();
         updateStats();
     });
-    
+
     // Send Reminders for selected
-    $('#sendRemindersBtn').on('click', function() {
+    $('#sendRemindersBtn').on('click', function () {
         const ids = [];
-        $('.row-selector:checked').each(function() {
+        $('.row-selector:checked').each(function () {
             ids.push($(this).data('student-id'));
         });
         sendReminders(ids);
     });
-    
+
     // Enter key for search
-    $('#debtorsTable_filter input').on('keyup', function(e) {
+    $('#debtorsTable_filter input').on('keyup', function (e) {
         if (e.key === 'Enter') {
             currentFilters.search = $(this).val();
         }
