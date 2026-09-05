@@ -582,9 +582,9 @@ let hideTimer = null;
 
 // Pre-generated export URLs (format is required by the route)
 const exportUrls = {
-    pdf:   @json(route('reports.financial.export', ['format' => 'pdf'])),
-    excel: @json(route('reports.financial.export', ['format' => 'excel'])),
-    csv:   @json(route('reports.financial.export', ['format' => 'csv'])),
+    pdf:   @json(route('reports.financial.export', ['report' => 'debtors', 'format' => 'pdf'])),
+    excel: @json(route('reports.financial.export', ['report' => 'debtors', 'format' => 'excel'])),
+    csv:   @json(route('reports.financial.export', ['report' => 'debtors', 'format' => 'csv'])),
 };
 
 // ====================================================================
