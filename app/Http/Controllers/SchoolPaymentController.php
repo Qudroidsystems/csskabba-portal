@@ -292,30 +292,83 @@ class SchoolPaymentController extends Controller
 
     // ── Fetch student data helper ─────────────────────────────────────────
 
+    /**
+     * Resolve the student's enrollment for a specific term/session.
+     *
+     * FIX: the previous version joined `studentclass` on studentId only, with
+     * no term/session filter, so a student with more than one studentclass
+     * row (e.g. after being promoted to a new class) could have `->first()`
+     * return the wrong enrollment. That mismatched class_id then silently
+     * produced an empty/incorrect bills list — which is why "amount paid"
+     * and "progress" appeared to stop showing.
+     *
+     * This now looks for the exact term/session enrollment first. If none
+     * exists, it falls back to the student's most recent enrollment and
+     * flags `used_fallback = true` on the returned object so the caller can
+     * warn the UI (the studentpayment.blade.php view already has a banner
+     * wired up for this — it just never received the flag before).
+     */
     private function fetchStudentData(int $studentId, int $termid, int $sessionid): ?object
     {
-        return Student::where('studentRegistration.id', $studentId)
-            ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('parentRegistration', 'parentRegistration.id', '=', 'studentRegistration.id')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        $buildBase = function () use ($studentId) {
+            return Student::where('studentRegistration.id', $studentId)
+                ->leftJoin('parentRegistration', 'parentRegistration.id', '=', 'studentRegistration.id')
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->select([
+                    'studentRegistration.id as id',
+                    'studentRegistration.admissionNo as admissionNo',
+                    'studentRegistration.firstname as firstname',
+                    'studentRegistration.lastname as lastname',
+                    'studentRegistration.othername as othername',
+                    'studentRegistration.home_address2 as homeadd',
+                    'parentRegistration.father_phone as phone',
+                    'studentRegistration.statusId as statusId',
+                    'studentRegistration.student_status as student_status',
+                    'studentpicture.picture as avatar',
+                ]);
+        };
+
+        // 1) Prefer the enrollment that matches this exact term/session.
+        $exact = $buildBase()
+            ->leftJoin('studentclass', function ($join) use ($termid, $sessionid) {
+                $join->on('studentclass.studentId', '=', 'studentRegistration.id')
+                    ->where('studentclass.termid', $termid)
+                    ->where('studentclass.sessionid', $sessionid);
+            })
             ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionNo',
-                'studentRegistration.firstname as firstname',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.othername as othername',
-                'studentRegistration.home_address2 as homeadd',
-                'parentRegistration.father_phone as phone',
-                'studentRegistration.statusId as statusId',
-                'studentRegistration.student_status as student_status',
-                'studentpicture.picture as avatar',
+            ->addSelect([
                 'schoolclass.schoolclass as schoolclass',
                 'schoolarm.arm as arm',
                 'studentclass.schoolclassid as schoolclassId',
             ])
             ->first();
+
+        if ($exact && $exact->schoolclassId) {
+            $exact->used_fallback = false;
+            return $exact;
+        }
+
+        // 2) No enrollment record for this exact term/session (e.g. the
+        // student was promoted/moved since) — fall back to the most recent
+        // enrollment so the page still shows something, flagged accordingly.
+        $fallback = $buildBase()
+            ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->addSelect([
+                'schoolclass.schoolclass as schoolclass',
+                'schoolarm.arm as arm',
+                'studentclass.schoolclassid as schoolclassId',
+            ])
+            ->orderByDesc('studentclass.id')
+            ->first();
+
+        if ($fallback) {
+            $fallback->used_fallback = true;
+        }
+
+        return $fallback;
     }
 
     /**
@@ -375,6 +428,7 @@ class SchoolPaymentController extends Controller
             }
 
             $schoolclassId = $studentdata->schoolclassId;
+            $usedFallback  = (bool) ($studentdata->used_fallback ?? false);
 
             $rawBills = DB::table('school_bill_class_term_session')
                 ->where('school_bill_class_term_session.class_id', $schoolclassId)
@@ -449,7 +503,14 @@ class SchoolPaymentController extends Controller
                 $amountPaid  = $bookEntry ? (float) $bookEntry->amount_paid : 0;
                 $adjustedAmt = (float) $bill->adjusted_amount;
                 $balance     = max(0, $adjustedAmt - $amountPaid);
-                $progress    = $adjustedAmt > 0 ? min(100, ($amountPaid / $adjustedAmt) * 100) : 0;
+
+                // FIX: when a bill is fully waived by scholarship/discount
+                // (adjusted amount = 0), it should read as 100% / paid even
+                // though nothing was ever actually paid — previously it fell
+                // through to 0% and "not paid".
+                $progress = $adjustedAmt > 0
+                    ? min(100, ($amountPaid / $adjustedAmt) * 100)
+                    : ($balance <= 0 ? 100 : 0);
 
                 $totalAdjusted += $adjustedAmt;
                 $totalPaid     += $amountPaid;
@@ -479,42 +540,45 @@ class SchoolPaymentController extends Controller
                                                 ? implode(', ', $bill->discount_labels)
                                                 : ($bill->discount_labels ?? ''),
                     'has_pending_invoice'   => !is_null($pendingPayment),
-                    'is_paid'               => $balance <= 0 && $amountPaid > 0,
+                    // FIX: a bill with balance <= 0 is paid, even if
+                    // amount_paid happens to be 0 (fully waived bill).
+                    'is_paid'               => $balance <= 0,
                     'is_partial'            => $amountPaid > 0 && $balance > 0,
                 ];
             }
 
-            // Payment records (pending / not yet invoiced)
+            // Payment records (pending / not yet invoiced) — one row per
+            // bill, aggregated across all payments made on it so far.
+            //
+            // FIX: previously this joined only the single latest payment
+            // record and displayed its own amount_paid as "totalAmountPaid",
+            // which under-reported the true paid amount whenever a bill had
+            // more than one pending payment before an invoice was generated.
             $paymentRecords = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
                 ->where('student_bill_payment.termid_id', $termid)
                 ->where('student_bill_payment.session_id', $sessionid)
                 ->where('student_bill_payment.delete_status', '1')
-                ->leftJoin('student_bill_payment_record', function ($join) {
-                    $join->on('student_bill_payment_record.student_bill_payment_id', '=', 'student_bill_payment.id')
-                        ->whereRaw('student_bill_payment_record.id = (
-                            SELECT MAX(id) FROM student_bill_payment_record spr
-                            WHERE spr.student_bill_payment_id = student_bill_payment.id
-                        )');
-                })
                 ->leftJoin('school_bill', 'school_bill.id', '=', 'student_bill_payment.school_bill_id')
                 ->leftJoin('users', 'users.id', '=', 'student_bill_payment.generated_by')
                 ->select([
                     'student_bill_payment.id as paymentId',
                     'student_bill_payment.school_bill_id as school_bill_id',
-                    'student_bill_payment_record.id as recordId',
-                    'student_bill_payment.created_at as receivedDate',
                     'student_bill_payment.payment_method as paymentMethod',
                     'student_bill_payment.status as paymentStatus',
                     'school_bill.title as title',
                     'school_bill.description as description',
                     'school_bill.bill_amount as billAmount',
-                    'student_bill_payment_record.amount_paid as totalAmountPaid',
-                    'student_bill_payment_record.amount_owed as balance',
+                    DB::raw('(SELECT MAX(spr.id) FROM student_bill_payment_record spr WHERE spr.student_bill_payment_id = student_bill_payment.id) as recordId'),
+                    DB::raw('(SELECT MAX(spr.created_at) FROM student_bill_payment_record spr WHERE spr.student_bill_payment_id = student_bill_payment.id) as receivedDate'),
+                    DB::raw('(SELECT COALESCE(SUM(spr.amount_paid), 0) FROM student_bill_payment_record spr WHERE spr.student_bill_payment_id = student_bill_payment.id) as totalAmountPaid'),
+                    DB::raw('(SELECT spr.amount_owed FROM student_bill_payment_record spr WHERE spr.student_bill_payment_id = student_bill_payment.id ORDER BY spr.id DESC LIMIT 1) as balance'),
                     DB::raw('COALESCE(users.name, "Unknown") as receivedBy'),
                 ])
                 ->get();
 
-            // Payment history (invoiced / completed)
+            // Payment history (invoiced / completed) — one row per
+            // transaction, kept as-is: this is a transaction log rather than
+            // a per-bill summary, so multiple rows per bill is intended.
             $paymentHistory = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
                 ->where('student_bill_payment.termid_id', $termid)
                 ->where('student_bill_payment.session_id', $sessionid)
@@ -550,7 +614,8 @@ class SchoolPaymentController extends Controller
             $fullName = $this->getFullNameWithOther($studentdata->firstname, $studentdata->lastname, $studentdata->othername ?? '');
 
             return response()->json([
-                'success' => true,
+                'success'       => true,
+                'used_fallback' => $usedFallback,
                 'data'    => [
                     'student' => [
                         'id'             => $studentdata->id,
@@ -592,6 +657,9 @@ class SchoolPaymentController extends Controller
                     'term'    => optional(Schoolterm::find($termid))->term,
                     'session' => optional(Schoolsession::find($sessionid))->session,
                 ],
+                // Kept at top level as well since result.used_fallback is what
+                // the blade view reads.
+                'used_fallback' => $usedFallback,
             ]);
 
         } catch (\Exception $e) {
@@ -1022,6 +1090,22 @@ class SchoolPaymentController extends Controller
 
     // ── Delete payment record ─────────────────────────────────────────────
 
+    /**
+     * FIX: this previously only subtracted the deleted record's amount from
+     * the payment book, and never touched:
+     *   - the amount_owed / complete_payment stored on the record(s) left
+     *     behind (which the Payment Records / History tables read directly)
+     *   - the parent student_bill_payment.status
+     *
+     * So deleting anything other than the very last payment on a bill left
+     * stale balances on-screen, and a bill that becomes newly "incomplete"
+     * after a deletion could still show as Completed.
+     *
+     * This now recomputes amount_paid / amount_owed / completion state from
+     * the remaining records (source of truth) rather than subtracting, and
+     * keeps every dependent row (book, last remaining record, parent
+     * payment status) in sync with that recomputed truth.
+     */
     public function deletestudentpayment($recordId)
     {
         try {
@@ -1038,6 +1122,11 @@ class SchoolPaymentController extends Controller
                 ], 403);
             }
 
+            $oldValues = [
+                'amount_paid' => $paymentRecord->amount_paid,
+                'amount_owed' => $paymentRecord->amount_owed,
+            ];
+
             $paymentBook = StudentBillPaymentBook::where([
                 'student_id'     => $studentPayment->student_id,
                 'school_bill_id' => $studentPayment->school_bill_id,
@@ -1046,31 +1135,56 @@ class SchoolPaymentController extends Controller
                 'session_id'     => $studentPayment->session_id,
             ])->first();
 
-            $oldValues = [
-                'amount_paid' => $paymentRecord->amount_paid,
-                'amount_owed' => $paymentRecord->amount_owed,
-            ];
+            $paymentRecord->delete();
+
+            // Recompute from the records that remain (source of truth),
+            // instead of subtracting — correct regardless of whether the
+            // first, a middle, or the last payment was the one removed.
+            $remainingRecords = StudentBillPaymentRecord::where('student_bill_payment_id', $studentPayment->id)
+                ->orderBy('created_at')
+                ->get();
+
+            $adjustedTotal = $paymentBook
+                ? (float) ($paymentBook->adjusted_amount ?: $paymentBook->original_amount)
+                : max(0, (float) $paymentRecord->total_bill);
+
+            $newAmountPaid = $remainingRecords->sum('amount_paid');
+            $newAmountOwed = max(0, $adjustedTotal - $newAmountPaid);
+            $isComplete    = $newAmountPaid > 0 && $newAmountOwed <= 0;
 
             if ($paymentBook) {
-                $adjustedTotal = (float) ($paymentBook->adjusted_amount ?: $paymentBook->original_amount);
-                $newAmountPaid = max(0, (float) $paymentBook->amount_paid - (float) $paymentRecord->amount_paid);
-                $newAmountOwed = max(0, $adjustedTotal - $newAmountPaid);
-
                 DB::table('student_bill_payment_book')
                     ->where('id', $paymentBook->id)
                     ->update([
                         'amount_paid'    => $newAmountPaid,
                         'amount_owed'    => $newAmountOwed,
-                        'payment_status' => $newAmountOwed <= 0 && $newAmountPaid > 0 ? 'Completed' : 'Pending',
+                        'payment_status' => $isComplete ? 'Completed' : 'Pending',
                         'updated_at'     => now(),
                     ]);
             }
 
-            $paymentRecord->delete();
-
-            $remaining = StudentBillPaymentRecord::where('student_bill_payment_id', $studentPayment->id)->count();
-            if ($remaining == 0) {
+            if ($remainingRecords->isEmpty()) {
+                // Nothing left for this bill — remove the parent payment row
+                // too, so it stops appearing as a pending/completed payment.
                 $studentPayment->delete();
+            } else {
+                // Keep the most recent remaining record's stored balance and
+                // completion flag in sync, since the Payment Records /
+                // History tables read amount_owed / complete_payment
+                // straight off the record rather than recomputing them.
+                $lastRecord = $remainingRecords->last();
+                StudentBillPaymentRecord::where('id', $lastRecord->id)->update([
+                    'amount_owed'      => $newAmountOwed,
+                    'total_bill'       => $adjustedTotal,
+                    'complete_payment' => $isComplete ? 1 : 0,
+                ]);
+
+                DB::table('student_bill_payment')
+                    ->where('id', $studentPayment->id)
+                    ->update([
+                        'status'     => $isComplete ? 'Completed' : 'Pending',
+                        'updated_at' => now(),
+                    ]);
             }
 
             DB::commit();
@@ -1085,7 +1199,10 @@ class SchoolPaymentController extends Controller
                 'session_id'                      => $studentPayment->session_id,
                 'amount'                         => $oldValues['amount_paid'],
                 'entity_type'                    => 'payment',
-            ], $oldValues, null, 'Payment record deleted');
+            ], $oldValues, [
+                'amount_paid' => $newAmountPaid,
+                'amount_owed' => $newAmountOwed,
+            ], 'Payment record deleted');
 
             return response()->json(['success' => true, 'message' => 'Payment deleted successfully.']);
 
