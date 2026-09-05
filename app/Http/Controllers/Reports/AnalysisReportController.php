@@ -50,6 +50,21 @@ class AnalysisReportController extends Controller
     /**
      * Core data endpoint used by both Class Analysis and School-wide Analysis.
      *
+     * ENROLLMENT ROSTER FIX (2026-09):
+     * `studentclass.termid` / `studentclass.sessionid` are NOT reliable
+     * history — they get overwritten as a student is promoted/moved, so
+     * filtering the roster by the selected term/session silently excluded
+     * (or mismatched) students and produced an empty report for any
+     * term/session other than the one `studentclass` currently points to.
+     *
+     * The roster is now pulled by CLASS only (current enrollment).
+     * Bills (`school_bill_class_term_session`) and payments
+     * (`student_bill_payment_book`) are still correctly scoped to the
+     * selected term/session, since those tables are written at
+     * billing/payment time and do carry accurate historical data.
+     * This mirrors the same pattern already used in the payment flow
+     * (see the "current active enrollment" fallback note there).
+     *
      * KEY FIX vs. the old version: every eligible bill for every student is
      * run through BillAdjustmentService::buildBillAdjustment() regardless of
      * whether a student_bill_payment_book row exists yet. Previously, a
@@ -76,8 +91,11 @@ class AnalysisReportController extends Controller
             $studentsQuery = DB::table('studentRegistration as s')
                 ->join('studentclass as sc', 'sc.studentId', '=', 's.id')
                 ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
-                ->where('sc.termid', $termId)
-                ->where('sc.sessionid', $sessionId);
+                ->leftJoin('schoolclass as scl', 'scl.id', '=', 'sc.schoolclassid')
+                ->leftJoin('schoolarm as sar', 'sar.id', '=', 'scl.arm');
+            // NOTE: intentionally NOT filtering by sc.termid / sc.sessionid —
+            // see the roster-fix comment above. Roster = current enrollment;
+            // bills/payments below remain scoped to the selected term/session.
 
             if ($classId && $classId !== '') {
                 $studentsQuery->where('sc.schoolclassid', $classId);
@@ -92,7 +110,8 @@ class AnalysisReportController extends Controller
                 's.gender',
                 's.statusId',
                 'sp.picture as avatar',
-                'sc.schoolclassid as class_id'
+                'sc.schoolclassid as class_id',
+                DB::raw("CONCAT(scl.schoolclass, ' ', COALESCE(sar.arm, '')) as class_display_name")
             )->get();
 
             if ($students->isEmpty()) {
@@ -225,6 +244,8 @@ class AnalysisReportController extends Controller
                     'student_name'    => $studentName,
                     'admission_no'    => $student->admissionNo ?? 'N/A',
                     'gender'          => $student->gender ?? 'N/A',
+                    'class_id'        => $student->class_id,
+                    'class_name'      => trim($student->class_display_name ?? ''),
                     'total_billed'    => round($adjustedTotal, 2),
                     'total_paid'      => round($totalPaid, 2),
                     'outstanding'     => round($outstanding, 2),
@@ -388,15 +409,18 @@ class AnalysisReportController extends Controller
     /**
      * Export PDF — per-student totals now computed via buildBillAdjustment()
      * for every eligible bill, so scholarships/discounts show correctly even
-     * for students who have not yet made a payment.
+     * for students who have not yet made a payment. Roster is pulled by
+     * CLASS only (current enrollment) — see the fix note on
+     * getClassAnalysisData() above; bills/payments stay scoped to the
+     * selected term/session.
      */
     public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
     {
         $schoolInfo = SchoolInformation::getActiveSchool();
 
-        $studentsQuery = DB::table('studentclass')
-            ->where('termid', $termid_id)
-            ->where('sessionid', $session_id);
+        $studentsQuery = DB::table('studentclass');
+        // NOTE: intentionally NOT filtering by termid / sessionid — roster
+        // fix (see getClassAnalysisData). Class filter only.
 
         if ($class_id && $class_id !== '') {
             $studentsQuery->where('schoolclassid', $class_id);
@@ -563,7 +587,8 @@ class AnalysisReportController extends Controller
     }
 
     /**
-     * Export CSV — same per-bill adjustment logic as exportPDF()
+     * Export CSV — same per-bill adjustment logic as exportPDF(), same
+     * roster-by-class fix.
      */
     private function exportCSV($classId, $termId, $sessionId)
     {
@@ -580,9 +605,9 @@ class AnalysisReportController extends Controller
         $termName    = DB::table('schoolterm')->where('id', $termId)->value('term');
         $sessionName = DB::table('schoolsession')->where('id', $sessionId)->value('session');
 
-        $studentsQuery = DB::table('studentclass')
-            ->where('termid', $termId)
-            ->where('sessionid', $sessionId);
+        $studentsQuery = DB::table('studentclass');
+        // NOTE: intentionally NOT filtering by termid / sessionid — roster
+        // fix (see getClassAnalysisData). Class filter only.
 
         if ($classId && $classId !== '') {
             $studentsQuery->where('schoolclassid', $classId);
@@ -699,6 +724,13 @@ class AnalysisReportController extends Controller
 
     /**
      * Student Payment Details
+     *
+     * ADDED: $allTermsOutstanding — a full history of this student's billed
+     * / paid / outstanding totals across EVERY term & session they have a
+     * payment-book record for (not just the one currently selected in the
+     * URL). This is built straight off student_bill_payment_book, which is
+     * always correctly scoped per term/session (unlike studentclass), so it
+     * gives an accurate picture even when the roster/class link is stale.
      */
     public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
     {
@@ -769,10 +801,38 @@ class AnalysisReportController extends Controller
             ->orderBy('sbpr.created_at', 'desc')
             ->get();
 
+        // Full multi-term / multi-session outstanding history for this
+        // student, independent of whatever class/term/session is in the URL.
+        $allTermsOutstanding = DB::table('student_bill_payment_book as spb')
+            ->join('schoolterm as st', 'st.id', '=', 'spb.term_id')
+            ->join('schoolsession as ss', 'ss.id', '=', 'spb.session_id')
+            ->leftJoin('schoolclass as scl', 'scl.id', '=', 'spb.class_id')
+            ->leftJoin('schoolarm as sar', 'sar.id', '=', 'scl.arm')
+            ->where('spb.student_id', $studentId)
+            ->groupBy(
+                'spb.term_id', 'spb.session_id', 'spb.class_id',
+                'st.term', 'ss.session', 'scl.schoolclass', 'sar.arm'
+            )
+            ->select(
+                'spb.term_id',
+                'spb.session_id',
+                'spb.class_id',
+                'st.term as term_name',
+                'ss.session as session_name',
+                DB::raw("CONCAT(scl.schoolclass, ' ', COALESCE(sar.arm, '')) as class_name"),
+                DB::raw('SUM(spb.amount_paid) as amount_paid'),
+                DB::raw('SUM(spb.amount_owed) as amount_owed'),
+                DB::raw('SUM(COALESCE(spb.adjusted_amount, spb.original_amount, 0)) as total_billed')
+            )
+            ->orderByDesc('spb.session_id')
+            ->orderByDesc('spb.term_id')
+            ->get();
+
         return view('reports.analysis.student-payment-details', compact(
             'pagetitle', 'schoolInfo', 'student', 'studentName',
             'classInfo', 'termInfo', 'sessionInfo', 'paymentBook',
-            'bills', 'paymentRecords', 'studentId', 'classId', 'termId', 'sessionId'
+            'bills', 'paymentRecords', 'studentId', 'classId', 'termId', 'sessionId',
+            'allTermsOutstanding'
         ));
     }
 }
