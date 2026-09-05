@@ -85,6 +85,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
 use App\Http\Controllers\ViewStudentMockReportController;
 use App\Http\Controllers\ViewStudentReportController;
+use App\Http\Controllers\Reports\ReminderController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -840,6 +841,8 @@ Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () 
     Route::get('/high-outstanding', [AnalysisReportController::class, 'getHighOutstandingAlerts'])->name('high-outstanding');
     Route::post('/send-reminders', [AnalysisReportController::class, 'sendPaymentReminders'])->name('send-reminders');
     Route::post('/clear-cache', [AnalysisReportController::class, 'clearReportCache'])->name('clear-cache');
+
+    Route::post('/send-reminders', [ReminderController::class, 'sendReminders'])->name('send-reminders');
 });
 
 

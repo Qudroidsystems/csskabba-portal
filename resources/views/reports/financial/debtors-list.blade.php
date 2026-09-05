@@ -275,6 +275,21 @@
     box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
+.rem-channel-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+}
+.rem-channel-label:hover { background: #f8fafc; }
+.rem-channel-label input { width: 16px; height: 16px; }
+
 @media (max-width: 768px) {
     .report-hero { padding: 20px; }
     .report-hero h1 { font-size: 18px; }
@@ -488,6 +503,12 @@ const exportUrls = {
     csv:   @json(route('reports.financial.export', ['report' => 'debtors', 'format' => 'csv'])),
 };
 
+const reminderChannelsEnabled = {
+    email:    @json((bool) config('reminders.channels.email', true)),
+    sms:      @json((bool) config('reminders.channels.sms', false)),
+    whatsapp: @json((bool) config('reminders.channels.whatsapp', false)),
+};
+
 function fmt(n) {
     return '₦' + parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
 }
@@ -681,34 +702,98 @@ function exportDebtors(format) {
     window.open(base + '?' + params.toString(), '_blank');
 }
 
+function buildChannelPickerHtml(count) {
+    var html = '<div class="text-start">';
+    html += '<p class="mb-3">Send fee reminder for <strong>' + count + '</strong> student(s).</p>';
+    html += '<p class="mb-2 fw-semibold">Select channel(s):</p>';
+
+    var any = false;
+    if (reminderChannelsEnabled.email) {
+        any = true;
+        html += '<label class="rem-channel-label"><input type="checkbox" class="rem-channel" value="email" checked> <i class="ri-mail-line"></i> Email</label>';
+    }
+    if (reminderChannelsEnabled.sms) {
+        any = true;
+        html += '<label class="rem-channel-label"><input type="checkbox" class="rem-channel" value="sms"> <i class="ri-message-2-line"></i> SMS</label>';
+    }
+    if (reminderChannelsEnabled.whatsapp) {
+        any = true;
+        html += '<label class="rem-channel-label"><input type="checkbox" class="rem-channel" value="whatsapp"> <i class="ri-whatsapp-line"></i> WhatsApp</label>';
+    }
+    if (!any) {
+        html += '<p class="text-danger small mb-0">No channels enabled. Set REMINDER_* in .env / config/reminders.php</p>';
+    }
+    html += '</div>';
+    return html;
+}
+
 function sendReminders(studentIds) {
     if (!studentIds || studentIds.length === 0) {
         Swal.fire('Warning', 'Please select students first', 'warning');
         return;
     }
+
     Swal.fire({
-        title: 'Send Payment Reminders?',
-        text: 'This will send reminders to ' + studentIds.length + ' student(s) with outstanding balances.',
+        title: 'Send Payment Reminders',
+        html: buildChannelPickerHtml(studentIds.length),
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Yes, send now',
-        cancelButtonText: 'Cancel'
+        confirmButtonText: 'Send now',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#2563eb',
+        preConfirm: function () {
+            var channels = [];
+            document.querySelectorAll('.rem-channel:checked').forEach(function (el) {
+                channels.push(el.value);
+            });
+            if (channels.length === 0) {
+                Swal.showValidationMessage('Select at least one channel');
+                return false;
+            }
+            return channels;
+        }
     }).then(function (result) {
         if (!result.isConfirmed) return;
+
+        var channels = result.value;
+
+        Swal.fire({
+            title: 'Sending…',
+            text: 'Please wait while reminders are processed.',
+            allowOutsideClick: false,
+            didOpen: function () { Swal.showLoading(); }
+        });
+
         $.ajax({
             url: '{{ route("reports.analysis.send-reminders") }}',
             type: 'POST',
             data: {
                 student_ids: studentIds,
-                term_id: $('#term_id').val(),
-                session_id: $('#session_id').val(),
+                term_id: $('#term_id').val() || '',
+                session_id: $('#session_id').val() || '',
+                channels: channels,
                 _token: '{{ csrf_token() }}'
             },
             success: function (response) {
-                Swal.fire('Success', response.message || 'Reminders sent.', 'success');
+                Swal.fire({
+                    icon: response.success ? 'success' : 'error',
+                    title: response.success ? 'Done' : 'Error',
+                    html: '<pre style="text-align:left;white-space:pre-wrap;font-size:13px;margin:0">' +
+                        escapeHtml(response.message || '') + '</pre>'
+                });
             },
-            error: function () {
-                Swal.fire('Error', 'Failed to send reminders', 'error');
+            error: function (xhr) {
+                var msg = 'Failed to send reminders';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                } else if (xhr.status === 404) {
+                    msg = 'Reminder endpoint not found. Check route reports.analysis.send-reminders';
+                } else if (xhr.status === 403) {
+                    msg = 'You do not have permission to send reminders.';
+                } else if (xhr.status === 419) {
+                    msg = 'Session expired. Refresh the page and try again.';
+                }
+                Swal.fire('Error', msg, 'error');
             }
         });
     });
