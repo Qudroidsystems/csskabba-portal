@@ -236,12 +236,12 @@
         @php $counter = 1; @endphp
         @foreach($students as $std)
             @php
-                $hasScholarship = $scholarshipAssignments->contains('student_id', $std->stid);
-                $hasDiscount = $discountAssignments->contains('student_id', $std->stid);
+                $hasScholarship = $scholarshipAssignments->has($std->stid);
+                $hasDiscount = $discountAssignments->has($std->stid);
                 $status = $studentTotals[$std->stid]['status'];
-                $totalBilledForStudent = $studentBillInfo->sum('amount');
                 $totalPaid = $studentTotals[$std->stid]['totalPaid'];
                 $totalBalance = $studentTotals[$std->stid]['totalBalance'];
+                $totalBilledForStudent = $studentTotals[$std->stid]['totalBilled'];
                 $completion = $totalBilledForStudent > 0 ? round(($totalPaid / $totalBilledForStudent) * 100, 1) : 0;
                 $progressClass = $completion >= 70 ? 'progress-high' : ($completion >= 40 ? 'progress-medium' : 'progress-low');
             @endphp
@@ -257,8 +257,11 @@
                 </td>
                 @foreach($studentBillInfo as $bill)
                     @php
-                        $payment = $studentPayments->where('stid', $std->stid)->where('schoolbillid', $bill->schoolbillid)->first();
-                        $paid = $payment ? $payment->totalAmountPaid : 0;
+                        // FIX: $studentPayments never existed on this data shape.
+                        // Payments live in $paymentBooks, keyed "{student_id}_{school_bill_id}"
+                        // with the amount on ->amount_paid (see controller).
+                        $book = $paymentBooks->get($std->stid . '_' . $bill->schoolbillid);
+                        $paid = $book ? (float) $book->amount_paid : 0;
                     @endphp
                     <td class="text-end">{{ $paid > 0 ? '₦' . number_format($paid, 2) : '—' }}</td>
                 @endforeach
@@ -286,7 +289,13 @@
         <tr>
             <td colspan="5" class="text-end">TOTALS</td>
             @foreach($studentBillInfo as $bill)
-                @php $billTotalPaid = $studentPayments->where('schoolbillid', $bill->schoolbillid)->sum('totalAmountPaid'); @endphp
+                @php
+                    // FIX: sum from $paymentBooks filtered by this bill's id,
+                    // matching the column name used by student_bill_payment_book.
+                    $billTotalPaid = $paymentBooks
+                        ->where('school_bill_id', $bill->schoolbillid)
+                        ->sum('amount_paid');
+                @endphp
                 <td class="text-end">₦{{ number_format($billTotalPaid, 2) }}</td>
             @endforeach
             <td class="text-end">₦{{ number_format($totalPaidSum, 2) }}</td>
