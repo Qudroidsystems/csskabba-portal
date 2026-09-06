@@ -1,4 +1,5 @@
 <?php
+// database/migrations/2026_09_06_000003_add_scheduling_rules_to_timetable_settings.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,45 +10,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('timetable_settings', function (Blueprint $table) {
-            if (!Schema::hasColumn('timetable_settings', 'free_periods_per_week')) {
-                $table->unsignedInteger('free_periods_per_week')->nullable()->default(0);
-            }
-            if (!Schema::hasColumn('timetable_settings', 'max_lessons_per_day')) {
-                $table->unsignedTinyInteger('max_lessons_per_day')->nullable();
-            }
-            if (!Schema::hasColumn('timetable_settings', 'lessons_per_day')) {
-                $table->unsignedTinyInteger('lessons_per_day')->nullable();
-            }
-            if (!Schema::hasColumn('timetable_settings', 'short_break_after_period')) {
-                $table->unsignedTinyInteger('short_break_after_period')->nullable();
-            }
-            if (!Schema::hasColumn('timetable_settings', 'long_break_after_period')) {
-                $table->unsignedTinyInteger('long_break_after_period')->nullable();
-            }
-            if (!Schema::hasColumn('timetable_settings', 'assembly_day')) {
-                $table->string('assembly_day')->nullable();
-            }
-            if (!Schema::hasColumn('timetable_settings', 'half_days')) {
-                $table->json('half_days')->nullable();
-            }
-            if (!Schema::hasColumn('timetable_settings', 'deprioritize_break_adjacent')) {
-                $table->boolean('deprioritize_break_adjacent')->default(true);
-            }
+            $table->unsignedTinyInteger('lessons_per_day')->nullable()->after('max_lessons_per_day');
+            $table->unsignedTinyInteger('short_break_after_period')->nullable()->after('lessons_per_day');
+            $table->unsignedTinyInteger('long_break_after_period')->nullable()->after('short_break_after_period');
+            $table->string('assembly_day')->nullable()->after('long_break_after_period');
+            $table->json('half_days')->nullable()->after('assembly_day');
+            $table->boolean('deprioritize_break_adjacent')->default(true)->after('half_days');
         });
     }
 
     public function down(): void
     {
         Schema::table('timetable_settings', function (Blueprint $table) {
-            foreach ([
-                'free_periods_per_week', 'max_lessons_per_day', 'lessons_per_day',
-                'short_break_after_period', 'long_break_after_period', 'assembly_day',
-                'half_days', 'deprioritize_break_adjacent',
-            ] as $col) {
-                if (Schema::hasColumn('timetable_settings', $col)) {
-                    $table->dropColumn($col);
-                }
-            }
+            $table->dropColumn(['lessons_per_day','short_break_after_period','long_break_after_period','assembly_day','half_days','deprioritize_break_adjacent']);
         });
     }
 };
