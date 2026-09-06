@@ -18,91 +18,402 @@
     --tt-shadow:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
 }
 
+/* ── Reset & Base ─────────────────────────────────── */
+.timetable-container * {
+    box-sizing: border-box;
+}
+
 /* ── Page header ──────────────────────────────────── */
 .tt-page-header {
     background: linear-gradient(135deg, #1565C0 0%, #6A1B9A 100%);
-    border-radius: 16px; padding: 24px 28px; color: #fff;
-    margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;
+    border-radius: 16px;
+    padding: 24px 28px;
+    color: #fff;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
 }
-.tt-page-header h4 { color: #fff; margin: 0; font-size: 20px; font-weight: 700; }
-.tt-page-header p  { color: rgba(255,255,255,.75); margin: 4px 0 0; font-size: 13px; }
+.tt-page-header h4 {
+    color: #fff;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+.tt-page-header p {
+    color: rgba(255,255,255,.75);
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+.tt-page-header .btn {
+    border-color: rgba(255,255,255,.3);
+    color: #fff;
+}
+.tt-page-header .btn:hover {
+    background: rgba(255,255,255,.15);
+    border-color: rgba(255,255,255,.5);
+}
 
 /* ── Cards ────────────────────────────────────────── */
-.tt-card { background: #fff; border: 1px solid var(--tt-border); border-radius: var(--tt-radius); box-shadow: var(--tt-shadow); overflow: hidden; }
-.tt-card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--tt-border); background: var(--tt-surface); }
-.tt-card-header h6 { margin: 0; font-size: 14px; font-weight: 600; color: #1E293B; }
-.tt-card-body { padding: 20px; }
+.tt-card {
+    background: #fff;
+    border: 1px solid var(--tt-border);
+    border-radius: var(--tt-radius);
+    box-shadow: var(--tt-shadow);
+    overflow: hidden;
+}
+.tt-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--tt-border);
+    background: var(--tt-surface);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.tt-card-header h6 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1E293B;
+}
+.tt-card-body {
+    padding: 20px;
+}
 
 /* ── Setting cards list ───────────────────────────── */
-.setting-card { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border: 1px solid var(--tt-border); border-radius: 10px; background: #fff; transition: all 0.18s ease; margin-bottom: 10px; cursor: pointer; }
-.setting-card:hover { border-color: var(--tt-blue); box-shadow: 0 0 0 3px rgba(21,101,192,.08); transform: translateY(-1px); }
-.setting-card:last-child { margin-bottom: 0; }
-.setting-card .sc-icon { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, #E3F2FD, #EDE7F6); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.setting-card .sc-icon i { font-size: 20px; color: var(--tt-blue); }
-.setting-card .sc-body { flex: 1; margin: 0 14px; }
-.setting-card .sc-body .sc-title { font-size: 14px; font-weight: 600; color: #1E293B; margin-bottom: 2px; }
-.setting-card .sc-body .sc-meta  { font-size: 12px; color: #64748B; }
-.setting-card .sc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.setting-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border: 1px solid var(--tt-border);
+    border-radius: 10px;
+    background: #fff;
+    transition: all 0.18s ease;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+.setting-card:hover {
+    border-color: var(--tt-blue);
+    box-shadow: 0 0 0 3px rgba(21,101,192,.08);
+    transform: translateY(-1px);
+}
+.setting-card:last-child {
+    margin-bottom: 0;
+}
+.setting-card .sc-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #E3F2FD, #EDE7F6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.setting-card .sc-icon i {
+    font-size: 20px;
+    color: var(--tt-blue);
+}
+.setting-card .sc-body {
+    flex: 1;
+    margin: 0 14px;
+    min-width: 0;
+}
+.setting-card .sc-body .sc-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1E293B;
+    margin-bottom: 2px;
+}
+.setting-card .sc-body .sc-meta {
+    font-size: 12px;
+    color: #64748B;
+    word-break: break-word;
+}
+.setting-card .sc-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
 
 /* ── Tabs ─────────────────────────────────────────── */
-.tt-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--tt-border); margin-bottom: 24px; }
-.tt-tab { padding: 10px 18px; font-size: 13px; font-weight: 500; color: #64748B; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 6px; text-decoration: none; background: none; border-top: none; border-left: none; border-right: none; }
-.tt-tab:hover { color: var(--tt-blue); background: rgba(21,101,192,.04); }
-.tt-tab.active { color: var(--tt-blue); border-bottom-color: var(--tt-blue); font-weight: 600; }
-.tt-tab .tab-badge { font-size: 10px; padding: 1px 6px; background: #EF4444; color: #fff; border-radius: 10px; font-weight: 600; }
+.tt-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--tt-border);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+.tt-tab {
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748B;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    flex-shrink: 0;
+}
+.tt-tab:hover {
+    color: var(--tt-blue);
+    background: rgba(21,101,192,.04);
+}
+.tt-tab.active {
+    color: var(--tt-blue);
+    border-bottom-color: var(--tt-blue);
+    font-weight: 600;
+}
+.tt-tab .tab-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    background: #EF4444;
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+}
 
 /* ── Timetable grid ───────────────────────────────── */
-.tt-grid-wrapper { overflow-x: auto; }
-.tt-grid { width: 100%; border-collapse: collapse; min-width: 700px; }
-.tt-grid th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 12px 10px; text-align: center; white-space: nowrap; }
-.tt-grid th.period-th  { background: #1E293B; color: #fff; width: 100px; text-align: left; padding-left: 14px; }
+.tt-grid-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.tt-grid {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+.tt-grid th {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 12px 10px;
+    text-align: center;
+    white-space: nowrap;
+}
+.tt-grid th.period-th {
+    background: #1E293B;
+    color: #fff;
+    width: 100px;
+    text-align: left;
+    padding-left: 14px;
+}
 .tt-grid th.monday-th    { background: var(--tt-blue);   color: #fff; }
 .tt-grid th.tuesday-th   { background: var(--tt-purple); color: #fff; }
 .tt-grid th.wednesday-th { background: var(--tt-green);  color: #fff; }
 .tt-grid th.thursday-th  { background: var(--tt-orange); color: #fff; }
 .tt-grid th.friday-th    { background: var(--tt-pink);   color: #fff; }
-.tt-grid td { border: 1px solid var(--tt-border); vertical-align: middle; padding: 0; transition: all 0.15s; }
-.tt-grid td.period-td { background: var(--tt-surface); padding: 10px 14px; }
-.tt-grid .period-td .pname { font-size: 12px; font-weight: 700; color: #1E293B; }
-.tt-grid .period-td .ptime { font-size: 11px; color: #94A3B8; margin-top: 2px; }
+.tt-grid td {
+    border: 1px solid var(--tt-border);
+    vertical-align: middle;
+    padding: 0;
+    transition: all 0.15s;
+}
+.tt-grid td.period-td {
+    background: var(--tt-surface);
+    padding: 10px 14px;
+    min-width: 100px;
+}
+.tt-grid .period-td .pname {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1E293B;
+}
+.tt-grid .period-td .ptime {
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 2px;
+}
 
-.tt-cell { cursor: pointer; padding: 8px; min-height: 68px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: all 0.15s; }
-.tt-cell:hover { background: rgba(21,101,192,.06) !important; }
-.tt-cell.is-free { background: #FAFAFA; }
-.tt-cell.is-double { background: rgba(21,101,192,.05); }
-.tt-cell.is-break { background: #FFFBEB; cursor: default; }
-.tt-cell.is-break:hover { background: #FFFBEB !important; }
-.tt-cell .cell-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.8); box-shadow: 0 2px 6px rgba(0,0,0,.15); margin-bottom: 5px; }
-.tt-cell .cell-avatar-placeholder { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #E3F2FD, #EDE7F6); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
-.tt-cell .cell-avatar-placeholder i { font-size: 16px; color: var(--tt-blue); }
-.tt-cell .cell-subject { font-size: 11px; font-weight: 700; color: #1E293B; line-height: 1.3; }
-.tt-cell .cell-teacher { font-size: 10px; color: #64748B; margin-top: 1px; }
-.tt-cell .cell-room    { font-size: 10px; color: #94A3B8; margin-top: 1px; }
-.tt-cell .cell-room i  { font-size: 9px; margin-right: 2px; }
-.tt-cell .cell-free    { font-size: 11px; color: #CBD5E1; }
-.tt-cell .cell-break   { font-size: 11px; color: #D97706; font-weight: 600; }
-.tt-cell .cell-double-badge { font-size: 9px; padding: 1px 5px; background: rgba(21,101,192,.12); color: var(--tt-blue); border-radius: 4px; font-weight: 700; margin-top: 3px; }
-.tt-cell.has-subject { border-left: 3px solid; }
+.tt-cell {
+    cursor: pointer;
+    padding: 8px;
+    min-height: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.15s;
+    min-width: 80px;
+}
+.tt-cell:hover {
+    background: rgba(21,101,192,.06) !important;
+}
+.tt-cell.is-free {
+    background: #FAFAFA;
+}
+.tt-cell.is-double {
+    background: rgba(21,101,192,.05);
+}
+.tt-cell.is-break {
+    background: #FFFBEB;
+    cursor: default;
+}
+.tt-cell.is-break:hover {
+    background: #FFFBEB !important;
+}
+.tt-cell .cell-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,.8);
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    margin-bottom: 5px;
+}
+.tt-cell .cell-avatar-placeholder {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #E3F2FD, #EDE7F6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+.tt-cell .cell-avatar-placeholder i {
+    font-size: 16px;
+    color: var(--tt-blue);
+}
+.tt-cell .cell-subject {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1E293B;
+    line-height: 1.3;
+}
+.tt-cell .cell-teacher {
+    font-size: 10px;
+    color: #64748B;
+    margin-top: 1px;
+}
+.tt-cell .cell-room {
+    font-size: 10px;
+    color: #94A3B8;
+    margin-top: 1px;
+}
+.tt-cell .cell-room i {
+    font-size: 9px;
+    margin-right: 2px;
+}
+.tt-cell .cell-free {
+    font-size: 11px;
+    color: #CBD5E1;
+}
+.tt-cell .cell-break {
+    font-size: 11px;
+    color: #D97706;
+    font-weight: 600;
+}
+.tt-cell .cell-double-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    background: rgba(21,101,192,.12);
+    color: var(--tt-blue);
+    border-radius: 4px;
+    font-weight: 700;
+    margin-top: 3px;
+}
+.tt-cell.has-subject {
+    border-left: 3px solid;
+}
 
 /* ── Constraints table ────────────────────────────── */
-#constraintsTable { font-size: 13px; }
-#constraintsTable td { vertical-align: middle; }
-#constraintsTable input[type="number"] { width: 70px; }
+#constraintsTable {
+    font-size: 13px;
+}
+#constraintsTable td {
+    vertical-align: middle;
+    padding: 8px 6px;
+}
+#constraintsTable input[type="number"] {
+    width: 70px;
+}
+#constraintsTable select[multiple] {
+    min-height: 50px;
+    font-size: 12px;
+}
 
 /* ── Conflict items ───────────────────────────────── */
-.conflict-item { border: 1px solid #FEE2E2; background: #FFF5F5; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 14px; }
-.conflict-item.room-conflict { border-color: #FED7AA; background: #FFF7ED; }
-.conflict-item:last-child { margin-bottom: 0; }
-.conflict-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.conflict-avatar-ph { width: 44px; height: 44px; border-radius: 50%; background: #FEE2E2; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.conflict-avatar-ph.room { background: #FED7AA; }
-.conflict-avatar-ph i { color: #EF4444; }
-.conflict-avatar-ph.room i { color: #EA580C; }
+.conflict-item {
+    border: 1px solid #FEE2E2;
+    background: #FFF5F5;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+.conflict-item.room-conflict {
+    border-color: #FED7AA;
+    background: #FFF7ED;
+}
+.conflict-item:last-child {
+    margin-bottom: 0;
+}
+.conflict-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.conflict-avatar-ph {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #FEE2E2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.conflict-avatar-ph.room {
+    background: #FED7AA;
+}
+.conflict-avatar-ph i {
+    color: #EF4444;
+}
+.conflict-avatar-ph.room i {
+    color: #EA580C;
+}
 
 /* ── Real-time conflict panel ─────── */
-.rtc-panel { border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; font-size: 12px; animation: rtcSlideIn 0.2s ease; }
-.rtc-panel:last-child { margin-bottom: 0; }
-@keyframes rtcSlideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.rtc-panel {
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12px;
+    animation: rtcSlideIn 0.2s ease;
+}
+.rtc-panel:last-child {
+    margin-bottom: 0;
+}
+@keyframes rtcSlideIn {
+    from { opacity:0; transform:translateY(-6px); }
+    to { opacity:1; transform:translateY(0); }
+}
 .rtc-error   { background: #FFF1F2; border: 1px solid #FECDD3; }
 .rtc-warning { background: #FFFBEB; border: 1px solid #FDE68A; }
 .rtc-clear   { background: #F0FDF4; border: 1px solid #BBF7D0; }
@@ -112,37 +423,293 @@
 .rtc-msg.green { color: #15803d; }
 .rtc-detail  { color: #64748B; font-size: 11px; margin-bottom: 6px; }
 .rtc-alts    { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.rtc-alt-badge { font-size: 10px; padding: 3px 8px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; border-radius: 6px; cursor: pointer; transition: all .15s; white-space: nowrap; }
-.rtc-alt-badge:hover { background: #16a34a; color: #fff; border-color: #16a34a; }
-.rtc-room-alt { font-size: 10px; padding: 3px 8px; background: #EFF6FF; color: #1565C0; border: 1px solid #BFDBFE; border-radius: 6px; cursor: pointer; transition: all .15s; white-space: nowrap; }
-.rtc-room-alt:hover { background: #1565C0; color: #fff; }
-.rtc-spinner { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748B; padding: 10px 0; }
-.rtc-spinner .spinner-border { width: 14px; height: 14px; border-width: 2px; }
+.rtc-alt-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.rtc-alt-badge:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+}
+.rtc-room-alt {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: #EFF6FF;
+    color: #1565C0;
+    border: 1px solid #BFDBFE;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.rtc-room-alt:hover {
+    background: #1565C0;
+    color: #fff;
+}
+.rtc-spinner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #64748B;
+    padding: 10px 0;
+}
+.rtc-spinner .spinner-border {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+}
 
 /* ── Conflict suggestion box ─────── */
-.conflict-suggestion { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-top: 8px; }
-.conflict-suggestion .alt-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.alt-badge { font-size: 11px; padding: 4px 8px; background: #dcfce7; color: #15803d; border-radius: 6px; cursor: pointer; border: 1px solid #bbf7d0; transition: all .15s; }
-.alt-badge:hover { background: #16a34a; color: #fff; }
+.conflict-suggestion {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    margin-top: 8px;
+}
+.conflict-suggestion .alt-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+.alt-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    background: #dcfce7;
+    color: #15803d;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #bbf7d0;
+    transition: all .15s;
+}
+.alt-badge:hover {
+    background: #16a34a;
+    color: #fff;
+}
 
 /* ── Export buttons ───────────────────────────────── */
-.export-group { display: flex; gap: 8px; align-items: center; }
+.export-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
 
 /* ── Tom Select overrides ─────── */
-.ts-wrapper .ts-control { border-color: #D1D5DB; border-radius: 6px; min-height: 38px; font-size: 14px; }
-.ts-wrapper.focus .ts-control { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.12); }
-.ts-dropdown { font-size: 13px; }
-.ts-dropdown .option { padding: 8px 12px; }
-.ts-dropdown .option:hover,.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
+.ts-wrapper .ts-control {
+    border-color: #D1D5DB;
+    border-radius: 6px;
+    min-height: 38px;
+    font-size: 14px;
+}
+.ts-wrapper.focus .ts-control {
+    border-color: #1565C0;
+    box-shadow: 0 0 0 3px rgba(21,101,192,.12);
+}
+.ts-dropdown {
+    font-size: 13px;
+}
+.ts-dropdown .option {
+    padding: 8px 12px;
+}
+.ts-dropdown .option:hover,
+.ts-dropdown .option.active {
+    background: #EFF6FF;
+    color: #1565C0;
+}
 
 /* ── Editing presence banner ──────────────────────── */
-#editingBanner { border: 1px solid #FDE68A; background: #FFFBEB; color: #92400E; }
+#editingBanner {
+    border: 1px solid #FDE68A;
+    background: #FFFBEB;
+    color: #92400E;
+    border-radius: 8px;
+    padding: 10px 16px;
+}
+
+/* ── Periods table ────────────────────────────────── */
+#periodsTable .form-control-sm,
+#periodsTable .form-select-sm {
+    font-size: 13px;
+    padding: 4px 8px;
+}
+#periodsTable td {
+    padding: 6px 4px;
+    vertical-align: middle;
+}
+#periodsTable .period-order {
+    font-size: 13px;
+    font-weight: 600;
+    color: #94A3B8;
+}
+
+/* ── Modal styles ────────────────────────────────── */
+.modal-content {
+    border-radius: 14px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+.modal-header.bg-gradient-primary {
+    background: linear-gradient(135deg, #1565C0, #6A1B9A);
+}
+.modal-header .modal-title {
+    color: #fff;
+}
+.modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* ── Half days rows ──────────────────────────────── */
+.wiz-half-day-row {
+    background: var(--tt-surface);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--tt-border);
+}
+
+/* ── Utility ──────────────────────────────────────── */
+.cursor-pointer {
+    cursor: pointer;
+}
+.flex-1 {
+    flex: 1;
+}
+.opacity-30 {
+    opacity: 0.3;
+}
+.opacity-50 {
+    opacity: 0.5;
+}
+.bg-success-subtle {
+    background: #DCFCE7;
+}
+.text-success {
+    color: #15803d;
+}
+.bg-warning-subtle {
+    background: #FEF3C7;
+}
+.text-warning {
+    color: #D97706;
+}
+.bg-primary-subtle {
+    background: #EFF6FF;
+}
+.text-primary {
+    color: #1565C0;
+}
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
-    .tt-page-header { flex-direction: column; gap: 12px; }
-    .tt-tabs { overflow-x: auto; }
-    .export-group { flex-wrap: wrap; }
+    .tt-page-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    .tt-page-header .d-flex {
+        justify-content: center;
+    }
+    .tt-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .tt-tab {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+    .export-group {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .tt-card-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    .tt-card-header .d-flex {
+        justify-content: center;
+    }
+    .setting-card {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .setting-card .sc-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .tt-grid-wrapper {
+        margin: 0 -12px;
+        padding: 0 12px;
+    }
+    #constraintsTable {
+        font-size: 12px;
+    }
+    #constraintsTable input[type="number"] {
+        width: 50px;
+    }
+    #constraintsTable select[multiple] {
+        min-height: 40px;
+        font-size: 11px;
+    }
+    .conflict-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .conflict-avatar,
+    .conflict-avatar-ph {
+        align-self: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .tt-page-header {
+        padding: 16px 18px;
+        border-radius: 12px;
+    }
+    .tt-page-header h4 {
+        font-size: 17px;
+    }
+    .tt-card-body {
+        padding: 14px;
+    }
+    .setting-card {
+        padding: 10px 12px;
+    }
+    .tt-grid td.period-td {
+        padding: 6px 8px;
+        min-width: 70px;
+    }
+    .tt-cell {
+        min-height: 50px;
+        padding: 4px;
+        min-width: 60px;
+    }
+    .tt-cell .cell-subject {
+        font-size: 10px;
+    }
+    .tt-cell .cell-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    .tt-cell .cell-avatar-placeholder {
+        width: 28px;
+        height: 28px;
+    }
+    .tt-cell .cell-avatar-placeholder i {
+        font-size: 13px;
+    }
 }
 </style>
 @endsection
@@ -150,7 +717,7 @@
 @section('content')
 <div class="main-content">
 <div class="page-content">
-<div class="container-fluid">
+<div class="container-fluid timetable-container">
 
     {{-- Page Header --}}
     <div class="tt-page-header">
@@ -166,7 +733,7 @@
                 <i class="ri-magic-line me-1"></i>Generation Wizard
             </button>
             <button class="btn btn-outline-light btn-sm" onclick="openWholeSchoolExportModal()">
-                <i class="ri-school-line me-1"></i>Whole School Timetable
+                <i class="ri-school-line me-1"></i>Whole School
             </button>
             <a href="{{ route('timetable.reports.index') }}" class="btn btn-outline-light btn-sm">
                 <i class="ri-bar-chart-2-line me-1"></i>Reports
@@ -307,13 +874,13 @@
                 </div>
                 <div class="tt-tabs" role="tablist">
                     <button class="tt-tab active" onclick="showTab('periodsTab', this)">
-                        <i class="ri-time-line"></i> Periods & Settings
+                        <i class="ri-time-line"></i> Periods &amp; Settings
                     </button>
                     <button class="tt-tab" onclick="showTab('constraintsTab', this)">
-                        <i class="ri-bar-chart-2-line"></i> Subject Constraints
+                        <i class="ri-bar-chart-2-line"></i> Constraints
                     </button>
                     <button class="tt-tab" onclick="showTab('gridTab', this); loadTimetableGrid()">
-                        <i class="ri-table-line"></i> Timetable Grid
+                        <i class="ri-table-line"></i> Grid
                     </button>
                     <button class="tt-tab" onclick="showTab('conflictsTab', this)">
                         <i class="ri-alert-line"></i> Conflicts
@@ -370,10 +937,10 @@
                                     <h6><i class="ri-list-check-2-line me-2"></i>Period Schedule</h6>
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-sm btn-outline-info" onclick="openAnchorRebuildPanel()">
-                                            <i class="ri-flashlight-line"></i> Quick Rebuild
+                                            <i class="ri-flashlight-line"></i> Rebuild
                                         </button>
                                         <button class="btn btn-sm btn-primary" onclick="addPeriodRow()">
-                                            <i class="ri-add-line"></i> Add Period
+                                            <i class="ri-add-line"></i> Add
                                         </button>
                                     </div>
                                 </div>
@@ -405,14 +972,14 @@
 
                 {{-- ── TAB: Constraints ── --}}
                 <div id="constraintsTab" class="tab-content-pane" style="display:none">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <div>
                             <h6 class="mb-1">Subject Constraints</h6>
                             <p class="text-muted mb-0" style="font-size:13px">Define how many times per week each subject is taught and preferred scheduling rules.</p>
                         </div>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 flex-wrap">
                             <button class="btn btn-success" onclick="saveConstraints()">
-                                <i class="ri-save-line me-2"></i>Save Constraints
+                                <i class="ri-save-line me-2"></i>Save
                             </button>
                             <button class="btn btn-primary" onclick="generateTimetable()">
                                 <i class="ri-magic-line me-2"></i>Auto-Generate
@@ -457,7 +1024,7 @@
                                 <i class="ri-file-pdf-line me-1"></i>PDF
                             </button>
                             <button class="btn btn-sm btn-outline-success" onclick="sendNotifications()">
-                                <i class="ri-mail-send-line me-1"></i>Notify Teachers
+                                <i class="ri-mail-send-line me-1"></i>Notify
                             </button>
                         </div>
                     </div>
@@ -477,11 +1044,11 @@
                         <div>
                             <h6 class="mb-1">Conflict Checker</h6>
                             <p class="text-muted mb-0" style="font-size:13px">
-                                Detects teacher double-booking and room conflicts across <strong>all classes</strong> in the same session and term.
+                                Detects teacher double-booking and room conflicts across <strong>all classes</strong>.
                             </p>
                         </div>
                         <button class="btn btn-primary" onclick="checkConflicts()">
-                            <i class="ri-search-line me-2"></i>Run Conflict Check
+                            <i class="ri-search-line me-2"></i>Run Check
                         </button>
                     </div>
                     <div id="conflictCheckedAt" class="text-muted mb-2" style="font-size:12px;display:none">
@@ -508,8 +1075,8 @@
 {{-- ============================================================ --}}
 <div class="modal fade" id="editSlotModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content" style="border-radius:14px;overflow:hidden;border:none;box-shadow:0 20px 60px rgba(0,0,0,.18)">
-            <div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg,#1565C0,#6A1B9A);padding:20px 24px 0">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary pb-0" style="padding:20px 24px 0">
                 <div class="d-flex align-items-center gap-3 w-100">
                     <div id="editTeacherAvatar" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
                         <i class="ri-user-line text-white ri-xl"></i>
@@ -590,7 +1157,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:14px;overflow:hidden">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ri-school-line me-2"></i>Export Whole School Timetable</h5>
+                <h5 class="modal-title"><i class="ri-school-line me-2"></i>Export Whole School</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -816,7 +1383,7 @@
             <i class="ri-save-line me-1"></i>Apply Structure Only
         </button>
         <button class="btn btn-primary" onclick="submitGenerationWizard(true)">
-            <i class="ri-magic-line me-1"></i>Apply &amp; Generate Timetables
+            <i class="ri-magic-line me-1"></i>Apply &amp; Generate
         </button>
       </div>
     </div>
@@ -1295,7 +1862,7 @@ function renderGrid() {
     </tr></thead><tbody>`;
 
     currentPeriods.forEach(period => {
-        const isBreak   = period.is_break;
+        const isBreak   = period.is_break || ['short_break','long_break'].includes(period.type);
         const startTime = (period.start_time || '').slice(0, 5);
         const endTime   = (period.end_time   || '').slice(0, 5);
 
