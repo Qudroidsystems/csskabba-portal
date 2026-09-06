@@ -857,7 +857,8 @@ class TimetableController extends Controller
         return response()->json(['success' => true, 'half_days' => $setting->fresh()->half_days]);
     }
 
-    // =========================================================================
+   
+        // =========================================================================
     // APPLY GENERATION TEMPLATE — bulk day-structure setup across a scope
     // (specific classes, or every active class in a session/term), so the
     // admin never has to hand-build periods per class.
@@ -890,8 +891,13 @@ class TimetableController extends Controller
 
         $classIds = $validated['schoolclass_ids'] ?? SubjectTeacher::where('sessionid', $validated['session_id'])
             ->whereHas('subjectclass')
-            ->join('subjectclass', 'subjectclass.id', '=', 'subject_teacher.subjectclassid')
-            ->distinct()->pluck('subjectclass.schoolclassid')->toArray();
+            ->with('subjectclass')
+            ->get()
+            ->pluck('subjectclass.schoolclassid')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
 
         if (empty($classIds)) {
             return response()->json(['success' => false, 'message' => 'No classes found for this scope.'], 404);
@@ -971,6 +977,7 @@ class TimetableController extends Controller
         }
     }
 
+    
     // =========================================================================
     // SAVE CONSTRAINTS
     // =========================================================================
