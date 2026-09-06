@@ -1272,61 +1272,70 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     Route::post('/broadsheet/all-classes/pdf',  [BroadsheetController::class, 'allClassesExportPdf'])->name('broadsheet.all-classes.pdf');
     Route::get('/broadsheet/class-groups',      [BroadsheetController::class, 'getClassGroups'])->name('broadsheet.class-groups');
 
+  
+
+
     // =========================================================================
-    // TIMETABLE MANAGEMENT ROUTES
-    // =========================================================================
+// TIMETABLE MANAGEMENT ROUTES
+// =========================================================================
 
-    Route::prefix('timetable')->name('timetable.')->group(function () {
+Route::prefix('timetable')->name('timetable.')->group(function () {
 
-        // Views
-        Route::get('/', [TimetableController::class, 'index'])->name('index');
-        Route::get('/teacher', [TimetableController::class, 'teacherView'])->name('teacher');
+    // Views
+    Route::get('/', [TimetableController::class, 'index'])->name('index');
+    Route::get('/teacher', [TimetableController::class, 'teacherView'])->name('teacher');
 
-        // AJAX — Setting management
-        Route::post('/setup', [TimetableController::class, 'setup'])->name('setup');
-        Route::get('/get-setting/{settingId}', [TimetableController::class, 'getSetting'])->name('get-setting');
-        Route::post('/save-settings', [TimetableController::class, 'saveSettings'])->name('save-settings');
-        Route::post('/save-constraints', [TimetableController::class, 'saveConstraints'])->name('save-constraints');
-        Route::delete('/delete-setting/{settingId}', [TimetableController::class, 'deleteSetting'])->name('delete-setting');
-        Route::post('/clone-setting', [TimetableController::class, 'cloneSetting'])->name('clone-setting');
+    // AJAX — Setting management
+    Route::post('/setup', [TimetableController::class, 'setup'])->name('setup');
+    Route::get('/get-setting/{settingId}', [TimetableController::class, 'getSetting'])->name('get-setting');
+    Route::post('/save-settings', [TimetableController::class, 'saveSettings'])->name('save-settings');
+    Route::post('/save-constraints', [TimetableController::class, 'saveConstraints'])->name('save-constraints');
+    Route::delete('/delete-setting/{settingId}', [TimetableController::class, 'deleteSetting'])->name('delete-setting');
+    Route::post('/clone-setting', [TimetableController::class, 'cloneSetting'])->name('clone-setting');
 
-        // AJAX — Grid & slots
-        Route::post('/auto-generate', [TimetableController::class, 'autoGenerate'])->name('auto-generate');
-        Route::get('/get-grid/{settingId}', [TimetableController::class, 'getGrid'])->name('get-grid');
-        Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
-        Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
+    // AJAX — Grid & slots
+    Route::post('/auto-generate', [TimetableController::class, 'autoGenerate'])->name('auto-generate');
+    Route::get('/get-grid/{settingId}', [TimetableController::class, 'getGrid'])->name('get-grid');
+    Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
+    Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
 
-        // AJAX — Checks & utilities
-        Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
-        Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
-        Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
+    // AJAX — Checks & utilities
+    Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
+    Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
+    Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
 
-        // AJAX — Subjects & teachers
-        Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
+    // AJAX — Subjects & teachers
+    Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
 
-        // AJAX — Teacher availability
-        Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
-        Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
+    // AJAX — Teacher availability
+    Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
+    Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
 
-        // AJAX — Substitutes
-        Route::post('/request-substitute', [TimetableController::class, 'requestSubstitute'])->name('request-substitute');
-        Route::post('/approve-substitute/{substituteId}', [TimetableController::class, 'approveSubstitute'])->name('approve-substitute');
-        Route::get('/substitute-requests', [TimetableController::class, 'getSubstituteRequests'])->name('substitute-requests');
+    // AJAX — Substitutes
+    Route::post('/request-substitute', [TimetableController::class, 'requestSubstitute'])->name('request-substitute');
+    Route::post('/approve-substitute/{substituteId}', [TimetableController::class, 'approveSubstitute'])->name('approve-substitute');
+    Route::get('/substitute-requests', [TimetableController::class, 'getSubstituteRequests'])->name('substitute-requests');
+    Route::get('/available-substitutes', [TimetableController::class, 'getAvailableSubstitutes'])->name('available-substitutes');
 
-        // NEW: Available substitutes for a given slot (was missing, broke teacher view)
-        Route::get('/available-substitutes', [TimetableController::class, 'getAvailableSubstitutes'])->name('available-substitutes');
+    // AJAX — Dashboard & analytics
+    Route::get('/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('workload-dashboard');
+    Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
 
-        // AJAX — Dashboard & analytics
-        Route::get('/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('workload-dashboard');
-        Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
+    // ── NEW: Generation Wizard endpoints ────────────────────────────────
+    Route::post('/apply-generation-template', [TimetableController::class, 'applyGenerationTemplate'])->name('apply-generation-template');
+    Route::post('/auto-generate-whole-school', [TimetableController::class, 'autoGenerateWholeSchool'])->name('auto-generate-whole-school');
+    Route::post('/rebuild-periods-from-anchors', [TimetableController::class, 'rebuildPeriodsFromAnchors'])->name('rebuild-periods-from-anchors');
+    Route::post('/save-half-days', [TimetableController::class, 'saveHalfDays'])->name('save-half-days');
+
+    // ── FIX: editing-presence routes, moved here from the wrong group ──
+    // Was nested under timetable-reports (wrong prefix, no name, JS 404'd).
+    // Blade calls these as url('/timetable/heartbeat', id) etc., which now
+    // resolves correctly since this group's prefix is 'timetable'.
+    Route::post('/heartbeat/{id}', [TimetableController::class, 'heartbeat'])->name('heartbeat');
+    Route::post('/release-editing/{id}', [TimetableController::class, 'releaseEditing'])->name('release-editing');
+});
 
 
-    });
-    // Add this route with your other timetable routes
-    Route::get('/timetable/export-whole-school', [TimetableController::class, 'exportWholeSchool'])->name('timetable.export-whole-school');
-    Route::post('/timetable/check-conflict-suggestions', [TimetableController::class, 'checkConflictWithSuggestions'])->name('timetable.check-conflict-suggestions');
-    // Add this route definition
-    Route::post('/timetable/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('timetable.check-slot-conflict');
 
     // Add these routes to your web.php file
 

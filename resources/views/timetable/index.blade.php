@@ -160,6 +160,9 @@
             <a href="{{ route('timetable.teacher') }}" class="btn btn-light btn-sm">
                 <i class="ri-user-line me-1"></i>My Timetable
             </a>
+            <button class="btn btn-outline-light btn-sm" onclick="openGenerationWizardModal()">
+                <i class="ri-magic-line me-1"></i>Generation Wizard
+            </button>
             <button class="btn btn-outline-light btn-sm" onclick="openWholeSchoolExportModal()">
                 <i class="ri-school-line me-1"></i>Whole School Timetable
             </button>
@@ -363,9 +366,14 @@
                             <div class="tt-card border">
                                 <div class="tt-card-header">
                                     <h6><i class="ri-list-check-2-line me-2"></i>Period Schedule</h6>
-                                    <button class="btn btn-sm btn-primary" onclick="addPeriodRow()">
-                                        <i class="ri-add-line"></i> Add Period
-                                    </button>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-info" onclick="openAnchorRebuildPanel()">
+                                            <i class="ri-flashlight-line"></i> Quick Rebuild
+                                        </button>
+                                        <button class="btn btn-sm btn-primary" onclick="addPeriodRow()">
+                                            <i class="ri-add-line"></i> Add Period
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="tt-card-body p-0">
                                     <div class="table-responsive">
@@ -658,6 +666,227 @@
     </div>
 </div>
 
+{{-- ============================================================ --}}
+{{-- GENERATION WIZARD MODAL                                      --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="generationWizardModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#6A1B9A)">
+        <h5 class="modal-title text-white"><i class="ri-magic-line me-2"></i>Generation Wizard</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <p class="text-muted" style="font-size:13px">Set up the day structure for many classes at once, then optionally auto-generate timetables for all of them.</p>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+            <select class="form-select" id="wizSessionId">
+              <option value="">— Select —</option>
+              @foreach($schoolsessions as $session)
+                <option value="{{ $session->id }}">{{ $session->session }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Term <span class="text-muted fw-normal">(optional)</span></label>
+            <select class="form-select" id="wizTermId">
+              <option value="">All Terms</option>
+              @foreach($schoolterms as $term)
+                <option value="{{ $term->id }}">{{ $term->term }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Scope</label>
+            <select class="form-select" id="wizScope" onchange="toggleWizardClassPicker()">
+              <option value="all">All Classes (with subjects assigned)</option>
+              <option value="selected">Selected Classes Only</option>
+            </select>
+          </div>
+          <div class="col-12" id="wizClassPickerWrap" style="display:none">
+            <label class="form-label fw-semibold">Classes</label>
+            <select class="form-select" id="wizClassIds" multiple size="6">
+              @foreach($schoolclasses as $class)
+                <option value="{{ $class->id }}">{{ $class->schoolclass }}{{ $class->arm_name ? ' '.$class->arm_name : '' }}</option>
+              @endforeach
+            </select>
+            <small class="text-muted">Ctrl/Cmd-click to select multiple.</small>
+          </div>
+        </div>
+
+        <hr>
+        <h6 class="mb-3"><i class="ri-time-line me-2"></i>Day Structure</h6>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Day Start</label>
+            <input type="time" class="form-control" id="wizDayStart" value="08:00">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Day End</label>
+            <input type="time" class="form-control" id="wizDayEnd" value="14:30">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Lessons / Day</label>
+            <input type="number" class="form-control" id="wizLessonsPerDay" min="1" max="12" value="8">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Period Length (min)</label>
+            <input type="number" class="form-control" id="wizPeriodDuration" min="20" max="90" value="40">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Short Break After Period</label>
+            <input type="number" class="form-control" id="wizShortBreakAfter" min="1" placeholder="e.g. 2">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Short Break (min)</label>
+            <input type="number" class="form-control" id="wizShortBreakDuration" min="5" max="60" value="20">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Long Break After Period</label>
+            <input type="number" class="form-control" id="wizLongBreakAfter" min="1" placeholder="e.g. 4">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Long Break (min)</label>
+            <input type="number" class="form-control" id="wizLongBreakDuration" min="10" max="90" value="40">
+          </div>
+
+          <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="wizAssemblyFirstPeriod" onchange="toggleWizardAssemblyDay()">
+              <label class="form-check-label" for="wizAssemblyFirstPeriod">Assembly as First Period</label>
+            </div>
+          </div>
+          <div class="col-md-3" id="wizAssemblyDayWrap" style="display:none">
+            <label class="form-label fw-semibold">Assembly Day</label>
+            <select class="form-select" id="wizAssemblyDay">
+              @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday'] as $day)
+                <option value="{{ $day }}">{{ $day }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Free Periods / Week</label>
+            <input type="number" class="form-control" id="wizFreePeriods" min="0" value="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Max Lessons / Day <span class="text-muted fw-normal">(optional)</span></label>
+            <input type="number" class="form-control" id="wizMaxLessonsPerDay" min="1" placeholder="No cap">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Active Days</label>
+            <div class="d-flex flex-wrap gap-3 mt-1">
+              @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday'] as $day)
+                <label class="d-flex align-items-center gap-1" style="font-size:13px">
+                  <input class="form-check-input wiz-active-day mt-0" type="checkbox" value="{{ $day }}" checked>
+                  {{ $day }}
+                </label>
+              @endforeach
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="wizDeprioritizeBreakAdjacent" checked>
+              <label class="form-check-label" for="wizDeprioritizeBreakAdjacent">
+                Deprioritize periods next to a break when auto-generating
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0"><i class="ri-calendar-event-line me-2"></i>Half-Days
+                <span class="text-muted fw-normal" style="font-size:12px">(optional — cap lessons on specific days)</span>
+            </h6>
+            <button class="btn btn-sm btn-outline-primary" onclick="addWizardHalfDayRow()"><i class="ri-add-line"></i> Add</button>
+        </div>
+        <div id="wizHalfDaysBody"></div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-outline-primary" onclick="submitGenerationWizard(false)">
+            <i class="ri-save-line me-1"></i>Apply Structure Only
+        </button>
+        <button class="btn btn-primary" onclick="submitGenerationWizard(true)">
+            <i class="ri-magic-line me-1"></i>Apply &amp; Generate Timetables
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- ANCHOR-BASED QUICK REBUILD MODAL (single class)              --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="anchorRebuildModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ri-flashlight-line me-2"></i>Quick Rebuild Periods</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3" style="font-size:13px">Rebuilds this class's period list from lesson count + break/assembly anchors, replacing manually-edited rows.</p>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold">Day Start</label>
+            <input type="time" class="form-control" id="arDayStart" value="08:00">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Lessons / Day</label>
+            <input type="number" class="form-control" id="arLessonsPerDay" min="1" max="12" value="8">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Period Length (min)</label>
+            <input type="number" class="form-control" id="arPeriodDuration" min="20" max="90" value="40">
+          </div>
+          <div class="col-6"></div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Short Break After Period</label>
+            <input type="number" class="form-control" id="arShortBreakAfter" min="1" placeholder="e.g. 2">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Short Break (min)</label>
+            <input type="number" class="form-control" id="arShortBreakDuration" min="5" max="60" value="20">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Long Break After Period</label>
+            <input type="number" class="form-control" id="arLongBreakAfter" min="1" placeholder="e.g. 4">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Long Break (min)</label>
+            <input type="number" class="form-control" id="arLongBreakDuration" min="10" max="90" value="40">
+          </div>
+          <div class="col-6 d-flex align-items-end">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="arAssemblyEnabled" onchange="document.getElementById('arAssemblyDayWrap').style.display=this.checked?'':'none'">
+              <label class="form-check-label" for="arAssemblyEnabled">Assembly First Period</label>
+            </div>
+          </div>
+          <div class="col-6" id="arAssemblyDayWrap" style="display:none">
+            <label class="form-label fw-semibold">Assembly Day</label>
+            <select class="form-select" id="arAssemblyDay">
+              @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday'] as $day)
+                <option value="{{ $day }}">{{ $day }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAnchorRebuild()"><i class="ri-flashlight-line me-1"></i>Rebuild</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
@@ -691,22 +920,26 @@ function getSubjectColor(subjectId) {
 }
 
 const ROUTES = {
-    setup:              '{{ route("timetable.setup") }}',
-    saveSettings:       '{{ route("timetable.save-settings") }}',
-    saveConstraints:    '{{ route("timetable.save-constraints") }}',
-    autoGenerate:       '{{ route("timetable.auto-generate") }}',
-    saveSlot:           '{{ route("timetable.save-slot") }}',
-    sendNotifications:  '{{ route("timetable.send-notifications") }}',
-    cloneSetting:       '{{ route("timetable.clone-setting") }}',
-    getSetting:         '{{ url("/timetable/get-setting") }}',
-    getGrid:            '{{ url("/timetable/get-grid") }}',
-    checkConflicts:     '{{ url("/timetable/check-conflicts") }}',
-    checkSlotConflict:  '{{ route("timetable.check-slot-conflict") }}',
-    export:             '{{ url("/timetable/export") }}',
-    deleteSetting:      '{{ url("/timetable/delete-setting") }}',
-    exportWholeSchool:  '{{ route("timetable.export-whole-school") }}',
-    heartbeat:          '{{ url("/timetable/heartbeat") }}',
-    releaseEditing:     '{{ url("/timetable/release-editing") }}',
+    setup:                      '{{ route("timetable.setup") }}',
+    saveSettings:               '{{ route("timetable.save-settings") }}',
+    saveConstraints:            '{{ route("timetable.save-constraints") }}',
+    autoGenerate:               '{{ route("timetable.auto-generate") }}',
+    saveSlot:                   '{{ route("timetable.save-slot") }}',
+    sendNotifications:          '{{ route("timetable.send-notifications") }}',
+    cloneSetting:               '{{ route("timetable.clone-setting") }}',
+    getSetting:                 '{{ url("/timetable/get-setting") }}',
+    getGrid:                    '{{ url("/timetable/get-grid") }}',
+    checkConflicts:             '{{ url("/timetable/check-conflicts") }}',
+    checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
+    export:                     '{{ url("/timetable/export") }}',
+    deleteSetting:              '{{ url("/timetable/delete-setting") }}',
+    exportWholeSchool:          '{{ route("timetable.export-whole-school") }}',
+    heartbeat:                  '{{ url("/timetable/heartbeat") }}',
+    releaseEditing:             '{{ url("/timetable/release-editing") }}',
+    applyGenerationTemplate:    '{{ route("timetable.apply-generation-template") }}',
+    autoGenerateWholeSchool:    '{{ route("timetable.auto-generate-whole-school") }}',
+    rebuildPeriodsFromAnchors:  '{{ route("timetable.rebuild-periods-from-anchors") }}',
+    saveHalfDays:               '{{ route("timetable.save-half-days") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
@@ -1694,6 +1927,224 @@ async function confirmClone(force = false) {
         } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); pendingCloneId = null; }
+}
+
+// ============================================================================
+// GENERATION WIZARD
+// ============================================================================
+function openGenerationWizardModal() {
+    document.getElementById('wizHalfDaysBody').innerHTML = '';
+    new bootstrap.Modal(document.getElementById('generationWizardModal')).show();
+}
+
+function toggleWizardClassPicker() {
+    document.getElementById('wizClassPickerWrap').style.display =
+        document.getElementById('wizScope').value === 'selected' ? '' : 'none';
+}
+
+function toggleWizardAssemblyDay() {
+    document.getElementById('wizAssemblyDayWrap').style.display =
+        document.getElementById('wizAssemblyFirstPeriod').checked ? '' : 'none';
+}
+
+function addWizardHalfDayRow() {
+    const wrap = document.getElementById('wizHalfDaysBody');
+    const row  = document.createElement('div');
+    row.className = 'row g-2 align-items-center mb-2 wiz-half-day-row';
+    row.innerHTML = `
+        <div class="col-md-5">
+            <select class="form-select form-select-sm half-day-select">
+                ${['Monday','Tuesday','Wednesday','Thursday','Friday'].map(d => `<option value="${d}">${d}</option>`).join('')}
+            </select>
+        </div>
+        <div class="col-md-5">
+            <input type="number" class="form-control form-control-sm half-day-lessons" min="1" placeholder="Lessons that day">
+        </div>
+        <div class="col-md-2 text-end">
+            <button class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('.wiz-half-day-row').remove()">
+                <i class="ri-delete-bin-line"></i>
+            </button>
+        </div>`;
+    wrap.appendChild(row);
+}
+
+function getWizardHalfDays() {
+    return [...document.querySelectorAll('.wiz-half-day-row')].map(row => {
+        const day     = row.querySelector('.half-day-select').value;
+        const lessons = parseInt(row.querySelector('.half-day-lessons').value);
+        return (day && lessons) ? { day, lessons } : null;
+    }).filter(Boolean);
+}
+
+// Renders the "X applied, Y skipped (published/locked)" summary used after
+// applyGenerationTemplate. `results` is the raw array the controller returns:
+// [{schoolclass_id, setting_id?, skipped, reason?}, ...]
+function buildWizardResultsSummary(results) {
+    if (!Array.isArray(results) || !results.length) return '';
+    const skipped = results.filter(r => r.skipped);
+    const applied = results.filter(r => !r.skipped);
+
+    // Map class ids -> names using the wizard's class picker options (best effort;
+    // falls back to the raw id if a class isn't in the list, e.g. scope was "all").
+    const classNameById = {};
+    document.querySelectorAll('#wizClassIds option').forEach(opt => {
+        classNameById[opt.value] = opt.textContent.trim();
+    });
+    const nameFor = (id) => classNameById[id] || `Class #${id}`;
+
+    let html = `<div class="text-start mt-2" style="font-size:12px">
+        <div class="text-success mb-1"><i class="ri-checkbox-circle-line"></i> Applied to ${applied.length} class(es)</div>`;
+
+    if (skipped.length) {
+        html += `<div class="text-warning mb-1"><i class="ri-alert-line"></i> Skipped ${skipped.length} class(es) — published/locked:</div>
+            <ul class="mb-0 ps-4">
+                ${skipped.map(s => `<li>${escapeHtml(nameFor(s.schoolclass_id))}</li>`).join('')}
+            </ul>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+async function submitGenerationWizard(alsoGenerate) {
+    const sessionId = document.getElementById('wizSessionId').value;
+    if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
+
+    const activeDays = [...document.querySelectorAll('.wiz-active-day:checked')].map(cb => cb.value);
+    if (!activeDays.length) return Swal.fire('Required', 'Select at least one active day.', 'warning');
+
+    const scope    = document.getElementById('wizScope').value;
+    const classIds = scope === 'selected'
+        ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
+        : null;
+    if (scope === 'selected' && !classIds.length) {
+        return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
+    }
+
+    const payload = {
+        session_id:                  parseInt(sessionId),
+        term_id:                     document.getElementById('wizTermId').value || null,
+        schoolclass_ids:             classIds,
+        school_day_start:            document.getElementById('wizDayStart').value,
+        school_day_end:              document.getElementById('wizDayEnd').value,
+        period_duration_minutes:     parseInt(document.getElementById('wizPeriodDuration').value),
+        short_break_duration:        parseInt(document.getElementById('wizShortBreakDuration').value),
+        long_break_duration:         parseInt(document.getElementById('wizLongBreakDuration').value),
+        lessons_per_day:             parseInt(document.getElementById('wizLessonsPerDay').value),
+        short_break_after:           document.getElementById('wizShortBreakAfter').value ? parseInt(document.getElementById('wizShortBreakAfter').value) : null,
+        long_break_after:            document.getElementById('wizLongBreakAfter').value ? parseInt(document.getElementById('wizLongBreakAfter').value) : null,
+        assembly_first_period:       document.getElementById('wizAssemblyFirstPeriod').checked,
+        assembly_day:                document.getElementById('wizAssemblyFirstPeriod').checked
+                                          ? document.getElementById('wizAssemblyDay').value : null,
+        active_days:                 activeDays,
+        free_periods_per_week:       parseInt(document.getElementById('wizFreePeriods').value) || 0,
+        max_lessons_per_day:         document.getElementById('wizMaxLessonsPerDay').value ? parseInt(document.getElementById('wizMaxLessonsPerDay').value) : null,
+        half_days:                   getWizardHalfDays(),
+        deprioritize_break_adjacent: document.getElementById('wizDeprioritizeBreakAdjacent').checked,
+    };
+
+    showLoader();
+    try {
+        const res  = await apiFetch(ROUTES.applyGenerationTemplate, 'POST', payload);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed to apply structure.');
+
+        const summaryHtml = buildWizardResultsSummary(data.results);
+
+        if (!alsoGenerate) {
+            hideLoader();
+            bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
+            Swal.fire({
+                icon: 'success', title: 'Structure Applied',
+                html: `Applied to <strong>${data.applied_to}</strong> class(es).${summaryHtml}`,
+            }).then(() => location.reload());
+            return;
+        }
+
+        const genRes  = await apiFetch(ROUTES.autoGenerateWholeSchool, 'POST', {
+            session_id: payload.session_id, term_id: payload.term_id, schoolclass_ids: payload.schoolclass_ids,
+        });
+        const genData = await genRes.json();
+        hideLoader();
+
+        if (genData.success) {
+            bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
+            const shortfallNote = genData.had_shortfalls
+                ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
+                : '';
+            Swal.fire({
+                icon: 'success', title: 'Generated!',
+                html: `Generated timetables for <strong>${genData.classes.length}</strong> class(es).${summaryHtml}${shortfallNote}`,
+            }).then(() => location.reload());
+        } else if (genData.has_locked) {
+            const confirmResult = await Swal.fire({
+                title: 'Some Timetables Are Locked', text: genData.message + ' Unpublish and regenerate anyway?',
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#DC2626', confirmButtonText: 'Unpublish & Generate',
+            });
+            if (confirmResult.isConfirmed) {
+                showLoader();
+                const forceRes  = await apiFetch(ROUTES.autoGenerateWholeSchool, 'POST', {
+                    session_id: payload.session_id, term_id: payload.term_id,
+                    schoolclass_ids: payload.schoolclass_ids, force_unpublish: true,
+                });
+                const forceData = await forceRes.json();
+                hideLoader();
+                if (forceData.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
+                    const forceShortfallNote = forceData.had_shortfalls
+                        ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
+                        : '';
+                    Swal.fire({
+                        icon: 'success', title: 'Generated!',
+                        html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}${forceShortfallNote}`,
+                    }).then(() => location.reload());
+                } else {
+                    Swal.fire('Error', forceData.message || 'Failed', 'error');
+                }
+            }
+        } else {
+            throw new Error(genData.message || 'Generation failed.');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+// ============================================================================
+// QUICK REBUILD (single class, anchor-based)
+// ============================================================================
+function openAnchorRebuildPanel() {
+    if (!currentSettingId) return Swal.fire('No Class Loaded', 'Load or create a class timetable first.', 'warning');
+    new bootstrap.Modal(document.getElementById('anchorRebuildModal')).show();
+}
+
+async function submitAnchorRebuild() {
+    const assemblyChecked = document.getElementById('arAssemblyEnabled').checked;
+    const payload = {
+        setting_id:                    currentSettingId,
+        lessons_per_day:                parseInt(document.getElementById('arLessonsPerDay').value),
+        short_break_after_period:       document.getElementById('arShortBreakAfter').value ? parseInt(document.getElementById('arShortBreakAfter').value) : null,
+        long_break_after_period:        document.getElementById('arLongBreakAfter').value ? parseInt(document.getElementById('arLongBreakAfter').value) : null,
+        assembly_day:                   assemblyChecked ? document.getElementById('arAssemblyDay').value : null,
+        short_break_duration_minutes:   parseInt(document.getElementById('arShortBreakDuration').value),
+        long_break_duration_minutes:    parseInt(document.getElementById('arLongBreakDuration').value),
+        period_duration_minutes:        parseInt(document.getElementById('arPeriodDuration').value),
+        school_day_start:               document.getElementById('arDayStart').value,
+    };
+
+    showLoader();
+    try {
+        const res  = await apiFetch(ROUTES.rebuildPeriodsFromAnchors, 'POST', payload);
+        const data = await res.json();
+        if (!data.success) {
+            if (data.is_locked) throw new Error(data.message);
+            throw new Error(data.message || 'Failed to rebuild periods.');
+        }
+        bootstrap.Modal.getInstance(document.getElementById('anchorRebuildModal')).hide();
+        await loadSetting(currentSettingId);
+        Swal.fire({ icon:'success', title:'Periods Rebuilt!', timer:1600, showConfirmButton:false });
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    finally { hideLoader(); }
 }
 
 // ============================================================================
