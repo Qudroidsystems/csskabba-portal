@@ -1,6 +1,7 @@
 {{-- resources/views/timetable/index.blade.php --}}
 @extends('layouts.master')
 
+@section('css')
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
 <style>
@@ -144,6 +145,7 @@
     .export-group { flex-wrap: wrap; }
 }
 </style>
+@endsection
 
 @section('content')
 <div class="main-content">
@@ -889,6 +891,7 @@
 
 @endsection
 
+@section('script')
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -946,103 +949,54 @@ const CSRF = '{{ csrf_token() }}';
 function url(base, id) { return base.replace(/\/$/, '') + '/' + id; }
 
 // ============================================================================
-// TOM SELECT — Room dropdown
+// UTILITIES
 // ============================================================================
-document.addEventListener('DOMContentLoaded', function () {
-    roomTomSelect = new TomSelect('#editSlotRoom', {
-        valueField: 'value', labelField: 'label', searchField: ['label'],
-        options: [], create: true, createOnBlur: true,
-        placeholder: 'Search or type a room…', maxItems: 1, allowEmptyOption: true,
-        render: {
-            option: function(data) {
-                return '<div class="d-flex justify-content-between align-items-center">'
-                     + '<span>' + escapeHtml(data.label) + '</span>'
-                     + (data.type ? '<small class="text-muted ms-2">' + escapeHtml(data.type) + '</small>' : '')
-                     + '</div>';
-            }
-        },
-        onChange: function() {
-            debounceConflictCheck();
-        }
-    });
-});
-
-// Release the editing lock when the tab/window actually closes.
-window.addEventListener('beforeunload', function () {
-    if (currentSettingId) {
-        navigator.sendBeacon(url(ROUTES.releaseEditing, currentSettingId), new Blob([JSON.stringify({})], { type: 'application/json' }));
-    }
-});
-
-function updateRoomDropdown(rooms) {
-    if (!roomTomSelect) return;
-    roomTomSelect.clearOptions();
-    roomTomSelect.addOption({ value: '', label: '— No Room —' });
-    rooms.forEach(r => roomTomSelect.addOption({ value: r.id.toString(), label: r.label, type: r.type || '' }));
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
 
-// ============================================================================
-// TABS
-// ============================================================================
+function apiFetch(endpoint, method = 'GET', body = null) {
+    const opts = { method, headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } };
+    if (body && method !== 'GET') { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch(endpoint, opts);
+}
+
+function showLoader() {
+    Swal.fire({ title: 'Processing…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
+}
+function hideLoader() { Swal.close(); }
+
 function showTab(tabId, btn) {
     document.querySelectorAll('.tab-content-pane').forEach(p => p.style.display = 'none');
-    document.querySelectorAll('.tt-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tt-tab').forEach(t => t.classList.remove('active'));
     document.getElementById(tabId).style.display = '';
     if (btn) btn.classList.add('active');
-}
-
-// ============================================================================
-// EDITING PRESENCE
-// ============================================================================
-function showEditingBanner(editingInfo) {
-    const banner = document.getElementById('editingBanner');
-    if (!editingInfo) { banner.style.display = 'none'; return; }
-    document.getElementById('editingBannerText').textContent =
-        `${editingInfo.user_name} is also editing this timetable (started ${editingInfo.since}). Coordinate to avoid overwriting each other's changes.`;
-    banner.style.display = '';
-}
-
-function startEditingHeartbeat(settingId) {
-    stopEditingHeartbeat();
-    apiFetch(url(ROUTES.heartbeat, settingId), 'POST');
-    editingHeartbeatTimer = setInterval(() => apiFetch(url(ROUTES.heartbeat, settingId), 'POST'), 30000);
-}
-
-function stopEditingHeartbeat() {
-    if (editingHeartbeatTimer) { clearInterval(editingHeartbeatTimer); editingHeartbeatTimer = null; }
-    if (currentSettingId) apiFetch(url(ROUTES.releaseEditing, currentSettingId), 'POST');
 }
 
 function closeEditor() {
     stopEditingHeartbeat();
     document.getElementById('timetableEditor').style.display = 'none';
-}
-
-function handleVersionConflict(data) {
-    return Swal.fire({
-        title: 'Someone else saved changes',
-        html: `<p>${escapeHtml(data.message)}</p><p class="text-muted" style="font-size:12px">Reload to see the latest version before continuing.</p>`,
-        icon: 'warning', confirmButtonText: 'Reload Timetable', confirmButtonColor: '#1565C0',
-    }).then(() => loadSetting(currentSettingId));
+    currentSettingId = null;
+    currentSettingVersion = null;
 }
 
 // ============================================================================
-// LOAD / CREATE SETTING
+// LOAD / CREATE
 // ============================================================================
 async function loadOrCreateSetting() {
     const classId   = document.getElementById('classSelect').value;
     const sessionId = document.getElementById('sessionSelect').value;
-    const termId    = document.getElementById('termSelect').value;
+    const termId    = document.getElementById('termSelect').value || null;
+    if (!classId || !sessionId) return Swal.fire('Required', 'Please select Class and Session.', 'warning');
 
-    if (!classId || !sessionId) {
-        return Swal.fire({ title: 'Required', text: 'Please select both a class and session.', icon: 'warning', confirmButtonColor: '#1565C0' });
-    }
     showLoader();
     try {
-        const res  = await apiFetch(ROUTES.setup, 'POST', { schoolclass_id: classId, session_id: sessionId, term_id: termId || null });
+        const res  = await apiFetch(ROUTES.setup, 'POST', { schoolclass_id: classId, session_id: sessionId, term_id: termId });
         const data = await res.json();
-        if (data.success) { currentSettingId = data.setting_id; await loadSetting(currentSettingId); }
-        else throw new Error(data.message || 'Failed');
+        if (data.success) {
+            await loadSetting(data.setting_id);
+        } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
 }
@@ -1052,14 +1006,21 @@ async function loadSetting(settingId) {
     try {
         const res  = await apiFetch(url(ROUTES.getSetting, settingId), 'GET');
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Failed');
+        if (!data.success) throw new Error(data.message || 'Failed to load');
 
-        currentSetting    = data.setting;
-        currentSettingId  = settingId;
+        currentSettingId      = settingId;
+        currentSetting        = data.setting;
         currentSettingVersion = data.setting.updated_at;
-        availableSubjects = data.available_subjects || [];
+        availableSubjects     = data.available_subjects || [];
 
-        showEditingBanner(data.editing_info);
+        // Editing presence
+        if (data.editing_info) {
+            document.getElementById('editingBanner').style.display = '';
+            document.getElementById('editingBannerText').textContent =
+                `${data.editing_info.user_name} is also editing this timetable (since ${data.editing_info.since}).`;
+        } else {
+            document.getElementById('editingBanner').style.display = 'none';
+        }
         startEditingHeartbeat(settingId);
 
         const className   = (data.setting.schoolclass?.schoolclass || '')
@@ -1096,6 +1057,28 @@ async function loadSetting(settingId) {
         Swal.fire('Error', 'Failed to load timetable: ' + e.message, 'error');
     } finally { hideLoader(); }
 }
+
+// ============================================================================
+// EDITING HEARTBEAT
+// ============================================================================
+function startEditingHeartbeat(settingId) {
+    stopEditingHeartbeat();
+    editingHeartbeatTimer = setInterval(() => {
+        apiFetch(url(ROUTES.heartbeat, settingId), 'POST').catch(() => {});
+    }, 60000);
+}
+
+function stopEditingHeartbeat() {
+    if (editingHeartbeatTimer) {
+        clearInterval(editingHeartbeatTimer);
+        editingHeartbeatTimer = null;
+    }
+    if (currentSettingId) {
+        apiFetch(url(ROUTES.releaseEditing, currentSettingId), 'POST').catch(() => {});
+    }
+}
+
+window.addEventListener('beforeunload', stopEditingHeartbeat);
 
 // ============================================================================
 // PERIODS
@@ -1362,6 +1345,28 @@ function renderGrid() {
 }
 
 // ============================================================================
+// ROOM DROPDOWN (Tom Select)
+// ============================================================================
+function updateRoomDropdown(rooms) {
+    if (roomTomSelect) {
+        roomTomSelect.destroy();
+        roomTomSelect = null;
+    }
+    const el = document.getElementById('editSlotRoom');
+    if (!el) return;
+
+    roomTomSelect = new TomSelect(el, {
+        valueField: 'id',
+        labelField: 'label',
+        searchField: ['label', 'name', 'code'],
+        options: rooms,
+        create: false,
+        placeholder: 'Search or select a room…',
+        onChange: function() { debounceConflictCheck(); }
+    });
+}
+
+// ============================================================================
 // EDIT SLOT MODAL
 // ============================================================================
 function openSlotModal(periodId, day) {
@@ -1381,7 +1386,6 @@ function openSlotModal(periodId, day) {
     document.getElementById('editSlotNotes').value            = slot.notes || '';
     document.getElementById('editSlotIsDouble').checked       = slot.is_double || false;
 
-    // Reset conflict panel and save button
     resetConflictPanel();
 
     if (roomTomSelect) {
@@ -1421,7 +1425,6 @@ function openSlotModal(periodId, day) {
 
     new bootstrap.Modal(document.getElementById('editSlotModal')).show();
 
-    // Run conflict check after modal is shown if slot already has teacher/room
     if (slot.teacher_id || slot.room_id) {
         setTimeout(runRealtimeConflictCheck, 300);
     }
@@ -1452,7 +1455,6 @@ function onTeacherChange() {
 // ============================================================================
 function debounceConflictCheck() {
     clearTimeout(conflictCheckTimer);
-    // Show spinner immediately
     const panel = document.getElementById('slotConflictPanel');
     const inner = document.getElementById('slotConflictInner');
     const teacherId = document.getElementById('editSlotTeacher').value;
@@ -1492,7 +1494,6 @@ async function runRealtimeConflictCheck() {
         inner.innerHTML = '';
         panel.style.display = '';
 
-        // Render conflict cards
         data.conflicts.forEach(c => {
             const div = document.createElement('div');
             div.className = 'rtc-panel ' + (c.severity === 'error' ? 'rtc-error' : 'rtc-warning');
@@ -1525,7 +1526,6 @@ async function runRealtimeConflictCheck() {
             inner.appendChild(div);
         });
 
-        // Render warning cards
         data.warnings.forEach(w => {
             const div = document.createElement('div');
             div.className = 'rtc-panel rtc-warning';
@@ -1534,7 +1534,6 @@ async function runRealtimeConflictCheck() {
             inner.appendChild(div);
         });
 
-        // All clear
         if (!data.conflicts.length && !data.warnings.length) {
             inner.innerHTML = `<div class="rtc-panel rtc-clear">
                 <div class="rtc-icon">✅</div>
@@ -1542,7 +1541,6 @@ async function runRealtimeConflictCheck() {
             </div>`;
         }
 
-        // Update save button state
         const saveBtn = document.getElementById('saveSlotBtn');
         if (data.has_error) {
             saveBtn.innerHTML = '<i class="ri-alert-line me-2"></i>Save Anyway (Override)';
@@ -1553,7 +1551,6 @@ async function runRealtimeConflictCheck() {
         }
 
     } catch (e) {
-        // Silent fail — don't block the user
         inner.innerHTML = '';
     }
 }
@@ -1568,14 +1565,12 @@ function resetConflictPanel() {
     }
 }
 
-// Click alternative slot — close modal, navigate to it
 function closeModalAndOpenSlot(periodId, day) {
     const modal = bootstrap.Modal.getInstance(document.getElementById('editSlotModal'));
     if (modal) modal.hide();
     loadTimetableGrid().then(() => openSlotModal(periodId, day));
 }
 
-// Click alternative room — auto-select in Tom Select
 function switchToRoom(roomId, label) {
     if (!roomTomSelect) return;
     const idStr = roomId.toString();
@@ -1583,10 +1578,8 @@ function switchToRoom(roomId, label) {
         roomTomSelect.addOption({ value: idStr, label: label });
     }
     roomTomSelect.setValue(idStr);
-    // onChange will trigger debounceConflictCheck via Tom Select onChange callback
 }
 
-// Silent background conflict check — just updates the badge
 async function silentConflictCheck() {
     if (!currentSettingId) return;
     try {
@@ -1634,14 +1627,12 @@ async function saveSlot() {
             return;
         }
 
-        // ── Version conflict (someone else saved the setting since we loaded it) ──
         if (result.has_version_conflict) {
             hideLoader();
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             return handleVersionConflict(result);
         }
 
-        // ── Conflict detected ──
         if (result.has_conflict) {
             hideLoader();
 
@@ -1718,7 +1709,7 @@ async function saveSlot() {
 }
 
 // ============================================================================
-// CONFLICT CHECKER TAB — full cross-class detection
+// CONFLICT CHECKER TAB
 // ============================================================================
 async function checkConflicts() {
     if (!currentSettingId) return;
@@ -1750,7 +1741,6 @@ async function checkConflicts() {
         badge.style.display = '';
         badge.textContent   = data.conflict_count;
 
-        // Count by category
         const teacherConflicts = data.conflicts.filter(c => c.conflict_category === 'teacher');
         const roomConflicts    = data.conflicts.filter(c => c.conflict_category === 'room');
 
@@ -1828,7 +1818,7 @@ function switchToGridAndOpen(periodId, day) {
 }
 
 // ============================================================================
-// NOTIFICATIONS
+// NOTIFICATIONS / EXPORT / DELETE / CLONE
 // ============================================================================
 async function sendNotifications() {
     const result = await Swal.fire({
@@ -1846,9 +1836,6 @@ async function sendNotifications() {
     finally { hideLoader(); }
 }
 
-// ============================================================================
-// EXPORT
-// ============================================================================
 function exportTimetable(format) {
     if (!currentSettingId) return Swal.fire('Error', 'No timetable loaded.', 'error');
     const orientation = document.getElementById('exportOrientation')?.value || 'horizontal';
@@ -1872,9 +1859,6 @@ function exportWholeSchoolTimetable() {
     );
 }
 
-// ============================================================================
-// DELETE / CLONE
-// ============================================================================
 async function deleteSetting(settingId, updatedAt) {
     const result = await Swal.fire({
         title: 'Delete Timetable?', text: 'This will permanently delete this timetable and all its slots.',
@@ -1976,16 +1960,11 @@ function getWizardHalfDays() {
     }).filter(Boolean);
 }
 
-// Renders the "X applied, Y skipped (published/locked)" summary used after
-// applyGenerationTemplate. `results` is the raw array the controller returns:
-// [{schoolclass_id, setting_id?, skipped, reason?}, ...]
 function buildWizardResultsSummary(results) {
     if (!Array.isArray(results) || !results.length) return '';
     const skipped = results.filter(r => r.skipped);
     const applied = results.filter(r => !r.skipped);
 
-    // Map class ids -> names using the wizard's class picker options (best effort;
-    // falls back to the raw id if a class isn't in the list, e.g. scope was "all").
     const classNameById = {};
     document.querySelectorAll('#wizClassIds option').forEach(opt => {
         classNameById[opt.value] = opt.textContent.trim();
@@ -2111,7 +2090,7 @@ async function submitGenerationWizard(alsoGenerate) {
 }
 
 // ============================================================================
-// QUICK REBUILD (single class, anchor-based)
+// QUICK REBUILD
 // ============================================================================
 function openAnchorRebuildPanel() {
     if (!currentSettingId) return Swal.fire('No Class Loaded', 'Load or create a class timetable first.', 'warning');
@@ -2148,21 +2127,20 @@ async function submitAnchorRebuild() {
 }
 
 // ============================================================================
-// UTILITIES
+// VERSION CONFLICT HANDLER
 // ============================================================================
-function escapeHtml(str) {
-    if (str == null) return '';
-    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+async function handleVersionConflict(data) {
+    const result = await Swal.fire({
+        title: 'Timetable Changed',
+        text: data.message || 'This timetable was modified by someone else. Reload to get the latest version.',
+        icon: 'warning',
+        confirmButtonText: 'Reload Now',
+        showCancelButton: true,
+        cancelButtonText: 'Stay',
+    });
+    if (result.isConfirmed && currentSettingId) {
+        await loadSetting(currentSettingId);
+    }
 }
-
-function apiFetch(endpoint, method = 'GET', body = null) {
-    const opts = { method, headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } };
-    if (body && method !== 'GET') { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
-    return fetch(endpoint, opts);
-}
-
-function showLoader() {
-    Swal.fire({ title: 'Processing…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
-}
-function hideLoader() { Swal.close(); }
 </script>
+@endsection

@@ -1275,7 +1275,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
   
 
 
-    // =========================================================================
+// =========================================================================
 // TIMETABLE MANAGEMENT ROUTES
 // =========================================================================
 
@@ -1301,8 +1301,10 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
 
     // AJAX — Checks & utilities
     Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
+    Route::post('/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('check-slot-conflict');
     Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
     Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
+    Route::get('/export-whole-school', [TimetableController::class, 'exportWholeSchool'])->name('export-whole-school');
 
     // AJAX — Subjects & teachers
     Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
@@ -1321,20 +1323,24 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     Route::get('/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('workload-dashboard');
     Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
 
-    // ── NEW: Generation Wizard endpoints ────────────────────────────────
+    // Generation Wizard
     Route::post('/apply-generation-template', [TimetableController::class, 'applyGenerationTemplate'])->name('apply-generation-template');
     Route::post('/auto-generate-whole-school', [TimetableController::class, 'autoGenerateWholeSchool'])->name('auto-generate-whole-school');
     Route::post('/rebuild-periods-from-anchors', [TimetableController::class, 'rebuildPeriodsFromAnchors'])->name('rebuild-periods-from-anchors');
     Route::post('/save-half-days', [TimetableController::class, 'saveHalfDays'])->name('save-half-days');
 
-    // ── FIX: editing-presence routes, moved here from the wrong group ──
-    // Was nested under timetable-reports (wrong prefix, no name, JS 404'd).
-    // Blade calls these as url('/timetable/heartbeat', id) etc., which now
-    // resolves correctly since this group's prefix is 'timetable'.
+    // Editing presence
     Route::post('/heartbeat/{id}', [TimetableController::class, 'heartbeat'])->name('heartbeat');
     Route::post('/release-editing/{id}', [TimetableController::class, 'releaseEditing'])->name('release-editing');
-});
 
+    // Publish / Unpublish
+    Route::post('/publish/{settingId}', [TimetableController::class, 'publishSetting'])->name('publish');
+    Route::post('/unpublish/{settingId}', [TimetableController::class, 'unpublishSetting'])->name('unpublish');
+    Route::post('/publish-and-notify', [TimetableController::class, 'publishAndNotify'])->name('publish-and-notify');
+
+    // ICS feed (signed)
+    Route::get('/ics/{teacherId}', [TimetableController::class, 'exportIcs'])->name('ics');
+});
 
 
     // Add these routes to your web.php file
