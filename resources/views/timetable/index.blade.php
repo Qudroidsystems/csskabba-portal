@@ -98,7 +98,7 @@
 .conflict-avatar-ph i { color: #EF4444; }
 .conflict-avatar-ph.room i { color: #EA580C; }
 
-/* ── Real-time conflict panel ─────────────────────── */
+/* ── Real-time conflict panel ─────── */
 .rtc-panel { border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; font-size: 12px; animation: rtcSlideIn 0.2s ease; }
 .rtc-panel:last-child { margin-bottom: 0; }
 @keyframes rtcSlideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
@@ -133,6 +133,9 @@
 .ts-dropdown { font-size: 13px; }
 .ts-dropdown .option { padding: 8px 12px; }
 .ts-dropdown .option:hover,.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
+
+/* ── Editing presence banner ──────────────────────── */
+#editingBanner { border: 1px solid #FDE68A; background: #FFFBEB; color: #92400E; }
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
@@ -237,7 +240,7 @@
                 </div>
                 <div class="tt-card-body" style="max-height:280px;overflow-y:auto">
                     @forelse ($settings as $setting)
-                    <div class="setting-card" onclick="loadSetting({{ $setting->id }})">
+                    <div class="setting-card" onclick="loadSetting({{ $setting->id }})" data-updated-at="{{ $setting->updated_at->toISOString() }}">
                         <div class="sc-icon"><i class="ri-school-line"></i></div>
                         <div class="sc-body">
                             <div class="sc-title">{{ $setting->resolved_class_name ?: 'Unknown Class' }}</div>
@@ -261,7 +264,7 @@
                             <button class="btn btn-sm btn-outline-info" onclick="cloneSetting({{ $setting->id }})" title="Clone">
                                 <i class="ri-file-copy-line"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $setting->id }})" title="Delete">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $setting->id }}, '{{ $setting->updated_at->toISOString() }}')" title="Delete">
                                 <i class="ri-delete-bin-line"></i>
                             </button>
                         </div>
@@ -286,13 +289,17 @@
                     <small class="text-muted" id="editorSubContext"></small>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('timetableEditor').style.display='none'">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="closeEditor()">
                         <i class="ri-arrow-go-back-line me-1"></i>Close Editor
                     </button>
                 </div>
             </div>
 
             <div class="tt-card-body">
+                <div id="editingBanner" class="alert d-flex align-items-center gap-2 mb-3" style="display:none">
+                    <i class="ri-user-shared-line ri-lg"></i>
+                    <span id="editingBannerText"></span>
+                </div>
                 <div class="tt-tabs" role="tablist">
                     <button class="tt-tab active" onclick="showTab('periodsTab', this)">
                         <i class="ri-time-line"></i> Periods & Settings
@@ -661,6 +668,8 @@
 // ============================================================================
 let currentSettingId  = null;
 let currentSetting    = null;
+let currentSettingVersion = null;
+let editingHeartbeatTimer = null;
 let currentPeriods    = [];
 let currentGrid       = {};
 let currentDays       = [];
@@ -696,6 +705,8 @@ const ROUTES = {
     export:             '{{ url("/timetable/export") }}',
     deleteSetting:      '{{ url("/timetable/delete-setting") }}',
     exportWholeSchool:  '{{ route("timetable.export-whole-school") }}',
+    heartbeat:          '{{ url("/timetable/heartbeat") }}',
+    releaseEditing:     '{{ url("/timetable/release-editing") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
@@ -723,6 +734,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// Release the editing lock when the tab/window actually closes.
+window.addEventListener('beforeunload', function () {
+    if (currentSettingId) {
+        navigator.sendBeacon(url(ROUTES.releaseEditing, currentSettingId), new Blob([JSON.stringify({})], { type: 'application/json' }));
+    }
+});
+
 function updateRoomDropdown(rooms) {
     if (!roomTomSelect) return;
     roomTomSelect.clearOptions();
@@ -738,6 +756,41 @@ function showTab(tabId, btn) {
     document.querySelectorAll('.tt-tab').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).style.display = '';
     if (btn) btn.classList.add('active');
+}
+
+// ============================================================================
+// EDITING PRESENCE
+// ============================================================================
+function showEditingBanner(editingInfo) {
+    const banner = document.getElementById('editingBanner');
+    if (!editingInfo) { banner.style.display = 'none'; return; }
+    document.getElementById('editingBannerText').textContent =
+        `${editingInfo.user_name} is also editing this timetable (started ${editingInfo.since}). Coordinate to avoid overwriting each other's changes.`;
+    banner.style.display = '';
+}
+
+function startEditingHeartbeat(settingId) {
+    stopEditingHeartbeat();
+    apiFetch(url(ROUTES.heartbeat, settingId), 'POST');
+    editingHeartbeatTimer = setInterval(() => apiFetch(url(ROUTES.heartbeat, settingId), 'POST'), 30000);
+}
+
+function stopEditingHeartbeat() {
+    if (editingHeartbeatTimer) { clearInterval(editingHeartbeatTimer); editingHeartbeatTimer = null; }
+    if (currentSettingId) apiFetch(url(ROUTES.releaseEditing, currentSettingId), 'POST');
+}
+
+function closeEditor() {
+    stopEditingHeartbeat();
+    document.getElementById('timetableEditor').style.display = 'none';
+}
+
+function handleVersionConflict(data) {
+    return Swal.fire({
+        title: 'Someone else saved changes',
+        html: `<p>${escapeHtml(data.message)}</p><p class="text-muted" style="font-size:12px">Reload to see the latest version before continuing.</p>`,
+        icon: 'warning', confirmButtonText: 'Reload Timetable', confirmButtonColor: '#1565C0',
+    }).then(() => loadSetting(currentSettingId));
 }
 
 // ============================================================================
@@ -770,7 +823,11 @@ async function loadSetting(settingId) {
 
         currentSetting    = data.setting;
         currentSettingId  = settingId;
+        currentSettingVersion = data.setting.updated_at;
         availableSubjects = data.available_subjects || [];
+
+        showEditingBanner(data.editing_info);
+        startEditingHeartbeat(settingId);
 
         const className   = (data.setting.schoolclass?.schoolclass || '')
             + (data.setting.schoolclass?.arm_name ? ' ' + data.setting.schoolclass.arm_name : '');
@@ -862,6 +919,7 @@ async function saveSettings() {
     try {
         const res  = await apiFetch(ROUTES.saveSettings, 'POST', {
             setting_id:                   currentSettingId,
+            expected_updated_at:          currentSettingVersion,
             school_day_start:             document.getElementById('schoolDayStart').value,
             school_day_end:               document.getElementById('schoolDayEnd').value,
             period_duration_minutes:      parseInt(document.getElementById('periodDuration').value),
@@ -871,8 +929,12 @@ async function saveSettings() {
         });
         const data = await res.json();
         if (data.success) {
+            currentSettingVersion = data.setting.updated_at;
             Swal.fire({ icon:'success', title:'Saved!', timer:1600, showConfirmButton:false });
             await loadSetting(currentSettingId);
+        } else if (data.has_version_conflict) {
+            hideLoader();
+            return handleVersionConflict(data);
         } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
@@ -939,10 +1001,15 @@ async function saveConstraints() {
     if (!constraints.length) return Swal.fire('Error', 'No constraints to save.', 'error');
     showLoader();
     try {
-        const res  = await apiFetch(ROUTES.saveConstraints, 'POST', { setting_id: currentSettingId, constraints });
+        const res  = await apiFetch(ROUTES.saveConstraints, 'POST', { setting_id: currentSettingId, expected_updated_at: currentSettingVersion, constraints });
         const data = await res.json();
-        if (data.success) Swal.fire({ icon:'success', title:'Saved!', timer:1400, showConfirmButton:false });
-        else throw new Error(data.message || 'Failed');
+        if (data.success) {
+            currentSettingVersion = data.updated_at;
+            Swal.fire({ icon:'success', title:'Saved!', timer:1400, showConfirmButton:false });
+        } else if (data.has_version_conflict) {
+            hideLoader();
+            return handleVersionConflict(data);
+        } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
 }
@@ -960,13 +1027,17 @@ async function generateTimetable() {
     if (!result.isConfirmed) return;
     showLoader();
     try {
-        const res  = await apiFetch(ROUTES.autoGenerate, 'POST', { setting_id: currentSettingId });
+        const res  = await apiFetch(ROUTES.autoGenerate, 'POST', { setting_id: currentSettingId, expected_updated_at: currentSettingVersion });
         const data = await res.json();
         if (data.success) {
+            currentSettingVersion = data.setting_updated_at || currentSettingVersion;
             await loadTimetableGrid();
             showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
             silentConflictCheck();
             Swal.fire({ icon:'success', title:'Generated!', timer:1800, showConfirmButton:false });
+        } else if (data.has_version_conflict) {
+            hideLoader();
+            return handleVersionConflict(data);
         } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
@@ -1306,6 +1377,7 @@ async function saveSlot() {
     const roomId = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
     const payload = {
         setting_id: parseInt(document.getElementById('editSlotSettingId').value),
+        expected_updated_at: currentSettingVersion,
         period_id:  parseInt(document.getElementById('editSlotPeriodId').value),
         day:        document.getElementById('editSlotDay').value,
         subject_id: document.getElementById('editSlotSubject').value || null,
@@ -1321,11 +1393,19 @@ async function saveSlot() {
         const result = await res.json();
 
         if (result.success) {
+            currentSettingVersion = result.setting_updated_at;
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             await loadTimetableGrid();
             silentConflictCheck();
             Swal.fire({ icon:'success', title:'Saved!', timer:1200, showConfirmButton:false });
             return;
+        }
+
+        // ── Version conflict (someone else saved the setting since we loaded it) ──
+        if (result.has_version_conflict) {
+            hideLoader();
+            bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
+            return handleVersionConflict(result);
         }
 
         // ── Conflict detected ──
@@ -1385,10 +1465,14 @@ async function saveSlot() {
             const res2    = await apiFetch(ROUTES.saveSlot, 'POST', { ...payload, force_save: true });
             const result2 = await res2.json();
             if (result2.success) {
+                currentSettingVersion = result2.setting_updated_at;
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 await loadTimetableGrid();
                 silentConflictCheck();
                 Swal.fire({ icon:'success', title:'Saved (Override)!', timer:1400, showConfirmButton:false });
+            } else if (result2.has_version_conflict) {
+                bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
+                return handleVersionConflict(result2);
             } else {
                 Swal.fire('Error', result2.message || 'Save failed', 'error');
             }
@@ -1558,7 +1642,7 @@ function exportWholeSchoolTimetable() {
 // ============================================================================
 // DELETE / CLONE
 // ============================================================================
-async function deleteSetting(settingId) {
+async function deleteSetting(settingId, updatedAt) {
     const result = await Swal.fire({
         title: 'Delete Timetable?', text: 'This will permanently delete this timetable and all its slots.',
         icon: 'warning', showCancelButton: true, confirmButtonColor: '#DC2626', confirmButtonText: 'Yes, delete!',
@@ -1566,11 +1650,15 @@ async function deleteSetting(settingId) {
     if (!result.isConfirmed) return;
     showLoader();
     try {
-        const res  = await apiFetch(url(ROUTES.deleteSetting, settingId), 'DELETE');
+        const res  = await apiFetch(url(ROUTES.deleteSetting, settingId), 'DELETE', { expected_updated_at: updatedAt });
         const data = await res.json();
         if (data.success) {
             Swal.fire({ icon:'success', title:'Deleted!', timer:1400, showConfirmButton:false });
             setTimeout(() => location.reload(), 1400);
+        } else if (data.has_version_conflict) {
+            hideLoader();
+            await Swal.fire({ title: 'Changed since you last saw it', text: data.message, icon: 'warning', confirmButtonText: 'Reload List' });
+            location.reload();
         } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
@@ -1581,20 +1669,28 @@ function cloneSetting(settingId) {
     new bootstrap.Modal(document.getElementById('cloneModal')).show();
 }
 
-async function confirmClone() {
+async function confirmClone(force = false) {
     if (!pendingCloneId) return;
-    bootstrap.Modal.getInstance(document.getElementById('cloneModal')).hide();
+    if (!force) bootstrap.Modal.getInstance(document.getElementById('cloneModal')).hide();
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.cloneSetting, 'POST', {
             setting_id:     pendingCloneId,
             new_session_id: document.getElementById('cloneSessionId').value || null,
             new_term_id:    document.getElementById('cloneTermId').value    || null,
+            force,
         });
         const data = await res.json();
         if (data.success) {
             Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false });
             setTimeout(() => location.reload(), 1400);
+        } else if (data.is_being_edited) {
+            hideLoader();
+            const confirmResult = await Swal.fire({
+                title: 'Being Edited', text: data.message, icon: 'warning',
+                showCancelButton: true, confirmButtonText: 'Clone Anyway', confirmButtonColor: '#DC2626',
+            });
+            if (confirmResult.isConfirmed) return confirmClone(true);
         } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); pendingCloneId = null; }

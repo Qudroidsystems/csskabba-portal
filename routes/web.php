@@ -1385,6 +1385,8 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         Route::get('/download/{report}', [TimetableReportController::class, 'download'])->name('download');
         Route::delete('/{report}', [TimetableReportController::class, 'destroy'])->name('destroy');
         Route::post('/schedule', [TimetableReportController::class, 'schedule'])->name('schedule');
+        Route::post('/timetable/heartbeat/{id}', [TimetableController::class, 'heartbeat']);
+        Route::post('/timetable/release-editing/{id}', [TimetableController::class, 'releaseEditing']);
     });
     
 

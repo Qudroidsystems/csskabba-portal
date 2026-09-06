@@ -50,9 +50,12 @@ class TimetableController extends Controller
         '#DCFCE7','#FEE2E2','#EDE9FE','#F0F9FF','#FFF7ED',
     ];
 
+    // How long an "editing_at" heartbeat is considered live before it's treated as stale.
+    const EDITING_LOCK_TTL_MINUTES = 3;
+
     public function __construct()
     {
-        $this->middleware('permission:View timetable|Create timetable|Edit timetable|Delete timetable|Generate timetable', ['only' => ['index', 'getSetting', 'getGrid']]);
+        $this->middleware('permission:View timetable|Create timetable|Edit timetable|Delete timetable|Generate timetable', ['only' => ['index', 'getSetting', 'getGrid', 'heartbeat', 'releaseEditing']]);
         $this->middleware('permission:Create timetable', ['only' => ['setup', 'saveSettings']]);
         $this->middleware('permission:Edit timetable', ['only' => ['saveSlot', 'bulkUpdateSlots', 'cloneSetting']]);
         $this->middleware('permission:Delete timetable', ['only' => ['deleteSetting']]);
@@ -206,6 +209,43 @@ class TimetableController extends Controller
             'published_at' => optional($setting->published_at)->format('d M Y, H:i'),
             'published_by' => $setting->publisher?->name,
         ], 423);
+    }
+
+    // =========================================================================
+    // HELPER: Reject a save when the record was changed by someone else since
+    // the client last loaded it. $expectedUpdatedAt is whatever timestamp the
+    // client last saw; null means "don't check" (e.g. first-ever save).
+    // =========================================================================
+    private function versionConflictResponse(TimetableSetting $setting, ?string $expectedUpdatedAt): ?JsonResponse
+    {
+        if (!$expectedUpdatedAt) return null;
+        if ($setting->updated_at->eq(Carbon::parse($expectedUpdatedAt))) return null;
+
+        return response()->json([
+            'success'              => false,
+            'has_version_conflict' => true,
+            'message'              => 'This timetable was changed by ' . ($setting->updater?->name ?? 'someone else')
+                . ' at ' . $setting->updated_at->format('d M Y, H:i:s') . '. Reload to see the latest version.',
+            'current_updated_at'   => $setting->updated_at->toISOString(),
+        ], 409);
+    }
+
+    // =========================================================================
+    // HELPER: For destructive-but-non-mutating-source actions (clone), warn
+    // if someone else appears to be actively editing the source right now.
+    // Soft warning only — caller can override with force:true.
+    // =========================================================================
+    private function editingRecentlyResponse(TimetableSetting $setting, string $actionMessage): ?JsonResponse
+    {
+        if (!$setting->editing_by || $setting->editing_by == Auth::id()) return null;
+        if (!$setting->editing_at || $setting->editing_at->diffInMinutes(now()) > self::EDITING_LOCK_TTL_MINUTES) return null;
+
+        return response()->json([
+            'success'         => false,
+            'is_being_edited' => true,
+            'message'         => ($setting->editor?->name ?? 'Someone') . ' is currently editing this timetable (started '
+                . $setting->editing_at->diffForHumans() . "). {$actionMessage}",
+        ], 409);
     }
 
     // =========================================================================
@@ -471,16 +511,53 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
+    // EDITING PRESENCE — heartbeat while a setting is open, release on close.
+    // Deliberately uses DB::table() (not Eloquent::update) so these calls
+    // never bump `updated_at` and never trip the version-conflict check.
+    // =========================================================================
+    public function heartbeat(int $settingId): JsonResponse
+    {
+        DB::table('timetable_settings')->where('id', $settingId)->update([
+            'editing_by' => Auth::id(),
+            'editing_at' => now(),
+        ]);
+        return response()->json(['success' => true]);
+    }
+
+    public function releaseEditing(int $settingId): JsonResponse
+    {
+        DB::table('timetable_settings')->where('id', $settingId)
+            ->where('editing_by', Auth::id())
+            ->update(['editing_by' => null, 'editing_at' => null]);
+        return response()->json(['success' => true]);
+    }
+
+    // =========================================================================
     // GET SETTING
     // =========================================================================
     public function getSetting(int $settingId): JsonResponse
     {
-        $setting = TimetableSetting::with(['periods', 'constraints.subject', 'session', 'term'])->findOrFail($settingId);
+        $setting = TimetableSetting::with(['periods', 'constraints.subject', 'session', 'term', 'editor'])->findOrFail($settingId);
 
         $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
             ->where('schoolclass.id', $setting->schoolclass_id)->first();
         $setting->setRelation('schoolclass', $schoolclass);
+
+        $editingInfo = null;
+        if ($setting->editing_by && $setting->editing_by != Auth::id() && $setting->editing_at
+            && $setting->editing_at->diffInMinutes(now()) <= self::EDITING_LOCK_TTL_MINUTES) {
+            $editingInfo = [
+                'user_name' => $setting->editor?->name ?? 'Another user',
+                'since'     => $setting->editing_at->diffForHumans(),
+            ];
+        }
+
+        // Stamp presence for the current viewer (raw query — doesn't touch updated_at).
+        DB::table('timetable_settings')->where('id', $setting->id)->update([
+            'editing_by' => Auth::id(),
+            'editing_at' => now(),
+        ]);
 
         $availableSubjects = SubjectTeacher::where('sessionid', $setting->session_id)
             ->when($setting->term_id, fn($q) => $q->where('termid', $setting->term_id))
@@ -496,7 +573,12 @@ class TimetableController extends Controller
                 'term_name'    => $setting->term?->term ?? 'All Terms',
             ]);
 
-        return response()->json(['success' => true, 'setting' => $setting, 'available_subjects' => $availableSubjects]);
+        return response()->json([
+            'success'            => true,
+            'setting'            => $setting,
+            'available_subjects' => $availableSubjects,
+            'editing_info'       => $editingInfo,
+        ]);
     }
 
     // =========================================================================
@@ -612,6 +694,7 @@ class TimetableController extends Controller
     {
         $validated = $request->validate([
             'setting_id'                   => 'required|exists:timetable_settings,id',
+            'expected_updated_at'          => 'nullable|date',
             'school_day_start'             => 'required|date_format:H:i',
             'school_day_end'               => 'required|date_format:H:i',
             'period_duration_minutes'      => 'required|integer|min:20|max:90',
@@ -627,6 +710,7 @@ class TimetableController extends Controller
             DB::beginTransaction();
             $setting = TimetableSetting::findOrFail($validated['setting_id']);
             if ($lock = $this->publishedLockResponse($setting)) { DB::rollBack(); return $lock; }
+            if ($conflict = $this->versionConflictResponse($setting, $validated['expected_updated_at'] ?? null)) { DB::rollBack(); return $conflict; }
 
             $isNew = $setting->periods()->count() === 0;
 
@@ -894,6 +978,7 @@ class TimetableController extends Controller
     {
         $validated = $request->validate([
             'setting_id'                                    => 'required|exists:timetable_settings,id',
+            'expected_updated_at'                            => 'nullable|date',
             'constraints'                                    => 'required|array',
             'constraints.*.subject_id'                       => 'required|exists:subject,id',
             'constraints.*.periods_per_week'                 => 'required|integer|min:1|max:10',
@@ -905,6 +990,10 @@ class TimetableController extends Controller
             'constraints.*.is_compulsory'                     => 'boolean',
             'constraints.*.avoid_consecutive_double_days'     => 'boolean',
         ]);
+
+        $setting = TimetableSetting::findOrFail($validated['setting_id']);
+        if ($lock = $this->publishedLockResponse($setting)) return $lock;
+        if ($conflict = $this->versionConflictResponse($setting, $validated['expected_updated_at'] ?? null)) return $conflict;
 
         DB::transaction(function () use ($validated) {
             TimetableConstraint::where('setting_id', $validated['setting_id'])->delete();
@@ -924,7 +1013,9 @@ class TimetableController extends Controller
             }
         });
 
-        return response()->json(['success' => true]);
+        $setting->touch();
+
+        return response()->json(['success' => true, 'updated_at' => $setting->fresh()->updated_at->toISOString()]);
     }
 
     // =========================================================================
@@ -1087,20 +1178,22 @@ class TimetableController extends Controller
     public function saveSlot(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'setting_id'  => 'required|exists:timetable_settings,id',
-            'period_id'   => 'required|exists:timetable_periods,id',
-            'day'         => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
-            'subject_id'  => 'nullable|exists:subject,id',
-            'teacher_id'  => 'nullable|exists:users,id',
-            'room_id'     => 'nullable|exists:rooms,id',
-            'is_double'   => 'boolean',
-            'is_free'     => 'boolean',
-            'notes'       => 'nullable|string|max:191',
-            'force_save'  => 'boolean',
+            'setting_id'          => 'required|exists:timetable_settings,id',
+            'expected_updated_at' => 'nullable|date',
+            'period_id'           => 'required|exists:timetable_periods,id',
+            'day'                 => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
+            'subject_id'          => 'nullable|exists:subject,id',
+            'teacher_id'          => 'nullable|exists:users,id',
+            'room_id'             => 'nullable|exists:rooms,id',
+            'is_double'           => 'boolean',
+            'is_free'             => 'boolean',
+            'notes'               => 'nullable|string|max:191',
+            'force_save'          => 'boolean',
         ]);
 
         $currentSetting = TimetableSetting::findOrFail($validated['setting_id']);
         if ($lock = $this->publishedLockResponse($currentSetting)) return $lock;
+        if ($conflict = $this->versionConflictResponse($currentSetting, $validated['expected_updated_at'] ?? null)) return $conflict;
 
         $sessionId = $currentSetting->session_id;
         $termId    = $currentSetting->term_id;
@@ -1271,7 +1364,13 @@ class TimetableController extends Controller
             }
         } catch (\Exception $e) { Log::warning('Notification failed: ' . $e->getMessage()); }
 
-        return response()->json(['success' => true, 'slot' => $slot->load(['subject', 'teacher', 'room'])]);
+        $currentSetting->touch();
+
+        return response()->json([
+            'success'            => true,
+            'slot'               => $slot->load(['subject', 'teacher', 'room']),
+            'setting_updated_at' => $currentSetting->fresh()->updated_at->toISOString(),
+        ]);
     }
 
     // =========================================================================
@@ -1444,13 +1543,17 @@ class TimetableController extends Controller
     // =========================================================================
     public function autoGenerate(Request $request): JsonResponse
     {
-        $validated = $request->validate(['setting_id' => 'required|exists:timetable_settings,id']);
+        $validated = $request->validate([
+            'setting_id'          => 'required|exists:timetable_settings,id',
+            'expected_updated_at' => 'nullable|date',
+        ]);
 
         try {
             DB::beginTransaction();
 
             $setting = TimetableSetting::with(['periods', 'constraints.subject'])->findOrFail($validated['setting_id']);
             if ($lock = $this->publishedLockResponse($setting)) { DB::rollBack(); return $lock; }
+            if ($conflict = $this->versionConflictResponse($setting, $validated['expected_updated_at'] ?? null)) { DB::rollBack(); return $conflict; }
 
             TimetableSlot::where('setting_id', $setting->id)->delete();
 
@@ -1467,9 +1570,15 @@ class TimetableController extends Controller
                 });
 
             $stats = $this->runAutoGenerateCore($setting, $crossOccupied);
+            $setting->touch();
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Timetable generated successfully.', 'stats' => $stats]);
+            return response()->json([
+                'success'            => true,
+                'message'            => 'Timetable generated successfully.',
+                'stats'              => $stats,
+                'setting_updated_at' => $setting->fresh()->updated_at->toISOString(),
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('autoGenerate failed', ['error' => $e->getMessage()]);
@@ -1530,6 +1639,7 @@ class TimetableController extends Controller
             $crossOccupied = [];
             foreach ($ordered as $setting) {
                 $stats = $this->runAutoGenerateCore($setting, $crossOccupied);
+                $setting->touch();
                 $results[] = [
                     'setting_id' => $setting->id,
                     'class_name' => $this->getClassName($setting->schoolclass),
@@ -1959,9 +2069,14 @@ class TimetableController extends Controller
     // =========================================================================
     // DELETE / CLONE
     // =========================================================================
-    public function deleteSetting(int $settingId): JsonResponse
+    public function deleteSetting(Request $request, int $settingId): JsonResponse
     {
         $setting = TimetableSetting::findOrFail($settingId);
+
+        if ($conflict = $this->versionConflictResponse($setting, $request->input('expected_updated_at'))) {
+            return $conflict;
+        }
+
         try { $this->logTimetableChange(Auth::id(), 'delete', 'TimetableSetting', $settingId, null, $setting->toArray()); }
         catch (\Exception $e) { Log::warning('Audit log failed: ' . $e->getMessage()); }
         $setting->delete();
@@ -1974,9 +2089,15 @@ class TimetableController extends Controller
             'setting_id'     => 'required|exists:timetable_settings,id',
             'new_session_id' => 'nullable|exists:schoolsession,id',
             'new_term_id'    => 'nullable|exists:schoolterm,id',
+            'force'          => 'boolean',
         ]);
 
-        $oldSetting = TimetableSetting::with(['periods', 'constraints', 'slots'])->findOrFail($validated['setting_id']);
+        $oldSetting = TimetableSetting::with(['periods', 'constraints', 'slots', 'editor'])->findOrFail($validated['setting_id']);
+
+        if (empty($validated['force'])
+            && $editingWarning = $this->editingRecentlyResponse($oldSetting, 'Clone anyway?')) {
+            return $editingWarning;
+        }
 
         DB::beginTransaction();
         try {
@@ -1986,6 +2107,8 @@ class TimetableController extends Controller
             $newSetting->is_published = false;
             $newSetting->published_at = null;
             $newSetting->published_by = null;
+            $newSetting->editing_by   = null;
+            $newSetting->editing_at   = null;
             $newSetting->created_by   = Auth::id();
             $newSetting->updated_by   = Auth::id();
             $newSetting->save();
