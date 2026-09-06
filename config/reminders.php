@@ -1,7 +1,5 @@
 <?php
-
 return [
-
     /*
     | Channels the school has enabled in .env
     | Admin can still choose a subset when sending.
@@ -13,30 +11,20 @@ return [
     ],
 
     /*
-    | Where to read parent/student contacts.
-    | Adjust column names to match your schema.
+    | How many student_ids can be sent synchronously (with an immediate
+    | sent/skipped/failed summary) before falling back to the queue.
+    | Above this, each student's send is dispatched as its own job.
+    */
+    'sync_batch_limit' => env('REMINDER_SYNC_BATCH_LIMIT', 15),
+
+    /*
+    | Contact fields, tried in order; ALL non-empty matches are used
+    | (fan-out to father_phone + mother_phone if both exist), not just
+    | the first. Sourced from parentRegistration + studentRegistration.
     */
     'contacts' => [
-        'student_table' => 'studentRegistration',
-        'student_pk'    => 'id',
-
-        // Tried in order; first non-empty wins
-        'email_fields' => [
-            'parent_email',
-            'guardian_email',
-            'email',
-            'father_email',
-            'mother_email',
-        ],
-        'phone_fields' => [
-            'parent_phone',
-            'guardian_phone',
-            'phone',
-            'father_phone',
-            'mother_phone',
-            'phoneno',
-            'mobile',
-        ],
+        'email_fields' => ['parent_email', 'student_email'],
+        'phone_fields' => ['father_phone', 'mother_phone', 'student_phone'],
     ],
 
     'sms' => [
@@ -57,18 +45,16 @@ return [
     'whatsapp' => [
         // meta | twilio | log
         'driver' => env('WHATSAPP_DRIVER', 'log'),
-
         'meta' => [
             'token'             => env('WHATSAPP_META_TOKEN'),
             'phone_number_id'   => env('WHATSAPP_META_PHONE_NUMBER_ID'),
             'template_name'     => env('WHATSAPP_TEMPLATE_NAME', 'fee_reminder'),
             'template_language' => env('WHATSAPP_TEMPLATE_LANG', 'en'),
         ],
-
         'twilio' => [
-            'sid'        => env('TWILIO_SID'),
-            'token'      => env('TWILIO_TOKEN'),
-            'from'       => env('TWILIO_WHATSAPP_FROM'), // e.g. whatsapp:+1415...
+            'sid'   => env('TWILIO_SID'),
+            'token' => env('TWILIO_TOKEN'),
+            'from'  => env('TWILIO_WHATSAPP_FROM'), // e.g. whatsapp:+1415...
         ],
     ],
 

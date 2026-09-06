@@ -102,7 +102,9 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Build grouped debtors dataset
+     * Build grouped debtors dataset. Now joins parentRegistration so each
+     * row carries enough info to compute has_contact (does this debtor
+     * have ANY reachable parent/student email or phone on file).
      */
     private function buildDebtorsDataset(Request $request): Collection
     {
@@ -114,6 +116,7 @@ class FinancialReportController extends Controller
             ->leftJoin('schoolterm as st', 'st.id', '=', 'sbpb.term_id')
             ->leftJoin('schoolsession as ss', 'ss.id', '=', 'sbpb.session_id')
             ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
+            ->leftJoin('parentRegistration as pr', 'pr.studentId', '=', 's.id')
             ->where('sbpb.amount_owed', '>', 0)
             ->select(
                 's.id as student_id',
@@ -121,6 +124,11 @@ class FinancialReportController extends Controller
                 's.admissionNo as admission_no',
                 's.student_status',
                 's.gender',
+                's.email as student_email',
+                's.phone_number as student_phone',
+                'pr.parent_email',
+                'pr.father_phone',
+                'pr.mother_phone',
                 'sp.picture as avatar',
                 'sb.id as bill_id',
                 'sb.title as bill_title',
@@ -208,6 +216,12 @@ class FinancialReportController extends Controller
                 $sch  = $scholarships->get($first->student_id);
                 $disc = $discounts->get($first->student_id, collect());
 
+                $hasContact = !empty($first->parent_email)
+                    || !empty($first->father_phone)
+                    || !empty($first->mother_phone)
+                    || !empty($first->student_email)
+                    || !empty($first->student_phone);
+
                 return [
                     'student_id'      => $first->student_id,
                     'student_name'    => $first->student_name,
@@ -215,6 +229,7 @@ class FinancialReportController extends Controller
                     'student_status'  => $first->student_status ?? 'N/A',
                     'gender'          => $first->gender ?? 'N/A',
                     'avatar'          => $first->avatar,
+                    'has_contact'     => $hasContact,
                     'class_id'        => $first->class_id,
                     'class_name'      => $first->class_name,
                     'term_id'         => $first->term_id,
