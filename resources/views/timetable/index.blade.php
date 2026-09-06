@@ -1459,6 +1459,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================
 // GLOBALS
@@ -1560,10 +1562,15 @@ async function loadOrCreateSetting() {
         const res  = await apiFetch(ROUTES.setup, 'POST', { schoolclass_id: classId, session_id: sessionId, term_id: termId });
         const data = await res.json();
         if (data.success) {
-            await loadSetting(data.setting_id);
-        } else throw new Error(data.message || 'Failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+            await loadSetting(data.setting_id); // loadSetting manages its own loader lifecycle
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 async function loadSetting(settingId) {
@@ -1571,14 +1578,17 @@ async function loadSetting(settingId) {
     try {
         const res  = await apiFetch(url(ROUTES.getSetting, settingId), 'GET');
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Failed to load');
+        if (!data.success) {
+            hideLoader();
+            Swal.fire('Error', 'Failed to load timetable: ' + (data.message || 'Failed to load'), 'error');
+            return;
+        }
 
         currentSettingId      = settingId;
         currentSetting        = data.setting;
         currentSettingVersion = data.setting.updated_at;
         availableSubjects     = data.available_subjects || [];
 
-        // Editing presence
         if (data.editing_info) {
             document.getElementById('editingBanner').style.display = '';
             document.getElementById('editingBannerText').textContent =
@@ -1614,13 +1624,15 @@ async function loadSetting(settingId) {
 
         loadConstraintsIntoTable(data.setting.constraints || []);
 
+        hideLoader();
         document.getElementById('timetableEditor').style.display = '';
         document.getElementById('timetableEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
         showTab('periodsTab', document.querySelector('.tt-tab'));
 
     } catch (e) {
+        hideLoader();
         Swal.fire('Error', 'Failed to load timetable: ' + e.message, 'error');
-    } finally { hideLoader(); }
+    }
 }
 
 // ============================================================================
@@ -1711,14 +1723,20 @@ async function saveSettings() {
         const data = await res.json();
         if (data.success) {
             currentSettingVersion = data.setting.updated_at;
+            hideLoader();
             Swal.fire({ icon:'success', title:'Saved!', timer:1600, showConfirmButton:false });
             await loadSetting(currentSettingId);
         } else if (data.has_version_conflict) {
             hideLoader();
-            return handleVersionConflict(data);
-        } else throw new Error(data.message || 'Failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+            handleVersionConflict(data);
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 // ============================================================================
@@ -1786,13 +1804,19 @@ async function saveConstraints() {
         const data = await res.json();
         if (data.success) {
             currentSettingVersion = data.updated_at;
+            hideLoader();
             Swal.fire({ icon:'success', title:'Saved!', timer:1400, showConfirmButton:false });
         } else if (data.has_version_conflict) {
             hideLoader();
-            return handleVersionConflict(data);
-        } else throw new Error(data.message || 'Failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+            handleVersionConflict(data);
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 // ============================================================================
@@ -1815,13 +1839,19 @@ async function generateTimetable() {
             await loadTimetableGrid();
             showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
             silentConflictCheck();
+            hideLoader();
             Swal.fire({ icon:'success', title:'Generated!', timer:1800, showConfirmButton:false });
         } else if (data.has_version_conflict) {
             hideLoader();
-            return handleVersionConflict(data);
-        } else throw new Error(data.message || 'Failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+            handleVersionConflict(data);
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 // ============================================================================
@@ -1964,7 +1994,6 @@ function openSlotModal(periodId, day) {
         avatarDiv.innerHTML = `<i class="ri-user-line text-white ri-xl"></i>`;
     }
 
-    // Subject dropdown
     const subjectSel = document.getElementById('editSlotSubject');
     subjectSel.innerHTML = '<option value="">— Free Period —</option>';
     availableSubjects.forEach(s => {
@@ -1975,7 +2004,6 @@ function openSlotModal(periodId, day) {
         subjectSel.appendChild(opt);
     });
 
-    // Teacher dropdown
     const teacherSel = document.getElementById('editSlotTeacher');
     teacherSel.innerHTML = '<option value="">— No Teacher —</option>';
     const uniqueTeachers = new Map();
@@ -2185,6 +2213,7 @@ async function saveSlot() {
 
         if (result.success) {
             currentSettingVersion = result.setting_updated_at;
+            hideLoader();
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             await loadTimetableGrid();
             silentConflictCheck();
@@ -2255,22 +2284,28 @@ async function saveSlot() {
             const result2 = await res2.json();
             if (result2.success) {
                 currentSettingVersion = result2.setting_updated_at;
+                hideLoader();
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 await loadTimetableGrid();
                 silentConflictCheck();
                 Swal.fire({ icon:'success', title:'Saved (Override)!', timer:1400, showConfirmButton:false });
             } else if (result2.has_version_conflict) {
+                hideLoader();
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 return handleVersionConflict(result2);
             } else {
+                hideLoader();
                 Swal.fire('Error', result2.message || 'Save failed', 'error');
             }
             return;
         }
 
-        throw new Error(result.message || 'Save failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+        hideLoader();
+        Swal.fire('Error', result.message || 'Save failed', 'error');
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 // ============================================================================
@@ -2282,7 +2317,11 @@ async function checkConflicts() {
     try {
         const res  = await apiFetch(url(ROUTES.checkConflicts, currentSettingId), 'GET');
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Failed');
+        if (!data.success) {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+            return;
+        }
 
         const container = document.getElementById('conflictsList');
         const badge     = document.getElementById('conflictBadgeTab');
@@ -2300,6 +2339,7 @@ async function checkConflicts() {
                     <h6 class="text-success">No Conflicts Found</h6>
                     <p class="text-muted mb-0">All teachers and rooms are properly scheduled with no overlaps across any class.</p>
                 </div>`;
+            hideLoader();
             return;
         }
 
@@ -2373,8 +2413,11 @@ async function checkConflicts() {
         });
 
         container.innerHTML = html;
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+        hideLoader();
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 function switchToGridAndOpen(periodId, day) {
@@ -2395,10 +2438,13 @@ async function sendNotifications() {
     try {
         const res  = await apiFetch(ROUTES.sendNotifications, 'POST', { setting_id: currentSettingId, type: 'weekly_preview' });
         const data = await res.json();
+        hideLoader();
         if (data.success) Swal.fire({ icon:'success', title:'Sent!', text: data.message, timer:2000, showConfirmButton:false });
-        else throw new Error(data.message || 'Failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+        else Swal.fire('Error', data.message || 'Failed', 'error');
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 function exportTimetable(format) {
@@ -2434,16 +2480,20 @@ async function deleteSetting(settingId, updatedAt) {
     try {
         const res  = await apiFetch(url(ROUTES.deleteSetting, settingId), 'DELETE', { expected_updated_at: updatedAt });
         const data = await res.json();
+        hideLoader();
         if (data.success) {
             Swal.fire({ icon:'success', title:'Deleted!', timer:1400, showConfirmButton:false });
             setTimeout(() => location.reload(), 1400);
         } else if (data.has_version_conflict) {
-            hideLoader();
             await Swal.fire({ title: 'Changed since you last saw it', text: data.message, icon: 'warning', confirmButtonText: 'Reload List' });
             location.reload();
-        } else throw new Error(data.message || 'Failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+        } else {
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 function cloneSetting(settingId) {
@@ -2454,28 +2504,46 @@ function cloneSetting(settingId) {
 async function confirmClone(force = false) {
     if (!pendingCloneId) return;
     if (!force) bootstrap.Modal.getInstance(document.getElementById('cloneModal')).hide();
+
+    const settingId = pendingCloneId;
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.cloneSetting, 'POST', {
-            setting_id:     pendingCloneId,
+            setting_id:     settingId,
             new_session_id: document.getElementById('cloneSessionId').value || null,
             new_term_id:    document.getElementById('cloneTermId').value    || null,
             force,
         });
         const data = await res.json();
+        hideLoader();
+
         if (data.success) {
+            pendingCloneId = null;
             Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false });
             setTimeout(() => location.reload(), 1400);
-        } else if (data.is_being_edited) {
-            hideLoader();
+            return;
+        }
+
+        if (data.is_being_edited) {
             const confirmResult = await Swal.fire({
                 title: 'Being Edited', text: data.message, icon: 'warning',
                 showCancelButton: true, confirmButtonText: 'Clone Anyway', confirmButtonColor: '#DC2626',
             });
-            if (confirmResult.isConfirmed) return confirmClone(true);
-        } else throw new Error(data.message || 'Failed');
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); pendingCloneId = null; }
+            if (confirmResult.isConfirmed) {
+                pendingCloneId = settingId;
+                return confirmClone(true);
+            }
+            pendingCloneId = null;
+            return;
+        }
+
+        pendingCloneId = null;
+        Swal.fire('Error', data.message || 'Failed', 'error');
+    } catch (e) {
+        hideLoader();
+        pendingCloneId = null;
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 // ============================================================================
@@ -2681,14 +2749,18 @@ async function submitAnchorRebuild() {
         const res  = await apiFetch(ROUTES.rebuildPeriodsFromAnchors, 'POST', payload);
         const data = await res.json();
         if (!data.success) {
-            if (data.is_locked) throw new Error(data.message);
-            throw new Error(data.message || 'Failed to rebuild periods.');
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed to rebuild periods.', 'error');
+            return;
         }
         bootstrap.Modal.getInstance(document.getElementById('anchorRebuildModal')).hide();
+        hideLoader();
         await loadSetting(currentSettingId);
         Swal.fire({ icon:'success', title:'Periods Rebuilt!', timer:1600, showConfirmButton:false });
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
 // ============================================================================
