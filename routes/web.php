@@ -429,7 +429,18 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::post('updateclasscategoryid', [ClasscategoryController::class, 'updateclasscategory'])->name('classcategories.updateclasscategory');
 
 
-    Route::resource('parent', ParentController::class);
+   
+      // Parent routes - all modal-based
+    Route::get('/parents', [ParentController::class, 'index'])->name('parent.index');
+    Route::get('/parents/optimized', [ParentController::class, 'getParentsOptimized'])->name('parent.optimized');
+    Route::get('/parents/students-without-parent', [ParentController::class, 'getStudentsWithoutParent'])->name('parent.students.without');
+    Route::post('/parents', [ParentController::class, 'store'])->name('parent.store');
+    Route::get('/parents/{id}', [ParentController::class, 'show'])->name('parent.show');
+    Route::get('/parents/{id}/edit', [ParentController::class, 'edit'])->name('parent.edit');
+    Route::patch('/parents/{id}', [ParentController::class, 'update'])->name('parent.update');
+    Route::delete('/parents/{id}', [ParentController::class, 'destroy'])->name('parent.destroy');
+    Route::post('/parents/destroy-multiple', [ParentController::class, 'destroyMultiple'])->name('parent.destroy.multiple');
+
     Route::resource('studentImageUpload', StudentImageUploadController::class);
     Route::resource('myclass', MyClassController::class);
     Route::resource('mysubject', MySubjectController::class);
