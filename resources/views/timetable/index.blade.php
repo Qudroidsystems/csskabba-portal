@@ -1,7 +1,7 @@
 {{-- resources/views/timetable/index.blade.php --}}
 @extends('layouts.master')
 
-@section('css')
+
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
 <style>
@@ -712,7 +712,7 @@
     }
 }
 </style>
-@endsection
+
 
 @section('content')
 <div class="main-content">
@@ -1456,9 +1456,7 @@
   </div>
 </div>
 
-@endsection
 
-@section('script')
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
