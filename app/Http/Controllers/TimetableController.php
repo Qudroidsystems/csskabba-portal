@@ -1,10 +1,9 @@
 <?php
 
-// app/Http/Controllers/TimetableController.php
-
 namespace App\Http\Controllers;
 
 use App\Mail\TimetableNotificationMail;
+use App\Models\Holiday;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\Schoolclass;
@@ -31,6 +30,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 
 class TimetableController extends Controller
 {
@@ -56,9 +56,9 @@ class TimetableController extends Controller
         $this->middleware('permission:Create timetable', ['only' => ['setup', 'saveSettings']]);
         $this->middleware('permission:Edit timetable', ['only' => ['saveSlot', 'bulkUpdateSlots', 'cloneSetting']]);
         $this->middleware('permission:Delete timetable', ['only' => ['deleteSetting']]);
-        $this->middleware('permission:Generate timetable', ['only' => ['autoGenerate']]);
+        $this->middleware('permission:Generate timetable', ['only' => ['autoGenerate', 'autoGenerateWholeSchool', 'applyGenerationTemplate']]);
         $this->middleware('permission:View my timetable', ['only' => ['teacherView']]);
-        $this->middleware('permission:Manage timetable settings', ['only' => ['saveSettings']]);
+        $this->middleware('permission:Manage timetable settings', ['only' => ['saveSettings', 'rebuildPeriodsFromAnchors', 'saveHalfDays']]);
         $this->middleware('permission:Manage timetable constraints', ['only' => ['saveConstraints']]);
         $this->middleware('permission:View timetable reports', ['only' => ['workloadDashboard', 'generateAnalytics']]);
         $this->middleware('permission:Export timetable', ['only' => ['export', 'exportWholeSchool']]);
@@ -67,7 +67,8 @@ class TimetableController extends Controller
         $this->middleware('permission:View substitute requests', ['only' => ['getSubstituteRequests']]);
         $this->middleware('permission:Manage teacher availability', ['only' => ['saveTeacherAvailability', 'getTeacherAvailability']]);
         $this->middleware('permission:Check timetable conflicts', ['only' => ['checkConflicts']]);
-        $this->middleware('permission:Send timetable notifications', ['only' => ['sendNotifications']]);
+        $this->middleware('permission:Send timetable notifications', ['only' => ['sendNotifications', 'publishAndNotify']]);
+        $this->middleware('permission:Publish timetable', ['only' => ['publishSetting', 'unpublishSetting', 'publishAndNotify']]);
     }
 
     // =========================================================================
@@ -130,7 +131,6 @@ class TimetableController extends Controller
             ->orderBy('order')
             ->get();
 
-        // All slots this teacher occupies across ALL classes in same session/term
         $teacherBusyKeys = TimetableSlot::whereHas('setting', function($q) use ($sessionId, $termId) {
                 $q->where('session_id', $sessionId)->where('is_active', true);
                 if ($termId) $q->where('term_id', $termId);
@@ -145,9 +145,7 @@ class TimetableController extends Controller
         foreach ($days as $day) {
             foreach ($periods as $period) {
                 if ($day === $currentDay && $period->id == $currentPeriodId) continue;
-                // Skip if teacher already busy at this time (any class)
                 if ($teacherBusyKeys->has($day . '_' . $period->id)) continue;
-                // Check if slot in THIS class is free
                 $slot       = TimetableSlot::where('setting_id', $settingId)
                     ->where('period_id', $period->id)->where('day', $day)->first();
                 $isSlotFree = !$slot || $slot->is_free || !$slot->subject_id;
@@ -192,6 +190,242 @@ class TimetableController extends Controller
                 'type'     => $r->type,
                 'capacity' => $r->capacity,
             ])->toArray();
+    }
+
+    // =========================================================================
+    // HELPER: Reject an edit attempt against a published (locked) timetable
+    // =========================================================================
+    private function publishedLockResponse(TimetableSetting $setting): ?JsonResponse
+    {
+        if (!$setting->is_published) return null;
+
+        return response()->json([
+            'success'      => false,
+            'is_locked'    => true,
+            'message'      => 'This timetable is published and locked. Unpublish it first to make changes — teachers will need to be re-notified afterward.',
+            'published_at' => optional($setting->published_at)->format('d M Y, H:i'),
+            'published_by' => $setting->publisher?->name,
+        ], 423);
+    }
+
+    // =========================================================================
+    // HELPER: Look up the holiday (if any) covering a specific calendar date
+    // =========================================================================
+    private function getHolidayForDate(Carbon $date, ?int $sessionId, ?int $termId = null): ?Holiday
+    {
+        return Holiday::whereDate('date', $date->toDateString())
+            ->where(function ($q) use ($sessionId) {
+                $q->whereNull('session_id')->orWhere('session_id', $sessionId);
+            })
+            ->where(function ($q) use ($termId) {
+                $q->whereNull('term_id')->orWhere('term_id', $termId);
+            })
+            ->orderByDesc('is_full_day')
+            ->first();
+    }
+
+    // =========================================================================
+    // ICS CALENDAR FEED — public, signed-URL, no session auth required.
+    // Rolling window (not tied to a fixed session date range, since
+    // Schoolsession has no start_date/end_date columns): recurrence starts
+    // this Monday and runs 18 months out, refetched fresh on every poll so
+    // calendar apps always see the current timetable state.
+    // =========================================================================
+    public function exportIcs(int $teacherId)
+    {
+        $teacher = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))->findOrFail($teacherId);
+
+        $sessionId = Schoolsession::where('status', 'Current')->value('id')
+            ?? Schoolsession::latest('id')->value('id');
+        $session = Schoolsession::findOrFail($sessionId);
+
+        $slots = TimetableSlot::where('teacher_id', $teacher->id)
+            ->whereNotNull('subject_id')
+            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
+            ->with(['period', 'subject', 'setting.schoolclass', 'room'])
+            ->get();
+
+        $ics = $this->buildIcsFeed($teacher, $session, $slots);
+
+        return response($ics, 200)
+            ->header('Content-Type', 'text/calendar; charset=utf-8')
+            ->header('Content-Disposition', 'inline; filename="timetable-' . $teacher->id . '.ics"')
+            ->header('Cache-Control', 'no-cache');
+    }
+
+    // =========================================================================
+    // PRIVATE: Build the raw ICS document for a teacher's weekly slots.
+    // One recurring VEVENT per slot, with holiday dates excluded via EXDATE.
+    // =========================================================================
+    private function buildIcsFeed(User $teacher, Schoolsession $session, $slots): string
+    {
+        $tz        = config('app.timezone', 'UTC');
+        $startDate = now()->startOfWeek(Carbon::MONDAY);
+        $endDate   = $startDate->copy()->addMonths(18);
+
+        $byDayCode = ['Monday'=>'MO','Tuesday'=>'TU','Wednesday'=>'WE','Thursday'=>'TH','Friday'=>'FR','Saturday'=>'SA','Sunday'=>'SU'];
+
+        $holidays = Holiday::where('is_full_day', true)
+            ->whereDate('date', '>=', $startDate->toDateString())
+            ->whereDate('date', '<=', $endDate->toDateString())
+            ->where(fn($q) => $q->whereNull('session_id')->orWhere('session_id', $session->id))
+            ->get();
+
+        $lines = [
+            'BEGIN:VCALENDAR', 'VERSION:2.0',
+            'PRODID:-//' . config('app.name', 'School') . '//Timetable//EN',
+            'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+            $this->icsFold('X-WR-CALNAME:' . $this->icsEscape(($teacher->name ?? 'My') . ' Timetable')),
+            'X-WR-TIMEZONE:' . $tz,
+            'REFRESH-INTERVAL;VALUE=DURATION:PT12H',
+            'X-PUBLISHED-TTL:PT12H',
+        ];
+
+        foreach ($slots as $slot) {
+            $day     = $slot->day;
+            $dayCode = $byDayCode[$day] ?? null;
+            if (!$dayCode || !$slot->period) continue;
+
+            $first = $startDate->copy();
+            while ($first->format('l') !== $day) $first->addDay();
+
+            [$sh, $sm] = explode(':', substr($slot->period->start_time, 0, 5));
+            [$eh, $em] = explode(':', substr($slot->period->end_time, 0, 5));
+
+            $dtStart = $first->copy()->setTime((int) $sh, (int) $sm);
+            $dtEnd   = $first->copy()->setTime((int) $eh, (int) $em);
+
+            $className = $this->getClassName($slot->setting?->schoolclass);
+            $roomName  = $slot->room?->room_name;
+
+            $descParts = array_filter([
+                $className ? "Class: {$className}" : null,
+                $roomName  ? "Room: {$roomName}"    : null,
+                $slot->is_double ? 'Double period'  : null,
+            ]);
+
+            $exdates = [];
+            foreach ($holidays as $h) {
+                $hDate = Carbon::parse($h->date);
+                if ($hDate->format('l') === $day && $hDate->gte($first)) {
+                    $exdates[] = $hDate->copy()->setTime((int) $sh, (int) $sm)->format('Ymd\THis');
+                }
+            }
+
+            $uid = 'slot-' . $slot->id . '-' . $session->id . '@' . parse_url(config('app.url'), PHP_URL_HOST);
+
+            $lines[] = 'BEGIN:VEVENT';
+            $lines[] = 'UID:' . $uid;
+            $lines[] = 'DTSTAMP:' . now()->utc()->format('Ymd\THis\Z');
+            $lines[] = 'DTSTART;TZID=' . $tz . ':' . $dtStart->format('Ymd\THis');
+            $lines[] = 'DTEND;TZID=' . $tz . ':' . $dtEnd->format('Ymd\THis');
+            $lines[] = $this->icsFold('RRULE:FREQ=WEEKLY;BYDAY=' . $dayCode . ';UNTIL=' . $endDate->copy()->utc()->format('Ymd\THis\Z'));
+            if ($exdates) $lines[] = $this->icsFold('EXDATE;TZID=' . $tz . ':' . implode(',', $exdates));
+            $lines[] = $this->icsFold('SUMMARY:' . $this->icsEscape(($slot->subject?->subject ?? 'Class') . ' — ' . $className));
+            if ($descParts) $lines[] = $this->icsFold('DESCRIPTION:' . $this->icsEscape(implode('\n', $descParts)));
+            if ($roomName)  $lines[] = $this->icsFold('LOCATION:' . $this->icsEscape($roomName));
+            $lines[] = 'END:VEVENT';
+        }
+
+        $lines[] = 'END:VCALENDAR';
+        return implode("\r\n", $lines) . "\r\n";
+    }
+
+    private function icsEscape(string $text): string
+    {
+        return str_replace(["\\", ",", ";", "\n"], ["\\\\", "\\,", "\\;", "\\n"], $text);
+    }
+
+    private function icsFold(string $line): string
+    {
+        $folded = '';
+        while (mb_strlen($line, '8bit') > 75) {
+            $folded .= mb_strcut($line, 0, 75, '8bit') . "\r\n ";
+            $line = mb_strcut($line, 75, null, '8bit');
+        }
+        return $folded . $line;
+    }
+
+    // =========================================================================
+    // HELPER: For every (day, period) pair, resolve what it actually IS that
+    // day — a period marked 'assembly' is only assembly on the configured
+    // assembly day; every other day it's live teaching capacity. A half-day
+    // cutoff removes teaching capacity beyond a lesson count for that day.
+    // Everything (generation, grid rendering, exports, teacher view) reads
+    // from this instead of re-deriving the rules independently.
+    // =========================================================================
+    private function computeDayPeriodMeta(TimetableSetting $setting): array
+    {
+        $days        = $setting->active_days ?? self::DAYS;
+        $periods     = $setting->periods->sortBy('order')->values();
+        $halfDays    = $setting->half_days ?? [];
+        $assemblyDay = $setting->assembly_day;
+
+        $meta = [];
+        foreach ($days as $day) {
+            $teachingIndex = 0;
+            $cutoff        = $halfDays[$day] ?? null;
+
+            foreach ($periods as $period) {
+                $effectiveType = $period->type;
+                if ($period->type === 'assembly') {
+                    $effectiveType = ($day === $assemblyDay) ? 'assembly' : 'lesson';
+                }
+
+                $applicable = true;
+                if ($effectiveType === 'lesson') {
+                    $teachingIndex++;
+                    if ($cutoff && $teachingIndex > $cutoff) $applicable = false;
+                }
+
+                $meta[$day][$period->id] = ['applicable' => $applicable, 'effective_type' => $effectiveType];
+            }
+        }
+        return $meta;
+    }
+
+    // =========================================================================
+    // HELPER: Is this period immediately before/after a break or assembly?
+    // =========================================================================
+    private function isBreakAdjacent(TimetablePeriod $period, $allPeriods): bool
+    {
+        $ordered = $allPeriods->sortBy('order')->values();
+        $idx     = $ordered->search(fn($p) => $p->id === $period->id);
+        if ($idx === false) return false;
+
+        $isNonLesson = fn($p) => $p && in_array($p->type, ['short_break', 'long_break', 'assembly']);
+        return $isNonLesson($ordered->get($idx - 1)) || $isNonLesson($ordered->get($idx + 1));
+    }
+
+    // =========================================================================
+    // HELPER: Turn a generation-wizard template into a periods[] array,
+    // inserting short/long breaks and an optional assembly slot at the
+    // requested positions. Shared by applyGenerationTemplate() and
+    // rebuildPeriodsFromAnchors() for every class in the chosen scope.
+    // =========================================================================
+    private function buildPeriodsFromTemplate(array $template): array
+    {
+        $periods = [];
+        $lessonCount     = (int) $template['lessons_per_day'];
+        $shortBreakAfter = $template['short_break_after'] ?? null;
+        $longBreakAfter  = $template['long_break_after']  ?? null;
+        $hasAssembly     = !empty($template['assembly_first_period']);
+
+        $lessonNumber = 0;
+        if ($hasAssembly) {
+            $periods[] = ['name' => 'Assembly', 'type' => 'assembly'];
+        }
+        for ($i = 1; $i <= $lessonCount; $i++) {
+            $lessonNumber++;
+            $periods[] = ['name' => "Period {$lessonNumber}", 'type' => 'lesson'];
+            if ($shortBreakAfter && $i == $shortBreakAfter) {
+                $periods[] = ['name' => 'Short Break', 'type' => 'short_break'];
+            }
+            if ($longBreakAfter && $i == $longBreakAfter) {
+                $periods[] = ['name' => 'Long Break', 'type' => 'long_break'];
+            }
+        }
+        return $periods;
     }
 
     // =========================================================================
@@ -330,14 +564,15 @@ class TimetableController extends Controller
             ]);
 
         return response()->json([
-            'success'    => true,
-            'setting'    => $setting,
-            'periods'    => $setting->periods,
-            'grid'       => $grid,
-            'days'       => $setting->active_days ?? self::DAYS,
-            'teachers'   => $allTeachers,
-            'rooms'      => $rooms,
-            'class_name' => $this->getClassName($setting->schoolclass),
+            'success'         => true,
+            'setting'         => $setting,
+            'periods'         => $setting->periods,
+            'grid'            => $grid,
+            'days'            => $setting->active_days ?? self::DAYS,
+            'teachers'        => $allTeachers,
+            'rooms'           => $rooms,
+            'class_name'      => $this->getClassName($setting->schoolclass),
+            'day_period_meta' => $this->computeDayPeriodMeta($setting),
         ]);
     }
 
@@ -391,7 +626,9 @@ class TimetableController extends Controller
         try {
             DB::beginTransaction();
             $setting = TimetableSetting::findOrFail($validated['setting_id']);
-            $isNew   = $setting->periods()->count() === 0;
+            if ($lock = $this->publishedLockResponse($setting)) { DB::rollBack(); return $lock; }
+
+            $isNew = $setting->periods()->count() === 0;
 
             $setting->update([
                 'school_day_start'             => $validated['school_day_start'],
@@ -445,36 +682,244 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
+    // REBUILD PERIODS FROM ANCHORS — recomputes the period list from
+    // lessons/day + break/assembly anchors, so admins never hand-edit rows
+    // after changing a duration or anchor position.
+    // =========================================================================
+    public function rebuildPeriodsFromAnchors(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'setting_id'                    => 'required|exists:timetable_settings,id',
+            'lessons_per_day'               => 'required|integer|min:1|max:12',
+            'short_break_after_period'      => 'nullable|integer|min:1',
+            'long_break_after_period'       => 'nullable|integer|min:1',
+            'assembly_day'                  => 'nullable|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'short_break_duration_minutes'  => 'required|integer|min:5|max:60',
+            'long_break_duration_minutes'   => 'required|integer|min:10|max:90',
+            'period_duration_minutes'       => 'required|integer|min:20|max:90',
+            'school_day_start'              => 'required|date_format:H:i',
+            'max_lessons_per_day'           => 'nullable|integer|min:1',
+            'free_periods_per_week'         => 'nullable|integer|min:0',
+            'deprioritize_break_adjacent'   => 'boolean',
+        ]);
+
+        $setting = TimetableSetting::findOrFail($validated['setting_id']);
+        if ($lock = $this->publishedLockResponse($setting)) return $lock;
+
+        $setting->update([
+            'lessons_per_day'              => $validated['lessons_per_day'],
+            'short_break_after_period'     => $validated['short_break_after_period'] ?? null,
+            'long_break_after_period'      => $validated['long_break_after_period'] ?? null,
+            'assembly_day'                 => $validated['assembly_day'] ?? null,
+            'period_duration_minutes'      => $validated['period_duration_minutes'],
+            'short_break_duration_minutes' => $validated['short_break_duration_minutes'],
+            'long_break_duration_minutes'  => $validated['long_break_duration_minutes'],
+            'school_day_start'             => $validated['school_day_start'],
+            'max_lessons_per_day'          => $validated['max_lessons_per_day'] ?? null,
+            'free_periods_per_week'        => $validated['free_periods_per_week'] ?? 0,
+            'deprioritize_break_adjacent'  => $validated['deprioritize_break_adjacent'] ?? true,
+            'updated_by'                   => Auth::id(),
+        ]);
+
+        $periods = $this->buildPeriodsFromTemplate([
+            'lessons_per_day'       => $validated['lessons_per_day'],
+            'short_break_after'     => $validated['short_break_after_period'] ?? null,
+            'long_break_after'      => $validated['long_break_after_period'] ?? null,
+            'assembly_first_period' => !empty($validated['assembly_day']),
+        ]);
+
+        TimetablePeriod::where('setting_id', $setting->id)->delete();
+        $start = Carbon::createFromFormat('H:i', $validated['school_day_start']);
+        $order = 0;
+        foreach ($periods as $p) {
+            $order++;
+            $duration = match ($p['type']) {
+                'short_break' => $validated['short_break_duration_minutes'],
+                'long_break'  => $validated['long_break_duration_minutes'],
+                default       => $validated['period_duration_minutes'],
+            };
+            $end = (clone $start)->addMinutes($duration);
+            TimetablePeriod::create([
+                'setting_id' => $setting->id, 'order' => $order,
+                'name' => $p['name'], 'type' => $p['type'],
+                'start_time' => $start->format('H:i'), 'end_time' => $end->format('H:i'),
+                'duration_minutes' => $duration,
+                'is_break' => in_array($p['type'], ['short_break', 'long_break', 'assembly']),
+            ]);
+            $start = $end;
+        }
+
+        return response()->json(['success' => true, 'setting' => $setting->fresh(), 'periods' => $setting->periods()->get()]);
+    }
+
+    // =========================================================================
+    // HALF-DAYS — set/clear the per-day teaching-slot cutoff (e.g. {"Friday": 5})
+    // =========================================================================
+    public function saveHalfDays(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'setting_id'          => 'required|exists:timetable_settings,id',
+            'half_days'           => 'nullable|array',
+            'half_days.*.day'     => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'half_days.*.lessons' => 'required|integer|min:1',
+        ]);
+
+        $setting = TimetableSetting::findOrFail($validated['setting_id']);
+        if ($lock = $this->publishedLockResponse($setting)) return $lock;
+
+        $map = collect($validated['half_days'] ?? [])->mapWithKeys(fn($h) => [$h['day'] => $h['lessons']])->toArray();
+        $setting->update(['half_days' => $map ?: null, 'updated_by' => Auth::id()]);
+
+        return response()->json(['success' => true, 'half_days' => $setting->fresh()->half_days]);
+    }
+
+    // =========================================================================
+    // APPLY GENERATION TEMPLATE — bulk day-structure setup across a scope
+    // (specific classes, or every active class in a session/term), so the
+    // admin never has to hand-build periods per class.
+    // =========================================================================
+    public function applyGenerationTemplate(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'session_id'              => 'required|exists:schoolsession,id',
+            'term_id'                 => 'nullable|exists:schoolterm,id',
+            'schoolclass_ids'         => 'nullable|array',
+            'schoolclass_ids.*'       => 'exists:schoolclass,id',
+            'school_day_start'        => 'required|date_format:H:i',
+            'school_day_end'          => 'required|date_format:H:i',
+            'period_duration_minutes' => 'required|integer|min:20|max:90',
+            'short_break_duration'    => 'required|integer|min:5|max:60',
+            'long_break_duration'     => 'required|integer|min:10|max:90',
+            'lessons_per_day'         => 'required|integer|min:1|max:12',
+            'short_break_after'       => 'nullable|integer|min:1',
+            'long_break_after'        => 'nullable|integer|min:1',
+            'assembly_first_period'   => 'boolean',
+            'assembly_day'            => 'nullable|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'active_days'             => 'required|array|min:1',
+            'free_periods_per_week'   => 'nullable|integer|min:0',
+            'max_lessons_per_day'     => 'nullable|integer|min:1',
+            'half_days'               => 'nullable|array',
+            'half_days.*.day'         => 'required_with:half_days|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'half_days.*.lessons'     => 'required_with:half_days|integer|min:1',
+            'deprioritize_break_adjacent' => 'boolean',
+        ]);
+
+        $classIds = $validated['schoolclass_ids'] ?? SubjectTeacher::where('sessionid', $validated['session_id'])
+            ->whereHas('subjectclass')
+            ->join('subjectclass', 'subjectclass.id', '=', 'subject_teacher.subjectclassid')
+            ->distinct()->pluck('subjectclass.schoolclassid')->toArray();
+
+        if (empty($classIds)) {
+            return response()->json(['success' => false, 'message' => 'No classes found for this scope.'], 404);
+        }
+
+        $periodTemplate = $this->buildPeriodsFromTemplate($validated);
+        $halfDaysMap = isset($validated['half_days'])
+            ? collect($validated['half_days'])->mapWithKeys(fn($h) => [$h['day'] => $h['lessons']])->toArray()
+            : null;
+        $results = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($classIds as $classId) {
+                $setting = TimetableSetting::firstOrCreate(
+                    [
+                        'schoolclass_id' => $classId,
+                        'session_id'     => $validated['session_id'],
+                        'term_id'        => $validated['term_id'] ?? null,
+                    ],
+                    ['is_active' => true, 'created_by' => Auth::id(), 'updated_by' => Auth::id()]
+                );
+
+                if ($lock = $this->publishedLockResponse($setting)) {
+                    $results[] = ['schoolclass_id' => $classId, 'skipped' => true, 'reason' => 'published/locked'];
+                    continue;
+                }
+
+                $setting->update([
+                    'school_day_start'             => $validated['school_day_start'],
+                    'school_day_end'               => $validated['school_day_end'],
+                    'period_duration_minutes'      => $validated['period_duration_minutes'],
+                    'short_break_duration_minutes' => $validated['short_break_duration'],
+                    'long_break_duration_minutes'  => $validated['long_break_duration'],
+                    'active_days'                  => $validated['active_days'],
+                    'free_periods_per_week'        => $validated['free_periods_per_week'] ?? null,
+                    'max_lessons_per_day'          => $validated['max_lessons_per_day'] ?? null,
+                    'lessons_per_day'              => $validated['lessons_per_day'],
+                    'short_break_after_period'     => $validated['short_break_after'] ?? null,
+                    'long_break_after_period'      => $validated['long_break_after'] ?? null,
+                    'assembly_day'                 => $validated['assembly_day'] ?? null,
+                    'half_days'                    => $halfDaysMap,
+                    'deprioritize_break_adjacent'  => $validated['deprioritize_break_adjacent'] ?? true,
+                    'updated_by'                   => Auth::id(),
+                ]);
+
+                TimetablePeriod::where('setting_id', $setting->id)->delete();
+
+                $start = Carbon::createFromFormat('H:i', $validated['school_day_start']);
+                $order = 0;
+                foreach ($periodTemplate as $p) {
+                    $order++;
+                    $duration = match ($p['type']) {
+                        'short_break' => $validated['short_break_duration'],
+                        'long_break'  => $validated['long_break_duration'],
+                        default       => $validated['period_duration_minutes'],
+                    };
+                    $end = (clone $start)->addMinutes($duration);
+                    TimetablePeriod::create([
+                        'setting_id' => $setting->id, 'order' => $order,
+                        'name' => $p['name'], 'type' => $p['type'],
+                        'start_time' => $start->format('H:i'), 'end_time' => $end->format('H:i'),
+                        'duration_minutes' => $duration,
+                        'is_break' => in_array($p['type'], ['short_break', 'long_break', 'assembly']),
+                    ]);
+                    $start = $end;
+                }
+
+                $results[] = ['schoolclass_id' => $classId, 'setting_id' => $setting->id, 'skipped' => false];
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'applied_to' => count($results), 'results' => $results]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
     // SAVE CONSTRAINTS
     // =========================================================================
     public function saveConstraints(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'setting_id'                      => 'required|exists:timetable_settings,id',
-            'constraints'                     => 'required|array',
-            'constraints.*.subject_id'        => 'required|exists:subject,id',
-            'constraints.*.periods_per_week'  => 'required|integer|min:1|max:10',
-            'constraints.*.allow_double'      => 'boolean',
-            'constraints.*.max_double'        => 'integer|min:0|max:5',
-            'constraints.*.preferred_days'    => 'nullable|array',
-            'constraints.*.avoid_days'        => 'nullable|array',
-            'constraints.*.preferred_periods' => 'nullable|array',
-            'constraints.*.is_compulsory'     => 'boolean',
+            'setting_id'                                    => 'required|exists:timetable_settings,id',
+            'constraints'                                    => 'required|array',
+            'constraints.*.subject_id'                       => 'required|exists:subject,id',
+            'constraints.*.periods_per_week'                 => 'required|integer|min:1|max:10',
+            'constraints.*.allow_double'                      => 'boolean',
+            'constraints.*.max_double'                        => 'integer|min:0|max:5',
+            'constraints.*.preferred_days'                    => 'nullable|array',
+            'constraints.*.avoid_days'                        => 'nullable|array',
+            'constraints.*.preferred_periods'                 => 'nullable|array',
+            'constraints.*.is_compulsory'                     => 'boolean',
+            'constraints.*.avoid_consecutive_double_days'     => 'boolean',
         ]);
 
         DB::transaction(function () use ($validated) {
             TimetableConstraint::where('setting_id', $validated['setting_id'])->delete();
             foreach ($validated['constraints'] as $c) {
                 TimetableConstraint::create([
-                    'setting_id'                  => $validated['setting_id'],
-                    'subject_id'                  => $c['subject_id'],
-                    'periods_per_week'             => $c['periods_per_week'],
-                    'allow_double_period'          => $c['allow_double'] ?? false,
-                    'max_double_periods_per_week'  => $c['max_double'] ?? 1,
-                    'preferred_days'               => $c['preferred_days'] ?? null,
-                    'avoid_days'                   => $c['avoid_days'] ?? null,
-                    'preferred_periods'            => $c['preferred_periods'] ?? null,
-                    'is_compulsory'                => $c['is_compulsory'] ?? true,
+                    'setting_id'                     => $validated['setting_id'],
+                    'subject_id'                     => $c['subject_id'],
+                    'periods_per_week'               => $c['periods_per_week'],
+                    'allow_double_period'            => $c['allow_double'] ?? false,
+                    'max_double_periods_per_week'    => $c['max_double'] ?? 1,
+                    'preferred_days'                 => $c['preferred_days'] ?? null,
+                    'avoid_days'                      => $c['avoid_days'] ?? null,
+                    'preferred_periods'               => $c['preferred_periods'] ?? null,
+                    'is_compulsory'                   => $c['is_compulsory'] ?? true,
+                    'avoid_consecutive_double_days'   => $c['avoid_consecutive_double_days'] ?? true,
                 ]);
             }
         });
@@ -484,7 +929,6 @@ class TimetableController extends Controller
 
     // =========================================================================
     // REAL-TIME SLOT CONFLICT CHECK
-    // Called from the modal as the user selects teacher / room — no save yet.
     // =========================================================================
     public function checkSlotConflict(Request $request): JsonResponse
     {
@@ -504,7 +948,6 @@ class TimetableController extends Controller
         $conflicts = [];
         $warnings  = [];
 
-        // ── Teacher conflict ──────────────────────────────────────────────────
         if (!empty($validated['teacher_id'])) {
             $teacherConflict = TimetableSlot::where('period_id', $validated['period_id'])
                 ->where('day', $validated['day'])
@@ -545,7 +988,6 @@ class TimetableController extends Controller
                 ];
             }
 
-            // Workload warning — 4+ periods on the same day across all classes
             $dailyCount = TimetableSlot::where('teacher_id', $validated['teacher_id'])
                 ->where('day', $validated['day'])
                 ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
@@ -562,7 +1004,6 @@ class TimetableController extends Controller
             }
         }
 
-        // ── Room conflict (timetable slots) ───────────────────────────────────
         if (!empty($validated['room_id'])) {
             $roomConflict = TimetableSlot::where('period_id', $validated['period_id'])
                 ->where('day', $validated['day'])
@@ -602,7 +1043,6 @@ class TimetableController extends Controller
                 ];
             }
 
-            // Room booking conflict
             if ($period) {
                 $bookingConflict = RoomBooking::where('room_id', $validated['room_id'])
                     ->where('day', $validated['day'])
@@ -642,7 +1082,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // SAVE SLOT — real-time cross-class teacher + room conflict detection
+    // SAVE SLOT
     // =========================================================================
     public function saveSlot(Request $request): JsonResponse
     {
@@ -660,10 +1100,11 @@ class TimetableController extends Controller
         ]);
 
         $currentSetting = TimetableSetting::findOrFail($validated['setting_id']);
-        $sessionId      = $currentSetting->session_id;
-        $termId         = $currentSetting->term_id;
+        if ($lock = $this->publishedLockResponse($currentSetting)) return $lock;
 
-        // ── Resolve current class name for messages ───────────────────────────
+        $sessionId = $currentSetting->session_id;
+        $termId    = $currentSetting->term_id;
+
         $currentSchoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
             ->where('schoolclass.id', $currentSetting->schoolclass_id)->first();
@@ -672,7 +1113,6 @@ class TimetableController extends Controller
 
         if (empty($validated['force_save'])) {
 
-            // ── TEACHER CONFLICT ──────────────────────────────────────────────
             if (!empty($validated['teacher_id'])) {
                 $conflict = TimetableSlot::where('period_id', $validated['period_id'])
                     ->where('day', $validated['day'])
@@ -725,7 +1165,6 @@ class TimetableController extends Controller
                 }
             }
 
-            // ── ROOM CONFLICT (timetable slots) ───────────────────────────────
             if (!empty($validated['room_id'])) {
                 $roomSlotConflict = TimetableSlot::where('period_id', $validated['period_id'])
                     ->where('day', $validated['day'])
@@ -780,7 +1219,6 @@ class TimetableController extends Controller
                     ], 409);
                 }
 
-                // ── ROOM BOOKING CONFLICT ─────────────────────────────────────
                 $period = TimetablePeriod::find($validated['period_id']);
                 if ($period) {
                     $bookedConflict = RoomBooking::where('room_id', $validated['room_id'])
@@ -808,7 +1246,6 @@ class TimetableController extends Controller
             }
         }
 
-        // ── No conflict — save ────────────────────────────────────────────────
         $slot = TimetableSlot::updateOrCreate(
             [
                 'setting_id' => $validated['setting_id'],
@@ -852,7 +1289,6 @@ class TimetableController extends Controller
         $sessionId = $setting->session_id;
         $termId    = $setting->term_id;
 
-        // All active, non-free slots in this session/term
         $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
                 $q->where('session_id', $sessionId)->where('is_active', true);
                 if ($termId) $q->where('term_id', $termId);
@@ -864,7 +1300,6 @@ class TimetableController extends Controller
             ->with(['period', 'subject', 'setting', 'teacher', 'teacher.staffPicture', 'room'])
             ->get();
 
-        // Hydrate schoolclass with arm_name for each slot's setting
         $classIds     = $slots->pluck('setting.schoolclass_id')->unique()->filter();
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
@@ -878,7 +1313,6 @@ class TimetableController extends Controller
 
         $conflicts = [];
 
-        // ── Teacher double-booking ────────────────────────────────────────────
         $teacherGrouped = $slots->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
 
         foreach ($teacherGrouped as $group) {
@@ -930,7 +1364,6 @@ class TimetableController extends Controller
             }
         }
 
-        // ── Room double-booking ───────────────────────────────────────────────
         $allSlotsWithRoom = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
                 $q->where('session_id', $sessionId)->where('is_active', true);
                 if ($termId) $q->where('term_id', $termId);
@@ -942,7 +1375,6 @@ class TimetableController extends Controller
             ->with(['period', 'subject', 'setting', 'teacher', 'room'])
             ->get();
 
-        // Re-hydrate schoolclass for room slots
         $roomClassIds = $allSlotsWithRoom->pluck('setting.schoolclass_id')->unique()->filter();
         $roomClasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
@@ -1008,7 +1440,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // AUTO-GENERATE — respects cross-class teacher occupancy
+    // AUTO-GENERATE (single class) — respects cross-class teacher occupancy
     // =========================================================================
     public function autoGenerate(Request $request): JsonResponse
     {
@@ -1017,146 +1449,27 @@ class TimetableController extends Controller
         try {
             DB::beginTransaction();
 
-            $setting       = TimetableSetting::with(['periods', 'constraints.subject'])->findOrFail($validated['setting_id']);
-            $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
-            $days          = $setting->active_days ?? self::DAYS;
-            $constraints   = $setting->constraints->keyBy('subject_id');
-            $classId       = $setting->schoolclass_id;
-            $sessionId     = $setting->session_id;
-            $termId        = $setting->term_id;
-
-            $subjectTeachers = SubjectTeacher::where('sessionid', $sessionId)
-                ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $classId))
-                ->with(['subject', 'staff'])->get()->groupBy('subjectid');
-
-            // Pre-load cross-class teacher occupancy for this session/term
-            $crossOccupied = [];
-            $crossClassSlots = TimetableSlot::whereHas('setting', function($q) use ($sessionId, $termId, $setting) {
-                    $q->where('session_id', $sessionId)->where('is_active', true)->where('id', '!=', $setting->id);
-                    if ($termId) $q->where('term_id', $termId);
-                    else         $q->whereNull('term_id');
-                })
-                ->whereNotNull('teacher_id')->where('is_free', false)
-                ->get(['teacher_id', 'period_id', 'day']);
-
-            foreach ($crossClassSlots as $occ) {
-                $crossOccupied[$occ->teacher_id][$occ->day][] = $occ->period_id;
-            }
+            $setting = TimetableSetting::with(['periods', 'constraints.subject'])->findOrFail($validated['setting_id']);
+            if ($lock = $this->publishedLockResponse($setting)) { DB::rollBack(); return $lock; }
 
             TimetableSlot::where('setting_id', $setting->id)->delete();
 
-            $slotPool       = $this->buildWeightedSlotPool($days, $lessonPeriods);
-            $teacherDaySlot = [];
-            $placed         = [];
+            $crossOccupied = [];
+            TimetableSlot::whereHas('setting', function ($q) use ($setting) {
+                    $q->where('session_id', $setting->session_id)->where('is_active', true)->where('id', '!=', $setting->id);
+                    if ($setting->term_id) $q->where('term_id', $setting->term_id);
+                    else                   $q->whereNull('term_id');
+                })
+                ->whereNotNull('teacher_id')->where('is_free', false)
+                ->get(['teacher_id', 'period_id', 'day'])
+                ->each(function ($occ) use (&$crossOccupied) {
+                    $crossOccupied[$occ->teacher_id][$occ->day][] = $occ->period_id;
+                });
 
-            $requirements = $constraints->sortByDesc(fn($c) => ($c->is_compulsory ? 100 : 0) + $c->periods_per_week)->values();
-
-            foreach ($requirements as $constraint) {
-                $subjectId   = $constraint->subject_id;
-                $needed      = $constraint->periods_per_week;
-                $allowDouble = $constraint->allow_double_period;
-                $maxDouble   = $constraint->max_double_periods_per_week;
-                $preferDays  = $constraint->preferred_days ?? [];
-                $avoidDays   = $constraint->avoid_days ?? [];
-                $doubleCount = 0;
-
-                $teacherEntry = $subjectTeachers->get($subjectId)?->first();
-                $teacherId    = $teacherEntry?->staffid;
-
-                $scoredSlots = [];
-                foreach ($slotPool as $slot) {
-                    $day      = $slot['day'];
-                    $periodId = $slot['period_id'];
-                    $key      = $day . '_' . $periodId;
-                    if (isset($placed[$key])) continue;
-                    // Skip if teacher already assigned in this class
-                    if ($teacherId && in_array($periodId, $teacherDaySlot[$teacherId][$day] ?? [])) continue;
-                    // Skip if teacher already assigned in another class
-                    if ($teacherId && in_array($periodId, $crossOccupied[$teacherId][$day] ?? [])) continue;
-
-                    $score = 0;
-                    if (in_array($day, $preferDays)) $score += 10;
-                    if (in_array($day, $avoidDays))  $score -= 10;
-                    $scoredSlots[] = ['slot' => $slot, 'score' => $score, 'key' => $key];
-                }
-
-                usort($scoredSlots, fn($a, $b) => $b['score'] - $a['score']);
-
-                $placedThisSubject = 0;
-                foreach ($scoredSlots as $scored) {
-                    if ($placedThisSubject >= $needed) break;
-                    $slot     = $scored['slot'];
-                    $day      = $slot['day'];
-                    $periodId = $slot['period_id'];
-                    $key      = $scored['key'];
-                    if (isset($placed[$key])) continue;
-
-                    TimetableSlot::create([
-                        'setting_id' => $setting->id,
-                        'period_id'  => $periodId,
-                        'day'        => $day,
-                        'subject_id' => $subjectId,
-                        'teacher_id' => $teacherId,
-                        'is_double'  => false,
-                        'is_free'    => false,
-                    ]);
-                    $placed[$key] = $subjectId;
-                    if ($teacherId) {
-                        $teacherDaySlot[$teacherId][$day][] = $periodId;
-                        // Also mark in crossOccupied so subsequent subjects respect it
-                        $crossOccupied[$teacherId][$day][] = $periodId;
-                    }
-                    $placedThisSubject++;
-
-                    // Double period
-                    if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed) {
-                        $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
-                        if ($nextPeriod) {
-                            $nextKey         = $day . '_' . $nextPeriod->id;
-                            $teacherConflict = $teacherId && (
-                                in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []) ||
-                                in_array($nextPeriod->id, $crossOccupied[$teacherId][$day] ?? [])
-                            );
-                            if (!isset($placed[$nextKey]) && !$teacherConflict) {
-                                TimetableSlot::create([
-                                    'setting_id' => $setting->id,
-                                    'period_id'  => $nextPeriod->id,
-                                    'day'        => $day,
-                                    'subject_id' => $subjectId,
-                                    'teacher_id' => $teacherId,
-                                    'is_double'  => true,
-                                    'is_free'    => false,
-                                ]);
-                                $placed[$nextKey] = $subjectId;
-                                if ($teacherId) {
-                                    $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
-                                    $crossOccupied[$teacherId][$day][]  = $nextPeriod->id;
-                                }
-                                $placedThisSubject++;
-                                $doubleCount++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Fill remaining slots as free
-            foreach ($slotPool as $slot) {
-                $key = $slot['day'] . '_' . $slot['period_id'];
-                if (!isset($placed[$key])) {
-                    TimetableSlot::create([
-                        'setting_id' => $setting->id,
-                        'period_id'  => $slot['period_id'],
-                        'day'        => $slot['day'],
-                        'subject_id' => null,
-                        'teacher_id' => null,
-                        'is_free'    => true,
-                    ]);
-                }
-            }
+            $stats = $this->runAutoGenerateCore($setting, $crossOccupied);
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Timetable generated successfully.']);
+            return response()->json(['success' => true, 'message' => 'Timetable generated successfully.', 'stats' => $stats]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('autoGenerate failed', ['error' => $e->getMessage()]);
@@ -1164,12 +1477,253 @@ class TimetableController extends Controller
         }
     }
 
-    private function buildWeightedSlotPool($days, $lessonPeriods): array
+    // =========================================================================
+    // AUTO-GENERATE — WHOLE SCHOOL (all classes, or a chosen subset, in a
+    // session/term, one click)
+    // =========================================================================
+    public function autoGenerateWholeSchool(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'session_id'        => 'required|exists:schoolsession,id',
+            'term_id'           => 'nullable|exists:schoolterm,id',
+            'schoolclass_ids'   => 'nullable|array',
+            'schoolclass_ids.*' => 'exists:schoolclass,id',
+            'force_unpublish'   => 'boolean',
+        ]);
+
+        $settings = TimetableSetting::with(['periods', 'constraints.subject', 'schoolclass'])
+            ->where('session_id', $validated['session_id'])
+            ->where('is_active', true)
+            ->when($validated['term_id'] ?? null, fn($q) => $q->where('term_id', $validated['term_id']))
+            ->when($validated['schoolclass_ids'] ?? null, fn($q) => $q->whereIn('schoolclass_id', $validated['schoolclass_ids']))
+            ->get();
+
+        if ($settings->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No timetables found for this scope. Create class timetables first (or run the Generation Wizard, which creates them automatically).'], 404);
+        }
+
+        $publishedLocked = $settings->filter(fn($s) => $s->is_published);
+        if ($publishedLocked->isNotEmpty() && empty($validated['force_unpublish'])) {
+            return response()->json([
+                'success'          => false,
+                'has_locked'       => true,
+                'message'          => $publishedLocked->count() . ' of these timetables are published and locked.',
+                'locked_classes'   => $publishedLocked->map(fn($s) => $this->getClassName($s->schoolclass))->values(),
+            ], 423);
+        }
+
+        $ordered = $settings->sortByDesc(function ($s) {
+            return $s->constraints->sum(fn($c) => ($c->is_compulsory ? 100 : 0) + $c->periods_per_week);
+        })->values();
+
+        $results = [];
+        try {
+            DB::beginTransaction();
+
+            TimetableSlot::whereIn('setting_id', $settings->pluck('id'))->delete();
+
+            if (!empty($validated['force_unpublish'])) {
+                TimetableSetting::whereIn('id', $publishedLocked->pluck('id'))
+                    ->update(['is_published' => false, 'published_at' => null, 'published_by' => null]);
+            }
+
+            $crossOccupied = [];
+            foreach ($ordered as $setting) {
+                $stats = $this->runAutoGenerateCore($setting, $crossOccupied);
+                $results[] = [
+                    'setting_id' => $setting->id,
+                    'class_name' => $this->getClassName($setting->schoolclass),
+                    'placed'     => $stats['placed'],
+                    'unplaced'   => $stats['unplaced_subjects'],
+                ];
+            }
+
+            DB::commit();
+            return response()->json([
+                'success'        => true,
+                'message'        => 'Generated timetables for ' . count($results) . ' class(es).',
+                'classes'        => $results,
+                'had_shortfalls' => collect($results)->contains(fn($r) => !empty($r['unplaced'])),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('autoGenerateWholeSchool failed', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
+    // PRIVATE: Core slot-placement logic, shared by single and whole-school
+    // generate. Assumes slots for $setting have already been deleted.
+    // Mutates $crossOccupied. Respects: cross-class teacher clashes, the
+    // free-period floor, a per-day lesson cap, assembly-day/half-day
+    // effective capacity, break/assembly-adjacent soft deprioritization,
+    // and a per-subject consecutive-double-day cooldown.
+    // =========================================================================
+    private function runAutoGenerateCore(TimetableSetting $setting, array &$crossOccupied): array
+    {
+        $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
+        $days          = $setting->active_days ?? self::DAYS;
+        $constraints   = $setting->constraints->keyBy('subject_id');
+        $classId       = $setting->schoolclass_id;
+        $sessionId     = $setting->session_id;
+
+        $dayMeta  = $this->computeDayPeriodMeta($setting);
+        $slotPool = $this->buildWeightedSlotPool($days, $setting, $dayMeta);
+
+        $subjectTeachers = SubjectTeacher::where('sessionid', $sessionId)
+            ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $classId))
+            ->with(['subject', 'staff'])->get()->groupBy('subjectid');
+
+        $teacherDaySlot   = [];
+        $placed           = [];
+        $unplacedSubjects = [];
+
+        $totalLessonSlots   = count($slotPool);
+        $freeTarget         = $setting->free_periods_per_week ?? 0;
+        $placementBudget    = max(0, $totalLessonSlots - $freeTarget);
+        $maxPerDay          = $setting->max_lessons_per_day ?? null;
+        $lessonsPlacedByDay = [];
+
+        $requirements = $constraints->sortByDesc(fn($c) => ($c->is_compulsory ? 100 : 0) + $c->periods_per_week)->values();
+
+        foreach ($requirements as $constraint) {
+            $subjectId   = $constraint->subject_id;
+            $needed      = $constraint->periods_per_week;
+            $allowDouble = $constraint->allow_double_period;
+            $maxDouble   = $constraint->max_double_periods_per_week;
+            $preferDays  = $constraint->preferred_days ?? [];
+            $avoidDays   = $constraint->avoid_days ?? [];
+            $avoidConsecutiveDoubles = $constraint->avoid_consecutive_double_days ?? true;
+            $doubleCount = 0;
+            $usedDoubleDays = [];
+
+            $teacherEntry = $subjectTeachers->get($subjectId)?->first();
+            $teacherId    = $teacherEntry?->staffid;
+
+            $scoredSlots = [];
+            foreach ($slotPool as $slot) {
+                $day      = $slot['day'];
+                $periodId = $slot['period_id'];
+                $key      = $day . '_' . $periodId;
+                if (isset($placed[$key])) continue;
+                if ($teacherId && in_array($periodId, $teacherDaySlot[$teacherId][$day] ?? [])) continue;
+                if ($teacherId && in_array($periodId, $crossOccupied[$teacherId][$day] ?? [])) continue;
+
+                $score = 0;
+                if (in_array($day, $preferDays)) $score += 10;
+                if (in_array($day, $avoidDays))  $score -= 10;
+                if ($setting->deprioritize_break_adjacent && !empty($slot['is_break_adjacent'])) $score -= 3;
+
+                $scoredSlots[] = ['slot' => $slot, 'score' => $score, 'key' => $key];
+            }
+
+            usort($scoredSlots, fn($a, $b) => $b['score'] - $a['score']);
+
+            $placedThisSubject = 0;
+            foreach ($scoredSlots as $scored) {
+                if ($placedThisSubject >= $needed) break;
+                if (count($placed) >= $placementBudget) break 2;
+
+                $slot     = $scored['slot'];
+                $day      = $slot['day'];
+                $periodId = $slot['period_id'];
+                $key      = $scored['key'];
+                if (isset($placed[$key])) continue;
+                if ($maxPerDay && ($lessonsPlacedByDay[$day] ?? 0) >= $maxPerDay) continue;
+
+                TimetableSlot::create([
+                    'setting_id' => $setting->id, 'period_id' => $periodId, 'day' => $day,
+                    'subject_id' => $subjectId, 'teacher_id' => $teacherId,
+                    'is_double'  => false, 'is_free' => false,
+                ]);
+                $placed[$key] = $subjectId;
+                $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
+                if ($teacherId) {
+                    $teacherDaySlot[$teacherId][$day][] = $periodId;
+                    $crossOccupied[$teacherId][$day][]  = $periodId;
+                }
+                $placedThisSubject++;
+
+                if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed
+                    && count($placed) < $placementBudget
+                    && (!$maxPerDay || ($lessonsPlacedByDay[$day] ?? 0) < $maxPerDay)) {
+
+                    $cooldownOk = true;
+                    if ($avoidConsecutiveDoubles) {
+                        foreach ($usedDoubleDays as $usedDay) {
+                            if (abs((self::DAYS_MAP[$day] ?? 0) - (self::DAYS_MAP[$usedDay] ?? 0)) <= 1) { $cooldownOk = false; break; }
+                        }
+                    }
+
+                    if ($cooldownOk) {
+                        $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
+                        $nextApplicable = $nextPeriod
+                            && ($dayMeta[$day][$nextPeriod->id]['effective_type'] ?? null) === 'lesson'
+                            && ($dayMeta[$day][$nextPeriod->id]['applicable'] ?? false);
+
+                        if ($nextPeriod && $nextApplicable) {
+                            $nextKey         = $day . '_' . $nextPeriod->id;
+                            $teacherConflict = $teacherId && (
+                                in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []) ||
+                                in_array($nextPeriod->id, $crossOccupied[$teacherId][$day] ?? [])
+                            );
+                            if (!isset($placed[$nextKey]) && !$teacherConflict) {
+                                TimetableSlot::create([
+                                    'setting_id' => $setting->id, 'period_id' => $nextPeriod->id, 'day' => $day,
+                                    'subject_id' => $subjectId, 'teacher_id' => $teacherId,
+                                    'is_double'  => true, 'is_free' => false,
+                                ]);
+                                $placed[$nextKey] = $subjectId;
+                                $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
+                                if ($teacherId) {
+                                    $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
+                                    $crossOccupied[$teacherId][$day][]  = $nextPeriod->id;
+                                }
+                                $placedThisSubject++;
+                                $doubleCount++;
+                                $usedDoubleDays[] = $day;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($placedThisSubject < $needed) {
+                $unplacedSubjects[] = [
+                    'subject' => $constraint->subject?->subject ?? "Subject #{$subjectId}",
+                    'needed'  => $needed, 'placed'  => $placedThisSubject,
+                ];
+            }
+        }
+
+        foreach ($slotPool as $slot) {
+            $key = $slot['day'] . '_' . $slot['period_id'];
+            if (!isset($placed[$key])) {
+                TimetableSlot::create([
+                    'setting_id' => $setting->id, 'period_id' => $slot['period_id'], 'day' => $slot['day'],
+                    'subject_id' => null, 'teacher_id' => null, 'is_free' => true,
+                ]);
+            }
+        }
+
+        return ['placed' => count($placed), 'unplaced_subjects' => $unplacedSubjects];
+    }
+
+    private function buildWeightedSlotPool($days, TimetableSetting $setting, array $dayMeta): array
     {
         $pool = [];
         foreach ($days as $day) {
-            foreach ($lessonPeriods as $period) {
-                $pool[] = ['day' => $day, 'period_id' => $period->id, 'period_order' => $period->order];
+            foreach ($setting->periods as $period) {
+                $m = $dayMeta[$day][$period->id] ?? null;
+                if (!$m || $m['effective_type'] !== 'lesson' || !$m['applicable']) continue;
+
+                $pool[] = [
+                    'day'               => $day,
+                    'period_id'         => $period->id,
+                    'period_order'      => $period->order,
+                    'is_break_adjacent' => $this->isBreakAdjacent($period, $setting->periods),
+                ];
             }
         }
         return $pool;
@@ -1202,6 +1756,8 @@ class TimetableController extends Controller
         $slots = TimetableSlot::where('setting_id', $settingId)
             ->with(['subject', 'teacher', 'period', 'room'])->get();
 
+        $dayMeta = $this->computeDayPeriodMeta($setting);
+
         $grid = []; $subjectColors = []; $colorIdx = 0;
         foreach ($slots as $slot) {
             if ($slot->subject_id && !isset($subjectColors[$slot->subject_id])) {
@@ -1224,8 +1780,8 @@ class TimetableController extends Controller
         $termName    = $setting->term?->term ?? 'All Terms';
 
         return match($format) {
-            'pdf'   => $this->exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation),
-            default => $this->exportCsv($setting, $periods, $days, $grid, $className, $sessionName),
+            'pdf'   => $this->exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation, $dayMeta),
+            default => $this->exportCsv($setting, $periods, $days, $grid, $className, $sessionName, $dayMeta),
         };
     }
 
@@ -1264,6 +1820,7 @@ class TimetableController extends Controller
                     'subject' => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
                     'teacher' => $slot->teacher?->name ?? '',
                     'room'    => ($slot->room_id && $slot->room) ? $slot->room->room_name : '',
+                    'is_free' => $slot->is_free ?? !$slot->subject_id,
                 ];
             }
             $allTimetables[] = [
@@ -1271,6 +1828,7 @@ class TimetableController extends Controller
                 'periods'    => $setting->periods,
                 'grid'       => $grid,
                 'days'       => $setting->active_days ?? self::DAYS,
+                'day_meta'   => $this->computeDayPeriodMeta($setting),
             ];
         }
 
@@ -1295,8 +1853,68 @@ class TimetableController extends Controller
             'schoolclass', 'session', 'term',
         ])->findOrFail($validated['setting_id']);
 
+        if ($validated['type'] === 'daily_summary') {
+            $todayHoliday = $this->getHolidayForDate(now(), $setting->session_id, $setting->term_id);
+            if ($todayHoliday && $todayHoliday->is_full_day) {
+                return response()->json(['success' => true, 'message' => "Skipped — today is a holiday ({$todayHoliday->title}).", 'sent' => 0]);
+            }
+        }
+
+        $sent = $this->dispatchNotifications($setting, $validated['type']);
+
+        return response()->json(['success' => true, 'message' => "Notifications sent to {$sent} teacher(s).", 'sent' => $sent]);
+    }
+
+    // =========================================================================
+    // PUBLISH / UNPUBLISH — locks or unlocks a timetable for editing
+    // =========================================================================
+    public function publishSetting(int $settingId): JsonResponse
+    {
+        $setting = TimetableSetting::findOrFail($settingId);
+        $setting->update(['is_published' => true, 'published_at' => now(), 'published_by' => Auth::id()]);
+        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => true]);
+
+        return response()->json(['success' => true, 'message' => 'Timetable published and locked.']);
+    }
+
+    public function unpublishSetting(int $settingId): JsonResponse
+    {
+        $setting = TimetableSetting::findOrFail($settingId);
+        $setting->update(['is_published' => false, 'published_at' => null, 'published_by' => null]);
+        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => false]);
+
+        return response()->json(['success' => true, 'message' => 'Timetable unpublished. It can now be edited.']);
+    }
+
+    public function publishAndNotify(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['setting_id' => 'required|exists:timetable_settings,id']);
+
+        $setting = TimetableSetting::with([
+            'slots.teacher', 'slots.teacher.staffPicture',
+            'slots.subject', 'slots.period', 'slots.room',
+            'schoolclass', 'session', 'term',
+        ])->findOrFail($validated['setting_id']);
+
+        $setting->update(['is_published' => true, 'published_at' => now(), 'published_by' => Auth::id()]);
+        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => true]);
+
+        $sent = $this->dispatchNotifications($setting, 'weekly_preview');
+
+        return response()->json([
+            'success' => true,
+            'message' => "Timetable published and notifications sent to {$sent} teacher(s).",
+            'sent'    => $sent,
+        ]);
+    }
+
+    // =========================================================================
+    // PRIVATE: shared notification-sending logic
+    // =========================================================================
+    private function dispatchNotifications(TimetableSetting $setting, string $type): int
+    {
         $byTeacher = $setting->slots->whereNotNull('teacher_id')->groupBy('teacher_id');
-        $sent      = 0;
+        $sent = 0;
 
         foreach ($byTeacher as $teacherId => $teacherSlots) {
             $teacher = $teacherSlots->first()->teacher;
@@ -1315,7 +1933,7 @@ class TimetableController extends Controller
                     'subject' => $s->subject?->subject,
                     'room'    => $s->room?->room_name,
                 ])->toArray(),
-                'type'      => $validated['type'],
+                'type'      => $type,
                 'generated' => now()->format('d M Y H:i'),
             ];
 
@@ -1324,7 +1942,7 @@ class TimetableController extends Controller
                 foreach ($teacherSlots as $slot) {
                     TimetableNotification::create([
                         'teacher_id'   => $teacherId, 'slot_id'    => $slot->id,
-                        'type'         => $validated['type'], 'email' => $teacher->email,
+                        'type'         => $type, 'email' => $teacher->email,
                         'scheduled_at' => now(), 'sent_at'   => now(),
                         'status'       => 'sent', 'payload'   => json_encode($notifData),
                     ]);
@@ -1335,7 +1953,7 @@ class TimetableController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'message' => "Notifications sent to {$sent} teacher(s).", 'sent' => $sent]);
+        return $sent;
     }
 
     // =========================================================================
@@ -1362,9 +1980,14 @@ class TimetableController extends Controller
 
         DB::beginTransaction();
         try {
-            $newSetting             = $oldSetting->replicate();
-            $newSetting->session_id = $validated['new_session_id'] ?? $oldSetting->session_id;
-            $newSetting->term_id    = $validated['new_term_id'] ?? $oldSetting->term_id;
+            $newSetting               = $oldSetting->replicate();
+            $newSetting->session_id   = $validated['new_session_id'] ?? $oldSetting->session_id;
+            $newSetting->term_id      = $validated['new_term_id'] ?? $oldSetting->term_id;
+            $newSetting->is_published = false;
+            $newSetting->published_at = null;
+            $newSetting->published_by = null;
+            $newSetting->created_by   = Auth::id();
+            $newSetting->updated_by   = Auth::id();
             $newSetting->save();
 
             $periodMap = [];
@@ -1374,23 +1997,87 @@ class TimetableController extends Controller
                 $newPeriod->save();
                 $periodMap[$period->id] = $newPeriod->id;
             }
+
             foreach ($oldSetting->constraints as $constraint) {
                 $newC = $constraint->replicate(); $newC->setting_id = $newSetting->id; $newC->save();
             }
+
+            $newSlotIds = [];
             foreach ($oldSetting->slots as $slot) {
                 if (!isset($periodMap[$slot->period_id])) continue;
                 $newSlot = $slot->replicate();
                 $newSlot->setting_id = $newSetting->id;
                 $newSlot->period_id  = $periodMap[$slot->period_id];
                 $newSlot->save();
+                $newSlotIds[] = $newSlot->id;
             }
 
+            $conflicts = $this->detectTeacherConflictsForSetting($newSetting, $newSlotIds);
+
             DB::commit();
-            return response()->json(['success' => true, 'setting_id' => $newSetting->id]);
+            return response()->json([
+                'success'       => true,
+                'setting_id'    => $newSetting->id,
+                'conflicts'     => $conflicts,
+                'has_conflicts' => count($conflicts) > 0,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    // =========================================================================
+    // PRIVATE: After a clone (or any bulk copy), find teacher slots in the new
+    // setting that now clash with a teacher's assignment elsewhere in the same
+    // session/term, and flag them with a note so they're visible in the grid.
+    // =========================================================================
+    private function detectTeacherConflictsForSetting(TimetableSetting $setting, array $slotIds): array
+    {
+        if (empty($slotIds)) return [];
+
+        $newSlots = TimetableSlot::whereIn('id', $slotIds)
+            ->whereNotNull('teacher_id')->where('is_free', false)
+            ->with(['period', 'subject', 'teacher'])->get();
+
+        if ($newSlots->isEmpty()) return [];
+
+        $sessionId = $setting->session_id;
+        $termId    = $setting->term_id;
+
+        $others = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId, $setting) {
+                $q->where('session_id', $sessionId)->where('is_active', true)->where('id', '!=', $setting->id);
+                if ($termId) $q->where('term_id', $termId);
+                else         $q->whereNull('term_id');
+            })
+            ->whereIn('teacher_id', $newSlots->pluck('teacher_id')->unique())
+            ->where('is_free', false)->whereNotNull('subject_id')
+            ->with(['setting.schoolclass', 'subject', 'teacher'])
+            ->get()
+            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
+
+        $conflicts = [];
+        foreach ($newSlots as $newSlot) {
+            $key = $newSlot->teacher_id . '|' . $newSlot->day . '|' . $newSlot->period_id;
+            if (!$others->has($key)) continue;
+
+            $clashing = $others->get($key)->first();
+            $newSlot->update(['notes' => trim(($newSlot->notes ? $newSlot->notes . "\n" : '')
+                . "⚠️ Clone conflict: {$newSlot->teacher?->name} is already teaching in "
+                . $this->getClassName($clashing->setting?->schoolclass) . " at this time.")]);
+
+            $conflicts[] = [
+                'teacher'             => $newSlot->teacher?->name ?? 'Unknown',
+                'day'                 => $newSlot->day,
+                'period'              => $newSlot->period?->name,
+                'period_time'         => $this->formatTime($newSlot->period?->start_time ?? '') . ' – ' . $this->formatTime($newSlot->period?->end_time ?? ''),
+                'subject_here'        => $newSlot->subject?->subject,
+                'conflicting_class'   => $this->getClassName($clashing->setting?->schoolclass),
+                'conflicting_subject' => $clashing->subject?->subject,
+            ];
+        }
+
+        return $conflicts;
     }
 
     // =========================================================================
@@ -1406,6 +2093,9 @@ class TimetableController extends Controller
             'updates.*.subject_id' => 'nullable|exists:subject,id',
             'updates.*.teacher_id' => 'nullable|exists:users,id',
         ]);
+
+        $setting = TimetableSetting::findOrFail($validated['setting_id']);
+        if ($lock = $this->publishedLockResponse($setting)) return $lock;
 
         DB::beginTransaction();
         try {
@@ -1434,10 +2124,21 @@ class TimetableController extends Controller
             'reason'                => 'required|string|max:500',
             'assignment_date'       => 'required|date|after_or_equal:today',
         ]);
-        $slot = TimetableSlot::findOrFail($validated['slot_id']);
+
+        $slot = TimetableSlot::with('setting')->findOrFail($validated['slot_id']);
         if ($slot->teacher_id != Auth::id()) {
             return response()->json(['success' => false, 'message' => 'You can only request substitutes for your own classes'], 403);
         }
+
+        $assignmentDate = Carbon::parse($validated['assignment_date']);
+        $holiday = $this->getHolidayForDate($assignmentDate, $slot->setting?->session_id, $slot->setting?->term_id);
+        if ($holiday && $holiday->is_full_day) {
+            return response()->json([
+                'success' => false,
+                'message' => "That date ({$assignmentDate->format('d M Y')}) is a holiday — {$holiday->title}. No substitute needed.",
+            ], 422);
+        }
+
         $substitute = SubstituteAssignment::create([
             'original_teacher_id'   => Auth::id(),
             'substitute_teacher_id' => $validated['substitute_teacher_id'],
@@ -1446,6 +2147,7 @@ class TimetableController extends Controller
             'reason'                => $validated['reason'],
             'status'                => 'pending',
         ]);
+
         return response()->json(['success' => true, 'substitute' => $substitute]);
     }
 
@@ -1592,10 +2294,30 @@ class TimetableController extends Controller
             ->with(['period', 'subject', 'setting.schoolclass', 'setting.term', 'room'])
             ->get()->groupBy('day');
 
-        $allPeriods = TimetablePeriod::whereIn(
+        $allPeriods = TimetablePeriod::with('setting')->whereIn(
             'setting_id',
             TimetableSetting::where('session_id', $sessionId)->pluck('id')
         )->orderBy('order')->get()->unique('order');
+
+        // For each merged period row, resolve assembly/half-day rules from
+        // that period's OWN setting. NOTE: allPeriods dedupes by "order" and
+        // picks one arbitrary setting per order value, so this reflects that
+        // one class's rules — if different arms configure assembly days or
+        // half-days differently for the same period number, this view uses
+        // whichever arm's setting happened to be picked, not a true merge.
+        $periodDayMeta = [];
+        $metaCache     = [];
+        foreach ($allPeriods as $period) {
+            if (!$period->setting) continue;
+            $sid = $period->setting_id;
+            if (!isset($metaCache[$sid])) {
+                $metaCache[$sid] = $this->computeDayPeriodMeta($period->setting->load('periods'));
+            }
+            foreach (self::DAYS as $day) {
+                $periodDayMeta[$period->id][$day] = $metaCache[$sid][$day][$period->id]
+                    ?? ['applicable' => true, 'effective_type' => $period->type];
+            }
+        }
 
         $sessions      = Schoolsession::orderByDesc('id')->get();
         $terms         = Schoolterm::all();
@@ -1603,16 +2325,20 @@ class TimetableController extends Controller
         $upcomingSlots = $this->getUpcomingSlots($teacherId, $sessionId);
         $weeklySummary = $this->getWeeklySummary($teacherId, $sessionId);
 
+        $icsUrl    = URL::signedRoute('timetable.ics', ['teacherId' => $teacherId], now()->addYears(10));
+        $webcalUrl = preg_replace('/^https?:\/\//', 'webcal://', $icsUrl);
+
         return view('timetable.teacher', compact(
             'pagetitle', 'slots', 'days', 'allPeriods', 'sessions', 'terms',
-            'sessionId', 'termId', 'upcomingSlots', 'weeklySummary', 'teacherPicture'
+            'sessionId', 'termId', 'upcomingSlots', 'weeklySummary', 'teacherPicture',
+            'periodDayMeta', 'icsUrl', 'webcalUrl'
         ));
     }
 
     // =========================================================================
     // PRIVATE: PDF EXPORT HELPERS
     // =========================================================================
-    private function exportCsv($setting, $periods, $days, $grid, $className, $sessionName)
+    private function exportCsv($setting, $periods, $days, $grid, $className, $sessionName, array $dayMeta = [])
     {
         $filename = preg_replace('/[^A-Za-z0-9._-]/', '_', "timetable_{$className}_{$sessionName}.csv");
         $handle   = fopen('php://temp', 'w+');
@@ -1628,9 +2354,21 @@ class TimetableController extends Controller
                 $this->formatTime($period->start_time) . ' – ' . $this->formatTime($period->end_time),
             ];
             foreach ($days as $day) {
-                $s     = $grid[$period->id][$day] ?? ['subject' => '—', 'teacher' => ''];
-                $row[] = $s['subject'];
-                $row[] = $s['teacher'] ?: '—';
+                $meta          = $dayMeta[$day][$period->id] ?? null;
+                $effectiveType = $meta['effective_type'] ?? $period->type;
+                $applicable    = $meta['applicable'] ?? true;
+
+                if (!$applicable) {
+                    $row[] = 'N/A'; $row[] = '—';
+                } elseif ($effectiveType === 'assembly') {
+                    $row[] = 'ASSEMBLY'; $row[] = '—';
+                } elseif (in_array($effectiveType, ['short_break', 'long_break'])) {
+                    $row[] = 'BREAK'; $row[] = '—';
+                } else {
+                    $s     = $grid[$period->id][$day] ?? ['subject' => '—', 'teacher' => ''];
+                    $row[] = $s['subject'];
+                    $row[] = $s['teacher'] ?: '—';
+                }
             }
             fputcsv($handle, $row);
         }
@@ -1644,7 +2382,7 @@ class TimetableController extends Controller
             ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
     }
 
-    private function exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation = 'horizontal')
+    private function exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation = 'horizontal', array $dayMeta = [])
     {
         $schoolInfo    = SchoolInformation::getActiveSchool();
         $schoolName    = $schoolInfo?->school_name ?? config('app.name', 'School');
@@ -1663,8 +2401,8 @@ class TimetableController extends Controller
         }
 
         return $orientation === 'vertical'
-            ? $this->exportPdfVertical($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy)
-            : $this->exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy);
+            ? $this->exportPdfVertical($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, $dayMeta)
+            : $this->exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, $dayMeta);
     }
 
     private function buildSchoolHeaderHtml(string $schoolName, ?string $schoolLogo, string $schoolAddress, string $schoolPhone, string $schoolEmail, string $schoolMotto): string
@@ -1737,6 +2475,8 @@ th, td { border: 1px solid #e2e8f0; vertical-align: middle; padding: 8px 6px; }
 .break-lbl { font-size: 8px; color: #d97706; font-weight: 700; }
 .free-cell { background: #f9fafb !important; text-align: center; }
 .free-lbl { font-size: 8px; color: #9ca3af; font-style: italic; }
+.na-cell { background: #f1f5f9 !important; text-align: center; }
+.na-lbl  { font-size: 8px; color: #94a3b8; font-style: italic; }
 .footer { margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 7px; color: #94a3b8; }
 .print-btn { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #1565C0, #0d47a1); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 700; z-index: 999; }
 @media print { .print-btn { display: none !important; } .class-section { page-break-inside: avoid; } }
@@ -1761,7 +2501,7 @@ CSS;
             . $codeHtml . $teacherHtml . $roomHtml . '</td>';
     }
 
-    private function exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy)
+    private function exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, array $dayMeta = [])
     {
         $colPct = round(85 / max(count($days), 1), 2);
         $dayHeaders = '';
@@ -1771,16 +2511,28 @@ CSS;
 
         $tableRows = '';
         foreach ($periods as $period) {
-            $isBreak = $period->is_break ?? false;
-            $tableRows .= '<tr' . ($isBreak ? ' class="break-row"' : '') . '>';
+            $tableRows .= '<tr>';
             $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
                 . '<div class="ptime">' . htmlspecialchars($this->formatTime($period->start_time) . ' – ' . $this->formatTime($period->end_time)) . '</div></td>';
+
             foreach ($days as $day) {
-                $slot   = $grid[$period->id][$day] ?? null;
-                $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—';
-                if ($isBreak)      $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
-                elseif ($isFree)   $tableRows .= '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>';
-                else               $tableRows .= $this->buildSlotCellHtml($slot);
+                $meta          = $dayMeta[$day][$period->id] ?? null;
+                $effectiveType = $meta['effective_type'] ?? $period->type;
+                $applicable    = $meta['applicable'] ?? true;
+
+                if (!$applicable) {
+                    $tableRows .= '<td class="na-cell"><span class="na-lbl">— N/A —</span></td>';
+                } elseif ($effectiveType === 'assembly') {
+                    $tableRows .= '<td class="break-cell"><span class="break-lbl">🎤 ASSEMBLY</span></td>';
+                } elseif (in_array($effectiveType, ['short_break', 'long_break'])) {
+                    $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
+                } else {
+                    $slot   = $grid[$period->id][$day] ?? null;
+                    $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—';
+                    $tableRows .= $isFree
+                        ? '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>'
+                        : $this->buildSlotCellHtml($slot);
+                }
             }
             $tableRows .= '</tr>';
         }
@@ -1797,12 +2549,12 @@ CSS;
             . '<table><thead><tr><th class="period-header" style="width:90px">PERIOD</th>' . $dayHeaders . '</tr></thead><tbody>' . $tableRows . '</tbody></table>'
             . '<div class="footer"><div class="footer-left">Generated: ' . htmlspecialchars($generatedAt) . '</div>'
             . '<div style="text-align:center">Generated by: ' . htmlspecialchars($generatedBy) . '</div>'
-            . '<div style="text-align:right">☕ Break | ▯ Free period</div></div></body></html>';
+            . '<div style="text-align:right">☕ Break | 🎤 Assembly | ▯ Free period | N/A Half-day cutoff</div></div></body></html>';
 
         return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
-    private function exportPdfVertical($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy)
+    private function exportPdfVertical($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, array $dayMeta = [])
     {
         $colPct        = round(85 / max(count($periods), 1), 2);
         $periodHeaders = '';
@@ -1816,12 +2568,25 @@ CSS;
         foreach ($days as $day) {
             $hc = self::DAY_COLORS[$day] ?? '#333';
             $tableRows .= '<tr><td class="day-cell" style="background:linear-gradient(135deg,' . $hc . ',' . $hc . 'cc);color:#fff">' . htmlspecialchars($day) . '</td>';
+
             foreach ($periods as $period) {
-                $slot   = $grid[$period->id][$day] ?? null;
-                $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—';
-                if ($period->is_break ?? false) $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
-                elseif ($isFree)                $tableRows .= '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>';
-                else                            $tableRows .= $this->buildSlotCellHtml($slot);
+                $meta          = $dayMeta[$day][$period->id] ?? null;
+                $effectiveType = $meta['effective_type'] ?? $period->type;
+                $applicable    = $meta['applicable'] ?? true;
+
+                if (!$applicable) {
+                    $tableRows .= '<td class="na-cell"><span class="na-lbl">— N/A —</span></td>';
+                } elseif ($effectiveType === 'assembly') {
+                    $tableRows .= '<td class="break-cell"><span class="break-lbl">🎤 ASSEMBLY</span></td>';
+                } elseif (in_array($effectiveType, ['short_break', 'long_break'])) {
+                    $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
+                } else {
+                    $slot   = $grid[$period->id][$day] ?? null;
+                    $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—';
+                    $tableRows .= $isFree
+                        ? '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>'
+                        : $this->buildSlotCellHtml($slot);
+                }
             }
             $tableRows .= '</tr>';
         }
@@ -1838,7 +2603,7 @@ CSS;
             . '<table><thead><tr><th class="period-header" style="width:70px">DAY / PERIOD</th>' . $periodHeaders . '</tr></thead><tbody>' . $tableRows . '</tbody></table>'
             . '<div class="footer"><div class="footer-left">Generated: ' . htmlspecialchars($generatedAt) . '</div>'
             . '<div style="text-align:center">Generated by: ' . htmlspecialchars($generatedBy) . '</div>'
-            . '<div style="text-align:right">☕ Break | ▯ Free period</div></div></body></html>';
+            . '<div style="text-align:right">☕ Break | 🎤 Assembly | ▯ Free period | N/A Half-day cutoff</div></div></body></html>';
 
         return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
     }
@@ -1862,6 +2627,23 @@ CSS;
 
         foreach ($allTimetables as $tt) {
             $eClassName = htmlspecialchars($tt['class_name']);
+            $dayMeta    = $tt['day_meta'] ?? [];
+
+            $renderCell = function ($period, $day) use ($tt, $dayMeta) {
+                $meta          = $dayMeta[$day][$period->id] ?? null;
+                $effectiveType = $meta['effective_type'] ?? $period->type;
+                $applicable    = $meta['applicable'] ?? true;
+
+                if (!$applicable) return '<td class="na-cell"><span class="na-lbl">— N/A —</span></td>';
+                if ($effectiveType === 'assembly') return '<td class="break-cell"><span class="break-lbl">🎤 ASSEMBLY</span></td>';
+                if (in_array($effectiveType, ['short_break', 'long_break'])) return '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
+
+                $slot   = $tt['grid'][$period->id][$day] ?? null;
+                $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—' || $slot['subject'] === 'FREE';
+                return $isFree
+                    ? '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>'
+                    : $this->buildSlotCellHtml($slot);
+            };
 
             if ($orientation === 'vertical') {
                 $colPct        = round(85 / max(count($tt['periods']), 1), 2);
@@ -1876,11 +2658,7 @@ CSS;
                     $hc = self::DAY_COLORS[$day] ?? '#333';
                     $tableRows .= '<tr><td class="day-cell" style="background:linear-gradient(135deg,' . $hc . ',' . $hc . 'cc);color:#fff">' . htmlspecialchars($day) . '</td>';
                     foreach ($tt['periods'] as $period) {
-                        $slot   = $tt['grid'][$period->id][$day] ?? null;
-                        $isFree = !$slot || empty($slot['subject']) || $slot['subject'] === '—' || $slot['subject'] === 'FREE';
-                        if ($period->is_break ?? false) $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
-                        elseif ($isFree)                $tableRows .= '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>';
-                        else                            $tableRows .= $this->buildSlotCellHtml($slot);
+                        $tableRows .= $renderCell($period, $day);
                     }
                     $tableRows .= '</tr>';
                 }
@@ -1894,16 +2672,11 @@ CSS;
                 }
                 $tableRows = '';
                 foreach ($tt['periods'] as $period) {
-                    $isBreak = $period->is_break ?? false;
-                    $tableRows .= '<tr' . ($isBreak ? ' class="break-row"' : '') . '>';
+                    $tableRows .= '<tr>';
                     $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
                         . '<div class="ptime">' . htmlspecialchars($this->formatTime($period->start_time) . ' – ' . $this->formatTime($period->end_time)) . '</div></td>';
                     foreach ($tt['days'] as $day) {
-                        $slot   = $tt['grid'][$period->id][$day] ?? null;
-                        $isFree = !$slot || empty($slot['subject']) || $slot['subject'] === '—' || $slot['subject'] === 'FREE';
-                        if ($isBreak)    $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
-                        elseif ($isFree) $tableRows .= '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>';
-                        else             $tableRows .= $this->buildSlotCellHtml($slot);
+                        $tableRows .= $renderCell($period, $day);
                     }
                     $tableRows .= '</tr>';
                 }
@@ -1922,7 +2695,7 @@ CSS;
             . $timetablesHtml
             . '<div class="footer"><div class="footer-left">Generated: ' . htmlspecialchars($generatedAt) . '</div>'
             . '<div style="text-align:center">Generated by: ' . htmlspecialchars($generatedBy) . '</div>'
-            . '<div style="text-align:right">☕ Break | ▯ Free period</div></div></body></html>';
+            . '<div style="text-align:right">☕ Break | 🎤 Assembly | ▯ Free period | N/A Half-day cutoff</div></div></body></html>';
 
         return response($html, 200)
             ->header('Content-Type', 'text/html; charset=UTF-8')
@@ -1942,27 +2715,48 @@ CSS;
         $slots = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
             ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting.schoolclass', 'room'])->get();
+            ->with(['period', 'subject', 'setting.schoolclass', 'setting.term', 'room'])->get();
 
-        return $slots->filter(function ($slot) use ($now, $today) {
-                if (strtolower($slot->day) === $today) {
-                    try { return Carbon::createFromFormat('H:i:s', $slot->period->start_time)->greaterThan($now); }
-                    catch (\Exception $e) { return true; }
+        return $slots
+            ->map(function ($slot) use ($dayMap, $todayIndex, $now, $today) {
+                $dIdx      = $dayMap[strtolower($slot->day)] ?? 0;
+                $daysAhead = $dIdx >= $todayIndex ? $dIdx - $todayIndex : ($dIdx + 7 - $todayIndex);
+
+                if ($daysAhead === 0 && strtolower($slot->day) === $today) {
+                    try {
+                        if (Carbon::createFromFormat('H:i:s', $slot->period->start_time)->lessThanOrEqualTo($now)) {
+                            $daysAhead = 7;
+                        }
+                    } catch (\Exception $e) { /* keep as-is */ }
+                }
+
+                return ['slot' => $slot, 'occur_date' => $now->copy()->addDays($daysAhead)->startOfDay(), 'sort' => $daysAhead];
+            })
+            ->filter(function ($item) {
+                $slot    = $item['slot'];
+                $holiday = $this->getHolidayForDate($item['occur_date'], $slot->setting?->session_id, $slot->setting?->term_id);
+                if (!$holiday) return true;
+                if ($holiday->is_full_day) return false;
+
+                if ($holiday->cutoff_time) {
+                    try {
+                        $periodStart = Carbon::createFromFormat('H:i:s', $slot->period->start_time);
+                        $cutoff      = Carbon::createFromFormat('H:i:s', $holiday->cutoff_time);
+                        if ($periodStart->greaterThanOrEqualTo($cutoff)) return false;
+                    } catch (\Exception $e) { /* keep as-is */ }
                 }
                 return true;
             })
-            ->sortBy(function ($s) use ($dayMap, $todayIndex) {
-                $d = $dayMap[strtolower($s->day)] ?? 0;
-                return $d >= $todayIndex ? $d : $d + 7;
-            })
+            ->sortBy('sort')
             ->take(6)
-            ->map(fn($s) => [
-                'day'     => $s->day,
-                'period'  => $s->period?->name,
-                'time'    => $this->formatTime($s->period?->start_time ?? '') . ' – ' . $this->formatTime($s->period?->end_time ?? ''),
-                'subject' => $s->subject?->subject,
-                'class'   => $s->setting?->schoolclass?->schoolclass,
-                'room'    => $s->room?->room_name,
+            ->map(fn($item) => [
+                'day'     => $item['slot']->day,
+                'date'    => $item['occur_date']->format('D, d M'),
+                'period'  => $item['slot']->period?->name,
+                'time'    => $this->formatTime($item['slot']->period?->start_time ?? '') . ' – ' . $this->formatTime($item['slot']->period?->end_time ?? ''),
+                'subject' => $item['slot']->subject?->subject,
+                'class'   => $item['slot']->setting?->schoolclass?->schoolclass,
+                'room'    => $item['slot']->room?->room_name,
             ])
             ->values()->toArray();
     }

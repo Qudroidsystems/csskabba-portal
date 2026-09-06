@@ -1386,6 +1386,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         Route::delete('/{report}', [TimetableReportController::class, 'destroy'])->name('destroy');
         Route::post('/schedule', [TimetableReportController::class, 'schedule'])->name('schedule');
     });
+    
 
     // =========================================================================
     // API ROUTES (also add to routes/api.php if using separate API prefix)

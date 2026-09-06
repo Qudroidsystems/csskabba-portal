@@ -1,144 +1,125 @@
-{{-- resources/views/holidays/index.blade.php --}}
-@extends('layouts.master')
+@extends('layouts.app')
 
 @section('content')
-<div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">
-                            <i class="ri-calendar-event-line me-2"></i>{{ $pagetitle }}
-                        </h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                                <li class="breadcrumb-item active">Holidays</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @can('Create holidays')
-            <div class="row mb-3">
-                <div class="col-lg-12">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#holidayModal" onclick="resetHolidayForm()">
-                        <i class="ri-add-line me-2"></i>Add Holiday
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{{ $pagetitle ?? 'Holiday Management' }}</h4>
+                <div class="page-title-right">
+                    @can('Create holidays')
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHolidayModal">
+                        <i class="ri-add-line"></i> Add Holiday
                     </button>
+                    @endcan
                 </div>
             </div>
-            @endcan
+        </div>
+    </div>
 
-            {{-- Upcoming Holidays Card --}}
-            @if($upcomingHolidays->count() > 0)
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card bg-warning-subtle">
-                        <div class="card-body">
-                            <h6 class="mb-3"><i class="ri-calendar-event-line me-2"></i>Upcoming Holidays</h6>
-                            <div class="d-flex flex-wrap gap-3">
-                                @foreach($upcomingHolidays as $holiday)
-                                <div class="card border-0 shadow-sm" style="min-width: 200px;">
-                                    <div class="card-body py-2">
-                                        <strong>{{ $holiday->name }}</strong><br>
-                                        <small class="text-muted">
-                                            {{ \Carbon\Carbon::parse($holiday->start_date)->format('d M Y') }}
-                                            @if($holiday->start_date != $holiday->end_date)
-                                                - {{ \Carbon\Carbon::parse($holiday->end_date)->format('d M Y') }}
-                                            @endif
-                                        </small>
-                                        <span class="badge bg-secondary ms-2">{{ str_replace('_', ' ', $holiday->type) }}</span>
-                                    </div>
+    <!-- Upcoming Holidays Card -->
+    @if($upcomingHolidays->count() > 0)
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="ri-calendar-event-line me-2"></i>Upcoming Holidays</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach($upcomingHolidays as $holiday)
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">{{ Carbon\Carbon::parse($holiday->date)->format('D, M d') }}</h6>
+                                    <h5 class="card-title">{{ $holiday->title }}</h5>
+                                    <span class="badge bg-{{ $holiday->is_full_day ? 'danger' : 'warning' }}">
+                                        {{ $holiday->is_full_day ? 'Full Day' : 'Half Day' }}
+                                    </span>
+                                    @if($holiday->session)
+                                    <p class="text-muted small mt-2">{{ $holiday->session->session }}</p>
+                                    @endif
                                 </div>
-                                @endforeach
                             </div>
                         </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
-            @endif
+        </div>
+    </div>
+    @endif
 
-            {{-- Holidays List --}}
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">All Holidays</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Holiday Name</th>
-                                            <th>Type</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                            <th>Duration</th>
-                                            <th>Affects Timetable</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($holidays as $holiday)
-                                        <tr>
-                                            <td class="fw-medium">{{ $holiday->name }}</td>
-                                            <td>
-                                                @php
-                                                    $typeColors = [
-                                                        'public_holiday' => 'danger',
-                                                        'school_holiday' => 'warning',
-                                                        'exam_period' => 'info',
-                                                        'special_event' => 'success'
-                                                    ];
-                                                @endphp
-                                                <span class="badge bg-{{ $typeColors[$holiday->type] ?? 'secondary' }}-subtle text-{{ $typeColors[$holiday->type] ?? 'secondary' }}">
-                                                    {{ str_replace('_', ' ', ucfirst($holiday->type)) }}
-                                                </span>
-                                            </td>
-                                            <td>{{ \Carbon\Carbon::parse($holiday->start_date)->format('d M Y') }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($holiday->end_date)->format('d M Y') }}</td>
-                                            <td>
-                                                @php
-                                                    $start = \Carbon\Carbon::parse($holiday->start_date);
-                                                    $end = \Carbon\Carbon::parse($holiday->end_date);
-                                                    $days = $start->diffInDays($end) + 1;
-                                                @endphp
-                                                {{ $days }} day(s)
-                                            </td>
-                                            <td>
-                                                @if($holiday->affects_timetable)
-                                                    <span class="badge bg-success">Yes</span>
-                                                @else
-                                                    <span class="badge bg-secondary">No</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-info" onclick="viewHoliday({{ $holiday->id }})" title="View Details">
-                                                    <i class="ri-eye-line"></i>
-                                                </button>
-                                                @can('Edit holidays')
-                                                <button class="btn btn-sm btn-outline-primary" onclick="editHoliday({{ $holiday->id }})" title="Edit">
-                                                    <i class="ri-edit-line"></i>
-                                                </button>
-                                                @endcan
-                                                @can('Delete holidays')
-                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteHoliday({{ $holiday->id }})" title="Delete">
-                                                    <i class="ri-delete-bin-line"></i>
-                                                </button>
-                                                @endcan
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="d-flex justify-content-end mt-3">
-                                {{ $holidays->links('pagination::bootstrap-5') }}
-                            </div>
-                        </div>
+    <!-- Holidays Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-bordered table-hover datatable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Cut-off Time</th>
+                                <th>Session</th>
+                                <th>Term</th>
+                                <th>Created By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($holidays as $index => $holiday)
+                            <tr>
+                                <td>{{ $holidays->firstItem() + $index }}</td>
+                                <td>{{ Carbon\Carbon::parse($holiday->date)->format('d M Y') }}</td>
+                                <td><strong>{{ $holiday->title }}</strong></td>
+                                <td>
+                                    <span class="badge bg-{{ $holiday->is_full_day ? 'danger' : 'warning' }}">
+                                        {{ $holiday->is_full_day ? 'Full Day' : 'Half Day' }}
+                                    </span>
+                                </td>
+                                <td>{{ $holiday->cutoff_time ? Carbon\Carbon::parse($holiday->cutoff_time)->format('H:i') : 'N/A' }}</td>
+                                <td>{{ $holiday->session?->session ?? 'All Sessions' }}</td>
+                                <td>{{ $holiday->term?->term ?? 'All Terms' }}</td>
+                                <td>{{ $holiday->creator?->name ?? 'System' }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        @can('Edit holidays')
+                                        <button type="button" class="btn btn-info edit-holiday" 
+                                                data-id="{{ $holiday->id }}"
+                                                data-date="{{ $holiday->date }}"
+                                                data-title="{{ $holiday->title }}"
+                                                data-is_full_day="{{ $holiday->is_full_day ? '1' : '0' }}"
+                                                data-cutoff_time="{{ $holiday->cutoff_time }}"
+                                                data-session_id="{{ $holiday->session_id }}"
+                                                data-term_id="{{ $holiday->term_id }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editHolidayModal">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                        @endcan
+                                        @can('Delete holidays')
+                                        <button type="button" class="btn btn-danger delete-holiday" 
+                                                data-id="{{ $holiday->id }}"
+                                                data-title="{{ $holiday->title }}">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                        @endcan
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="9" class="text-center">No holidays found.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                    
+                    <div class="d-flex justify-content-center">
+                        {{ $holidays->links() }}
                     </div>
                 </div>
             </div>
@@ -146,179 +127,308 @@
     </div>
 </div>
 
-{{-- Holiday Modal --}}
-<div class="modal fade" id="holidayModal" tabindex="-1" aria-hidden="true">
+<!-- Add Holiday Modal -->
+<div class="modal fade" id="addHolidayModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white" id="holidayModalTitle">Add Holiday</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ri-add-line me-2"></i>Add New Holiday</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="holidayForm">
-                    <input type="hidden" id="holidayId">
+            <form id="addHolidayForm">
+                @csrf
+                <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Holiday Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="holidayName" required placeholder="e.g., Christmas Break">
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Start Date</label>
-                            <input type="date" class="form-control" id="holidayStartDate" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">End Date</label>
-                            <input type="date" class="form-control" id="holidayEndDate" required>
-                        </div>
+                        <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="date" name="date" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Holiday Type</label>
-                        <select class="form-select" id="holidayType">
-                            <option value="public_holiday">Public Holiday</option>
-                            <option value="school_holiday">School Holiday</option>
-                            <option value="exam_period">Exam Period</option>
-                            <option value="special_event">Special Event</option>
+                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" placeholder="e.g., Christmas Day" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_full_day" name="is_full_day" value="1" checked>
+                            <label class="form-check-label" for="is_full_day">Full Day Holiday</label>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="cutoff_time_group">
+                        <label for="cutoff_time" class="form-label">Cut-off Time (for half-day)</label>
+                        <input type="time" class="form-control" id="cutoff_time" name="cutoff_time">
+                        <small class="text-muted">Classes after this time will be canceled</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="session_id" class="form-label">Session (Optional)</label>
+                        <select class="form-select" id="session_id" name="session_id">
+                            <option value="">All Sessions</option>
+                            @foreach($sessions as $session)
+                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="holidayAffectsTimetable" checked>
-                            <label class="form-check-label">Affects Timetable (auto-cancel classes)</label>
-                        </div>
+                        <label for="term_id" class="form-label">Term (Optional)</label>
+                        <select class="form-select" id="term_id" name="term_id">
+                            <option value="">All Terms</option>
+                            @foreach(\App\Models\Schoolterm::orderBy('id', 'desc')->get() as $term)
+                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" id="holidayDescription" rows="3" placeholder="Additional information about this holiday..."></textarea>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="affects_timetable" name="affects_timetable" value="1" checked>
+                            <label class="form-check-label" for="affects_timetable">Affects Timetable</label>
+                        </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveHoliday()">Save Holiday</button>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveHolidayBtn">Save Holiday</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
+<!-- Edit Holiday Modal -->
+<div class="modal fade" id="editHolidayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ri-edit-line me-2"></i>Edit Holiday</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editHolidayForm">
+                @csrf
+                @method('PUT')
+                <input type="hidden" id="edit_holiday_id" name="holiday_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="edit_date" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="edit_is_full_day" name="is_full_day" value="1">
+                            <label class="form-check-label" for="edit_is_full_day">Full Day Holiday</label>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="edit_cutoff_time_group">
+                        <label for="edit_cutoff_time" class="form-label">Cut-off Time (for half-day)</label>
+                        <input type="time" class="form-control" id="edit_cutoff_time" name="cutoff_time">
+                        <small class="text-muted">Classes after this time will be canceled</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_session_id" class="form-label">Session (Optional)</label>
+                        <select class="form-select" id="edit_session_id" name="session_id">
+                            <option value="">All Sessions</option>
+                            @foreach($sessions as $session)
+                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_term_id" class="form-label">Term (Optional)</label>
+                        <select class="form-select" id="edit_term_id" name="term_id">
+                            <option value="">All Terms</option>
+                            @foreach(\App\Models\Schoolterm::orderBy('id', 'desc')->get() as $term)
+                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="edit_affects_timetable" name="affects_timetable" value="1" checked>
+                            <label class="form-check-label" for="edit_affects_timetable">Affects Timetable</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="updateHolidayBtn">Update Holiday</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+@endsection
+
+@push('scripts')
 <script>
-    function resetHolidayForm() {
-        document.getElementById('holidayId').value = '';
-        document.getElementById('holidayName').value = '';
-        document.getElementById('holidayStartDate').value = '';
-        document.getElementById('holidayEndDate').value = '';
-        document.getElementById('holidayType').value = 'public_holiday';
-        document.getElementById('holidayAffectsTimetable').checked = true;
-        document.getElementById('holidayDescription').value = '';
-        document.getElementById('holidayModalTitle').innerText = 'Add Holiday';
-    }
+$(document).ready(function() {
+    // Toggle cut-off time visibility based on full day checkbox
+    $('#is_full_day, #edit_is_full_day').on('change', function() {
+        const isFullDay = $(this).is(':checked');
+        const groupId = $(this).attr('id') === 'is_full_day' ? 'cutoff_time_group' : 'edit_cutoff_time_group';
+        $('#' + groupId).toggle(!isFullDay);
+    });
 
-    function saveHoliday() {
-        const id = document.getElementById('holidayId').value;
-        const data = {
-            name: document.getElementById('holidayName').value,
-            start_date: document.getElementById('holidayStartDate').value,
-            end_date: document.getElementById('holidayEndDate').value,
-            type: document.getElementById('holidayType').value,
-            affects_timetable: document.getElementById('holidayAffectsTimetable').checked,
-            description: document.getElementById('holidayDescription').value
-        };
+    // Add Holiday
+    $('#addHolidayForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        // Convert checkbox values to boolean
+        data.is_full_day = data.is_full_day ? true : false;
+        data.affects_timetable = data.affects_timetable ? true : false;
 
-        if (!data.name || !data.start_date || !data.end_date) {
-            Swal.fire('Error', 'Please fill all required fields', 'error');
-            return;
-        }
+        $('#saveHolidayBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
 
-        const method = id ? 'PUT' : 'POST';
-        const url = id ? `/holidays/${id}` : '/holidays';
-
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        $.ajax({
+            url: '{{ route("holidays.store") }}',
+            method: 'POST',
+            data: data,
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.message,
+                        timer: 1500
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
             },
-            body: JSON.stringify(data)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire('Success', data.message, 'success');
-                bootstrap.Modal.getInstance(document.getElementById('holidayModal')).hide();
-                location.reload();
-            } else {
-                Swal.fire('Error', data.message, 'error');
+            error: function(xhr) {
+                const error = xhr.responseJSON?.message || 'An error occurred';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error
+                });
+            },
+            complete: function() {
+                $('#saveHolidayBtn').prop('disabled', false).html('Save Holiday');
             }
         });
-    }
+    });
 
-    function editHoliday(id) {
-        fetch(`/holidays/${id}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    const holiday = data.holiday;
-                    document.getElementById('holidayId').value = holiday.id;
-                    document.getElementById('holidayName').value = holiday.name;
-                    document.getElementById('holidayStartDate').value = holiday.start_date;
-                    document.getElementById('holidayEndDate').value = holiday.end_date;
-                    document.getElementById('holidayType').value = holiday.type;
-                    document.getElementById('holidayAffectsTimetable').checked = holiday.affects_timetable;
-                    document.getElementById('holidayDescription').value = holiday.description || '';
-                    document.getElementById('holidayModalTitle').innerText = 'Edit Holiday';
-                    new bootstrap.Modal(document.getElementById('holidayModal')).show();
+    // Edit Holiday - Load data into modal
+    $('.edit-holiday').on('click', function() {
+        const id = $(this).data('id');
+        const date = $(this).data('date');
+        const title = $(this).data('title');
+        const isFullDay = $(this).data('is_full_day') == 1;
+        const cutoffTime = $(this).data('cutoff_time');
+        const sessionId = $(this).data('session_id');
+        const termId = $(this).data('term_id');
+
+        $('#edit_holiday_id').val(id);
+        $('#edit_date').val(date);
+        $('#edit_title').val(title);
+        $('#edit_is_full_day').prop('checked', isFullDay);
+        $('#edit_cutoff_time').val(cutoffTime || '');
+        $('#edit_session_id').val(sessionId || '');
+        $('#edit_term_id').val(termId || '');
+        
+        // Show/hide cutoff time
+        $('#edit_cutoff_time_group').toggle(!isFullDay);
+    });
+
+    // Update Holiday
+    $('#editHolidayForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#edit_holiday_id').val();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        data.is_full_day = data.is_full_day ? true : false;
+        data.affects_timetable = data.affects_timetable ? true : false;
+
+        $('#updateHolidayBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Updating...');
+
+        $.ajax({
+            url: `/holidays/${id}`,
+            method: 'POST',
+            data: {
+                ...data,
+                _method: 'PUT'
+            },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.message,
+                        timer: 1500
+                    }).then(() => {
+                        location.reload();
+                    });
                 }
-            });
-    }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.message || 'An error occurred';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error
+                });
+            },
+            complete: function() {
+                $('#updateHolidayBtn').prop('disabled', false).html('Update Holiday');
+            }
+        });
+    });
 
-    function deleteHoliday(id) {
+    // Delete Holiday
+    $('.delete-holiday').on('click', function() {
+        const id = $(this).data('id');
+        const title = $(this).data('title');
+
         Swal.fire({
-            title: 'Delete Holiday?',
-            text: 'This will also remove timetable overrides for this holiday!',
+            title: 'Delete Holiday',
+            text: `Are you sure you want to delete "${title}"?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`/holidays/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire('Deleted!', data.message, 'success');
-                        location.reload();
-                    } else {
-                        Swal.fire('Error', data.message, 'error');
+                $.ajax({
+                    url: `/holidays/${id}`,
+                    method: 'POST',
+                    data: {
+                        _method: 'DELETE',
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted',
+                                text: response.message,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: xhr.responseJSON?.message || 'An error occurred'
+                        });
                     }
                 });
             }
         });
-    }
+    });
 
-    function viewHoliday(id) {
-        fetch(`/holidays/${id}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    const holiday = data.holiday;
-                    Swal.fire({
-                        title: holiday.name,
-                        html: `
-                            <div class="text-start">
-                                <p><strong>Type:</strong> ${holiday.type.replace('_', ' ').toUpperCase()}</p>
-                                <p><strong>Period:</strong> ${holiday.start_date} to ${holiday.end_date}</p>
-                                <p><strong>Duration:</strong> ${Math.ceil((new Date(holiday.end_date) - new Date(holiday.start_date)) / (1000 * 60 * 60 * 24)) + 1} days</p>
-                                <p><strong>Affects Timetable:</strong> ${holiday.affects_timetable ? 'Yes' : 'No'}</p>
-                                ${holiday.description ? `<hr><p><strong>Description:</strong><br>${holiday.description}</p>` : ''}
-                            </div>
-                        `,
-                        icon: 'info'
-                    });
-                }
-            });
-    }
+    // Auto-dismiss modal on close
+    $('#addHolidayModal, #editHolidayModal').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset();
+        $(this).find('.is-invalid').removeClass('is-invalid');
+    });
+});
 </script>
-@endsection
+@endpush
