@@ -1704,10 +1704,11 @@ function getSubjectColor(subjectId) {
 }
 
 // ============================================================================
-// ROUTES — All routes use Laravel's route() helper to generate correct URLs
+// ROUTES — Using route() helper with the correct route names
 // ============================================================================
 const ROUTES = {
-    // Simple routes (no parameters)
+    // Simple routes (no parameters) - these use the route name WITHOUT the 'timetable.' prefix
+    // since the route group already adds 'timetable.' prefix
     setup:                      '{{ route("timetable.setup") }}',
     saveSettings:               '{{ route("timetable.save-settings") }}',
     saveConstraints:            '{{ route("timetable.save-constraints") }}',
@@ -1721,10 +1722,14 @@ const ROUTES = {
     rebuildPeriodsFromAnchors:  '{{ route("timetable.rebuild-periods-from-anchors") }}',
     saveHalfDays:               '{{ route("timetable.save-half-days") }}',
     checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
+    
+    // Teacher assignment routes - IMPORTANT: The route names in the routes file already include 'timetable.'
+    // so we need to include the full prefix when calling route()
     getTeacherAssignments:      '{{ route("timetable.teacher-assignments") }}',
     assignTeacher:              '{{ route("timetable.assign-teacher") }}',
+    unassignTeacher:            '{{ route("timetable.unassign-teacher", ["subjectclassId" => ":id"]) }}',
 
-    // Routes with :id placeholders — use url() function below to replace
+    // Routes with :id placeholders
     getSetting:                 '{{ route("timetable.get-setting", ["settingId" => ":id"]) }}',
     getGrid:                    '{{ route("timetable.get-grid", ["settingId" => ":id"]) }}',
     checkConflicts:             '{{ route("timetable.check-conflicts", ["settingId" => ":id"]) }}',
@@ -1732,7 +1737,6 @@ const ROUTES = {
     deleteSetting:              '{{ route("timetable.delete-setting", ["settingId" => ":id"]) }}',
     heartbeat:                  '{{ route("timetable.heartbeat", ["id" => ":id"]) }}',
     releaseEditing:             '{{ route("timetable.release-editing", ["id" => ":id"]) }}',
-    unassignTeacher:            '{{ route("timetable.unassign-teacher", ["subjectclassId" => ":id"]) }}',
 };
 
 const CSRF = '{{ csrf_token() }}';
