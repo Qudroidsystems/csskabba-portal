@@ -13,6 +13,7 @@ use App\Models\Schoolterm;
 use App\Models\Subject;
 use App\Models\Subjectclass;
 use App\Models\SubjectTeacher;
+use App\Models\SubjectRegistrationStatus;
 use App\Models\SubstituteAssignment;
 use App\Models\TeacherAvailability;
 use App\Models\TimetableConstraint;
@@ -1949,9 +1950,20 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // TEACHER ASSIGNMENTS — who teaches what, before generation. Only ever
-    // links/unlinks a teacher on an EXISTING Subjectclass row (curriculum
-    // record used by broadsheets/results); never creates or deletes that row.
+    // TEACHER ASSIGNMENTS — who teaches what, before generation.
+    //
+    // NOTE ON DATA MODEL: `Subjectclass` does NOT carry its own session/term.
+    // Those live on `SubjectTeacher` (sessionid, termid). A `subjectclass` row
+    // only becomes discoverable for a given session/term through the
+    // `subjectteacher` row it's linked to via `subjectteacherid`. This mirrors
+    // the join pattern already proven in SubjectOperationController — do not
+    // "fix" this back to `subjectclass.session` / `subjectclass.termid`,
+    // those columns are not the source of truth here.
+    //
+    // This method only ever re-points an EXISTING subjectclass row at a
+    // different SubjectTeacher (i.e. swaps who teaches it); it never creates
+    // or deletes a subjectclass row — that curriculum record is owned by the
+    // Subjects/Classes setup screen and is also used for score entry.
     // =========================================================================
     public function getTeacherAssignments(Request $request): JsonResponse
     {
@@ -1960,14 +1972,44 @@ class TimetableController extends Controller
             'term_id'    => 'nullable|exists:schoolterm,id',
         ]);
 
-        // FIXED: Using 'session' column name (not 'sessionid' or 'session_id')
-        // and 'termid' column name (matches the database)
-        $subjectclasses = Subjectclass::where('session', $validated['session_id'])
-            ->when($validated['term_id'] ?? null, function($q, $termId) {
-                return $q->where('termid', $termId);
-            })
-            ->with(['subject:id,subject,subject_code', 'schoolClass', 'subjectTeacher.staff.staffPicture'])
+        $rows = Subjectclass::query()
+            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+            ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+            ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->where('subjectteacher.sessionid', $validated['session_id'])
+            ->when($validated['term_id'] ?? null, fn($q, $termId) => $q->where('subjectteacher.termid', $termId))
+            ->select([
+                'subjectclass.id as subjectclass_id',
+                'subjectclass.subjectteacherid',
+                'subject.id as subject_id',
+                'subject.subject as subject_name',
+                'subject.subject_code as subject_code',
+                'schoolclass.id as schoolclass_id',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+                'users.id as teacher_id',
+                'users.name as teacher_name',
+                'staffpicture.picture as teacher_picture',
+            ])
+            ->orderBy('schoolclass.schoolclass')->orderBy('schoolarm.arm')->orderBy('subject.subject')
             ->get();
+
+        if ($rows->isEmpty()) {
+            return response()->json(['success' => true, 'teachers' => [], 'unassigned' => []]);
+        }
+
+        // Registered-student count per subjectclass, in one grouped query —
+        // same shape as SubjectOperationController::registeredClasses().
+        $subjectclassIds = $rows->pluck('subjectclass_id')->unique()->values();
+        $studentCounts = SubjectRegistrationStatus::whereIn('subjectclassid', $subjectclassIds)
+            ->where('sessionid', $validated['session_id'])
+            ->when($validated['term_id'] ?? null, fn($q, $termId) => $q->where('termid', $termId))
+            ->select(['subjectclassid', DB::raw('COUNT(DISTINCT studentid) as cnt')])
+            ->groupBy('subjectclassid')
+            ->pluck('cnt', 'subjectclassid');
 
         $teachers = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
             ->with('staffPicture')->orderBy('name')->get();
@@ -1975,17 +2017,19 @@ class TimetableController extends Controller
         $byTeacher  = [];
         $unassigned = [];
 
-        foreach ($subjectclasses as $sc) {
+        foreach ($rows as $r) {
             $row = [
-                'subjectclass_id' => $sc->id,
-                'subject_id'      => $sc->subjectid,
-                'subject_name'    => $sc->subject->subject ?? 'Unknown',
-                'schoolclass_id'  => $sc->schoolclassid,
-                'class_name'      => $this->getClassName($sc->schoolClass),
+                'subjectclass_id'  => $r->subjectclass_id,
+                'subject_id'       => $r->subject_id,
+                'subject_name'     => $r->subject_name ?? 'Unknown',
+                'subject_code'     => $r->subject_code,
+                'schoolclass_id'   => $r->schoolclass_id,
+                'class_name'       => trim(($r->class_name ?? '') . ' ' . ($r->arm_name ?? '')) ?: 'Unknown Class',
+                'registered_count' => (int) ($studentCounts[$r->subjectclass_id] ?? 0),
             ];
 
-            if ($sc->subjectteacherid && $sc->subjectTeacher?->staffid) {
-                $byTeacher[$sc->subjectTeacher->staffid][] = $row;
+            if ($r->teacher_id) {
+                $byTeacher[$r->teacher_id][] = $row;
             } else {
                 $unassigned[] = $row;
             }
@@ -2014,21 +2058,27 @@ class TimetableController extends Controller
             'teacher_id'      => 'required|exists:users,id',
         ]);
 
-        $subjectclass = Subjectclass::findOrFail($validated['subjectclass_id']);
+        $subjectclass = Subjectclass::with('subjectTeacher')->findOrFail($validated['subjectclass_id']);
+        $currentLink  = $subjectclass->subjectTeacher; // carries subjectid/sessionid/termid
+
+        if (!$currentLink) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This class/subject has no session or term on record yet — set it up via Subjects/Classes first.',
+            ], 422);
+        }
+
         $previousTeacherLinkId = $subjectclass->subjectteacherid;
 
         DB::beginTransaction();
         try {
-            // FIXED: Using 'session' column name (matches the database)
-            $subjectTeacher = SubjectTeacher::firstOrCreate(
-                [
-                    'staffid'   => $validated['teacher_id'],
-                    'subjectid' => $subjectclass->subjectid,
-                    'session'   => $subjectclass->session,
-                    'termid'    => $subjectclass->termid,
-                ],
-                ['userid' => $validated['teacher_id']]
-            );
+            // Reuse the existing subjectid/sessionid/termid — only the staff changes.
+            $subjectTeacher = SubjectTeacher::firstOrCreate([
+                'staffid'   => $validated['teacher_id'],
+                'subjectid' => $currentLink->subjectid,
+                'sessionid' => $currentLink->sessionid,
+                'termid'    => $currentLink->termid,
+            ]);
 
             $subjectclass->update(['subjectteacherid' => $subjectTeacher->id]);
 
