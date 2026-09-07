@@ -274,9 +274,12 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                 $infoSheet->getColumnDimension('A')->setWidth(28);
                 $infoSheet->getColumnDimension('B')->setWidth(50);
 
-                // Move Instructions sheet to the front
+                // Move Instructions sheet to the front.
+                // NOTE: Spreadsheet has no insertSheet() method — addSheet()
+                // is the correct API for re-attaching an already-detached
+                // worksheet object at a specific index.
                 $spreadsheet->removeSheetByIndex($spreadsheet->getIndex($infoSheet));
-                $spreadsheet->insertSheet($infoSheet, 0);
+                $spreadsheet->addSheet($infoSheet, 0);
                 $spreadsheet->setActiveSheetIndex(0);
             },
         ];
