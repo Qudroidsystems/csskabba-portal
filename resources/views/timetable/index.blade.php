@@ -1715,8 +1715,6 @@ function getSubjectColor(subjectId) {
 // ROUTES — Using route() helper with the correct route names
 // ============================================================================
 const ROUTES = {
-    // Simple routes (no parameters) - these use the route name WITHOUT the 'timetable.' prefix
-    // since the route group already adds 'timetable.' prefix
     setup:                      '{{ route("timetable.setup") }}',
     saveSettings:               '{{ route("timetable.save-settings") }}',
     saveConstraints:            '{{ route("timetable.save-constraints") }}',
@@ -1730,13 +1728,8 @@ const ROUTES = {
     rebuildPeriodsFromAnchors:  '{{ route("timetable.rebuild-periods-from-anchors") }}',
     saveHalfDays:               '{{ route("timetable.save-half-days") }}',
     checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
-    
-    // Teacher assignment — READ-ONLY. Only getTeacherAssignments is used.
-    // Assign/unassign endpoints must never be called from the timetable module;
-    // teacher ↔ subject ↔ class mapping is owned by main Subject/Class management.
     getTeacherAssignments:      '{{ route("timetable.teacher-assignments") }}',
 
-    // Routes with :id placeholders
     getSetting:                 '{{ route("timetable.get-setting", ["settingId" => ":id"]) }}',
     getGrid:                    '{{ route("timetable.get-grid", ["settingId" => ":id"]) }}',
     checkConflicts:             '{{ route("timetable.check-conflicts", ["settingId" => ":id"]) }}',
@@ -1790,10 +1783,6 @@ function closeEditor() {
 
 // ============================================================================
 // TEACHER ASSIGNMENT MODAL — READ-ONLY
-// Displays existing SubjectTeacher / subjectclass mappings for
-// generation readiness. Never creates or updates those tables.
-// Teacher assignment is owned exclusively by the main Subject /
-// Class management screens.
 // ============================================================================
 function openTeacherAssignModal() {
     document.getElementById('teacherAssignmentContainer').innerHTML = `
@@ -1907,7 +1896,7 @@ function renderTeacherAssignmentTable() {
 }
 
 // ============================================================================
-// MULTI-SELECT DELETE (Existing Timetables list)
+// MULTI-SELECT DELETE
 // ============================================================================
 function toggleSettingSelection(id, checked) {
     if (checked) selectedSettingIds.add(id);
@@ -1999,7 +1988,7 @@ async function loadOrCreateSetting() {
         const res  = await apiFetch(ROUTES.setup, 'POST', { schoolclass_id: classId, session_id: sessionId, term_id: termId });
         const data = await res.json();
         if (data.success) {
-            await loadSetting(data.setting_id); // loadSetting manages its own loader lifecycle
+            await loadSetting(data.setting_id);
         } else {
             hideLoader();
             Swal.fire('Error', data.message || 'Failed', 'error');
@@ -3276,12 +3265,26 @@ async function submitGenerationWizard(alsoGenerate) {
         if (genData.success) {
             await animateWizardResults(genData.classes);
             bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
+
+            // ================================================================
+            // BUILD CONFLICT NOTE FROM THE BACKEND RESPONSE
+            // ================================================================
+            const conflictNote = genData.conflict_summary?.total
+                ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i> 
+                    ${genData.conflict_summary.total} conflict(s) detected 
+                    (${genData.conflict_summary.teacher_conflicts} teacher, 
+                    ${genData.conflict_summary.room_conflicts} room). 
+                    Open a class → Conflicts tab to resolve.</p>`
+                : `<p class="text-success mt-2" style="font-size:12px">
+                    <i class="ri-check-line"></i> No conflicts across the generated classes.</p>`;
+
             const shortfallNote = genData.had_shortfalls
                 ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
                 : '';
+
             Swal.fire({
                 icon: 'success', title: 'Generated!',
-                html: `Generated timetables for <strong>${genData.classes.length}</strong> class(es).${summaryHtml}${shortfallNote}`,
+                html: `Generated timetables for <strong>${genData.classes.length}</strong> class(es).${summaryHtml}${conflictNote}${shortfallNote}`,
             }).then(() => location.reload());
         } else if (genData.has_locked) {
             const confirmResult = await Swal.fire({
@@ -3300,12 +3303,26 @@ async function submitGenerationWizard(alsoGenerate) {
                 if (forceData.success) {
                     await animateWizardResults(forceData.classes);
                     bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
+
+                    // ================================================================
+                    // BUILD CONFLICT NOTE FOR FORCE UNPUBLISH BRANCH
+                    // ================================================================
+                    const forceConflictNote = forceData.conflict_summary?.total
+                        ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i> 
+                            ${forceData.conflict_summary.total} conflict(s) detected 
+                            (${forceData.conflict_summary.teacher_conflicts} teacher, 
+                            ${forceData.conflict_summary.room_conflicts} room). 
+                            Open a class → Conflicts tab to resolve.</p>`
+                        : `<p class="text-success mt-2" style="font-size:12px">
+                            <i class="ri-check-line"></i> No conflicts across the generated classes.</p>`;
+
                     const forceShortfallNote = forceData.had_shortfalls
                         ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
                         : '';
+
                     Swal.fire({
                         icon: 'success', title: 'Generated!',
-                        html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}${forceShortfallNote}`,
+                        html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}${forceConflictNote}${forceShortfallNote}`,
                     }).then(() => location.reload());
                 } else {
                     Swal.fire('Error', forceData.message || 'Failed', 'error');
