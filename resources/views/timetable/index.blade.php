@@ -694,6 +694,34 @@
     font-size: 15px;
 }
 
+/* ── Whole-School export mode toggle ──────────────── */
+.ws-mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.ws-mode-btn {
+    flex: 1;
+    border: 1.5px solid var(--tt-border);
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #64748B;
+    cursor: pointer;
+    text-align: left;
+    transition: all .15s;
+}
+.ws-mode-btn i { font-size: 16px; display:block; margin-bottom: 4px; color: var(--tt-blue); }
+.ws-mode-btn.active {
+    border-color: var(--tt-blue);
+    background: rgba(21,101,192,.06);
+    color: var(--tt-blue);
+    box-shadow: 0 0 0 3px rgba(21,101,192,.1);
+}
+.ws-mode-btn small { display:block; font-weight:400; color:#94A3B8; margin-top:2px; }
+
 /* ── Utility ──────────────────────────────────────── */
 .cursor-pointer {
     cursor: pointer;
@@ -785,6 +813,9 @@
     .conflict-avatar,
     .conflict-avatar-ph {
         align-self: center;
+    }
+    .ws-mode-toggle {
+        flex-direction: column;
     }
 }
 
@@ -1212,10 +1243,6 @@
 
 {{-- ============================================================ --}}
 {{-- TEACHER ASSIGNMENT MODAL (READ-ONLY)                         --}}
-{{-- Teacher ↔ subject ↔ class mapping is owned by the main       --}}
-{{-- Subject / Class management screens. Timetable only reads it  --}}
-{{-- for generation and display. No writes to subjectclass /      --}}
-{{-- SubjectTeacher from this module.                             --}}
 {{-- ============================================================ --}}
 <div class="modal fade" id="teacherAssignModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -1358,7 +1385,9 @@
     </div>
 </div>
 
-{{-- Whole School Export Modal --}}
+{{-- ============================================================ --}}
+{{-- WHOLE SCHOOL EXPORT MODAL — Per-Class or Merged Grid          --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="wholeSchoolExportModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:14px;overflow:hidden">
@@ -1367,7 +1396,19 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted mb-3" style="font-size:13px">Export timetables for all classes in the selected session and term.</p>
+
+                <div class="ws-mode-toggle">
+                    <button type="button" class="ws-mode-btn active" data-mode="per_class" onclick="selectWsMode(this)">
+                        <i class="ri-file-copy-2-line"></i>Per-Class
+                        <small>One page per class</small>
+                    </button>
+                    <button type="button" class="ws-mode-btn" data-mode="merged" onclick="selectWsMode(this)">
+                        <i class="ri-layout-grid-line"></i>Merged Grid
+                        <small>All classes overlaid in one table</small>
+                    </button>
+                </div>
+                <input type="hidden" id="wholeSchoolMode" value="per_class">
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
                     <select class="form-select" id="wholeSchoolSessionId">
@@ -1386,8 +1427,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Orientation</label>
+                <div class="mb-3" id="wsOrientationWrap">
+                    <label class="form-label fw-semibold">Orientation <span class="text-muted fw-normal">(PDF, per-class only)</span></label>
                     <select class="form-select" id="wholeSchoolOrientation">
                         <option value="horizontal">Horizontal Layout (Days as columns)</option>
                         <option value="vertical">Vertical Layout (Days as rows)</option>
@@ -1396,8 +1437,11 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" onclick="exportWholeSchoolTimetable()">
-                    <i class="ri-file-pdf-line me-2"></i>Export PDF
+                <button class="btn btn-outline-primary" onclick="exportWholeSchoolTimetable('web')">
+                    <i class="ri-global-line me-2"></i>Web View
+                </button>
+                <button class="btn btn-primary" onclick="exportWholeSchoolTimetable('pdf')">
+                    <i class="ri-file-pdf-line me-2"></i>PDF
                 </button>
             </div>
         </div>
@@ -1723,6 +1767,9 @@ const ROUTES = {
     sendNotifications:          '{{ route("timetable.send-notifications") }}',
     cloneSetting:               '{{ route("timetable.clone-setting") }}',
     exportWholeSchool:          '{{ route("timetable.export-whole-school") }}',
+    exportWholeSchoolWeb:       '{{ route("timetable.export-whole-school-web") }}',
+    exportMergedGrid:           '{{ route("timetable.export-merged-grid") }}',
+    mergedGridWeb:              '{{ route("timetable.merged-grid-web") }}',
     applyGenerationTemplate:    '{{ route("timetable.apply-generation-template") }}',
     autoGenerateWholeSchool:    '{{ route("timetable.auto-generate-whole-school") }}',
     rebuildPeriodsFromAnchors:  '{{ route("timetable.rebuild-periods-from-anchors") }}',
@@ -2995,19 +3042,39 @@ function exportTimetable(format) {
     else window.location.href = exportUrl;
 }
 
+// ── Whole School Export (Per-Class or Merged Grid) ─────────────────────
 function openWholeSchoolExportModal() {
+    selectWsMode(document.querySelector('.ws-mode-btn[data-mode="per_class"]'));
     new bootstrap.Modal(document.getElementById('wholeSchoolExportModal')).show();
 }
 
-function exportWholeSchoolTimetable() {
+function selectWsMode(btn) {
+    document.querySelectorAll('.ws-mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.mode;
+    document.getElementById('wholeSchoolMode').value = mode;
+    document.getElementById('wsOrientationWrap').style.display = mode === 'per_class' ? '' : 'none';
+}
+
+function exportWholeSchoolTimetable(type = 'pdf') {
     const sessionId   = document.getElementById('wholeSchoolSessionId').value;
     const termId      = document.getElementById('wholeSchoolTermId').value;
     const orientation = document.getElementById('wholeSchoolOrientation').value;
+    const mode        = document.getElementById('wholeSchoolMode').value; // 'per_class' | 'merged'
+
     if (!sessionId) return Swal.fire('Error', 'Please select a session.', 'error');
-    window.open(
-        ROUTES.exportWholeSchool + '?session_id=' + sessionId + '&term_id=' + (termId || '') + '&orientation=' + orientation,
-        '_blank'
-    );
+
+    let base;
+    if (mode === 'merged') {
+        base = type === 'web' ? ROUTES.mergedGridWeb : ROUTES.exportMergedGrid;
+    } else {
+        base = type === 'web' ? ROUTES.exportWholeSchoolWeb : ROUTES.exportWholeSchool;
+    }
+
+    let qs = `?session_id=${sessionId}&term_id=${termId || ''}`;
+    if (mode === 'per_class' && type === 'pdf') qs += `&orientation=${orientation}`;
+
+    window.open(base + qs, '_blank');
 }
 
 async function deleteSetting(settingId, updatedAt) {
@@ -3266,9 +3333,6 @@ async function submitGenerationWizard(alsoGenerate) {
             await animateWizardResults(genData.classes);
             bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
 
-            // ================================================================
-            // BUILD CONFLICT NOTE FROM THE BACKEND RESPONSE
-            // ================================================================
             const conflictNote = genData.conflict_summary?.total
                 ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i> 
                     ${genData.conflict_summary.total} conflict(s) detected 
@@ -3304,9 +3368,6 @@ async function submitGenerationWizard(alsoGenerate) {
                     await animateWizardResults(forceData.classes);
                     bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
 
-                    // ================================================================
-                    // BUILD CONFLICT NOTE FOR FORCE UNPUBLISH BRANCH
-                    // ================================================================
                     const forceConflictNote = forceData.conflict_summary?.total
                         ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i> 
                             ${forceData.conflict_summary.total} conflict(s) detected 
