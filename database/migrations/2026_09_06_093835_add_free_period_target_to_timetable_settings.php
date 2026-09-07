@@ -10,15 +10,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('timetable_settings', function (Blueprint $table) {
-            $table->unsignedSmallInteger('free_periods_per_week')->nullable()->after('active_days');
-            $table->unsignedSmallInteger('max_lessons_per_day')->nullable()->after('free_periods_per_week');
+            // Only add column if it doesn't already exist
+            if (!Schema::hasColumn('timetable_settings', 'free_periods_per_week')) {
+                $table->unsignedSmallInteger('free_periods_per_week')->nullable()->after('active_days');
+            }
+            
+            // Only add column if it doesn't already exist
+            if (!Schema::hasColumn('timetable_settings', 'max_lessons_per_day')) {
+                $table->unsignedSmallInteger('max_lessons_per_day')->nullable()->after('free_periods_per_week');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('timetable_settings', function (Blueprint $table) {
-            $table->dropColumn(['free_periods_per_week', 'max_lessons_per_day']);
+            $columns = ['free_periods_per_week', 'max_lessons_per_day'];
+            foreach ($columns as $column) {
+                if (Schema::hasColumn('timetable_settings', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
         });
     }
 };
