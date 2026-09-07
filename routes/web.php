@@ -1314,6 +1314,7 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
     Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
     Route::get('/export-whole-school', [TimetableController::class, 'exportWholeSchool'])->name('export-whole-school');
+    Route::get('/export-whole-school-web', [TimetableController::class, 'exportWholeSchoolWeb'])->name('export-whole-school-web');
 
     // AJAX — Subjects & teachers
     Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');

@@ -2367,58 +2367,50 @@ class TimetableController extends Controller
         };
     }
 
-    // =========================================================================
-    // EXPORT WHOLE SCHOOL TIMETABLE
-    // =========================================================================
-    public function exportWholeSchool(Request $request)
-    {
-        $sessionId   = $request->input('session_id');
-        $termId      = $request->input('term_id');
-        $orientation = $request->input('orientation', 'horizontal');
+   // =========================================================================
+// EXPORT WHOLE SCHOOL TIMETABLE — PDF
+// =========================================================================
+public function exportWholeSchool(Request $request)
+{
+    $sessionId   = $request->input('session_id');
+    $termId      = $request->input('term_id');
+    $orientation = $request->input('orientation', 'horizontal');
 
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+    if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
 
-        $settings = TimetableSetting::with(['session', 'term', 'periods'])
-            ->join('schoolclass', 'schoolclass.id', '=', 'timetable_settings.schoolclass_id')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['timetable_settings.*', 'schoolclass.schoolclass as _class_name', 'schoolarm.arm as _arm_name'])
-            ->where('timetable_settings.session_id', $sessionId)
-            ->when($termId, fn($q) => $q->where('timetable_settings.term_id', $termId))
-            ->where('timetable_settings.is_active', true)
-            ->orderBy('schoolclass.schoolclass')->orderBy('schoolarm.arm')->get();
+    [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
 
-        if ($settings->isEmpty()) return response()->json(['error' => 'No timetables found'], 404);
+    if (empty($allTimetables)) return response()->json(['error' => 'No timetables found'], 404);
 
-        $schoolInfo    = SchoolInformation::getActiveSchool();
-        $allTimetables = [];
+    return $this->exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation, $overallStats);
+}
 
-        foreach ($settings as $setting) {
-            $className = trim(($setting->_class_name ?? '') . ' ' . ($setting->_arm_name ?? '')) ?: 'Unknown Class';
-            $slots     = TimetableSlot::where('setting_id', $setting->id)
-                ->with(['subject', 'teacher', 'period', 'room'])->get();
-            $grid = [];
-            foreach ($slots as $slot) {
-                $grid[$slot->period_id][$slot->day] = [
-                    'subject' => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
-                    'teacher' => $slot->teacher?->name ?? '',
-                    'room'    => ($slot->room_id && $slot->room) ? $slot->room->room_name : '',
-                    'is_free' => $slot->is_free ?? !$slot->subject_id,
-                ];
-            }
-            $allTimetables[] = [
-                'class_name' => $className,
-                'periods'    => $setting->periods,
-                'grid'       => $grid,
-                'days'       => $setting->active_days ?? self::DAYS,
-                'day_meta'   => $this->computeDayPeriodMeta($setting),
-            ];
-        }
+// =========================================================================
+// EXPORT WHOLE SCHOOL TIMETABLE — WEB VIEW
+// =========================================================================
+public function exportWholeSchoolWeb(Request $request)
+{
+    $sessionId = $request->input('session_id');
+    $termId    = $request->input('term_id');
 
-        $session = Schoolsession::find($sessionId);
-        $term    = $termId ? Schoolterm::find($termId) : null;
-        return $this->exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation);
+    if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+
+    [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
+
+    if (empty($allTimetables)) {
+        abort(404, 'No timetables found for this session/term.');
     }
 
+    return view('timetable.exports.whole-school-web', [
+        'allTimetables' => $allTimetables,
+        'schoolInfo'    => $schoolInfo,
+        'sessionName'   => $session->session ?? 'Session',
+        'termName'      => $term?->term ?? 'All Terms',
+        'dayColors'     => self::DAY_COLORS,
+        'generatedAt'   => now()->format('d M Y, H:i'),
+        'overallStats'  => $overallStats,
+    ]);
+}
     // =========================================================================
     // NOTIFICATIONS
     // =========================================================================
@@ -3038,10 +3030,8 @@ class TimetableController extends Controller
         ]);
     }
 
-    // =========================================================================
-    // PRIVATE: Build the whole-school timetable PDF — one page per class.
-    // =========================================================================
-    private function exportWholeSchoolPdf(array $allTimetables, ?SchoolInformation $schoolInfo, ?Schoolsession $session, ?Schoolterm $term, string $orientation)
+
+    private function exportWholeSchoolPdf(array $allTimetables, ?SchoolInformation $schoolInfo, ?Schoolsession $session, ?Schoolterm $term, string $orientation, array $overallStats = [])
     {
         $sessionName = $session->session ?? 'Session';
         $termName    = $term?->term ?? 'All Terms';
@@ -3054,10 +3044,112 @@ class TimetableController extends Controller
             'orientation'   => $orientation,
             'dayColors'     => self::DAY_COLORS,
             'generatedAt'   => now()->format('d M Y, H:i'),
+            'overallStats'  => $overallStats,
         ])->setPaper($orientation === 'vertical' ? 'a4' : 'a3', 'landscape');
 
         $filename = 'whole-school-timetable-' . str_replace([' ', '/'], '-', $sessionName) . '.pdf';
-
         return $pdf->stream($filename);
     }
+
+    // =========================================================================
+    // PRIVATE: Compute lightweight stats for one class's timetable grid
+    // =========================================================================
+    private function buildClassStats(array $grid, $periods, array $days, array $dayMeta): array
+    {
+        $totalSlots = 0; $filled = 0;
+        $subjects = []; $teachers = []; $rooms = [];
+
+        foreach ($days as $day) {
+            foreach ($periods as $period) {
+                $meta = $dayMeta[$day][$period->id] ?? null;
+                if (!$meta || $meta['effective_type'] !== 'lesson' || !$meta['applicable']) continue;
+
+                $totalSlots++;
+                $slot = $grid[$period->id][$day] ?? null;
+                if ($slot && !($slot['is_free'] ?? true)) {
+                    $filled++;
+                    if (!empty($slot['subject']) && $slot['subject'] !== '—') $subjects[$slot['subject']] = true;
+                    if (!empty($slot['teacher']))                             $teachers[$slot['teacher']] = true;
+                    if (!empty($slot['room']))                                $rooms[$slot['room']]       = true;
+                }
+            }
+        }
+
+        return [
+            'total_slots'   => $totalSlots,
+            'filled_slots'  => $filled,
+            'free_slots'    => max(0, $totalSlots - $filled),
+            'fill_rate'     => $totalSlots > 0 ? (int) round(($filled / $totalSlots) * 100) : 0,
+            'subject_count' => count($subjects),
+            'teacher_count' => count($teachers),
+            'room_count'    => count($rooms),
+            'teacher_names' => array_keys($teachers),
+        ];
+    }
+
+    // =========================================================================
+    // PRIVATE: Build the whole-school dataset shared by the PDF and Web exports
+    // =========================================================================
+    private function buildWholeSchoolExportData($sessionId, $termId): array
+    {
+        $settings = TimetableSetting::with(['session', 'term', 'periods'])
+            ->join('schoolclass', 'schoolclass.id', '=', 'timetable_settings.schoolclass_id')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['timetable_settings.*', 'schoolclass.schoolclass as _class_name', 'schoolarm.arm as _arm_name'])
+            ->where('timetable_settings.session_id', $sessionId)
+            ->when($termId, fn($q) => $q->where('timetable_settings.term_id', $termId))
+            ->where('timetable_settings.is_active', true)
+            ->orderBy('schoolclass.schoolclass')->orderBy('schoolarm.arm')->get();
+
+        $schoolInfo = SchoolInformation::getActiveSchool();
+        $session    = Schoolsession::find($sessionId);
+        $term       = $termId ? Schoolterm::find($termId) : null;
+
+        if ($settings->isEmpty()) {
+            return [[], $schoolInfo, $session, $term, []];
+        }
+
+        $allTimetables = [];
+
+        foreach ($settings as $setting) {
+            $className = trim(($setting->_class_name ?? '') . ' ' . ($setting->_arm_name ?? '')) ?: 'Unknown Class';
+            $slots     = TimetableSlot::where('setting_id', $setting->id)
+                ->with(['subject', 'teacher', 'period', 'room'])->get();
+
+            $grid = [];
+            foreach ($slots as $slot) {
+                $grid[$slot->period_id][$slot->day] = [
+                    'subject' => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
+                    'teacher' => $slot->teacher?->name ?? '',
+                    'room'    => ($slot->room_id && $slot->room) ? $slot->room->room_name : '',
+                    'is_free' => $slot->is_free ?? !$slot->subject_id,
+                ];
+            }
+
+            $days    = $setting->active_days ?? self::DAYS;
+            $dayMeta = $this->computeDayPeriodMeta($setting);
+
+            $allTimetables[] = [
+                'setting_id' => $setting->id,
+                'class_name' => $className,
+                'periods'    => $setting->periods,
+                'grid'       => $grid,
+                'days'       => $days,
+                'day_meta'   => $dayMeta,
+                'stats'      => $this->buildClassStats($grid, $setting->periods, $days, $dayMeta),
+            ];
+        }
+
+        $overallStats = [
+            'total_classes'   => count($allTimetables),
+            'total_teachers'  => collect($allTimetables)->pluck('stats.teacher_names')->flatten()->filter()->unique()->count(),
+            'avg_fill_rate'   => (int) round(collect($allTimetables)->avg(fn($t) => $t['stats']['fill_rate'])),
+            'total_conflicts' => $this->countConflictsForScope((int) $sessionId, $termId ? (int) $termId : null)['total'],
+        ];
+
+        return [$allTimetables, $schoolInfo, $session, $term, $overallStats];
+    }
+
+
+
 }
