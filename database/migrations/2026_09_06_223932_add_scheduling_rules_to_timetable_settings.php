@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // FIRST PASS: Add columns without any 'after' positioning
         Schema::table('timetable_settings', function (Blueprint $table) {
             if (!Schema::hasColumn('timetable_settings', 'free_periods_per_week')) {
                 $table->unsignedInteger('free_periods_per_week')->nullable()->default(0);
