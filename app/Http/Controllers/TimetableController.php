@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TimetableController extends Controller
 {
@@ -3035,5 +3036,28 @@ class TimetableController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    // =========================================================================
+    // PRIVATE: Build the whole-school timetable PDF — one page per class.
+    // =========================================================================
+    private function exportWholeSchoolPdf(array $allTimetables, ?SchoolInformation $schoolInfo, ?Schoolsession $session, ?Schoolterm $term, string $orientation)
+    {
+        $sessionName = $session->session ?? 'Session';
+        $termName    = $term?->term ?? 'All Terms';
+
+        $pdf = Pdf::loadView('timetable.exports.whole-school', [
+            'allTimetables' => $allTimetables,
+            'schoolInfo'    => $schoolInfo,
+            'sessionName'   => $sessionName,
+            'termName'      => $termName,
+            'orientation'   => $orientation,
+            'dayColors'     => self::DAY_COLORS,
+            'generatedAt'   => now()->format('d M Y, H:i'),
+        ])->setPaper($orientation === 'vertical' ? 'a4' : 'a3', 'landscape');
+
+        $filename = 'whole-school-timetable-' . str_replace([' ', '/'], '-', $sessionName) . '.pdf';
+
+        return $pdf->stream($filename);
     }
 }
