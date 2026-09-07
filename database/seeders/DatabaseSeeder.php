@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Permission;
 
 class DatabaseSeeder extends Seeder
 {
@@ -463,6 +464,34 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
+     * Check if a permission already exists
+     */
+    protected function permissionExists(string $permissionName, string $guardName = 'web'): bool
+    {
+        return Permission::where('name', $permissionName)
+            ->where('guard_name', $guardName)
+            ->exists();
+    }
+
+    /**
+     * Safely create a permission if it doesn't exist
+     */
+    protected function createPermissionIfNotExists(string $permissionName, string $guardName = 'web', ?string $title = null): bool
+    {
+        if ($this->permissionExists($permissionName, $guardName)) {
+            return false;
+        }
+
+        $data = ['name' => $permissionName, 'guard_name' => $guardName];
+        if ($title) {
+            $data['title'] = $title;
+        }
+
+        Permission::create($data);
+        return true;
+    }
+
+    /**
      * Safely call a seeder with error handling, progress indicator, and skip if already run
      */
     protected function safeCall($seeder, $name, $message = null): array
@@ -486,6 +515,7 @@ class DatabaseSeeder extends Seeder
         }
 
         try {
+            // Run the seeder
             $this->call($seeder);
             $this->logSeederRun($seeder, true);
 
@@ -495,6 +525,17 @@ class DatabaseSeeder extends Seeder
             }
             return ['success' => true];
         } catch (\Exception $e) {
+            // Check if the error is about duplicate permissions
+            if (str_contains($e->getMessage(), 'PermissionAlreadyExists')) {
+                if ($message) {
+                    $this->command->getOutput()->write("\r\033[K");
+                    $this->command->warn("  ⚠️  {$name} - some permissions already exist, skipping duplicates");
+                }
+                // Log as partially successful
+                $this->logSeederRun($seeder, true, 'Some permissions already existed');
+                return ['success' => true, 'skipped' => false];
+            }
+
             if ($message) {
                 $this->command->getOutput()->write("\r\033[K");
                 $this->command->error("  ❌ {$name} failed: " . $e->getMessage());
@@ -527,6 +568,8 @@ class DatabaseSeeder extends Seeder
             'schoolterm' => '📅 Terms',
             'schoolsession' => '📅 Sessions',
             'schoolclass' => '🏫 Classes',
+            'permissions' => '🔐 Permissions',
+            'roles' => '👥 Roles',
         ];
 
         $stats = [];
