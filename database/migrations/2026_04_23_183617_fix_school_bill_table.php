@@ -113,14 +113,14 @@ return new class extends Migration
                             DB::statement('ALTER TABLE school_bill_class_term_session MODIFY created_by BIGINT UNSIGNED NULL');
                         } catch (\Exception $e) {
                             // If modification fails, we'll skip the foreign key
-                            $this->logMessage('Could not modify created_by column type', 'warn');
+                            error_log('Could not modify created_by column type: ' . $e->getMessage());
                         }
                     }
                 }
             });
 
-            // Convert string IDs to integers if needed (keep your existing conversion logic)
-            // ... (add your conversion code here if needed)
+            // Convert string IDs to integers if needed
+            $this->convertStringIdsToIntegers();
         }
 
         // ============================================
@@ -137,26 +137,76 @@ return new class extends Migration
     }
 
     /**
-     * Log a message (works in both console and web)
+     * Convert string IDs to integers
      */
-    private function logMessage(string $message, string $type = 'info'): void
+    private function convertStringIdsToIntegers(): void
     {
-        if ($this->getCommand()) {
-            // Running from CLI
-            switch ($type) {
-                case 'warn':
-                    $this->getCommand()->warn($message);
-                    break;
-                case 'error':
-                    $this->getCommand()->error($message);
-                    break;
-                default:
-                    $this->getCommand()->info($message);
-                    break;
+        $tableName = 'school_bill_class_term_session';
+        
+        if (!Schema::hasTable($tableName)) {
+            return;
+        }
+
+        $columnsToCheck = ['bill_id', 'class_id', 'termid_id', 'session_id'];
+        $needsConversion = false;
+
+        foreach ($columnsToCheck as $column) {
+            if (Schema::hasColumn($tableName, $column)) {
+                try {
+                    $columnType = DB::getSchemaBuilder()->getColumnType($tableName, $column);
+                    if ($columnType !== 'bigint' && $columnType !== 'integer' && $columnType !== 'bigint unsigned') {
+                        $needsConversion = true;
+                        break;
+                    }
+                } catch (\Exception $e) {
+                    $needsConversion = true;
+                }
             }
-        } else {
-            // Running from web or testing
-            \Log::info($message);
+        }
+
+        if ($needsConversion) {
+            try {
+                // Add new integer columns
+                Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                    if (!Schema::hasColumn($tableName, 'bill_id_new')) {
+                        $table->unsignedBigInteger('bill_id_new')->nullable()->after('id');
+                        $table->unsignedBigInteger('class_id_new')->nullable()->after('bill_id_new');
+                        $table->unsignedBigInteger('termid_id_new')->nullable()->after('class_id_new');
+                        $table->unsignedBigInteger('session_id_new')->nullable()->after('termid_id_new');
+                    }
+                });
+
+                // Migrate data
+                DB::statement('UPDATE school_bill_class_term_session SET bill_id_new = CAST(bill_id AS UNSIGNED) WHERE bill_id IS NOT NULL AND bill_id != ""');
+                DB::statement('UPDATE school_bill_class_term_session SET class_id_new = CAST(class_id AS UNSIGNED) WHERE class_id IS NOT NULL AND class_id != ""');
+                DB::statement('UPDATE school_bill_class_term_session SET termid_id_new = CAST(termid_id AS UNSIGNED) WHERE termid_id IS NOT NULL AND termid_id != ""');
+                DB::statement('UPDATE school_bill_class_term_session SET session_id_new = CAST(session_id AS UNSIGNED) WHERE session_id IS NOT NULL AND session_id != ""');
+
+                // Drop old columns and rename new ones
+                Schema::table($tableName, function (Blueprint $table) {
+                    if (Schema::hasColumn('school_bill_class_term_session', 'bill_id')) {
+                        $table->dropColumn('bill_id');
+                    }
+                    if (Schema::hasColumn('school_bill_class_term_session', 'class_id')) {
+                        $table->dropColumn('class_id');
+                    }
+                    if (Schema::hasColumn('school_bill_class_term_session', 'termid_id')) {
+                        $table->dropColumn('termid_id');
+                    }
+                    if (Schema::hasColumn('school_bill_class_term_session', 'session_id')) {
+                        $table->dropColumn('session_id');
+                    }
+
+                    if (Schema::hasColumn('school_bill_class_term_session', 'bill_id_new')) {
+                        $table->renameColumn('bill_id_new', 'bill_id');
+                        $table->renameColumn('class_id_new', 'class_id');
+                        $table->renameColumn('termid_id_new', 'termid_id');
+                        $table->renameColumn('session_id_new', 'session_id');
+                    }
+                });
+            } catch (\Exception $e) {
+                error_log('Error converting IDs: ' . $e->getMessage());
+            }
         }
     }
 
@@ -168,6 +218,7 @@ return new class extends Migration
         $tableName = 'school_bill_class_term_session';
         
         if (!Schema::hasTable($tableName)) {
+            error_log("Table {$tableName} doesn't exist, skipping foreign keys");
             return;
         }
 
@@ -179,7 +230,7 @@ return new class extends Migration
             try {
                 $userIdType = DB::getSchemaBuilder()->getColumnType('users', 'id');
             } catch (\Exception $e) {
-                $this->logMessage('Could not determine users.id column type', 'warn');
+                error_log('Could not determine users.id column type: ' . $e->getMessage());
             }
         }
 
@@ -202,20 +253,20 @@ return new class extends Migration
                 'columnType' => 'unsignedBigInteger'
             ];
         } else {
-            $this->logMessage('Skipping created_by foreign key - users table or column type issue', 'warn');
+            error_log('Skipping created_by foreign key - users table or column type issue');
         }
 
         // Add each foreign key if it doesn't exist
         foreach ($foreignKeys as $column => $config) {
             if (!Schema::hasColumn($tableName, $column)) {
-                $this->logMessage("Column {$column} doesn't exist in {$tableName}", 'warn');
+                error_log("Column {$column} doesn't exist in {$tableName}");
                 continue;
             }
 
             if (!in_array($config['constraint'], $existingForeignKeys)) {
                 // Check if the referenced table exists
                 if (!Schema::hasTable($config['table'])) {
-                    $this->logMessage("Referenced table {$config['table']} doesn't exist, skipping foreign key", 'warn');
+                    error_log("Referenced table {$config['table']} doesn't exist, skipping foreign key");
                     continue;
                 }
 
@@ -231,12 +282,12 @@ return new class extends Migration
                               ->onDelete('cascade');
                     });
                     
-                    $this->logMessage("Added foreign key {$config['constraint']} on {$tableName}.{$column}", 'info');
+                    error_log("Added foreign key {$config['constraint']} on {$tableName}.{$column}");
                 } catch (\Exception $e) {
-                    $this->logMessage("Could not add foreign key {$config['constraint']}: " . $e->getMessage(), 'warn');
+                    error_log("Could not add foreign key {$config['constraint']}: " . $e->getMessage());
                 }
             } else {
-                $this->logMessage("Foreign key {$config['constraint']} already exists, skipping", 'info');
+                error_log("Foreign key {$config['constraint']} already exists, skipping");
             }
         }
     }
@@ -264,11 +315,11 @@ return new class extends Migration
             // Only modify if the type is different
             if ($currentType !== $expectedType && !str_contains($currentType, $expectedType)) {
                 DB::statement("ALTER TABLE {$table} MODIFY {$column} {$expectedType} NULL");
-                $this->logMessage("Changed {$table}.{$column} type to {$expectedType}", 'info');
+                error_log("Changed {$table}.{$column} type to {$expectedType}");
             }
         } catch (\Exception $e) {
             // If we can't determine or modify the type, skip
-            $this->logMessage("Could not ensure column type for {$table}.{$column}: " . $e->getMessage(), 'warn');
+            error_log("Could not ensure column type for {$table}.{$column}: " . $e->getMessage());
         }
     }
 
@@ -305,7 +356,7 @@ return new class extends Migration
             $indexes = DB::select("SHOW INDEX FROM {$tableName}");
             $existingIndexes = array_column($indexes, 'Key_name');
         } catch (\Exception $e) {
-            $this->logMessage('Could not fetch existing indexes', 'warn');
+            error_log('Could not fetch existing indexes: ' . $e->getMessage());
             return;
         }
 
@@ -314,14 +365,14 @@ return new class extends Migration
                 try {
                     $table->index(['class_id', 'termid_id', 'session_id'], 'idx_sbcts_cts');
                 } catch (\Exception $e) {
-                    $this->logMessage('Could not add index idx_sbcts_cts: ' . $e->getMessage(), 'warn');
+                    error_log('Could not add index idx_sbcts_cts: ' . $e->getMessage());
                 }
             }
             if (!in_array('idx_sbcts_bill', $existingIndexes)) {
                 try {
                     $table->index('bill_id', 'idx_sbcts_bill');
                 } catch (\Exception $e) {
-                    $this->logMessage('Could not add index idx_sbcts_bill: ' . $e->getMessage(), 'warn');
+                    error_log('Could not add index idx_sbcts_bill: ' . $e->getMessage());
                 }
             }
             if (!in_array('uk_sbcts_unique', $existingIndexes)) {
@@ -330,7 +381,7 @@ return new class extends Migration
                         $table->unique(['bill_id', 'class_id', 'termid_id', 'session_id'], 'uk_sbcts_unique');
                     }
                 } catch (\Exception $e) {
-                    $this->logMessage('Could not add unique constraint uk_sbcts_unique: ' . $e->getMessage(), 'warn');
+                    error_log('Could not add unique constraint uk_sbcts_unique: ' . $e->getMessage());
                 }
             }
         });
