@@ -683,6 +683,17 @@
     animation: fadeSlideUp 0.2s ease both;
 }
 
+/* ── Teacher assignment table ─────────────────────── */
+#teacherAssignmentContainer table tr {
+    animation: fadeIn 0.2s ease;
+}
+.assignment-teacher-select {
+    min-width: 220px;
+}
+.ta-row-status {
+    font-size: 15px;
+}
+
 /* ── Utility ──────────────────────────────────────── */
 .cursor-pointer {
     cursor: pointer;
@@ -814,6 +825,9 @@
     .tt-cell .cell-avatar-placeholder i {
         font-size: 13px;
     }
+    .assignment-teacher-select {
+        min-width: 160px;
+    }
 }
 </style>
 
@@ -833,6 +847,9 @@
             <a href="{{ route('timetable.teacher') }}" class="btn btn-outline-light btn-sm">
                 <i class="ri-user-line me-1"></i>My Timetable
             </a>
+            <button class="btn btn-outline-light btn-sm" onclick="openTeacherAssignModal()">
+                <i class="ri-user-settings-line me-1"></i>Assign Teachers
+            </button>
             <button class="btn btn-outline-light btn-sm" onclick="openGenerationWizardModal()">
                 <i class="ri-magic-line me-1"></i>Generation Wizard
             </button>
@@ -1191,6 +1208,64 @@
 
 </div>
 </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- TEACHER ASSIGNMENT MODAL                                     --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="teacherAssignModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#6A1B9A)">
+        <h5 class="modal-title text-white"><i class="ri-user-settings-line me-2"></i>Assign Teachers to Subjects</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+        <p class="text-muted mb-3" style="font-size:13px">
+            Pick a session (and optionally a term) to see every subject taught in every class, and assign or change the teacher for each. Changes save immediately — no separate save step.
+        </p>
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+            <select class="form-select" id="taSessionId" onchange="loadTeacherAssignments()">
+              <option value="">— Select —</option>
+              @foreach($schoolsessions as $session)
+                <option value="{{ $session->id }}">{{ $session->session }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Term <span class="text-muted fw-normal">(optional)</span></label>
+            <select class="form-select" id="taTermId" onchange="loadTeacherAssignments()">
+              <option value="">All Terms</option>
+              @foreach($schoolterms as $term)
+                <option value="{{ $term->id }}">{{ $term->term }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Search</label>
+            <input type="text" class="form-control" id="taSearchInput" placeholder="Filter by class, subject or teacher…" oninput="renderTeacherAssignmentTable()">
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" id="taSummaryBar" style="display:none">
+            <span class="badge bg-success-subtle text-success" id="taAssignedCount">0 assigned</span>
+            <span class="badge bg-warning-subtle text-warning" id="taUnassignedCount">0 unassigned</span>
+        </div>
+
+        <div id="teacherAssignmentContainer">
+            <div class="text-center py-5 text-muted">
+                <i class="ri-user-settings-line ri-3x d-block mb-3 opacity-30"></i>
+                <p>Select a session to load subject/teacher assignments.</p>
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 {{-- ============================================================ --}}
@@ -1615,6 +1690,8 @@ let pendingCloneId    = null;
 let roomTomSelect     = null;
 let conflictCheckTimer = null;
 let selectedSettingIds = new Set();
+let taData = { teachers: [], unassigned: [] };
+let taRows = [];
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
 const subjectColorMap = {};
@@ -1647,6 +1724,9 @@ const ROUTES = {
     autoGenerateWholeSchool:    '{{ route("timetable.auto-generate-whole-school") }}',
     rebuildPeriodsFromAnchors:  '{{ route("timetable.rebuild-periods-from-anchors") }}',
     saveHalfDays:               '{{ route("timetable.save-half-days") }}',
+    getTeacherAssignments:      '{{ url("/timetable/timetable/teacher-assignments") }}',
+    assignTeacher:              '{{ url("/timetable/timetable/assign-teacher") }}',
+    unassignTeacher:            '{{ url("/timetable/timetable/unassign-teacher") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
@@ -1683,6 +1763,166 @@ function closeEditor() {
     document.getElementById('timetableEditor').style.display = 'none';
     currentSettingId = null;
     currentSettingVersion = null;
+}
+
+// ============================================================================
+// TEACHER ASSIGNMENT MODAL
+// ============================================================================
+function openTeacherAssignModal() {
+    document.getElementById('teacherAssignmentContainer').innerHTML = `
+        <div class="text-center py-5 text-muted">
+            <i class="ri-user-settings-line ri-3x d-block mb-3 opacity-30"></i>
+            <p>Select a session to load subject/teacher assignments.</p>
+        </div>`;
+    document.getElementById('taSummaryBar').style.display = 'none';
+    document.getElementById('taSearchInput').value = '';
+    new bootstrap.Modal(document.getElementById('teacherAssignModal')).show();
+}
+
+async function loadTeacherAssignments() {
+    const sessionId = document.getElementById('taSessionId').value;
+    const termId    = document.getElementById('taTermId').value;
+    const container = document.getElementById('teacherAssignmentContainer');
+
+    if (!sessionId) {
+        container.innerHTML = `<div class="text-center py-5 text-muted"><p>Select a session to load subject/teacher assignments.</p></div>`;
+        document.getElementById('taSummaryBar').style.display = 'none';
+        taRows = [];
+        return;
+    }
+
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Loading assignments…</p></div>';
+
+    try {
+        const params = new URLSearchParams({ session_id: sessionId });
+        if (termId) params.set('term_id', termId);
+        const res  = await apiFetch(`${ROUTES.getTeacherAssignments}?${params.toString()}`, 'GET');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed to load.');
+
+        taData = data;
+        taRows = buildAssignmentRows(data);
+        renderTeacherAssignmentTable();
+    } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function buildAssignmentRows(data) {
+    const rows = [];
+    (data.unassigned || []).forEach(u => rows.push({ ...u, teacher_id: null, teacher_name: null }));
+    (data.teachers || []).forEach(t => {
+        (t.assignments || []).forEach(a => rows.push({ ...a, teacher_id: t.teacher_id, teacher_name: t.teacher_name }));
+    });
+    rows.sort((a, b) =>
+        (a.class_name || '').localeCompare(b.class_name || '') ||
+        (a.subject_name || '').localeCompare(b.subject_name || '')
+    );
+    return rows;
+}
+
+function renderTeacherAssignmentTable() {
+    const container = document.getElementById('teacherAssignmentContainer');
+    const search    = (document.getElementById('taSearchInput').value || '').toLowerCase().trim();
+
+    if (!taRows.length) {
+        document.getElementById('taSummaryBar').style.display = 'none';
+        container.innerHTML = `<div class="text-center py-5 text-muted">
+            <i class="ri-information-line ri-2x d-block mb-2"></i>
+            <p>No subjects assigned to any class for this session/term yet. Assign subjects to classes first (via your Subjects/Classes setup) before assigning teachers here.</p>
+        </div>`;
+        return;
+    }
+
+    const filtered = !search ? taRows : taRows.filter(r =>
+        (r.class_name || '').toLowerCase().includes(search) ||
+        (r.subject_name || '').toLowerCase().includes(search) ||
+        (r.teacher_name || '').toLowerCase().includes(search)
+    );
+
+    const assignedCount   = taRows.filter(r => r.teacher_id).length;
+    const unassignedCount = taRows.length - assignedCount;
+    document.getElementById('taSummaryBar').style.display = '';
+    document.getElementById('taAssignedCount').textContent   = `${assignedCount} assigned`;
+    document.getElementById('taUnassignedCount').textContent = `${unassignedCount} unassigned`;
+
+    if (!filtered.length) {
+        container.innerHTML = `<div class="text-center py-4 text-muted"><p>No matches for "${escapeHtml(search)}".</p></div>`;
+        return;
+    }
+
+    const teacherOptions = (taData.teachers || [])
+        .map(t => `<option value="${t.teacher_id}">${escapeHtml(t.teacher_name)}</option>`)
+        .join('');
+
+    let html = `<div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr>
+            <th>Class</th><th>Subject</th><th style="width:280px">Teacher</th><th style="width:50px"></th>
+        </tr></thead><tbody>`;
+
+    filtered.forEach(row => {
+        html += `<tr data-subjectclass-id="${row.subjectclass_id}">
+            <td>${escapeHtml(row.class_name || '—')}</td>
+            <td>${escapeHtml(row.subject_name || '—')}</td>
+            <td>
+                <select class="form-select form-select-sm assignment-teacher-select" data-subjectclass-id="${row.subjectclass_id}" onchange="onAssignmentTeacherChange(this)">
+                    <option value="">— Unassigned —</option>
+                    ${teacherOptions}
+                </select>
+            </td>
+            <td class="text-center"><span class="ta-row-status" id="taStatus${row.subjectclass_id}"></span></td>
+        </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+
+    filtered.forEach(row => {
+        const sel = container.querySelector(`.assignment-teacher-select[data-subjectclass-id="${row.subjectclass_id}"]`);
+        if (sel) sel.value = row.teacher_id || '';
+    });
+}
+
+async function onAssignmentTeacherChange(selectEl) {
+    const subjectclassId = parseInt(selectEl.dataset.subjectclassId);
+    const teacherId       = selectEl.value;
+    const statusEl        = document.getElementById(`taStatus${subjectclassId}`);
+    selectEl.disabled     = true;
+    if (statusEl) statusEl.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+
+    try {
+        let ok = false;
+        if (teacherId) {
+            const res  = await apiFetch(ROUTES.assignTeacher, 'POST', { subjectclass_id: subjectclassId, teacher_id: parseInt(teacherId) });
+            const data = await res.json();
+            ok = !!data.success;
+        } else {
+            const res  = await apiFetch(url(ROUTES.unassignTeacher, subjectclassId), 'DELETE');
+            const data = await res.json();
+            ok = !!data.success;
+        }
+
+        if (ok) {
+            const row = taRows.find(r => r.subjectclass_id === subjectclassId);
+            if (row) {
+                row.teacher_id   = teacherId ? parseInt(teacherId) : null;
+                const t          = (taData.teachers || []).find(t => t.teacher_id == teacherId);
+                row.teacher_name = t ? t.teacher_name : null;
+            }
+            if (statusEl) statusEl.innerHTML = '<i class="ri-checkbox-circle-fill text-success"></i>';
+            setTimeout(() => { if (statusEl) statusEl.innerHTML = ''; }, 1500);
+
+            const assignedCount = taRows.filter(r => r.teacher_id).length;
+            document.getElementById('taAssignedCount').textContent   = `${assignedCount} assigned`;
+            document.getElementById('taUnassignedCount').textContent = `${taRows.length - assignedCount} unassigned`;
+        } else {
+            if (statusEl) statusEl.innerHTML = '<i class="ri-error-warning-fill text-danger" title="Save failed"></i>';
+        }
+    } catch (e) {
+        if (statusEl) statusEl.innerHTML = '<i class="ri-error-warning-fill text-danger" title="Save failed"></i>';
+    } finally {
+        selectEl.disabled = false;
+    }
 }
 
 // ============================================================================
