@@ -334,36 +334,17 @@ Route::group(['middleware' => ['auth']], function () {
     // STUDENT MANAGEMENT ROUTES
     // ================================================
 
-    // Core resource
-    Route::resource('student', StudentController::class)->except(['destroy']);
-
     // ------------------------------------------------
-    // Individual Student Operations
-    // ------------------------------------------------
-    Route::prefix('student')->name('student.')->group(function () {
-        Route::delete('{id}/destroy', [StudentController::class, 'destroy'])->name('destroy');
-        Route::get('studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('deletestudent');
-
-        Route::get('overview/{id}', [StudentController::class, 'overview'])->name('overview');
-        Route::get('settings/{id}', [StudentController::class, 'setting'])->name('settings');
-
-        Route::put('updateclass', [StudentController::class, 'updateClass'])->name('updateclass');
-        Route::post('generate-student-pdf', [StudentController::class, 'generateStudentPdf'])->name('pdf');
-    });
-
-    // ------------------------------------------------
-    // Bulk / Batch Upload
+    // Bulk / Batch Upload  (fixed segments — must come BEFORE the resource route)
     // ------------------------------------------------
     Route::prefix('student')->group(function () {
         Route::get('bulkupload', [StudentController::class, 'bulkupload'])->name('student.bulkupload');
         Route::post('bulkuploadsave', [StudentController::class, 'bulkuploadsave'])->name('student.bulkuploadsave');
 
-        // Exact name expected by the sidebar
         Route::get('batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
 
         Route::delete('deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
 
-        // Template + progress + errors
         Route::get('batch/generate-template', [StudentController::class, 'generateBatchTemplate'])->name('student.batch.generateTemplate');
         Route::get('batch/import-progress', [StudentController::class, 'getBatchImportProgress'])->name('student.batch.importProgress');
         Route::get('batch/{id}/errors', [StudentController::class, 'getBatchImportErrors'])->name('student.batch.errors');
@@ -386,6 +367,20 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('students/report-progress', [StudentController::class, 'getReportProgress'])->name('students.report-progress');
     Route::get('students/by-class-session', [StudentController::class, 'getStudentsByClassAndSession'])->name('students.by-class-session');
     Route::post('students/bulk-update-status', [StudentController::class, 'bulkUpdateStatus'])->name('students.bulk-update-status');
+
+    // ------------------------------------------------
+    // Individual Student Operations (fixed segments before wildcards)
+    // ------------------------------------------------
+    Route::prefix('student')->name('student.')->group(function () {
+        Route::delete('{id}/destroy', [StudentController::class, 'destroy'])->name('destroy');
+        Route::get('studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('deletestudent');
+
+        Route::get('overview/{id}', [StudentController::class, 'overview'])->name('overview');
+        Route::get('settings/{id}', [StudentController::class, 'setting'])->name('settings');
+
+        Route::put('updateclass', [StudentController::class, 'updateClass'])->name('updateclass');
+        Route::post('generate-student-pdf', [StudentController::class, 'generateStudentPdf'])->name('pdf');
+    });
 
     // ------------------------------------------------
     // Current Term Helpers
@@ -420,6 +415,12 @@ Route::group(['middleware' => ['auth']], function () {
             ] : null,
         ]);
     })->name('system.active-term-session');
+
+    // ================================================
+    // RESOURCE ROUTE — must come LAST so it doesn't swallow
+    // fixed-segment paths like /student/batchindex, /student/bulkupload, etc.
+    // ================================================
+    Route::resource('student', StudentController::class)->except(['destroy']);
 
 
     // ================================================
