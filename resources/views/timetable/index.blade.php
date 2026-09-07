@@ -1703,7 +1703,11 @@ function getSubjectColor(subjectId) {
     return subjectColorMap[subjectId];
 }
 
+// ============================================================================
+// ROUTES — All routes use Laravel's route() helper to generate correct URLs
+// ============================================================================
 const ROUTES = {
+    // Simple routes (no parameters)
     setup:                      '{{ route("timetable.setup") }}',
     saveSettings:               '{{ route("timetable.save-settings") }}',
     saveConstraints:            '{{ route("timetable.save-constraints") }}',
@@ -1711,26 +1715,34 @@ const ROUTES = {
     saveSlot:                   '{{ route("timetable.save-slot") }}',
     sendNotifications:          '{{ route("timetable.send-notifications") }}',
     cloneSetting:               '{{ route("timetable.clone-setting") }}',
-    getSetting:                 '{{ url("/timetable/get-setting") }}',
-    getGrid:                    '{{ url("/timetable/get-grid") }}',
-    checkConflicts:             '{{ url("/timetable/check-conflicts") }}',
-    checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
-    export:                     '{{ url("/timetable/export") }}',
-    deleteSetting:              '{{ url("/timetable/delete-setting") }}',
     exportWholeSchool:          '{{ route("timetable.export-whole-school") }}',
-    heartbeat:                  '{{ url("/timetable/heartbeat") }}',
-    releaseEditing:             '{{ url("/timetable/release-editing") }}',
     applyGenerationTemplate:    '{{ route("timetable.apply-generation-template") }}',
     autoGenerateWholeSchool:    '{{ route("timetable.auto-generate-whole-school") }}',
     rebuildPeriodsFromAnchors:  '{{ route("timetable.rebuild-periods-from-anchors") }}',
     saveHalfDays:               '{{ route("timetable.save-half-days") }}',
-    getTeacherAssignments:      '{{ url("/timetable/timetable/teacher-assignments") }}',
-    assignTeacher:              '{{ url("/timetable/timetable/assign-teacher") }}',
-    unassignTeacher:            '{{ url("/timetable/timetable/unassign-teacher") }}',
+    checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
+    getTeacherAssignments:      '{{ route("timetable.teacher-assignments") }}',
+    assignTeacher:              '{{ route("timetable.assign-teacher") }}',
+
+    // Routes with :id placeholders — use url() function below to replace
+    getSetting:                 '{{ route("timetable.get-setting", ["settingId" => ":id"]) }}',
+    getGrid:                    '{{ route("timetable.get-grid", ["settingId" => ":id"]) }}',
+    checkConflicts:             '{{ route("timetable.check-conflicts", ["settingId" => ":id"]) }}',
+    export:                     '{{ route("timetable.export", ["settingId" => ":id"]) }}',
+    deleteSetting:              '{{ route("timetable.delete-setting", ["settingId" => ":id"]) }}',
+    heartbeat:                  '{{ route("timetable.heartbeat", ["id" => ":id"]) }}',
+    releaseEditing:             '{{ route("timetable.release-editing", ["id" => ":id"]) }}',
+    unassignTeacher:            '{{ route("timetable.unassign-teacher", ["subjectclassId" => ":id"]) }}',
 };
+
 const CSRF = '{{ csrf_token() }}';
 
-function url(base, id) { return base.replace(/\/$/, '') + '/' + id; }
+// ============================================================================
+// URL HELPER — Replaces :id placeholder with the actual ID
+// ============================================================================
+function url(base, id) {
+    return base.replace(/:id\b/, id);
+}
 
 // ============================================================================
 // UTILITIES
