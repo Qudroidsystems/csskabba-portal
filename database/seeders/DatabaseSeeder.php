@@ -10,25 +10,20 @@ use Illuminate\Support\Facades\Log;
 class DatabaseSeeder extends Seeder
 {
     /**
+     * Track which seeders have been run
+     */
+    protected array $runSeeders = [];
+
+    /**
      * Seed the application's database.
      *
      * This seeder runs all seeders in the correct order with detailed progress reporting.
-     *
-     * Order of execution:
-     * 1. Core Permissions - Foundation for all access control
-     * 2. User & Role Management - Base user data
-     * 3. Academic Structure - Terms, classes, subjects
-     * 4. Academic Permissions - Teacher, student, exam permissions
-     * 5. Parent Portal Permissions
-     * 6. Timetable & Scheduling Permissions
-     * 7. Promotion & School Bill Permissions
-     * 8. Finance Permissions
-     * 9. Finance Lookup & Reference Data
-     * 10. Payment Gateways
-     * 11. Demo/Local Data (Development Only)
      */
     public function run(): void
     {
+        // Load already run seeders from the database
+        $this->loadRunSeeders();
+
         // Start timing the seeding process
         $startTime = microtime(true);
         $seededCount = 0;
@@ -51,16 +46,13 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         $result = $this->safeCall(PermissionTableSeeder::class, 'PermissionTableSeeder', '🔐 Seeding permission tables...');
-        if ($result['success']) { $seededCount++; } else { $failedCount++; }
-
-        // RoleTableSeeder is commented - keeping as is from original
-        // $this->call(RoleTableSeeder::class);
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
 
         $result = $this->safeCall(UserTableSeeder::class, 'UserTableSeeder', '👤 Seeding user data...');
-        if ($result['success']) { $seededCount++; } else { $failedCount++; }
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
 
         $result = $this->safeCall(TermTableSeeder::class, 'TermTableSeeder', '📅 Seeding term data...');
-        if ($result['success']) { $seededCount++; } else { $failedCount++; }
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
 
         $this->command->info('');
 
@@ -90,14 +82,13 @@ class DatabaseSeeder extends Seeder
             'SubjectVettedPermissionTableSeeder' => '  ✅ Seeding subject vetted permissions...',
             'SubjectVettingsPermissionTableSeeder' => '  🔍 Seeding subject vettings...',
             'StudentAssessmentPermissionTableSeeder' => '  📝 Seeding student assessment permissions...',
-            'IdCardPermissionTableSeeder' => '  📝 Seeding student ID Card permissions...',
+            'IdCardPermissionTableSeeder' => '  🪪 Seeding student ID Card permissions...',
             'AdminScoreEntryPermissionSeeder' => '  📝 Seeding Admin score entry...',
-
         ];
 
         foreach ($academicSeeders as $seeder => $message) {
             $result = $this->safeCall($seeder, $seeder, $message);
-            if ($result['success']) { $seededCount++; } else { $failedCount++; }
+            $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
         }
 
         $this->command->info('');
@@ -118,7 +109,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($examSeeders as $seeder => $message) {
             $result = $this->safeCall($seeder, $seeder, $message);
-            if ($result['success']) { $seededCount++; } else { $failedCount++; }
+            $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
         }
 
         $this->command->info('');
@@ -132,7 +123,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         $result = $this->safeCall(ParentPermissionTableSeeder::class, 'ParentPermissionTableSeeder', '  👪 Seeding parent portal permissions...');
-        if ($result['success']) { $seededCount++; } else { $failedCount++; }
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
 
         $this->command->info('');
 
@@ -154,7 +145,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($timetableSeeders as $seeder => $message) {
             $result = $this->safeCall($seeder, $seeder, $message);
-            if ($result['success']) { $seededCount++; } else { $failedCount++; }
+            $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
         }
 
         $this->command->info('');
@@ -168,10 +159,10 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         $result = $this->safeCall(PromotionPermissionTableSeeder::class, 'PromotionPermissionTableSeeder', '  🚀 Seeding promotion permissions...');
-        if ($result['success']) { $seededCount++; } else { $failedCount++; }
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
 
         $result = $this->safeCall(SchoolBillTermSessionPermissionTableSeeder::class, 'SchoolBillTermSessionPermissionTableSeeder', '  💰 Seeding school bill term session permissions...');
-        if ($result['success']) { $seededCount++; } else { $failedCount++; }
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
 
         $this->command->info('');
 
@@ -187,20 +178,47 @@ class DatabaseSeeder extends Seeder
             'ScholarshipPermissionSeeder' => '  🎓 Seeding scholarship permissions...',
             'FinancePermissionSeeder' => '  💵 Seeding finance permissions...',
             'SiblingGroupPermissionSeeder' => '  👨‍👩‍👧 Seeding sibling group permissions...',
+            'StudentPaymentPermissionTableSeeder' => '  💳 Seeding student payment permissions...',
+            'FinancialReportPermissionSeeder' => '  📊 Seeding financial report permissions...',
         ];
 
         foreach ($financePermissionSeeders as $seeder => $message) {
             $result = $this->safeCall($seeder, $seeder, $message);
-            if ($result['success']) { $seededCount++; } else { $failedCount++; }
+            $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
         }
 
         $this->command->info('');
 
         // ============================================
-        // PART 8: FINANCE LOOKUP & REFERENCE DATA
+        // PART 8: UPDATED PERMISSION SEEDERS (NEW)
         // ============================================
         $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-        $this->command->info('│ 📚 PART 8: FINANCE LOOKUP & REFERENCE DATA                                 │');
+        $this->command->info('│ 🔄 PART 8: UPDATED PERMISSION SEEDERS                                      │');
+        $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
+        $this->command->info('');
+
+        $updatedSeeders = [
+            'UpdatedAttendancePermissionTableSeeder' => '  📋 Seeding updated attendance permissions...',
+            'UpdatedFinancialReportPermissionTableSeeder' => '  📊 Seeding updated financial report permissions...',
+            'UpdatedScholarshipPermissionTableSeeder' => '  🎓 Seeding updated scholarship permissions...',
+            'UpdatedAdminScoreEntryPermissionTableSeeder' => '  📝 Seeding updated admin score entry permissions...',
+            'UpdatedPromotionPermissionTableSeeder' => '  🚀 Seeding updated promotion permissions...',
+            'UpdatedTranscriptPermissionTableSeeder' => '  📄 Seeding updated transcript permissions...',
+            'UpdatedFinancePermissionTableSeeder' => '  💰 Seeding updated finance permissions...',
+        ];
+
+        foreach ($updatedSeeders as $seeder => $message) {
+            $result = $this->safeCall($seeder, $seeder, $message);
+            $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
+        }
+
+        $this->command->info('');
+
+        // ============================================
+        // PART 9: FINANCE LOOKUP & REFERENCE DATA
+        // ============================================
+        $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
+        $this->command->info('│ 📚 PART 9: FINANCE LOOKUP & REFERENCE DATA                                 │');
         $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
         $this->command->info('');
 
@@ -215,30 +233,30 @@ class DatabaseSeeder extends Seeder
 
         foreach ($financeLookupSeeders as $seeder => $message) {
             $result = $this->safeCall($seeder, $seeder, $message);
-            if ($result['success']) { $seededCount++; } else { $failedCount++; }
+            $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
         }
 
         $this->command->info('');
 
         // ============================================
-        // PART 9: PAYMENT GATEWAYS
+        // PART 10: PAYMENT GATEWAYS
         // ============================================
         $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-        $this->command->info('│ 🌐 PART 9: PAYMENT GATEWAYS                                               │');
+        $this->command->info('│ 🌐 PART 10: PAYMENT GATEWAYS                                              │');
         $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
         $this->command->info('');
 
         $result = $this->safeCall(DefaultPaymentGatewaysSeeder::class, 'DefaultPaymentGatewaysSeeder', '  🌐 Seeding default payment gateways...');
-        if ($result['success']) { $seededCount++; } else { $failedCount++; }
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
 
         $this->command->info('');
 
         // ============================================
-        // PART 10: DEMO/TEST DATA (DEVELOPMENT ONLY)
+        // PART 11: DEMO/TEST DATA (DEVELOPMENT ONLY)
         // ============================================
         if (app()->environment('local', 'development')) {
             $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-            $this->command->info('│ 🧪 PART 10: DEMO & TEST DATA (Development Environment)                     │');
+            $this->command->info('│ 🧪 PART 11: DEMO & TEST DATA (Development Environment)                    │');
             $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
             $this->command->info('');
 
@@ -256,17 +274,17 @@ class DatabaseSeeder extends Seeder
 
             foreach ($demoSeeders as $seeder => $message) {
                 $result = $this->safeCall($seeder, $seeder, $message);
-                if ($result['success']) { $seededCount++; } else { $failedCount++; }
+                $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
             }
 
             $this->command->info('');
         } else {
             $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-            $this->command->info('│ 🚀 PART 10: PRODUCTION ENVIRONMENT                                        │');
+            $this->command->info('│ 🚀 PART 11: PRODUCTION ENVIRONMENT                                        │');
             $this->command->info('│    Skipping demo data - only seeding essential data                       │');
             $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
             $this->command->info('');
-            $skippedCount = count($this->getDemoSeeders());
+            $skippedCount += count($this->getDemoSeeders());
         }
 
         // ============================================
@@ -317,7 +335,96 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Safely call a seeder with error handling and progress indicator
+     * Load previously run seeders from the database
+     */
+    protected function loadRunSeeders(): void
+    {
+        $this->runSeeders = [];
+
+        // Check if the seeder_log table exists
+        if (!Schema::hasTable('seeder_log')) {
+            // Create the seeder_log table if it doesn't exist
+            $this->createSeederLogTable();
+            return;
+        }
+
+        try {
+            $this->runSeeders = DB::table('seeder_log')
+                ->where('completed_at', '!=', null)
+                ->pluck('seeder_name')
+                ->toArray();
+        } catch (\Exception $e) {
+            // Table might not exist or be accessible
+            Log::warning('Could not load seeder log: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Create the seeder_log table if it doesn't exist
+     */
+    protected function createSeederLogTable(): void
+    {
+        Schema::create('seeder_log', function ($table) {
+            $table->id();
+            $table->string('seeder_name')->unique();
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            $table->boolean('success')->default(false);
+            $table->text('error_message')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Check if a seeder has already been run successfully
+     */
+    protected function hasBeenRun(string $seederName): bool
+    {
+        return in_array($seederName, $this->runSeeders);
+    }
+
+    /**
+     * Log that a seeder has been run
+     */
+    protected function logSeederRun(string $seederName, bool $success, ?string $error = null): void
+    {
+        try {
+            DB::table('seeder_log')->updateOrInsert(
+                ['seeder_name' => $seederName],
+                [
+                    'seeder_name' => $seederName,
+                    'started_at' => now(),
+                    'completed_at' => $success ? now() : null,
+                    'success' => $success,
+                    'error_message' => $error,
+                    'updated_at' => now(),
+                ]
+            );
+
+            if ($success && !in_array($seederName, $this->runSeeders)) {
+                $this->runSeeders[] = $seederName;
+            }
+        } catch (\Exception $e) {
+            // Silently fail - we don't want logging to break seeding
+        }
+    }
+
+    /**
+     * Update statistics
+     */
+    protected function updateStats(array $result, int &$seededCount, int &$failedCount, int &$skippedCount): void
+    {
+        if (isset($result['skipped']) && $result['skipped']) {
+            $skippedCount++;
+        } elseif ($result['success']) {
+            $seededCount++;
+        } else {
+            $failedCount++;
+        }
+    }
+
+    /**
+     * Safely call a seeder with error handling, progress indicator, and skip if already run
      */
     protected function safeCall($seeder, $name, $message = null): array
     {
@@ -332,8 +439,17 @@ class DatabaseSeeder extends Seeder
             return ['success' => false, 'skipped' => true];
         }
 
+        // Check if seeder already exists in the log and was successful
+        if ($this->hasBeenRun($seeder)) {
+            $this->command->getOutput()->write("\r\033[K");
+            $this->command->info("  ⏭️  {$name} already run - skipping");
+            return ['success' => true, 'skipped' => true];
+        }
+
         try {
             $this->call($seeder);
+            $this->logSeederRun($seeder, true);
+
             if ($message) {
                 $this->command->getOutput()->write("\r\033[K");
                 $this->command->info("  ✅ {$name} completed successfully!");
@@ -345,6 +461,7 @@ class DatabaseSeeder extends Seeder
                 $this->command->error("  ❌ {$name} failed: " . $e->getMessage());
             }
             Log::error("Seeder failed: {$name} - " . $e->getMessage());
+            $this->logSeederRun($seeder, false, $e->getMessage());
             return ['success' => false];
         }
     }
