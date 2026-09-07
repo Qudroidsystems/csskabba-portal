@@ -1968,92 +1968,130 @@ class TimetableController extends Controller
     // are also used for score entry. Assigning or changing a teacher must be
     // done there, not from the timetable module.
     // =========================================================================
-    public function getTeacherAssignments(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'session_id' => 'required|exists:schoolsession,id',
-            'term_id'    => 'nullable|exists:schoolterm,id',
-        ]);
+   public function getTeacherAssignments(Request $request): JsonResponse
+{
+    $validated = $request->validate([
+        'session_id' => 'required|exists:schoolsession,id',
+        'term_id'    => 'nullable|exists:schoolterm,id',
+    ]);
 
-        $rows = Subjectclass::query()
+    try {
+        // Build the query to get all subject-class assignments for this session/term
+        $query = Subjectclass::query()
             ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
             ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
             ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-            ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
             ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->where('subjectteacher.sessionid', $validated['session_id'])
-            ->when($validated['term_id'] ?? null, fn($q, $termId) => $q->where('subjectteacher.termid', $termId))
-            ->select([
-                'subjectclass.id as subjectclass_id',
-                'subjectclass.subjectteacherid',
-                'subject.id as subject_id',
-                'subject.subject as subject_name',
-                'subject.subject_code as subject_code',
-                'schoolclass.id as schoolclass_id',
-                'schoolclass.schoolclass as class_name',
-                'schoolarm.arm as arm_name',
-                'users.id as teacher_id',
-                'users.name as teacher_name',
-                'staffpicture.picture as teacher_picture',
-            ])
-            ->orderBy('schoolclass.schoolclass')->orderBy('schoolarm.arm')->orderBy('subject.subject')
-            ->get();
+            ->where('subjectteacher.sessionid', $validated['session_id']);
 
-        if ($rows->isEmpty()) {
-            return response()->json(['success' => true, 'teachers' => [], 'unassigned' => []]);
+        if (!empty($validated['term_id'])) {
+            $query->where('subjectteacher.termid', $validated['term_id']);
         }
 
-        // Registered-student count per subjectclass, in one grouped query —
-        // same shape as SubjectOperationController::registeredClasses().
-        $subjectclassIds = $rows->pluck('subjectclass_id')->unique()->values();
+        $assignments = $query->select([
+            'subjectclass.id as subjectclass_id',
+            'subjectclass.subjectteacherid',
+            'subject.id as subject_id',
+            'subject.subject as subject_name',
+            'subject.subject_code as subject_code',
+            'schoolclass.id as schoolclass_id',
+            'schoolclass.schoolclass as class_name',
+            'schoolarm.arm as arm_name',
+            'users.id as teacher_id',
+            'users.name as teacher_name',
+        ])
+        ->orderBy('schoolclass.schoolclass')
+        ->orderBy('schoolarm.arm')
+        ->orderBy('subject.subject')
+        ->get();
+
+        if ($assignments->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'teachers' => [],
+                'unassigned' => [],
+                'message' => 'No subject-class assignments found for this session/term.'
+            ]);
+        }
+
+        // Get student counts for each subjectclass
+        $subjectclassIds = $assignments->pluck('subjectclass_id')->unique()->values();
         $studentCounts = SubjectRegistrationStatus::whereIn('subjectclassid', $subjectclassIds)
             ->where('sessionid', $validated['session_id'])
-            ->when($validated['term_id'] ?? null, fn($q, $termId) => $q->where('termid', $termId))
+            ->when(!empty($validated['term_id']), fn($q, $termId) => $q->where('termid', $termId))
             ->select(['subjectclassid', DB::raw('COUNT(DISTINCT studentid) as cnt')])
             ->groupBy('subjectclassid')
             ->pluck('cnt', 'subjectclassid');
 
-        $teachers = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
-            ->with('staffPicture')->orderBy('name')->get();
-
-        $byTeacher  = [];
-        $unassigned = [];
-
-        foreach ($rows as $r) {
-            $row = [
-                'subjectclass_id'  => $r->subjectclass_id,
-                'subject_id'       => $r->subject_id,
-                'subject_name'     => $r->subject_name ?? 'Unknown',
-                'subject_code'     => $r->subject_code,
-                'schoolclass_id'   => $r->schoolclass_id,
-                'class_name'       => trim(($r->class_name ?? '') . ' ' . ($r->arm_name ?? '')) ?: 'Unknown Class',
-                'registered_count' => (int) ($studentCounts[$r->subjectclass_id] ?? 0),
-            ];
-
-            if ($r->teacher_id) {
-                $byTeacher[$r->teacher_id][] = $row;
-            } else {
-                $unassigned[] = $row;
+        // Get teacher pictures
+        $teacherIds = $assignments->pluck('teacher_id')->filter()->unique()->values();
+        $teacherPictures = [];
+        if ($teacherIds->isNotEmpty()) {
+            $pictures = DB::table('staffpicture')
+                ->whereIn('staffid', $teacherIds)
+                ->get(['staffid', 'picture']);
+            
+            foreach ($pictures as $pic) {
+                $teacherPictures[$pic->staffid] = $pic->picture;
             }
         }
 
-        $teacherData = $teachers->map(fn($t) => [
-            'teacher_id'      => $t->id,
-            'teacher_name'    => $t->name,
-            'teacher_picture' => $t->staffPicture
-                ? asset('storage/staff_avatars/' . $t->staffPicture->picture)
-                : asset('storage/staff_avatars/default.png'),
-            'assignments'     => $byTeacher[$t->id] ?? [],
-        ])->values();
+        // Group by teacher
+        $byTeacher = [];
+        $unassigned = [];
+
+        foreach ($assignments as $row) {
+            $className = trim(($row->class_name ?? '') . ' ' . ($row->arm_name ?? ''));
+            
+            $data = [
+                'subjectclass_id' => $row->subjectclass_id,
+                'subject_id' => $row->subject_id,
+                'subject_name' => $row->subject_name ?? 'Unknown Subject',
+                'subject_code' => $row->subject_code ?? '',
+                'schoolclass_id' => $row->schoolclass_id,
+                'class_name' => $className ?: 'Unknown Class',
+                'registered_count' => (int) ($studentCounts[$row->subjectclass_id] ?? 0),
+            ];
+
+            if ($row->teacher_id) {
+                if (!isset($byTeacher[$row->teacher_id])) {
+                    $byTeacher[$row->teacher_id] = [
+                        'teacher_id' => $row->teacher_id,
+                        'teacher_name' => $row->teacher_name ?? 'Unknown Teacher',
+                        'teacher_picture' => isset($teacherPictures[$row->teacher_id]) 
+                            ? asset('storage/staff_avatars/' . $teacherPictures[$row->teacher_id])
+                            : asset('storage/staff_avatars/default.png'),
+                        'assignments' => [],
+                    ];
+                }
+                $byTeacher[$row->teacher_id]['assignments'][] = $data;
+            } else {
+                $unassigned[] = $data;
+            }
+        }
 
         return response()->json([
-            'success'    => true,
-            'teachers'   => $teacherData,
+            'success' => true,
+            'teachers' => array_values($byTeacher),
             'unassigned' => $unassigned,
         ]);
-    }
 
+    } catch (\Exception $e) {
+        Log::error('getTeacherAssignments failed', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'validated' => $validated
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to load teacher assignments: ' . $e->getMessage(),
+            'teachers' => [],
+            'unassigned' => [],
+        ], 500);
+    }
+}
     // =========================================================================
     // EXPORT CLASS TIMETABLE
     // =========================================================================
