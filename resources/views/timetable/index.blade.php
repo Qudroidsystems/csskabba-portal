@@ -23,6 +23,29 @@
     box-sizing: border-box;
 }
 
+/* ── Global animation keyframes ───────────────────── */
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.92); }
+    60%  { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Generic press feedback for buttons inside the module */
+.timetable-container .btn {
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.timetable-container .btn:active {
+    transform: scale(0.96);
+}
+
 /* ── Page header ──────────────────────────────────── */
 .tt-page-header {
     background: linear-gradient(135deg, #1565C0 0%, #6A1B9A 100%);
@@ -35,6 +58,7 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
+    animation: fadeSlideUp 0.45s ease both;
 }
 .tt-page-header h4 {
     color: #fff;
@@ -63,6 +87,8 @@
     border-radius: var(--tt-radius);
     box-shadow: var(--tt-shadow);
     overflow: hidden;
+    animation: fadeSlideUp 0.45s ease both;
+    animation-delay: .05s;
 }
 .tt-card-header {
     display: flex;
@@ -96,14 +122,35 @@
     transition: all 0.18s ease;
     margin-bottom: 10px;
     cursor: pointer;
+    animation: fadeSlideUp 0.35s ease both;
 }
+.setting-card:nth-child(1) { animation-delay: .02s; }
+.setting-card:nth-child(2) { animation-delay: .06s; }
+.setting-card:nth-child(3) { animation-delay: .10s; }
+.setting-card:nth-child(4) { animation-delay: .14s; }
+.setting-card:nth-child(5) { animation-delay: .18s; }
+.setting-card:nth-child(n+6) { animation-delay: .20s; }
 .setting-card:hover {
     border-color: var(--tt-blue);
     box-shadow: 0 0 0 3px rgba(21,101,192,.08);
     transform: translateY(-1px);
 }
+.setting-card:active {
+    transform: scale(0.99);
+}
 .setting-card:last-child {
     margin-bottom: 0;
+}
+.setting-card .sc-select {
+    display: flex;
+    align-items: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+.setting-card .sc-select input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
 }
 .setting-card .sc-icon {
     width: 42px;
@@ -139,6 +186,11 @@
     display: flex;
     gap: 6px;
     flex-shrink: 0;
+}
+.setting-card.is-selected {
+    border-color: var(--tt-blue);
+    background: rgba(21,101,192,.04);
+    box-shadow: 0 0 0 3px rgba(21,101,192,.1);
 }
 
 /* ── Tabs ─────────────────────────────────────────── */
@@ -189,6 +241,11 @@
     font-weight: 600;
 }
 
+/* Fade the pane in every time it's switched to (display:none → block replays this) */
+.tab-content-pane {
+    animation: fadeIn 0.25s ease;
+}
+
 /* ── Timetable grid ───────────────────────────────── */
 .tt-grid-wrapper {
     overflow-x: auto;
@@ -198,6 +255,7 @@
     width: 100%;
     border-collapse: collapse;
     min-width: 700px;
+    animation: fadeIn 0.3s ease;
 }
 .tt-grid th {
     font-size: 12px;
@@ -252,11 +310,14 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    transition: opacity 0.28s ease, transform 0.28s cubic-bezier(.34,1.56,.64,1);
+    transition: opacity 0.28s ease, transform 0.15s cubic-bezier(.34,1.56,.64,1), background 0.15s ease;
     min-width: 80px;
 }
 .tt-cell:hover {
     background: rgba(21,101,192,.06) !important;
+}
+.tt-cell:active {
+    transform: scale(0.94);
 }
 .tt-cell.is-free {
     background: #FAFAFA;
@@ -270,6 +331,9 @@
 }
 .tt-cell.is-break:hover {
     background: #FFFBEB !important;
+}
+.tt-cell.is-break:active {
+    transform: none;
 }
 .tt-cell .cell-avatar {
     width: 34px;
@@ -351,6 +415,7 @@
     font-size: 13px;
     color: #1565C0;
     font-weight: 600;
+    animation: fadeSlideUp 0.25s ease both;
 }
 .tt-generating-banner .spinner-border { width: 16px; height: 16px; border-width: 2px; }
 .tt-generating-skip {
@@ -394,6 +459,7 @@
     display: flex;
     align-items: flex-start;
     gap: 14px;
+    animation: fadeSlideUp 0.3s ease both;
 }
 .conflict-item.room-conflict {
     border-color: #FED7AA;
@@ -586,6 +652,9 @@
     font-weight: 600;
     color: #94A3B8;
 }
+#periodsTable tr {
+    animation: fadeIn 0.2s ease;
+}
 
 /* ── Modal styles ────────────────────────────────── */
 .modal-content {
@@ -593,6 +662,7 @@
     overflow: hidden;
     border: none;
     box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    animation: popIn 0.22s ease;
 }
 .modal-header.bg-gradient-primary {
     background: linear-gradient(135deg, #1565C0, #6A1B9A);
@@ -610,6 +680,7 @@
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid var(--tt-border);
+    animation: fadeSlideUp 0.2s ease both;
 }
 
 /* ── Utility ──────────────────────────────────────── */
@@ -759,7 +830,7 @@
             <p>Create, manage, and export class timetables for your school.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('timetable.teacher') }}" class="btn btn-light btn-sm">
+            <a href="{{ route('timetable.teacher') }}" class="btn btn-outline-light btn-sm">
                 <i class="ri-user-line me-1"></i>My Timetable
             </a>
             <button class="btn btn-outline-light btn-sm" onclick="openGenerationWizardModal()">
@@ -842,10 +913,25 @@
                     <h6><i class="ri-history-line me-2 text-success"></i>Existing Timetables
                         <span class="badge bg-success-subtle text-success ms-2">{{ $settings->count() }}</span>
                     </h6>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <label class="d-flex align-items-center gap-1 cursor-pointer" style="font-size:12px">
+                            <input type="checkbox" id="selectAllSettings" class="form-check-input mt-0"
+                                   onchange="toggleSelectAllSettings(this.checked)">
+                            Select All
+                        </label>
+                        <button class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn" onclick="bulkDeleteSelectedSettings()" disabled>
+                            <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                        </button>
+                    </div>
                 </div>
                 <div class="tt-card-body" style="max-height:280px;overflow-y:auto">
                     @forelse ($settings as $setting)
-                    <div class="setting-card" onclick="loadSetting({{ $setting->id }})" data-updated-at="{{ $setting->updated_at->toISOString() }}">
+                    <div class="setting-card" data-id="{{ $setting->id }}" onclick="loadSetting({{ $setting->id }})" data-updated-at="{{ $setting->updated_at->toISOString() }}">
+                        <div class="sc-select" onclick="event.stopPropagation()">
+                            <input type="checkbox" class="form-check-input setting-select-checkbox"
+                                   value="{{ $setting->id }}"
+                                   onchange="toggleSettingSelection({{ $setting->id }}, this.checked)">
+                        </div>
                         <div class="sc-icon"><i class="ri-school-line"></i></div>
                         <div class="sc-body">
                             <div class="sc-title">{{ $setting->resolved_class_name ?: 'Unknown Class' }}</div>
@@ -1528,6 +1614,7 @@ let availableRooms    = [];
 let pendingCloneId    = null;
 let roomTomSelect     = null;
 let conflictCheckTimer = null;
+let selectedSettingIds = new Set();
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
 const subjectColorMap = {};
@@ -1596,6 +1683,85 @@ function closeEditor() {
     document.getElementById('timetableEditor').style.display = 'none';
     currentSettingId = null;
     currentSettingVersion = null;
+}
+
+// ============================================================================
+// MULTI-SELECT DELETE (Existing Timetables list)
+// ============================================================================
+function toggleSettingSelection(id, checked) {
+    if (checked) selectedSettingIds.add(id);
+    else selectedSettingIds.delete(id);
+
+    const card = document.querySelector(`.setting-card[data-id="${id}"]`);
+    if (card) card.classList.toggle('is-selected', checked);
+
+    updateBulkDeleteUI();
+}
+
+function toggleSelectAllSettings(checked) {
+    document.querySelectorAll('.setting-select-checkbox').forEach(cb => {
+        cb.checked = checked;
+        const id = parseInt(cb.value);
+        if (checked) selectedSettingIds.add(id);
+        else selectedSettingIds.delete(id);
+        const card = document.querySelector(`.setting-card[data-id="${id}"]`);
+        if (card) card.classList.toggle('is-selected', checked);
+    });
+    updateBulkDeleteUI();
+}
+
+function updateBulkDeleteUI() {
+    const btn   = document.getElementById('bulkDeleteBtn');
+    const count = selectedSettingIds.size;
+    if (btn) {
+        btn.disabled  = count === 0;
+        btn.innerHTML = `<i class="ri-delete-bin-line me-1"></i>Delete Selected${count ? ' (' + count + ')' : ''}`;
+    }
+
+    const allCbs      = document.querySelectorAll('.setting-select-checkbox');
+    const selectAllCb = document.getElementById('selectAllSettings');
+    if (selectAllCb) {
+        selectAllCb.checked       = allCbs.length > 0 && count === allCbs.length;
+        selectAllCb.indeterminate = count > 0 && count < allCbs.length;
+    }
+}
+
+async function bulkDeleteSelectedSettings() {
+    const ids = [...selectedSettingIds];
+    if (!ids.length) return;
+
+    const result = await Swal.fire({
+        title: `Delete ${ids.length} Timetable${ids.length > 1 ? 's' : ''}?`,
+        text: 'This will permanently delete the selected timetables and all their slots.',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonColor: '#DC2626', confirmButtonText: `Yes, delete ${ids.length}!`,
+    });
+    if (!result.isConfirmed) return;
+
+    showLoader();
+    const outcomes = await Promise.all(ids.map(async (id) => {
+        const card      = document.querySelector(`.setting-card[data-id="${id}"]`);
+        const updatedAt = card?.dataset.updatedAt || null;
+        try {
+            const res  = await apiFetch(url(ROUTES.deleteSetting, id), 'DELETE', { expected_updated_at: updatedAt });
+            const data = await res.json();
+            return { id, success: !!data.success };
+        } catch (e) {
+            return { id, success: false };
+        }
+    }));
+    hideLoader();
+
+    selectedSettingIds.clear();
+    const failedCount  = outcomes.filter(o => !o.success).length;
+    const successCount = outcomes.length - failedCount;
+
+    if (!failedCount) {
+        Swal.fire({ icon: 'success', title: 'Deleted!', text: `${successCount} timetable(s) removed.`, timer: 1800, showConfirmButton: false });
+    } else {
+        Swal.fire('Partially Completed', `${successCount} deleted, ${failedCount} failed (possibly changed or already removed by someone else). Reloading list…`, 'warning');
+    }
+    setTimeout(() => location.reload(), successCount || failedCount ? 1800 : 100);
 }
 
 // ============================================================================
