@@ -82,7 +82,7 @@ class DatabaseSeeder extends Seeder
             'SubjectVettedPermissionTableSeeder' => '  ✅ Seeding subject vetted permissions...',
             'SubjectVettingsPermissionTableSeeder' => '  🔍 Seeding subject vettings...',
             'StudentAssessmentPermissionTableSeeder' => '  📝 Seeding student assessment permissions...',
-            'IdCardPermissionTableSeeder' => '  🪪 Seeding student ID Card permissions...',
+            'IdCardPermissionSeeder' => '  🪪 Seeding student ID Card permissions...',
             'AdminScoreEntryPermissionSeeder' => '  📝 Seeding Admin score entry...',
         ];
 
@@ -180,6 +180,11 @@ class DatabaseSeeder extends Seeder
             'SiblingGroupPermissionSeeder' => '  👨‍👩‍👧 Seeding sibling group permissions...',
             'StudentPaymentPermissionTableSeeder' => '  💳 Seeding student payment permissions...',
             'FinancialReportPermissionSeeder' => '  📊 Seeding financial report permissions...',
+            'PayrollPermissionSeeder' => '  💰 Seeding payroll permissions...',
+            'StaffPaymentPermissionSeeder' => '  👨‍🏫 Seeding staff payment permissions...',
+            'SchoolPaymentPermissionTableSeeder' => '  🏫 Seeding school payment permissions...',
+            'AllFinancePermissionsSeeder' => '  💰 Seeding all finance permissions...',
+            'StaffAttendancePermissionTableSeeder' => '  📋 Seeding staff attendance permissions...',
         ];
 
         foreach ($financePermissionSeeders as $seeder => $message) {
@@ -190,10 +195,32 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         // ============================================
-        // PART 8: UPDATED PERMISSION SEEDERS (NEW)
+        // PART 8: ANALYSIS & TRANSCRIPT PERMISSIONS
         // ============================================
         $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-        $this->command->info('│ 🔄 PART 8: UPDATED PERMISSION SEEDERS                                      │');
+        $this->command->info('│ 📊 PART 8: ANALYSIS & TRANSCRIPT PERMISSIONS                               │');
+        $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
+        $this->command->info('');
+
+        $analysisSeeders = [
+            'AnalysisPermissionTableSeeder' => '  📊 Seeding analysis permissions...',
+            'TranscriptPermissionTableSeeder' => '  📄 Seeding transcript permissions...',
+            'MyPrincipalsCommentPermissionTableSeeder' => '  👔 Seeding my principals comment permissions...',
+            'AdminStudentResultManagerPermissionSeeder' => '  📝 Seeding admin student result manager...',
+        ];
+
+        foreach ($analysisSeeders as $seeder => $message) {
+            $result = $this->safeCall($seeder, $seeder, $message);
+            $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
+        }
+
+        $this->command->info('');
+
+        // ============================================
+        // PART 9: UPDATED PERMISSION SEEDERS
+        // ============================================
+        $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
+        $this->command->info('│ 🔄 PART 9: UPDATED PERMISSION SEEDERS                                      │');
         $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
         $this->command->info('');
 
@@ -205,6 +232,7 @@ class DatabaseSeeder extends Seeder
             'UpdatedPromotionPermissionTableSeeder' => '  🚀 Seeding updated promotion permissions...',
             'UpdatedTranscriptPermissionTableSeeder' => '  📄 Seeding updated transcript permissions...',
             'UpdatedFinancePermissionTableSeeder' => '  💰 Seeding updated finance permissions...',
+            'UpdatedTimetablePermissionTableSeeder' => '  📅 Seeding updated timetable permissions...',
         ];
 
         foreach ($updatedSeeders as $seeder => $message) {
@@ -215,10 +243,23 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         // ============================================
-        // PART 9: FINANCE LOOKUP & REFERENCE DATA
+        // PART 10: ATTENDANCE PERMISSIONS
         // ============================================
         $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-        $this->command->info('│ 📚 PART 9: FINANCE LOOKUP & REFERENCE DATA                                 │');
+        $this->command->info('│ 📋 PART 10: ATTENDANCE PERMISSIONS                                         │');
+        $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
+        $this->command->info('');
+
+        $result = $this->safeCall(AttendancePermissionTableSeeder::class, 'AttendancePermissionTableSeeder', '  📋 Seeding attendance permissions...');
+        $this->updateStats($result, $seededCount, $failedCount, $skippedCount);
+
+        $this->command->info('');
+
+        // ============================================
+        // PART 11: FINANCE LOOKUP & REFERENCE DATA
+        // ============================================
+        $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
+        $this->command->info('│ 📚 PART 11: FINANCE LOOKUP & REFERENCE DATA                                 │');
         $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
         $this->command->info('');
 
@@ -239,10 +280,10 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         // ============================================
-        // PART 10: PAYMENT GATEWAYS
+        // PART 12: PAYMENT GATEWAYS
         // ============================================
         $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-        $this->command->info('│ 🌐 PART 10: PAYMENT GATEWAYS                                              │');
+        $this->command->info('│ 🌐 PART 12: PAYMENT GATEWAYS                                              │');
         $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
         $this->command->info('');
 
@@ -252,11 +293,11 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
 
         // ============================================
-        // PART 11: DEMO/TEST DATA (DEVELOPMENT ONLY)
+        // PART 13: DEMO/TEST DATA (DEVELOPMENT ONLY)
         // ============================================
         if (app()->environment('local', 'development')) {
             $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-            $this->command->info('│ 🧪 PART 11: DEMO & TEST DATA (Development Environment)                    │');
+            $this->command->info('│ 🧪 PART 13: DEMO & TEST DATA (Development Environment)                    │');
             $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
             $this->command->info('');
 
@@ -280,7 +321,7 @@ class DatabaseSeeder extends Seeder
             $this->command->info('');
         } else {
             $this->command->info('┌─────────────────────────────────────────────────────────────────────────────┐');
-            $this->command->info('│ 🚀 PART 11: PRODUCTION ENVIRONMENT                                        │');
+            $this->command->info('│ 🚀 PART 13: PRODUCTION ENVIRONMENT                                        │');
             $this->command->info('│    Skipping demo data - only seeding essential data                       │');
             $this->command->info('└─────────────────────────────────────────────────────────────────────────────┘');
             $this->command->info('');
