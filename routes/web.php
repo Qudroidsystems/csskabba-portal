@@ -1308,6 +1308,10 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
     Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
 
+    Route::get('/export-whole-school-web', [TimetableController::class, 'exportWholeSchoolWeb'])->name('export-whole-school-web');
+    Route::get('/export-merged-grid', [TimetableController::class, 'exportMergedGrid'])->name('export-merged-grid');
+    Route::get('/merged-grid-web', [TimetableController::class, 'mergedGridWeb'])->name('merged-grid-web');
+
     // AJAX — Checks & utilities
     Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
     Route::post('/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('check-slot-conflict');

@@ -3150,6 +3150,163 @@ public function exportWholeSchoolWeb(Request $request)
         return [$allTimetables, $schoolInfo, $session, $term, $overallStats];
     }
 
+// =========================================================================
+// PRIVATE: Build a single merged grid (all classes overlaid) for a session/term
+// =========================================================================
+private function buildMergedGridData($sessionId, $termId): array
+{
+    $settings = TimetableSetting::with(['periods'])
+        ->join('schoolclass', 'schoolclass.id', '=', 'timetable_settings.schoolclass_id')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select(['timetable_settings.*', 'schoolclass.schoolclass as _class_name', 'schoolarm.arm as _arm_name'])
+        ->where('timetable_settings.session_id', $sessionId)
+        ->when($termId, fn($q) => $q->where('timetable_settings.term_id', $termId))
+        ->where('timetable_settings.is_active', true)
+        ->orderBy('schoolclass.schoolclass')->orderBy('schoolarm.arm')
+        ->get();
 
+    $schoolInfo = SchoolInformation::getActiveSchool();
+    $session    = Schoolsession::find($sessionId);
+    $term       = $termId ? Schoolterm::find($termId) : null;
+
+    if ($settings->isEmpty()) {
+        return ['rows' => [], 'days' => [], 'classColors' => [], 'classList' => [],
+                'schoolInfo' => $schoolInfo, 'sessionName' => $session->session ?? 'Session',
+                'termName' => $term?->term ?? 'All Terms', 'generatedAt' => now()->format('d M Y, H:i')];
+    }
+
+    $classColorPalette = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16','#6366F1','#D946EF'];
+
+    $classData    = [];
+    $classColors  = [];
+    $colorIdx     = 0;
+    $allDaysUnion = [];
+    $timeSlotMap  = []; // "HH:MM-HH:MM" => ['start'=>,'end'=>,'names'=>[]]
+
+    foreach ($settings as $setting) {
+        $className = trim(($setting->_class_name ?? '') . ' ' . ($setting->_arm_name ?? '')) ?: 'Unknown Class';
+        $classColors[$className] = $classColorPalette[$colorIdx++ % count($classColorPalette)];
+
+        $slots = TimetableSlot::where('setting_id', $setting->id)->with(['subject', 'teacher', 'room'])->get();
+        $grid  = [];
+        foreach ($slots as $slot) {
+            $grid[$slot->period_id][$slot->day] = [
+                'subject' => $slot->subject?->subject,
+                'teacher' => $slot->teacher?->name,
+                'room'    => $slot->room?->room_name,
+                'is_free' => $slot->is_free ?? !$slot->subject_id,
+            ];
+        }
+
+        $days    = $setting->active_days ?? self::DAYS;
+        $allDaysUnion = array_unique(array_merge($allDaysUnion, $days));
+        $dayMeta = $this->computeDayPeriodMeta($setting);
+
+        foreach ($setting->periods as $period) {
+            $key = substr($period->start_time, 0, 5) . '-' . substr($period->end_time, 0, 5);
+            if (!isset($timeSlotMap[$key])) {
+                $timeSlotMap[$key] = [
+                    'start' => substr($period->start_time, 0, 5),
+                    'end'   => substr($period->end_time, 0, 5),
+                    'names' => [],
+                ];
+            }
+            $timeSlotMap[$key]['names'][] = $period->name;
+        }
+
+        $classData[$className] = ['grid' => $grid, 'days' => $days, 'dayMeta' => $dayMeta, 'periods' => $setting->periods];
+    }
+
+    $dayOrder = self::DAYS;
+    usort($allDaysUnion, fn($a, $b) => array_search($a, $dayOrder) <=> array_search($b, $dayOrder));
+    uasort($timeSlotMap, fn($a, $b) => strcmp($a['start'], $b['start']));
+
+    $mergedRows = [];
+    foreach ($timeSlotMap as $info) {
+        $label = collect($info['names'])->countBy()->sortDesc()->keys()->first() ?? 'Period';
+
+        $rowEntries = [];
+        foreach ($allDaysUnion as $day) {
+            $entries = []; $anyBreak = false; $applicable = false;
+
+            foreach ($classData as $className => $cd) {
+                if (!in_array($day, $cd['days'])) continue;
+                $matchedPeriod = $cd['periods']->first(fn($p) =>
+                    substr($p->start_time, 0, 5) === $info['start'] && substr($p->end_time, 0, 5) === $info['end']
+                );
+                if (!$matchedPeriod) continue;
+
+                $meta = $cd['dayMeta'][$day][$matchedPeriod->id] ?? null;
+                if (!$meta || !$meta['applicable']) continue;
+                $applicable = true;
+
+                if ($meta['effective_type'] !== 'lesson') { $anyBreak = true; continue; }
+
+                $slotInfo = $cd['grid'][$matchedPeriod->id][$day] ?? null;
+                if (!$slotInfo || $slotInfo['is_free']) continue;
+
+                $entries[] = [
+                    'class'   => $className,
+                    'subject' => $slotInfo['subject'] ?? '—',
+                    'teacher' => $slotInfo['teacher'] ?? '',
+                    'room'    => $slotInfo['room'] ?? '',
+                    'color'   => $classColors[$className],
+                ];
+            }
+
+            $rowEntries[$day] = [
+                'entries'     => $entries,
+                'is_break'    => $anyBreak && empty($entries),
+                'applicable'  => $applicable,
+            ];
+        }
+
+        $mergedRows[] = ['label' => $label, 'time' => $info['start'] . ' – ' . $info['end'], 'days' => $rowEntries];
+    }
+
+    return [
+        'rows'        => $mergedRows,
+        'days'        => $allDaysUnion,
+        'classColors' => $classColors,
+        'classList'   => array_keys($classColors),
+        'schoolInfo'  => $schoolInfo,
+        'sessionName' => $session->session ?? 'Session',
+        'termName'    => $term?->term ?? 'All Terms',
+        'generatedAt' => now()->format('d M Y, H:i'),
+        'dayColors'   => self::DAY_COLORS,
+    ];
+}
+
+// =========================================================================
+// MERGED GRID — PDF
+// =========================================================================
+public function exportMergedGrid(Request $request)
+{
+    $sessionId = $request->input('session_id');
+    $termId    = $request->input('term_id');
+    if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+
+    $data = $this->buildMergedGridData($sessionId, $termId);
+    if (empty($data['rows'])) return response()->json(['error' => 'No timetables found'], 404);
+
+    $pdf = Pdf::loadView('timetable.exports.merged-grid', $data)->setPaper('a3', 'landscape');
+    $filename = 'merged-timetable-' . str_replace([' ', '/'], '-', $data['sessionName']) . '.pdf';
+    return $pdf->stream($filename);
+}
+
+// =========================================================================
+// MERGED GRID — WEB VIEW
+// =========================================================================
+public function mergedGridWeb(Request $request)
+{
+    $sessionId = $request->input('session_id');
+    $termId    = $request->input('term_id');
+    if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+
+    $data = $this->buildMergedGridData($sessionId, $termId);
+    if (empty($data['rows'])) abort(404, 'No timetables found for this session/term.');
+
+    return view('timetable.exports.merged-grid-web', $data);
+}
 
 }
