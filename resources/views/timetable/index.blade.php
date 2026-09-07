@@ -242,6 +242,7 @@
     margin-top: 2px;
 }
 
+/* ── Generation animation ─────────────────────────── */
 .tt-cell {
     cursor: pointer;
     padding: 8px;
@@ -251,7 +252,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    transition: all 0.15s;
+    transition: opacity 0.28s ease, transform 0.28s cubic-bezier(.34,1.56,.64,1);
     min-width: 80px;
 }
 .tt-cell:hover {
@@ -333,6 +334,38 @@
 }
 .tt-cell.has-subject {
     border-left: 3px solid;
+}
+.tt-cell.cell-building {
+    opacity: 0;
+    transform: scale(0.75);
+}
+.tt-generating-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg,#EFF6FF,#F5F3FF);
+    border: 1px solid #BFDBFE;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #1565C0;
+    font-weight: 600;
+}
+.tt-generating-banner .spinner-border { width: 16px; height: 16px; border-width: 2px; }
+.tt-generating-skip {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748B;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* ── Staff picture toggle ─────────────────────────── */
+.hide-avatars .cell-avatar,
+.hide-avatars .cell-avatar-placeholder {
+    display: none !important;
 }
 
 /* ── Constraints table ────────────────────────────── */
@@ -1010,6 +1043,10 @@
                             <p class="text-muted mb-0" style="font-size:13px">Click any cell to assign a subject and teacher.</p>
                         </div>
                         <div class="export-group">
+                            <label class="d-flex align-items-center gap-1 cursor-pointer" style="font-size:12px" title="Toggle staff photos in the grid">
+                                <input type="checkbox" id="toggleStaffPictures" checked onchange="toggleStaffPictureVisibility()">
+                                Show staff pictures
+                            </label>
                             <select id="exportOrientation" class="form-select form-select-sm" style="width:auto">
                                 <option value="horizontal">Horizontal Layout</option>
                                 <option value="vertical">Vertical Layout</option>
@@ -1246,6 +1283,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <div id="wizFormContent">
         <p class="text-muted" style="font-size:13px">Set up the day structure for many classes at once, then optionally auto-generate timetables for all of them.</p>
 
         <div class="row g-3">
@@ -1365,6 +1403,14 @@
               </label>
             </div>
           </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="wizIncludeRooms" checked>
+              <label class="form-check-label" for="wizIncludeRooms">
+                Automatically assign available rooms (no double-bookings)
+              </label>
+            </div>
+          </div>
         </div>
 
         <hr>
@@ -1375,6 +1421,12 @@
             <button class="btn btn-sm btn-outline-primary" onclick="addWizardHalfDayRow()"><i class="ri-add-line"></i> Add</button>
         </div>
         <div id="wizHalfDaysBody"></div>
+        </div><!-- /wizFormContent -->
+
+        <div id="wizGenerationProgress" style="display:none">
+          <h6 class="mb-3"><i class="ri-magic-line me-2"></i>Generating Timetables…</h6>
+          <div id="wizProgressList" style="max-height:320px;overflow-y:auto"></div>
+        </div>
 
       </div>
       <div class="modal-footer">
@@ -1457,8 +1509,6 @@
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -1825,22 +1875,49 @@ async function saveConstraints() {
 async function generateTimetable() {
     const result = await Swal.fire({
         title: 'Auto-Generate Timetable?',
-        html: 'This will <strong>clear the existing timetable</strong> and generate a new one based on your constraints. The generator now respects teacher assignments across all classes.',
+        html: `
+            <div style="text-align:left;font-size:14px">
+                <p>This will <strong>clear the existing timetable</strong> and generate a new one based on your constraints. The generator respects teacher assignments across all classes.</p>
+                <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
+                    <input type="checkbox" id="swalIncludeRooms" checked style="width:16px;height:16px">
+                    <span>Automatically assign available rooms (no double-bookings)</span>
+                </label>
+            </div>`,
         icon: 'warning', showCancelButton: true,
         confirmButtonColor: '#1565C0', confirmButtonText: 'Yes, generate!',
+        preConfirm: () => ({ includeRooms: document.getElementById('swalIncludeRooms')?.checked ?? true }),
     });
     if (!result.isConfirmed) return;
+    const includeRooms = result.value?.includeRooms ?? true;
+
     showLoader();
     try {
-        const res  = await apiFetch(ROUTES.autoGenerate, 'POST', { setting_id: currentSettingId, expected_updated_at: currentSettingVersion });
+        const res  = await apiFetch(ROUTES.autoGenerate, 'POST', {
+            setting_id: currentSettingId,
+            expected_updated_at: currentSettingVersion,
+            include_rooms: includeRooms,
+        });
         const data = await res.json();
         if (data.success) {
             currentSettingVersion = data.setting_updated_at || currentSettingVersion;
-            await loadTimetableGrid();
-            showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
-            silentConflictCheck();
             hideLoader();
-            Swal.fire({ icon:'success', title:'Generated!', timer:1800, showConfirmButton:false });
+            showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
+            await loadTimetableGridAnimated();
+            silentConflictCheck();
+
+            const shortfall = data.stats?.room_shortfall_count
+                ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> ${data.stats.room_shortfall_count} lesson(s) couldn't get a room — not enough rooms free at those times.</p>`
+                : '';
+            const unplaced = data.stats?.unplaced_subjects?.length
+                ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed — check the Constraints/Conflicts tabs.</p>`
+                : '';
+            const needsAttention = !!(shortfall || unplaced);
+            Swal.fire({
+                icon: 'success', title: 'Generated!',
+                html: `Timetable built successfully.${shortfall}${unplaced}`,
+                timer: needsAttention ? undefined : 1800,
+                showConfirmButton: needsAttention,
+            });
         } else if (data.has_version_conflict) {
             hideLoader();
             handleVersionConflict(data);
@@ -1871,23 +1948,48 @@ async function loadTimetableGrid() {
         allTeachers    = data.teachers|| [];
         availableRooms = data.rooms   || [];
         updateRoomDropdown(availableRooms);
-        renderGrid();
+        renderGrid({ animate: false });
     } catch (e) {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load grid: ${escapeHtml(e.message)}</div>`;
     }
 }
 
-function renderGrid() {
+async function loadTimetableGridAnimated() {
+    if (!currentSettingId) return;
+    const container = document.getElementById('timetableGridContainer');
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Loading timetable…</p></div>';
+    try {
+        const res  = await apiFetch(url(ROUTES.getGrid, currentSettingId), 'GET');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed');
+        currentPeriods = data.periods || [];
+        currentGrid    = data.grid    || {};
+        currentDays    = data.days    || ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+        allTeachers    = data.teachers|| [];
+        availableRooms = data.rooms   || [];
+        updateRoomDropdown(availableRooms);
+        renderGrid({ animate: true });
+    } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load grid: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function renderGrid(options = {}) {
+    const animate   = !!options.animate;
     const container = document.getElementById('timetableGridContainer');
     if (!currentPeriods.length) {
         container.innerHTML = '<div class="alert alert-warning m-3">No periods configured. Save settings first.</div>';
         return;
     }
     const dayThClasses = {Monday:'monday-th',Tuesday:'tuesday-th',Wednesday:'wednesday-th',Thursday:'thursday-th',Friday:'friday-th'};
+
     let html = `<table class="tt-grid"><thead><tr>
         <th class="period-th">Period</th>
         ${currentDays.map(d => `<th class="${dayThClasses[d]||''}">${escapeHtml(d)}</th>`).join('')}
     </tr></thead><tbody>`;
+
+    let cellSeq = 0;
+    const buildingCells = [];
 
     currentPeriods.forEach(period => {
         const isBreak   = period.is_break || ['short_break','long_break'].includes(period.type);
@@ -1902,12 +2004,14 @@ function renderGrid() {
         currentDays.forEach(day => {
             const slot   = currentGrid[period.id]?.[day] || null;
             const isFree = !slot || slot.is_free || (!slot.subject_id && !slot.teacher_id);
+            cellSeq++;
+            const cellId = `c${cellSeq}`;
 
             if (isBreak) {
                 html += `<td><div class="tt-cell is-break"><span class="cell-break">☕ Break</span></div></td>`;
             } else if (isFree) {
                 html += `<td onclick="openSlotModal(${period.id},'${day}')">
-                    <div class="tt-cell is-free">
+                    <div class="tt-cell is-free" data-cell-id="${cellId}">
                         <i class="ri-add-line ri-lg text-muted opacity-30"></i>
                         <span class="cell-free">Free</span>
                     </div></td>`;
@@ -1925,8 +2029,11 @@ function renderGrid() {
                     ? `<span class="cell-teacher">${escapeHtml(slot.teacher.split(' ')[0])}</span>`
                     : '';
 
+                const animClass = animate ? ' cell-building' : '';
+                if (animate) buildingCells.push(cellId);
+
                 html += `<td onclick="openSlotModal(${period.id},'${day}')" ${borderStyle}>
-                    <div class="tt-cell has-subject${slot.is_double?' is-double':''}">
+                    <div class="tt-cell has-subject${slot.is_double?' is-double':''}${animClass}" data-cell-id="${cellId}">
                         ${avatarHtml}
                         <span class="cell-subject">${escapeHtml(slot.subject_code || slot.subject || '—')}</span>
                         ${teacherHtml}${roomHtml}${doubleBadge}
@@ -1937,6 +2044,63 @@ function renderGrid() {
     });
     html += '</tbody></table>';
     container.innerHTML = html;
+    applyStaffPictureVisibility();
+
+    if (animate && buildingCells.length) {
+        playGridBuildAnimation(container, buildingCells);
+    }
+}
+
+function playGridBuildAnimation(container, cellIds) {
+    const banner = document.createElement('div');
+    banner.className = 'tt-generating-banner';
+    banner.id = 'ttGeneratingBanner';
+    banner.innerHTML = `
+        <div class="spinner-border text-primary"></div>
+        <span id="ttGeneratingText">Placing lessons… 0 / ${cellIds.length}</span>
+        <span class="tt-generating-skip" onclick="skipGridBuildAnimation()">Skip animation</span>`;
+    container.prepend(banner);
+
+    let i = 0;
+    const total     = cellIds.length;
+    const stepDelay = total > 60 ? 12 : total > 30 ? 20 : 35;
+
+    window._ttBuildTimer = setInterval(() => {
+        if (i >= total) {
+            clearInterval(window._ttBuildTimer);
+            finishGridBuildAnimation();
+            return;
+        }
+        const el = container.querySelector(`[data-cell-id="${cellIds[i]}"]`);
+        if (el) el.classList.remove('cell-building');
+        i++;
+        const textEl = document.getElementById('ttGeneratingText');
+        if (textEl) textEl.textContent = `Placing lessons… ${i} / ${total}`;
+    }, stepDelay);
+}
+
+function skipGridBuildAnimation() {
+    if (window._ttBuildTimer) clearInterval(window._ttBuildTimer);
+    document.querySelectorAll('#timetableGridContainer .cell-building').forEach(el => el.classList.remove('cell-building'));
+    finishGridBuildAnimation();
+}
+
+function finishGridBuildAnimation() {
+    const banner = document.getElementById('ttGeneratingBanner');
+    if (banner) banner.remove();
+}
+
+function applyStaffPictureVisibility() {
+    const show = localStorage.getItem('tt_show_staff_pictures') !== '0';
+    const cb = document.getElementById('toggleStaffPictures');
+    if (cb) cb.checked = show;
+    document.getElementById('timetableGridContainer')?.classList.toggle('hide-avatars', !show);
+}
+
+function toggleStaffPictureVisibility() {
+    const show = document.getElementById('toggleStaffPictures').checked;
+    localStorage.setItem('tt_show_staff_pictures', show ? '1' : '0');
+    document.getElementById('timetableGridContainer')?.classList.toggle('hide-avatars', !show);
 }
 
 // ============================================================================
@@ -2551,6 +2715,10 @@ async function confirmClone(force = false) {
 // ============================================================================
 function openGenerationWizardModal() {
     document.getElementById('wizHalfDaysBody').innerHTML = '';
+    const formEl     = document.getElementById('wizFormContent');
+    const progressEl = document.getElementById('wizGenerationProgress');
+    if (formEl)     formEl.style.display = '';
+    if (progressEl) progressEl.style.display = 'none';
     new bootstrap.Modal(document.getElementById('generationWizardModal')).show();
 }
 
@@ -2617,6 +2785,42 @@ function buildWizardResultsSummary(results) {
     return html;
 }
 
+function animateWizardResults(results) {
+    return new Promise((resolve) => {
+        const formEl     = document.getElementById('wizFormContent');
+        const progressEl = document.getElementById('wizGenerationProgress');
+        const listEl     = document.getElementById('wizProgressList');
+        if (!formEl || !progressEl || !listEl || !results?.length) return resolve();
+
+        formEl.style.display = 'none';
+        progressEl.style.display = '';
+        listEl.innerHTML = results.map((r, i) => `
+            <div class="d-flex align-items-center gap-2 py-2 px-1" style="border-bottom:1px solid #F1F5F9;font-size:13px">
+                <span class="spinner-border spinner-border-sm text-primary" id="wizProgSpinner${i}"></span>
+                <i class="ri-checkbox-circle-fill text-success" id="wizProgCheck${i}" style="display:none"></i>
+                <span class="flex-grow-1">${escapeHtml(r.class_name)}</span>
+                <span class="text-muted" id="wizProgDetail${i}"></span>
+            </div>`).join('');
+
+        let i = 0;
+        const stepDelay = results.length > 20 ? 90 : 180;
+        const timer = setInterval(() => {
+            if (i >= results.length) {
+                clearInterval(timer);
+                setTimeout(resolve, 400);
+                return;
+            }
+            const spinner = document.getElementById(`wizProgSpinner${i}`);
+            const check   = document.getElementById(`wizProgCheck${i}`);
+            const detail  = document.getElementById(`wizProgDetail${i}`);
+            if (spinner) spinner.style.display = 'none';
+            if (check)   check.style.display = '';
+            if (detail)  detail.textContent = `${results[i].placed} placed${results[i].unplaced?.length ? `, ${results[i].unplaced.length} short` : ''}`;
+            i++;
+        }, stepDelay);
+    });
+}
+
 async function submitGenerationWizard(alsoGenerate) {
     const sessionId = document.getElementById('wizSessionId').value;
     if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
@@ -2631,6 +2835,8 @@ async function submitGenerationWizard(alsoGenerate) {
     if (scope === 'selected' && !classIds.length) {
         return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
     }
+
+    const includeRooms = document.getElementById('wizIncludeRooms')?.checked ?? true;
 
     const payload = {
         session_id:                  parseInt(sessionId),
@@ -2652,6 +2858,7 @@ async function submitGenerationWizard(alsoGenerate) {
         max_lessons_per_day:         document.getElementById('wizMaxLessonsPerDay').value ? parseInt(document.getElementById('wizMaxLessonsPerDay').value) : null,
         half_days:                   getWizardHalfDays(),
         deprioritize_break_adjacent: document.getElementById('wizDeprioritizeBreakAdjacent').checked,
+        include_rooms:               includeRooms,
     };
 
     showLoader();
@@ -2674,11 +2881,13 @@ async function submitGenerationWizard(alsoGenerate) {
 
         const genRes  = await apiFetch(ROUTES.autoGenerateWholeSchool, 'POST', {
             session_id: payload.session_id, term_id: payload.term_id, schoolclass_ids: payload.schoolclass_ids,
+            include_rooms: includeRooms,
         });
         const genData = await genRes.json();
         hideLoader();
 
         if (genData.success) {
+            await animateWizardResults(genData.classes);
             bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
             const shortfallNote = genData.had_shortfalls
                 ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
@@ -2697,10 +2906,12 @@ async function submitGenerationWizard(alsoGenerate) {
                 const forceRes  = await apiFetch(ROUTES.autoGenerateWholeSchool, 'POST', {
                     session_id: payload.session_id, term_id: payload.term_id,
                     schoolclass_ids: payload.schoolclass_ids, force_unpublish: true,
+                    include_rooms: includeRooms,
                 });
                 const forceData = await forceRes.json();
                 hideLoader();
                 if (forceData.success) {
+                    await animateWizardResults(forceData.classes);
                     bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
                     const forceShortfallNote = forceData.had_shortfalls
                         ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
