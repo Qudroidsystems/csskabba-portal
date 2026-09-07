@@ -1,25 +1,95 @@
+{{-- resources/views/student/batchindex.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
 <style>
-    #batch-loader, #update-class-loader {
-        backdrop-filter: blur(2px);
-        font-size: 1.1rem;
-        color: #333;
-    }
-    #batch-loader .spinner-border, #update-class-loader .spinner-border {
-        width: 2rem;
-        height: 2rem;
-    }
-    #deleteRecordModal .spinner-border {
-        width: 1.5rem;
-        height: 1.5rem;
-    }
+/* ── Batch Upload Design System (ported from scoresheet) ─────────── */
+:root {
+    --ss-primary:   #1e3a5f;
+    --ss-accent:    #2563eb;
+    --ss-success:   #16a34a;
+    --ss-warning:   #d97706;
+    --ss-danger:    #dc2626;
+    --ss-info:      #4338ca;
+    --ss-muted:     #6b7280;
+    --ss-border:    #e2e8f0;
+    --ss-bg:        #f8fafc;
+    --ss-card:      #ffffff;
+    --ss-radius:    10px;
+    --ss-shadow:    0 1px 4px rgba(0,0,0,.08);
+}
+
+/* Stat cards */
+.stat-card { background: var(--ss-card); border: 1px solid var(--ss-border); border-radius: var(--ss-radius); padding: 14px 18px; box-shadow: var(--ss-shadow); transition: transform .15s; }
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card .stat-value { font-size: 22px; font-weight: 700; color: var(--ss-primary); }
+.stat-card .stat-label { font-size: 11px; color: var(--ss-muted); margin-top: 2px; }
+.stat-card .stat-icon  { font-size: 28px; opacity: .15; float: right; margin-top: -6px; }
+
+/* Card / table chrome */
+.ss-card-header { background: var(--ss-primary); }
+.ss-card-header h5 { color: #fff; }
+
+#batchListTable { font-size: 12.5px; }
+#batchListTable thead tr { background: var(--ss-primary); color: #fff; }
+#batchListTable thead th { padding: 10px 8px; font-weight: 600; white-space: nowrap; border: none; }
+#batchListTable tbody td { padding: 10px 8px; vertical-align: middle; border-bottom: 1px solid var(--ss-border); }
+#batchListTable tbody tr { transition: background .14s ease, box-shadow .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1); }
+#batchListTable tbody tr:hover {
+    background: #f0f6ff !important;
+    box-shadow: inset 3px 0 0 var(--ss-accent);
+    transform: translateY(-1px);
+    position: relative; z-index: 1;
+}
+
+/* Status pill badges (same visual family as scoresheet lock-badge) */
+.status-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+}
+.status-pill.success    { background: #dcfce7; color: var(--ss-success); }
+.status-pill.processing { background: #fef3c7; color: var(--ss-warning); }
+.status-pill.partial    { background: #e0e7ff; color: var(--ss-info); }
+.status-pill.failed     { background: #fee2e2; color: var(--ss-danger); }
+
+/* Filter bar */
+.filter-card { background: var(--ss-card); border: 1px solid var(--ss-border); border-radius: var(--ss-radius); box-shadow: var(--ss-shadow); }
+
+/* Modal headers — gradient/primary, matching scoresheet modals */
+.ss-modal-header { background: var(--ss-primary); border: none; }
+.ss-modal-header .modal-title { color: #fff; }
+
+/* Progress bars (upload / batch import) */
+.ss-progress-wrap { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius: 10px; background:#fefce8; }
+.ss-progress-track { height:6px; border-radius:4px; background:#f1f5f9; overflow:hidden; margin-top:4px; }
+.ss-progress-fill  { height:100%; border-radius:4px; transition:width .3s ease; }
+
+/* Loaders inside modals */
+#batch-loader, #update-class-loader, #template-loader {
+    backdrop-filter: blur(2px);
+    font-size: 1.1rem;
+    color: #333;
+}
+#batch-loader .spinner-border, #update-class-loader .spinner-border {
+    width: 2rem; height: 2rem;
+}
+#deleteRecordModal .spinner-border { width: 1.5rem; height: 1.5rem; }
+
+/* Toast (lightweight, non-blocking notifications) */
+.ss-toast {
+    position: fixed; bottom: 20px; right: 20px; z-index: 99999;
+    min-width: 280px; border-radius: 10px; color: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+}
+.ss-toast .toast-body { display:flex; align-items:center; padding: 12px 14px; }
 </style>
+
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
-            <!-- Start page title -->
+
+            {{-- ══ PAGE TITLE ══════════════════════════════════════════════ --}}
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -33,33 +103,17 @@
                     </div>
                 </div>
             </div>
-            <!-- End page title -->
-
-            <!-- Batch Status Chart -->
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">Batch Upload Status</h5>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="batchStatusChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             @if ($errors->any())
                 <div class="alert alert-danger">
                     <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                    <ul>
+                    <ul class="mb-0">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
                 </div>
             @endif
-
             @if (session('status'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('status') }}
@@ -73,67 +127,128 @@
                 </div>
             @endif
 
+            {{-- ══ STAT SUMMARY CARDS ══════════════════════════════════════ --}}
+            @php
+                $totalBatches      = $batch->count();
+                $processingBatches = $batch->where('status', 'Processing')->count();
+                $successBatches    = $batch->where('status', 'Success')->count();
+                $partialBatches    = $batch->where('status', 'Partial')->count();
+                $failedBatches     = $batch->where('status', 'Failed')->count();
+            @endphp
+            <div class="row g-3 mb-3">
+                <div class="col-6 col-lg-2-4" style="flex:0 0 20%;max-width:20%;">
+                    <div class="stat-card text-center h-100">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-value text-primary">{{ $totalBatches }}</div>
+                        <div class="stat-label">Total Batches</div>
+                    </div>
+                </div>
+                <div class="col-6" style="flex:0 0 20%;max-width:20%;">
+                    <div class="stat-card text-center h-100">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-value" style="color:var(--ss-warning);">{{ $processingBatches }}</div>
+                        <div class="stat-label">Processing</div>
+                    </div>
+                </div>
+                <div class="col-6" style="flex:0 0 20%;max-width:20%;">
+                    <div class="stat-card text-center h-100">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" style="color:var(--ss-success);">{{ $successBatches }}</div>
+                        <div class="stat-label">Success</div>
+                    </div>
+                </div>
+                <div class="col-6" style="flex:0 0 20%;max-width:20%;">
+                    <div class="stat-card text-center h-100">
+                        <div class="stat-icon">🔶</div>
+                        <div class="stat-value" style="color:var(--ss-info);">{{ $partialBatches }}</div>
+                        <div class="stat-label">Partial</div>
+                    </div>
+                </div>
+                <div class="col-6" style="flex:0 0 20%;max-width:20%;">
+                    <div class="stat-card text-center h-100">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-value" style="color:var(--ss-danger);">{{ $failedBatches }}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ══ BATCH STATUS CHART ══════════════════════════════════════ --}}
+            <div class="row mb-3">
+                <div class="col-lg-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header ss-card-header">
+                            <h5 class="card-title mb-0"><i class="ri-bar-chart-2-line me-1"></i>Batch Upload Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="batchStatusChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="batchList">
-                <div class="row">
+
+                {{-- ══ FILTER BAR ══════════════════════════════════════════ --}}
+                <div class="row mb-3">
                     <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-xxl-4">
-                                        <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search batches">
-                                            <i class="ri-search-line search-icon"></i>
-                                        </div>
+                        <div class="filter-card p-3">
+                            <div class="row g-3">
+                                <div class="col-xxl-4">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control search" placeholder="Search batches">
+                                        <i class="ri-search-line search-icon"></i>
                                     </div>
-                                    <div class="col-xxl-3 col-sm-6">
-                                        <select class="form-control" id="idStatus" data-choices data-choices-search-false>
-                                            <option value="all">Select Status</option>
-                                            <option value="Processing">Processing</option>
-                                            <option value="Partial">Partial</option>
-                                            <option value="Success">Success</option>
-                                            <option value="Failed">Failed</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-xxl-3 col-sm-6">
-                                        <select class="form-control" id="idClass" data-choices data-choices-search-false>
-                                            <option value="all">Select Class</option>
-                                            @foreach ($batch->pluck('schoolclass')->unique() as $class)
-                                                <option value="{{ $class }}">{{ $class }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-xxl-2 col-sm-6">
-                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();"><i class="bi bi-funnel align-baseline me-1"></i> Filters</button>
-                                    </div>
+                                </div>
+                                <div class="col-xxl-3 col-sm-6">
+                                    <select class="form-control" id="idStatus" data-choices data-choices-search-false>
+                                        <option value="all">Select Status</option>
+                                        <option value="Processing">Processing</option>
+                                        <option value="Partial">Partial</option>
+                                        <option value="Success">Success</option>
+                                        <option value="Failed">Failed</option>
+                                    </select>
+                                </div>
+                                <div class="col-xxl-3 col-sm-6">
+                                    <select class="form-control" id="idClass" data-choices data-choices-search-false>
+                                        <option value="all">Select Class</option>
+                                        @foreach ($batch->pluck('schoolclass')->unique() as $class)
+                                            <option value="{{ $class }}">{{ $class }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-xxl-2 col-sm-6">
+                                    <button type="button" class="btn btn-secondary w-100" onclick="filterData();"><i class="bi bi-funnel align-baseline me-1"></i> Filters</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {{-- ══ MAIN TABLE CARD ═════════════════════════════════════ --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header ss-card-header d-flex align-items-center flex-wrap gap-2 py-3">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Batch Uploads <span class="badge bg-dark-subtle text-dark ms-1">{{ $batch->count() }}</span></h5>
+                                    <h5 class="mb-0"><i class="ri-file-list-3-line me-2"></i>Batch Uploads <span class="badge bg-white text-primary ms-1">{{ $batch->count() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         @can('Create student-bulk-upload')
-                                            <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#generateTemplateModal"><i class="bi bi-file-earmark-spreadsheet align-baseline me-1"></i> Generate Template</button>
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addBatchModal"><i class="bi bi-plus-circle align-baseline me-1"></i> New Batch Upload</button>
+                                            <button class="btn btn-light text-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
+                                            <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#generateTemplateModal"><i class="bi bi-file-earmark-spreadsheet align-baseline me-1"></i> Generate Template</button>
+                                            <button type="button" class="btn btn-warning add-btn" data-bs-toggle="modal" data-bs-target="#addBatchModal"><i class="bi bi-plus-circle align-baseline me-1"></i> New Batch Upload</button>
                                         @endcan
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-0">
                                 <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="batchListTable">
-                                        <thead class="table-active">
+                                    <table class="table table-nowrap align-middle mb-0" id="batchListTable">
+                                        <thead>
                                             <tr>
-                                                <th><div class="form-check"><input class="form-check-input" type="checkbox" value="option" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
+                                                <th style="width:44px;"><div class="form-check mb-0"><input class="form-check-input" type="checkbox" value="option" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
                                                 <th class="sort cursor-pointer" data-sort="sn">SN</th>
                                                 <th class="sort cursor-pointer" data-sort="title">Batch Title</th>
                                                 <th class="sort cursor-pointer" data-sort="schoolclass">School Class</th>
@@ -148,6 +263,20 @@
                                         <tbody class="list form-check-all">
                                             @php $i = 0 @endphp
                                             @forelse ($batch as $sc)
+                                                @php
+                                                    $pillClass = match ($sc->status) {
+                                                        'Success'    => 'success',
+                                                        'Processing' => 'processing',
+                                                        'Partial'    => 'partial',
+                                                        default      => 'failed',
+                                                    };
+                                                    $pillIcon = match ($sc->status) {
+                                                        'Success'    => 'ri-check-line',
+                                                        'Processing' => 'ri-loader-4-line',
+                                                        'Partial'    => 'ri-error-warning-line',
+                                                        default      => 'ri-close-line',
+                                                    };
+                                                @endphp
                                                 <tr>
                                                     <td class="id" data-id="{{ $sc->id }}">
                                                         <div class="form-check">
@@ -156,36 +285,32 @@
                                                         </div>
                                                     </td>
                                                     <td class="sn">{{ ++$i }}</td>
-                                                    <td class="title">{{ $sc->title }}</td>
+                                                    <td class="title fw-semibold">{{ $sc->title }}</td>
                                                     <td class="schoolclass">{{ $sc->schoolclass }}</td>
                                                     <td class="arm">{{ $sc->arm }}</td>
                                                     <td class="term">{{ $sc->term }}</td>
                                                     <td class="session">{{ $sc->session }}</td>
                                                     <td class="status" data-status="{{ $sc->status }}">
-                                                        @php
-                                                            $statusClass = match ($sc->status) {
-                                                                'Success'    => 'success',
-                                                                'Processing' => 'warning',
-                                                                'Partial'    => 'info',
-                                                                default      => 'danger',
-                                                            };
-                                                        @endphp
-                                                        <span class="badge bg-{{ $statusClass }}">{{ $sc->status }}</span>
+                                                        <span class="status-pill {{ $pillClass }}">
+                                                            <i class="{{ $pillIcon }}"></i>{{ $sc->status }}
+                                                        </span>
                                                     </td>
-                                                    <td class="upload_date">{{ Carbon\Carbon::parse($sc->upload_date)->format('Y-m-d') }}</td>
+                                                    <td class="upload_date">
+                                                        <i class="ri-calendar-line me-1 text-muted"></i>{{ Carbon\Carbon::parse($sc->upload_date)->format('Y-m-d') }}
+                                                    </td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @if (in_array($sc->status, ['Failed', 'Partial']))
                                                                 <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-warning btn-icon btn-sm view-errors-btn" data-id="{{ $sc->id }}" title="View Import Errors"><i class="ph-warning"></i></a>
+                                                                    <a href="javascript:void(0);" class="btn btn-sm btn-soft-warning view-errors-btn" data-id="{{ $sc->id }}" title="View Import Errors"><i class="ph-warning"></i></a>
                                                                 </li>
                                                             @endif
                                                             @can('Create student-bulk-upload')
                                                                 <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-primary btn-icon btn-sm update-item-btn" data-id="{{ $sc->id }}" data-schoolclass="{{ $sc->schoolclass }}" data-arm="{{ $sc->arm }}" data-schoolclassid="{{ $sc->schoolclassid }}" data-armid="{{ $sc->armid }}" data-classcategoryid="{{ $sc->classcategoryid ?? '' }}"><i class="ph-pencil"></i></a>
+                                                                    <a href="javascript:void(0);" class="btn btn-sm btn-soft-info update-item-btn" data-id="{{ $sc->id }}" data-schoolclass="{{ $sc->schoolclass }}" data-arm="{{ $sc->arm }}" data-schoolclassid="{{ $sc->schoolclassid }}" data-armid="{{ $sc->armid }}" data-classcategoryid="{{ $sc->classcategoryid ?? '' }}"><i class="ph-pencil"></i></a>
                                                                 </li>
                                                                 <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $sc->id }}"><i class="ph-trash"></i></a>
+                                                                    <a href="javascript:void(0);" class="btn btn-sm btn-soft-danger remove-item-btn" data-id="{{ $sc->id }}"><i class="ph-trash"></i></a>
                                                                 </li>
                                                             @endcan
                                                         </ul>
@@ -193,13 +318,15 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="10" class="noresult" style="display: block;">No results found</td>
+                                                    <td colspan="10" class="noresult text-center text-muted py-4" style="display: block;">
+                                                        <i class="ri-inbox-line ri-2x d-block mb-2"></i>No results found
+                                                    </td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="row mt-3 align-items-center" id="pagination-element">
+                                <div class="row mt-3 px-3 pb-3 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
                                             Showing <span class="fw-semibold">{{ $batch->count() }}</span> of <span class="fw-semibold">{{ $batch->count() }}</span> Results
@@ -212,28 +339,29 @@
                 </div>
             </div>
 
-            <!-- Generate Template Modal -->
+            {{-- ══ GENERATE TEMPLATE MODAL ═══════════════════════════════════ --}}
             <div id="generateTemplateModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Generate Batch Upload Template</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header ss-modal-header">
+                            <h5 class="modal-title"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Generate Batch Upload Template</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body position-relative">
-                            <div id="template-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.8); z-index: 1000;">
+                            <div id="template-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.85); z-index: 1000;">
                                 <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
                                 <span class="ms-2">Generating template...</span>
                             </div>
 
-                            <p class="text-muted small">
+                            <div class="alert alert-info small">
+                                <i class="ri-information-line me-1"></i>
                                 Choose the class, term, and session this template is for. Those three
                                 values are locked into the spreadsheet automatically — whoever fills it
                                 in only needs to enter student details.
-                            </p>
+                            </div>
 
                             <div class="mb-3">
-                                <label for="tpl_schoolclassid" class="form-label">School Class & Arm</label>
+                                <label for="tpl_schoolclassid" class="form-label fw-semibold">School Class &amp; Arm</label>
                                 <select id="tpl_schoolclassid" class="form-control" data-choices data-choices-search-true required>
                                     <option value="">Select Class</option>
                                     @foreach ($schoolclasses as $sc)
@@ -242,7 +370,7 @@
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="tpl_termid" class="form-label">Term</label>
+                                <label for="tpl_termid" class="form-label fw-semibold">Term</label>
                                 <select id="tpl_termid" class="form-control" data-choices data-choices-search-true required>
                                     <option value="">Select Term</option>
                                     @foreach ($schoolterms as $sc)
@@ -251,7 +379,7 @@
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="tpl_sessionid" class="form-label">Session</label>
+                                <label for="tpl_sessionid" class="form-label fw-semibold">Session</label>
                                 <select id="tpl_sessionid" class="form-control" data-choices data-choices-search-true required>
                                     <option value="">Select Session</option>
                                     @foreach ($schoolsessions as $sc)
@@ -260,14 +388,14 @@
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="tpl_rows" class="form-label">Number of blank rows</label>
+                                <label for="tpl_rows" class="form-label fw-semibold">Number of blank rows</label>
                                 <input type="number" id="tpl_rows" class="form-control" value="30" min="1" max="500">
                             </div>
                             <div class="alert alert-danger d-none" id="template-alert-error-msg"></div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" id="generate-template-btn">
+                            <button type="button" class="btn btn-primary" id="generate-template-btn" style="background:var(--ss-primary);border-color:var(--ss-primary);">
                                 <i class="bi bi-download me-1"></i> Generate &amp; Download
                             </button>
                         </div>
@@ -275,29 +403,29 @@
                 </div>
             </div>
 
-            <!-- Add Batch Modal -->
+            {{-- ══ ADD BATCH MODAL ═══════════════════════════════════════════ --}}
             <div id="addBatchModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="addModalLabel" class="modal-title">Add Batch Upload</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header ss-modal-header">
+                            <h5 id="addModalLabel" class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add Batch Upload</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <form class="tablelist-form" autocomplete="off" id="add-batch-form" action="{{ route('student.bulkuploadsave') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="modal-body position-relative">
-                                <div id="batch-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.8); z-index: 1000;">
+                                <div id="batch-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.85); z-index: 1000;">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <span class="ms-2">Processing Batch...</span>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="title" class="form-label">Batch Title</label>
+                                    <label for="title" class="form-label fw-semibold">Batch Title</label>
                                     <input type="text" id="title" name="title" class="form-control" placeholder="Enter batch title" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="schoolclassid" class="form-label">School Class & Arm</label>
+                                    <label for="schoolclassid" class="form-label fw-semibold">School Class &amp; Arm</label>
                                     <select id="schoolclassid" name="schoolclassid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Class</option>
                                         @foreach ($schoolclasses as $sc)
@@ -306,7 +434,7 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="termid" class="form-label">Term</label>
+                                    <label for="termid" class="form-label fw-semibold">Term</label>
                                     <select id="termid" name="termid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Term</option>
                                         @foreach ($schoolterms as $sc)
@@ -315,7 +443,7 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="sessionid" class="form-label">Session</label>
+                                    <label for="sessionid" class="form-label fw-semibold">Session</label>
                                     <select id="sessionid" name="sessionid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Session</option>
                                         @foreach ($schoolsessions as $sc)
@@ -324,50 +452,50 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="filesheet" class="form-label">Upload File</label>
+                                    <label for="filesheet" class="form-label fw-semibold">Upload File</label>
                                     <input type="file" id="filesheet" name="filesheet" class="form-control" accept=".xlsx,.xls,.csv" required>
                                 </div>
                                 <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add Batch</button>
+                                <button type="submit" class="btn btn-primary" id="add-btn" style="background:var(--ss-primary);border-color:var(--ss-primary);">Add Batch</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Batch Import Progress Modal -->
+            {{-- ══ IMPORT PROGRESS MODAL ═════════════════════════════════════ --}}
             <div id="importProgressModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Importing Students</h5>
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header ss-modal-header">
+                            <h5 class="modal-title"><i class="ri-loader-4-line me-2"></i>Importing Students</h5>
                         </div>
                         <div class="modal-body text-center">
                             <p class="text-muted mb-3" id="importProgressMessage">Starting import...</p>
-                            <div class="progress mb-2" style="height: 24px;">
-                                <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+                            <div class="progress mb-2" style="height: 10px; border-radius: 10px;">
+                                <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; background:var(--ss-primary);">0%</div>
                             </div>
                             <p class="small text-muted" id="importProgressCount">0 / 0 rows</p>
                             <div id="importResultIcon" class="mt-3 d-none"></div>
                         </div>
                         <div class="modal-footer d-none" id="importProgressFooter">
                             <button type="button" class="btn btn-outline-warning d-none" id="importViewErrorsBtn">View Errors</button>
-                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="window.location.reload()">Close &amp; Refresh</button>
+                            <button type="button" class="btn btn-primary" style="background:var(--ss-primary);border-color:var(--ss-primary);" data-bs-dismiss="modal" onclick="window.location.reload()">Close &amp; Refresh</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Import Errors Modal -->
+            {{-- ══ IMPORT ERRORS MODAL ═══════════════════════════════════════ --}}
             <div id="importErrorsModal" class="modal fade" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="importErrorsTitle">Import Errors</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header ss-modal-header">
+                            <h5 class="modal-title" id="importErrorsTitle"><i class="ri-error-warning-line me-2"></i>Import Errors</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div id="importErrorsLoading" class="text-center py-3">
@@ -383,64 +511,64 @@
                 </div>
             </div>
 
-            <!-- Update Class Modal -->
+            {{-- ══ UPDATE CLASS MODAL ════════════════════════════════════════ --}}
             <div id="updateClassModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Update Class</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header ss-modal-header">
+                            <h5 class="modal-title"><i class="ph-pencil me-2"></i>Update Class</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <form class="tablelist-form" autocomplete="off" id="update-class-form" action="{{ route('student.updateclass') }}" method="POST">
                             @csrf
                             @method('PUT')
                             <div class="modal-body position-relative">
-                                <div id="update-class-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.8); z-index: 1000;">
+                                <div id="update-class-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.85); z-index: 1000;">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <span class="ms-2">Updating Class...</span>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="update_batch_id" class="form-label">Batch ID</label>
+                                    <label for="update_batch_id" class="form-label fw-semibold">Batch ID</label>
                                     <input type="text" id="update_batch_id" name="batch_id" class="form-control" readonly>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="update_schoolclass" class="form-label">School Class Name</label>
+                                    <label for="update_schoolclass" class="form-label fw-semibold">School Class Name</label>
                                     <input type="text" id="update_schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class name" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="update_arm" class="form-label">Arm Name</label>
+                                    <label for="update_arm" class="form-label fw-semibold">Arm Name</label>
                                     <input type="text" id="update_arm" name="arm" class="form-control" placeholder="Enter arm name" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="update_schoolclassid" class="form-label">School Class ID</label>
+                                    <label for="update_schoolclassid" class="form-label fw-semibold">School Class ID</label>
                                     <input type="text" id="update_schoolclassid" name="schoolclassid" class="form-control" placeholder="Enter school class ID" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="update_armid" class="form-label">Arm ID</label>
+                                    <label for="update_armid" class="form-label fw-semibold">Arm ID</label>
                                     <input type="text" id="update_armid" name="armid" class="form-control" placeholder="Enter arm ID" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="update_classcategoryid" class="form-label">Class Category ID</label>
+                                    <label for="update_classcategoryid" class="form-label fw-semibold">Class Category ID</label>
                                     <input type="text" id="update_classcategoryid" name="classcategoryid" class="form-control" placeholder="Enter class category ID" required>
                                 </div>
                                 <div class="alert alert-danger d-none" id="update-alert-error-msg"></div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update Class</button>
+                                <button type="submit" class="btn btn-primary" id="update-btn" style="background:var(--ss-primary);border-color:var(--ss-primary);">Update Class</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Delete Batch Modal -->
+            {{-- ══ DELETE BATCH MODAL ════════════════════════════════════════ --}}
             <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header border-0">
                             <button type="button" class="btn-close" id="deleteRecord-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-md-5">
@@ -471,6 +599,18 @@
 </div>
 
 <script>
+    /* ══ Toast helper (ported from scoresheet, non-blocking notices) ══ */
+    function showToast(msg, type = 'info') {
+        const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
+        const id = 'toast_' + Date.now();
+        document.body.insertAdjacentHTML('beforeend',
+            `<div id="${id}" class="ss-toast toast align-items-center border-0 show" role="alert"
+              style="background:${colors[type]||colors.info};">
+              <div class="toast-body"><div class="me-auto">${msg}</div>
+              <button class="btn-close btn-close-white ms-2" onclick="this.closest('.ss-toast').remove()"></button></div></div>`);
+        setTimeout(() => document.getElementById(id)?.remove(), 4000);
+    }
+
     let currentDeleteId = null;
     let currentUpdateId = null;
     let importPollTimer = null;
@@ -559,8 +699,8 @@
                 .then(function (response) {
                     const modal = bootstrap.Modal.getInstance(updateClassModal);
                     if (modal) modal.hide();
-                    Swal.fire({ icon: 'success', title: 'Success', text: response.data.message || 'Class updated successfully!', showConfirmButton: false, timer: 1500 })
-                        .then(() => window.location.reload());
+                    showToast(response.data.message || 'Class updated successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 900);
                 })
                 .catch(function (error) {
                     updateBtnText.disabled = false;
@@ -620,6 +760,7 @@
 
                     const modal = bootstrap.Modal.getInstance(document.getElementById('generateTemplateModal'));
                     if (modal) modal.hide();
+                    showToast('Template downloaded successfully!', 'success');
                 })
                 .catch(async function (error) {
                     let message = 'Failed to generate template.';
@@ -702,6 +843,7 @@
             bar.style.width = '0%';
             bar.textContent = '0%';
             bar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+            bar.style.background = 'var(--ss-primary)';
             message.textContent = 'Starting import...';
             count.textContent = '0 / 0 rows';
             resultIcon.classList.add('d-none');
@@ -727,14 +869,14 @@
                     if (p.status === 'complete') {
                         clearInterval(importPollTimer);
                         bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
-                        bar.classList.add('bg-success');
+                        bar.style.background = 'var(--ss-success)';
                         resultIcon.classList.remove('d-none');
                         resultIcon.innerHTML = '<i class="bi bi-check-circle-fill text-success display-4"></i>';
                         footer.classList.remove('d-none');
                     } else if (p.status === 'partial') {
                         clearInterval(importPollTimer);
                         bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
-                        bar.classList.add('bg-warning');
+                        bar.style.background = 'var(--ss-warning)';
                         resultIcon.classList.remove('d-none');
                         resultIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning display-4"></i>';
                         footer.classList.remove('d-none');
@@ -743,7 +885,7 @@
                     } else if (p.status === 'failed') {
                         clearInterval(importPollTimer);
                         bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
-                        bar.classList.add('bg-danger');
+                        bar.style.background = 'var(--ss-danger)';
                         resultIcon.classList.remove('d-none');
                         resultIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger display-4"></i>';
                         footer.classList.remove('d-none');
@@ -776,7 +918,7 @@
             list.classList.add('d-none');
             empty.classList.add('d-none');
             list.innerHTML = '';
-            title.textContent = 'Import Errors';
+            title.innerHTML = '<i class="ri-error-warning-line me-2"></i>Import Errors';
 
             modal.show();
 
@@ -784,7 +926,7 @@
                 .then(function (response) {
                     loading.classList.add('d-none');
                     const data = response.data;
-                    title.textContent = `Import Errors — ${data.title || 'Batch'}`;
+                    title.innerHTML = `<i class="ri-error-warning-line me-2"></i>Import Errors — ${data.title || 'Batch'}`;
 
                     if (!data.errors || data.errors.length === 0) {
                         empty.classList.remove('d-none');
