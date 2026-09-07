@@ -848,7 +848,7 @@
                 <i class="ri-user-line me-1"></i>My Timetable
             </a>
             <button class="btn btn-outline-light btn-sm" onclick="openTeacherAssignModal()">
-                <i class="ri-user-settings-line me-1"></i>Assign Teachers
+                <i class="ri-user-search-line me-1"></i>View Assignments
             </button>
             <button class="btn btn-outline-light btn-sm" onclick="openGenerationWizardModal()">
                 <i class="ri-magic-line me-1"></i>Generation Wizard
@@ -1211,19 +1211,27 @@
 </div>
 
 {{-- ============================================================ --}}
-{{-- TEACHER ASSIGNMENT MODAL                                     --}}
+{{-- TEACHER ASSIGNMENT MODAL (READ-ONLY)                         --}}
+{{-- Teacher ↔ subject ↔ class mapping is owned by the main       --}}
+{{-- Subject / Class management screens. Timetable only reads it  --}}
+{{-- for generation and display. No writes to subjectclass /      --}}
+{{-- SubjectTeacher from this module.                             --}}
 {{-- ============================================================ --}}
 <div class="modal fade" id="teacherAssignModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content" style="border-radius:14px;overflow:hidden">
       <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#6A1B9A)">
-        <h5 class="modal-title text-white"><i class="ri-user-settings-line me-2"></i>Assign Teachers to Subjects</h5>
+        <h5 class="modal-title text-white"><i class="ri-user-search-line me-2"></i>View Teacher Assignments</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" style="max-height:75vh;overflow-y:auto">
-        <p class="text-muted mb-3" style="font-size:13px">
-            Pick a session (and optionally a term) to see every subject taught in every class, and assign or change the teacher for each. Changes save immediately — no separate save step.
-        </p>
+        <div class="alert alert-info d-flex align-items-start gap-2 mb-3" style="font-size:13px">
+          <i class="ri-information-line ri-lg mt-1"></i>
+          <div>
+            <strong>Read-only view.</strong> This screen only shows the current teacher–subject–class mapping used by the timetable generator.
+            To assign or change teachers, use the main <strong>Subject / Class management</strong> screens. Timetable operations never create or update those records.
+          </div>
+        </div>
         <div class="row g-3 mb-3">
           <div class="col-md-4">
             <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
@@ -1256,8 +1264,8 @@
 
         <div id="teacherAssignmentContainer">
             <div class="text-center py-5 text-muted">
-                <i class="ri-user-settings-line ri-3x d-block mb-3 opacity-30"></i>
-                <p>Select a session to load subject/teacher assignments.</p>
+                <i class="ri-user-search-line ri-3x d-block mb-3 opacity-30"></i>
+                <p>Select a session to view subject/teacher assignments.</p>
             </div>
         </div>
       </div>
@@ -1723,11 +1731,10 @@ const ROUTES = {
     saveHalfDays:               '{{ route("timetable.save-half-days") }}',
     checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
     
-    // Teacher assignment routes - IMPORTANT: The route names in the routes file already include 'timetable.'
-    // so we need to include the full prefix when calling route()
+    // Teacher assignment — READ-ONLY. Only getTeacherAssignments is used.
+    // Assign/unassign endpoints must never be called from the timetable module;
+    // teacher ↔ subject ↔ class mapping is owned by main Subject/Class management.
     getTeacherAssignments:      '{{ route("timetable.teacher-assignments") }}',
-    assignTeacher:              '{{ route("timetable.assign-teacher") }}',
-    unassignTeacher:            '{{ route("timetable.unassign-teacher", ["subjectclassId" => ":id"]) }}',
 
     // Routes with :id placeholders
     getSetting:                 '{{ route("timetable.get-setting", ["settingId" => ":id"]) }}',
@@ -1782,13 +1789,17 @@ function closeEditor() {
 }
 
 // ============================================================================
-// TEACHER ASSIGNMENT MODAL
+// TEACHER ASSIGNMENT MODAL — READ-ONLY
+// Displays existing SubjectTeacher / subjectclass mappings for
+// generation readiness. Never creates or updates those tables.
+// Teacher assignment is owned exclusively by the main Subject /
+// Class management screens.
 // ============================================================================
 function openTeacherAssignModal() {
     document.getElementById('teacherAssignmentContainer').innerHTML = `
         <div class="text-center py-5 text-muted">
-            <i class="ri-user-settings-line ri-3x d-block mb-3 opacity-30"></i>
-            <p>Select a session to load subject/teacher assignments.</p>
+            <i class="ri-user-search-line ri-3x d-block mb-3 opacity-30"></i>
+            <p>Select a session to view subject/teacher assignments.</p>
         </div>`;
     document.getElementById('taSummaryBar').style.display = 'none';
     document.getElementById('taSearchInput').value = '';
@@ -1801,7 +1812,7 @@ async function loadTeacherAssignments() {
     const container = document.getElementById('teacherAssignmentContainer');
 
     if (!sessionId) {
-        container.innerHTML = `<div class="text-center py-5 text-muted"><p>Select a session to load subject/teacher assignments.</p></div>`;
+        container.innerHTML = `<div class="text-center py-5 text-muted"><p>Select a session to view subject/teacher assignments.</p></div>`;
         document.getElementById('taSummaryBar').style.display = 'none';
         taRows = [];
         return;
@@ -1845,7 +1856,9 @@ function renderTeacherAssignmentTable() {
         document.getElementById('taSummaryBar').style.display = 'none';
         container.innerHTML = `<div class="text-center py-5 text-muted">
             <i class="ri-information-line ri-2x d-block mb-2"></i>
-            <p>No subjects assigned to any class for this session/term yet. Assign subjects to classes first (via your Subjects/Classes setup) before assigning teachers here.</p>
+            <p>No subjects assigned to any class for this session/term yet.
+            Assign subjects and teachers in the main <strong>Subject / Class management</strong> screens first.
+            The timetable module only reads those assignments for generation.</p>
         </div>`;
         return;
     }
@@ -1867,78 +1880,30 @@ function renderTeacherAssignmentTable() {
         return;
     }
 
-    const teacherOptions = (taData.teachers || [])
-        .map(t => `<option value="${t.teacher_id}">${escapeHtml(t.teacher_name)}</option>`)
-        .join('');
-
     let html = `<div class="table-responsive"><table class="table table-hover align-middle mb-0">
         <thead class="table-light"><tr>
-            <th>Class</th><th>Subject</th><th style="width:280px">Teacher</th><th style="width:50px"></th>
+            <th>Class</th><th>Subject</th><th>Teacher</th><th style="width:90px">Status</th>
         </tr></thead><tbody>`;
 
     filtered.forEach(row => {
-        html += `<tr data-subjectclass-id="${row.subjectclass_id}">
+        const hasTeacher = !!row.teacher_id;
+        const teacherCell = hasTeacher
+            ? `<span class="fw-semibold">${escapeHtml(row.teacher_name || '—')}</span>`
+            : `<span class="text-warning"><i class="ri-alert-line me-1"></i>Unassigned</span>`;
+        const statusBadge = hasTeacher
+            ? `<span class="badge bg-success-subtle text-success">Ready</span>`
+            : `<span class="badge bg-warning-subtle text-warning">Missing</span>`;
+
+        html += `<tr>
             <td>${escapeHtml(row.class_name || '—')}</td>
             <td>${escapeHtml(row.subject_name || '—')}</td>
-            <td>
-                <select class="form-select form-select-sm assignment-teacher-select" data-subjectclass-id="${row.subjectclass_id}" onchange="onAssignmentTeacherChange(this)">
-                    <option value="">— Unassigned —</option>
-                    ${teacherOptions}
-                </select>
-            </td>
-            <td class="text-center"><span class="ta-row-status" id="taStatus${row.subjectclass_id}"></span></td>
+            <td>${teacherCell}</td>
+            <td>${statusBadge}</td>
         </tr>`;
     });
 
     html += '</tbody></table></div>';
     container.innerHTML = html;
-
-    filtered.forEach(row => {
-        const sel = container.querySelector(`.assignment-teacher-select[data-subjectclass-id="${row.subjectclass_id}"]`);
-        if (sel) sel.value = row.teacher_id || '';
-    });
-}
-
-async function onAssignmentTeacherChange(selectEl) {
-    const subjectclassId = parseInt(selectEl.dataset.subjectclassId);
-    const teacherId       = selectEl.value;
-    const statusEl        = document.getElementById(`taStatus${subjectclassId}`);
-    selectEl.disabled     = true;
-    if (statusEl) statusEl.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
-
-    try {
-        let ok = false;
-        if (teacherId) {
-            const res  = await apiFetch(ROUTES.assignTeacher, 'POST', { subjectclass_id: subjectclassId, teacher_id: parseInt(teacherId) });
-            const data = await res.json();
-            ok = !!data.success;
-        } else {
-            const res  = await apiFetch(url(ROUTES.unassignTeacher, subjectclassId), 'DELETE');
-            const data = await res.json();
-            ok = !!data.success;
-        }
-
-        if (ok) {
-            const row = taRows.find(r => r.subjectclass_id === subjectclassId);
-            if (row) {
-                row.teacher_id   = teacherId ? parseInt(teacherId) : null;
-                const t          = (taData.teachers || []).find(t => t.teacher_id == teacherId);
-                row.teacher_name = t ? t.teacher_name : null;
-            }
-            if (statusEl) statusEl.innerHTML = '<i class="ri-checkbox-circle-fill text-success"></i>';
-            setTimeout(() => { if (statusEl) statusEl.innerHTML = ''; }, 1500);
-
-            const assignedCount = taRows.filter(r => r.teacher_id).length;
-            document.getElementById('taAssignedCount').textContent   = `${assignedCount} assigned`;
-            document.getElementById('taUnassignedCount').textContent = `${taRows.length - assignedCount} unassigned`;
-        } else {
-            if (statusEl) statusEl.innerHTML = '<i class="ri-error-warning-fill text-danger" title="Save failed"></i>';
-        }
-    } catch (e) {
-        if (statusEl) statusEl.innerHTML = '<i class="ri-error-warning-fill text-danger" title="Save failed"></i>';
-    } finally {
-        selectEl.disabled = false;
-    }
 }
 
 // ============================================================================
