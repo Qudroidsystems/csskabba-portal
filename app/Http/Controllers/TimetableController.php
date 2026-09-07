@@ -1693,197 +1693,256 @@ class TimetableController extends Controller
     // PRIVATE: Core slot-placement logic, shared by single and whole-school
     // generate. Assumes slots for $setting have already been deleted.
     // =========================================================================
-    private function runAutoGenerateCore(TimetableSetting $setting, array &$crossOccupied, bool $includeRooms = false, array &$roomOccupied = []): array
-    {
-        $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
-        $days          = $setting->active_days ?? self::DAYS;
-        $constraints   = $setting->constraints->keyBy('subject_id');
-        $classId       = $setting->schoolclass_id;
-        $sessionId     = $setting->session_id;
+    private function runAutoGenerateCore(
+    TimetableSetting $setting,
+    array &$crossOccupied,
+    bool $includeRooms = false,
+    array &$roomOccupied = []
+): array {
+    $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
+    $days          = $setting->active_days ?? self::DAYS;
+    $classId       = $setting->schoolclass_id;
+    $sessionId     = $setting->session_id;
 
-        $dayMeta  = $this->computeDayPeriodMeta($setting);
-        $slotPool = $this->buildWeightedSlotPool($days, $setting, $dayMeta);
+    // ------------------------------------------------------------------
+    // Bootstrap constraints from SubjectTeacher when the setting has none.
+    // This is what makes the Generation Wizard place lessons + teachers
+    // without forcing the admin to open every class and click "Save".
+    // ------------------------------------------------------------------
+    $constraints = $this->ensureConstraintsExist($setting);
 
-        $subjectTeachers = SubjectTeacher::where('sessionid', $sessionId)
-            ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $classId))
-            ->with(['subject', 'staff'])->get()->groupBy('subjectid');
+    $dayMeta  = $this->computeDayPeriodMeta($setting);
+    $slotPool = $this->buildWeightedSlotPool($days, $setting, $dayMeta);
 
-        // Rooms available for this run — only fetched when the admin opted in.
-        $availableRoomIds = $includeRooms
-            ? Room::where('is_active', true)->orderBy('room_name')->pluck('id')->toArray()
-            : [];
+    // Respect term when present (same filter used by the View Assignments modal)
+    $subjectTeachers = SubjectTeacher::where('sessionid', $sessionId)
+        ->when($setting->term_id, fn ($q) => $q->where('termid', $setting->term_id))
+        ->whereHas('subjectclass', fn ($q) => $q->where('schoolclassid', $classId))
+        ->with(['subject', 'staff'])
+        ->get()
+        ->groupBy('subjectid');
 
-        // Teacher availability windows (day => [[start,end,is_available],...]).
-        // A teacher with no records on file is treated as fully available, so
-        // this never restricts anything unless the school has actually filled
-        // in that teacher's availability.
-        $availabilityMap = [];
-        $teacherIds = $subjectTeachers->flatten()->pluck('staffid')->filter()->unique()->values();
-        if ($teacherIds->isNotEmpty()) {
-            TeacherAvailability::whereIn('teacher_id', $teacherIds)->get()
-                ->each(function ($a) use (&$availabilityMap) {
-                    $availabilityMap[$a->teacher_id][$a->day][] = [
-                        'start' => $a->start_time, 'end' => $a->end_time, 'is_available' => (bool) $a->is_available,
-                    ];
-                });
-        }
+    // Rooms available for this run — only fetched when the admin opted in.
+    $availableRoomIds = $includeRooms
+        ? Room::where('is_active', true)->orderBy('room_name')->pluck('id')->toArray()
+        : [];
 
-        $teacherDaySlot     = [];
-        $placed             = [];
-        $unplacedSubjects   = [];
-        $roomShortfallCount = 0;
-
-        $totalLessonSlots   = count($slotPool);
-        $freeTarget         = $setting->free_periods_per_week ?? 0;
-        $placementBudget    = max(0, $totalLessonSlots - $freeTarget);
-        $maxPerDay          = $setting->max_lessons_per_day ?? null;
-        $lessonsPlacedByDay = [];
-
-        $requirements = $constraints->sortByDesc(fn($c) => ($c->is_compulsory ? 100 : 0) + $c->periods_per_week)->values();
-
-        foreach ($requirements as $constraint) {
-            $subjectId   = $constraint->subject_id;
-            $needed      = $constraint->periods_per_week;
-            $allowDouble = $constraint->allow_double_period;
-            $maxDouble   = $constraint->max_double_periods_per_week;
-            $preferDays  = $constraint->preferred_days ?? [];
-            $avoidDays   = $constraint->avoid_days ?? [];
-            $avoidConsecutiveDoubles = $constraint->avoid_consecutive_double_days ?? true;
-            $doubleCount = 0;
-            $usedDoubleDays = [];
-
-            $teacherEntry = $subjectTeachers->get($subjectId)?->first();
-            $teacherId    = $teacherEntry?->staffid;
-
-            $scoredSlots = [];
-            foreach ($slotPool as $slot) {
-                $day      = $slot['day'];
-                $periodId = $slot['period_id'];
-                $key      = $day . '_' . $periodId;
-                if (isset($placed[$key])) continue;
-                if ($teacherId && in_array($periodId, $teacherDaySlot[$teacherId][$day] ?? [])) continue;
-                if ($teacherId && in_array($periodId, $crossOccupied[$teacherId][$day] ?? [])) continue;
-                if ($teacherId && !$this->isTeacherAvailableForPeriod($teacherId, $day, $periodId, $setting, $availabilityMap)) continue;
-
-                $score = 0;
-                if (in_array($day, $preferDays)) $score += 10;
-                if (in_array($day, $avoidDays))  $score -= 10;
-                if ($setting->deprioritize_break_adjacent && !empty($slot['is_break_adjacent'])) $score -= 3;
-
-                $scoredSlots[] = ['slot' => $slot, 'score' => $score, 'key' => $key];
-            }
-
-            usort($scoredSlots, fn($a, $b) => $b['score'] - $a['score']);
-
-            $placedThisSubject = 0;
-            foreach ($scoredSlots as $scored) {
-                if ($placedThisSubject >= $needed) break;
-                if (count($placed) >= $placementBudget) break 2;
-
-                $slot     = $scored['slot'];
-                $day      = $slot['day'];
-                $periodId = $slot['period_id'];
-                $key      = $scored['key'];
-                if (isset($placed[$key])) continue;
-                if ($maxPerDay && ($lessonsPlacedByDay[$day] ?? 0) >= $maxPerDay) continue;
-
-                $roomId = $includeRooms ? $this->pickAvailableRoom($availableRoomIds, $day, $periodId, $roomOccupied) : null;
-                if ($includeRooms && !$roomId) $roomShortfallCount++;
-
-                TimetableSlot::create([
-                    'setting_id' => $setting->id, 'period_id' => $periodId, 'day' => $day,
-                    'subject_id' => $subjectId, 'teacher_id' => $teacherId, 'room_id' => $roomId,
-                    'is_double'  => false, 'is_free' => false,
-                ]);
-                $placed[$key] = $subjectId;
-                $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
-                if ($teacherId) {
-                    $teacherDaySlot[$teacherId][$day][] = $periodId;
-                    $crossOccupied[$teacherId][$day][]  = $periodId;
-                }
-                if ($roomId) $roomOccupied[$roomId][$day][] = $periodId;
-                $placedThisSubject++;
-
-                if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed
-                    && count($placed) < $placementBudget
-                    && (!$maxPerDay || ($lessonsPlacedByDay[$day] ?? 0) < $maxPerDay)) {
-
-                    $cooldownOk = true;
-                    if ($avoidConsecutiveDoubles) {
-                        foreach ($usedDoubleDays as $usedDay) {
-                            if (abs((self::DAYS_MAP[$day] ?? 0) - (self::DAYS_MAP[$usedDay] ?? 0)) <= 1) { $cooldownOk = false; break; }
-                        }
-                    }
-
-                    if ($cooldownOk) {
-                        $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
-                        $nextApplicable = $nextPeriod
-                            && ($dayMeta[$day][$nextPeriod->id]['effective_type'] ?? null) === 'lesson'
-                            && ($dayMeta[$day][$nextPeriod->id]['applicable'] ?? false);
-
-                        if ($nextPeriod && $nextApplicable) {
-                            $nextKey         = $day . '_' . $nextPeriod->id;
-                            $teacherConflict = $teacherId && (
-                                in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []) ||
-                                in_array($nextPeriod->id, $crossOccupied[$teacherId][$day] ?? [])
-                            );
-                            $teacherAvailableNext = !$teacherId
-                                || $this->isTeacherAvailableForPeriod($teacherId, $day, $nextPeriod->id, $setting, $availabilityMap);
-
-                            if (!isset($placed[$nextKey]) && !$teacherConflict && $teacherAvailableNext) {
-                                // Keep the double period in the same room when possible.
-                                $nextRoomId = $roomId;
-                                if ($includeRooms && $nextRoomId && in_array($nextPeriod->id, $roomOccupied[$nextRoomId][$day] ?? [])) {
-                                    $nextRoomId = $this->pickAvailableRoom($availableRoomIds, $day, $nextPeriod->id, $roomOccupied);
-                                    if (!$nextRoomId) $roomShortfallCount++;
-                                }
-
-                                TimetableSlot::create([
-                                    'setting_id' => $setting->id, 'period_id' => $nextPeriod->id, 'day' => $day,
-                                    'subject_id' => $subjectId, 'teacher_id' => $teacherId, 'room_id' => $nextRoomId,
-                                    'is_double'  => true, 'is_free' => false,
-                                ]);
-                                $placed[$nextKey] = $subjectId;
-                                $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
-                                if ($teacherId) {
-                                    $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
-                                    $crossOccupied[$teacherId][$day][]  = $nextPeriod->id;
-                                }
-                                if ($nextRoomId) $roomOccupied[$nextRoomId][$day][] = $nextPeriod->id;
-                                $placedThisSubject++;
-                                $doubleCount++;
-                                $usedDoubleDays[] = $day;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if ($placedThisSubject < $needed) {
-                $unplacedSubjects[] = [
-                    'subject' => $constraint->subject?->subject ?? "Subject #{$subjectId}",
-                    'needed'  => $needed, 'placed'  => $placedThisSubject,
+    // Teacher availability windows (day => [[start,end,is_available],...]).
+    // A teacher with no records on file is treated as fully available.
+    $availabilityMap = [];
+    $teacherIds = $subjectTeachers->flatten()->pluck('staffid')->filter()->unique()->values();
+    if ($teacherIds->isNotEmpty()) {
+        TeacherAvailability::whereIn('teacher_id', $teacherIds)->get()
+            ->each(function ($a) use (&$availabilityMap) {
+                $availabilityMap[$a->teacher_id][$a->day][] = [
+                    'start'        => $a->start_time,
+                    'end'          => $a->end_time,
+                    'is_available' => (bool) $a->is_available,
                 ];
-            }
-        }
-
-        foreach ($slotPool as $slot) {
-            $key = $slot['day'] . '_' . $slot['period_id'];
-            if (!isset($placed[$key])) {
-                TimetableSlot::create([
-                    'setting_id' => $setting->id, 'period_id' => $slot['period_id'], 'day' => $slot['day'],
-                    'subject_id' => null, 'teacher_id' => null, 'is_free' => true,
-                ]);
-            }
-        }
-
-        return [
-            'placed'               => count($placed),
-            'unplaced_subjects'    => $unplacedSubjects,
-            'rooms_included'       => $includeRooms,
-            'room_shortfall_count' => $roomShortfallCount,
-        ];
+            });
     }
+
+    $teacherDaySlot     = [];
+    $placed             = [];
+    $unplacedSubjects   = [];
+    $roomShortfallCount = 0;
+
+    $totalLessonSlots   = count($slotPool);
+    $freeTarget         = $setting->free_periods_per_week ?? 0;
+    $placementBudget    = max(0, $totalLessonSlots - $freeTarget);
+    $maxPerDay          = $setting->max_lessons_per_day ?? null;
+    $lessonsPlacedByDay = [];
+
+    $requirements = $constraints
+        ->sortByDesc(fn ($c) => ($c->is_compulsory ? 100 : 0) + $c->periods_per_week)
+        ->values();
+
+    foreach ($requirements as $constraint) {
+        $subjectId               = $constraint->subject_id;
+        $needed                  = $constraint->periods_per_week;
+        $allowDouble             = $constraint->allow_double_period;
+        $maxDouble               = $constraint->max_double_periods_per_week;
+        $preferDays              = $constraint->preferred_days ?? [];
+        $avoidDays               = $constraint->avoid_days ?? [];
+        $avoidConsecutiveDoubles = $constraint->avoid_consecutive_double_days ?? true;
+        $doubleCount             = 0;
+        $usedDoubleDays          = [];
+
+        $teacherEntry = $subjectTeachers->get($subjectId)?->first();
+        $teacherId    = $teacherEntry?->staffid;
+
+        $scoredSlots = [];
+        foreach ($slotPool as $slot) {
+            $day      = $slot['day'];
+            $periodId = $slot['period_id'];
+            $key      = $day . '_' . $periodId;
+
+            if (isset($placed[$key])) continue;
+            if ($teacherId && in_array($periodId, $teacherDaySlot[$teacherId][$day] ?? [])) continue;
+            if ($teacherId && in_array($periodId, $crossOccupied[$teacherId][$day] ?? [])) continue;
+            if ($teacherId && !$this->isTeacherAvailableForPeriod($teacherId, $day, $periodId, $setting, $availabilityMap)) continue;
+
+            $score = 0;
+            if (in_array($day, $preferDays)) $score += 10;
+            if (in_array($day, $avoidDays))  $score -= 10;
+            if ($setting->deprioritize_break_adjacent && !empty($slot['is_break_adjacent'])) $score -= 3;
+
+            $scoredSlots[] = ['slot' => $slot, 'score' => $score, 'key' => $key];
+        }
+
+        usort($scoredSlots, fn ($a, $b) => $b['score'] - $a['score']);
+
+        $placedThisSubject = 0;
+        foreach ($scoredSlots as $scored) {
+            if ($placedThisSubject >= $needed) break;
+            if (count($placed) >= $placementBudget) break 2;
+
+            $slot     = $scored['slot'];
+            $day      = $slot['day'];
+            $periodId = $slot['period_id'];
+            $key      = $scored['key'];
+
+            if (isset($placed[$key])) continue;
+            if ($maxPerDay && ($lessonsPlacedByDay[$day] ?? 0) >= $maxPerDay) continue;
+
+            $roomId = $includeRooms
+                ? $this->pickAvailableRoom($availableRoomIds, $day, $periodId, $roomOccupied)
+                : null;
+            if ($includeRooms && !$roomId) $roomShortfallCount++;
+
+            TimetableSlot::create([
+                'setting_id' => $setting->id,
+                'period_id'  => $periodId,
+                'day'        => $day,
+                'subject_id' => $subjectId,
+                'teacher_id' => $teacherId,
+                'room_id'    => $roomId,
+                'is_double'  => false,
+                'is_free'    => false,
+            ]);
+
+            $placed[$key] = $subjectId;
+            $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
+
+            if ($teacherId) {
+                $teacherDaySlot[$teacherId][$day][] = $periodId;
+                $crossOccupied[$teacherId][$day][]  = $periodId;
+            }
+            if ($roomId) {
+                $roomOccupied[$roomId][$day][] = $periodId;
+            }
+            $placedThisSubject++;
+
+            // Attempt a double period when allowed
+            if ($allowDouble
+                && $doubleCount < $maxDouble
+                && $placedThisSubject < $needed
+                && count($placed) < $placementBudget
+                && (!$maxPerDay || ($lessonsPlacedByDay[$day] ?? 0) < $maxPerDay)
+            ) {
+                $cooldownOk = true;
+                if ($avoidConsecutiveDoubles) {
+                    foreach ($usedDoubleDays as $usedDay) {
+                        if (abs((self::DAYS_MAP[$day] ?? 0) - (self::DAYS_MAP[$usedDay] ?? 0)) <= 1) {
+                            $cooldownOk = false;
+                            break;
+                        }
+                    }
+                }
+
+                if ($cooldownOk) {
+                    $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
+                    $nextApplicable = $nextPeriod
+                        && ($dayMeta[$day][$nextPeriod->id]['effective_type'] ?? null) === 'lesson'
+                        && ($dayMeta[$day][$nextPeriod->id]['applicable'] ?? false);
+
+                    if ($nextPeriod && $nextApplicable) {
+                        $nextKey = $day . '_' . $nextPeriod->id;
+
+                        $teacherConflict = $teacherId && (
+                            in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []) ||
+                            in_array($nextPeriod->id, $crossOccupied[$teacherId][$day] ?? [])
+                        );
+
+                        $teacherAvailableNext = !$teacherId
+                            || $this->isTeacherAvailableForPeriod(
+                                $teacherId, $day, $nextPeriod->id, $setting, $availabilityMap
+                            );
+
+                        if (!isset($placed[$nextKey]) && !$teacherConflict && $teacherAvailableNext) {
+                            // Prefer keeping the double in the same room
+                            $nextRoomId = $roomId;
+                            if ($includeRooms && $nextRoomId
+                                && in_array($nextPeriod->id, $roomOccupied[$nextRoomId][$day] ?? [])
+                            ) {
+                                $nextRoomId = $this->pickAvailableRoom(
+                                    $availableRoomIds, $day, $nextPeriod->id, $roomOccupied
+                                );
+                                if (!$nextRoomId) $roomShortfallCount++;
+                            }
+
+                            TimetableSlot::create([
+                                'setting_id' => $setting->id,
+                                'period_id'  => $nextPeriod->id,
+                                'day'        => $day,
+                                'subject_id' => $subjectId,
+                                'teacher_id' => $teacherId,
+                                'room_id'    => $nextRoomId,
+                                'is_double'  => true,
+                                'is_free'    => false,
+                            ]);
+
+                            $placed[$nextKey] = $subjectId;
+                            $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
+
+                            if ($teacherId) {
+                                $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
+                                $crossOccupied[$teacherId][$day][]  = $nextPeriod->id;
+                            }
+                            if ($nextRoomId) {
+                                $roomOccupied[$nextRoomId][$day][] = $nextPeriod->id;
+                            }
+
+                            $placedThisSubject++;
+                            $doubleCount++;
+                            $usedDoubleDays[] = $day;
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($placedThisSubject < $needed) {
+            $unplacedSubjects[] = [
+                'subject' => $constraint->subject?->subject ?? "Subject #{$subjectId}",
+                'needed'  => $needed,
+                'placed'  => $placedThisSubject,
+            ];
+        }
+    }
+
+    // Fill remaining empty slots as free periods
+    foreach ($slotPool as $slot) {
+        $key = $slot['day'] . '_' . $slot['period_id'];
+        if (!isset($placed[$key])) {
+            TimetableSlot::create([
+                'setting_id' => $setting->id,
+                'period_id'  => $slot['period_id'],
+                'day'        => $slot['day'],
+                'subject_id' => null,
+                'teacher_id' => null,
+                'is_free'    => true,
+            ]);
+        }
+    }
+
+    return [
+        'placed'               => count($placed),
+        'unplaced_subjects'    => $unplacedSubjects,
+        'rooms_included'       => $includeRooms,
+        'room_shortfall_count' => $roomShortfallCount,
+    ];
+}
 
     // =========================================================================
     // PRIVATE: First free room (from the admin-chosen pool) for a given
@@ -2692,6 +2751,53 @@ class TimetableController extends Controller
             'periodDayMeta', 'icsUrl', 'webcalUrl'
         ));
     }
+
+    // =========================================================================
+// PRIVATE: Ensure a setting has at least one constraint row.
+// If none exist, create sensible defaults from the current SubjectTeacher
+// assignments (the same data the "View Teacher Assignments" modal shows).
+// Returns the refreshed constraints collection keyed by subject_id.
+// =========================================================================
+private function ensureConstraintsExist(TimetableSetting $setting): \Illuminate\Support\Collection
+{
+    $constraints = $setting->constraints->keyBy('subject_id');
+
+    if ($constraints->isNotEmpty()) {
+        return $constraints;
+    }
+
+    $subjectTeachers = SubjectTeacher::where('sessionid', $setting->session_id)
+        ->when($setting->term_id, fn ($q) => $q->where('termid', $setting->term_id))
+        ->whereHas('subjectclass', fn ($q) => $q->where('schoolclassid', $setting->schoolclass_id))
+        ->get();
+
+    $created = 0;
+    foreach ($subjectTeachers as $st) {
+        // Guard against duplicate subject rows
+        if (TimetableConstraint::where('setting_id', $setting->id)
+                ->where('subject_id', $st->subjectid)
+                ->exists()) {
+            continue;
+        }
+
+        TimetableConstraint::create([
+            'setting_id'                    => $setting->id,
+            'subject_id'                    => $st->subjectid,
+            'periods_per_week'              => 2,
+            'allow_double_period'           => false,
+            'max_double_periods_per_week'   => 1,
+            'is_compulsory'                 => true,
+            'avoid_consecutive_double_days' => true,
+        ]);
+        $created++;
+    }
+
+    if ($created > 0) {
+        $setting->load('constraints.subject');
+    }
+
+    return $setting->constraints->keyBy('subject_id');
+}
 
     // =========================================================================
     // PRIVATE: PDF EXPORT HELPERS
