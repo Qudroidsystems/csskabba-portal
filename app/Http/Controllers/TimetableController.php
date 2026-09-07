@@ -1960,10 +1960,13 @@ class TimetableController extends Controller
     // "fix" this back to `subjectclass.session` / `subjectclass.termid`,
     // those columns are not the source of truth here.
     //
-    // This method only ever re-points an EXISTING subjectclass row at a
-    // different SubjectTeacher (i.e. swaps who teaches it); it never creates
-    // or deletes a subjectclass row — that curriculum record is owned by the
-    // Subjects/Classes setup screen and is also used for score entry.
+    // READ-ONLY: this endpoint is a status view only. It shows who is
+    // currently teaching what, per the assignments made in Subjects/Classes
+    // management, so the admin can see gaps before generating a timetable.
+    // It must never write to `subjectclass` or `subjectteacher` — those
+    // records are owned exclusively by the Subjects/Classes setup screen and
+    // are also used for score entry. Assigning or changing a teacher must be
+    // done there, not from the timetable module.
     // =========================================================================
     public function getTeacherAssignments(Request $request): JsonResponse
     {
@@ -2049,66 +2052,6 @@ class TimetableController extends Controller
             'teachers'   => $teacherData,
             'unassigned' => $unassigned,
         ]);
-    }
-
-    public function assignTeacherToSubjectclass(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'subjectclass_id' => 'required|exists:subjectclass,id',
-            'teacher_id'      => 'required|exists:users,id',
-        ]);
-
-        $subjectclass = Subjectclass::with('subjectTeacher')->findOrFail($validated['subjectclass_id']);
-        $currentLink  = $subjectclass->subjectTeacher; // carries subjectid/sessionid/termid
-
-        if (!$currentLink) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This class/subject has no session or term on record yet — set it up via Subjects/Classes first.',
-            ], 422);
-        }
-
-        $previousTeacherLinkId = $subjectclass->subjectteacherid;
-
-        DB::beginTransaction();
-        try {
-            // Reuse the existing subjectid/sessionid/termid — only the staff changes.
-            $subjectTeacher = SubjectTeacher::firstOrCreate([
-                'staffid'   => $validated['teacher_id'],
-                'subjectid' => $currentLink->subjectid,
-                'sessionid' => $currentLink->sessionid,
-                'termid'    => $currentLink->termid,
-            ]);
-
-            $subjectclass->update(['subjectteacherid' => $subjectTeacher->id]);
-
-            // Clean up the previous teacher-link row only if nothing else uses it.
-            if ($previousTeacherLinkId && $previousTeacherLinkId != $subjectTeacher->id) {
-                $stillUsed = Subjectclass::where('subjectteacherid', $previousTeacherLinkId)->exists();
-                if (!$stillUsed) SubjectTeacher::where('id', $previousTeacherLinkId)->delete();
-            }
-
-            DB::commit();
-            return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    public function unassignTeacherFromSubjectclass(int $subjectclassId): JsonResponse
-    {
-        $subjectclass    = Subjectclass::findOrFail($subjectclassId);
-        $teacherLinkId   = $subjectclass->subjectteacherid;
-
-        $subjectclass->update(['subjectteacherid' => null]);
-
-        if ($teacherLinkId) {
-            $stillUsed = Subjectclass::where('subjectteacherid', $teacherLinkId)->exists();
-            if (!$stillUsed) SubjectTeacher::where('id', $teacherLinkId)->delete();
-        }
-
-        return response()->json(['success' => true]);
     }
 
     // =========================================================================
