@@ -1309,11 +1309,12 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     // AJAX — Subjects & teachers
     Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
 
-    // AJAX — Teacher availability
+    
     Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
     Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
     Route::get('/teacher-assignments', [TimetableController::class, 'getTeacherAssignments'])->name('timetable.teacher-assignments');
     Route::post('/assign-teacher', [TimetableController::class, 'assignTeacherToSubjectclass'])->name('timetable.assign-teacher');
+    
     Route::delete('/unassign-teacher/{subjectclassId}', [TimetableController::class, 'unassignTeacherFromSubjectclass'])->name('timetable.unassign-teacher');
 
     // AJAX — Substitutes
