@@ -2076,6 +2076,60 @@ public function getBatchImportProgress(Request $request)
         }
     }
 
+/**
+ * Generate a locked Excel template for batch student upload.
+ */
+public function generateBatchTemplate(Request $request)
+{
+    $request->validate([
+        'schoolclassid' => 'required|exists:schoolclass,id',
+        'termid'        => 'required|exists:schoolterm,id',
+        'sessionid'     => 'required|exists:schoolsession,id',
+        'rows'          => 'nullable|integer|min:1|max:500',
+    ]);
 
+    try {
+        $class = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(
+                'schoolclass.id',
+                'schoolclass.schoolclass',
+                'schoolarm.arm'
+            )
+            ->where('schoolclass.id', $request->schoolclassid)
+            ->firstOrFail();
+
+        $term    = Schoolterm::findOrFail($request->termid);
+        $session = Schoolsession::findOrFail($request->sessionid);
+
+        $className = $class->schoolclass . ($class->arm ? ' - ' . $class->arm : '');
+        $rows      = (int) $request->input('rows', 30);
+
+        $filename = 'student-batch-template-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(
+            new \App\Exports\StudentBatchTemplateExport(
+                (int) $request->schoolclassid,
+                (int) $request->termid,
+                (int) $request->sessionid,
+                $rows,
+                $className,
+                $term->term,
+                $session->session
+            ),
+            $filename
+        );
+    } catch (\Exception $e) {
+        Log::error('Failed to generate batch template: ' . $e->getMessage());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate template: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        return redirect()->back()->with('error', 'Failed to generate template: ' . $e->getMessage());
+    }
+}
 
 }

@@ -18,6 +18,7 @@ class Subjectclass extends Model
         'subjectteacherid',
         'termid',
         'sessionid',
+        'session',       // Changed from sessionid to session
         'status',
         'teacher_editing_enabled',
         'teacher_editing_disabled_at',

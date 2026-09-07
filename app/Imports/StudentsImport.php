@@ -5,59 +5,58 @@ namespace App\Imports;
 use App\Models\Student;
 use App\Models\Studentclass;
 use App\Models\Studenthouse;
-use App\Models\StudentStatus;
 use App\Models\Studentpicture;
 use App\Models\PromotionStatus;
 use App\Models\ParentRegistration;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Session;
-use Maatwebsite\Excel\Concerns\ToModel;
 use App\Models\Studentpersonalityprofile;
+use App\Models\StudentCurrentTerm;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithUpsertColumns;
 
-/**
- * SkipsOnFailure / SkipsOnError mean a bad row is recorded and skipped
- * instead of aborting the whole import. Call $import->failures() and
- * $import->errors() after Excel::import() to retrieve what went wrong.
- */
-class StudentsImport implements ToModel, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation, SkipsOnFailure, SkipsOnError
+class StudentsImport implements
+    ToModel,
+    WithStartRow,
+    WithValidation,
+    SkipsOnFailure,
+    SkipsOnError,
+    WithUpserts,
+    WithUpsertColumns
 {
     use Importable, SkipsFailures, SkipsErrors;
-
-    public $id = 0;
 
     protected int $sclassid;
     protected int $termid;
     protected int $sessionid;
     protected int $batchid;
+    protected ?int $userId;
 
+    protected int $rowCounter = 0;
     protected ?string $progressKey = null;
     protected int $totalRows = 0;
 
-    /**
-     * Context is passed explicitly rather than read from the HTTP session,
-     * because this class runs inside a queue worker where no session exists.
-     * Session::get() is kept only as a fallback for any legacy caller.
-     */
     public function __construct(
-        ?int $schoolclassid = null,
-        ?int $termid = null,
-        ?int $sessionid = null,
-        ?int $batchid = null
+        int $schoolclassid,
+        int $termid,
+        int $sessionid,
+        int $batchid,
+        ?int $userId = null
     ) {
-        $this->sclassid  = $schoolclassid ?? (int) Session::get('sclassid');
-        $this->termid    = $termid ?? (int) Session::get('tid');
-        $this->sessionid = $sessionid ?? (int) Session::get('sid');
-        $this->batchid   = $batchid ?? (int) Session::get('batchid');
+        $this->sclassid  = $schoolclassid;
+        $this->termid    = $termid;
+        $this->sessionid = $sessionid;
+        $this->batchid   = $batchid;
+        $this->userId    = $userId;
     }
 
     public function setProgressTracking(string $progressKey, int $totalRows): void
@@ -68,144 +67,160 @@ class StudentsImport implements ToModel, WithStartRow, WithUpsertColumns, WithUp
 
     public function model(array $row)
     {
-        // Count this row as "attempted" before any exception can interrupt,
-        // so the progress bar stays accurate even on skipped/failed rows.
-        $this->id++;
+        $this->rowCounter++;
         $this->reportProgress();
 
-        $naIfEmpty = function ($value) {
-            return (is_null($value) || trim((string) $value) === '') ? 'N/A' : trim((string) $value);
-        };
+        $clean = fn ($v) => (is_null($v) || trim((string) $v) === '') ? null : trim((string) $v);
 
-        $schoolclassid = $this->sclassid ?: 'N/A';
-        $termid        = $this->termid ?: 'N/A';
-        $sessionid     = $this->sessionid ?: 'N/A';
-        $batchid       = $this->batchid ?: 'N/A';
+        $admissionNo  = $clean($row[0] ?? null);
+        $lastname     = $clean($row[1] ?? null);
+        $firstname    = $clean($row[2] ?? null);
+        $othername    = $clean($row[3] ?? null);
+        $gender       = $clean($row[4] ?? null);
+        $homeAddress  = $clean($row[5] ?? null);
+        $dob          = $clean($row[6] ?? null);
+        $age          = $clean($row[7] ?? null);
+        $placeOfBirth = $clean($row[8] ?? null);
+        $nationality  = $clean($row[9] ?? null);
+        $state        = $clean($row[10] ?? null);
+        $local        = $clean($row[11] ?? null);
+        $religion     = $clean($row[12] ?? null);
+        $lastSchool   = $clean($row[13] ?? null);
+        $lastClass    = $clean($row[14] ?? null);
 
-        $admissionno = $naIfEmpty($row[0] ?? null);
-        $surname = $naIfEmpty($row[1] ?? null);
-        $firstname = $naIfEmpty($row[2] ?? null);
-        $othername = $naIfEmpty($row[3] ?? null);
-        $gender = $naIfEmpty($row[4] ?? null);
-        $homeaddress = $naIfEmpty($row[5] ?? null);
-        $dob = $naIfEmpty($row[6] ?? null);
-        $age = $naIfEmpty($row[7] ?? null);
-        $placeofbirth = $naIfEmpty($row[8] ?? null);
-        $nationality = $naIfEmpty($row[9] ?? null);
-        $state = $naIfEmpty($row[10] ?? null);
-        $local = $naIfEmpty($row[11] ?? null);
-        $religion = $naIfEmpty($row[12] ?? null);
-        $lastschool = $naIfEmpty($row[13] ?? null);
-        $lastclass = $naIfEmpty($row[14] ?? null);
+        // Parent fields
+        $fatherTitle      = $clean($row[18] ?? null);
+        $fatherName       = $clean($row[19] ?? null);
+        $fatherPhone      = $clean($row[20] ?? null);
+        $officeAddress    = $clean($row[21] ?? null);
+        $fatherOccupation = $clean($row[22] ?? null);
+        $motherTitle      = $clean($row[23] ?? null);
+        $motherName       = $clean($row[24] ?? null);
+        $motherPhone      = $clean($row[25] ?? null);
+        $motherOccupation = $clean($row[26] ?? null);
+        $motherOfficeAddr = $clean($row[27] ?? null);
+        $parentAddress    = $clean($row[28] ?? null);
+        $parentReligion   = $clean($row[29] ?? null);
 
-        $father_title          = $naIfEmpty($row[18] ?? null);
-        $father                = $naIfEmpty($row[19] ?? null);
-        $father_phone          = $naIfEmpty($row[20] ?? null);
-        $office_address        = $naIfEmpty($row[21] ?? null);
-        $father_occupation     = $naIfEmpty($row[22] ?? null);
-        $mother_title          = $naIfEmpty($row[23] ?? null);
-        $mother                = $naIfEmpty($row[24] ?? null);
-        $mother_phone          = $naIfEmpty($row[25] ?? null);
-        $mother_occupation     = $naIfEmpty($row[26] ?? null);
-        $mother_office_address = $naIfEmpty($row[27] ?? null);
-        $parent_address        = $naIfEmpty($row[28] ?? null);
-        $parent_religion       = $naIfEmpty($row[29] ?? null);
+        $rowNumber = $this->startRow() + $this->rowCounter - 1;
 
-        $rowNumber = $this->startRow() + $this->id - 1;
-
-        if (in_array($admissionno, ['N/A', ''], true) || in_array($surname, ['N/A', ''], true) || in_array($firstname, ['N/A', ''], true)) {
-            throw new \Exception("Row {$rowNumber}: required fields (admissionno, surname, firstname) cannot be empty or 'N/A'.");
+        if (!$admissionNo || !$lastname || !$firstname) {
+            throw new \Exception("Row {$rowNumber}: Admission No, Surname and First Name are required.");
         }
 
-        if (in_array($schoolclassid, ['N/A', ''], true) || in_array($termid, ['N/A', ''], true) || in_array($sessionid, ['N/A', ''], true) || in_array($batchid, ['N/A', ''], true)) {
-            throw new \Exception("Row {$rowNumber}: session data (schoolclassid, termid, sessionid, batchid) cannot be empty or 'N/A'.");
-        }
-
-        $studentbiodata = new Student();
-        $studentclass = new Studentclass();
-        $promotion = new PromotionStatus();
-        $parent = new ParentRegistration();
-        $studenthouse = new Studenthouse();
-        $picture = new Studentpicture();
-        $studentpersonalityprofile = new Studentpersonalityprofile();
-        $studentStatus = StudentStatus::where('status', 'old')->first();
-
-        return \DB::transaction(function () use (
-            $studentbiodata, $studentclass, $promotion, $parent, $studenthouse, $picture, $studentpersonalityprofile, $studentStatus,
-            $admissionno, $surname, $firstname, $othername, $gender, $homeaddress, $dob, $age, $placeofbirth, $nationality, $state, $local, $religion, $lastschool, $lastclass,
-            $father_title, $father, $father_phone, $office_address, $father_occupation,
-            $mother_title, $mother, $mother_phone, $mother_occupation, $mother_office_address, $parent_address, $parent_religion,
-            $schoolclassid, $termid, $sessionid, $batchid
+        return DB::transaction(function () use (
+            $admissionNo, $lastname, $firstname, $othername, $gender, $homeAddress,
+            $dob, $age, $placeOfBirth, $nationality, $state, $local, $religion,
+            $lastSchool, $lastClass,
+            $fatherTitle, $fatherName, $fatherPhone, $officeAddress, $fatherOccupation,
+            $motherTitle, $motherName, $motherPhone, $motherOccupation, $motherOfficeAddr,
+            $parentAddress, $parentReligion
         ) {
-            $studentbiodata->admissionNo = $admissionno;
-            $studentbiodata->title = 'N/A';
-            $studentbiodata->firstname = $firstname;
-            $studentbiodata->lastname = $surname;
-            $studentbiodata->othername = $othername;
-            $studentbiodata->gender = $gender;
-            $studentbiodata->home_address = $homeaddress;
-            $studentbiodata->home_address2 = 'N/A';
-            $studentbiodata->dateofbirth = $dob;
-            $studentbiodata->age = $age;
-            $studentbiodata->placeofbirth = $placeofbirth;
-            $studentbiodata->religion = $religion;
-            $studentbiodata->nationality = $nationality;
-            $studentbiodata->state = $state;
-            $studentbiodata->local = $local;
-            $studentbiodata->last_school = $lastschool;
-            $studentbiodata->last_class = $lastclass;
-            $studentbiodata->registeredBy = Auth::user()->id ?? 'N/A';
-            $studentbiodata->batchid = $batchid;
-            $studentbiodata->statusId = $studentStatus ? $studentStatus->id : 'N/A';
-            $studentbiodata->save();
-            $studentId = $studentbiodata->id;
+            // 1. Student (upsert by admissionNo)
+            $student = Student::updateOrCreate(
+                ['admissionNo' => $admissionNo],
+                [
+                    'title'            => 'N/A',
+                    'firstname'        => $firstname,
+                    'lastname'         => $lastname,
+                    'othername'        => $othername,
+                    'gender'           => $gender,
+                    'home_address'     => $homeAddress,
+                    'home_address2'    => $homeAddress ?? 'N/A',
+                    'dateofbirth'      => $dob,
+                    'age'              => is_numeric($age) ? (int) $age : null,
+                    'placeofbirth'     => $placeOfBirth,
+                    'religion'         => $religion,
+                    'nationality'      => $nationality,
+                    'state'            => $state,
+                    'local'            => $local,
+                    'last_school'      => $lastSchool,
+                    'last_class'       => $lastClass,
+                    'registeredBy'     => $this->userId,
+                    'batchid'          => $this->batchid,
+                    'statusId'         => 1,          // Old student for batch uploads
+                    'student_status'   => 'Active',
+                    'student_category' => 'Day',
+                ]
+            );
 
-            $parent->studentId = $studentId;
-            $parent->father_title = $father_title;
-            $parent->father = $father;
-            $parent->father_phone = $father_phone;
-            $parent->office_address = $office_address;
-            $parent->father_occupation = $father_occupation;
-            $parent->mother_title = $mother_title;
-            $parent->mother = $mother;
-            $parent->mother_phone = $mother_phone;
-            $parent->mother_occupation = $mother_occupation;
-            $parent->mother_office_address = $mother_office_address;
-            $parent->parent_address = $parent_address;
-            $parent->religion = $parent_religion;
-            $parent->save();
+            // 2. Parent
+            ParentRegistration::updateOrCreate(
+                ['studentId' => $student->id],
+                [
+                    'father_title'          => $fatherTitle,
+                    'father'                => $fatherName,
+                    'father_phone'          => $fatherPhone,
+                    'office_address'        => $officeAddress,
+                    'father_occupation'     => $fatherOccupation,
+                    'mother_title'          => $motherTitle,
+                    'mother'                => $motherName,
+                    'mother_phone'          => $motherPhone,
+                    'mother_occupation'     => $motherOccupation,
+                    'mother_office_address' => $motherOfficeAddr,
+                    'parent_address'        => $parentAddress,
+                    'religion'              => $parentReligion,
+                ]
+            );
 
-            $picture->studentid = $studentId;
-            $picture->picture = 'N/A';
-            $picture->save();
+            // 3. Picture
+            Studentpicture::firstOrCreate(
+                ['studentid' => $student->id],
+                ['picture' => 'unnamed.jpg']
+            );
 
-            $studentclass->studentId = $studentId;
-            $studentclass->schoolclassid = $schoolclassid;
-            $studentclass->termid = $termid;
-            $studentclass->sessionid = $sessionid;
-            $studentclass->save();
+            // 4. Studentclass
+            Studentclass::updateOrCreate(
+                [
+                    'studentId' => $student->id,
+                    'termid'    => $this->termid,
+                    'sessionid' => $this->sessionid,
+                ],
+                ['schoolclassid' => $this->sclassid]
+            );
 
-            $promotion->studentId = $studentId;
-            $promotion->schoolclassid = $schoolclassid;
-            $promotion->termid = $termid;
-            $promotion->sessionid = $sessionid;
-            $promotion->promotionStatus = 'PROMOTED';
-            $promotion->classstatus = 'CURRENT';
-            $promotion->save();
+            // 5. PromotionStatus
+            PromotionStatus::updateOrCreate(
+                [
+                    'studentId'     => $student->id,
+                    'schoolclassid' => $this->sclassid,
+                    'termid'        => $this->termid,
+                    'sessionid'     => $this->sessionid,
+                ],
+                [
+                    'promotionStatus' => 'PROMOTED',
+                    'classstatus'     => 'CURRENT',
+                ]
+            );
 
-            $studenthouse->studentid = $studentId;
-            $studenthouse->termid = $termid;
-            $studenthouse->sessionid = $sessionid;
-            $studenthouse->schoolhouse = 'N/A';
-            $studenthouse->save();
+            // 6. Student house
+            Studenthouse::updateOrCreate(
+                [
+                    'studentid' => $student->id,
+                    'termid'    => $this->termid,
+                    'sessionid' => $this->sessionid,
+                ],
+                ['schoolhouse' => null]
+            );
 
-            $studentpersonalityprofile->studentid = $studentId;
-            $studentpersonalityprofile->schoolclassid = $schoolclassid;
-            $studentpersonalityprofile->termid = $termid;
-            $studentpersonalityprofile->sessionid = $sessionid;
-            $studentpersonalityprofile->save();
+            // 7. Personality profile
+            Studentpersonalityprofile::firstOrCreate([
+                'studentid'     => $student->id,
+                'schoolclassid' => $this->sclassid,
+                'termid'        => $this->termid,
+                'sessionid'     => $this->sessionid,
+            ]);
 
-            return $studentbiodata;
+            // 8. Current Term – use the official model method
+            StudentCurrentTerm::registerTerm(
+                $student->id,
+                $this->sclassid,
+                $this->termid,
+                $this->sessionid,
+                true   // mark as current
+            );
+
+            return $student;
         });
     }
 
@@ -215,41 +230,40 @@ class StudentsImport implements ToModel, WithStartRow, WithUpsertColumns, WithUp
             return;
         }
 
-        $isLastRow = $this->id >= $this->totalRows;
-
-        if ($this->id % 3 !== 0 && !$isLastRow) {
+        // Update every 5 rows or on the last row
+        if ($this->rowCounter % 5 !== 0 && $this->rowCounter < $this->totalRows) {
             return;
         }
 
         Cache::put($this->progressKey, [
             'status'   => 'processing',
-            'progress' => min($this->id, $this->totalRows),
+            'progress' => min($this->rowCounter, $this->totalRows),
             'total'    => $this->totalRows,
-            'message'  => "Processed {$this->id} of {$this->totalRows} rows",
-        ], now()->addMinutes(30));
+            'message'  => "Processed {$this->rowCounter} of {$this->totalRows} rows",
+        ], now()->addMinutes(45));
     }
 
     public function rules(): array
     {
         return [
-            '0' => 'required',
-            '1' => 'required',
-            '2' => 'required',
-            '4' => 'nullable|in:Male,Female',
-            '7' => 'numeric|nullable',
-            '15' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->sclassid) {
-                    $onFailure('This data does not match the selected School Class');
+            '0'  => 'required|string|max:50',
+            '1'  => 'required|string|max:100',
+            '2'  => 'required|string|max:100',
+            '4'  => 'nullable|in:Male,Female',
+            '7'  => 'nullable|numeric|min:1|max:100',
+            '15' => function ($attribute, $value, $fail) {
+                if ((int) $value !== $this->sclassid) {
+                    $fail('Class ID does not match the selected class for this batch.');
                 }
             },
-            '16' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->termid) {
-                    $onFailure('This data does not match the selected School Term');
+            '16' => function ($attribute, $value, $fail) {
+                if ((int) $value !== $this->termid) {
+                    $fail('Term ID does not match the selected term for this batch.');
                 }
             },
-            '17' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->sessionid) {
-                    $onFailure('This data does not match the selected School Session');
+            '17' => function ($attribute, $value, $fail) {
+                if ((int) $value !== $this->sessionid) {
+                    $fail('Session ID does not match the selected session for this batch.');
                 }
             },
         ];
@@ -261,25 +275,7 @@ class StudentsImport implements ToModel, WithStartRow, WithUpsertColumns, WithUp
             '0.required' => 'Admission number is required.',
             '1.required' => 'Surname is required.',
             '2.required' => 'First name is required.',
-            '4.in' => 'Gender must be Male or Female.',
-            '7.numeric' => 'Age must be a number.',
-            '15' => 'School class ID does not match the selected class.',
-            '16' => 'Term ID does not match the selected term.',
-            '17' => 'Session ID does not match the selected session.',
-        ];
-    }
-
-    public function customValidationAttributes()
-    {
-        return [
-            '0' => 'admissionno',
-            '1' => 'surname',
-            '2' => 'firstname',
-            '4' => 'gender',
-            '7' => 'age',
-            '15' => 'schoolclassid',
-            '16' => 'termid',
-            '17' => 'sessionid',
+            '4.in'       => 'Gender must be Male or Female.',
         ];
     }
 
@@ -299,7 +295,7 @@ class StudentsImport implements ToModel, WithStartRow, WithUpsertColumns, WithUp
             'title', 'firstname', 'lastname', 'othername', 'gender',
             'home_address', 'home_address2', 'dateofbirth', 'age', 'placeofbirth',
             'religion', 'nationality', 'state', 'local', 'last_school', 'last_class',
-            'registeredBy', 'batchid', 'statusId',
+            'registeredBy', 'batchid', 'statusId', 'student_status',
         ];
     }
 }

@@ -19,7 +19,7 @@ class ProcessStudentBatchImport implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 600;
-    public $tries = 1;
+    public $tries   = 1;
 
     public function __construct(
         protected string $filePath,
@@ -52,14 +52,15 @@ class ProcessStudentBatchImport implements ShouldQueue
             'progress' => 0,
             'total'    => $totalRows,
             'message'  => 'Import started',
-        ], now()->addMinutes(30));
+        ], now()->addMinutes(45));
 
         try {
             $import = new StudentsImport(
                 $this->schoolclassid,
                 $this->termid,
                 $this->sessionid,
-                $this->batchId
+                $this->batchId,
+                $this->userId
             );
             $import->setProgressTracking($this->progressKey, $totalRows);
 
@@ -68,9 +69,6 @@ class ProcessStudentBatchImport implements ShouldQueue
             $this->finalizeResult($batch, $import, $totalRows);
 
         } catch (\Throwable $e) {
-            // A truly fatal error (corrupt file, unreadable sheet, etc.) —
-            // distinct from a per-row failure, which SkipsOnFailure/SkipsOnError
-            // already handle without reaching this catch block.
             Log::error('ProcessStudentBatchImport fatal error: ' . $e->getMessage(), [
                 'batch_id' => $this->batchId,
                 'trace'    => $e->getTraceAsString(),
@@ -82,10 +80,6 @@ class ProcessStudentBatchImport implements ShouldQueue
         }
     }
 
-    /**
-     * Inspect what the import collected, decide Success / Partial / Failed,
-     * and persist both the status and a readable error list.
-     */
     protected function finalizeResult(StudentBatchModel $batch, StudentsImport $import, int $totalRows): void
     {
         $details = [];
@@ -118,14 +112,14 @@ class ProcessStudentBatchImport implements ShouldQueue
             $status  = 'Failed';
             $message = "All {$totalRows} row(s) failed to import.";
         } else {
-            $status  = 'Partial';
+            $status   = 'Partial';
             $imported = $totalRows - $failedCount;
             $message  = "{$imported} of {$totalRows} row(s) imported. {$failedCount} row(s) failed — see details.";
         }
 
         $batch->update([
-            'status'         => $status,
-            'import_errors'  => $failedCount > 0 ? json_encode($details) : null,
+            'status'        => $status,
+            'import_errors' => $failedCount > 0 ? json_encode($details) : null,
         ]);
 
         Cache::put($this->progressKey, [
@@ -133,14 +127,14 @@ class ProcessStudentBatchImport implements ShouldQueue
             'progress' => $totalRows,
             'total'    => $totalRows,
             'message'  => $message,
-        ], now()->addMinutes(30));
+        ], now()->addMinutes(45));
     }
 
     protected function countDataRows(): int
     {
         try {
             $rows = Excel::toArray([], $this->filePath, 'local')[0] ?? [];
-            return max(0, count($rows) - 1);
+            return max(0, count($rows) - 1); // exclude header
         } catch (\Throwable $e) {
             Log::warning('Could not pre-count batch import rows: ' . $e->getMessage());
             return 0;
@@ -159,7 +153,7 @@ class ProcessStudentBatchImport implements ShouldQueue
             'progress' => 0,
             'total'    => $total,
             'message'  => $message,
-        ], now()->addMinutes(30));
+        ], now()->addMinutes(45));
     }
 
     public function failed(\Throwable $exception): void

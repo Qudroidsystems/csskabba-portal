@@ -1960,8 +1960,12 @@ class TimetableController extends Controller
             'term_id'    => 'nullable|exists:schoolterm,id',
         ]);
 
-        $subjectclasses = Subjectclass::where('sessionid', $validated['session_id'])
-            ->where('termid', $validated['term_id'] ?? null)
+        // FIXED: Using 'session' column name (not 'sessionid' or 'session_id')
+        // and 'termid' column name (matches the database)
+        $subjectclasses = Subjectclass::where('session', $validated['session_id'])
+            ->when($validated['term_id'] ?? null, function($q, $termId) {
+                return $q->where('termid', $termId);
+            })
             ->with(['subject:id,subject,subject_code', 'schoolClass', 'subjectTeacher.staff.staffPicture'])
             ->get();
 
@@ -2010,16 +2014,17 @@ class TimetableController extends Controller
             'teacher_id'      => 'required|exists:users,id',
         ]);
 
-        $subjectclass             = Subjectclass::findOrFail($validated['subjectclass_id']);
-        $previousTeacherLinkId    = $subjectclass->subjectteacherid;
+        $subjectclass = Subjectclass::findOrFail($validated['subjectclass_id']);
+        $previousTeacherLinkId = $subjectclass->subjectteacherid;
 
         DB::beginTransaction();
         try {
+            // FIXED: Using 'session' column name (matches the database)
             $subjectTeacher = SubjectTeacher::firstOrCreate(
                 [
                     'staffid'   => $validated['teacher_id'],
                     'subjectid' => $subjectclass->subjectid,
-                    'sessionid' => $subjectclass->sessionid,
+                    'session'   => $subjectclass->session,
                     'termid'    => $subjectclass->termid,
                 ],
                 ['userid' => $validated['teacher_id']]
