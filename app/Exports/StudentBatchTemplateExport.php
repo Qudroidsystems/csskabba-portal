@@ -87,25 +87,48 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
     public function headings(): array
     {
         return [
-            'Admission No*', 'Surname*', 'First Name*', 'Other Name', 'Gender*',
-            'Home Address', 'Date of Birth (YYYY-MM-DD)*', 'Age', 'Place of Birth',
-            'Nationality', 'State of Origin', 'LGA', 'Religion', 'Last School', 'Last Class',
-            'Class ID (locked)', 'Term ID (locked)', 'Session ID (locked)',
-            'Father Title', 'Father Name', 'Father Phone', 'Office Address', 'Father Occupation',
-            'Mother Title', 'Mother Name', 'Mother Phone', 'Mother Occupation',
-            'Mother Office Address', 'Parent Address', 'Parent Religion',
+            'Admission No*',
+            'Surname*',
+            'First Name*',
+            'Other Name',
+            'Gender*',
+            'Home Address',
+            'Date of Birth (YYYY-MM-DD)*',
+            'Age',
+            'Place of Birth',
+            'Nationality',
+            'State of Origin',
+            'LGA',
+            'Religion',
+            'Last School',
+            'Last Class',
+            'Class ID (locked)',
+            'Term ID (locked)',
+            'Session ID (locked)',
+            'Father Title',
+            'Father Name',
+            'Father Phone',
+            'Office Address',
+            'Father Occupation',
+            'Mother Title',
+            'Mother Name',
+            'Mother Phone',
+            'Mother Occupation',
+            'Mother Office Address',
+            'Parent Address',
+            'Parent Religion',
         ];
     }
 
     public function columnWidths(): array
     {
         return [
-            'A' => 16, 'B' => 16, 'C' => 16, 'D' => 16, 'E' => 10,
-            'F' => 24, 'G' => 16, 'H' => 8,  'I' => 18, 'J' => 16,
-            'K' => 18, 'L' => 18, 'M' => 14, 'N' => 20, 'O' => 14,
-            'P' => 12, 'Q' => 12, 'R' => 12,
-            'S' => 12, 'T' => 18, 'U' => 16, 'V' => 20, 'W' => 18,
-            'X' => 12, 'Y' => 18, 'Z' => 16, 'AA' => 18, 'AB' => 22,
+            'A'  => 16, 'B'  => 16, 'C'  => 16, 'D'  => 16, 'E'  => 10,
+            'F'  => 24, 'G'  => 16, 'H'  => 8,  'I'  => 18, 'J'  => 16,
+            'K'  => 18, 'L'  => 18, 'M'  => 14, 'N'  => 20, 'O'  => 14,
+            'P'  => 12, 'Q'  => 12, 'R'  => 12,
+            'S'  => 12, 'T'  => 18, 'U'  => 16, 'V'  => 20, 'W'  => 18,
+            'X'  => 12, 'Y'  => 18, 'Z'  => 16, 'AA' => 18, 'AB' => 22,
             'AC' => 20, 'AD' => 16,
         ];
     }
@@ -120,18 +143,33 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
 
                 // ----- Header styling -----
                 $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
-                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4361EE']],
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true],
+                    'font' => [
+                        'bold'  => true,
+                        'color' => ['rgb' => 'FFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType'   => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '4361EE'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'wrapText'   => true,
+                        'vertical'   => Alignment::VERTICAL_CENTER,
+                    ],
                 ]);
-                $sheet->getRowDimension(1)->setRowHeight(30);
+                $sheet->getRowDimension(1)->setRowHeight(32);
                 $sheet->freezePane('A2');
 
                 // ----- Locked columns: grey fill so it's visually obvious -----
                 foreach (self::LOCKED_COLUMNS as $col) {
                     $sheet->getStyle("{$col}2:{$col}{$lastRow}")->applyFromArray([
-                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E9ECEF']],
-                        'font' => ['color' => ['rgb' => '6C757D']],
+                        'fill' => [
+                            'fillType'   => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'E9ECEF'],
+                        ],
+                        'font' => [
+                            'color' => ['rgb' => '6C757D'],
+                        ],
                     ]);
                 }
 
@@ -141,24 +179,27 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                         ->getProtection()
                         ->setLocked(Protection::PROTECTION_UNPROTECTED);
                 }
+
+                // Enable sheet protection (no password – only prevents accidental edits to ID columns)
                 $sheet->getProtection()->setSheet(true);
-                // No password — this protection is to stop accidental edits to the
-                // ID columns, not to secure the file.
+                $sheet->getProtection()->setSort(false);
+                $sheet->getProtection()->setInsertRows(false);
+                $sheet->getProtection()->setDeleteRows(false);
 
                 // ----- Gender dropdown (column E) -----
                 for ($row = 2; $row <= $lastRow; $row++) {
-                    $v = $sheet->getCell("E{$row}")->getDataValidation();
-                    $v->setType(DataValidation::TYPE_LIST);
-                    $v->setErrorStyle(DataValidation::STYLE_STOP);
-                    $v->setAllowBlank(true);
-                    $v->setShowDropDown(true);
-                    $v->setShowErrorMessage(true);
-                    $v->setErrorTitle('Invalid Gender');
-                    $v->setError('Please select Male or Female from the dropdown.');
-                    $v->setFormula1('"Male,Female"');
+                    $validation = $sheet->getCell("E{$row}")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_STOP);
+                    $validation->setAllowBlank(true);
+                    $validation->setShowDropDown(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Invalid Gender');
+                    $validation->setError('Please select Male or Female from the dropdown.');
+                    $validation->setFormula1('"Male,Female"');
                 }
 
-                // ----- Hidden "Lists" sheet for the State dropdown (37 items — too long for an inline list) -----
+                // ----- Hidden "Lists" sheet for the State dropdown -----
                 $spreadsheet = $sheet->getParent();
                 $listSheet   = $spreadsheet->createSheet();
                 $listSheet->setTitle('Lists');
@@ -167,30 +208,35 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                     'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
                     'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT', 'Gombe', 'Imo',
                     'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa',
-                    'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+                    'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba',
+                    'Yobe', 'Zamfara',
                 ];
+
                 foreach ($states as $i => $stateName) {
                     $listSheet->setCellValue('A' . ($i + 1), $stateName);
                 }
+
                 $listSheet->getColumnDimension('A')->setWidth(20);
                 $listSheet->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
 
                 $stateRange = 'Lists!$A$1:$A$' . count($states);
+
                 for ($row = 2; $row <= $lastRow; $row++) {
-                    $v = $sheet->getCell("K{$row}")->getDataValidation();
-                    $v->setType(DataValidation::TYPE_LIST);
-                    $v->setErrorStyle(DataValidation::STYLE_WARNING);
-                    $v->setAllowBlank(true);
-                    $v->setShowDropDown(true);
-                    $v->setShowErrorMessage(true);
-                    $v->setErrorTitle('Unrecognised State');
-                    $v->setError('This state is not in the standard list — double check spelling.');
-                    $v->setFormula1($stateRange);
+                    $validation = $sheet->getCell("K{$row}")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_WARNING);
+                    $validation->setAllowBlank(true);
+                    $validation->setShowDropDown(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Unrecognised State');
+                    $validation->setError('This state is not in the standard list — double-check the spelling.');
+                    $validation->setFormula1($stateRange);
                 }
 
                 // ----- Instructions sheet -----
                 $infoSheet = $spreadsheet->createSheet();
                 $infoSheet->setTitle('Instructions');
+
                 $infoSheet->fromArray([
                     ['Batch Upload Template'],
                     [''],
@@ -201,16 +247,34 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                     ['Instructions:'],
                     ['1. Fill in one row per student on the "Student Data" sheet.'],
                     ['2. Do NOT edit the grey Class ID / Term ID / Session ID columns — they are locked and pre-filled.'],
-                    ['3. Date of Birth must be in YYYY-MM-DD format.'],
+                    ['3. Date of Birth must be in YYYY-MM-DD format (e.g. 2015-03-25).'],
                     ['4. Gender and State have dropdown lists — please use them instead of typing freely.'],
-                    ['5. Save the file and upload it back through the Batch Upload screen.'],
+                    ['5. Required columns are marked with an asterisk (*).'],
+                    ['6. Save the file and upload it back through the Batch Upload screen.'],
+                    [''],
+                    ['Notes:'],
+                    ['- Admission No must be unique.'],
+                    ['- Leave Age blank if you want the system to calculate it later.'],
+                    ['- Parent information is optional but recommended.'],
                 ], null, 'A1');
-                $infoSheet->getStyle('A1')->applyFromArray(['font' => ['bold' => true, 'size' => 14]]);
-                $infoSheet->getStyle('A3:A5')->applyFromArray(['font' => ['bold' => true]]);
-                $infoSheet->getColumnDimension('A')->setWidth(28);
-                $infoSheet->getColumnDimension('B')->setWidth(40);
 
-                // Move Instructions to the front so it's the first thing the admin sees
+                $infoSheet->getStyle('A1')->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 14],
+                ]);
+                $infoSheet->getStyle('A3:A5')->applyFromArray([
+                    'font' => ['bold' => true],
+                ]);
+                $infoSheet->getStyle('A7')->applyFromArray([
+                    'font' => ['bold' => true],
+                ]);
+                $infoSheet->getStyle('A14')->applyFromArray([
+                    'font' => ['bold' => true],
+                ]);
+
+                $infoSheet->getColumnDimension('A')->setWidth(28);
+                $infoSheet->getColumnDimension('B')->setWidth(50);
+
+                // Move Instructions sheet to the front
                 $spreadsheet->removeSheetByIndex($spreadsheet->getIndex($infoSheet));
                 $spreadsheet->insertSheet($infoSheet, 0);
                 $spreadsheet->setActiveSheetIndex(0);
