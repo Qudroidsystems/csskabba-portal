@@ -374,7 +374,7 @@
                                 <select id="tpl_termid" class="form-control" data-choices data-choices-search-true required>
                                     <option value="">Select Term</option>
                                     @foreach ($schoolterms as $sc)
-                                        <option value="{{ $sc->id }}">{{ $sc->term }}</option>
+                                        <option value="{{ $sc->id }}">{{ $sc->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -383,7 +383,7 @@
                                 <select id="tpl_sessionid" class="form-control" data-choices data-choices-search-true required>
                                     <option value="">Select Session</option>
                                     @foreach ($schoolsessions as $sc)
-                                        <option value="{{ $sc->id }}">{{ $sc->session }}</option>
+                                        <option value="{{ $sc->id }}">{{ $sc->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
