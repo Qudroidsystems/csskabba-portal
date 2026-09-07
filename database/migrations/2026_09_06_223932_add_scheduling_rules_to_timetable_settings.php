@@ -8,13 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // FIRST PASS: Add columns without any 'after' positioning
+        // STEP 1: First, ensure max_lessons_per_day exists
+        // This is the column that other columns are trying to reference with 'after'
+        if (!Schema::hasColumn('timetable_settings', 'max_lessons_per_day')) {
+            Schema::table('timetable_settings', function (Blueprint $table) {
+                $table->unsignedTinyInteger('max_lessons_per_day')->nullable();
+            });
+        }
+
+        // STEP 2: Now add all other columns
         Schema::table('timetable_settings', function (Blueprint $table) {
             if (!Schema::hasColumn('timetable_settings', 'free_periods_per_week')) {
                 $table->unsignedInteger('free_periods_per_week')->nullable()->default(0);
-            }
-            if (!Schema::hasColumn('timetable_settings', 'max_lessons_per_day')) {
-                $table->unsignedTinyInteger('max_lessons_per_day')->nullable();
             }
             if (!Schema::hasColumn('timetable_settings', 'lessons_per_day')) {
                 $table->unsignedTinyInteger('lessons_per_day')->nullable();
