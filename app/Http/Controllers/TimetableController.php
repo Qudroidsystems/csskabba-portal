@@ -2401,15 +2401,17 @@ public function exportWholeSchoolWeb(Request $request)
         abort(404, 'No timetables found for this session/term.');
     }
 
-    return view('timetable.exports.whole-school-web', [
-        'allTimetables' => $allTimetables,
-        'schoolInfo'    => $schoolInfo,
-        'sessionName'   => $session->session ?? 'Session',
-        'termName'      => $term?->term ?? 'All Terms',
-        'dayColors'     => self::DAY_COLORS,
-        'generatedAt'   => now()->format('d M Y, H:i'),
-        'overallStats'  => $overallStats,
-    ]);
+    $pagetitle = 'Whole School Timetable';
+
+    return view('timetable.exports.whole-school-web', array_merge(
+        compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'pagetitle'),
+        [
+            'sessionName'   => $session->session ?? 'Session',
+            'termName'      => $term?->term ?? 'All Terms',
+            'dayColors'     => self::DAY_COLORS,
+            'generatedAt'   => now()->format('d M Y, H:i'),
+        ]
+    ));
 }
     // =========================================================================
     // NOTIFICATIONS
@@ -3306,7 +3308,10 @@ public function mergedGridWeb(Request $request)
     $data = $this->buildMergedGridData($sessionId, $termId);
     if (empty($data['rows'])) abort(404, 'No timetables found for this session/term.');
 
-    return view('timetable.exports.merged-grid-web', $data);
+    // ADD THIS LINE: Define the page title
+    $pagetitle = 'Merged Timetable';
+
+    return view('timetable.exports.merged-grid-web', array_merge($data, compact('pagetitle')));
 }
 
 }
