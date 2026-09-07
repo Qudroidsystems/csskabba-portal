@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Jobs\ProcessStudentBatchImport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class StudentController extends Controller
@@ -1290,54 +1291,96 @@ public function update(Request $request, $id): JsonResponse
         return view('student.batchindex', compact('batch','schoolclasses','schoolterms','schoolsessions','pagetitle'));
     }
 
-    public function bulkuploadsave(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'filesheet'    => 'required|mimes:xlsx,csv,xls',
-            'title'        => 'required',
-            'termid'       => 'required|exists:schoolterm,id',
-            'sessionid'    => 'required|exists:schoolsession,id',
-            'schoolclassid'=> 'required|exists:schoolclass,id',
-        ]);
+  public function bulkuploadsave(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'filesheet'    => 'required|mimes:xlsx,csv,xls|max:10240', // 10MB
+        'title'        => 'required|string|max:255',
+        'termid'       => 'required|exists:schoolterm,id',
+        'sessionid'    => 'required|exists:schoolsession,id',
+        'schoolclassid'=> 'required|exists:schoolclass,id',
+    ]);
 
-        if ($validator->fails()) return redirect()->back()->withErrors($validator)->withInput();
-
-        if (StudentBatchModel::where('title', $request->title)->exists()) {
-            return redirect()->back()->with('success', 'Title already used. Please choose another.');
+    if ($validator->fails()) {
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
-
-        try {
-            DB::beginTransaction();
-
-            $batch = StudentBatchModel::create([
-                'title'        => $request->title,
-                'schoolclassid'=> $request->schoolclassid,
-                'termid'       => $request->termid,
-                'session'      => $request->sessionid,
-                'status'       => '',
-            ]);
-
-            session(['sclassid'=>$request->schoolclassid,'tid'=>$request->termid,'sid'=>$request->sessionid,'batchid'=>$batch->id]);
-
-            (new StudentsImport())->import($request->file('filesheet'), null, \Maatwebsite\Excel\Excel::XLSX);
-            $batch->update(['status'=>'Success']);
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Student Batch File Imported Successfully');
-
-        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            DB::rollBack();
-            $batch->update(['status'=>'Failed']);
-            $errors = collect($e->failures())->map(fn($f) => "Row {$f->row()}: ".implode(', ',$f->errors()))->implode('; ');
-            return redirect()->back()->with('status', $errors);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Error importing batch: {$e->getMessage()}");
-            return redirect()->back()->with('status', 'Failed to import batch: '.$e->getMessage());
-        }
+        return redirect()->back()->withErrors($validator)->withInput();
     }
 
+    if (StudentBatchModel::where('title', $request->title)->exists()) {
+        $message = 'Title already used. Please choose another.';
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => false, 'message' => $message], 422);
+        }
+        return redirect()->back()->with('success', $message);
+    }
+
+    try {
+        // Persist to disk before the request ends — a queue worker runs in a
+        // separate process and cannot see PHP's ephemeral temp-upload file.
+        $storedPath = $request->file('filesheet')->store('batch-imports', 'local');
+
+        $batch = StudentBatchModel::create([
+            'title'         => $request->title,
+            'schoolclassid' => $request->schoolclassid,
+            'termid'        => $request->termid,
+            'session'       => $request->sessionid,
+            'status'        => 'Processing',
+        ]);
+
+        $progressKey = 'batch_import_' . $batch->id . '_' . uniqid();
+
+        Cache::put($progressKey, [
+            'status'   => 'queued',
+            'progress' => 0,
+            'total'    => 0,
+            'message'  => 'Waiting to start...',
+        ], now()->addMinutes(30));
+
+        ProcessStudentBatchImport::dispatch(
+            $storedPath,
+            $batch->id,
+            $progressKey,
+            (int) $request->schoolclassid,
+            (int) $request->termid,
+            (int) $request->sessionid,
+            auth()->id()
+        );
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Batch upload queued for processing.',
+                'batch_id'     => $batch->id,
+                'progress_key' => $progressKey,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Batch upload queued for processing.');
+
+    } catch (\Exception $e) {
+        Log::error("Error queuing batch import: {$e->getMessage()}");
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => false, 'message' => 'Failed to queue import: ' . $e->getMessage()], 500);
+        }
+        return redirect()->back()->with('status', 'Failed to queue import: ' . $e->getMessage());
+    }
+}
+
+public function getBatchImportProgress(Request $request)
+{
+    $request->validate(['progress_key' => 'required|string']);
+
+    $progress = Cache::get($request->progress_key, [
+        'status'   => 'unknown',
+        'progress' => 0,
+        'total'    => 0,
+        'message'  => 'No progress data found (it may have expired).',
+    ]);
+
+    return response()->json(['success' => true, 'progress' => $progress]);
+}
     public function getLastAdmissionNumber(Request $request)
     {
         try {
@@ -2008,4 +2051,31 @@ public function update(Request $request, $id): JsonResponse
             return response()->json(['success'=>false,'message'=>$e->getMessage()], 500);
         }
     }
+
+
+    public function getBatchImportErrors($id)
+    {
+        try {
+            $batch = StudentBatchModel::findOrFail($id);
+
+            $errors = $batch->import_errors
+                ? json_decode($batch->import_errors, true)
+                : [];
+
+            return response()->json([
+                'success' => true,
+                'title'   => $batch->title,
+                'status'  => $batch->status,
+                'errors'  => $errors,
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Batch not found'], 404);
+        } catch (\Exception $e) {
+            Log::error("Error fetching batch import errors: {$e->getMessage()}");
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+
+
 }

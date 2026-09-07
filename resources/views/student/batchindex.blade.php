@@ -88,6 +88,8 @@
                                     <div class="col-xxl-3 col-sm-6">
                                         <select class="form-control" id="idStatus" data-choices data-choices-search-false>
                                             <option value="all">Select Status</option>
+                                            <option value="Processing">Processing</option>
+                                            <option value="Partial">Partial</option>
                                             <option value="Success">Success</option>
                                             <option value="Failed">Failed</option>
                                         </select>
@@ -120,6 +122,7 @@
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         @can('Create student-bulk-upload')
                                             <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
+                                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#generateTemplateModal"><i class="bi bi-file-earmark-spreadsheet align-baseline me-1"></i> Generate Template</button>
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addBatchModal"><i class="bi bi-plus-circle align-baseline me-1"></i> New Batch Upload</button>
                                         @endcan
                                     </div>
@@ -159,11 +162,24 @@
                                                     <td class="term">{{ $sc->term }}</td>
                                                     <td class="session">{{ $sc->session }}</td>
                                                     <td class="status" data-status="{{ $sc->status }}">
-                                                        <span class="badge bg-{{ $sc->status == 'Success' ? 'success' : 'danger' }}">{{ $sc->status }}</span>
+                                                        @php
+                                                            $statusClass = match ($sc->status) {
+                                                                'Success'    => 'success',
+                                                                'Processing' => 'warning',
+                                                                'Partial'    => 'info',
+                                                                default      => 'danger',
+                                                            };
+                                                        @endphp
+                                                        <span class="badge bg-{{ $statusClass }}">{{ $sc->status }}</span>
                                                     </td>
                                                     <td class="upload_date">{{ Carbon\Carbon::parse($sc->upload_date)->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
+                                                            @if (in_array($sc->status, ['Failed', 'Partial']))
+                                                                <li>
+                                                                    <a href="javascript:void(0);" class="btn btn-subtle-warning btn-icon btn-sm view-errors-btn" data-id="{{ $sc->id }}" title="View Import Errors"><i class="ph-warning"></i></a>
+                                                                </li>
+                                                            @endif
                                                             @can('Create student-bulk-upload')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-primary btn-icon btn-sm update-item-btn" data-id="{{ $sc->id }}" data-schoolclass="{{ $sc->schoolclass }}" data-arm="{{ $sc->arm }}" data-schoolclassid="{{ $sc->schoolclassid }}" data-armid="{{ $sc->armid }}" data-classcategoryid="{{ $sc->classcategoryid ?? '' }}"><i class="ph-pencil"></i></a>
@@ -196,6 +212,69 @@
                 </div>
             </div>
 
+            <!-- Generate Template Modal -->
+            <div id="generateTemplateModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Generate Batch Upload Template</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body position-relative">
+                            <div id="template-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.8); z-index: 1000;">
+                                <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+                                <span class="ms-2">Generating template...</span>
+                            </div>
+
+                            <p class="text-muted small">
+                                Choose the class, term, and session this template is for. Those three
+                                values are locked into the spreadsheet automatically — whoever fills it
+                                in only needs to enter student details.
+                            </p>
+
+                            <div class="mb-3">
+                                <label for="tpl_schoolclassid" class="form-label">School Class & Arm</label>
+                                <select id="tpl_schoolclassid" class="form-control" data-choices data-choices-search-true required>
+                                    <option value="">Select Class</option>
+                                    @foreach ($schoolclasses as $sc)
+                                        <option value="{{ $sc->id }}">{{ $sc->schoolclass }} - {{ $sc->arm }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tpl_termid" class="form-label">Term</label>
+                                <select id="tpl_termid" class="form-control" data-choices data-choices-search-true required>
+                                    <option value="">Select Term</option>
+                                    @foreach ($schoolterms as $sc)
+                                        <option value="{{ $sc->id }}">{{ $sc->term }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tpl_sessionid" class="form-label">Session</label>
+                                <select id="tpl_sessionid" class="form-control" data-choices data-choices-search-true required>
+                                    <option value="">Select Session</option>
+                                    @foreach ($schoolsessions as $sc)
+                                        <option value="{{ $sc->id }}">{{ $sc->session }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tpl_rows" class="form-label">Number of blank rows</label>
+                                <input type="number" id="tpl_rows" class="form-control" value="30" min="1" max="500">
+                            </div>
+                            <div class="alert alert-danger d-none" id="template-alert-error-msg"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="generate-template-btn">
+                                <i class="bi bi-download me-1"></i> Generate &amp; Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Add Batch Modal -->
             <div id="addBatchModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
@@ -207,14 +286,12 @@
                         <form class="tablelist-form" autocomplete="off" id="add-batch-form" action="{{ route('student.bulkuploadsave') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="modal-body position-relative">
-                                <!-- Loader Overlay -->
                                 <div id="batch-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.8); z-index: 1000;">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <span class="ms-2">Processing Batch...</span>
                                 </div>
-                                <!-- Form Fields -->
                                 <div class="mb-3">
                                     <label for="title" class="form-label">Batch Title</label>
                                     <input type="text" id="title" name="title" class="form-control" placeholder="Enter batch title" required>
@@ -261,6 +338,51 @@
                 </div>
             </div>
 
+            <!-- Batch Import Progress Modal -->
+            <div id="importProgressModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Importing Students</h5>
+                        </div>
+                        <div class="modal-body text-center">
+                            <p class="text-muted mb-3" id="importProgressMessage">Starting import...</p>
+                            <div class="progress mb-2" style="height: 24px;">
+                                <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                            <p class="small text-muted" id="importProgressCount">0 / 0 rows</p>
+                            <div id="importResultIcon" class="mt-3 d-none"></div>
+                        </div>
+                        <div class="modal-footer d-none" id="importProgressFooter">
+                            <button type="button" class="btn btn-outline-warning d-none" id="importViewErrorsBtn">View Errors</button>
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="window.location.reload()">Close &amp; Refresh</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Errors Modal -->
+            <div id="importErrorsModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="importErrorsTitle">Import Errors</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="importErrorsLoading" class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </div>
+                            <div id="importErrorsList" class="d-none"></div>
+                            <div id="importErrorsEmpty" class="d-none text-muted text-center py-3">No detailed errors were recorded for this batch.</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Update Class Modal -->
             <div id="updateClassModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
@@ -273,14 +395,12 @@
                             @csrf
                             @method('PUT')
                             <div class="modal-body position-relative">
-                                <!-- Loader Overlay -->
                                 <div id="update-class-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.8); z-index: 1000;">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <span class="ms-2">Updating Class...</span>
                                 </div>
-                                <!-- Form Fields -->
                                 <div class="mb-3">
                                     <label for="update_batch_id" class="form-label">Batch ID</label>
                                     <input type="text" id="update_batch_id" name="batch_id" class="form-control" readonly>
@@ -353,6 +473,8 @@
 <script>
     let currentDeleteId = null;
     let currentUpdateId = null;
+    let importPollTimer = null;
+    let lastProgressKey = null;
 
     document.addEventListener('DOMContentLoaded', function () {
         const deleteButtons = document.querySelectorAll('.remove-item-btn');
@@ -360,76 +482,37 @@
         const deleteRecordModal = document.getElementById('deleteRecordModal');
         const updateClassModal = document.getElementById('updateClassModal');
         const deleteBtn = document.getElementById('delete-record');
-        const updateBtn = document.getElementById('update-btn');
         const updateForm = document.getElementById('update-class-form');
+        const addBatchForm = document.getElementById('add-batch-form');
 
-        // Handle Delete Buttons
+        // ===== Delete batch =====
         deleteButtons.forEach(button => {
             button.addEventListener('click', function () {
                 currentDeleteId = this.getAttribute('data-id');
-                console.log("Delete button clicked for batch ID:", currentDeleteId);
-                if (deleteRecordModal) {
-                    const modal = new bootstrap.Modal(deleteRecordModal);
-                    modal.show();
-                }
+                if (deleteRecordModal) new bootstrap.Modal(deleteRecordModal).show();
             });
         });
 
-        // Handle Update Buttons
+        // ===== Update batch class =====
         updateButtons.forEach(button => {
             button.addEventListener('click', function () {
                 currentUpdateId = this.getAttribute('data-id');
-                const schoolclass = this.getAttribute('data-schoolclass');
-                const arm = this.getAttribute('data-arm');
-                const schoolclassid = this.getAttribute('data-schoolclassid');
-                const armid = this.getAttribute('data-armid');
-                const classcategoryid = this.getAttribute('data-classcategoryid');
-
-                // Populate form fields
                 document.getElementById('update_batch_id').value = currentUpdateId;
-                document.getElementById('update_schoolclass').value = schoolclass;
-                document.getElementById('update_arm').value = arm;
-                document.getElementById('update_schoolclassid').value = schoolclassid;
-                document.getElementById('update_armid').value = armid;
-                document.getElementById('update_classcategoryid').value = classcategoryid || '';
-
-                console.log("Update button clicked for batch ID:", currentUpdateId);
-                if (updateClassModal) {
-                    const modal = new bootstrap.Modal(updateClassModal);
-                    modal.show();
-                }
+                document.getElementById('update_schoolclass').value = this.getAttribute('data-schoolclass');
+                document.getElementById('update_arm').value = this.getAttribute('data-arm');
+                document.getElementById('update_schoolclassid').value = this.getAttribute('data-schoolclassid');
+                document.getElementById('update_armid').value = this.getAttribute('data-armid');
+                document.getElementById('update_classcategoryid').value = this.getAttribute('data-classcategoryid') || '';
+                if (updateClassModal) new bootstrap.Modal(updateClassModal).show();
             });
         });
 
-        // Handle Delete Confirmation
         if (deleteBtn) {
             deleteBtn.addEventListener('click', handleDeleteConfirmation);
         }
 
         function handleDeleteConfirmation() {
-            if (!currentDeleteId) {
-                console.error("No batch ID set for deletion");
-                Swal.fire({
-                    position: 'center',
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No batch selected for deletion',
-                    showConfirmButton: true
-                });
-                return;
-            }
-
-            if (!axios) {
-                console.error("Axios is not available");
-                Swal.fire({
-                    position: 'center',
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Axios library not loaded',
-                    showConfirmButton: true
-                });
-                return;
-            }
+            if (!currentDeleteId) return;
 
             const deleteBtnText = document.getElementById('delete-btn-text');
             const deleteBtnLoader = document.getElementById('delete-btn-loader');
@@ -438,65 +521,27 @@
             deleteBtn.disabled = true;
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-            if (!csrfToken) {
-                console.error("CSRF token not found");
-                Swal.fire({
-                    position: 'center',
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'CSRF token missing',
-                    showConfirmButton: true
-                });
-                deleteBtnText.classList.remove('d-none');
-                deleteBtnLoader.classList.add('d-none');
-                deleteBtn.disabled = false;
-                return;
-            }
 
-            console.log("Sending DELETE request for batch ID:", currentDeleteId);
             axios.delete(`/student/deletestudentbatch?studentbatchid=${currentDeleteId}`, {
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' }
             })
             .then(function (response) {
-                console.log("Delete response:", response.data);
                 const modal = bootstrap.Modal.getInstance(deleteRecordModal);
                 if (modal) modal.hide();
-
-                Swal.fire({
-                    position: 'center',
-                    icon: 'success',
-                    title: 'Success',
-                    text: response.data.message || 'Batch deleted successfully!',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    window.location.reload();
-                });
+                Swal.fire({ icon: 'success', title: 'Success', text: response.data.message || 'Batch deleted successfully!', showConfirmButton: false, timer: 1500 })
+                    .then(() => window.location.reload());
             })
             .catch(function (error) {
-                console.error("Delete error:", error.response ? error.response.data : error.message);
                 deleteBtnText.classList.remove('d-none');
                 deleteBtnLoader.classList.add('d-none');
                 deleteBtn.disabled = false;
-
                 const modal = bootstrap.Modal.getInstance(deleteRecordModal);
                 if (modal) modal.hide();
-
-                const errorMessage = error.response?.data?.message || 'Error deleting batch';
-                Swal.fire({
-                    position: 'center',
-                    icon: error.response?.status === 404 ? 'warning' : 'error',
-                    title: error.response?.status === 404 ? 'Batch Not Found' : 'Error',
-                    text: errorMessage,
-                    showConfirmButton: true
-                });
+                Swal.fire({ icon: error.response?.status === 404 ? 'warning' : 'error', title: 'Error', text: error.response?.data?.message || 'Error deleting batch', showConfirmButton: true });
             });
         }
 
-        // Handle Update Form Submission
+        // ===== Update class form =====
         if (updateForm) {
             updateForm.addEventListener('submit', function (e) {
                 e.preventDefault();
@@ -508,53 +553,264 @@
                 updateLoader.classList.remove('d-none');
 
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                if (!csrfToken) {
-                    console.error("CSRF token not found");
-                    Swal.fire({
-                        position: 'center',
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'CSRF token missing',
-                        showConfirmButton: true
-                    });
+                const formData = new FormData(updateForm);
+
+                axios.post(updateForm.action, formData, { headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'multipart/form-data' } })
+                .then(function (response) {
+                    const modal = bootstrap.Modal.getInstance(updateClassModal);
+                    if (modal) modal.hide();
+                    Swal.fire({ icon: 'success', title: 'Success', text: response.data.message || 'Class updated successfully!', showConfirmButton: false, timer: 1500 })
+                        .then(() => window.location.reload());
+                })
+                .catch(function (error) {
                     updateBtnText.disabled = false;
                     updateLoader.classList.add('d-none');
+                    errorMsg.textContent = error.response?.data?.message || 'Error updating class';
+                    errorMsg.classList.remove('d-none');
+                });
+            });
+        }
+
+        // ===== Generate template =====
+        const generateBtn = document.getElementById('generate-template-btn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', function () {
+                const schoolclassid = document.getElementById('tpl_schoolclassid').value;
+                const termid = document.getElementById('tpl_termid').value;
+                const sessionid = document.getElementById('tpl_sessionid').value;
+                const rows = document.getElementById('tpl_rows').value || 30;
+                const errorMsg = document.getElementById('template-alert-error-msg');
+                const loader = document.getElementById('template-loader');
+
+                errorMsg.classList.add('d-none');
+
+                if (!schoolclassid || !termid || !sessionid) {
+                    errorMsg.textContent = 'Please select class, term, and session.';
+                    errorMsg.classList.remove('d-none');
                     return;
                 }
 
-                const formData = new FormData(updateForm);
-                axios.post(updateForm.action, formData, {
+                loader.classList.remove('d-none');
+                generateBtn.disabled = true;
+
+                axios({
+                    method: 'GET',
+                    url: '{{ route("student.batch.generateTemplate") }}',
+                    params: { schoolclassid, termid, sessionid, rows },
+                    responseType: 'blob',
+                    timeout: 60000
+                })
+                .then(function (response) {
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+
+                    let filename = 'student-batch-template.xlsx';
+                    const contentDisposition = response.headers['content-disposition'];
+                    if (contentDisposition) {
+                        const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (match && match[1]) filename = match[1].replace(/['"]/g, '');
+                    }
+
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('generateTemplateModal'));
+                    if (modal) modal.hide();
+                })
+                .catch(async function (error) {
+                    let message = 'Failed to generate template.';
+                    if (error.response?.data instanceof Blob) {
+                        try {
+                            const text = await error.response.data.text();
+                            message = JSON.parse(text).message || message;
+                        } catch (e) {}
+                    } else if (error.response?.data?.message) {
+                        message = error.response.data.message;
+                    }
+                    errorMsg.textContent = message;
+                    errorMsg.classList.remove('d-none');
+                })
+                .finally(function () {
+                    loader.classList.add('d-none');
+                    generateBtn.disabled = false;
+                });
+            });
+        }
+
+        // ===== Add batch (queued import) =====
+        if (addBatchForm) {
+            addBatchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const loader = document.getElementById('batch-loader');
+                const errorMsg = document.getElementById('alert-error-msg');
+                const addBtn = document.getElementById('add-btn');
+
+                errorMsg.classList.add('d-none');
+                loader.classList.remove('d-none');
+                addBtn.disabled = true;
+
+                const formData = new FormData(addBatchForm);
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                axios.post(addBatchForm.action, formData, {
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Content-Type': 'multipart/form-data'
                     }
                 })
                 .then(function (response) {
-                    console.log("Update response:", response.data);
-                    const modal = bootstrap.Modal.getInstance(updateClassModal);
-                    if (modal) modal.hide();
+                    loader.classList.add('d-none');
+                    addBtn.disabled = false;
 
-                    Swal.fire({
-                        position: 'center',
-                        icon: 'success',
-                        title: 'Success',
-                        text: response.data.message || 'Class updated successfully!',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        window.location.reload();
-                    });
+                    if (response.data.success) {
+                        const addModal = bootstrap.Modal.getInstance(document.getElementById('addBatchModal'));
+                        if (addModal) addModal.hide();
+
+                        addBatchForm.reset();
+                        startProgressPolling(response.data.progress_key, response.data.batch_id);
+                    } else {
+                        errorMsg.textContent = response.data.message || 'Failed to queue import.';
+                        errorMsg.classList.remove('d-none');
+                    }
                 })
                 .catch(function (error) {
-                    console.error("Update error:", error.response ? error.response.data : error.message);
-                    updateBtnText.disabled = false;
-                    updateLoader.classList.add('d-none');
-
-                    const errorMessage = error.response?.data?.message || 'Error updating class';
-                    errorMsg.textContent = errorMessage;
+                    loader.classList.add('d-none');
+                    addBtn.disabled = false;
+                    errorMsg.textContent = error.response?.data?.message || 'Failed to queue import.';
                     errorMsg.classList.remove('d-none');
                 });
             });
+        }
+
+        function startProgressPolling(progressKey, batchId) {
+            lastProgressKey = progressKey;
+
+            const modal = new bootstrap.Modal(document.getElementById('importProgressModal'));
+            const bar = document.getElementById('importProgressBar');
+            const message = document.getElementById('importProgressMessage');
+            const count = document.getElementById('importProgressCount');
+            const resultIcon = document.getElementById('importResultIcon');
+            const footer = document.getElementById('importProgressFooter');
+            const viewErrorsBtn = document.getElementById('importViewErrorsBtn');
+
+            bar.style.width = '0%';
+            bar.textContent = '0%';
+            bar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+            message.textContent = 'Starting import...';
+            count.textContent = '0 / 0 rows';
+            resultIcon.classList.add('d-none');
+            resultIcon.innerHTML = '';
+            footer.classList.add('d-none');
+            viewErrorsBtn.classList.add('d-none');
+
+            modal.show();
+
+            if (importPollTimer) clearInterval(importPollTimer);
+
+            importPollTimer = setInterval(function () {
+                axios.get('{{ route("student.batch.importProgress") }}', { params: { progress_key: progressKey } })
+                .then(function (response) {
+                    const p = response.data.progress;
+                    const pct = p.total > 0 ? Math.round((p.progress / p.total) * 100) : 0;
+
+                    bar.style.width = pct + '%';
+                    bar.textContent = pct + '%';
+                    count.textContent = `${p.progress} / ${p.total} rows`;
+                    message.textContent = p.message || '';
+
+                    if (p.status === 'complete') {
+                        clearInterval(importPollTimer);
+                        bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                        bar.classList.add('bg-success');
+                        resultIcon.classList.remove('d-none');
+                        resultIcon.innerHTML = '<i class="bi bi-check-circle-fill text-success display-4"></i>';
+                        footer.classList.remove('d-none');
+                    } else if (p.status === 'partial') {
+                        clearInterval(importPollTimer);
+                        bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                        bar.classList.add('bg-warning');
+                        resultIcon.classList.remove('d-none');
+                        resultIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning display-4"></i>';
+                        footer.classList.remove('d-none');
+                        viewErrorsBtn.classList.remove('d-none');
+                        viewErrorsBtn.onclick = () => showImportErrors(batchId);
+                    } else if (p.status === 'failed') {
+                        clearInterval(importPollTimer);
+                        bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                        bar.classList.add('bg-danger');
+                        resultIcon.classList.remove('d-none');
+                        resultIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger display-4"></i>';
+                        footer.classList.remove('d-none');
+                        viewErrorsBtn.classList.remove('d-none');
+                        viewErrorsBtn.onclick = () => showImportErrors(batchId);
+                    }
+                })
+                .catch(function () {
+                    // transient network hiccup — keep polling
+                });
+            }, 1500);
+        }
+
+        // ===== View import errors (from table row button or progress modal) =====
+        document.querySelectorAll('.view-errors-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                showImportErrors(this.getAttribute('data-id'));
+            });
+        });
+
+        function showImportErrors(batchId) {
+            const modalEl = document.getElementById('importErrorsModal');
+            const modal = new bootstrap.Modal(modalEl);
+            const loading = document.getElementById('importErrorsLoading');
+            const list = document.getElementById('importErrorsList');
+            const empty = document.getElementById('importErrorsEmpty');
+            const title = document.getElementById('importErrorsTitle');
+
+            loading.classList.remove('d-none');
+            list.classList.add('d-none');
+            empty.classList.add('d-none');
+            list.innerHTML = '';
+            title.textContent = 'Import Errors';
+
+            modal.show();
+
+            axios.get(`/student/batch/${batchId}/errors`)
+                .then(function (response) {
+                    loading.classList.add('d-none');
+                    const data = response.data;
+                    title.textContent = `Import Errors — ${data.title || 'Batch'}`;
+
+                    if (!data.errors || data.errors.length === 0) {
+                        empty.classList.remove('d-none');
+                        return;
+                    }
+
+                    const html = data.errors.map(function (err) {
+                        const rowLabel = err.row ? `Row ${err.row}` : 'General error';
+                        const messages = Array.isArray(err.errors) ? err.errors.join('<br>') : err.errors;
+                        return `
+                            <div class="alert alert-warning mb-2">
+                                <strong>${rowLabel}</strong>
+                                ${err.attribute ? ` — <em>${err.attribute}</em>` : ''}
+                                <div class="small mt-1">${messages}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    list.innerHTML = html;
+                    list.classList.remove('d-none');
+                })
+                .catch(function () {
+                    loading.classList.add('d-none');
+                    empty.textContent = 'Failed to load error details.';
+                    empty.classList.remove('d-none');
+                });
         }
     });
 </script>

@@ -335,24 +335,21 @@ Route::group(['middleware' => ['auth']], function () {
     // ================================================
     Route::resource('student', StudentController::class)->except(['destroy']);
 
-    // Additional student routes
-    Route::prefix('students')->group(function () {
-        Route::get('/data', [StudentController::class, 'data'])->name('student.data');
-        Route::get('/last-admission-number', [StudentController::class, 'getLastAdmissionNumber'])->name('student.getLastAdmissionNumber');
-        Route::get('/report', [StudentController::class, 'generateReport'])->name('students.report');
-        Route::post('/destroy-multiple', [StudentController::class, 'destroyMultiple'])->name('student.destroyMultiple');
-        Route::get('/optimized', [StudentController::class, 'getStudentsOptimized'])->name('students.optimized'); // THIS IS THE KEY ROUTE
-
-        // Add these missing routes
-    Route::post('/bulk-update-status', [StudentController::class, 'bulkUpdateStatus'])->name('students.bulk-update-status');
-    Route::get('/by-class-session', [StudentController::class, 'getStudentsByClassAndSession'])->name('students.by-class-session');
+   Route::prefix('student')->group(function () {
+        Route::get('/bulkupload', [StudentController::class, 'bulkupload'])->name('student.bulkupload');
+        Route::post('/bulkuploadsave', [StudentController::class, 'bulkuploadsave'])->name('student.bulkuploadsave');
+        Route::get('/batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
+        Route::delete('/deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
+        Route::get('/batch/generate-template', [StudentController::class, 'generateBatchTemplate'])->name('student.batch.generateTemplate');
+        Route::get('/batch/import-progress', [StudentController::class, 'getBatchImportProgress'])->name('student.batch.importProgress');
+        Route::get('/batch/{id}/errors', [StudentController::class, 'getBatchImportErrors'])->name('student.batch.errors'); // NEW
     });
 
 
     // Add this separate route (not inside students prefix)
-Route::get('/students-in-term', [StudentController::class, 'getStudentsInTerm'])->name('students.in-term');
-Route::post('/students/remove-from-term', [StudentController::class, 'removeFromTerm'])->name('students.remove-from-term');
-Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkRemoveFromTerm'])->name('students.bulk-remove-from-term');
+    Route::get('/students-in-term', [StudentController::class, 'getStudentsInTerm'])->name('students.in-term');
+    Route::post('/students/remove-from-term', [StudentController::class, 'removeFromTerm'])->name('students.remove-from-term');
+    Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkRemoveFromTerm'])->name('students.bulk-remove-from-term');
 
 
     // Individual student operations
@@ -1312,10 +1309,10 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     
     Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
     Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
-    Route::get('/teacher-assignments', [TimetableController::class, 'getTeacherAssignments'])->name('timetable.teacher-assignments');
-    Route::post('/assign-teacher', [TimetableController::class, 'assignTeacherToSubjectclass'])->name('timetable.assign-teacher');
+    Route::get('/teacher-assignments', [TimetableController::class, 'getTeacherAssignments'])->name('teacher-assignments');
+    Route::post('/assign-teacher', [TimetableController::class, 'assignTeacherToSubjectclass'])->name('assign-teacher');
     
-    Route::delete('/unassign-teacher/{subjectclassId}', [TimetableController::class, 'unassignTeacherFromSubjectclass'])->name('timetable.unassign-teacher');
+    Route::delete('/unassign-teacher/{subjectclassId}', [TimetableController::class, 'unassignTeacherFromSubjectclass'])->name('unassign-teacher');
 
     // AJAX — Substitutes
     Route::post('/request-substitute', [TimetableController::class, 'requestSubstitute'])->name('request-substitute');

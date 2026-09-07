@@ -3,57 +3,85 @@
 namespace App\Imports;
 
 use App\Models\Student;
-use Illuminate\Support\Str;
 use App\Models\Studentclass;
 use App\Models\Studenthouse;
 use App\Models\StudentStatus;
 use App\Models\Studentpicture;
 use App\Models\PromotionStatus;
-use App\Models\StudentBatchModel;
 use App\Models\ParentRegistration;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\Concerns\ToModel;
 use App\Models\Studentpersonalityprofile;
-use Maatwebsite\Excel\Validators\Failure;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\WithUpserts;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithProgressBar;
 use Maatwebsite\Excel\Concerns\WithUpsertColumns;
 
-class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation
+/**
+ * SkipsOnFailure / SkipsOnError mean a bad row is recorded and skipped
+ * instead of aborting the whole import. Call $import->failures() and
+ * $import->errors() after Excel::import() to retrieve what went wrong.
+ */
+class StudentsImport implements ToModel, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation, SkipsOnFailure, SkipsOnError
 {
-    use Importable;
+    use Importable, SkipsFailures, SkipsErrors;
 
     public $id = 0;
 
-    public $_sclassid = 0;
+    protected int $sclassid;
+    protected int $termid;
+    protected int $sessionid;
+    protected int $batchid;
 
-    public $_teremid = 0;
-
-    public $_sessionid = 0;
-
-    public $_batchid = 0;
+    protected ?string $progressKey = null;
+    protected int $totalRows = 0;
 
     /**
-     * Handle a single row of the Excel file and map it to models.
+     * Context is passed explicitly rather than read from the HTTP session,
+     * because this class runs inside a queue worker where no session exists.
+     * Session::get() is kept only as a fallback for any legacy caller.
      */
+    public function __construct(
+        ?int $schoolclassid = null,
+        ?int $termid = null,
+        ?int $sessionid = null,
+        ?int $batchid = null
+    ) {
+        $this->sclassid  = $schoolclassid ?? (int) Session::get('sclassid');
+        $this->termid    = $termid ?? (int) Session::get('tid');
+        $this->sessionid = $sessionid ?? (int) Session::get('sid');
+        $this->batchid   = $batchid ?? (int) Session::get('batchid');
+    }
+
+    public function setProgressTracking(string $progressKey, int $totalRows): void
+    {
+        $this->progressKey = $progressKey;
+        $this->totalRows   = $totalRows;
+    }
+
     public function model(array $row)
     {
-        // Helper function to return "N/A" for null, empty, or whitespace-only values
+        // Count this row as "attempted" before any exception can interrupt,
+        // so the progress bar stays accurate even on skipped/failed rows.
+        $this->id++;
+        $this->reportProgress();
+
         $naIfEmpty = function ($value) {
-            return (is_null($value) || trim($value) === '') ? 'N/A' : trim($value);
+            return (is_null($value) || trim((string) $value) === '') ? 'N/A' : trim((string) $value);
         };
 
-        // Retrieve session data with "N/A" fallback
-        $schoolclassid = $naIfEmpty(Session::get('sclassid'));
-        $termid = $naIfEmpty(Session::get('tid'));
-        $sessionid = $naIfEmpty(Session::get('sid'));
-        $batchid = $naIfEmpty(Session::get('batchid'));
+        $schoolclassid = $this->sclassid ?: 'N/A';
+        $termid        = $this->termid ?: 'N/A';
+        $sessionid     = $this->sessionid ?: 'N/A';
+        $batchid       = $this->batchid ?: 'N/A';
 
-        // Map row data with "N/A" for missing/empty values
         $admissionno = $naIfEmpty($row[0] ?? null);
         $surname = $naIfEmpty($row[1] ?? null);
         $firstname = $naIfEmpty($row[2] ?? null);
@@ -70,30 +98,29 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $lastschool = $naIfEmpty($row[13] ?? null);
         $lastclass = $naIfEmpty($row[14] ?? null);
 
-        $father_title = $naIfEmpty(Str::limit($row[18] ?? '', 3, ''));
-        $father = $naIfEmpty(Str::substr($row[18] ?? '', 3));
-        $father_phone = $naIfEmpty($row[19] ?? null);
-        $office_address = $naIfEmpty($row[20] ?? null);
-        $father_occupation = $naIfEmpty($row[21] ?? null);
-        $mother_title = $naIfEmpty(Str::limit($row[22] ?? '', 3, ''));
-        $mother = $naIfEmpty(Str::substr($row[22] ?? '', 3));
-        $mother_phone = $naIfEmpty($row[23] ?? null);
-        $mother_occupation = $naIfEmpty($row[24] ?? null);
-        $mother_office_address = $naIfEmpty($row[25] ?? null);
-        $parent_address = $naIfEmpty($row[26] ?? null);
-        $parent_religion = $naIfEmpty($row[27] ?? null);
+        $father_title          = $naIfEmpty($row[18] ?? null);
+        $father                = $naIfEmpty($row[19] ?? null);
+        $father_phone          = $naIfEmpty($row[20] ?? null);
+        $office_address        = $naIfEmpty($row[21] ?? null);
+        $father_occupation     = $naIfEmpty($row[22] ?? null);
+        $mother_title          = $naIfEmpty($row[23] ?? null);
+        $mother                = $naIfEmpty($row[24] ?? null);
+        $mother_phone          = $naIfEmpty($row[25] ?? null);
+        $mother_occupation     = $naIfEmpty($row[26] ?? null);
+        $mother_office_address = $naIfEmpty($row[27] ?? null);
+        $parent_address        = $naIfEmpty($row[28] ?? null);
+        $parent_religion       = $naIfEmpty($row[29] ?? null);
 
-        // Validate required fields
+        $rowNumber = $this->startRow() + $this->id - 1;
+
         if (in_array($admissionno, ['N/A', ''], true) || in_array($surname, ['N/A', ''], true) || in_array($firstname, ['N/A', ''], true)) {
-            throw new \Exception("Required fields (admissionno, surname, firstname) cannot be empty or 'N/A' in row " . ($this->startRow() + $this->id));
+            throw new \Exception("Row {$rowNumber}: required fields (admissionno, surname, firstname) cannot be empty or 'N/A'.");
         }
 
-        // Validate session-based fields
         if (in_array($schoolclassid, ['N/A', ''], true) || in_array($termid, ['N/A', ''], true) || in_array($sessionid, ['N/A', ''], true) || in_array($batchid, ['N/A', ''], true)) {
-            throw new \Exception("Session data (schoolclassid, termid, sessionid, batchid) cannot be empty or 'N/A' in row " . ($this->startRow() + $this->id));
+            throw new \Exception("Row {$rowNumber}: session data (schoolclassid, termid, sessionid, batchid) cannot be empty or 'N/A'.");
         }
 
-        // Initialize models
         $studentbiodata = new Student();
         $studentclass = new Studentclass();
         $promotion = new PromotionStatus();
@@ -103,22 +130,21 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $studentpersonalityprofile = new Studentpersonalityprofile();
         $studentStatus = StudentStatus::where('status', 'old')->first();
 
-        // Use transaction to ensure data consistency
         return \DB::transaction(function () use (
             $studentbiodata, $studentclass, $promotion, $parent, $studenthouse, $picture, $studentpersonalityprofile, $studentStatus,
             $admissionno, $surname, $firstname, $othername, $gender, $homeaddress, $dob, $age, $placeofbirth, $nationality, $state, $local, $religion, $lastschool, $lastclass,
-            $father_title, $father, $father_phone, $office_address, $father_occupation, $mother_title, $mother, $mother_phone, $mother_occupation, $mother_office_address, $parent_address, $parent_religion,
+            $father_title, $father, $father_phone, $office_address, $father_occupation,
+            $mother_title, $mother, $mother_phone, $mother_occupation, $mother_office_address, $parent_address, $parent_religion,
             $schoolclassid, $termid, $sessionid, $batchid
         ) {
-            // Populate student biodata
             $studentbiodata->admissionNo = $admissionno;
-            $studentbiodata->title = 'N/A'; // Hardcoded as per original
+            $studentbiodata->title = 'N/A';
             $studentbiodata->firstname = $firstname;
             $studentbiodata->lastname = $surname;
             $studentbiodata->othername = $othername;
             $studentbiodata->gender = $gender;
             $studentbiodata->home_address = $homeaddress;
-            $studentbiodata->home_address2 = 'N/A'; // Hardcoded as per original
+            $studentbiodata->home_address2 = 'N/A';
             $studentbiodata->dateofbirth = $dob;
             $studentbiodata->age = $age;
             $studentbiodata->placeofbirth = $placeofbirth;
@@ -134,7 +160,6 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $studentbiodata->save();
             $studentId = $studentbiodata->id;
 
-            // Populate parent data
             $parent->studentId = $studentId;
             $parent->father_title = $father_title;
             $parent->father = $father;
@@ -150,19 +175,16 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $parent->religion = $parent_religion;
             $parent->save();
 
-            // Populate student picture
             $picture->studentid = $studentId;
-            $picture->picture = 'N/A'; 
+            $picture->picture = 'N/A';
             $picture->save();
 
-            // Populate student class
             $studentclass->studentId = $studentId;
             $studentclass->schoolclassid = $schoolclassid;
             $studentclass->termid = $termid;
             $studentclass->sessionid = $sessionid;
             $studentclass->save();
 
-            // Populate promotion status
             $promotion->studentId = $studentId;
             $promotion->schoolclassid = $schoolclassid;
             $promotion->termid = $termid;
@@ -171,63 +193,68 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $promotion->classstatus = 'CURRENT';
             $promotion->save();
 
-            // Populate student house
             $studenthouse->studentid = $studentId;
             $studenthouse->termid = $termid;
             $studenthouse->sessionid = $sessionid;
-            $studenthouse->schoolhouse = 'N/A';  
+            $studenthouse->schoolhouse = 'N/A';
             $studenthouse->save();
 
-            // Populate student personality profile
             $studentpersonalityprofile->studentid = $studentId;
             $studentpersonalityprofile->schoolclassid = $schoolclassid;
             $studentpersonalityprofile->termid = $termid;
             $studentpersonalityprofile->sessionid = $sessionid;
             $studentpersonalityprofile->save();
 
-            $this->id++; // Increment row counter
-
             return $studentbiodata;
         });
     }
 
-    /**
-     * Validation rules for the Excel import.
-     */
+    protected function reportProgress(): void
+    {
+        if (!$this->progressKey || $this->totalRows <= 0) {
+            return;
+        }
+
+        $isLastRow = $this->id >= $this->totalRows;
+
+        if ($this->id % 3 !== 0 && !$isLastRow) {
+            return;
+        }
+
+        Cache::put($this->progressKey, [
+            'status'   => 'processing',
+            'progress' => min($this->id, $this->totalRows),
+            'total'    => $this->totalRows,
+            'message'  => "Processed {$this->id} of {$this->totalRows} rows",
+        ], now()->addMinutes(30));
+    }
+
     public function rules(): array
     {
-        $this->_sclassid = Session::get('sclassid') ?? 'N/A';
-        $this->_termid = Session::get('tid') ?? 'N/A';
-        $this->_sessionid = Session::get('sid') ?? 'N/A';
-        $this->_batchid = Session::get('batchid') ?? 'N/A';
-
         return [
-            '0' => 'required', // admissionno
-            '1' => 'required', // surname
-            '2' => 'required', // firstname
-           // '4' => 'in:Male,Female|nullable', // gender
-            '7' => 'numeric|nullable', // age
+            '0' => 'required',
+            '1' => 'required',
+            '2' => 'required',
+            '4' => 'nullable|in:Male,Female',
+            '7' => 'numeric|nullable',
             '15' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->_sclassid) {
+                if ($value != $this->sclassid) {
                     $onFailure('This data does not match the selected School Class');
                 }
             },
             '16' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->_termid) {
+                if ($value != $this->termid) {
                     $onFailure('This data does not match the selected School Term');
                 }
             },
             '17' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->_sessionid) {
+                if ($value != $this->sessionid) {
                     $onFailure('This data does not match the selected School Session');
                 }
             },
         ];
     }
 
-    /**
-     * Custom validation messages.
-     */
     public function customValidationMessages()
     {
         return [
@@ -242,16 +269,13 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         ];
     }
 
-    /**
-     * Custom validation attribute names.
-     */
     public function customValidationAttributes()
     {
         return [
             '0' => 'admissionno',
             '1' => 'surname',
             '2' => 'firstname',
-           // '4' => 'gender',
+            '4' => 'gender',
             '7' => 'age',
             '15' => 'schoolclassid',
             '16' => 'termid',
@@ -259,77 +283,23 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         ];
     }
 
-    /**
-     * Start reading from row 2 (skip header).
-     */
     public function startRow(): int
     {
         return 2;
     }
 
-    /**
-     * Unique identifier for upserts.
-     */
     public function uniqueBy()
     {
         return 'admissionNo';
     }
 
-    /**
-     * Columns to update during upserts.
-     */
     public function upsertColumns()
     {
         return [
-            'title',
-            'firstname',
-            'lastname',
-            'othername',
-            'gender',
-            'home_address',
-            'home_address2',
-            'dateofbirth',
-            'age',
-            'placeofbirth',
-            'religion',
-            'nationality',
-            'state',
-            'local',
-            'last_school',
-            'last_class',
-            'registeredBy',
-            'batchid',
-            'statusId',
+            'title', 'firstname', 'lastname', 'othername', 'gender',
+            'home_address', 'home_address2', 'dateofbirth', 'age', 'placeofbirth',
+            'religion', 'nationality', 'state', 'local', 'last_school', 'last_class',
+            'registeredBy', 'batchid', 'statusId',
         ];
-    }
-
-    /**
-     * Handle validation failures.
-     */
-    public function onFailure(Failure ...$failures)
-    {
-        StudentBatchModel::where('id', $this->_batchid)->update(['Status' => 'Failed']);
-        foreach ($failures as $failure) {
-            \Log::error('Excel Import Failure', [
-                'row' => $failure->row(),
-                'attribute' => $failure->attribute(),
-                'errors' => $failure->errors(),
-                'values' => $failure->values(),
-            ]);
-        }
-        throw new \Exception('Validation failed for row ' . $failure->row() . ': ' . implode(', ', $failure->errors()));
-    }
-
-    /**
-     * Handle exceptions during import.
-     */
-    public function onError(\Throwable $e)
-    {
-        StudentBatchModel::where('id', $this->_batchid)->update(['Status' => 'Failed']);
-        \Log::error('Excel Import Error', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-        throw $e;
     }
 }
