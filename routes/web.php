@@ -1321,9 +1321,9 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
     Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
     Route::get('/teacher-assignments', [TimetableController::class, 'getTeacherAssignments'])->name('teacher-assignments');
-    // Route::post('/assign-teacher', [TimetableController::class, 'assignTeacherToSubjectclass'])->name('assign-teacher');
+    Route::post('/assign-teacher', [TimetableController::class, 'assignTeacherToSubjectclass'])->name('assign-teacher');
     
-    // Route::delete('/unassign-teacher/{subjectclassId}', [TimetableController::class, 'unassignTeacherFromSubjectclass'])->name('unassign-teacher');
+    Route::delete('/unassign-teacher/{subjectclassId}', [TimetableController::class, 'unassignTeacherFromSubjectclass'])->name('unassign-teacher');
 
     // AJAX — Substitutes
     Route::post('/request-substitute', [TimetableController::class, 'requestSubstitute'])->name('request-substitute');
