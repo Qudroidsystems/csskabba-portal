@@ -16,8 +16,6 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
-     *
-     * This seeder runs all seeders in the correct order with detailed progress reporting.
      */
     public function run(): void
     {
