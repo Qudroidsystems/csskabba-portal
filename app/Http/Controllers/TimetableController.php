@@ -1674,13 +1674,22 @@ class TimetableController extends Controller
                 ];
             }
 
+            // ================================================================
+            // FIX: Run conflict check after generation
+            // ================================================================
+            $conflictSummary = $this->countConflictsForScope(
+                $validated['session_id'], 
+                $validated['term_id'] ?? null
+            );
+
             DB::commit();
             return response()->json([
-                'success'        => true,
-                'message'        => 'Generated timetables for ' . count($results) . ' class(es).',
-                'classes'        => $results,
-                'had_shortfalls' => collect($results)->contains(fn($r) => !empty($r['unplaced'])),
-                'include_rooms'  => $includeRooms,
+                'success'          => true,
+                'message'          => 'Generated timetables for ' . count($results) . ' class(es).',
+                'classes'          => $results,
+                'had_shortfalls'   => collect($results)->contains(fn($r) => !empty($r['unplaced'])),
+                'include_rooms'    => $includeRooms,
+                'conflict_summary' => $conflictSummary, // ← NEW
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1690,259 +1699,418 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // PRIVATE: Core slot-placement logic, shared by single and whole-school
-    // generate. Assumes slots for $setting have already been deleted.
+    // PRIVATE: Fast conflict count across a scope
+    // =========================================================================
+    private function countConflictsForScope(int $sessionId, ?int $termId): array
+    {
+        $scopeFilter = function ($q) use ($sessionId, $termId) {
+            $q->where('session_id', $sessionId)->where('is_active', true);
+            if ($termId) $q->where('term_id', $termId);
+            else $q->whereNull('term_id');
+        };
+
+        $teacherConflicts = TimetableSlot::whereHas('setting', $scopeFilter)
+            ->whereNotNull('teacher_id')
+            ->where('is_free', false)
+            ->whereNotNull('subject_id')
+            ->get(['teacher_id', 'day', 'period_id'])
+            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id)
+            ->filter(fn($g) => $g->count() > 1)
+            ->sum(fn($g) => $g->count() - 1);
+
+        $roomConflicts = TimetableSlot::whereHas('setting', $scopeFilter)
+            ->whereNotNull('room_id')
+            ->where('is_free', false)
+            ->whereNotNull('subject_id')
+            ->get(['room_id', 'day', 'period_id'])
+            ->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $s->period_id)
+            ->filter(fn($g) => $g->count() > 1)
+            ->sum(fn($g) => $g->count() - 1);
+
+        return [
+            'teacher_conflicts' => $teacherConflicts,
+            'room_conflicts' => $roomConflicts,
+            'total' => $teacherConflicts + $roomConflicts,
+        ];
+    }
+
+    // =========================================================================
+    // PRIVATE: Core slot-placement logic with improved efficiency
     // =========================================================================
     private function runAutoGenerateCore(
-    TimetableSetting $setting,
-    array &$crossOccupied,
-    bool $includeRooms = false,
-    array &$roomOccupied = []
-): array {
-    $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
-    $days          = $setting->active_days ?? self::DAYS;
-    $classId       = $setting->schoolclass_id;
-    $sessionId     = $setting->session_id;
+        TimetableSetting $setting,
+        array &$crossOccupied,
+        bool $includeRooms = false,
+        array &$roomOccupied = []
+    ): array {
+        $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
+        $days          = $setting->active_days ?? self::DAYS;
+        $classId       = $setting->schoolclass_id;
+        $sessionId     = $setting->session_id;
 
-    // ------------------------------------------------------------------
-    // Bootstrap constraints from SubjectTeacher when the setting has none.
-    // This is what makes the Generation Wizard place lessons + teachers
-    // without forcing the admin to open every class and click "Save".
-    // ------------------------------------------------------------------
-    $constraints = $this->ensureConstraintsExist($setting);
+        // Ensure constraints exist with intelligent defaults
+        $constraints = $this->ensureConstraintsExist($setting);
 
-    $dayMeta  = $this->computeDayPeriodMeta($setting);
-    $slotPool = $this->buildWeightedSlotPool($days, $setting, $dayMeta);
+        $dayMeta     = $this->computeDayPeriodMeta($setting);
+        $slotPool    = $this->buildWeightedSlotPool($days, $setting, $dayMeta);
+        $totalSlots  = count($slotPool);
+        $freeTarget  = $setting->free_periods_per_week ?? 0;
+        $placementBudget = max(0, $totalSlots - $freeTarget);
 
-    // Respect term when present (same filter used by the View Assignments modal)
-    $subjectTeachers = SubjectTeacher::where('sessionid', $sessionId)
-        ->when($setting->term_id, fn ($q) => $q->where('termid', $setting->term_id))
-        ->whereHas('subjectclass', fn ($q) => $q->where('schoolclassid', $classId))
-        ->with(['subject', 'staff'])
-        ->get()
-        ->groupBy('subjectid');
+        // Get all subject teachers for this class
+        $subjectTeachers = SubjectTeacher::where('sessionid', $sessionId)
+            ->when($setting->term_id, fn($q) => $q->where('termid', $setting->term_id))
+            ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $classId))
+            ->with(['subject', 'staff'])
+            ->get()
+            ->groupBy('subjectid');
 
-    // Rooms available for this run — only fetched when the admin opted in.
-    $availableRoomIds = $includeRooms
-        ? Room::where('is_active', true)->orderBy('room_name')->pluck('id')->toArray()
-        : [];
+        $availableRoomIds = $includeRooms
+            ? Room::where('is_active', true)->orderBy('room_name')->pluck('id')->toArray()
+            : [];
 
-    // Teacher availability windows (day => [[start,end,is_available],...]).
-    // A teacher with no records on file is treated as fully available.
-    $availabilityMap = [];
-    $teacherIds = $subjectTeachers->flatten()->pluck('staffid')->filter()->unique()->values();
-    if ($teacherIds->isNotEmpty()) {
-        TeacherAvailability::whereIn('teacher_id', $teacherIds)->get()
-            ->each(function ($a) use (&$availabilityMap) {
-                $availabilityMap[$a->teacher_id][$a->day][] = [
-                    'start'        => $a->start_time,
-                    'end'          => $a->end_time,
-                    'is_available' => (bool) $a->is_available,
-                ];
-            });
-    }
+        $availabilityMap = $this->loadTeacherAvailability($subjectTeachers);
 
-    $teacherDaySlot     = [];
-    $placed             = [];
-    $unplacedSubjects   = [];
-    $roomShortfallCount = 0;
+        $teacherDaySlot = [];
+        $placed = [];
+        $unplacedSubjects = [];
+        $roomShortfallCount = 0;
+        $lessonsPlacedByDay = [];
+        $maxPerDay = $setting->max_lessons_per_day ?? null;
 
-    $totalLessonSlots   = count($slotPool);
-    $freeTarget         = $setting->free_periods_per_week ?? 0;
-    $placementBudget    = max(0, $totalLessonSlots - $freeTarget);
-    $maxPerDay          = $setting->max_lessons_per_day ?? null;
-    $lessonsPlacedByDay = [];
+        // ================================================================
+        // SORT CONSTRAINTS: Subjects with fewer periods get priority
+        // (harder to place) — this improves fill rate significantly.
+        // ================================================================
+        $requirements = $constraints
+            ->sortBy(fn($c) => $c->periods_per_week)
+            ->values();
 
-    $requirements = $constraints
-        ->sortByDesc(fn ($c) => ($c->is_compulsory ? 100 : 0) + $c->periods_per_week)
-        ->values();
+        foreach ($requirements as $constraint) {
+            $subjectId = $constraint->subject_id;
+            $needed = $constraint->periods_per_week;
+            $allowDouble = $constraint->allow_double_period;
+            $maxDouble = $constraint->max_double_periods_per_week;
+            $preferDays = $constraint->preferred_days ?? [];
+            $avoidDays = $constraint->avoid_days ?? [];
+            $avoidConsecutiveDoubles = $constraint->avoid_consecutive_double_days ?? true;
 
-    foreach ($requirements as $constraint) {
-        $subjectId               = $constraint->subject_id;
-        $needed                  = $constraint->periods_per_week;
-        $allowDouble             = $constraint->allow_double_period;
-        $maxDouble               = $constraint->max_double_periods_per_week;
-        $preferDays              = $constraint->preferred_days ?? [];
-        $avoidDays               = $constraint->avoid_days ?? [];
-        $avoidConsecutiveDoubles = $constraint->avoid_consecutive_double_days ?? true;
-        $doubleCount             = 0;
-        $usedDoubleDays          = [];
+            $teacherEntry = $subjectTeachers->get($subjectId)?->first();
+            $teacherId = $teacherEntry?->staffid;
 
-        $teacherEntry = $subjectTeachers->get($subjectId)?->first();
-        $teacherId    = $teacherEntry?->staffid;
+            // Early skip if already placed enough
+            $alreadyPlaced = $this->countSubjectPlaced($placed, $subjectId);
+            if ($alreadyPlaced >= $needed) continue;
 
-        $scoredSlots = [];
-        foreach ($slotPool as $slot) {
-            $day      = $slot['day'];
-            $periodId = $slot['period_id'];
-            $key      = $day . '_' . $periodId;
+            // Build candidate slots with scoring
+            $candidates = [];
+            foreach ($slotPool as $slot) {
+                $day = $slot['day'];
+                $periodId = $slot['period_id'];
+                $key = $day . '_' . $periodId;
 
-            if (isset($placed[$key])) continue;
-            if ($teacherId && in_array($periodId, $teacherDaySlot[$teacherId][$day] ?? [])) continue;
-            if ($teacherId && in_array($periodId, $crossOccupied[$teacherId][$day] ?? [])) continue;
-            if ($teacherId && !$this->isTeacherAvailableForPeriod($teacherId, $day, $periodId, $setting, $availabilityMap)) continue;
+                // Skip if already used
+                if (isset($placed[$key])) continue;
 
-            $score = 0;
-            if (in_array($day, $preferDays)) $score += 10;
-            if (in_array($day, $avoidDays))  $score -= 10;
-            if ($setting->deprioritize_break_adjacent && !empty($slot['is_break_adjacent'])) $score -= 3;
-
-            $scoredSlots[] = ['slot' => $slot, 'score' => $score, 'key' => $key];
-        }
-
-        usort($scoredSlots, fn ($a, $b) => $b['score'] - $a['score']);
-
-        $placedThisSubject = 0;
-        foreach ($scoredSlots as $scored) {
-            if ($placedThisSubject >= $needed) break;
-            if (count($placed) >= $placementBudget) break 2;
-
-            $slot     = $scored['slot'];
-            $day      = $slot['day'];
-            $periodId = $slot['period_id'];
-            $key      = $scored['key'];
-
-            if (isset($placed[$key])) continue;
-            if ($maxPerDay && ($lessonsPlacedByDay[$day] ?? 0) >= $maxPerDay) continue;
-
-            $roomId = $includeRooms
-                ? $this->pickAvailableRoom($availableRoomIds, $day, $periodId, $roomOccupied)
-                : null;
-            if ($includeRooms && !$roomId) $roomShortfallCount++;
-
-            TimetableSlot::create([
-                'setting_id' => $setting->id,
-                'period_id'  => $periodId,
-                'day'        => $day,
-                'subject_id' => $subjectId,
-                'teacher_id' => $teacherId,
-                'room_id'    => $roomId,
-                'is_double'  => false,
-                'is_free'    => false,
-            ]);
-
-            $placed[$key] = $subjectId;
-            $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
-
-            if ($teacherId) {
-                $teacherDaySlot[$teacherId][$day][] = $periodId;
-                $crossOccupied[$teacherId][$day][]  = $periodId;
-            }
-            if ($roomId) {
-                $roomOccupied[$roomId][$day][] = $periodId;
-            }
-            $placedThisSubject++;
-
-            // Attempt a double period when allowed
-            if ($allowDouble
-                && $doubleCount < $maxDouble
-                && $placedThisSubject < $needed
-                && count($placed) < $placementBudget
-                && (!$maxPerDay || ($lessonsPlacedByDay[$day] ?? 0) < $maxPerDay)
-            ) {
-                $cooldownOk = true;
-                if ($avoidConsecutiveDoubles) {
-                    foreach ($usedDoubleDays as $usedDay) {
-                        if (abs((self::DAYS_MAP[$day] ?? 0) - (self::DAYS_MAP[$usedDay] ?? 0)) <= 1) {
-                            $cooldownOk = false;
-                            break;
-                        }
-                    }
+                // Skip if teacher conflict
+                if ($teacherId) {
+                    if (in_array($periodId, $teacherDaySlot[$teacherId][$day] ?? [])) continue;
+                    if (in_array($periodId, $crossOccupied[$teacherId][$day] ?? [])) continue;
+                    if (!$this->isTeacherAvailableForPeriod($teacherId, $day, $periodId, $setting, $availabilityMap)) continue;
                 }
 
-                if ($cooldownOk) {
-                    $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
-                    $nextApplicable = $nextPeriod
-                        && ($dayMeta[$day][$nextPeriod->id]['effective_type'] ?? null) === 'lesson'
-                        && ($dayMeta[$day][$nextPeriod->id]['applicable'] ?? false);
+                // Skip if max lessons per day reached
+                if ($maxPerDay && ($lessonsPlacedByDay[$day] ?? 0) >= $maxPerDay) continue;
 
-                    if ($nextPeriod && $nextApplicable) {
-                        $nextKey = $day . '_' . $nextPeriod->id;
+                $score = 0;
+                if (in_array($day, $preferDays)) $score += 20;
+                if (in_array($day, $avoidDays)) $score -= 15;
+                if ($setting->deprioritize_break_adjacent && !empty($slot['is_break_adjacent'])) $score -= 5;
 
-                        $teacherConflict = $teacherId && (
-                            in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []) ||
-                            in_array($nextPeriod->id, $crossOccupied[$teacherId][$day] ?? [])
-                        );
+                // Boost days that currently have fewer lessons (spread load)
+                $currentDayLoad = $lessonsPlacedByDay[$day] ?? 0;
+                $score -= ($currentDayLoad * 2);
 
-                        $teacherAvailableNext = !$teacherId
-                            || $this->isTeacherAvailableForPeriod(
-                                $teacherId, $day, $nextPeriod->id, $setting, $availabilityMap
+                $candidates[] = [
+                    'slot' => $slot,
+                    'score' => $score,
+                    'key' => $key
+                ];
+            }
+
+            // Sort by score descending
+            usort($candidates, fn($a, $b) => $b['score'] - $a['score']);
+
+            $placedThisSubject = $alreadyPlaced;
+            $doubleCount = 0;
+            $usedDoubleDays = [];
+            $remaining = $needed - $alreadyPlaced;
+
+            foreach ($candidates as $candidate) {
+                if ($placedThisSubject >= $needed) break;
+                if (count($placed) >= $placementBudget) break 2;
+
+                $slot = $candidate['slot'];
+                $day = $slot['day'];
+                $periodId = $slot['period_id'];
+                $key = $candidate['key'];
+
+                // Re-check conditions (might have changed)
+                if (isset($placed[$key])) continue;
+                if ($maxPerDay && ($lessonsPlacedByDay[$day] ?? 0) >= $maxPerDay) continue;
+
+                // Assign room if needed
+                $roomId = $includeRooms
+                    ? $this->pickAvailableRoom($availableRoomIds, $day, $periodId, $roomOccupied)
+                    : null;
+                if ($includeRooms && !$roomId) $roomShortfallCount++;
+
+                // Create the slot
+                TimetableSlot::create([
+                    'setting_id' => $setting->id,
+                    'period_id' => $periodId,
+                    'day' => $day,
+                    'subject_id' => $subjectId,
+                    'teacher_id' => $teacherId,
+                    'room_id' => $roomId,
+                    'is_double' => false,
+                    'is_free' => false,
+                ]);
+
+                $placed[$key] = $subjectId;
+                $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
+                $placedThisSubject++;
+
+                if ($teacherId) {
+                    $teacherDaySlot[$teacherId][$day][] = $periodId;
+                    $crossOccupied[$teacherId][$day][] = $periodId;
+                }
+                if ($roomId) {
+                    $roomOccupied[$roomId][$day][] = $periodId;
+                }
+
+                // Try to place a double period (consecutive)
+                if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed) {
+                    $cooldownOk = true;
+                    if ($avoidConsecutiveDoubles) {
+                        foreach ($usedDoubleDays as $usedDay) {
+                            if (abs((self::DAYS_MAP[$day] ?? 0) - (self::DAYS_MAP[$usedDay] ?? 0)) <= 1) {
+                                $cooldownOk = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($cooldownOk) {
+                        $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
+                        $nextApplicable = $nextPeriod
+                            && ($dayMeta[$day][$nextPeriod->id]['effective_type'] ?? null) === 'lesson'
+                            && ($dayMeta[$day][$nextPeriod->id]['applicable'] ?? false);
+
+                        if ($nextPeriod && $nextApplicable) {
+                            $nextKey = $day . '_' . $nextPeriod->id;
+
+                            $teacherConflict = $teacherId && (
+                                in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []) ||
+                                in_array($nextPeriod->id, $crossOccupied[$teacherId][$day] ?? [])
                             );
 
-                        if (!isset($placed[$nextKey]) && !$teacherConflict && $teacherAvailableNext) {
-                            // Prefer keeping the double in the same room
-                            $nextRoomId = $roomId;
-                            if ($includeRooms && $nextRoomId
-                                && in_array($nextPeriod->id, $roomOccupied[$nextRoomId][$day] ?? [])
-                            ) {
-                                $nextRoomId = $this->pickAvailableRoom(
-                                    $availableRoomIds, $day, $nextPeriod->id, $roomOccupied
+                            $teacherAvailableNext = !$teacherId
+                                || $this->isTeacherAvailableForPeriod(
+                                    $teacherId, $day, $nextPeriod->id, $setting, $availabilityMap
                                 );
-                                if (!$nextRoomId) $roomShortfallCount++;
+
+                            if (!isset($placed[$nextKey]) && !$teacherConflict && $teacherAvailableNext) {
+                                $nextRoomId = $roomId;
+                                if ($includeRooms && $nextRoomId
+                                    && in_array($nextPeriod->id, $roomOccupied[$nextRoomId][$day] ?? [])
+                                ) {
+                                    $nextRoomId = $this->pickAvailableRoom(
+                                        $availableRoomIds, $day, $nextPeriod->id, $roomOccupied
+                                    );
+                                    if (!$nextRoomId) $roomShortfallCount++;
+                                }
+
+                                TimetableSlot::create([
+                                    'setting_id' => $setting->id,
+                                    'period_id' => $nextPeriod->id,
+                                    'day' => $day,
+                                    'subject_id' => $subjectId,
+                                    'teacher_id' => $teacherId,
+                                    'room_id' => $nextRoomId,
+                                    'is_double' => true,
+                                    'is_free' => false,
+                                ]);
+
+                                $placed[$nextKey] = $subjectId;
+                                $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
+
+                                if ($teacherId) {
+                                    $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
+                                    $crossOccupied[$teacherId][$day][] = $nextPeriod->id;
+                                }
+                                if ($nextRoomId) {
+                                    $roomOccupied[$nextRoomId][$day][] = $nextPeriod->id;
+                                }
+
+                                $placedThisSubject++;
+                                $doubleCount++;
+                                $usedDoubleDays[] = $day;
                             }
-
-                            TimetableSlot::create([
-                                'setting_id' => $setting->id,
-                                'period_id'  => $nextPeriod->id,
-                                'day'        => $day,
-                                'subject_id' => $subjectId,
-                                'teacher_id' => $teacherId,
-                                'room_id'    => $nextRoomId,
-                                'is_double'  => true,
-                                'is_free'    => false,
-                            ]);
-
-                            $placed[$nextKey] = $subjectId;
-                            $lessonsPlacedByDay[$day] = ($lessonsPlacedByDay[$day] ?? 0) + 1;
-
-                            if ($teacherId) {
-                                $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
-                                $crossOccupied[$teacherId][$day][]  = $nextPeriod->id;
-                            }
-                            if ($nextRoomId) {
-                                $roomOccupied[$nextRoomId][$day][] = $nextPeriod->id;
-                            }
-
-                            $placedThisSubject++;
-                            $doubleCount++;
-                            $usedDoubleDays[] = $day;
                         }
                     }
                 }
             }
+
+            if ($placedThisSubject < $needed) {
+                $unplacedSubjects[] = [
+                    'subject' => $constraint->subject?->subject ?? "Subject #{$subjectId}",
+                    'needed' => $needed,
+                    'placed' => $placedThisSubject,
+                ];
+            }
         }
 
-        if ($placedThisSubject < $needed) {
-            $unplacedSubjects[] = [
-                'subject' => $constraint->subject?->subject ?? "Subject #{$subjectId}",
-                'needed'  => $needed,
-                'placed'  => $placedThisSubject,
-            ];
+        // Fill remaining empty slots as free periods
+        foreach ($slotPool as $slot) {
+            $key = $slot['day'] . '_' . $slot['period_id'];
+            if (!isset($placed[$key])) {
+                TimetableSlot::create([
+                    'setting_id' => $setting->id,
+                    'period_id' => $slot['period_id'],
+                    'day' => $slot['day'],
+                    'subject_id' => null,
+                    'teacher_id' => null,
+                    'is_free' => true,
+                ]);
+            }
         }
+
+        return [
+            'placed' => count($placed),
+            'unplaced_subjects' => $unplacedSubjects,
+            'rooms_included' => $includeRooms,
+            'room_shortfall_count' => $roomShortfallCount,
+        ];
     }
 
-    // Fill remaining empty slots as free periods
-    foreach ($slotPool as $slot) {
-        $key = $slot['day'] . '_' . $slot['period_id'];
-        if (!isset($placed[$key])) {
-            TimetableSlot::create([
-                'setting_id' => $setting->id,
-                'period_id'  => $slot['period_id'],
-                'day'        => $slot['day'],
-                'subject_id' => null,
-                'teacher_id' => null,
-                'is_free'    => true,
+    // =========================================================================
+    // PRIVATE: Count how many times a subject is already placed
+    // =========================================================================
+    private function countSubjectPlaced(array $placed, int $subjectId): int
+    {
+        $count = 0;
+        foreach ($placed as $sid) {
+            if ($sid === $subjectId) $count++;
+        }
+        return $count;
+    }
+
+    // =========================================================================
+    // PRIVATE: Load teacher availability data
+    // =========================================================================
+    private function loadTeacherAvailability($subjectTeachers): array
+    {
+        $availabilityMap = [];
+        $teacherIds = $subjectTeachers->flatten()->pluck('staffid')->filter()->unique()->values();
+        if ($teacherIds->isNotEmpty()) {
+            TeacherAvailability::whereIn('teacher_id', $teacherIds)->get()
+                ->each(function ($a) use (&$availabilityMap) {
+                    $availabilityMap[$a->teacher_id][$a->day][] = [
+                        'start' => $a->start_time,
+                        'end' => $a->end_time,
+                        'is_available' => (bool) $a->is_available,
+                    ];
+                });
+        }
+        return $availabilityMap;
+    }
+
+    // =========================================================================
+    // PRIVATE: Ensure a setting has at least one constraint row.
+    // If none exist, create sensible defaults from the current SubjectTeacher
+    // assignments, DISTRIBUTING PERIODS BASED ON THE ACTUAL TIMETABLE SLOTS.
+    // Returns the refreshed constraints collection keyed by subject_id.
+    // =========================================================================
+    private function ensureConstraintsExist(TimetableSetting $setting): \Illuminate\Support\Collection
+    {
+        $constraints = $setting->constraints->keyBy('subject_id');
+
+        if ($constraints->isNotEmpty()) {
+            return $constraints;
+        }
+
+        $subjectTeachers = SubjectTeacher::where('sessionid', $setting->session_id)
+            ->when($setting->term_id, fn ($q) => $q->where('termid', $setting->term_id))
+            ->whereHas('subjectclass', fn ($q) => $q->where('schoolclassid', $setting->schoolclass_id))
+            ->get()
+            ->unique('subjectid')
+            ->values();
+
+        if ($subjectTeachers->isEmpty()) {
+            return $constraints;
+        }
+
+        // ================================================================
+        // CRITICAL FIX: Count actual lesson slots available for this class
+        // using the settings the admin specified (periods, active days, half-days)
+        // ================================================================
+        $dayMeta = $this->computeDayPeriodMeta($setting);
+        $totalLessonSlots = 0;
+        foreach ($dayMeta as $periodsForDay) {
+            foreach ($periodsForDay as $meta) {
+                if ($meta['applicable'] && $meta['effective_type'] === 'lesson') {
+                    $totalLessonSlots++;
+                }
+            }
+        }
+
+        // Subtract free periods the admin wants to reserve
+        $freeTarget = $setting->free_periods_per_week ?? 0;
+        $budget = max(0, $totalLessonSlots - $freeTarget);
+
+        // If no slots available, fall back to a reasonable default
+        if ($budget === 0) {
+            $budget = max(1, count($subjectTeachers) * 2);
+        }
+
+        $subjectCount = $subjectTeachers->count();
+        
+        // Distribute periods evenly across all subjects
+        $base = $subjectCount > 0 ? intdiv($budget, $subjectCount) : 0;
+        $base = max(1, min($base, 8)); // Cap at 8 periods per subject per week
+        $remainder = $budget - ($base * $subjectCount);
+
+        $created = 0;
+        foreach ($subjectTeachers->values() as $i => $st) {
+            // Skip if constraint already exists (double-check)
+            if (TimetableConstraint::where('setting_id', $setting->id)
+                    ->where('subject_id', $st->subjectid)
+                    ->exists()) {
+                continue;
+            }
+
+            // Spread the remainder across the first N subjects
+            $periodsPerWeek = $base + ($i < $remainder ? 1 : 0);
+
+            TimetableConstraint::create([
+                'setting_id'                    => $setting->id,
+                'subject_id'                    => $st->subjectid,
+                'periods_per_week'              => $periodsPerWeek,
+                'allow_double_period'           => false,
+                'max_double_periods_per_week'   => 1,
+                'is_compulsory'                 => true,
+                'avoid_consecutive_double_days' => true,
             ]);
+            $created++;
         }
-    }
 
-    return [
-        'placed'               => count($placed),
-        'unplaced_subjects'    => $unplacedSubjects,
-        'rooms_included'       => $includeRooms,
-        'room_shortfall_count' => $roomShortfallCount,
-    ];
-}
+        if ($created > 0) {
+            $setting->load('constraints.subject');
+        }
+
+        return $setting->constraints->keyBy('subject_id');
+    }
 
     // =========================================================================
     // PRIVATE: First free room (from the admin-chosen pool) for a given
@@ -2027,130 +2195,131 @@ class TimetableController extends Controller
     // are also used for score entry. Assigning or changing a teacher must be
     // done there, not from the timetable module.
     // =========================================================================
-   public function getTeacherAssignments(Request $request): JsonResponse
-{
-    $validated = $request->validate([
-        'session_id' => 'required|exists:schoolsession,id',
-        'term_id'    => 'nullable|exists:schoolterm,id',
-    ]);
+    public function getTeacherAssignments(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'session_id' => 'required|exists:schoolsession,id',
+            'term_id'    => 'nullable|exists:schoolterm,id',
+        ]);
 
-    try {
-        // Build the query to get all subject-class assignments for this session/term
-        $query = Subjectclass::query()
-            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-            ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-            ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->where('subjectteacher.sessionid', $validated['session_id']);
+        try {
+            // Build the query to get all subject-class assignments for this session/term
+            $query = Subjectclass::query()
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->where('subjectteacher.sessionid', $validated['session_id']);
 
-        if (!empty($validated['term_id'])) {
-            $query->where('subjectteacher.termid', $validated['term_id']);
-        }
+            if (!empty($validated['term_id'])) {
+                $query->where('subjectteacher.termid', $validated['term_id']);
+            }
 
-        $assignments = $query->select([
-            'subjectclass.id as subjectclass_id',
-            'subjectclass.subjectteacherid',
-            'subject.id as subject_id',
-            'subject.subject as subject_name',
-            'subject.subject_code as subject_code',
-            'schoolclass.id as schoolclass_id',
-            'schoolclass.schoolclass as class_name',
-            'schoolarm.arm as arm_name',
-            'users.id as teacher_id',
-            'users.name as teacher_name',
-        ])
-        ->orderBy('schoolclass.schoolclass')
-        ->orderBy('schoolarm.arm')
-        ->orderBy('subject.subject')
-        ->get();
+            $assignments = $query->select([
+                'subjectclass.id as subjectclass_id',
+                'subjectclass.subjectteacherid',
+                'subject.id as subject_id',
+                'subject.subject as subject_name',
+                'subject.subject_code as subject_code',
+                'schoolclass.id as schoolclass_id',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+                'users.id as teacher_id',
+                'users.name as teacher_name',
+            ])
+            ->orderBy('schoolclass.schoolclass')
+            ->orderBy('schoolarm.arm')
+            ->orderBy('subject.subject')
+            ->get();
 
-        if ($assignments->isEmpty()) {
+            if ($assignments->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'teachers' => [],
+                    'unassigned' => [],
+                    'message' => 'No subject-class assignments found for this session/term.'
+                ]);
+            }
+
+            // Get student counts for each subjectclass
+            $subjectclassIds = $assignments->pluck('subjectclass_id')->unique()->values();
+            $studentCounts = SubjectRegistrationStatus::whereIn('subjectclassid', $subjectclassIds)
+                ->where('sessionid', $validated['session_id'])
+                ->when(!empty($validated['term_id']), fn($q, $termId) => $q->where('termid', $termId))
+                ->select(['subjectclassid', DB::raw('COUNT(DISTINCT studentid) as cnt')])
+                ->groupBy('subjectclassid')
+                ->pluck('cnt', 'subjectclassid');
+
+            // Get teacher pictures
+            $teacherIds = $assignments->pluck('teacher_id')->filter()->unique()->values();
+            $teacherPictures = [];
+            if ($teacherIds->isNotEmpty()) {
+                $pictures = DB::table('staffpicture')
+                    ->whereIn('staffid', $teacherIds)
+                    ->get(['staffid', 'picture']);
+                
+                foreach ($pictures as $pic) {
+                    $teacherPictures[$pic->staffid] = $pic->picture;
+                }
+            }
+
+            // Group by teacher
+            $byTeacher = [];
+            $unassigned = [];
+
+            foreach ($assignments as $row) {
+                $className = trim(($row->class_name ?? '') . ' ' . ($row->arm_name ?? ''));
+                
+                $data = [
+                    'subjectclass_id' => $row->subjectclass_id,
+                    'subject_id' => $row->subject_id,
+                    'subject_name' => $row->subject_name ?? 'Unknown Subject',
+                    'subject_code' => $row->subject_code ?? '',
+                    'schoolclass_id' => $row->schoolclass_id,
+                    'class_name' => $className ?: 'Unknown Class',
+                    'registered_count' => (int) ($studentCounts[$row->subjectclass_id] ?? 0),
+                ];
+
+                if ($row->teacher_id) {
+                    if (!isset($byTeacher[$row->teacher_id])) {
+                        $byTeacher[$row->teacher_id] = [
+                            'teacher_id' => $row->teacher_id,
+                            'teacher_name' => $row->teacher_name ?? 'Unknown Teacher',
+                            'teacher_picture' => isset($teacherPictures[$row->teacher_id]) 
+                                ? asset('storage/staff_avatars/' . $teacherPictures[$row->teacher_id])
+                                : asset('storage/staff_avatars/default.png'),
+                            'assignments' => [],
+                        ];
+                    }
+                    $byTeacher[$row->teacher_id]['assignments'][] = $data;
+                } else {
+                    $unassigned[] = $data;
+                }
+            }
+
             return response()->json([
                 'success' => true,
+                'teachers' => array_values($byTeacher),
+                'unassigned' => $unassigned,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('getTeacherAssignments failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'validated' => $validated
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load teacher assignments: ' . $e->getMessage(),
                 'teachers' => [],
                 'unassigned' => [],
-                'message' => 'No subject-class assignments found for this session/term.'
-            ]);
+            ], 500);
         }
-
-        // Get student counts for each subjectclass
-        $subjectclassIds = $assignments->pluck('subjectclass_id')->unique()->values();
-        $studentCounts = SubjectRegistrationStatus::whereIn('subjectclassid', $subjectclassIds)
-            ->where('sessionid', $validated['session_id'])
-            ->when(!empty($validated['term_id']), fn($q, $termId) => $q->where('termid', $termId))
-            ->select(['subjectclassid', DB::raw('COUNT(DISTINCT studentid) as cnt')])
-            ->groupBy('subjectclassid')
-            ->pluck('cnt', 'subjectclassid');
-
-        // Get teacher pictures
-        $teacherIds = $assignments->pluck('teacher_id')->filter()->unique()->values();
-        $teacherPictures = [];
-        if ($teacherIds->isNotEmpty()) {
-            $pictures = DB::table('staffpicture')
-                ->whereIn('staffid', $teacherIds)
-                ->get(['staffid', 'picture']);
-            
-            foreach ($pictures as $pic) {
-                $teacherPictures[$pic->staffid] = $pic->picture;
-            }
-        }
-
-        // Group by teacher
-        $byTeacher = [];
-        $unassigned = [];
-
-        foreach ($assignments as $row) {
-            $className = trim(($row->class_name ?? '') . ' ' . ($row->arm_name ?? ''));
-            
-            $data = [
-                'subjectclass_id' => $row->subjectclass_id,
-                'subject_id' => $row->subject_id,
-                'subject_name' => $row->subject_name ?? 'Unknown Subject',
-                'subject_code' => $row->subject_code ?? '',
-                'schoolclass_id' => $row->schoolclass_id,
-                'class_name' => $className ?: 'Unknown Class',
-                'registered_count' => (int) ($studentCounts[$row->subjectclass_id] ?? 0),
-            ];
-
-            if ($row->teacher_id) {
-                if (!isset($byTeacher[$row->teacher_id])) {
-                    $byTeacher[$row->teacher_id] = [
-                        'teacher_id' => $row->teacher_id,
-                        'teacher_name' => $row->teacher_name ?? 'Unknown Teacher',
-                        'teacher_picture' => isset($teacherPictures[$row->teacher_id]) 
-                            ? asset('storage/staff_avatars/' . $teacherPictures[$row->teacher_id])
-                            : asset('storage/staff_avatars/default.png'),
-                        'assignments' => [],
-                    ];
-                }
-                $byTeacher[$row->teacher_id]['assignments'][] = $data;
-            } else {
-                $unassigned[] = $data;
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'teachers' => array_values($byTeacher),
-            'unassigned' => $unassigned,
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('getTeacherAssignments failed', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'validated' => $validated
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to load teacher assignments: ' . $e->getMessage(),
-            'teachers' => [],
-            'unassigned' => [],
-        ], 500);
     }
-}
+
     // =========================================================================
     // EXPORT CLASS TIMETABLE
     // =========================================================================
@@ -2750,420 +2919,6 @@ class TimetableController extends Controller
             'sessionId', 'termId', 'upcomingSlots', 'weeklySummary', 'teacherPicture',
             'periodDayMeta', 'icsUrl', 'webcalUrl'
         ));
-    }
-
-    // =========================================================================
-// PRIVATE: Ensure a setting has at least one constraint row.
-// If none exist, create sensible defaults from the current SubjectTeacher
-// assignments (the same data the "View Teacher Assignments" modal shows).
-// Returns the refreshed constraints collection keyed by subject_id.
-// =========================================================================
-private function ensureConstraintsExist(TimetableSetting $setting): \Illuminate\Support\Collection
-{
-    $constraints = $setting->constraints->keyBy('subject_id');
-
-    if ($constraints->isNotEmpty()) {
-        return $constraints;
-    }
-
-    $subjectTeachers = SubjectTeacher::where('sessionid', $setting->session_id)
-        ->when($setting->term_id, fn ($q) => $q->where('termid', $setting->term_id))
-        ->whereHas('subjectclass', fn ($q) => $q->where('schoolclassid', $setting->schoolclass_id))
-        ->get();
-
-    $created = 0;
-    foreach ($subjectTeachers as $st) {
-        // Guard against duplicate subject rows
-        if (TimetableConstraint::where('setting_id', $setting->id)
-                ->where('subject_id', $st->subjectid)
-                ->exists()) {
-            continue;
-        }
-
-        TimetableConstraint::create([
-            'setting_id'                    => $setting->id,
-            'subject_id'                    => $st->subjectid,
-            'periods_per_week'              => 2,
-            'allow_double_period'           => false,
-            'max_double_periods_per_week'   => 1,
-            'is_compulsory'                 => true,
-            'avoid_consecutive_double_days' => true,
-        ]);
-        $created++;
-    }
-
-    if ($created > 0) {
-        $setting->load('constraints.subject');
-    }
-
-    return $setting->constraints->keyBy('subject_id');
-}
-
-    // =========================================================================
-    // PRIVATE: PDF EXPORT HELPERS
-    // =========================================================================
-    private function exportCsv($setting, $periods, $days, $grid, $className, $sessionName, array $dayMeta = [])
-    {
-        $filename = preg_replace('/[^A-Za-z0-9._-]/', '_', "timetable_{$className}_{$sessionName}.csv");
-        $handle   = fopen('php://temp', 'w+');
-        fwrite($handle, "\xEF\xBB\xBF");
-
-        $header = ['Period', 'Time'];
-        foreach ($days as $day) { $header[] = "{$day} (Subject)"; $header[] = "{$day} (Teacher)"; }
-        fputcsv($handle, $header);
-
-        foreach ($periods as $period) {
-            $row = [
-                $period->name,
-                $this->formatTime($period->start_time) . ' – ' . $this->formatTime($period->end_time),
-            ];
-            foreach ($days as $day) {
-                $meta          = $dayMeta[$day][$period->id] ?? null;
-                $effectiveType = $meta['effective_type'] ?? $period->type;
-                $applicable    = $meta['applicable'] ?? true;
-
-                if (!$applicable) {
-                    $row[] = 'N/A'; $row[] = '—';
-                } elseif ($effectiveType === 'assembly') {
-                    $row[] = 'ASSEMBLY'; $row[] = '—';
-                } elseif (in_array($effectiveType, ['short_break', 'long_break'])) {
-                    $row[] = 'BREAK'; $row[] = '—';
-                } else {
-                    $s     = $grid[$period->id][$day] ?? ['subject' => '—', 'teacher' => ''];
-                    $row[] = $s['subject'];
-                    $row[] = $s['teacher'] ?: '—';
-                }
-            }
-            fputcsv($handle, $row);
-        }
-
-        rewind($handle);
-        $csv = stream_get_contents($handle);
-        fclose($handle);
-
-        return response($csv, 200)
-            ->header('Content-Type', 'text/csv; charset=UTF-8')
-            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
-    }
-
-    private function exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation = 'horizontal', array $dayMeta = [])
-    {
-        $schoolInfo    = SchoolInformation::getActiveSchool();
-        $schoolName    = $schoolInfo?->school_name ?? config('app.name', 'School');
-        $schoolLogo    = $schoolInfo?->getLogoWithFallbackAttribute();
-        $schoolAddress = $schoolInfo?->school_address ?? '';
-        $schoolPhone   = $schoolInfo?->school_phone ?? '';
-        $schoolEmail   = $schoolInfo?->school_email ?? '';
-        $schoolMotto   = $schoolInfo?->school_motto ?? '';
-        $generatedAt   = now()->format('d F Y, H:i');
-        $generatedBy   = Auth::user()->name;
-
-        $subjectColorCss = '';
-        foreach ($subjectColors as $subjectId => $cIdx) {
-            $bg = self::SUBJECT_PALETTE[$cIdx];
-            $subjectColorCss .= ".subj-{$subjectId}{background:{$bg}!important}\n";
-        }
-
-        return $orientation === 'vertical'
-            ? $this->exportPdfVertical($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, $dayMeta)
-            : $this->exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, $dayMeta);
-    }
-
-    private function buildSchoolHeaderHtml(string $schoolName, ?string $schoolLogo, string $schoolAddress, string $schoolPhone, string $schoolEmail, string $schoolMotto): string
-    {
-        $logoHtml = $schoolLogo
-            ? '<img src="' . $schoolLogo . '" class="school-logo" alt="School Logo">'
-            : '<div class="school-logo-placeholder">🏫</div>';
-
-        return <<<HTML
-<div class="school-header">
-    <div class="school-logo-wrap">{$logoHtml}</div>
-    <div class="school-info">
-        <div class="school-name">{$schoolName}</div>
-        <div class="school-motto">{$schoolMotto}</div>
-        <div class="school-contact">
-            <div class="contact-address">{$schoolAddress}</div>
-            <div class="contact-details">
-                <span class="contact-item"><span class="contact-icon">📞</span> {$schoolPhone}</span>
-                <span class="contact-item"><span class="contact-icon">✉️</span> {$schoolEmail}</span>
-            </div>
-        </div>
-    </div>
-</div>
-HTML;
-    }
-
-    private function getSharedPdfCss(): string
-    {
-        return <<<CSS
-@page { size: A4 landscape; margin: 12mm 10mm; }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', 'Roboto', Arial, sans-serif; font-size: 10px; color: #1a1a2e; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.school-header { text-align: center; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 2px solid #e0e7ff; position: relative; }
-.school-header::after { content: ''; position: absolute; bottom: -2px; left: 25%; width: 50%; height: 2px; background: linear-gradient(90deg, #1565C0, #6A1B9A, #1565C0); }
-.school-logo-wrap { margin-bottom: 12px; }
-.school-logo { height: 80px; width: auto; max-width: 200px; object-fit: contain; display: inline-block; }
-.school-logo-placeholder { width: 80px; height: 80px; background: linear-gradient(135deg, #1565C0, #6A1B9A); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 42px; color: white; }
-.school-name { font-size: 22px; font-weight: 800; color: #1565C0; letter-spacing: 0.5px; margin-bottom: 5px; text-transform: uppercase; }
-.school-motto { font-size: 11px; color: #6A1B9A; font-style: italic; margin-bottom: 8px; }
-.school-contact { font-size: 8.5px; color: #555; }
-.contact-address { margin-bottom: 4px; }
-.contact-details { display: flex; justify-content: center; gap: 20px; }
-.contact-item { display: inline-flex; align-items: center; gap: 5px; }
-.doc-title { font-size: 18px; font-weight: 800; color: #1a1a2e; text-align: center; margin: 12px 0 5px; text-transform: uppercase; letter-spacing: 1.5px; }
-.doc-title::before, .doc-title::after { content: '✦'; font-size: 12px; color: #1565C0; margin: 0 12px; opacity: 0.6; }
-.doc-meta { font-size: 10px; color: #666; text-align: center; margin-bottom: 18px; padding-bottom: 8px; border-bottom: 1px dashed #ddd; }
-.class-section { margin-bottom: 35px; page-break-inside: avoid; }
-.class-title { font-size: 14px; font-weight: 800; color: #1565C0; margin: 20px 0 12px; padding: 8px 15px; background: linear-gradient(135deg, #f0f4ff, #e8edf5); border-left: 5px solid #1565C0; border-radius: 0 8px 8px 0; display: inline-block; }
-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-th, td { border: 1px solid #e2e8f0; vertical-align: middle; padding: 8px 6px; }
-.period-header { background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff; font-size: 9px; font-weight: 700; text-align: center; width: 80px; }
-.period-header .pname { font-weight: 800; font-size: 9px; text-transform: uppercase; }
-.period-header .ptime-small { font-size: 7px; opacity: 0.8; margin-top: 2px; }
-.day-header { color: #fff; font-size: 11px; font-weight: 700; text-align: center; padding: 10px 6px; text-transform: uppercase; }
-.day-header.monday    { background: linear-gradient(135deg, #1565C0, #0d47a1); }
-.day-header.tuesday   { background: linear-gradient(135deg, #6A1B9A, #4a0072); }
-.day-header.wednesday { background: linear-gradient(135deg, #1B5E20, #0a3d12); }
-.day-header.thursday  { background: linear-gradient(135deg, #E65100, #bf360c); }
-.day-header.friday    { background: linear-gradient(135deg, #880E4F, #4a0024); }
-.period-cell { background: linear-gradient(135deg, #f8fafc, #f1f5f9); text-align: center; font-weight: 600; }
-.pname { font-weight: 800; font-size: 10px; color: #1e293b; }
-.ptime { font-size: 8px; color: #64748b; margin-top: 2px; font-family: monospace; }
-.day-cell { font-weight: 800; text-align: center; width: 70px; font-size: 11px; text-transform: uppercase; }
-.slot-cell { text-align: center; padding: 8px 4px; background: #fff; }
-.sname { font-weight: 800; font-size: 10px; color: #1e293b; margin-bottom: 3px; }
-.scode { font-size: 7px; color: #6c757d; font-style: italic; margin-bottom: 2px; }
-.tname { font-size: 8px; color: #4b5563; margin-bottom: 2px; }
-.room { font-size: 7px; color: #059669; margin-top: 2px; display: inline-flex; align-items: center; gap: 2px; background: #ecfdf5; padding: 1px 4px; border-radius: 4px; }
-.break-cell { background: linear-gradient(135deg, #fffbeb, #fef3c7) !important; text-align: center; }
-.break-lbl { font-size: 8px; color: #d97706; font-weight: 700; }
-.free-cell { background: #f9fafb !important; text-align: center; }
-.free-lbl { font-size: 8px; color: #9ca3af; font-style: italic; }
-.na-cell { background: #f1f5f9 !important; text-align: center; }
-.na-lbl  { font-size: 8px; color: #94a3b8; font-style: italic; }
-.footer { margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 7px; color: #94a3b8; }
-.print-btn { position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #1565C0, #0d47a1); color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 700; z-index: 999; }
-@media print { .print-btn { display: none !important; } .class-section { page-break-inside: avoid; } }
-CSS;
-    }
-
-    private function buildSlotCellHtml(array $slot): string
-    {
-        $subjectName = $slot['subject'] ?? '—';
-        $teacherName = $slot['teacher'] ?? '';
-        $roomName    = $slot['room'] ?? '';
-
-        $teacherHtml = (!empty($teacherName) && $teacherName !== '—')
-            ? '<div class="tname">👨‍🏫 ' . htmlspecialchars($teacherName) . '</div>' : '';
-        $roomHtml    = !empty($roomName)
-            ? '<div class="room">📍 ' . htmlspecialchars($roomName) . '</div>' : '';
-        $codeHtml    = !empty($slot['subject_code'])
-            ? '<div class="scode">' . htmlspecialchars($slot['subject_code']) . '</div>' : '';
-
-        return '<td class="slot-cell">'
-            . '<div class="sname">' . htmlspecialchars($subjectName) . '</div>'
-            . $codeHtml . $teacherHtml . $roomHtml . '</td>';
-    }
-
-    private function exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, array $dayMeta = [])
-    {
-        $colPct = round(85 / max(count($days), 1), 2);
-        $dayHeaders = '';
-        foreach ($days as $day) {
-            $dayHeaders .= '<th class="day-header ' . strtolower($day) . '" style="width:' . $colPct . '%">' . htmlspecialchars($day) . '</th>';
-        }
-
-        $tableRows = '';
-        foreach ($periods as $period) {
-            $tableRows .= '<tr>';
-            $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
-                . '<div class="ptime">' . htmlspecialchars($this->formatTime($period->start_time) . ' – ' . $this->formatTime($period->end_time)) . '</div></td>';
-
-            foreach ($days as $day) {
-                $meta          = $dayMeta[$day][$period->id] ?? null;
-                $effectiveType = $meta['effective_type'] ?? $period->type;
-                $applicable    = $meta['applicable'] ?? true;
-
-                if (!$applicable) {
-                    $tableRows .= '<td class="na-cell"><span class="na-lbl">— N/A —</span></td>';
-                } elseif ($effectiveType === 'assembly') {
-                    $tableRows .= '<td class="break-cell"><span class="break-lbl">🎤 ASSEMBLY</span></td>';
-                } elseif (in_array($effectiveType, ['short_break', 'long_break'])) {
-                    $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
-                } else {
-                    $slot   = $grid[$period->id][$day] ?? null;
-                    $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—';
-                    $tableRows .= $isFree
-                        ? '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>'
-                        : $this->buildSlotCellHtml($slot);
-                }
-            }
-            $tableRows .= '</tr>';
-        }
-
-        $sharedCss  = $this->getSharedPdfCss();
-        $headerHtml = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
-
-        $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Timetable — ' . htmlspecialchars($className) . '</title>'
-            . '<style>' . $sharedCss . "\n" . $subjectColorCss . '</style></head><body>'
-            . '<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>'
-            . $headerHtml
-            . '<div class="doc-title">CLASS TIMETABLE</div>'
-            . '<div class="doc-meta">📖 ' . htmlspecialchars($className) . ' • 📅 ' . htmlspecialchars($sessionName) . ' • ' . htmlspecialchars($termName) . '</div>'
-            . '<table><thead><tr><th class="period-header" style="width:90px">PERIOD</th>' . $dayHeaders . '</tr></thead><tbody>' . $tableRows . '</tbody></table>'
-            . '<div class="footer"><div class="footer-left">Generated: ' . htmlspecialchars($generatedAt) . '</div>'
-            . '<div style="text-align:center">Generated by: ' . htmlspecialchars($generatedBy) . '</div>'
-            . '<div style="text-align:right">☕ Break | 🎤 Assembly | ▯ Free period | N/A Half-day cutoff</div></div></body></html>';
-
-        return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
-    }
-
-    private function exportPdfVertical($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy, array $dayMeta = [])
-    {
-        $colPct        = round(85 / max(count($periods), 1), 2);
-        $periodHeaders = '';
-        foreach ($periods as $period) {
-            $periodHeaders .= '<th class="period-header" style="width:' . $colPct . '%">'
-                . '<div class="pname">' . htmlspecialchars($period->name) . '</div>'
-                . '<div class="ptime-small">' . htmlspecialchars($this->formatTime($period->start_time) . '–' . $this->formatTime($period->end_time)) . '</div></th>';
-        }
-
-        $tableRows = '';
-        foreach ($days as $day) {
-            $hc = self::DAY_COLORS[$day] ?? '#333';
-            $tableRows .= '<tr><td class="day-cell" style="background:linear-gradient(135deg,' . $hc . ',' . $hc . 'cc);color:#fff">' . htmlspecialchars($day) . '</td>';
-
-            foreach ($periods as $period) {
-                $meta          = $dayMeta[$day][$period->id] ?? null;
-                $effectiveType = $meta['effective_type'] ?? $period->type;
-                $applicable    = $meta['applicable'] ?? true;
-
-                if (!$applicable) {
-                    $tableRows .= '<td class="na-cell"><span class="na-lbl">— N/A —</span></td>';
-                } elseif ($effectiveType === 'assembly') {
-                    $tableRows .= '<td class="break-cell"><span class="break-lbl">🎤 ASSEMBLY</span></td>';
-                } elseif (in_array($effectiveType, ['short_break', 'long_break'])) {
-                    $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
-                } else {
-                    $slot   = $grid[$period->id][$day] ?? null;
-                    $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—';
-                    $tableRows .= $isFree
-                        ? '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>'
-                        : $this->buildSlotCellHtml($slot);
-                }
-            }
-            $tableRows .= '</tr>';
-        }
-
-        $sharedCss  = $this->getSharedPdfCss();
-        $headerHtml = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
-
-        $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Timetable — ' . htmlspecialchars($className) . '</title>'
-            . '<style>' . $sharedCss . "\n" . $subjectColorCss . '</style></head><body>'
-            . '<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>'
-            . $headerHtml
-            . '<div class="doc-title">CLASS TIMETABLE</div>'
-            . '<div class="doc-meta">📖 ' . htmlspecialchars($className) . ' • 📅 ' . htmlspecialchars($sessionName) . ' • ' . htmlspecialchars($termName) . '</div>'
-            . '<table><thead><tr><th class="period-header" style="width:70px">DAY / PERIOD</th>' . $periodHeaders . '</tr></thead><tbody>' . $tableRows . '</tbody></table>'
-            . '<div class="footer"><div class="footer-left">Generated: ' . htmlspecialchars($generatedAt) . '</div>'
-            . '<div style="text-align:center">Generated by: ' . htmlspecialchars($generatedBy) . '</div>'
-            . '<div style="text-align:right">☕ Break | 🎤 Assembly | ▯ Free period | N/A Half-day cutoff</div></div></body></html>';
-
-        return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
-    }
-
-    private function exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation = 'horizontal')
-    {
-        $schoolName    = $schoolInfo?->school_name ?? config('app.name', 'School');
-        $schoolLogo    = $schoolInfo?->getLogoWithFallbackAttribute();
-        $schoolAddress = $schoolInfo?->school_address ?? '';
-        $schoolPhone   = $schoolInfo?->school_phone ?? '';
-        $schoolEmail   = $schoolInfo?->school_email ?? '';
-        $schoolMotto   = $schoolInfo?->school_motto ?? '';
-        $generatedAt   = now()->format('d F Y, H:i');
-        $generatedBy   = Auth::user()->name;
-        $sessionName   = $session->session ?? 'Current Session';
-        $termName      = $term?->term ?? 'All Terms';
-
-        $headerHtml     = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
-        $sharedCss      = $this->getSharedPdfCss();
-        $timetablesHtml = '';
-
-        foreach ($allTimetables as $tt) {
-            $eClassName = htmlspecialchars($tt['class_name']);
-            $dayMeta    = $tt['day_meta'] ?? [];
-
-            $renderCell = function ($period, $day) use ($tt, $dayMeta) {
-                $meta          = $dayMeta[$day][$period->id] ?? null;
-                $effectiveType = $meta['effective_type'] ?? $period->type;
-                $applicable    = $meta['applicable'] ?? true;
-
-                if (!$applicable) return '<td class="na-cell"><span class="na-lbl">— N/A —</span></td>';
-                if ($effectiveType === 'assembly') return '<td class="break-cell"><span class="break-lbl">🎤 ASSEMBLY</span></td>';
-                if (in_array($effectiveType, ['short_break', 'long_break'])) return '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
-
-                $slot   = $tt['grid'][$period->id][$day] ?? null;
-                $isFree = !$slot || ($slot['is_free'] ?? false) || empty($slot['subject']) || $slot['subject'] === '—' || $slot['subject'] === 'FREE';
-                return $isFree
-                    ? '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>'
-                    : $this->buildSlotCellHtml($slot);
-            };
-
-            if ($orientation === 'vertical') {
-                $colPct        = round(85 / max(count($tt['periods']), 1), 2);
-                $periodHeaders = '';
-                foreach ($tt['periods'] as $period) {
-                    $periodHeaders .= '<th class="period-header" style="width:' . $colPct . '%">'
-                        . '<div class="pname">' . htmlspecialchars($period->name) . '</div>'
-                        . '<div class="ptime-small">' . htmlspecialchars($this->formatTime($period->start_time) . '–' . $this->formatTime($period->end_time)) . '</div></th>';
-                }
-                $tableRows = '';
-                foreach ($tt['days'] as $day) {
-                    $hc = self::DAY_COLORS[$day] ?? '#333';
-                    $tableRows .= '<tr><td class="day-cell" style="background:linear-gradient(135deg,' . $hc . ',' . $hc . 'cc);color:#fff">' . htmlspecialchars($day) . '</td>';
-                    foreach ($tt['periods'] as $period) {
-                        $tableRows .= $renderCell($period, $day);
-                    }
-                    $tableRows .= '</tr>';
-                }
-                $timetablesHtml .= '<div class="class-section"><div class="class-title">📖 ' . $eClassName . '</div>'
-                    . '<table><thead><tr><th class="period-header" style="width:70px">DAY / PERIOD</th>' . $periodHeaders . '</tr></thead><tbody>' . $tableRows . '</tbody></table></div>';
-            } else {
-                $colPct     = round(85 / max(count($tt['days']), 1), 2);
-                $dayHeaders = '';
-                foreach ($tt['days'] as $day) {
-                    $dayHeaders .= '<th class="day-header ' . strtolower($day) . '" style="width:' . $colPct . '%">' . htmlspecialchars($day) . '</th>';
-                }
-                $tableRows = '';
-                foreach ($tt['periods'] as $period) {
-                    $tableRows .= '<tr>';
-                    $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
-                        . '<div class="ptime">' . htmlspecialchars($this->formatTime($period->start_time) . ' – ' . $this->formatTime($period->end_time)) . '</div></td>';
-                    foreach ($tt['days'] as $day) {
-                        $tableRows .= $renderCell($period, $day);
-                    }
-                    $tableRows .= '</tr>';
-                }
-                $timetablesHtml .= '<div class="class-section"><div class="class-title">📖 ' . $eClassName . '</div>'
-                    . '<table><thead><tr><th class="period-header" style="width:85px">PERIOD</th>' . $dayHeaders . '</tr></thead><tbody>' . $tableRows . '</tbody></table></div>';
-            }
-        }
-
-        $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
-            . '<title>Whole School Timetable - ' . htmlspecialchars($sessionName) . '</title>'
-            . '<style>' . $sharedCss . '</style></head><body>'
-            . '<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>'
-            . $headerHtml
-            . '<div class="doc-title">WHOLE SCHOOL TIMETABLE</div>'
-            . '<div class="doc-meta">📅 ' . htmlspecialchars($sessionName) . ' • ' . htmlspecialchars($termName) . '</div>'
-            . $timetablesHtml
-            . '<div class="footer"><div class="footer-left">Generated: ' . htmlspecialchars($generatedAt) . '</div>'
-            . '<div style="text-align:center">Generated by: ' . htmlspecialchars($generatedBy) . '</div>'
-            . '<div style="text-align:right">☕ Break | 🎤 Assembly | ▯ Free period | N/A Half-day cutoff</div></div></body></html>';
-
-        return response($html, 200)
-            ->header('Content-Type', 'text/html; charset=UTF-8')
-            ->header('Content-Disposition', 'inline; filename="whole_school_timetable_' . htmlspecialchars($sessionName) . '.pdf"');
     }
 
     // =========================================================================
