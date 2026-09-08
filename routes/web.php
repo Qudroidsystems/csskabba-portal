@@ -434,10 +434,14 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::resource('classoperation', ClassOperationController::class);
 
+    // Class Category Routes
+    Route::prefix('classcategories')->group(function () {
+        Route::get('/data', [ClasscategoryController::class, 'data'])->name('classcategories.data');
+        Route::get('/stats', [ClasscategoryController::class, 'stats'])->name('classcategories.stats');
+        Route::post('/bulk-destroy', [ClasscategoryController::class, 'deleteMultiple'])->name('classcategories.bulk-destroy');
+        Route::post('/update-category', [ClasscategoryController::class, 'updateclasscategory'])->name('classcategories.updateclasscategory');
+    });
     Route::resource('classcategories', ClasscategoryController::class);
-    Route::get('/classcategoryid/{classcategoryid}', [ClasscategoryController::class, 'deleteclasscategory'])->name('classcategories.deleteclasscategory');
-    Route::post('updateclasscategoryid', [ClasscategoryController::class, 'updateclasscategory'])->name('classcategories.updateclasscategory');
-
 
    
       // Parent routes - all modal-based
