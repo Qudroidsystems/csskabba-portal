@@ -854,77 +854,78 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-    // DELETE: BULK
-    // =========================================================================
+// DELETE: BULK - FIXED
+// =========================================================================
 
-    function doBulkDelete() {
-        var ids = [];
-        $('.row-checkbox:checked').each(function() {
-            ids.push($(this).val());
-        });
-        
-        if (ids.length === 0) {
-            toast('warning', 'No Selection', 'Please select at least one subject to delete.');
-            return;
-        }
-
-        Swal.fire({
-            title: 'Delete ' + ids.length + ' subject(s)?',
-            html: 'This will permanently remove the selected subjects.<br><strong>This action cannot be undone!</strong>',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Yes, delete them!',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true,
-            showLoaderOnConfirm: true,
-            preConfirm: function() {
-                return new Promise(function(resolve, reject) {
-                    PageLoader.show('Deleting subjects…');
-                    
-                    $.ajax({
-                        url: '{{ route("subject.bulk-destroy") }}',
-                        type: 'POST',
-                        data: {
-                            ids: ids,
-                            _token: CSRF
-                        },
-                        traditional: true,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        },
-                        success: function(res) {
-                            PageLoader.hide();
-                            if (res.success) {
-                                resolve(res);
-                            } else {
-                                reject(res.message || 'Failed to delete subjects');
-                            }
-                        },
-                        error: function(xhr) {
-                            PageLoader.hide();
-                            var errorMsg = 'An error occurred while deleting.';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMsg = xhr.responseJSON.message;
-                            }
-                            reject(errorMsg);
-                        }
-                    });
-                });
-            }
-        }).then(function(result) {
-            if (result.isConfirmed && result.value) {
-                toast('success', 'Deleted!', result.value.message || 'Subjects deleted successfully.');
-                table.ajax.reload();
-                loadStats();
-                $('#selectAll').prop('checked', false);
-                updateBulkBar();
-            }
-        }).catch(function(error) {
-            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete subjects.');
-        });
+function doBulkDelete() {
+    var ids = [];
+    $('.row-checkbox:checked').each(function() {
+        ids.push($(this).val());
+    });
+    
+    if (ids.length === 0) {
+        toast('warning', 'No Selection', 'Please select at least one subject to delete.');
+        return;
     }
+
+    Swal.fire({
+        title: 'Delete ' + ids.length + ' subject(s)?',
+        html: 'This will permanently remove the selected subjects.<br><strong>This action cannot be undone!</strong>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Yes, delete them!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        showLoaderOnConfirm: true,
+        preConfirm: function() {
+            return new Promise(function(resolve, reject) {
+                PageLoader.show('Deleting subjects…');
+                
+                // Send as JSON with proper array format
+                $.ajax({
+                    url: '{{ route("subject.bulk-destroy") }}',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        ids: ids,
+                        _token: CSRF
+                    }),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    success: function(res) {
+                        PageLoader.hide();
+                        if (res.success) {
+                            resolve(res);
+                        } else {
+                            reject(res.message || 'Failed to delete subjects');
+                        }
+                    },
+                    error: function(xhr) {
+                        PageLoader.hide();
+                        var errorMsg = 'An error occurred while deleting.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        reject(errorMsg);
+                    }
+                });
+            });
+        }
+    }).then(function(result) {
+        if (result.isConfirmed && result.value) {
+            toast('success', 'Deleted!', result.value.message || 'Subjects deleted successfully.');
+            table.ajax.reload();
+            loadStats();
+            $('#selectAll').prop('checked', false);
+            updateBulkBar();
+        }
+    }).catch(function(error) {
+        toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete subjects.');
+    });
+}
 
     $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
 

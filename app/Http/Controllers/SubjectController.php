@@ -369,64 +369,94 @@ class SubjectController extends Controller
     // BULK DESTROY
     // =========================================================================
 
-    public function deleteMultiple(Request $request)
-    {
-        try {
-            $ids = $request->input('ids', []);
-            
-            if (empty($ids)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No subjects selected.'
-                ], 400);
+   // =========================================================================
+// BULK DESTROY
+// =========================================================================
+
+public function deleteMultiple(Request $request)
+{
+    try {
+        // Get ids from request - handle both array and string formats
+        $ids = $request->input('ids');
+        
+        // If ids is a string, try to decode it or convert to array
+        if (is_string($ids)) {
+            // Check if it's a JSON string
+            $decoded = json_decode($ids, true);
+            if (is_array($decoded)) {
+                $ids = $decoded;
+            } else {
+                // If it's a comma-separated string
+                $ids = array_map('trim', explode(',', $ids));
             }
-
-            $existingIds = Subject::whereIn('id', $ids)->pluck('id')->toArray();
-            $invalidIds = array_diff($ids, $existingIds);
-            
-            if (!empty($invalidIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Some selected subjects do not exist.'
-                ], 400);
-            }
-
-            // Check if any are in use
-            $inUse = DB::table('subjectteacher')
-                ->whereIn('subjectid', $ids)
-                ->exists();
-                
-            if ($inUse) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Some subjects are being used by subject teachers and cannot be deleted.'
-                ], 422);
-            }
-
-            DB::beginTransaction();
-            $deleted = Subject::whereIn('id', $ids)->delete();
-            DB::commit();
-
-            Log::info('Bulk delete completed', [
-                'total' => count($ids),
-                'deleted' => $deleted
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => $deleted . ' subject(s) deleted successfully.',
-                'deleted_count' => $deleted
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Bulk delete failed:', ['error' => $e->getMessage()]);
+        }
+        
+        // Ensure ids is an array
+        if (!is_array($ids)) {
+            $ids = [];
+        }
+        
+        // Filter out any empty values
+        $ids = array_filter($ids);
+        
+        if (empty($ids)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting subjects: ' . $e->getMessage()
-            ], 500);
+                'message' => 'No subjects selected.'
+            ], 400);
         }
+
+        $existingIds = Subject::whereIn('id', $ids)->pluck('id')->toArray();
+        $invalidIds = array_diff($ids, $existingIds);
+        
+        if (!empty($invalidIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some selected subjects do not exist.'
+            ], 400);
+        }
+
+        // Check if any are in use
+        $inUse = DB::table('subjectteacher')
+            ->whereIn('subjectid', $ids)
+            ->exists();
+            
+        if ($inUse) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some subjects are being used by subject teachers and cannot be deleted.'
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        $deleted = Subject::whereIn('id', $ids)->delete();
+        DB::commit();
+
+        Log::info('Bulk delete completed', [
+            'total' => count($ids),
+            'deleted' => $deleted
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $deleted . ' subject(s) deleted successfully.',
+            'deleted_count' => $deleted
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Bulk delete failed:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'ids' => $request->input('ids', [])
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error deleting subjects: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     // =========================================================================
     // HELPERS
