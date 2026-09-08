@@ -315,12 +315,15 @@ Route::group(['middleware' => ['auth']], function () {
 
 
 
+    // School Arm Routes
+    Route::prefix('schoolarm')->group(function () {
+        Route::get('/data', [SchoolArmController::class, 'data'])->name('schoolarm.data');
+        Route::get('/stats', [SchoolArmController::class, 'stats'])->name('schoolarm.stats');
+        Route::post('/bulk-destroy', [SchoolArmController::class, 'deleteMultiple'])->name('schoolarm.bulk-destroy');
+        Route::post('/update-arm', [SchoolArmController::class, 'updatearm'])->name('schoolarm.updatearm');
+        Route::post('/delete-arm', [SchoolArmController::class, 'deletearm'])->name('schoolarm.deletearm');
+    });
     Route::resource('schoolarm', SchoolArmController::class);
-    Route::post('schoolarm/deletearm', [SchoolArmController::class, 'deletearm'])->name('schoolarm.deletearm');
-    Route::post('schoolarm/updatearm', [SchoolArmController::class, 'updatearm'])->name('schoolarm.updatearm');
-    Route::post('/schoolclass/deletes-schoolclass', [SchoolClassController::class, 'deleteschoolclass'])->name('schoolclass.deleteschoolclass');
-    Route::get('/schoolclasses/{getArms}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getArms');
-    Route::post('schoolarm/bulk-delete', [SchoolArmController::class, 'bulkDelete'])->name('schoolarm.bulkDelete');
 
    // School Class Routes
     Route::prefix('schoolclass')->group(function () {

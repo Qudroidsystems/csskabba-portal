@@ -2,400 +2,323 @@
 @extends('layouts.master')
 
 @section('content')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
 :root {
-    --pay-primary: #1e3a5f;
-    --pay-accent:  #2563eb;
-    --pay-success: #16a34a;
-    --pay-warning: #d97706;
-    --pay-danger:  #dc2626;
-    --pay-purple:  #7c3aed;
-    --pay-muted:   #6b7280;
-    --pay-border:  #e2e8f0;
-    --pay-bg:      #f8fafc;
-    --pay-radius:  12px;
-    --pay-shadow:  0 2px 8px rgba(0,0,0,.08);
+    --sa-primary:  #1e3a5f;
+    --sa-accent:   #2563eb;
+    --sa-success:  #16a34a;
+    --sa-warning:  #d97706;
+    --sa-danger:   #dc2626;
+    --sa-muted:    #6b7280;
+    --sa-border:   #e2e8f0;
+    --sa-bg:       #f8fafc;
+    --sa-radius:   12px;
+    --sa-shadow:   0 2px 8px rgba(0,0,0,.08);
 }
 
-/* Loading overlay */
-.loading-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5); z-index: 9999;
-    display: none; align-items: center; justify-content: center;
-}
-.loading-overlay.active { display: flex; }
-.loading-spinner {
-    background: white; padding: 24px 32px; border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.18); text-align: center;
-}
-.loading-spinner .spinner-border { width: 2.5rem; height: 2.5rem; }
-.loading-spinner p { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--pay-primary); }
-
-/* Hero Section */
-.pay-hero {
+/* ── Hero ────────────────────────────────────────────────── */
+.sa-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--pay-radius);
-    padding: 28px 32px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
+    border-radius: var(--sa-radius);
+    padding: 28px 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
 }
-.pay-hero::before {
-    content: '';
-    position: absolute; top: -60px; right: -60px;
-    width: 220px; height: 220px;
-    background: rgba(255,255,255,.06);
-    border-radius: 50%;
+.sa-hero::before {
+    content:''; position:absolute; top:-60px; right:-60px;
+    width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
 }
-.pay-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
-.pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
+.sa-hero::after {
+    content:''; position:absolute; bottom:-80px; left:-30px;
+    width:260px; height:260px; background:rgba(255,255,255,.03); border-radius:50%;
+}
+.sa-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
+.sa-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
 
-/* Stat Cards */
+/* ── Stat cards ──────────────────────────────────────────── */
 .stat-card {
-    background: #fff;
-    border: 1px solid var(--pay-border);
-    border-radius: var(--pay-radius);
-    padding: 18px 20px;
-    transition: transform .15s, box-shadow .15s;
+    background:#fff; border:1px solid var(--sa-border);
+    border-radius:var(--sa-radius); padding:18px 20px;
+    transition:transform .15s, box-shadow .15s;
 }
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--pay-shadow); }
-.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--pay-primary); }
-.stat-card .stat-label { font-size: 12px; color: var(--pay-muted); margin-top: 4px; }
-.stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
+.stat-card:hover { transform:translateY(-2px); box-shadow:var(--sa-shadow); }
+.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--sa-primary); }
+.stat-card .stat-label { font-size:12px; color:var(--sa-muted); margin-top:4px; }
+.stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
 
-/* Table Styles */
-.arm-table th {
-    background: var(--pay-primary);
-    color: #fff;
-    padding: 12px 16px;
-    font-weight: 600;
-    font-size: 13px;
-    white-space: nowrap;
+/* ── Table ───────────────────────────────────────────────── */
+.sa-table th {
+    background:var(--sa-primary); color:#fff;
+    padding:12px 16px; font-weight:600; font-size:13px;
+    white-space:nowrap;
 }
-.arm-table td {
-    padding: 11px 16px;
-    vertical-align: middle;
-    border-bottom: 1px solid var(--pay-border);
-    font-size: 13px;
+.sa-table td {
+    padding:11px 16px; vertical-align:middle;
+    border-bottom:1px solid var(--sa-border); font-size:13px;
 }
-.arm-table tr:hover td { background: #f0f9ff; }
+.sa-table tr:hover td { background:#f0f9ff; }
 
-/* Action Buttons */
-.btn-icon {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    transition: all .15s;
+/* ── Badges ──────────────────────────────────────────────── */
+.sa-badge {
+    display:inline-flex; align-items:center;
+    padding:3px 9px; border-radius:20px;
+    font-size:11px; font-weight:600;
 }
-.btn-subtle-secondary {
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
-}
-.btn-subtle-secondary:hover {
-    background: #e2e8f0;
-    color: #1e293b;
-    transform: translateY(-1px);
-}
-.btn-subtle-danger {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-}
-.btn-subtle-danger:hover {
-    background: #fee2e2;
-    color: #b91c1c;
-    transform: translateY(-1px);
-}
+.sa-badge-arm { background:#dbeafe; color:#2563eb; }
 
-/* Checkbox Styles */
-.form-check-input {
-    cursor: pointer;
-    width: 18px;
-    height: 18px;
-    margin-top: 0;
-}
-.form-check-input:checked {
-    background-color: var(--pay-accent);
-    border-color: var(--pay-accent);
-}
-
-/* DataTables Overrides */
+/* ── DataTables overrides ────────────────────────────────── */
 .dataTables_wrapper .dataTables_filter input {
-    border: 1.5px solid var(--pay-border);
-    border-radius: 8px;
-    padding: 7px 14px;
-    margin-left: 8px;
-    font-size: 13px;
+    border:1.5px solid var(--sa-border); border-radius:8px;
+    padding:7px 14px; margin-left:8px; font-size:13px;
+    transition:border .15s;
 }
 .dataTables_wrapper .dataTables_filter input:focus {
-    border-color: var(--pay-accent);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    border-color:var(--sa-accent); outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 .dataTables_wrapper .dataTables_length select {
-    border: 1.5px solid var(--pay-border);
-    border-radius: 8px;
-    padding: 5px 24px 5px 10px;
-    font-size: 13px;
+    border:1.5px solid var(--sa-border); border-radius:8px;
+    padding:6px 10px; margin:0 6px; font-size:13px;
+}
+.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--sa-muted); }
+.dataTables_wrapper .paginate_button  {
+    border-radius:6px !important; font-size:13px !important;
+    padding:4px 10px !important;
+}
+.dataTables_wrapper .paginate_button.current,
+.dataTables_wrapper .paginate_button.current:hover {
+    background:var(--sa-accent) !important;
+    border-color:var(--sa-accent) !important; color:#fff !important;
 }
 
-/* Modal Styles */
-#addArmModal .modal-content,
-#editModal .modal-content,
-#deleteRecordModal .modal-content {
-    border: none;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+/* ── Modals ──────────────────────────────────────────────── */
+.sa-modal .modal-content {
+    border:none; border-radius:16px;
+    overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15);
 }
 .modal-hero-bar {
-    background: linear-gradient(135deg, #1e3a5f, #2563eb);
-    padding: 20px 28px;
-    position: relative;
-    overflow: hidden;
+    background:linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    padding:22px 28px; position:relative; overflow:hidden;
 }
 .modal-hero-bar::before {
-    content: '';
-    position: absolute; top: -25px; right: -25px;
-    width: 100px; height: 100px;
-    background: rgba(255,255,255,.07);
-    border-radius: 50%;
+    content:''; position:absolute; top:-30px; right:-30px;
+    width:120px; height:120px; background:rgba(255,255,255,.07); border-radius:50%;
 }
-.modal-hero-bar h5 {
-    color: #fff;
-    font-weight: 700;
-    margin: 0;
-    font-size: 15px;
-    position: relative;
-}
-.modal-hero-bar .btn-close {
-    position: absolute;
-    top: 16px;
-    right: 20px;
-    filter: invert(1);
-}
-.modal-body {
-    padding: 24px;
-}
-.form-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 6px;
-}
+.modal-hero-bar h5 { color:#fff; font-weight:700; margin:0; font-size:16px; position:relative; }
+.modal-hero-bar .btn-close { position:absolute; top:18px; right:20px; filter:invert(1); }
+
+.form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
 .form-control, .form-select {
-    border: 1.5px solid var(--pay-border);
-    border-radius: 8px;
-    font-size: 13px;
-    padding: 9px 14px;
-    transition: border .15s;
+    border:1.5px solid var(--sa-border); border-radius:8px;
+    font-size:13px; padding:9px 14px; transition:border .15s;
 }
 .form-control:focus, .form-select:focus {
-    border-color: var(--pay-accent);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    border-color:var(--sa-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
-textarea.form-control {
-    resize: vertical;
-    min-height: 80px;
+textarea.form-control { resize:vertical; min-height:80px; }
+
+/* ── Bulk bar ────────────────────────────────────────────── */
+.bulk-bar {
+    background:#fff3cd; border:1px solid #ffc107;
+    border-radius:8px; padding:10px 16px;
+    display:none; align-items:center; gap:12px; margin-bottom:12px;
 }
-.modal-footer {
-    padding: 16px 24px 24px;
-    border-top: none;
+.bulk-bar.show { display:flex; }
+
+/* ── Full-page loader overlay ────────────────────────────── */
+#sa-page-loader {
+    position:fixed; inset:0; z-index:9999;
+    background:rgba(15,23,42,.55);
+    backdrop-filter:blur(3px);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    opacity:0; visibility:hidden;
+    transition:opacity .22s, visibility .22s;
 }
-.btn {
-    padding: 8px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 8px;
-    transition: all .15s;
+#sa-page-loader.active { opacity:1; visibility:visible; }
+.sa-loader-card {
+    background:#fff; border-radius:16px;
+    padding:32px 40px; text-align:center;
+    box-shadow:0 24px 64px rgba(0,0,0,.22); min-width:220px;
 }
-.btn-primary {
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
-    border: none;
+.sa-loader-spinner {
+    width:52px; height:52px; margin:0 auto 16px;
+    border:4px solid #e2e8f0; border-top-color:var(--sa-accent);
+    border-radius:50%; animation:sa-spin .75s linear infinite;
 }
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37,99,235,.3);
+@keyframes sa-spin { to { transform:rotate(360deg); } }
+.sa-loader-label { font-size:14px; font-weight:600; color:var(--sa-primary); margin-bottom:12px; }
+.sa-progress-wrap {
+    width:160px; height:5px; background:#e2e8f0;
+    border-radius:99px; overflow:hidden; margin:0 auto;
 }
-.btn-light {
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-}
-.btn-light:hover {
-    background: #e2e8f0;
-    transform: translateY(-1px);
+.sa-progress-bar {
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--sa-accent), #0d9488);
+    border-radius:99px; transition:width .35s ease;
 }
 
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 52px 24px;
-    color: var(--pay-muted);
+/* ── Modal body loading overlay ──────────────────────────── */
+.modal-body-loader {
+    position:absolute; inset:0; z-index:10;
+    background:rgba(255,255,255,.82); backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center;
+    border-radius:0 0 16px 16px;
+    opacity:0; visibility:hidden; transition:opacity .18s, visibility .18s;
 }
-.empty-state i {
-    font-size: 3rem;
-    opacity: .25;
-    display: block;
-    margin-bottom: 14px;
+.modal-body-loader.active { opacity:1; visibility:visible; }
+.modal-body-loader .inner { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.modal-body-loader .mbl-spinner {
+    width:36px; height:36px; border:3px solid #e2e8f0;
+    border-top-color:var(--sa-accent); border-radius:50%;
+    animation:sa-spin .7s linear infinite;
 }
-.empty-state p {
-    margin: 0;
-    font-size: 14px;
+.modal-body-loader .mbl-text { font-size:13px; font-weight:600; color:var(--sa-primary); }
+
+/* ── Toast notifications ─────────────────────────────────── */
+#sa-toast-stack {
+    position:fixed; bottom:24px; right:24px; z-index:10000;
+    display:flex; flex-direction:column-reverse; gap:10px; pointer-events:none;
+}
+.sa-toast {
+    pointer-events:all; background:#fff; border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,.14);
+    padding:14px 18px; min-width:280px; max-width:360px;
+    display:flex; align-items:flex-start; gap:12px;
+    border-left:4px solid var(--sa-accent);
+    transform:translateX(120%);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.sa-toast.show { transform:translateX(0); }
+.sa-toast.sa-toast-success { border-left-color:var(--sa-success); }
+.sa-toast.sa-toast-error   { border-left-color:var(--sa-danger);  }
+.sa-toast.sa-toast-warning { border-left-color:var(--sa-warning); }
+.sa-toast .sa-toast-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:1px; }
+.sa-toast-success .sa-toast-icon { color:var(--sa-success); }
+.sa-toast-error   .sa-toast-icon { color:var(--sa-danger);  }
+.sa-toast-warning .sa-toast-icon { color:var(--sa-warning); }
+.sa-toast .sa-toast-body { flex:1; }
+.sa-toast .sa-toast-title { font-size:13px; font-weight:700; color:#111827; margin-bottom:2px; }
+.sa-toast .sa-toast-msg   { font-size:12px; color:var(--sa-muted); line-height:1.4; }
+.sa-toast .sa-toast-close {
+    background:none; border:none; cursor:pointer;
+    color:var(--sa-muted); font-size:16px; line-height:1; padding:0; flex-shrink:0;
 }
 
-/* Alert Styles */
-.alert {
-    border: none;
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-size: 13px;
+/* ── Button loading state ────────────────────────────────── */
+.btn-loading { position:relative; pointer-events:none; opacity:.85; }
+.btn-loading .btn-text { visibility:hidden; }
+.btn-loading::after {
+    content:''; position:absolute; inset:0; margin:auto;
+    width:16px; height:16px; border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff; border-radius:50%; animation:sa-spin .65s linear infinite;
 }
-.alert-danger {
-    background: #fef2f2;
-    color: #991b1b;
-    border-left: 3px solid #dc2626;
-}
-.alert-success {
-    background: #f0fdf4;
-    color: #166534;
-    border-left: 3px solid #16a34a;
-}
-
-/* Badge */
-.badge {
-    padding: 4px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    border-radius: 20px;
-}
-.bg-dark-subtle {
-    background: #f1f5f9;
-    color: #1e293b;
-}
-
-/* Search Box */
-.search-box {
-    position: relative;
-}
-.search-box .search-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--pay-muted);
-    pointer-events: none;
-}
-.search-box .form-control {
-    padding-right: 36px;
-}
+.btn-loading.btn-outline-secondary::after,
+.btn-loading.btn-outline-danger::after { border-top-color:currentColor; }
+.btn-loading.btn-light::after { border-top-color:#374151; }
 </style>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+
+{{-- ═══ Full-page loader overlay ═══ --}}
+<div id="sa-page-loader">
+    <div class="sa-loader-card">
+        <div class="sa-loader-spinner"></div>
+        <div class="sa-loader-label" id="sa-loader-label">Processing…</div>
+        <div class="sa-progress-wrap">
+            <div class="sa-progress-bar" id="sa-progress-bar"></div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══ Toast stack ═══ --}}
+<div id="sa-toast-stack"></div>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- Global loading overlay --}}
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading…</span>
-            </div>
-            <p>Processing…</p>
-        </div>
-    </div>
-
-    <div class="pay-hero">
+    {{-- Hero --}}
+    <div class="sa-hero">
         <h1><i class="ri-building-line me-2"></i>School Arm Management</h1>
         <p>Manage school arms/classes divisions for organizing student classes.</p>
     </div>
 
+    {{-- Stat cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-group-line"></i></div>
-                <div class="stat-value" id="statTotal">{{ $all_arms ?? 0 }}</div>
+                <div class="stat-value" id="statTotal">—</div>
                 <div class="stat-label">Total Arms</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-bar-chart-line"></i></div>
-                <div class="stat-value text-primary" id="statShowing">0</div>
+                <div class="stat-value text-primary" id="statShowing">—</div>
                 <div class="stat-label">Showing Now</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-icon"><i class="ri-calendar-line"></i></div>
-                <div class="stat-value text-success">—</div>
-                <div class="stat-label">Last 30 Days</div>
+                <div class="stat-icon"><i class="ri-school-line"></i></div>
+                <div class="stat-value text-success" id="statWithClasses">—</div>
+                <div class="stat-label">With Classes</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-icon"><i class="ri-pencil-line"></i></div>
-                <div class="stat-value text-warning">—</div>
-                <div class="stat-label">Recent Updates</div>
+                <div class="stat-icon"><i class="ri-calendar-line"></i></div>
+                <div class="stat-value text-warning" id="statRecent">—</div>
+                <div class="stat-label">Recent Updates (30d)</div>
             </div>
         </div>
     </div>
 
+    {{-- Table card --}}
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap">
-            <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
-                <i class="ri-list-check me-2"></i>School Arms List
-                <span class="badge bg-primary ms-2" id="totalArmsBadge">{{ $all_arms ?? 0 }}</span>
-            </h5>
-            <div class="d-flex gap-2">
-                @can('Create school-arm')
-                    <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addArmModal">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold" style="color:var(--sa-primary)">
+                    <i class="ri-list-check me-2"></i>School Arms List
+                    <span class="badge bg-primary ms-2" id="totalBadge">0</span>
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-danger d-none" id="bulkDeleteBtn">
+                        <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                    </button>
+                    @can('Create school-arm')
+                    <button class="btn btn-primary" id="createArmBtn">
                         <i class="ri-add-line me-1"></i>Create Arm
                     </button>
-                @endcan
+                    @endcan
+                </div>
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="p-3 border-bottom">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="search-box">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search arms...">
-                            <i class="ri-search-line search-icon"></i>
-                        </div>
-                    </div>
-                    <div class="col-md-8 text-end">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" id="checkAll">
-                            <label class="form-check-label" for="checkAll">Select All</label>
-                        </div>
-                        <button class="btn btn-danger btn-sm d-none" id="remove-actions">
-                            <i class="ri-delete-bin-line me-1"></i>Delete Selected
-                        </button>
-                    </div>
-                </div>
+        <div class="card-body">
+
+            {{-- Bulk bar --}}
+            <div class="bulk-bar" id="bulkBar">
+                <i class="ri-checkbox-circle-line text-warning"></i>
+                <span id="bulkCount">0</span> arm(s) selected
+                <button class="btn btn-sm btn-danger ms-auto" id="bulkDeleteBtn2">
+                    <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                </button>
             </div>
 
             <div class="table-responsive">
-                <table class="table arm-table w-100 mb-0" id="armsTable">
+                <table class="table sa-table w-100 mb-0" id="armsTable">
                     <thead>
                         <tr>
                             <th width="40">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="checkAllTable">
-                                </div>
+                                <input type="checkbox" id="selectAll" class="form-check-input">
                             </th>
-                            <th width="60">#</th>
+                            <th>#</th>
                             <th>Arm Name</th>
-                            <th>Description / Remark</th>
-                            <th width="120">Last Updated</th>
+                            <th>Description</th>
+                            <th>Usage</th>
+                            <th>Last Updated</th>
                             <th width="100">Actions</th>
                         </tr>
                     </thead>
@@ -409,33 +332,43 @@ textarea.form-control {
 </div>
 </div>
 
-{{-- ADD ARM MODAL --}}
-<div id="addArmModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+{{-- ═══════════════════════ CREATE MODAL ════════════════════ --}}
+<div class="modal fade sa-modal" id="createModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-hero-bar">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 <h5><i class="ri-add-line me-2"></i>Create New School Arm</h5>
             </div>
-            <form id="addArmForm" method="POST" action="{{ route('schoolarm.store') }}">
+            <form id="createForm" autocomplete="off">
                 @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="arm" class="form-label">Arm Name <span class="text-danger">*</span></label>
-                        <input type="text" name="arm" id="arm" class="form-control" placeholder="e.g., A, B, C, or Science, Arts" required>
-                        <div class="invalid-feedback" id="armError"></div>
+                <div class="modal-body-loader" id="create-modal-loader">
+                    <div class="inner">
+                        <div class="mbl-spinner"></div>
+                        <div class="mbl-text" id="create-modal-loader-text">Saving…</div>
                     </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description / Remark</label>
-                        <textarea name="description" id="description" class="form-control" placeholder="Enter a brief description of this arm" rows="3"></textarea>
-                        <div class="invalid-feedback" id="descriptionError"></div>
-                    </div>
-                    <div class="alert alert-danger d-none" id="addAlertError"></div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-body p-4" style="position:relative">
+
+                    {{-- Arm Name --}}
+                    <div class="mb-3">
+                        <label class="form-label">Arm Name <span class="text-danger">*</span></label>
+                        <input type="text" name="arm" id="create-arm" class="form-control" placeholder="e.g., A, B, C, or Science, Arts" required>
+                        <small class="text-muted">Enter the arm/class division name</small>
+                    </div>
+
+                    {{-- Description --}}
+                    <div class="mb-3">
+                        <label class="form-label">Description / Remark</label>
+                        <textarea name="description" id="create-description" class="form-control" placeholder="Enter a brief description of this arm" rows="3"></textarea>
+                    </div>
+
+                    <div class="alert alert-danger d-none" id="create-error-msg"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="addBtn">
-                        <i class="ri-save-line me-1"></i>Create Arm
+                    <button type="submit" class="btn btn-primary" id="create-save-btn" disabled>
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Create Arm</span>
                     </button>
                 </div>
             </form>
@@ -443,34 +376,43 @@ textarea.form-control {
     </div>
 </div>
 
-{{-- EDIT ARM MODAL --}}
-<div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+{{-- ═══════════════════════ EDIT MODAL ══════════════════════ --}}
+<div class="modal fade sa-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-hero-bar">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 <h5><i class="ri-edit-line me-2"></i>Edit School Arm</h5>
             </div>
-            <form id="editArmForm">
+            <form id="editForm" autocomplete="off">
                 @csrf
-                <input type="hidden" name="id" id="edit_id">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="edit_arm" class="form-label">Arm Name <span class="text-danger">*</span></label>
-                        <input type="text" name="arm" id="edit_arm" class="form-control" required>
-                        <div class="invalid-feedback" id="editArmError"></div>
+                <input type="hidden" id="edit-arm-id">
+                <div class="modal-body-loader" id="edit-modal-loader">
+                    <div class="inner">
+                        <div class="mbl-spinner"></div>
+                        <div class="mbl-text" id="edit-modal-loader-text">Updating…</div>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit_description" class="form-label">Description / Remark</label>
-                        <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
-                        <div class="invalid-feedback" id="editDescriptionError"></div>
-                    </div>
-                    <div class="alert alert-danger d-none" id="editAlertError"></div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-body p-4" style="position:relative">
+
+                    {{-- Arm Name --}}
+                    <div class="mb-3">
+                        <label class="form-label">Arm Name <span class="text-danger">*</span></label>
+                        <input type="text" name="arm" id="edit-arm" class="form-control" required>
+                    </div>
+
+                    {{-- Description --}}
+                    <div class="mb-3">
+                        <label class="form-label">Description / Remark</label>
+                        <textarea name="description" id="edit-description" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="alert alert-danger d-none" id="edit-error-msg"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="updateBtn">
-                        <i class="ri-save-line me-1"></i>Update Arm
+                    <button type="submit" class="btn btn-primary" id="edit-update-btn">
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Update Arm</span>
                     </button>
                 </div>
             </form>
@@ -478,336 +420,490 @@ textarea.form-control {
     </div>
 </div>
 
-{{-- DELETE CONFIRMATION MODAL --}}
-<div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true">
+{{-- ═══════════════════════ DELETE MODAL ════════════════════ --}}
+<div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center pt-0">
-                <div class="mb-3">
-                    <div class="mx-auto mb-3" style="width: 60px; height: 60px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="ri-delete-bin-line" style="font-size: 28px; color: #dc2626;"></i>
-                    </div>
-                    <h5 class="mb-2">Are you sure?</h5>
-                    <p class="text-muted mb-0">You won't be able to revert this action!</p>
-                    <p class="text-muted small mt-2" id="deleteItemName"></p>
-                </div>
+            <div class="modal-body">
+                <p>Remove <strong id="delete-item-title"></strong>?</p>
+                <p class="text-muted small mb-0">This action cannot be undone.</p>
             </div>
-            <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
+            <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="ri-delete-bin-line me-1"></i>Yes, Delete
+                <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+                    <i class="ri-delete-bin-line me-1"></i><span class="btn-text">Delete</span>
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
 $(document).ready(function () {
-    $.fn.dataTable.ext.errMode = 'none';
 
-    // ── DataTable (Yajra) ────────────────────────────────────
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+    let deleteId = null;
+
+    // =========================================================================
+    // LOADING HELPERS
+    // =========================================================================
+
+    const PageLoader = {
+        _prog: 0, _timer: null,
+        show(label = 'Processing…') {
+            $('#sa-loader-label').text(label);
+            $('#sa-progress-bar').css('width', '0%');
+            $('#sa-page-loader').addClass('active');
+            this._prog = 0; this._tick();
+        },
+        _tick() {
+            PageLoader._timer = setInterval(() => {
+                if (PageLoader._prog < 85) {
+                    PageLoader._prog += Math.random() * 8;
+                    $('#sa-progress-bar').css('width', Math.min(PageLoader._prog, 85) + '%');
+                }
+            }, 220);
+        },
+        hide() {
+            clearInterval(this._timer);
+            $('#sa-progress-bar').css('width', '100%');
+            setTimeout(() => $('#sa-page-loader').removeClass('active'), 350);
+        },
+    };
+
+    function showModalLoader(id, text) {
+        $('#' + id + '-modal-loader-text').text(text || 'Processing…');
+        $('#' + id + '-modal-loader').addClass('active');
+    }
+    function hideModalLoader(id) { $('#' + id + '-modal-loader').removeClass('active'); }
+
+    function btnLoad($btn, label) {
+        $btn.data('original-html', $btn.html())
+            .prop('disabled', true).addClass('btn-loading');
+        if (label) $btn.html('<span class="btn-text">' + label + '</span>');
+    }
+    function btnReset($btn) {
+        var orig = $btn.data('original-html');
+        if (orig) $btn.html(orig);
+        $btn.prop('disabled', false).removeClass('btn-loading');
+    }
+
+    function toast(type, title, msg, duration) {
+        duration = duration || 4000;
+        var icons = {
+            success: 'ri-checkbox-circle-fill',
+            error:   'ri-close-circle-fill',
+            warning: 'ri-alert-fill',
+            info:    'ri-information-fill'
+        };
+        var id  = 'sa-toast-' + Date.now();
+        var $el = $([
+            '<div class="sa-toast sa-toast-' + type + '" id="' + id + '">',
+            '  <span class="sa-toast-icon"><i class="' + (icons[type] || icons.info) + '"></i></span>',
+            '  <div class="sa-toast-body">',
+            '    <div class="sa-toast-title">' + title + '</div>',
+            msg ? '    <div class="sa-toast-msg">' + msg + '</div>' : '',
+            '  </div>',
+            '  <button class="sa-toast-close" onclick="$(\'#' + id + '\').remove()">×</button>',
+            '</div>'
+        ].join(''));
+        $('#sa-toast-stack').append($el);
+        setTimeout(function() { $el.addClass('show'); }, 20);
+        if (duration > 0) {
+            setTimeout(function() {
+                $el.removeClass('show');
+                setTimeout(function() { $el.remove(); }, 350);
+            }, duration);
+        }
+    }
+
+    function showError(selector, msg) {
+        $(selector).removeClass('d-none')
+            .html('<i class="ri-error-warning-line me-1"></i>' + msg);
+    }
+
+    // =========================================================================
+    // DATATABLE (server-side)
+    // =========================================================================
+
     var table = $('#armsTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('schoolarm.index') }}",
-            type: 'GET'
+            url: '{{ route("schoolarm.data") }}',
+            type: 'GET',
+            error: function(xhr) {
+                console.error('DataTables AJAX error:', xhr.status, xhr.responseText);
+                toast('error', 'Load Error', 'Failed to load arms. Please refresh.');
+            }
         },
         columns: [
-            { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false },
-            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'arm', name: 'arm' },
-            { data: 'description', name: 'description' },
-            { data: 'updated_at', name: 'updated_at' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+            // Checkbox
+            {
+                data: 'checkbox', orderable: false, searchable: false,
+                render: function(data) {
+                    return data;
+                }
+            },
+            // Row index
+            { data: 'DT_RowIndex', orderable: false, searchable: false },
+            // Arm Name
+            { data: 'arm_info', orderable: false },
+            // Description
+            { data: 'description_info', orderable: false },
+            // Usage
+            { data: 'usage_count', orderable: false },
+            // Date
+            { data: 'formatted_date', orderable: false },
+            // Actions
+            { data: 'action', orderable: false, searchable: false },
         ],
-        order: [[2, 'asc']],
-        pageLength: 10,
+        dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
+             "<'row'<'col-12'tr>>" +
+             "<'row align-items-center mt-3'<'col-sm-5'i><'col-sm-7 text-end'p>>",
         language: {
-            search: '',
-            searchPlaceholder: 'Search arms...',
-            lengthMenu: 'Show _MENU_ entries',
-            info: 'Showing _START_–_END_ of _TOTAL_ arms',
-            infoEmpty: 'No arms found',
-            zeroRecords: 'No matching arms',
-            processing: '<div class="spinner-border text-primary" role="status"></div>'
+            processing:      '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…',
+            search:          '',
+            searchPlaceholder: 'Search arms…',
+            lengthMenu:      'Show _MENU_ entries',
+            info:            'Showing _START_–_END_ of _TOTAL_ arms',
+            infoEmpty:       'No arms found',
+            zeroRecords:     'No matching arms',
+            emptyTable:      'No school arms created yet',
         },
-        dom: 'rtip',
-        drawCallback: function () {
-            var info = this.api().page.info();
-            $('#totalArmsBadge').text(info.recordsTotal);
-            $('#statTotal').text(info.recordsTotal);
-            $('#statShowing').text(info.recordsDisplay);
-        }
+        order: [[2, 'asc']],
+        pageLength: 15,
+        responsive: true,
+        drawCallback: function() {
+            bindCheckboxes();
+            $('#totalBadge').text(this.api().page.info().recordsTotal);
+        },
     });
 
-    // Custom search
-    $('#searchInput').on('keyup', function () {
-        table.search(this.value).draw();
+    // =========================================================================
+    // STATS
+    // =========================================================================
+
+    function loadStats() {
+        $.get('{{ route("schoolarm.stats") }}', function(data) {
+            if (data.stats) {
+                $('#statTotal').text(data.stats.total);
+                $('#statShowing').text(data.stats.showing);
+                $('#statWithClasses').text(data.stats.with_classes);
+                $('#statRecent').text(data.stats.recently_updated);
+            }
+        }).fail(function() {
+            $('#statTotal, #statShowing, #statWithClasses, #statRecent').text('—');
+        });
+    }
+    loadStats();
+
+    // =========================================================================
+    // CHECKBOXES & BULK BAR
+    // =========================================================================
+
+    function bindCheckboxes() {
+        $('.row-checkbox').off('change').on('change', updateBulkBar);
+    }
+    $('#selectAll').on('change', function() {
+        $('.row-checkbox').prop('checked', this.checked);
+        updateBulkBar();
+    });
+    function updateBulkBar() {
+        var count = $('.row-checkbox:checked').length;
+        $('#bulkBar').toggleClass('show', count > 0);
+        $('#bulkCount').text(count);
+        $('#bulkDeleteBtn').toggleClass('d-none', count === 0);
+        if (count === 0) $('#selectAll').prop('checked', false);
+    }
+
+    // =========================================================================
+    // CREATE MODAL — guard button
+    // =========================================================================
+
+    function updateCreateBtn() {
+        var ok = $('#create-arm').val().trim() !== '';
+        $('#create-save-btn').prop('disabled', !ok);
+    }
+
+    $('#create-arm').on('input', updateCreateBtn);
+
+    // ── Open CREATE ───────────────────────────────────────────
+    $('#createArmBtn').on('click', function() {
+        $('#create-arm').val('');
+        $('#create-description').val('');
+        $('#create-save-btn').prop('disabled', true);
+        $('#create-error-msg').addClass('d-none').html('');
+        hideModalLoader('create');
+        new bootstrap.Modal(document.getElementById('createModal')).show();
     });
 
-    // Select All
-    $('#checkAll, #checkAllTable').on('change', function () {
-        var isChecked = $(this).is(':checked');
-        $('.chk_child').prop('checked', isChecked);
-        $('#remove-actions').toggleClass('d-none', !isChecked);
+    // =========================================================================
+    // EDIT MODAL
+    // =========================================================================
+
+    $(document).on('click', '.edit-arm-btn', function() {
+        var id = $(this).data('id');
+        var arm = $(this).data('arm');
+        var description = $(this).data('description');
+
+        $('#edit-arm-id').val(id);
+        $('#edit-arm').val(arm);
+        $('#edit-description').val(description || '');
+
+        $('#edit-error-msg').addClass('d-none').html('');
+        hideModalLoader('edit');
+        btnReset($('#edit-update-btn'));
+
+        new bootstrap.Modal(document.getElementById('editModal')).show();
     });
 
-    $(document).on('change', '.chk_child', function () {
-        var anyChecked = $('.chk_child:checked').length > 0;
-        $('#remove-actions').toggleClass('d-none', !anyChecked);
+    // =========================================================================
+    // SUBMIT: CREATE
+    // =========================================================================
 
-        var allChecked = $('.chk_child:checked').length === $('.chk_child').length && $('.chk_child').length > 0;
-        $('#checkAll, #checkAllTable').prop('checked', allChecked);
-    });
-
-    // ── ADD ARM ──────────────────────────────────────────────
-    $('#addArmForm').on('submit', function (e) {
+    $('#createForm').on('submit', function(e) {
         e.preventDefault();
 
-        $('#arm, #description').removeClass('is-invalid');
-        $('#armError, #descriptionError').text('');
-        $('#addAlertError').addClass('d-none');
+        var arm = $('#create-arm').val().trim();
+        var description = $('#create-description').val().trim();
 
-        const submitBtn = $('#addBtn');
-        const originalText = submitBtn.html();
-        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creating...');
+        if (!arm) {
+            showError('#create-error-msg', 'Please enter an arm name.');
+            return;
+        }
+
+        btnLoad($('#create-save-btn'), 'Saving…');
+        showModalLoader('create', 'Creating arm…');
+        $('#create-error-msg').addClass('d-none').html('');
 
         $.ajax({
             url: '{{ route("schoolarm.store") }}',
-            method: 'POST',
-            data: $(this).serialize(),
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            type: 'POST',
+            data: {
+                arm: arm,
+                description: description,
+                _token: CSRF,
             },
-            success: function (response) {
-                if (response.success) {
-                    $('#addArmModal').modal('hide');
-                    $('#addArmForm')[0].reset();
-                    table.ajax.reload(null, false);
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: response.message,
-                        timer: 1800,
-                        showConfirmButton: false
-                    });
-                }
-            },
-            error: function (xhr) {
-                if (xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors || {};
-                    if (errors.arm) {
-                        $('#arm').addClass('is-invalid');
-                        $('#armError').text(errors.arm[0]);
-                    }
-                    if (errors.description) {
-                        $('#description').addClass('is-invalid');
-                        $('#descriptionError').text(errors.description[0]);
-                    }
-                    if (xhr.responseJSON.message && Object.keys(errors).length === 0) {
-                        $('#addAlertError').removeClass('d-none').text(xhr.responseJSON.message);
-                    }
+            success: function(res) {
+                if (res.success) {
+                    $('#createModal').modal('hide');
+                    toast('success', 'Created!', res.message);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
-                    $('#addAlertError').removeClass('d-none')
-                        .text(xhr.responseJSON?.message || 'An error occurred. Please try again.');
+                    hideModalLoader('create');
+                    btnReset($('#create-save-btn'));
+                    updateCreateBtn();
+                    showError('#create-error-msg', res.message || 'Could not create arm.');
                 }
             },
-            complete: function () {
-                submitBtn.prop('disabled', false).html(originalText);
-            }
+
+            error: function(xhr) {
+                hideModalLoader('create');
+                btnReset($('#create-save-btn'));
+                updateCreateBtn();
+                var json = xhr.responseJSON;
+                var msg = (json && json.message) ||
+                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                          'An error occurred.';
+                showError('#create-error-msg', msg);
+                toast('error', 'Failed', msg);
+            },
         });
     });
 
-    // ── EDIT ARM ─────────────────────────────────────────────
-    $(document).on('click', '.edit-arm-btn', function () {
-        $('#edit_id').val($(this).data('id'));
-        $('#edit_arm').val($(this).data('arm'));
-        $('#edit_description').val($(this).data('description') || '');
+    // =========================================================================
+    // SUBMIT: EDIT
+    // =========================================================================
 
-        $('#edit_arm, #edit_description').removeClass('is-invalid');
-        $('#editArmError, #editDescriptionError').text('');
-        $('#editAlertError').addClass('d-none');
-
-        $('#editModal').modal('show');
-    });
-
-    $('#editArmForm').on('submit', function (e) {
+    $('#editForm').on('submit', function(e) {
         e.preventDefault();
 
-        const submitBtn = $('#updateBtn');
-        const originalText = submitBtn.html();
-        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Updating...');
+        var id = $('#edit-arm-id').val();
+        var arm = $('#edit-arm').val().trim();
+        var description = $('#edit-description').val().trim();
+
+        if (!arm) {
+            showError('#edit-error-msg', 'Please enter an arm name.');
+            return;
+        }
+
+        btnLoad($('#edit-update-btn'), 'Updating…');
+        showModalLoader('edit', 'Updating arm…');
+        $('#edit-error-msg').addClass('d-none').html('');
 
         $.ajax({
             url: '{{ route("schoolarm.updatearm") }}',
-            method: 'POST',
-            data: $(this).serialize(),
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            type: 'POST',
+            data: {
+                id: id,
+                arm: arm,
+                description: description,
+                _token: CSRF,
             },
-            success: function (response) {
-                if (response.success) {
-                    $('#editModal').modal('hide');
-                    table.ajax.reload(null, false);
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Updated!',
-                        text: response.message,
-                        timer: 1800,
-                        showConfirmButton: false
-                    });
-                }
-            },
-            error: function (xhr) {
-                if (xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors || {};
-                    if (errors.arm) {
-                        $('#edit_arm').addClass('is-invalid');
-                        $('#editArmError').text(errors.arm[0]);
-                    }
-                    if (errors.description) {
-                        $('#edit_description').addClass('is-invalid');
-                        $('#editDescriptionError').text(errors.description[0]);
-                    }
+            success: function(res) {
+                if (res.success) {
+                    $('#editModal').modal('hide');
+                    toast('success', 'Updated!', res.message);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
-                    $('#editAlertError').removeClass('d-none')
-                        .text(xhr.responseJSON?.message || 'An error occurred. Please try again.');
+                    hideModalLoader('edit');
+                    btnReset($('#edit-update-btn'));
+                    showError('#edit-error-msg', res.message || 'Could not update arm.');
                 }
             },
-            complete: function () {
-                submitBtn.prop('disabled', false).html(originalText);
-            }
+
+            error: function(xhr) {
+                hideModalLoader('edit');
+                btnReset($('#edit-update-btn'));
+                var json = xhr.responseJSON;
+                var msg = (json && json.message) ||
+                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                          'An error occurred.';
+                showError('#edit-error-msg', msg);
+                toast('error', 'Failed', msg);
+            },
         });
     });
 
-    // ── SINGLE DELETE ────────────────────────────────────────
-    let deleteArmId = null;
+    // =========================================================================
+    // DELETE: SINGLE
+    // =========================================================================
 
-    $(document).on('click', '.delete-arm-btn', function () {
-        deleteArmId = $(this).data('id');
-        $('#deleteItemName').html(`<strong>${$(this).data('name')}</strong> will be permanently deleted.`);
-        $('#deleteRecordModal').modal('show');
+    $(document).on('click', '.delete-arm-btn', function() {
+        deleteId = $(this).data('id');
+        $('#delete-item-title').text($(this).data('name') || 'this arm');
+        btnReset($('#confirm-delete-btn'));
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
     });
 
-    $('#confirmDeleteBtn').on('click', function () {
-        if (!deleteArmId) return;
-
-        const btn = $(this);
-        const originalText = btn.html();
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
+    $('#confirm-delete-btn').on('click', function() {
+        if (!deleteId) return;
+        var $btn = $(this);
+        btnLoad($btn, 'Deleting…');
 
         $.ajax({
             url: '{{ route("schoolarm.deletearm") }}',
-            method: 'POST',
-            data: {
-                armid: deleteArmId,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function (response) {
-                if (response.success) {
-                    $('#deleteRecordModal').modal('hide');
-                    table.ajax.reload(null, false);
+            type: 'POST',
+            data: { armid: deleteId, _token: CSRF },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Deleted!',
-                        text: response.message,
-                        timer: 1800,
-                        showConfirmButton: false
-                    });
+            success: function(res) {
+                $('#deleteModal').modal('hide');
+                if (res.success) {
+                    toast('success', 'Deleted!', res.message);
+                    table.ajax.reload();
+                    loadStats();
+                } else {
+                    toast('error', 'Cannot Delete', res.message);
+                    Swal.fire({ icon:'error', title:'Cannot Delete',
+                        text: res.message, confirmButtonColor:'#2563eb' });
                 }
             },
-            error: function (xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: xhr.responseJSON?.message || 'Failed to delete arm.'
-                });
-                $('#deleteRecordModal').modal('hide');
+
+            error: function(xhr) {
+                $('#deleteModal').modal('hide');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to delete.';
+                toast('error', 'Error', msg);
+                Swal.fire('Error!', msg, 'error');
             },
-            complete: function () {
-                btn.prop('disabled', false).html(originalText);
-                deleteArmId = null;
-            }
+
+            complete: function() {
+                btnReset($btn);
+                deleteId = null;
+            },
         });
     });
 
-    // ── BULK DELETE ──────────────────────────────────────────
-    $('#remove-actions').on('click', function () {
-        const selectedIds = [];
-        $('.chk_child:checked').each(function () {
-            selectedIds.push($(this).val());
-        });
+    // =========================================================================
+    // DELETE: BULK
+    // =========================================================================
 
-        if (selectedIds.length === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'No Selection',
-                text: 'Please select at least one arm to delete.'
-            });
+    function doBulkDelete() {
+        var ids = [];
+        $('.row-checkbox:checked').each(function() {
+            ids.push($(this).val());
+        });
+        
+        if (ids.length === 0) {
+            toast('warning', 'No Selection', 'Please select at least one arm to delete.');
             return;
         }
 
         Swal.fire({
-            title: 'Delete Multiple Arms?',
-            text: `You are about to delete ${selectedIds.length} arm(s). This action cannot be undone!`,
+            title: 'Delete ' + ids.length + ' arm(s)?',
+            html: 'This will permanently remove the selected arms.<br><strong>This action cannot be undone!</strong>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc2626',
-            cancelButtonColor: '#6b7280',
             confirmButtonText: 'Yes, delete them!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#loadingOverlay').addClass('active');
-
-                $.ajax({
-                    url: '{{ route("schoolarm.bulkDelete") }}',
-                    method: 'POST',
-                    data: {
-                        ids: selectedIds,
-                        _token: $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (response) {
-                        $('#loadingOverlay').removeClass('active');
-                        table.ajax.reload(null, false);
-
-                        // Uncheck all
-                        $('#checkAll, #checkAllTable').prop('checked', false);
-                        $('#remove-actions').addClass('d-none');
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Deleted!',
-                            text: response.message || `${selectedIds.length} arm(s) deleted successfully.`,
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    },
-                    error: function (xhr) {
-                        $('#loadingOverlay').removeClass('active');
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: xhr.responseJSON?.message || 'Failed to delete selected arms.'
-                        });
-                    }
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: function() {
+                return new Promise(function(resolve, reject) {
+                    PageLoader.show('Deleting arms…');
+                    
+                    $.ajax({
+                        url: '{{ route("schoolarm.bulk-destroy") }}',
+                        type: 'POST',
+                        data: {
+                            ids: ids,
+                            _token: CSRF
+                        },
+                        traditional: true,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        success: function(res) {
+                            PageLoader.hide();
+                            if (res.success) {
+                                resolve(res);
+                            } else {
+                                reject(res.message || 'Failed to delete arms');
+                            }
+                        },
+                        error: function(xhr) {
+                            PageLoader.hide();
+                            var errorMsg = 'An error occurred while deleting.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            reject(errorMsg);
+                        }
+                    });
                 });
             }
+        }).then(function(result) {
+            if (result.isConfirmed && result.value) {
+                toast('success', 'Deleted!', result.value.message || 'Arms deleted successfully.');
+                table.ajax.reload();
+                loadStats();
+                $('#selectAll').prop('checked', false);
+                updateBulkBar();
+            }
+        }).catch(function(error) {
+            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete arms.');
         });
-    });
+    }
+
+    $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
+
+    bindCheckboxes();
 });
 </script>
 @endsection
