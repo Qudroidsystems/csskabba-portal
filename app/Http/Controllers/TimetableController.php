@@ -2359,7 +2359,7 @@ class TimetableController extends Controller
     // =========================================================================
     // TEACHER VIEW — with Session, Term, and Class filtering
     // =========================================================================
-    public function teacherView(Request $request)
+   public function teacherView(Request $request)
     {
         $teacherId = Auth::id();
         $pagetitle = 'My Timetable';
@@ -2405,7 +2405,46 @@ class TimetableController extends Controller
             });
         }
 
-        $slots = $slotsQuery->get()->groupBy('day');
+        // IMPORTANT: Get the slots as a collection, NOT JSON
+        $slotsCollection = $slotsQuery->get();
+        
+        // Group by day
+        $slots = $slotsCollection->groupBy('day');
+
+        // Calculate combined sessions and conflicts
+        $combinedMap = [];
+        $conflictMap = [];
+        
+        foreach ($slotsCollection as $slot) {
+            $key = $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id;
+            
+            // Track combined sessions (same teacher, day, period)
+            if (!isset($combinedMap[$key])) {
+                $combinedMap[$key] = [];
+            }
+            $combinedMap[$key][] = $slot;
+        }
+        
+        // Mark combined slots and detect conflicts
+        foreach ($combinedMap as $key => $slotGroup) {
+            $count = count($slotGroup);
+            // Get unique classes in this group
+            $uniqueClasses = collect($slotGroup)->pluck('setting.schoolclass_id')->unique()->count();
+            
+            if ($count > 1) {
+                foreach ($slotGroup as $slot) {
+                    // If multiple classes but same room (or no room), it's a combined session
+                    $slot->combined_count = $count;
+                    $slot->conflict_count = 0;
+                    
+                    // If multiple classes and different rooms OR no room, it's a conflict
+                    // Since room_id is null for all, this is a conflict
+                    if ($uniqueClasses > 1) {
+                        $slot->conflict_count = $count;
+                    }
+                }
+            }
+        }
 
         // Get all periods across settings (for the grid)
         $allPeriods = TimetablePeriod::with('setting')->whereIn(
@@ -2428,28 +2467,6 @@ class TimetableController extends Controller
             }
         }
 
-        // Calculate combined sessions
-        $combinedMap = [];
-        foreach ($slots as $day => $daySlots) {
-            foreach ($daySlots as $slot) {
-                $key = $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id . '|' . $slot->subject_id;
-                if (!isset($combinedMap[$key])) {
-                    $combinedMap[$key] = ['slots' => [], 'room_id' => $slot->room_id];
-                }
-                $combinedMap[$key]['slots'][] = $slot;
-            }
-        }
-
-        // Mark combined slots
-        foreach ($combinedMap as $key => $data) {
-            $count = count($data['slots']);
-            if ($count > 1) {
-                foreach ($data['slots'] as $slot) {
-                    $slot->combined_count = $count;
-                }
-            }
-        }
-
         $sessions = Schoolsession::orderByDesc('id')->get();
         $terms = Schoolterm::all();
         $days = self::DAYS;
@@ -2467,7 +2484,6 @@ class TimetableController extends Controller
             'periodDayMeta', 'icsUrl', 'webcalUrl', 'todaySlots'
         ));
     }
-
     // =========================================================================
     // PRIVATE: Upcoming slots / weekly summary for teacher view
     // =========================================================================
