@@ -465,8 +465,19 @@ textarea.form-control {
                                 </td>
                             </tr>
                         @empty
+                            {{--
+                                IMPORTANT: the cell below MUST carry the "dataTables_empty" class.
+                                DataTables maps each <td> in a row to a column index; a single
+                                colspan="6" cell with no marker class makes it try to treat this
+                                as a 6-column data row and throws:
+                                  "Cannot set properties of undefined (setting '_DT_CellIndex')"
+                                That crash happens inside the same $(document).ready() call that
+                                initializes the table, so every handler registered AFTER
+                                $('#armsTable').DataTable({...}) (add/edit/delete submit handlers)
+                                never gets bound when the table starts out empty.
+                            --}}
                             <tr>
-                                <td colspan="6" class="text-center">
+                                <td colspan="6" class="text-center dataTables_empty">
                                     <div class="empty-state">
                                         <i class="ri-inbox-line"></i>
                                         <p>No school arms found.</p>
