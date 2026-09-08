@@ -712,18 +712,25 @@ $(document).ready(function () {
 
     function btnLoad(selector, loadingText = '') {
         const $btn = $(selector);
-        $btn.data('original-html', $btn.html())
-            .prop('disabled', true)
-            .addClass('btn-loading');
+        // Store original HTML only if not already stored
+        if (!$btn.data('original-html')) {
+            $btn.data('original-html', $btn.html());
+        }
+        $btn.prop('disabled', true).addClass('btn-loading');
         if (loadingText) {
             $btn.html(`<span class="btn-text">${loadingText}</span>`);
         }
         return $btn;
     }
+
     function btnReset(selector) {
         const $btn = $(selector);
         const orig = $btn.data('original-html');
-        if (orig) $btn.html(orig);
+        // Only reset if we have the original HTML
+        if (orig) {
+            $btn.html(orig);
+            $btn.removeData('original-html');
+        }
         $btn.prop('disabled', false).removeClass('btn-loading');
     }
 
@@ -1008,6 +1015,7 @@ $(document).ready(function () {
 
     // ── Open ADD ─────────────────────────────────────────────────
     $('#createCsBtn').on('click', function() {
+        // Reset form fields
         $('#add-classid').val('');
         $('#add-termid').val('');
         $('#add-sessionid').val('');
@@ -1016,6 +1024,14 @@ $(document).ready(function () {
         $('#add-btn').prop('disabled', true);
         $('#add-error-msg').addClass('d-none').html('');
         hideModalLoader('add');
+        
+        // CRITICAL FIX: Reset the button state
+        var $btn = $('#add-btn');
+        var origHtml = '<i class="ri-save-line me-1"></i><span class="btn-text">Add Compulsory Subject(s)</span>';
+        $btn.html(origHtml);
+        $btn.prop('disabled', true).removeClass('btn-loading');
+        $btn.removeData('original-html');
+        
         new bootstrap.Modal(document.getElementById('addModal')).show();
     });
 
@@ -1037,7 +1053,13 @@ $(document).ready(function () {
         $('#edit-sessionid').val(sessionId);
         $('#edit-error-msg').addClass('d-none').html('');
         hideModalLoader('edit');
-        btnReset('#edit-update-btn');
+        
+        // Reset edit button
+        var $editBtn = $('#edit-update-btn');
+        var origHtml = '<i class="ri-save-line me-1"></i><span class="btn-text">Update</span>';
+        $editBtn.html(origHtml);
+        $editBtn.prop('disabled', false).removeClass('btn-loading');
+        $editBtn.removeData('original-html');
 
         // Load subjects for edit
         loadEditSubjects(classId, termId, sessionId, subjectId, minGrade);
@@ -1128,6 +1150,7 @@ $(document).ready(function () {
             return;
         }
 
+        var $btn = $('#add-btn');
         btnLoad('#add-btn', 'Adding…');
         showModalLoader('add', 'Adding compulsory subject(s)…');
         $('#add-error-msg').addClass('d-none').html('');
@@ -1147,13 +1170,22 @@ $(document).ready(function () {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
             success: function(res) {
+                hideModalLoader('add');
+                
                 if (res.success) {
+                    // Reset button before hiding modal
+                    btnReset('#add-btn');
+                    // Reset to original state
+                    var origHtml = '<i class="ri-save-line me-1"></i><span class="btn-text">Add Compulsory Subject(s)</span>';
+                    $('#add-btn').html(origHtml);
+                    $('#add-btn').prop('disabled', true).removeClass('btn-loading');
+                    $('#add-btn').removeData('original-html');
+                    
                     $('#addModal').modal('hide');
                     toast('success', 'Added!', res.message);
                     table.ajax.reload();
                     loadStats();
                 } else {
-                    hideModalLoader('add');
                     btnReset('#add-btn');
                     showError('#add-error-msg', res.message || 'Could not add compulsory subject.');
                 }
@@ -1215,6 +1247,12 @@ $(document).ready(function () {
 
             success: function(res) {
                 if (res.success) {
+                    // Reset button before hiding modal
+                    btnReset('#edit-update-btn');
+                    var origHtml = '<i class="ri-save-line me-1"></i><span class="btn-text">Update</span>';
+                    $('#edit-update-btn').html(origHtml);
+                    $('#edit-update-btn').removeData('original-html');
+                    
                     $('#editModal').modal('hide');
                     toast('success', 'Updated!', res.message);
                     table.ajax.reload();
