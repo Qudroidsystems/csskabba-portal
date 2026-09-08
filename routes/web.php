@@ -301,9 +301,6 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/sessionid/{sessionid}', [SchoolsessionController::class, 'deletesession'])->name('session.deletesession');
     Route::post('updatesessionid', [SchoolsessionController::class, 'updatesession'])->name('session.updatesession');
 
-    Route::resource('schoolhouse', SchoolHouseController::class);
-    Route::post('schoolhouse/deletehouse', [SchoolHouseController::class, 'deletehouse'])->name('schoolhouse.deletehouse');
-    Route::post('schoolhouse/updatehouse', [SchoolHouseController::class, 'updatehouse'])->name('schoolhouse.updatehouse');
 
 
 
@@ -333,6 +330,31 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::resource('schoolclass', SchoolClassController::class);
+
+    // Club Routes
+    Route::prefix('club')->group(function () {
+        Route::get('/data', [ClubController::class, 'data'])->name('club.data');
+        Route::get('/stats', [ClubController::class, 'stats'])->name('club.stats');
+        Route::post('/bulk-destroy', [ClubController::class, 'deleteMultiple'])->name('club.bulk-destroy');
+        Route::post('/update-club', [ClubController::class, 'updateclub'])->name('club.updateclub');
+        Route::post('/delete-club', [ClubController::class, 'deleteclub'])->name('club.deleteclub');
+    });
+
+    Route::resource('club', ClubController::class);
+
+    // Sport Routes
+    Route::prefix('sport')->group(function () {
+        Route::get('/data', [SportController::class, 'data'])->name('sport.data');
+        Route::get('/stats', [SportController::class, 'stats'])->name('sport.stats');
+        Route::post('/bulk-destroy', [SportController::class, 'deleteMultiple'])->name('sport.bulk-destroy');
+        Route::post('/update-sport', [SportController::class, 'updatesport'])->name('sport.updatesport');
+        Route::post('/delete-sport', [SportController::class, 'deletesport'])->name('sport.deletesport');
+    });
+
+    Route::resource('sport', SportController::class);
+
+
+
 
         // ================================================
     // STUDENT MANAGEMENT ROUTES
@@ -479,7 +501,16 @@ Route::group(['middleware' => ['auth']], function () {
     // Route for generating report
     Route::post('/reports/generate', [StudentResultsController::class, 'generateReport'])->name('reports.generate');
 
+    // School House Routes
+    Route::prefix('schoolhouse')->group(function () {
+        Route::get('/data', [SchoolHouseController::class, 'data'])->name('schoolhouse.data');
+        Route::get('/stats', [SchoolHouseController::class, 'stats'])->name('schoolhouse.stats');
+        Route::post('/bulk-destroy', [SchoolHouseController::class, 'deleteMultiple'])->name('schoolhouse.bulk-destroy');
+        Route::post('/update-house', [SchoolHouseController::class, 'updatehouse'])->name('schoolhouse.updatehouse');
+        Route::post('/delete-house', [SchoolHouseController::class, 'deletehouse'])->name('schoolhouse.deletehouse');
+    });
 
+    Route::resource('schoolhouse', SchoolHouseController::class);
 
     // =========================================================================
 // MARKS SHEET DOWNLOAD ROUTE - MUST BE BEFORE WILDCARD ROUTES

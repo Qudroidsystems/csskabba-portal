@@ -3,101 +3,100 @@
 @section('content')
 <style>
 :root {
-    --sh-primary:  #1e3a5f;
-    --sh-accent:   #2563eb;
-    --sh-success:  #16a34a;
-    --sh-warning:  #d97706;
-    --sh-danger:   #dc2626;
-    --sh-muted:    #6b7280;
-    --sh-border:   #e2e8f0;
-    --sh-bg:       #f8fafc;
-    --sh-radius:   12px;
-    --sh-shadow:   0 2px 8px rgba(0,0,0,.08);
+    --club-primary:  #1e3a5f;
+    --club-accent:   #2563eb;
+    --club-success:  #16a34a;
+    --club-warning:  #d97706;
+    --club-danger:   #dc2626;
+    --club-muted:    #6b7280;
+    --club-border:   #e2e8f0;
+    --club-bg:       #f8fafc;
+    --club-radius:   12px;
+    --club-shadow:   0 2px 8px rgba(0,0,0,.08);
 }
 
 /* ── Hero ────────────────────────────────────────────────── */
-.sh-hero {
-    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--sh-radius);
+.club-hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #7c3aed 60%, #4f46e5 100%);
+    border-radius: var(--club-radius);
     padding: 28px 32px; margin-bottom: 24px;
     position: relative; overflow: hidden;
 }
-.sh-hero::before {
+.club-hero::before {
     content:''; position:absolute; top:-60px; right:-60px;
     width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
 }
-.sh-hero::after {
+.club-hero::after {
     content:''; position:absolute; bottom:-80px; left:-30px;
     width:260px; height:260px; background:rgba(255,255,255,.03); border-radius:50%;
 }
-.sh-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
-.sh-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
+.club-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
+.club-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
 
 /* ── Stat cards ──────────────────────────────────────────── */
 .stat-card {
-    background:#fff; border:1px solid var(--sh-border);
-    border-radius:var(--sh-radius); padding:18px 20px;
+    background:#fff; border:1px solid var(--club-border);
+    border-radius:var(--club-radius); padding:18px 20px;
     transition:transform .15s, box-shadow .15s;
 }
-.stat-card:hover { transform:translateY(-2px); box-shadow:var(--sh-shadow); }
-.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--sh-primary); }
-.stat-card .stat-label { font-size:12px; color:var(--sh-muted); margin-top:4px; }
+.stat-card:hover { transform:translateY(-2px); box-shadow:var(--club-shadow); }
+.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--club-primary); }
+.stat-card .stat-label { font-size:12px; color:var(--club-muted); margin-top:4px; }
 .stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
 
 /* ── Table ───────────────────────────────────────────────── */
-.sh-table th {
-    background:var(--sh-primary); color:#fff;
+.club-table th {
+    background:var(--club-primary); color:#fff;
     padding:12px 16px; font-weight:600; font-size:13px;
     white-space:nowrap;
 }
-.sh-table td {
+.club-table td {
     padding:11px 16px; vertical-align:middle;
-    border-bottom:1px solid var(--sh-border); font-size:13px;
+    border-bottom:1px solid var(--club-border); font-size:13px;
 }
-.sh-table tr:hover td { background:#f0f9ff; }
+.club-table tr:hover td { background:#f0f9ff; }
 
 /* ── Badges ──────────────────────────────────────────────── */
-.sh-badge {
+.club-badge {
     display:inline-flex; align-items:center;
     padding:3px 9px; border-radius:20px;
     font-size:11px; font-weight:600;
 }
-.sh-badge-colour { padding:4px 12px; color:#fff; border-radius:20px; }
-.sh-badge-term    { background:#dbeafe; color:#2563eb; }
-.sh-badge-session { background:#ccfbf1; color:#0f766e; }
+.club-badge-term    { background:#dbeafe; color:#2563eb; }
+.club-badge-session { background:#ccfbf1; color:#0f766e; }
 
 /* ── DataTables overrides ────────────────────────────────── */
 .dataTables_wrapper .dataTables_filter input {
-    border:1.5px solid var(--sh-border); border-radius:8px;
+    border:1.5px solid var(--club-border); border-radius:8px;
     padding:7px 14px; margin-left:8px; font-size:13px;
     transition:border .15s;
 }
 .dataTables_wrapper .dataTables_filter input:focus {
-    border-color:var(--sh-accent); outline:none;
+    border-color:var(--club-accent); outline:none;
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 .dataTables_wrapper .dataTables_length select {
-    border:1.5px solid var(--sh-border); border-radius:8px;
+    border:1.5px solid var(--club-border); border-radius:8px;
     padding:6px 10px; margin:0 6px; font-size:13px;
 }
-.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--sh-muted); }
+.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--club-muted); }
 .dataTables_wrapper .paginate_button  {
     border-radius:6px !important; font-size:13px !important;
     padding:4px 10px !important;
 }
 .dataTables_wrapper .paginate_button.current,
 .dataTables_wrapper .paginate_button.current:hover {
-    background:var(--sh-accent) !important;
-    border-color:var(--sh-accent) !important; color:#fff !important;
+    background:var(--club-accent) !important;
+    border-color:var(--club-accent) !important; color:#fff !important;
 }
 
 /* ── Modals ──────────────────────────────────────────────── */
-.sh-modal .modal-content {
+.club-modal .modal-content {
     border:none; border-radius:16px;
     overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15);
 }
 .modal-hero-bar {
-    background:linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    background:linear-gradient(135deg, #1e3a5f 0%, #7c3aed 100%);
     padding:22px 28px; position:relative; overflow:hidden;
 }
 .modal-hero-bar::before {
@@ -109,13 +108,14 @@
 
 .form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
 .form-control, .form-select {
-    border:1.5px solid var(--sh-border); border-radius:8px;
+    border:1.5px solid var(--club-border); border-radius:8px;
     font-size:13px; padding:9px 14px; transition:border .15s;
 }
 .form-control:focus, .form-select:focus {
-    border-color:var(--sh-accent);
+    border-color:var(--club-accent);
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
+textarea.form-control { resize:vertical; min-height:80px; }
 
 /* ── Bulk bar ────────────────────────────────────────────── */
 .bulk-bar {
@@ -126,7 +126,7 @@
 .bulk-bar.show { display:flex; }
 
 /* ── Full-page loader overlay ────────────────────────────── */
-#sh-page-loader {
+#club-page-loader {
     position:fixed; inset:0; z-index:9999;
     background:rgba(15,23,42,.55);
     backdrop-filter:blur(3px);
@@ -135,26 +135,26 @@
     opacity:0; visibility:hidden;
     transition:opacity .22s, visibility .22s;
 }
-#sh-page-loader.active { opacity:1; visibility:visible; }
-.sh-loader-card {
+#club-page-loader.active { opacity:1; visibility:visible; }
+.club-loader-card {
     background:#fff; border-radius:16px;
     padding:32px 40px; text-align:center;
     box-shadow:0 24px 64px rgba(0,0,0,.22); min-width:220px;
 }
-.sh-loader-spinner {
+.club-loader-spinner {
     width:52px; height:52px; margin:0 auto 16px;
-    border:4px solid #e2e8f0; border-top-color:var(--sh-accent);
-    border-radius:50%; animation:sh-spin .75s linear infinite;
+    border:4px solid #e2e8f0; border-top-color:var(--club-accent);
+    border-radius:50%; animation:club-spin .75s linear infinite;
 }
-@keyframes sh-spin { to { transform:rotate(360deg); } }
-.sh-loader-label { font-size:14px; font-weight:600; color:var(--sh-primary); margin-bottom:12px; }
-.sh-progress-wrap {
+@keyframes club-spin { to { transform:rotate(360deg); } }
+.club-loader-label { font-size:14px; font-weight:600; color:var(--club-primary); margin-bottom:12px; }
+.club-progress-wrap {
     width:160px; height:5px; background:#e2e8f0;
     border-radius:99px; overflow:hidden; margin:0 auto;
 }
-.sh-progress-bar {
+.club-progress-bar {
     height:100%; width:0%;
-    background:linear-gradient(90deg, var(--sh-accent), #0d9488);
+    background:linear-gradient(90deg, var(--club-accent), #7c3aed);
     border-radius:99px; transition:width .35s ease;
 }
 
@@ -170,39 +170,39 @@
 .modal-body-loader .inner { display:flex; flex-direction:column; align-items:center; gap:10px; }
 .modal-body-loader .mbl-spinner {
     width:36px; height:36px; border:3px solid #e2e8f0;
-    border-top-color:var(--sh-accent); border-radius:50%;
-    animation:sh-spin .7s linear infinite;
+    border-top-color:var(--club-accent); border-radius:50%;
+    animation:club-spin .7s linear infinite;
 }
-.modal-body-loader .mbl-text { font-size:13px; font-weight:600; color:var(--sh-primary); }
+.modal-body-loader .mbl-text { font-size:13px; font-weight:600; color:var(--club-primary); }
 
 /* ── Toast notifications ─────────────────────────────────── */
-#sh-toast-stack {
+#club-toast-stack {
     position:fixed; bottom:24px; right:24px; z-index:10000;
     display:flex; flex-direction:column-reverse; gap:10px; pointer-events:none;
 }
-.sh-toast {
+.club-toast {
     pointer-events:all; background:#fff; border-radius:10px;
     box-shadow:0 8px 28px rgba(0,0,0,.14);
     padding:14px 18px; min-width:280px; max-width:360px;
     display:flex; align-items:flex-start; gap:12px;
-    border-left:4px solid var(--sh-accent);
+    border-left:4px solid var(--club-accent);
     transform:translateX(120%);
     transition:transform .3s cubic-bezier(.34,1.56,.64,1);
 }
-.sh-toast.show { transform:translateX(0); }
-.sh-toast.sh-toast-success { border-left-color:var(--sh-success); }
-.sh-toast.sh-toast-error   { border-left-color:var(--sh-danger);  }
-.sh-toast.sh-toast-warning { border-left-color:var(--sh-warning); }
-.sh-toast .sh-toast-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:1px; }
-.sh-toast-success .sh-toast-icon { color:var(--sh-success); }
-.sh-toast-error   .sh-toast-icon { color:var(--sh-danger);  }
-.sh-toast-warning .sh-toast-icon { color:var(--sh-warning); }
-.sh-toast .sh-toast-body { flex:1; }
-.sh-toast .sh-toast-title { font-size:13px; font-weight:700; color:#111827; margin-bottom:2px; }
-.sh-toast .sh-toast-msg   { font-size:12px; color:var(--sh-muted); line-height:1.4; }
-.sh-toast .sh-toast-close {
+.club-toast.show { transform:translateX(0); }
+.club-toast.club-toast-success { border-left-color:var(--club-success); }
+.club-toast.club-toast-error   { border-left-color:var(--club-danger);  }
+.club-toast.club-toast-warning { border-left-color:var(--club-warning); }
+.club-toast .club-toast-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:1px; }
+.club-toast-success .club-toast-icon { color:var(--club-success); }
+.club-toast-error   .club-toast-icon { color:var(--club-danger);  }
+.club-toast-warning .club-toast-icon { color:var(--club-warning); }
+.club-toast .club-toast-body { flex:1; }
+.club-toast .club-toast-title { font-size:13px; font-weight:700; color:#111827; margin-bottom:2px; }
+.club-toast .club-toast-msg   { font-size:12px; color:var(--club-muted); line-height:1.4; }
+.club-toast .club-toast-close {
     background:none; border:none; cursor:pointer;
-    color:var(--sh-muted); font-size:16px; line-height:1; padding:0; flex-shrink:0;
+    color:var(--club-muted); font-size:16px; line-height:1; padding:0; flex-shrink:0;
 }
 
 /* ── Button loading state ────────────────────────────────── */
@@ -211,7 +211,7 @@
 .btn-loading::after {
     content:''; position:absolute; inset:0; margin:auto;
     width:16px; height:16px; border:2px solid rgba(255,255,255,.4);
-    border-top-color:#fff; border-radius:50%; animation:sh-spin .65s linear infinite;
+    border-top-color:#fff; border-radius:50%; animation:club-spin .65s linear infinite;
 }
 .btn-loading.btn-outline-secondary::after,
 .btn-loading.btn-outline-danger::after { border-top-color:currentColor; }
@@ -221,43 +221,43 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 
 {{-- ═══ Full-page loader overlay ═══ --}}
-<div id="sh-page-loader">
-    <div class="sh-loader-card">
-        <div class="sh-loader-spinner"></div>
-        <div class="sh-loader-label" id="sh-loader-label">Processing…</div>
-        <div class="sh-progress-wrap">
-            <div class="sh-progress-bar" id="sh-progress-bar"></div>
+<div id="club-page-loader">
+    <div class="club-loader-card">
+        <div class="club-loader-spinner"></div>
+        <div class="club-loader-label" id="club-loader-label">Processing…</div>
+        <div class="club-progress-wrap">
+            <div class="club-progress-bar" id="club-progress-bar"></div>
         </div>
     </div>
 </div>
 
 {{-- ═══ Toast stack ═══ --}}
-<div id="sh-toast-stack"></div>
+<div id="club-toast-stack"></div>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
     {{-- Hero --}}
-    <div class="sh-hero">
-        <h1><i class="ri-home-2-line me-2"></i>School House Management</h1>
-        <p>Manage school houses, their colours, masters, terms, and sessions.</p>
+    <div class="club-hero">
+        <h1><i class="ri-group-2-line me-2"></i>Club Management</h1>
+        <p>Manage school clubs, their patrons, terms, and sessions.</p>
     </div>
 
     {{-- Stat cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-icon"><i class="ri-home-2-line"></i></div>
+                <div class="stat-icon"><i class="ri-group-2-line"></i></div>
                 <div class="stat-value" id="statTotal">—</div>
-                <div class="stat-label">Total Houses</div>
+                <div class="stat-label">Total Clubs</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-user-line"></i></div>
-                <div class="stat-value text-primary" id="statMasters">—</div>
-                <div class="stat-label">Unique Masters</div>
+                <div class="stat-value text-primary" id="statPatrons">—</div>
+                <div class="stat-label">Unique Patrons</div>
             </div>
         </div>
         <div class="col-md-3">
@@ -280,17 +280,17 @@
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
             <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-semibold" style="color:var(--sh-primary)">
-                    <i class="ri-list-check me-2"></i>School Houses List
+                <h5 class="mb-0 fw-semibold" style="color:var(--club-primary)">
+                    <i class="ri-list-check me-2"></i>Clubs List
                     <span class="badge bg-primary ms-2" id="totalBadge">0</span>
                 </h5>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-danger d-none" id="bulkDeleteBtn">
                         <i class="ri-delete-bin-line me-1"></i>Delete Selected
                     </button>
-                    @can('Create schoolhouse')
-                    <button class="btn btn-primary" id="createHouseBtn">
-                        <i class="ri-add-line me-1"></i>Create House
+                    @can('Create club')
+                    <button class="btn btn-primary" id="createClubBtn">
+                        <i class="ri-add-line me-1"></i>Create Club
                     </button>
                     @endcan
                 </div>
@@ -301,23 +301,23 @@
             {{-- Bulk bar --}}
             <div class="bulk-bar" id="bulkBar">
                 <i class="ri-checkbox-circle-line text-warning"></i>
-                <span id="bulkCount">0</span> house(s) selected
+                <span id="bulkCount">0</span> club(s) selected
                 <button class="btn btn-sm btn-danger ms-auto" id="bulkDeleteBtn2">
                     <i class="ri-delete-bin-line me-1"></i>Delete Selected
                 </button>
             </div>
 
             <div class="table-responsive">
-                <table class="table sh-table w-100 mb-0" id="housesTable">
+                <table class="table club-table w-100 mb-0" id="clubsTable">
                     <thead>
                         <tr>
                             <th width="40">
                                 <input type="checkbox" id="selectAll" class="form-check-input">
                             </th>
                             <th>#</th>
-                            <th>House</th>
-                            <th>Colour</th>
-                            <th>House Master</th>
+                            <th>Club</th>
+                            <th>Description</th>
+                            <th>Patron</th>
                             <th>Term</th>
                             <th>Session</th>
                             <th>Last Updated</th>
@@ -335,12 +335,12 @@
 </div>
 
 {{-- ═══════════════════════ CREATE MODAL ════════════════════ --}}
-<div class="modal fade sh-modal" id="createModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade club-modal" id="createModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="ri-add-line me-2"></i>Create New School House</h5>
+                <h5><i class="ri-add-line me-2"></i>Create New Club</h5>
             </div>
             <form id="createForm" autocomplete="off">
                 @csrf
@@ -352,27 +352,23 @@
                 </div>
                 <div class="modal-body p-4" style="position:relative">
 
-                    {{-- House Name --}}
+                    {{-- Club Name --}}
                     <div class="mb-3">
-                        <label class="form-label">House Name <span class="text-danger">*</span></label>
-                        <input type="text" name="house" id="create-house" class="form-control" placeholder="Enter house name" required>
+                        <label class="form-label">Club Name <span class="text-danger">*</span></label>
+                        <input type="text" name="club" id="create-club" class="form-control" placeholder="Enter club name" required>
                     </div>
 
-                    {{-- House Colour --}}
+                    {{-- Description --}}
                     <div class="mb-3">
-                        <label class="form-label">House Colour <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-2 align-items-center">
-                            <input type="text" name="housecolour" id="create-housecolour" class="form-control" placeholder="Enter colour (e.g., red, #FF0000)" required>
-                            <input type="color" id="create-colour-picker" class="form-control" style="width: 60px; padding: 2px; height: 38px;" value="#2563eb">
-                        </div>
-                        <small class="text-muted">Enter a valid CSS color (name, hex, or RGB)</small>
+                        <label class="form-label">Description</label>
+                        <textarea name="description" id="create-description" class="form-control" placeholder="Enter club description" rows="3"></textarea>
                     </div>
 
-                    {{-- House Master --}}
+                    {{-- Patron --}}
                     <div class="mb-3">
-                        <label class="form-label">House Master <span class="text-danger">*</span></label>
-                        <select name="housemasterid" id="create-housemasterid" class="form-select" required>
-                            <option value="">— Select House Master —</option>
+                        <label class="form-label">Patron <span class="text-danger">*</span></label>
+                        <select name="patronid" id="create-patronid" class="form-select" required>
+                            <option value="">— Select Patron —</option>
                             @foreach ($staff as $s)
                                 <option value="{{ $s->userid }}">{{ $s->name }}</option>
                             @endforeach
@@ -406,7 +402,7 @@
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="create-save-btn" disabled>
-                        <i class="ri-save-line me-1"></i><span class="btn-text">Create House</span>
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Create Club</span>
                     </button>
                 </div>
             </form>
@@ -415,16 +411,16 @@
 </div>
 
 {{-- ═══════════════════════ EDIT MODAL ══════════════════════ --}}
-<div class="modal fade sh-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade club-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="ri-edit-line me-2"></i>Edit School House</h5>
+                <h5><i class="ri-edit-line me-2"></i>Edit Club</h5>
             </div>
             <form id="editForm" autocomplete="off">
                 @csrf
-                <input type="hidden" id="edit-house-id">
+                <input type="hidden" id="edit-club-id">
                 <div class="modal-body-loader" id="edit-modal-loader">
                     <div class="inner">
                         <div class="mbl-spinner"></div>
@@ -433,26 +429,23 @@
                 </div>
                 <div class="modal-body p-4" style="position:relative">
 
-                    {{-- House Name --}}
+                    {{-- Club Name --}}
                     <div class="mb-3">
-                        <label class="form-label">House Name <span class="text-danger">*</span></label>
-                        <input type="text" name="house" id="edit-house" class="form-control" required>
+                        <label class="form-label">Club Name <span class="text-danger">*</span></label>
+                        <input type="text" name="club" id="edit-club" class="form-control" required>
                     </div>
 
-                    {{-- House Colour --}}
+                    {{-- Description --}}
                     <div class="mb-3">
-                        <label class="form-label">House Colour <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-2 align-items-center">
-                            <input type="text" name="housecolour" id="edit-housecolour" class="form-control" required>
-                            <input type="color" id="edit-colour-picker" class="form-control" style="width: 60px; padding: 2px; height: 38px;" value="#2563eb">
-                        </div>
+                        <label class="form-label">Description</label>
+                        <textarea name="description" id="edit-description" class="form-control" rows="3"></textarea>
                     </div>
 
-                    {{-- House Master --}}
+                    {{-- Patron --}}
                     <div class="mb-3">
-                        <label class="form-label">House Master <span class="text-danger">*</span></label>
-                        <select name="housemasterid" id="edit-housemasterid" class="form-select" required>
-                            <option value="">— Select House Master —</option>
+                        <label class="form-label">Patron <span class="text-danger">*</span></label>
+                        <select name="patronid" id="edit-patronid" class="form-select" required>
+                            <option value="">— Select Patron —</option>
                             @foreach ($staff as $s)
                                 <option value="{{ $s->userid }}">{{ $s->name }}</option>
                             @endforeach
@@ -486,7 +479,7 @@
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="edit-update-btn">
-                        <i class="ri-save-line me-1"></i><span class="btn-text">Update House</span>
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Update Club</span>
                     </button>
                 </div>
             </form>
@@ -532,23 +525,23 @@ $(document).ready(function () {
     const PageLoader = {
         _prog: 0, _timer: null,
         show(label = 'Processing…') {
-            $('#sh-loader-label').text(label);
-            $('#sh-progress-bar').css('width', '0%');
-            $('#sh-page-loader').addClass('active');
+            $('#club-loader-label').text(label);
+            $('#club-progress-bar').css('width', '0%');
+            $('#club-page-loader').addClass('active');
             this._prog = 0; this._tick();
         },
         _tick() {
             PageLoader._timer = setInterval(() => {
                 if (PageLoader._prog < 85) {
                     PageLoader._prog += Math.random() * 8;
-                    $('#sh-progress-bar').css('width', Math.min(PageLoader._prog, 85) + '%');
+                    $('#club-progress-bar').css('width', Math.min(PageLoader._prog, 85) + '%');
                 }
             }, 220);
         },
         hide() {
             clearInterval(this._timer);
-            $('#sh-progress-bar').css('width', '100%');
-            setTimeout(() => $('#sh-page-loader').removeClass('active'), 350);
+            $('#club-progress-bar').css('width', '100%');
+            setTimeout(() => $('#club-page-loader').removeClass('active'), 350);
         },
     };
 
@@ -577,18 +570,18 @@ $(document).ready(function () {
             warning: 'ri-alert-fill',
             info:    'ri-information-fill'
         };
-        var id  = 'sh-toast-' + Date.now();
+        var id  = 'club-toast-' + Date.now();
         var $el = $([
-            '<div class="sh-toast sh-toast-' + type + '" id="' + id + '">',
-            '  <span class="sh-toast-icon"><i class="' + (icons[type] || icons.info) + '"></i></span>',
-            '  <div class="sh-toast-body">',
-            '    <div class="sh-toast-title">' + title + '</div>',
-            msg ? '    <div class="sh-toast-msg">' + msg + '</div>' : '',
+            '<div class="club-toast club-toast-' + type + '" id="' + id + '">',
+            '  <span class="club-toast-icon"><i class="' + (icons[type] || icons.info) + '"></i></span>',
+            '  <div class="club-toast-body">',
+            '    <div class="club-toast-title">' + title + '</div>',
+            msg ? '    <div class="club-toast-msg">' + msg + '</div>' : '',
             '  </div>',
-            '  <button class="sh-toast-close" onclick="$(\'#' + id + '\').remove()">×</button>',
+            '  <button class="club-toast-close" onclick="$(\'#' + id + '\').remove()">×</button>',
             '</div>'
         ].join(''));
-        $('#sh-toast-stack').append($el);
+        $('#club-toast-stack').append($el);
         setTimeout(function() { $el.addClass('show'); }, 20);
         if (duration > 0) {
             setTimeout(function() {
@@ -604,65 +597,29 @@ $(document).ready(function () {
     }
 
     // =========================================================================
-    // COLOUR PICKER SYNC
-    // =========================================================================
-
-    $('#create-colour-picker').on('input', function() {
-        $('#create-housecolour').val($(this).val());
-        updateCreateBtn();
-    });
-
-    $('#create-housecolour').on('input', function() {
-        $('#create-colour-picker').val($(this).val());
-        updateCreateBtn();
-    });
-
-    $('#edit-colour-picker').on('input', function() {
-        $('#edit-housecolour').val($(this).val());
-    });
-
-    $('#edit-housecolour').on('input', function() {
-        $('#edit-colour-picker').val($(this).val());
-    });
-
-    // =========================================================================
     // DATATABLE (server-side)
     // =========================================================================
 
-    var table = $('#housesTable').DataTable({
+    var table = $('#clubsTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("schoolhouse.data") }}',
+            url: '{{ route("club.data") }}',
             type: 'GET',
             error: function(xhr) {
                 console.error('DataTables AJAX error:', xhr.status, xhr.responseText);
-                toast('error', 'Load Error', 'Failed to load houses. Please refresh.');
+                toast('error', 'Load Error', 'Failed to load clubs. Please refresh.');
             }
         },
         columns: [
-            // Checkbox
-            {
-                data: 'checkbox', orderable: false, searchable: false,
-                render: function(data) {
-                    return data;
-                }
-            },
-            // Row index
+            { data: 'checkbox', orderable: false, searchable: false },
             { data: 'DT_RowIndex', orderable: false, searchable: false },
-            // House Name
-            { data: 'house_info', orderable: false },
-            // Colour
-            { data: 'colour_info', orderable: false },
-            // House Master
-            { data: 'master_info', orderable: false },
-            // Term
+            { data: 'club_info', orderable: false },
+            { data: 'description_info', orderable: false },
+            { data: 'patron_info', orderable: false },
             { data: 'term_info', orderable: false },
-            // Session
             { data: 'session_info', orderable: false },
-            // Date
             { data: 'formatted_date', orderable: false },
-            // Actions
             { data: 'action', orderable: false, searchable: false },
         ],
         dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
@@ -671,12 +628,12 @@ $(document).ready(function () {
         language: {
             processing:      '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…',
             search:          '',
-            searchPlaceholder: 'Search houses…',
+            searchPlaceholder: 'Search clubs…',
             lengthMenu:      'Show _MENU_ entries',
-            info:            'Showing _START_–_END_ of _TOTAL_ houses',
-            infoEmpty:       'No houses found',
-            zeroRecords:     'No matching houses',
-            emptyTable:      'No school houses created yet',
+            info:            'Showing _START_–_END_ of _TOTAL_ clubs',
+            infoEmpty:       'No clubs found',
+            zeroRecords:     'No matching clubs',
+            emptyTable:      'No clubs created yet',
         },
         order: [[2, 'asc']],
         pageLength: 15,
@@ -692,15 +649,15 @@ $(document).ready(function () {
     // =========================================================================
 
     function loadStats() {
-        $.get('{{ route("schoolhouse.stats") }}', function(data) {
+        $.get('{{ route("club.stats") }}', function(data) {
             if (data.stats) {
                 $('#statTotal').text(data.stats.total);
-                $('#statMasters').text(data.stats.unique_masters);
+                $('#statPatrons').text(data.stats.unique_patrons);
                 $('#statTerms').text(data.stats.unique_terms);
                 $('#statSessions').text(data.stats.unique_sessions);
             }
         }).fail(function() {
-            $('#statTotal, #statMasters, #statTerms, #statSessions').text('—');
+            $('#statTotal, #statPatrons, #statTerms, #statSessions').text('—');
         });
     }
     loadStats();
@@ -729,22 +686,20 @@ $(document).ready(function () {
     // =========================================================================
 
     function updateCreateBtn() {
-        var ok = $('#create-house').val().trim() !== '' &&
-                 $('#create-housecolour').val().trim() !== '' &&
-                 $('#create-housemasterid').val() !== '' &&
+        var ok = $('#create-club').val().trim() !== '' &&
+                 $('#create-patronid').val() !== '' &&
                  $('#create-termid').val() !== '' &&
                  $('#create-sessionid').val() !== '';
         $('#create-save-btn').prop('disabled', !ok);
     }
 
-    $('#create-house, #create-housecolour, #create-housemasterid, #create-termid, #create-sessionid').on('change input', updateCreateBtn);
+    $('#create-club, #create-patronid, #create-termid, #create-sessionid').on('change input', updateCreateBtn);
 
     // ── Open CREATE ───────────────────────────────────────────
-    $('#createHouseBtn').on('click', function() {
-        $('#create-house').val('');
-        $('#create-housecolour').val('#2563eb');
-        $('#create-colour-picker').val('#2563eb');
-        $('#create-housemasterid').val('');
+    $('#createClubBtn').on('click', function() {
+        $('#create-club').val('');
+        $('#create-description').val('');
+        $('#create-patronid').val('');
         $('#create-termid').val('');
         $('#create-sessionid').val('');
         $('#create-save-btn').prop('disabled', true);
@@ -757,19 +712,18 @@ $(document).ready(function () {
     // EDIT MODAL
     // =========================================================================
 
-    $(document).on('click', '.edit-house-btn', function() {
+    $(document).on('click', '.edit-club-btn', function() {
         var id = $(this).data('id');
-        var house = $(this).data('house');
-        var housecolour = $(this).data('housecolour');
-        var housemasterid = $(this).data('housemasterid');
+        var club = $(this).data('club');
+        var description = $(this).data('description');
+        var patronid = $(this).data('patronid');
         var termid = $(this).data('termid');
         var sessionid = $(this).data('sessionid');
 
-        $('#edit-house-id').val(id);
-        $('#edit-house').val(house);
-        $('#edit-housecolour').val(housecolour || '#2563eb');
-        $('#edit-colour-picker').val(housecolour || '#2563eb');
-        $('#edit-housemasterid').val(housemasterid);
+        $('#edit-club-id').val(id);
+        $('#edit-club').val(club);
+        $('#edit-description').val(description || '');
+        $('#edit-patronid').val(patronid);
         $('#edit-termid').val(termid);
         $('#edit-sessionid').val(sessionid);
 
@@ -787,22 +741,18 @@ $(document).ready(function () {
     $('#createForm').on('submit', function(e) {
         e.preventDefault();
 
-        var house = $('#create-house').val().trim();
-        var housecolour = $('#create-housecolour').val().trim();
-        var housemasterid = $('#create-housemasterid').val();
+        var club = $('#create-club').val().trim();
+        var description = $('#create-description').val().trim();
+        var patronid = $('#create-patronid').val();
         var termid = $('#create-termid').val();
         var sessionid = $('#create-sessionid').val();
 
-        if (!house) {
-            showError('#create-error-msg', 'Please enter a house name.');
+        if (!club) {
+            showError('#create-error-msg', 'Please enter a club name.');
             return;
         }
-        if (!housecolour) {
-            showError('#create-error-msg', 'Please enter a house colour.');
-            return;
-        }
-        if (!housemasterid) {
-            showError('#create-error-msg', 'Please select a house master.');
+        if (!patronid) {
+            showError('#create-error-msg', 'Please select a patron.');
             return;
         }
         if (!termid) {
@@ -815,16 +765,16 @@ $(document).ready(function () {
         }
 
         btnLoad($('#create-save-btn'), 'Saving…');
-        showModalLoader('create', 'Creating house…');
+        showModalLoader('create', 'Creating club…');
         $('#create-error-msg').addClass('d-none').html('');
 
         $.ajax({
-            url: '{{ route("schoolhouse.store") }}',
+            url: '{{ route("club.store") }}',
             type: 'POST',
             data: {
-                house: house,
-                housecolour: housecolour,
-                housemasterid: housemasterid,
+                club: club,
+                description: description,
+                patronid: patronid,
                 termid: termid,
                 sessionid: sessionid,
                 _token: CSRF,
@@ -841,7 +791,7 @@ $(document).ready(function () {
                     hideModalLoader('create');
                     btnReset($('#create-save-btn'));
                     updateCreateBtn();
-                    showError('#create-error-msg', res.message || 'Could not create house.');
+                    showError('#create-error-msg', res.message || 'Could not create club.');
                 }
             },
 
@@ -866,23 +816,19 @@ $(document).ready(function () {
     $('#editForm').on('submit', function(e) {
         e.preventDefault();
 
-        var id = $('#edit-house-id').val();
-        var house = $('#edit-house').val().trim();
-        var housecolour = $('#edit-housecolour').val().trim();
-        var housemasterid = $('#edit-housemasterid').val();
+        var id = $('#edit-club-id').val();
+        var club = $('#edit-club').val().trim();
+        var description = $('#edit-description').val().trim();
+        var patronid = $('#edit-patronid').val();
         var termid = $('#edit-termid').val();
         var sessionid = $('#edit-sessionid').val();
 
-        if (!house) {
-            showError('#edit-error-msg', 'Please enter a house name.');
+        if (!club) {
+            showError('#edit-error-msg', 'Please enter a club name.');
             return;
         }
-        if (!housecolour) {
-            showError('#edit-error-msg', 'Please enter a house colour.');
-            return;
-        }
-        if (!housemasterid) {
-            showError('#edit-error-msg', 'Please select a house master.');
+        if (!patronid) {
+            showError('#edit-error-msg', 'Please select a patron.');
             return;
         }
         if (!termid) {
@@ -895,17 +841,17 @@ $(document).ready(function () {
         }
 
         btnLoad($('#edit-update-btn'), 'Updating…');
-        showModalLoader('edit', 'Updating house…');
+        showModalLoader('edit', 'Updating club…');
         $('#edit-error-msg').addClass('d-none').html('');
 
         $.ajax({
-            url: '{{ route("schoolhouse.updatehouse") }}',
+            url: '{{ route("club.updateclub") }}',
             type: 'POST',
             data: {
                 id: id,
-                house: house,
-                housecolour: housecolour,
-                housemasterid: housemasterid,
+                club: club,
+                description: description,
+                patronid: patronid,
                 termid: termid,
                 sessionid: sessionid,
                 _token: CSRF,
@@ -921,7 +867,7 @@ $(document).ready(function () {
                 } else {
                     hideModalLoader('edit');
                     btnReset($('#edit-update-btn'));
-                    showError('#edit-error-msg', res.message || 'Could not update house.');
+                    showError('#edit-error-msg', res.message || 'Could not update club.');
                 }
             },
 
@@ -942,9 +888,9 @@ $(document).ready(function () {
     // DELETE: SINGLE
     // =========================================================================
 
-    $(document).on('click', '.delete-house-btn', function() {
+    $(document).on('click', '.delete-club-btn', function() {
         deleteId = $(this).data('id');
-        $('#delete-item-title').text($(this).data('name') || 'this house');
+        $('#delete-item-title').text($(this).data('name') || 'this club');
         btnReset($('#confirm-delete-btn'));
         new bootstrap.Modal(document.getElementById('deleteModal')).show();
     });
@@ -955,9 +901,9 @@ $(document).ready(function () {
         btnLoad($btn, 'Deleting…');
 
         $.ajax({
-            url: '{{ route("schoolhouse.deletehouse") }}',
+            url: '{{ route("club.deleteclub") }}',
             type: 'POST',
-            data: { houseid: deleteId, _token: CSRF },
+            data: { clubid: deleteId, _token: CSRF },
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
             success: function(res) {
@@ -998,13 +944,13 @@ $(document).ready(function () {
         });
         
         if (ids.length === 0) {
-            toast('warning', 'No Selection', 'Please select at least one house to delete.');
+            toast('warning', 'No Selection', 'Please select at least one club to delete.');
             return;
         }
 
         Swal.fire({
-            title: 'Delete ' + ids.length + ' house(s)?',
-            html: 'This will permanently remove the selected houses.<br><strong>This action cannot be undone!</strong>',
+            title: 'Delete ' + ids.length + ' club(s)?',
+            html: 'This will permanently remove the selected clubs.<br><strong>This action cannot be undone!</strong>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc2626',
@@ -1014,10 +960,10 @@ $(document).ready(function () {
             showLoaderOnConfirm: true,
             preConfirm: function() {
                 return new Promise(function(resolve, reject) {
-                    PageLoader.show('Deleting houses…');
+                    PageLoader.show('Deleting clubs…');
                     
                     $.ajax({
-                        url: '{{ route("schoolhouse.bulk-destroy") }}',
+                        url: '{{ route("club.bulk-destroy") }}',
                         type: 'POST',
                         data: {
                             ids: ids,
@@ -1033,7 +979,7 @@ $(document).ready(function () {
                             if (res.success) {
                                 resolve(res);
                             } else {
-                                reject(res.message || 'Failed to delete houses');
+                                reject(res.message || 'Failed to delete clubs');
                             }
                         },
                         error: function(xhr) {
@@ -1049,14 +995,14 @@ $(document).ready(function () {
             }
         }).then(function(result) {
             if (result.isConfirmed && result.value) {
-                toast('success', 'Deleted!', result.value.message || 'Houses deleted successfully.');
+                toast('success', 'Deleted!', result.value.message || 'Clubs deleted successfully.');
                 table.ajax.reload();
                 loadStats();
                 $('#selectAll').prop('checked', false);
                 updateBulkBar();
             }
         }).catch(function(error) {
-            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete houses.');
+            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete clubs.');
         });
     }
 
