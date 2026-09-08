@@ -1653,8 +1653,7 @@
                   <input class="form-check-input wiz-active-day mt-0" type="checkbox" value="{{ $day }}" checked>
                   {{ $day }}
                 </label>
-              @endforeach
-            </div>
+              @endforeach            </div>
           </div>
 
           <div class="col-12">
@@ -2654,6 +2653,7 @@ function openSlotModal(periodId, day) {
 
     new bootstrap.Modal(document.getElementById('editSlotModal')).show();
 
+    // Run conflict check if there's a teacher or room already assigned
     if (slot.teacher_id || slot.room_id) {
         setTimeout(runRealtimeConflictCheck, 300);
     }
@@ -2716,6 +2716,8 @@ async function runRealtimeConflictCheck() {
             day:        day,
             teacher_id: teacherId ? parseInt(teacherId) : null,
             room_id:    roomId    ? parseInt(roomId)    : null,
+            subject_id: document.getElementById('editSlotSubject').value
+                ? parseInt(document.getElementById('editSlotSubject').value) : null,
         });
         const data = await res.json();
         if (!data.success) return;
@@ -2755,11 +2757,13 @@ async function runRealtimeConflictCheck() {
             inner.appendChild(div);
         });
 
+        // ── UPDATED WARNINGS RENDERER ──────────────────────────────────
         data.warnings.forEach(w => {
             const div = document.createElement('div');
-            div.className = 'rtc-panel rtc-warning';
+            const isCombined = w.type === 'combined_session';
+            div.className = 'rtc-panel ' + (isCombined ? 'rtc-clear' : 'rtc-warning');
             div.innerHTML = `<div class="rtc-icon">${w.icon}</div>
-                <div class="rtc-body"><div class="rtc-msg">${escapeHtml(w.message)}</div></div>`;
+                <div class="rtc-body"><div class="rtc-msg${isCombined ? ' green' : ''}">${escapeHtml(w.message)}</div></div>`;
             inner.appendChild(div);
         });
 
@@ -2989,6 +2993,7 @@ async function checkConflicts() {
         Swal.fire('Error', e.message, 'error');
     }
 }
+
 function openConflictScopeModal() {
     document.getElementById('conflictScopeResults').innerHTML = `
         <div class="text-center py-4 text-muted">
@@ -3088,6 +3093,7 @@ function renderConflictsHtml(data) {
 
     return html;
 }
+
 function switchToGridAndOpen(periodId, day) {
     showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
     loadTimetableGrid().then(() => openSlotModal(periodId, day));
@@ -3141,7 +3147,7 @@ function exportWholeSchoolTimetable(type = 'pdf') {
     const sessionId   = document.getElementById('wholeSchoolSessionId').value;
     const termId      = document.getElementById('wholeSchoolTermId').value;
     const orientation = document.getElementById('wholeSchoolOrientation').value;
-    const mode        = document.getElementById('wholeSchoolMode').value; // 'per_class' | 'merged'
+    const mode        = document.getElementById('wholeSchoolMode').value;
 
     if (!sessionId) return Swal.fire('Error', 'Please select a session.', 'error');
 
