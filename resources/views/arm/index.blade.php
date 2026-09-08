@@ -465,17 +465,6 @@ textarea.form-control {
                                 </td>
                             </tr>
                         @empty
-                            {{--
-                                IMPORTANT: the cell below MUST carry the "dataTables_empty" class.
-                                DataTables maps each <td> in a row to a column index; a single
-                                colspan="6" cell with no marker class makes it try to treat this
-                                as a 6-column data row and throws:
-                                  "Cannot set properties of undefined (setting '_DT_CellIndex')"
-                                That crash happens inside the same $(document).ready() call that
-                                initializes the table, so every handler registered AFTER
-                                $('#armsTable').DataTable({...}) (add/edit/delete submit handlers)
-                                never gets bound when the table starts out empty.
-                            --}}
                             <tr>
                                 <td colspan="6" class="text-center dataTables_empty">
                                     <div class="empty-state">
@@ -523,7 +512,7 @@ textarea.form-control {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5><i class="ri-add-line me-2"></i>Create New School Arm</h5>
             </div>
-            <form id="addArmForm">
+            <form id="addArmForm" method="POST" action="{{ route('schoolarm.store') }}">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
@@ -618,34 +607,39 @@ textarea.form-control {
 
 <script>
 $(document).ready(function() {
-    // Prevent DataTables warnings (e.g. "Incorrect column count") from calling
-    // alert() + throwing, which would otherwise halt this ready() callback and
-    // stop the add/edit/delete form handlers below from ever being bound.
-    // Warnings still print to the console, they just won't crash the page.
+    // Prevent DataTables from throwing fatal errors that stop the rest of the script
     $.fn.dataTable.ext.errMode = 'none';
 
-    // Initialize DataTable for search/sort functionality
-    var table = $('#armsTable').DataTable({
-        pageLength: 10,
-        order: [[1, 'asc']],
-        language: {
-            search: '',
-            searchPlaceholder: 'Search arms...',
-            lengthMenu: 'Show _MENU_ entries',
-            info: 'Showing _START_–_END_ of _TOTAL_ arms',
-            infoEmpty: 'No arms found',
-            zeroRecords: 'No matching arms',
-        },
-        columnDefs: [
-            { orderable: false, targets: [0, 5] },
-            { orderable: true, targets: [1, 2, 3, 4] }
-        ],
-        dom: 'rtip',
-    });
+    // Safely initialize DataTable
+    var table = null;
+    try {
+        table = $('#armsTable').DataTable({
+            pageLength: 10,
+            order: [[1, 'asc']],
+            language: {
+                search: '',
+                searchPlaceholder: 'Search arms...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_–_END_ of _TOTAL_ arms',
+                infoEmpty: 'No arms found',
+                zeroRecords: 'No matching arms',
+            },
+            columnDefs: [
+                { orderable: false, targets: [0, 5] },
+                { orderable: true, targets: [1, 2, 3, 4] }
+            ],
+            dom: 'rtip',
+            destroy: true
+        });
+    } catch (e) {
+        console.warn('DataTables init failed (non-fatal):', e);
+    }
 
-    // Move custom search to work with DataTable
+    // Custom search
     $('#searchInput').on('keyup', function() {
-        table.search(this.value).draw();
+        if (table) {
+            table.search(this.value).draw();
+        }
     });
 
     // CheckAll functionality
@@ -693,11 +687,13 @@ $(document).ready(function() {
                     }).then(() => {
                         location.reload();
                     });
+                } else {
+                    $('#addAlertError').removeClass('d-none').text(response.message || 'Something went wrong');
                 }
             },
             error: function(xhr) {
                 if (xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors;
+                    var errors = xhr.responseJSON.errors || {};
                     if (errors.arm) {
                         $('#arm').addClass('is-invalid');
                         $('#armError').text(errors.arm[0]);
@@ -706,7 +702,7 @@ $(document).ready(function() {
                         $('#description').addClass('is-invalid');
                         $('#descriptionError').text(errors.description[0]);
                     }
-                    if (xhr.responseJSON.message && !errors) {
+                    if (xhr.responseJSON.message && !Object.keys(errors).length) {
                         $('#addAlertError').removeClass('d-none').text(xhr.responseJSON.message);
                     }
                 } else if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -770,7 +766,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 if (xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors;
+                    var errors = xhr.responseJSON.errors || {};
                     if (errors.arm) {
                         $('#edit_arm').addClass('is-invalid');
                         $('#editArmError').text(errors.arm[0]);
@@ -874,7 +870,6 @@ function deleteMultiple() {
         if (result.isConfirmed) {
             $('#loadingOverlay').addClass('active');
 
-            // Process deletions sequentially
             let completed = 0;
             let errors = 0;
 
@@ -888,10 +883,7 @@ function deleteMultiple() {
                     },
                     success: function(response) {
                         completed++;
-                        if (response.success) {
-                            // Remove row from table
-                            $(`tr[data-id="${id}"]`).remove();
-                        } else {
+                        if (!response.success) {
                             errors++;
                         }
                     },
