@@ -84,7 +84,7 @@ class SchoolClassController extends Controller
             // ── Arm Badge ──────────────────────────────────────────────────
             ->addColumn('arm_info', function ($row) {
                 $armName = $this->cleanUtf8String($row->arm_name ?? 'N/A');
-                return '<span class="ct-badge ct-badge-arm">' . e($armName) . '</span>
+                return '<span class="sc-badge sc-badge-arm">' . e($armName) . '</span>
                     <small class="text-muted d-block">Arm ID: ' . ($row->arm_id ?? 'N/A') . '</small>';
             })
 
@@ -94,7 +94,7 @@ class SchoolClassController extends Controller
                 $html = '<div class="d-flex flex-wrap gap-1">';
                 foreach ($categoryNames as $catName) {
                     if (!empty($catName)) {
-                        $html .= '<span class="ct-badge ct-badge-category">' . e($this->cleanUtf8String($catName)) . '</span>';
+                        $html .= '<span class="sc-badge sc-badge-category">' . e($this->cleanUtf8String($catName)) . '</span>';
                     }
                 }
                 $html .= '</div>';
@@ -370,9 +370,16 @@ class SchoolClassController extends Controller
 
     public function destroy($id)
     {
-        DB::beginTransaction();
         try {
-            $schoolclass = Schoolclass::findOrFail($id);
+            DB::beginTransaction();
+            
+            $schoolclass = Schoolclass::find($id);
+            if (!$schoolclass) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Class not found.'
+                ], 404);
+            }
 
             // Detach categories
             $schoolclass->classcategories()->detach();
@@ -413,19 +420,40 @@ class SchoolClassController extends Controller
 
     public function deleteMultiple(Request $request)
     {
-        $ids = $request->input('ids', []);
-        if (empty($ids)) {
-            return response()->json(['success' => false, 'message' => 'No classes selected.'], 400);
-        }
-
-        DB::beginTransaction();
         try {
+            $ids = $request->input('ids', []);
+            
+            if (empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No classes selected.'
+                ], 400);
+            }
+
+            // Validate that all IDs exist
+            $existingIds = Schoolclass::whereIn('id', $ids)->pluck('id')->toArray();
+            $invalidIds = array_diff($ids, $existingIds);
+            
+            if (!empty($invalidIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Some selected classes do not exist: ' . implode(', ', $invalidIds)
+                ], 400);
+            }
+
+            DB::beginTransaction();
+            
             $deleted = 0;
             foreach ($ids as $id) {
                 $schoolclass = Schoolclass::find($id);
                 if ($schoolclass) {
+                    // Detach categories
                     $schoolclass->classcategories()->detach();
+                    
+                    // Delete from class teacher table
                     ClassTeacher::where('schoolclassid', $id)->delete();
+                    
+                    // Delete the school class
                     $schoolclass->delete();
                     $deleted++;
                 }
@@ -433,18 +461,24 @@ class SchoolClassController extends Controller
 
             DB::commit();
 
-            Log::channel('schoolclass')->info('Bulk delete', ['count' => $deleted]);
+            Log::channel('schoolclass')->info('Bulk delete completed', [
+                'total' => count($ids),
+                'deleted' => $deleted
+            ]);
 
             return response()->json([
                 'success' => true,
                 'message' => $deleted . ' class(es) deleted successfully.',
+                'deleted_count' => $deleted
             ], 200);
 
         } catch (\Exception $e) {
             DB::rollBack();
 
             Log::channel('schoolclass')->error('Bulk delete failed:', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ids' => $request->input('ids', [])
             ]);
 
             return response()->json([

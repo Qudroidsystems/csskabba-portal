@@ -130,6 +130,26 @@
     background-color:var(--sc-accent); border-color:var(--sc-accent);
 }
 
+.inline-check-group {
+    display:flex; flex-wrap:wrap; gap:8px;
+    padding:10px 14px;
+    border:1.5px solid var(--sc-border); border-radius:8px;
+    background:#fafbfc;
+}
+.inline-check-group .form-check { margin:0; }
+.inline-check-group .form-check-label { font-size:13px; cursor:pointer; }
+.inline-check-group .form-check-input:checked {
+    background-color:var(--sc-accent); border-color:var(--sc-accent);
+}
+
+.select-all-bar {
+    background:#eff6ff; border:1.5px solid #bfdbfe;
+    border-radius:8px; padding:7px 12px; margin-bottom:6px;
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:600; color:var(--sc-accent);
+    cursor:pointer;
+}
+
 /* ── Bulk bar ────────────────────────────────────────────── */
 .bulk-bar {
     background:#fff3cd; border:1px solid #ffc107;
@@ -373,9 +393,9 @@
                     {{-- Arms --}}
                     <div class="mb-3">
                         <label class="form-label">Select Arm(s) <span class="text-danger">*</span></label>
-                        <div class="select-all-bar" id="create-select-all-bar">
-                            <input type="checkbox" class="form-check-input" id="create-select-all-arms">
-                            <label for="create-select-all-arms" class="mb-0">Select All Arms</label>
+                        <div class="select-all-bar" id="create-select-all-arms">
+                            <input type="checkbox" class="form-check-input" id="create-select-all-arms-cb">
+                            <label for="create-select-all-arms-cb" class="mb-0">Select All Arms</label>
                         </div>
                         <div class="checkbox-scroll" id="create-arm-list">
                             @foreach ($arms as $arm)
@@ -716,7 +736,7 @@ $(document).ready(function () {
     // SELECT-ALL HELPERS
     // =========================================================================
 
-    $('#create-select-all-arms').on('change', function() {
+    $('#create-select-all-arms-cb').on('change', function() {
         $('.create-arm-cb').prop('checked', this.checked);
         updateCreateCounts();
     });
@@ -754,7 +774,7 @@ $(document).ready(function () {
     // ── Open CREATE ───────────────────────────────────────────
     $('#createClassBtn').on('click', function() {
         $('#create-schoolclass').val('');
-        $('.create-arm-cb, #create-select-all-arms').prop('checked', false);
+        $('.create-arm-cb, #create-select-all-arms-cb').prop('checked', false);
         $('.create-category-cb, #create-select-all-categories-cb').prop('checked', false);
         $('#create-arm-count').text(0);
         $('#create-category-count').text(0);
@@ -985,51 +1005,75 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-    // DELETE: BULK
+    // DELETE: BULK (Complete working version)
     // =========================================================================
 
     function doBulkDelete() {
-        var ids = $('.row-checkbox:checked').map(function() { return this.value; }).get();
-        if (!ids.length) return;
+        var ids = [];
+        $('.row-checkbox:checked').each(function() {
+            ids.push($(this).val());
+        });
+        
+        if (ids.length === 0) {
+            toast('warning', 'No Selection', 'Please select at least one class to delete.');
+            return;
+        }
 
         Swal.fire({
             title: 'Delete ' + ids.length + ' class(es)?',
-            text:  'This will permanently remove the selected classes.',
-            icon:  'warning',
-            showCancelButton:    true,
-            confirmButtonColor:  '#dc2626',
-            confirmButtonText:   'Yes, delete all',
-            cancelButtonText:    'Cancel',
+            html: 'This will permanently remove the selected classes and all associated data.<br><strong>This action cannot be undone!</strong>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: function() {
+                return new Promise(function(resolve, reject) {
+                    PageLoader.show('Deleting classes…');
+                    
+                    $.ajax({
+                        url: '{{ route("schoolclass.bulk-destroy") }}',
+                        type: 'POST',
+                        data: {
+                            ids: ids,
+                            _token: CSRF
+                        },
+                        traditional: true,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        success: function(res) {
+                            PageLoader.hide();
+                            if (res.success) {
+                                resolve(res);
+                            } else {
+                                reject(res.message || 'Failed to delete classes');
+                            }
+                        },
+                        error: function(xhr) {
+                            PageLoader.hide();
+                            var errorMsg = 'An error occurred while deleting.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            reject(errorMsg);
+                        }
+                    });
+                });
+            }
         }).then(function(result) {
-            if (!result.isConfirmed) return;
-
-            PageLoader.show('Deleting classes…');
-
-            $.ajax({
-                url: '{{ route("schoolclass.bulk-destroy") }}',
-                type: 'POST',
-                data: { ids: ids, _token: CSRF },
-                traditional: true,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-
-                success: function(res) {
-                    PageLoader.hide();
-                    if (res.success) {
-                        toast('success', 'Deleted!', res.message);
-                        table.ajax.reload();
-                        loadStats();
-                        $('#selectAll').prop('checked', false);
-                        updateBulkBar();
-                    } else {
-                        toast('error', 'Failed', res.message || 'Could not delete classes.');
-                    }
-                },
-
-                error: function() {
-                    PageLoader.hide();
-                    toast('error', 'Error', 'Failed to delete selected classes.');
-                },
-            });
+            if (result.isConfirmed && result.value) {
+                toast('success', 'Deleted!', result.value.message || 'Classes deleted successfully.');
+                table.ajax.reload();
+                loadStats();
+                $('#selectAll').prop('checked', false);
+                updateBulkBar();
+            }
+        }).catch(function(error) {
+            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete classes.');
         });
     }
 
