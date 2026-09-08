@@ -884,6 +884,10 @@
             <button class="btn btn-outline-light btn-sm" onclick="openGenerationWizardModal()">
                 <i class="ri-magic-line me-1"></i>Generation Wizard
             </button>
+           
+            <button class="btn btn-outline-light btn-sm" onclick="openConflictScopeModal()">
+                <i class="ri-shield-cross-line me-1"></i>Check Conflicts
+            </button>
             <button class="btn btn-outline-light btn-sm" onclick="openWholeSchoolExportModal()">
                 <i class="ri-school-line me-1"></i>Whole School
             </button>
@@ -1448,6 +1452,51 @@
     </div>
 </div>
 
+<div class="modal fade" id="conflictScopeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+      <div class="modal-header" style="background:linear-gradient(135deg,#DC2626,#EA580C)">
+        <h5 class="modal-title text-white"><i class="ri-shield-cross-line me-2"></i>Check Conflicts — Session / Term</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+            <select class="form-select" id="ccSessionId">
+              <option value="">— Select —</option>
+              @foreach($schoolsessions as $session)
+                <option value="{{ $session->id }}">{{ $session->session }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Term <span class="text-muted fw-normal">(optional)</span></label>
+            <select class="form-select" id="ccTermId">
+              <option value="">All Terms</option>
+              @foreach($schoolterms as $term)
+                <option value="{{ $term->id }}">{{ $term->term }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-danger w-100 mb-3" onclick="runScopeConflictCheck()">
+          <i class="ri-search-line me-2"></i>Run Conflict Check
+        </button>
+        <div id="conflictScopeResults">
+          <div class="text-center py-4 text-muted">
+            <i class="ri-shield-check-line ri-2x d-block mb-2 opacity-30"></i>
+            <p>Select a session and run the check.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {{-- Clone Modal --}}
 <div class="modal fade" id="cloneModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1776,7 +1825,7 @@ const ROUTES = {
     saveHalfDays:               '{{ route("timetable.save-half-days") }}',
     checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
     getTeacherAssignments:      '{{ route("timetable.teacher-assignments") }}',
-
+    checkConflictsScope:        '{{ route("timetable.check-conflicts-scope") }}',
     getSetting:                 '{{ route("timetable.get-setting", ["settingId" => ":id"]) }}',
     getGrid:                    '{{ route("timetable.get-grid", ["settingId" => ":id"]) }}',
     checkConflicts:             '{{ route("timetable.check-conflicts", ["settingId" => ":id"]) }}',
@@ -2933,80 +2982,112 @@ async function checkConflicts() {
         badge.style.display = '';
         badge.textContent   = data.conflict_count;
 
-        const teacherConflicts = data.conflicts.filter(c => c.conflict_category === 'teacher');
-        const roomConflicts    = data.conflicts.filter(c => c.conflict_category === 'room');
-
-        let html = `<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-            <i class="ri-alert-line ri-xl"></i>
-            Found <strong class="mx-1">${data.conflict_count}</strong> conflict(s) across all classes
-            ${teacherConflicts.length ? `<span class="badge bg-danger ms-1">${teacherConflicts.length} teacher</span>` : ''}
-            ${roomConflicts.length    ? `<span class="badge bg-warning text-dark ms-1">${roomConflicts.length} room</span>` : ''}
-        </div>`;
-
-        data.conflicts.forEach(c => {
-            const isRoomConflict = c.conflict_category === 'room';
-            const avatarHtml     = isRoomConflict
-                ? `<div class="conflict-avatar-ph room"><i class="ri-home-3-line ri-xl" style="color:#EA580C"></i></div>`
-                : (c.teacher_picture
-                    ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
-                    : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`);
-
-            const crossArmBadge = c.is_cross_arm
-                ? `<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px">
-                       <i class="ri-git-branch-line"></i> Cross-Arm
-                   </span>` : '';
-
-            const classesHtml = (c.all_classes && c.all_classes.length > 2)
-                ? c.all_classes.map(cls => `<span class="badge bg-primary-subtle text-primary me-1">${escapeHtml(cls)}</span>`).join('')
-                : `<span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_a || '')}</span>
-                   <span class="mx-1 text-muted">&amp;</span>
-                   <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_b || '')}</span>`;
-
-            const altHtml = c.alternatives?.length
-                ? `<div class="conflict-suggestion">
-                       <div><i class="ri-lightbulb-line text-success me-1"></i>
-                           <strong>Suggestion:</strong> ${escapeHtml(c.resolution_suggestion)}
-                       </div>
-                       <div class="alt-badges">
-                           ${c.alternatives.slice(0, 4).map(a =>
-                               `<span class="alt-badge" onclick="switchToGridAndOpen(${a.period_id}, '${a.day}')">
-                                    📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
-                                </span>`
-                           ).join('')}
-                       </div>
-                   </div>`
-                : `<div class="mt-2 text-muted" style="font-size:12px">
-                       <i class="ri-information-line me-1"></i>${escapeHtml(c.resolution_suggestion)}
-                   </div>`;
-
-            html += `<div class="conflict-item ${isRoomConflict ? 'room-conflict' : ''}">
-                ${avatarHtml}
-                <div class="flex-grow-1">
-                    <div class="fw-semibold mb-1">
-                        ${escapeHtml(c.teacher || '—')} ${crossArmBadge}
-                        ${isRoomConflict ? '<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px">Room Conflict</span>' : ''}
-                    </div>
-                    <div class="text-danger fw-semibold" style="font-size:12px">
-                        <i class="ri-time-line me-1"></i>${escapeHtml(c.day)} · ${escapeHtml(c.period)}
-                        ${c.period_time ? ' (' + escapeHtml(c.period_time) + ')' : ''}
-                    </div>
-                    <div class="mt-1" style="font-size:12px">
-                        ${classesHtml}
-                        <span class="text-muted ms-2">${escapeHtml(c.subject_a || '—')} vs ${escapeHtml(c.subject_b || '—')}</span>
-                    </div>
-                    ${altHtml}
-                </div>
-            </div>`;
-        });
-
-        container.innerHTML = html;
+        document.getElementById('conflictsList').innerHTML = renderConflictsHtml(data);
         hideLoader();
     } catch (e) {
         hideLoader();
         Swal.fire('Error', e.message, 'error');
     }
 }
+function openConflictScopeModal() {
+    document.getElementById('conflictScopeResults').innerHTML = `
+        <div class="text-center py-4 text-muted">
+            <i class="ri-shield-check-line ri-2x d-block mb-2 opacity-30"></i>
+            <p>Select a session and run the check.</p>
+        </div>`;
+    new bootstrap.Modal(document.getElementById('conflictScopeModal')).show();
+}
 
+async function runScopeConflictCheck() {
+    const sessionId = document.getElementById('ccSessionId').value;
+    const termId    = document.getElementById('ccTermId').value;
+    if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
+
+    const container = document.getElementById('conflictScopeResults');
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger"></div><p class="mt-3 text-muted">Scanning all classes…</p></div>';
+
+    try {
+        const params = new URLSearchParams({ session_id: sessionId });
+        if (termId) params.set('term_id', termId);
+        const res  = await apiFetch(`${ROUTES.checkConflictsScope}?${params.toString()}`, 'GET');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed');
+        container.innerHTML = renderConflictsHtml(data);
+    } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+// Shared renderer — used by both the toolbar modal and the per-class Conflicts tab.
+function renderConflictsHtml(data) {
+    if (!data.conflict_count) {
+        return `<div class="text-center py-4">
+            <i class="ri-check-double-line ri-3x d-block mb-3 text-success"></i>
+            <h6 class="text-success">No Conflicts Found</h6>
+            <p class="text-muted mb-0">All teachers and rooms are properly scheduled with no overlaps.</p>
+        </div>`;
+    }
+
+    const teacherConflicts = data.conflicts.filter(c => c.conflict_category === 'teacher');
+    const roomConflicts    = data.conflicts.filter(c => c.conflict_category === 'room');
+
+    let html = `<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+        <i class="ri-alert-line ri-xl"></i>
+        Found <strong class="mx-1">${data.conflict_count}</strong> conflict(s)
+        ${teacherConflicts.length ? `<span class="badge bg-danger ms-1">${teacherConflicts.length} teacher</span>` : ''}
+        ${roomConflicts.length    ? `<span class="badge bg-warning text-dark ms-1">${roomConflicts.length} room</span>` : ''}
+    </div>`;
+
+    data.conflicts.forEach(c => {
+        const isRoomConflict = c.conflict_category === 'room';
+        const avatarHtml     = isRoomConflict
+            ? `<div class="conflict-avatar-ph room"><i class="ri-home-3-line ri-xl" style="color:#EA580C"></i></div>`
+            : (c.teacher_picture
+                ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
+                : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`);
+
+        const crossArmBadge = c.is_cross_arm
+            ? `<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px"><i class="ri-git-branch-line"></i> Cross-Arm</span>` : '';
+
+        const classesHtml = (c.all_classes && c.all_classes.length > 2)
+            ? c.all_classes.map(cls => `<span class="badge bg-primary-subtle text-primary me-1">${escapeHtml(cls)}</span>`).join('')
+            : `<span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_a || '')}</span>
+               <span class="mx-1 text-muted">&amp;</span>
+               <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_b || '')}</span>`;
+
+        const altHtml = c.alternatives?.length
+            ? `<div class="conflict-suggestion">
+                   <div><i class="ri-lightbulb-line text-success me-1"></i><strong>Suggestion:</strong> ${escapeHtml(c.resolution_suggestion)}</div>
+                   <div class="alt-badges">
+                       ${c.alternatives.slice(0, 4).map(a =>
+                           `<span class="alt-badge">📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})</span>`
+                       ).join('')}
+                   </div>
+               </div>`
+            : `<div class="mt-2 text-muted" style="font-size:12px"><i class="ri-information-line me-1"></i>${escapeHtml(c.resolution_suggestion)}</div>`;
+
+        html += `<div class="conflict-item ${isRoomConflict ? 'room-conflict' : ''}">
+            ${avatarHtml}
+            <div class="flex-grow-1">
+                <div class="fw-semibold mb-1">
+                    ${escapeHtml(c.teacher || '—')} ${crossArmBadge}
+                    ${isRoomConflict ? '<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px">Room Conflict</span>' : ''}
+                </div>
+                <div class="text-danger fw-semibold" style="font-size:12px">
+                    <i class="ri-time-line me-1"></i>${escapeHtml(c.day)} · ${escapeHtml(c.period)}
+                    ${c.period_time ? ' (' + escapeHtml(c.period_time) + ')' : ''}
+                </div>
+                <div class="mt-1" style="font-size:12px">
+                    ${classesHtml}
+                    <span class="text-muted ms-2">${escapeHtml(c.subject_a || '—')} vs ${escapeHtml(c.subject_b || '—')}</span>
+                </div>
+                ${altHtml}
+            </div>
+        </div>`;
+    });
+
+    return html;
+}
 function switchToGridAndOpen(periodId, day) {
     showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
     loadTimetableGrid().then(() => openSlotModal(periodId, day));

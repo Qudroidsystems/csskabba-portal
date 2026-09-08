@@ -1314,6 +1314,7 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
 
     // AJAX — Checks & utilities
     Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
+    Route::get('/check-conflicts-scope', [TimetableController::class, 'checkConflictsScope'])->name('check-conflicts-scope');
     Route::post('/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('check-slot-conflict');
     Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
     Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');

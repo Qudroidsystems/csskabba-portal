@@ -386,6 +386,9 @@ class DatabaseSeeder extends Seeder
 
             'UpdatedTimetablePermissionTableSeeder' =>
                 '📅 Seeding updated timetable permissions...',
+
+            'UpdatedTimetableReportsPermissionTableSeeder' =>
+                '📊 Seeding updated timetable reports permissions...',
         ];
 
         $this->runSeederList(

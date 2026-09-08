@@ -71,7 +71,8 @@ class TimetableController extends Controller
         $this->middleware('permission:Approve substitute', ['only' => ['approveSubstitute']]);
         $this->middleware('permission:View substitute requests', ['only' => ['getSubstituteRequests']]);
         $this->middleware('permission:Manage teacher availability', ['only' => ['saveTeacherAvailability', 'getTeacherAvailability']]);
-        $this->middleware('permission:Check timetable conflicts', ['only' => ['checkConflicts']]);
+        // $this->middleware('permission:Check timetable conflicts', ['only' => ['checkConflicts']]);
+        $this->middleware('permission:Check timetable conflicts', ['only' => ['checkConflicts', 'checkConflictsScope']]);
         $this->middleware('permission:Send timetable notifications', ['only' => ['sendNotifications', 'publishAndNotify']]);
         $this->middleware('permission:Publish timetable', ['only' => ['publishSetting', 'unpublishSetting', 'publishAndNotify']]);
     }
@@ -1361,170 +1362,357 @@ class TimetableController extends Controller
         ]);
     }
 
-    // =========================================================================
-    // CHECK CONFLICTS
-    // =========================================================================
-    public function checkConflicts(int $settingId): JsonResponse
-    {
-        $setting = TimetableSetting::with(['session', 'term'])->findOrFail($settingId);
+    // // =========================================================================
+    // // CHECK CONFLICTS
+    // // =========================================================================
+    // public function checkConflicts(int $settingId): JsonResponse
+    // {
+    //     $setting = TimetableSetting::with(['session', 'term'])->findOrFail($settingId);
 
-        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
-            ->where('schoolclass.id', $setting->schoolclass_id)->first();
-        $setting->setRelation('schoolclass', $schoolclass);
+    //     $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+    //         ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+    //         ->where('schoolclass.id', $setting->schoolclass_id)->first();
+    //     $setting->setRelation('schoolclass', $schoolclass);
 
-        $sessionId = $setting->session_id;
-        $termId    = $setting->term_id;
+    //     $sessionId = $setting->session_id;
+    //     $termId    = $setting->term_id;
 
-        $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
-                $q->where('session_id', $sessionId)->where('is_active', true);
-                if ($termId) $q->where('term_id', $termId);
-                else         $q->whereNull('term_id');
-            })
-            ->whereNotNull('teacher_id')
-            ->where('is_free', false)
-            ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting', 'teacher', 'teacher.staffPicture', 'room'])
-            ->get();
+    //     $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
+    //             $q->where('session_id', $sessionId)->where('is_active', true);
+    //             if ($termId) $q->where('term_id', $termId);
+    //             else         $q->whereNull('term_id');
+    //         })
+    //         ->whereNotNull('teacher_id')
+    //         ->where('is_free', false)
+    //         ->whereNotNull('subject_id')
+    //         ->with(['period', 'subject', 'setting', 'teacher', 'teacher.staffPicture', 'room'])
+    //         ->get();
 
-        $classIds     = $slots->pluck('setting.schoolclass_id')->unique()->filter();
-        $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
-            ->whereIn('schoolclass.id', $classIds)->get()->keyBy('id');
+    //     $classIds     = $slots->pluck('setting.schoolclass_id')->unique()->filter();
+    //     $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+    //         ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+    //         ->whereIn('schoolclass.id', $classIds)->get()->keyBy('id');
 
-        foreach ($slots as $slot) {
-            if ($slot->setting && isset($schoolclasses[$slot->setting->schoolclass_id])) {
-                $slot->setting->setRelation('schoolclass', $schoolclasses[$slot->setting->schoolclass_id]);
-            }
+    //     foreach ($slots as $slot) {
+    //         if ($slot->setting && isset($schoolclasses[$slot->setting->schoolclass_id])) {
+    //             $slot->setting->setRelation('schoolclass', $schoolclasses[$slot->setting->schoolclass_id]);
+    //         }
+    //     }
+
+    //     $conflicts = [];
+
+    //     $teacherGrouped = $slots->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
+
+    //     foreach ($teacherGrouped as $group) {
+    //         if ($group->count() < 2) continue;
+
+    //         $first       = $group->first();
+    //         $teacherName = $first->teacher?->name ?? '—';
+    //         $periodName  = $first->period?->name ?? '—';
+    //         $periodTime  = $this->formatTime($first->period?->start_time ?? '')
+    //                      . ' – ' . $this->formatTime($first->period?->end_time ?? '');
+    //         $classes     = $group->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->unique()->values();
+    //         $subjects    = $group->map(fn($s) => $s->subject?->subject ?? '—')->unique()->values();
+    //         $classLevels = $group->map(fn($s) => $s->setting?->schoolclass?->schoolclass ?? '')->unique();
+    //         $isCrossArm  = $classLevels->count() === 1 && $classes->count() > 1;
+
+    //         $alternatives = $this->findAlternativeSlots(
+    //             $first->teacher_id, $first->period_id, $first->day, $setting
+    //         );
+
+    //         $groupArr = $group->values();
+    //         for ($i = 1; $i < $groupArr->count(); $i++) {
+    //             $other  = $groupArr[$i];
+    //             $classA = $this->getClassName($first->setting?->schoolclass);
+    //             $classB = $this->getClassName($other->setting?->schoolclass);
+
+    //             $conflicts[] = [
+    //                 'type'                  => $isCrossArm ? 'cross_arm_conflict' : 'teacher_conflict',
+    //                 'conflict_category'     => 'teacher',
+    //                 'day'                   => $first->day,
+    //                 'period'                => $periodName,
+    //                 'period_time'           => $periodTime,
+    //                 'teacher'               => $teacherName,
+    //                 'teacher_id'            => $first->teacher_id,
+    //                 'teacher_picture'       => $first->teacher?->staffPicture
+    //                     ? asset('storage/staff_avatars/' . $first->teacher->staffPicture->picture)
+    //                     : null,
+    //                 'subject_a'             => $first->subject?->subject ?? '—',
+    //                 'subject_b'             => $other->subject?->subject ?? '—',
+    //                 'class_a'               => $classA,
+    //                 'class_b'               => $classB,
+    //                 'is_cross_arm'          => $isCrossArm,
+    //                 'setting_a_id'          => $first->setting_id,
+    //                 'setting_b_id'          => $other->setting_id,
+    //                 'all_classes'           => $classes,
+    //                 'all_subjects'          => $subjects,
+    //                 'alternatives'          => $alternatives,
+    //                 'resolution_suggestion' => $this->buildSuggestionText($teacherName, $classA, $alternatives),
+    //             ];
+    //         }
+    //     }
+
+    //     $allSlotsWithRoom = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
+    //             $q->where('session_id', $sessionId)->where('is_active', true);
+    //             if ($termId) $q->where('term_id', $termId);
+    //             else         $q->whereNull('term_id');
+    //         })
+    //         ->whereNotNull('room_id')
+    //         ->where('is_free', false)
+    //         ->whereNotNull('subject_id')
+    //         ->with(['period', 'subject', 'setting', 'teacher', 'room'])
+    //         ->get();
+
+    //     $roomClassIds = $allSlotsWithRoom->pluck('setting.schoolclass_id')->unique()->filter();
+    //     $roomClasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+    //         ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+    //         ->whereIn('schoolclass.id', $roomClassIds)->get()->keyBy('id');
+    //     foreach ($allSlotsWithRoom as $slot) {
+    //         if ($slot->setting && isset($roomClasses[$slot->setting->schoolclass_id])) {
+    //             $slot->setting->setRelation('schoolclass', $roomClasses[$slot->setting->schoolclass_id]);
+    //         }
+    //     }
+
+    //     $roomGrouped = $allSlotsWithRoom->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $s->period_id);
+
+    //     foreach ($roomGrouped as $group) {
+    //         if ($group->count() < 2) continue;
+
+    //         $first      = $group->first();
+    //         $room       = $first->room;
+    //         $periodName = $first->period?->name ?? '—';
+    //         $periodTime = $this->formatTime($first->period?->start_time ?? '')
+    //                     . ' – ' . $this->formatTime($first->period?->end_time ?? '');
+    //         $classes    = $group->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->unique()->values();
+    //         $subjects   = $group->map(fn($s) => $s->subject?->subject ?? '—')->unique()->values();
+
+    //         $groupArr = $group->values();
+    //         for ($i = 1; $i < $groupArr->count(); $i++) {
+    //             $other  = $groupArr[$i];
+    //             $classA = $this->getClassName($first->setting?->schoolclass);
+    //             $classB = $this->getClassName($other->setting?->schoolclass);
+
+    //             $conflicts[] = [
+    //                 'type'                  => 'room_conflict',
+    //                 'conflict_category'     => 'room',
+    //                 'day'                   => $first->day,
+    //                 'period'                => $periodName,
+    //                 'period_time'           => $periodTime,
+    //                 'teacher'               => '🏫 ' . ($room?->room_name ?? 'Unknown Room'),
+    //                 'teacher_id'            => null,
+    //                 'teacher_picture'       => null,
+    //                 'subject_a'             => $first->subject?->subject ?? '—',
+    //                 'subject_b'             => $other->subject?->subject ?? '—',
+    //                 'class_a'               => $classA,
+    //                 'class_b'               => $classB,
+    //                 'is_cross_arm'          => false,
+    //                 'setting_a_id'          => $first->setting_id,
+    //                 'setting_b_id'          => $other->setting_id,
+    //                 'all_classes'           => $classes,
+    //                 'all_subjects'          => $subjects,
+    //                 'alternatives'          => [],
+    //                 'resolution_suggestion' => "Room conflict: {$classA} and {$classB} are both assigned to "
+    //                     . ($room?->room_name ?? 'the same room')
+    //                     . " on {$first->day}, {$periodName}. Assign one class to a different room.",
+    //             ];
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'success'        => true,
+    //         'conflicts'      => $conflicts,
+    //         'conflict_count' => count($conflicts),
+    //         'has_conflicts'  => count($conflicts) > 0,
+    //         'checked_at'     => now()->format('d M Y, H:i:s'),
+    //     ]);
+    // }
+
+
+public function checkConflicts(int $settingId): JsonResponse
+{
+    $setting = TimetableSetting::findOrFail($settingId);
+    return response()->json(
+        $this->buildConflictReport((int) $setting->session_id, $setting->term_id)
+    );
+}
+
+// =========================================================================
+// PRIVATE: Shared conflict-detection logic — this is the exact body that
+// used to live directly inside checkConflicts(), now parameterized on
+// session/term instead of pulling them from one specific $setting so both
+// the per-class tab and the toolbar button can call it.
+// =========================================================================
+private function buildConflictReport(int $sessionId, ?int $termId): array
+{
+    $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
+            $q->where('session_id', $sessionId)->where('is_active', true);
+            if ($termId) $q->where('term_id', $termId);
+            else         $q->whereNull('term_id');
+        })
+        ->whereNotNull('teacher_id')
+        ->where('is_free', false)
+        ->whereNotNull('subject_id')
+        ->with(['period', 'subject', 'setting', 'teacher', 'teacher.staffPicture', 'room'])
+        ->get();
+
+    $classIds     = $slots->pluck('setting.schoolclass_id')->unique()->filter();
+    $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+        ->whereIn('schoolclass.id', $classIds)->get()->keyBy('id');
+
+    foreach ($slots as $slot) {
+        if ($slot->setting && isset($schoolclasses[$slot->setting->schoolclass_id])) {
+            $slot->setting->setRelation('schoolclass', $schoolclasses[$slot->setting->schoolclass_id]);
         }
-
-        $conflicts = [];
-
-        $teacherGrouped = $slots->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
-
-        foreach ($teacherGrouped as $group) {
-            if ($group->count() < 2) continue;
-
-            $first       = $group->first();
-            $teacherName = $first->teacher?->name ?? '—';
-            $periodName  = $first->period?->name ?? '—';
-            $periodTime  = $this->formatTime($first->period?->start_time ?? '')
-                         . ' – ' . $this->formatTime($first->period?->end_time ?? '');
-            $classes     = $group->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->unique()->values();
-            $subjects    = $group->map(fn($s) => $s->subject?->subject ?? '—')->unique()->values();
-            $classLevels = $group->map(fn($s) => $s->setting?->schoolclass?->schoolclass ?? '')->unique();
-            $isCrossArm  = $classLevels->count() === 1 && $classes->count() > 1;
-
-            $alternatives = $this->findAlternativeSlots(
-                $first->teacher_id, $first->period_id, $first->day, $setting
-            );
-
-            $groupArr = $group->values();
-            for ($i = 1; $i < $groupArr->count(); $i++) {
-                $other  = $groupArr[$i];
-                $classA = $this->getClassName($first->setting?->schoolclass);
-                $classB = $this->getClassName($other->setting?->schoolclass);
-
-                $conflicts[] = [
-                    'type'                  => $isCrossArm ? 'cross_arm_conflict' : 'teacher_conflict',
-                    'conflict_category'     => 'teacher',
-                    'day'                   => $first->day,
-                    'period'                => $periodName,
-                    'period_time'           => $periodTime,
-                    'teacher'               => $teacherName,
-                    'teacher_id'            => $first->teacher_id,
-                    'teacher_picture'       => $first->teacher?->staffPicture
-                        ? asset('storage/staff_avatars/' . $first->teacher->staffPicture->picture)
-                        : null,
-                    'subject_a'             => $first->subject?->subject ?? '—',
-                    'subject_b'             => $other->subject?->subject ?? '—',
-                    'class_a'               => $classA,
-                    'class_b'               => $classB,
-                    'is_cross_arm'          => $isCrossArm,
-                    'setting_a_id'          => $first->setting_id,
-                    'setting_b_id'          => $other->setting_id,
-                    'all_classes'           => $classes,
-                    'all_subjects'          => $subjects,
-                    'alternatives'          => $alternatives,
-                    'resolution_suggestion' => $this->buildSuggestionText($teacherName, $classA, $alternatives),
-                ];
-            }
-        }
-
-        $allSlotsWithRoom = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
-                $q->where('session_id', $sessionId)->where('is_active', true);
-                if ($termId) $q->where('term_id', $termId);
-                else         $q->whereNull('term_id');
-            })
-            ->whereNotNull('room_id')
-            ->where('is_free', false)
-            ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting', 'teacher', 'room'])
-            ->get();
-
-        $roomClassIds = $allSlotsWithRoom->pluck('setting.schoolclass_id')->unique()->filter();
-        $roomClasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
-            ->whereIn('schoolclass.id', $roomClassIds)->get()->keyBy('id');
-        foreach ($allSlotsWithRoom as $slot) {
-            if ($slot->setting && isset($roomClasses[$slot->setting->schoolclass_id])) {
-                $slot->setting->setRelation('schoolclass', $roomClasses[$slot->setting->schoolclass_id]);
-            }
-        }
-
-        $roomGrouped = $allSlotsWithRoom->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $s->period_id);
-
-        foreach ($roomGrouped as $group) {
-            if ($group->count() < 2) continue;
-
-            $first      = $group->first();
-            $room       = $first->room;
-            $periodName = $first->period?->name ?? '—';
-            $periodTime = $this->formatTime($first->period?->start_time ?? '')
-                        . ' – ' . $this->formatTime($first->period?->end_time ?? '');
-            $classes    = $group->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->unique()->values();
-            $subjects   = $group->map(fn($s) => $s->subject?->subject ?? '—')->unique()->values();
-
-            $groupArr = $group->values();
-            for ($i = 1; $i < $groupArr->count(); $i++) {
-                $other  = $groupArr[$i];
-                $classA = $this->getClassName($first->setting?->schoolclass);
-                $classB = $this->getClassName($other->setting?->schoolclass);
-
-                $conflicts[] = [
-                    'type'                  => 'room_conflict',
-                    'conflict_category'     => 'room',
-                    'day'                   => $first->day,
-                    'period'                => $periodName,
-                    'period_time'           => $periodTime,
-                    'teacher'               => '🏫 ' . ($room?->room_name ?? 'Unknown Room'),
-                    'teacher_id'            => null,
-                    'teacher_picture'       => null,
-                    'subject_a'             => $first->subject?->subject ?? '—',
-                    'subject_b'             => $other->subject?->subject ?? '—',
-                    'class_a'               => $classA,
-                    'class_b'               => $classB,
-                    'is_cross_arm'          => false,
-                    'setting_a_id'          => $first->setting_id,
-                    'setting_b_id'          => $other->setting_id,
-                    'all_classes'           => $classes,
-                    'all_subjects'          => $subjects,
-                    'alternatives'          => [],
-                    'resolution_suggestion' => "Room conflict: {$classA} and {$classB} are both assigned to "
-                        . ($room?->room_name ?? 'the same room')
-                        . " on {$first->day}, {$periodName}. Assign one class to a different room.",
-                ];
-            }
-        }
-
-        return response()->json([
-            'success'        => true,
-            'conflicts'      => $conflicts,
-            'conflict_count' => count($conflicts),
-            'has_conflicts'  => count($conflicts) > 0,
-            'checked_at'     => now()->format('d M Y, H:i:s'),
-        ]);
     }
+
+    $conflicts = [];
+
+    $teacherGrouped = $slots->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
+
+    foreach ($teacherGrouped as $group) {
+        if ($group->count() < 2) continue;
+
+        $first       = $group->first();
+        $teacherName = $first->teacher?->name ?? '—';
+        $periodName  = $first->period?->name ?? '—';
+        $periodTime  = $this->formatTime($first->period?->start_time ?? '')
+                     . ' – ' . $this->formatTime($first->period?->end_time ?? '');
+        $classes     = $group->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->unique()->values();
+        $subjects    = $group->map(fn($s) => $s->subject?->subject ?? '—')->unique()->values();
+        $classLevels = $group->map(fn($s) => $s->setting?->schoolclass?->schoolclass ?? '')->unique();
+        $isCrossArm  = $classLevels->count() === 1 && $classes->count() > 1;
+
+        // findAlternativeSlots needs a real TimetableSetting instance for its
+        // active_days fallback — $first->setting (eager-loaded above) works
+        // fine here even though we're no longer scoped to one specific setting.
+        $alternatives = $this->findAlternativeSlots(
+            $first->teacher_id, $first->period_id, $first->day, $first->setting
+        );
+
+        $groupArr = $group->values();
+        for ($i = 1; $i < $groupArr->count(); $i++) {
+            $other  = $groupArr[$i];
+            $classA = $this->getClassName($first->setting?->schoolclass);
+            $classB = $this->getClassName($other->setting?->schoolclass);
+
+            $conflicts[] = [
+                'type'                  => $isCrossArm ? 'cross_arm_conflict' : 'teacher_conflict',
+                'conflict_category'     => 'teacher',
+                'day'                   => $first->day,
+                'period'                => $periodName,
+                'period_time'           => $periodTime,
+                'teacher'               => $teacherName,
+                'teacher_id'            => $first->teacher_id,
+                'teacher_picture'       => $first->teacher?->staffPicture
+                    ? asset('storage/staff_avatars/' . $first->teacher->staffPicture->picture)
+                    : null,
+                'subject_a'             => $first->subject?->subject ?? '—',
+                'subject_b'             => $other->subject?->subject ?? '—',
+                'class_a'               => $classA,
+                'class_b'               => $classB,
+                'is_cross_arm'          => $isCrossArm,
+                'setting_a_id'          => $first->setting_id,
+                'setting_b_id'          => $other->setting_id,
+                'all_classes'           => $classes,
+                'all_subjects'          => $subjects,
+                'alternatives'          => $alternatives,
+                'resolution_suggestion' => $this->buildSuggestionText($teacherName, $classA, $alternatives),
+            ];
+        }
+    }
+
+    $allSlotsWithRoom = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
+            $q->where('session_id', $sessionId)->where('is_active', true);
+            if ($termId) $q->where('term_id', $termId);
+            else         $q->whereNull('term_id');
+        })
+        ->whereNotNull('room_id')
+        ->where('is_free', false)
+        ->whereNotNull('subject_id')
+        ->with(['period', 'subject', 'setting', 'teacher', 'room'])
+        ->get();
+
+    $roomClassIds = $allSlotsWithRoom->pluck('setting.schoolclass_id')->unique()->filter();
+    $roomClasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+        ->whereIn('schoolclass.id', $roomClassIds)->get()->keyBy('id');
+    foreach ($allSlotsWithRoom as $slot) {
+        if ($slot->setting && isset($roomClasses[$slot->setting->schoolclass_id])) {
+            $slot->setting->setRelation('schoolclass', $roomClasses[$slot->setting->schoolclass_id]);
+        }
+    }
+
+    $roomGrouped = $allSlotsWithRoom->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $s->period_id);
+
+    foreach ($roomGrouped as $group) {
+        if ($group->count() < 2) continue;
+
+        $first      = $group->first();
+        $room       = $first->room;
+        $periodName = $first->period?->name ?? '—';
+        $periodTime = $this->formatTime($first->period?->start_time ?? '')
+                    . ' – ' . $this->formatTime($first->period?->end_time ?? '');
+        $classes    = $group->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->unique()->values();
+        $subjects   = $group->map(fn($s) => $s->subject?->subject ?? '—')->unique()->values();
+
+        $groupArr = $group->values();
+        for ($i = 1; $i < $groupArr->count(); $i++) {
+            $other  = $groupArr[$i];
+            $classA = $this->getClassName($first->setting?->schoolclass);
+            $classB = $this->getClassName($other->setting?->schoolclass);
+
+            $conflicts[] = [
+                'type'                  => 'room_conflict',
+                'conflict_category'     => 'room',
+                'day'                   => $first->day,
+                'period'                => $periodName,
+                'period_time'           => $periodTime,
+                'teacher'               => '🏫 ' . ($room?->room_name ?? 'Unknown Room'),
+                'teacher_id'            => null,
+                'teacher_picture'       => null,
+                'subject_a'             => $first->subject?->subject ?? '—',
+                'subject_b'             => $other->subject?->subject ?? '—',
+                'class_a'               => $classA,
+                'class_b'               => $classB,
+                'is_cross_arm'          => false,
+                'setting_a_id'          => $first->setting_id,
+                'setting_b_id'          => $other->setting_id,
+                'all_classes'           => $classes,
+                'all_subjects'          => $subjects,
+                'alternatives'          => [],
+                'resolution_suggestion' => "Room conflict: {$classA} and {$classB} are both assigned to "
+                    . ($room?->room_name ?? 'the same room')
+                    . " on {$first->day}, {$periodName}. Assign one class to a different room.",
+            ];
+        }
+    }
+
+    return [
+        'success'        => true,
+        'conflicts'      => $conflicts,
+        'conflict_count' => count($conflicts),
+        'has_conflicts'  => count($conflicts) > 0,
+        'checked_at'     => now()->format('d M Y, H:i:s'),
+    ];
+}
+
+    // =========================================================================
+    // CHECK CONFLICTS — standalone entry point, no class context needed.
+    // Powers the toolbar "Check Conflicts" button.
+    // =========================================================================
+    public function checkConflictsScope(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'session_id' => 'required|exists:schoolsession,id',
+            'term_id'    => 'nullable|exists:schoolterm,id',
+        ]);
+
+        return response()->json(
+            $this->buildConflictReport((int) $validated['session_id'], $validated['term_id'] ?? null)
+        );
+    }
+
 
     // =========================================================================
     // AUTO-GENERATE (single class)
