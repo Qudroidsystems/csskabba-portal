@@ -53,8 +53,13 @@ class SchoolClassController extends Controller
     // DATATABLE — AJAX
     // =========================================================================
 
-    public function data(Request $request)
-    {
+   // =========================================================================
+// DATATABLE — AJAX (FIXED)
+// =========================================================================
+
+public function data(Request $request)
+{
+    try {
         $classes = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->leftJoin('schoolclass_classcategory', 'schoolclass_classcategory.schoolclass_id', '=', 'schoolclass.id')
             ->leftJoin('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
@@ -91,11 +96,15 @@ class SchoolClassController extends Controller
 
             // ── Categories ──────────────────────────────────────────────────
             ->addColumn('categories_info', function ($row) {
-                $categoryNames = explode(', ', $row->classcategory ?? '');
+                $categoryNames = !empty($row->classcategory) ? explode(', ', $row->classcategory) : [];
                 $html = '<div class="d-flex flex-wrap gap-1">';
-                foreach ($categoryNames as $catName) {
-                    if (!empty($catName)) {
-                        $html .= '<span class="sc-badge sc-badge-category">' . e($this->cleanUtf8String($catName)) . '</span>';
+                if (empty($categoryNames)) {
+                    $html .= '<span class="text-muted">No categories</span>';
+                } else {
+                    foreach ($categoryNames as $catName) {
+                        if (!empty($catName)) {
+                            $html .= '<span class="sc-badge sc-badge-category">' . e($this->cleanUtf8String($catName)) . '</span>';
+                        }
                     }
                 }
                 $html .= '</div>';
@@ -145,8 +154,18 @@ class SchoolClassController extends Controller
 
             ->rawColumns(['class_info', 'arm_info', 'categories_info', 'formatted_date', 'action'])
             ->make(true);
+            
+    } catch (\Exception $e) {
+        Log::channel('schoolclass')->error('DataTable error:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'error' => $e->getMessage()
+        ], 500);
     }
-
+}
     // =========================================================================
     // STATS
     // =========================================================================
