@@ -257,12 +257,15 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/updateuserrole', [RoleController::class, 'updateuserrole'])->name('roles.updateuserrole');
     Route::delete('roles/removeuserrole/{userid}/{roleid}', [RoleController::class, 'removeuserrole'])->name('roles.removeuserrole');
 
-   // Subject Routes
     Route::prefix('subject')->group(function () {
+        Route::get('/', [SubjectController::class, 'index'])->name('subject.index');
         Route::get('/data', [SubjectController::class, 'data'])->name('subject.data');
         Route::get('/stats', [SubjectController::class, 'stats'])->name('subject.stats');
+        Route::post('/store', [SubjectController::class, 'store'])->name('subject.store');
         Route::post('/bulk-destroy', [SubjectController::class, 'deleteMultiple'])->name('subject.bulk-destroy');
         Route::post('/delete-subject', [SubjectController::class, 'deletesubject'])->name('subject.deletesubject');
+        Route::put('/{id}', [SubjectController::class, 'update'])->name('subject.update');
+        Route::delete('/{id}', [SubjectController::class, 'destroy'])->name('subject.destroy');
     });
 
     // Subject Class Routes
