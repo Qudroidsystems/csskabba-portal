@@ -4,376 +4,271 @@
 @section('content')
 <style>
 :root {
-    --pay-primary: #1e3a5f;
-    --pay-accent:  #2563eb;
-    --pay-success: #16a34a;
-    --pay-warning: #d97706;
-    --pay-danger:  #dc2626;
-    --pay-purple:  #7c3aed;
-    --pay-muted:   #6b7280;
-    --pay-border:  #e2e8f0;
-    --pay-bg:      #f8fafc;
-    --pay-radius:  12px;
-    --pay-shadow:  0 2px 8px rgba(0,0,0,.08);
+    --cc-primary:  #1e3a5f;
+    --cc-accent:   #2563eb;
+    --cc-success:  #16a34a;
+    --cc-warning:  #d97706;
+    --cc-danger:   #dc2626;
+    --cc-muted:    #6b7280;
+    --cc-border:   #e2e8f0;
+    --cc-bg:       #f8fafc;
+    --cc-radius:   12px;
+    --cc-shadow:   0 2px 8px rgba(0,0,0,.08);
 }
 
-.loading-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5); z-index: 9999;
-    display: none; align-items: center; justify-content: center;
-}
-.loading-overlay.active { display: flex; }
-.loading-spinner {
-    background: white; padding: 24px 32px; border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.18); text-align: center;
-}
-.loading-spinner .spinner-border { width: 2.5rem; height: 2.5rem; }
-.loading-spinner p { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--pay-primary); }
-
-.pay-hero {
+/* ── Hero ────────────────────────────────────────────────── */
+.cc-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--pay-radius);
-    padding: 28px 32px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
+    border-radius: var(--cc-radius);
+    padding: 28px 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
 }
-.pay-hero::before {
-    content: '';
-    position: absolute; top: -60px; right: -60px;
-    width: 220px; height: 220px;
-    background: rgba(255,255,255,.06);
-    border-radius: 50%;
+.cc-hero::before {
+    content:''; position:absolute; top:-60px; right:-60px;
+    width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
 }
-.pay-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
-.pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
+.cc-hero::after {
+    content:''; position:absolute; bottom:-80px; left:-30px;
+    width:260px; height:260px; background:rgba(255,255,255,.03); border-radius:50%;
+}
+.cc-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
+.cc-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
 
-/* Navigation Tabs */
+/* ── Navigation Tabs ────────────────────────────────────── */
 .nav-tabs-custom {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-    border-bottom: 1px solid var(--pay-border);
-    padding-bottom: 0;
+    display: flex; gap: 8px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--cc-border); padding-bottom: 0;
 }
 .nav-tabs-custom .nav-link {
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--pay-muted);
-    background: transparent;
-    border: none;
-    border-radius: 8px 8px 0 0;
-    cursor: pointer;
-    transition: all .15s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    padding: 10px 20px; font-size: 13px; font-weight: 600;
+    color: var(--cc-muted); background: transparent;
+    border: none; border-radius: 8px 8px 0 0;
+    cursor: pointer; transition: all .15s;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
 }
-.nav-tabs-custom .nav-link i {
-    font-size: 16px;
-}
+.nav-tabs-custom .nav-link i { font-size: 16px; }
 .nav-tabs-custom .nav-link:hover {
-    color: var(--pay-accent);
-    background: rgba(37,99,235,.05);
+    color: var(--cc-accent); background: rgba(37,99,235,.05);
 }
 .nav-tabs-custom .nav-link.active {
-    color: var(--pay-accent);
-    border-bottom: 2px solid var(--pay-accent);
+    color: var(--cc-accent); border-bottom: 2px solid var(--cc-accent);
     background: transparent;
 }
-.nav-tabs-custom .nav-link.active i {
-    color: var(--pay-accent);
-}
 
+/* ── Stat cards ──────────────────────────────────────────── */
 .stat-card {
-    background: #fff;
-    border: 1px solid var(--pay-border);
-    border-radius: var(--pay-radius);
-    padding: 18px 20px;
-    transition: transform .15s, box-shadow .15s;
+    background:#fff; border:1px solid var(--cc-border);
+    border-radius:var(--cc-radius); padding:18px 20px;
+    transition:transform .15s, box-shadow .15s;
 }
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--pay-shadow); }
-.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--pay-primary); }
-.stat-card .stat-label { font-size: 12px; color: var(--pay-muted); margin-top: 4px; }
-.stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
+.stat-card:hover { transform:translateY(-2px); box-shadow:var(--cc-shadow); }
+.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--cc-primary); }
+.stat-card .stat-label { font-size:12px; color:var(--cc-muted); margin-top:4px; }
+.stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
 
-.category-table {
-    width: 100%;
-    border-collapse: collapse;
+/* ── Table ───────────────────────────────────────────────── */
+.cc-table th {
+    background:var(--cc-primary); color:#fff;
+    padding:12px 16px; font-weight:600; font-size:13px;
+    white-space:nowrap;
 }
-.category-table th {
-    background: var(--pay-primary);
-    color: #fff;
-    padding: 12px 16px;
-    font-weight: 600;
-    font-size: 13px;
-    white-space: nowrap;
-    text-align: left;
+.cc-table td {
+    padding:11px 16px; vertical-align:middle;
+    border-bottom:1px solid var(--cc-border); font-size:13px;
 }
-.category-table td {
-    padding: 11px 16px;
-    vertical-align: middle;
-    border-bottom: 1px solid var(--pay-border);
-    font-size: 13px;
-}
-.category-table tr:hover td { background: #f0f9ff; }
+.cc-table tr:hover td { background:#f0f9ff; }
 
-.btn-icon {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    transition: all .15s;
-    border: none;
-    cursor: pointer;
+/* ── Badges ──────────────────────────────────────────────── */
+.cc-badge {
+    display:inline-flex; align-items:center;
+    padding:4px 12px; border-radius:20px;
+    font-size:11px; font-weight:600;
 }
-.btn-subtle-secondary {
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
+.cc-badge-senior {
+    background:#f0fdf4; color:#16a34a;
+    border:1px solid #bbf7d0;
 }
-.btn-subtle-secondary:hover {
-    background: #e2e8f0;
-    color: #1e293b;
-    transform: translateY(-1px);
-}
-.btn-subtle-danger {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-}
-.btn-subtle-danger:hover {
-    background: #fee2e2;
-    color: #b91c1c;
-    transform: translateY(-1px);
+.cc-badge-junior {
+    background:#eff6ff; color:#2563eb;
+    border:1px solid #bfdbfe;
 }
 
-.search-box {
-    position: relative;
+/* ── DataTables overrides ────────────────────────────────── */
+.dataTables_wrapper .dataTables_filter input {
+    border:1.5px solid var(--cc-border); border-radius:8px;
+    padding:7px 14px; margin-left:8px; font-size:13px;
+    transition:border .15s;
 }
-.search-box .form-control {
-    border: 1.5px solid var(--pay-border);
-    border-radius: 8px;
-    padding: 9px 14px;
-    padding-right: 36px;
-    font-size: 13px;
-    width: 100%;
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color:var(--cc-accent); outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
-.search-box .form-control:focus {
-    border-color: var(--pay-accent);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+.dataTables_wrapper .dataTables_length select {
+    border:1.5px solid var(--cc-border); border-radius:8px;
+    padding:6px 10px; margin:0 6px; font-size:13px;
 }
-.search-box .search-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--pay-muted);
-    pointer-events: none;
+.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--cc-muted); }
+.dataTables_wrapper .paginate_button  {
+    border-radius:6px !important; font-size:13px !important;
+    padding:4px 10px !important;
+}
+.dataTables_wrapper .paginate_button.current,
+.dataTables_wrapper .paginate_button.current:hover {
+    background:var(--cc-accent) !important;
+    border-color:var(--cc-accent) !important; color:#fff !important;
 }
 
-.modal-content {
-    border: none;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+/* ── Modals ──────────────────────────────────────────────── */
+.cc-modal .modal-content {
+    border:none; border-radius:16px;
+    overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15);
 }
 .modal-hero-bar {
-    background: linear-gradient(135deg, #1e3a5f, #2563eb);
-    padding: 20px 28px;
-    position: relative;
+    background:linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    padding:22px 28px; position:relative; overflow:hidden;
 }
-.modal-hero-bar h5 {
-    color: #fff;
-    font-weight: 700;
-    margin: 0;
-    font-size: 15px;
+.modal-hero-bar::before {
+    content:''; position:absolute; top:-30px; right:-30px;
+    width:120px; height:120px; background:rgba(255,255,255,.07); border-radius:50%;
 }
-.modal-hero-bar .btn-close {
-    position: absolute;
-    top: 16px;
-    right: 20px;
-    filter: invert(1);
-}
-.modal-body {
-    padding: 24px;
-}
-.form-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 6px;
-}
+.modal-hero-bar h5 { color:#fff; font-weight:700; margin:0; font-size:16px; position:relative; }
+.modal-hero-bar .btn-close { position:absolute; top:18px; right:20px; filter:invert(1); }
+
+.form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
 .form-control, .form-select {
-    border: 1.5px solid var(--pay-border);
-    border-radius: 8px;
-    font-size: 13px;
-    padding: 9px 14px;
-    width: 100%;
+    border:1.5px solid var(--cc-border); border-radius:8px;
+    font-size:13px; padding:9px 14px; transition:border .15s;
 }
 .form-control:focus, .form-select:focus {
-    border-color: var(--pay-accent);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
-}
-textarea.form-control {
-    resize: vertical;
-    min-height: 80px;
-}
-.modal-footer {
-    padding: 16px 24px 24px;
-    border-top: none;
-}
-.btn {
-    padding: 8px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 8px;
-    transition: all .15s;
-    cursor: pointer;
-}
-.btn-primary {
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
-    border: none;
-    color: white;
-}
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37,99,235,.3);
-}
-.btn-light {
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-}
-.btn-light:hover {
-    background: #e2e8f0;
-    transform: translateY(-1px);
-}
-.btn-outline-primary {
-    border: 1.5px solid var(--pay-accent);
-    background: transparent;
-    color: var(--pay-accent);
-}
-.btn-outline-primary:hover {
-    background: var(--pay-accent);
-    color: white;
+    border-color:var(--cc-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 
 .sub-assessment-row {
-    background: #f8fafc;
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    border: 1px solid var(--pay-border);
+    background:#f8fafc; padding:12px; border-radius:10px;
+    margin-bottom:10px; border:1px solid var(--cc-border);
 }
 
-.badge-senior {
-    background: #f0fdf4;
-    color: #16a34a;
-    border: 1px solid #bbf7d0;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
+/* ── Bulk bar ────────────────────────────────────────────── */
+.bulk-bar {
+    background:#fff3cd; border:1px solid #ffc107;
+    border-radius:8px; padding:10px 16px;
+    display:none; align-items:center; gap:12px; margin-bottom:12px;
 }
-.badge-junior {
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
+.bulk-bar.show { display:flex; }
+
+/* ── Full-page loader overlay ────────────────────────────── */
+#cc-page-loader {
+    position:fixed; inset:0; z-index:9999;
+    background:rgba(15,23,42,.55);
+    backdrop-filter:blur(3px);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    opacity:0; visibility:hidden;
+    transition:opacity .22s, visibility .22s;
+}
+#cc-page-loader.active { opacity:1; visibility:visible; }
+.cc-loader-card {
+    background:#fff; border-radius:16px;
+    padding:32px 40px; text-align:center;
+    box-shadow:0 24px 64px rgba(0,0,0,.22); min-width:220px;
+}
+.cc-loader-spinner {
+    width:52px; height:52px; margin:0 auto 16px;
+    border:4px solid #e2e8f0; border-top-color:var(--cc-accent);
+    border-radius:50%; animation:cc-spin .75s linear infinite;
+}
+@keyframes cc-spin { to { transform:rotate(360deg); } }
+.cc-loader-label { font-size:14px; font-weight:600; color:var(--cc-primary); margin-bottom:12px; }
+.cc-progress-wrap {
+    width:160px; height:5px; background:#e2e8f0;
+    border-radius:99px; overflow:hidden; margin:0 auto;
+}
+.cc-progress-bar {
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--cc-accent), #0d9488);
+    border-radius:99px; transition:width .35s ease;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 52px 24px;
-    color: var(--pay-muted);
+/* ── Modal body loading overlay ──────────────────────────── */
+.modal-body-loader {
+    position:absolute; inset:0; z-index:10;
+    background:rgba(255,255,255,.82); backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center;
+    border-radius:0 0 16px 16px;
+    opacity:0; visibility:hidden; transition:opacity .18s, visibility .18s;
 }
-.empty-state i {
-    font-size: 3rem;
-    opacity: .25;
-    display: block;
-    margin-bottom: 14px;
+.modal-body-loader.active { opacity:1; visibility:visible; }
+.modal-body-loader .inner { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.modal-body-loader .mbl-spinner {
+    width:36px; height:36px; border:3px solid #e2e8f0;
+    border-top-color:var(--cc-accent); border-radius:50%;
+    animation:cc-spin .7s linear infinite;
+}
+.modal-body-loader .mbl-text { font-size:13px; font-weight:600; color:var(--cc-primary); }
+
+/* ── Toast notifications ─────────────────────────────────── */
+#cc-toast-stack {
+    position:fixed; bottom:24px; right:24px; z-index:10000;
+    display:flex; flex-direction:column-reverse; gap:10px; pointer-events:none;
+}
+.cc-toast {
+    pointer-events:all; background:#fff; border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,.14);
+    padding:14px 18px; min-width:280px; max-width:360px;
+    display:flex; align-items:flex-start; gap:12px;
+    border-left:4px solid var(--cc-accent);
+    transform:translateX(120%);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.cc-toast.show { transform:translateX(0); }
+.cc-toast.cc-toast-success { border-left-color:var(--cc-success); }
+.cc-toast.cc-toast-error   { border-left-color:var(--cc-danger);  }
+.cc-toast.cc-toast-warning { border-left-color:var(--cc-warning); }
+.cc-toast .cc-toast-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:1px; }
+.cc-toast-success .cc-toast-icon { color:var(--cc-success); }
+.cc-toast-error   .cc-toast-icon { color:var(--cc-danger);  }
+.cc-toast-warning .cc-toast-icon { color:var(--cc-warning); }
+.cc-toast .cc-toast-body { flex:1; }
+.cc-toast .cc-toast-title { font-size:13px; font-weight:700; color:#111827; margin-bottom:2px; }
+.cc-toast .cc-toast-msg   { font-size:12px; color:var(--cc-muted); line-height:1.4; }
+.cc-toast .cc-toast-close {
+    background:none; border:none; cursor:pointer;
+    color:var(--cc-muted); font-size:16px; line-height:1; padding:0; flex-shrink:0;
 }
 
-.alert {
-    border: none;
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-size: 13px;
-}
-.alert-danger {
-    background: #fef2f2;
-    color: #991b1b;
-    border-left: 3px solid #dc2626;
-}
-.alert-success {
-    background: #f0fdf4;
-    color: #166534;
-    border-left: 3px solid #16a34a;
-}
-
-.pagination {
-    display: flex;
-    gap: 5px;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-.pagination .page-item .page-link {
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 13px;
-    color: var(--pay-primary);
-    border: 1px solid var(--pay-border);
-    background: white;
-    text-decoration: none;
-}
-.pagination .page-item.active .page-link {
-    background: var(--pay-accent);
-    border-color: var(--pay-accent);
-    color: white;
-}
-.pagination .page-item.disabled .page-link {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.form-check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.form-check-input {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
+/* ── Button loading state ────────────────────────────────── */
+.btn-loading { position:relative; pointer-events:none; opacity:.85; }
+.btn-loading .btn-text { visibility:hidden; }
+.btn-loading::after {
+    content:''; position:absolute; inset:0; margin:auto;
+    width:16px; height:16px; border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff; border-radius:50%; animation:cc-spin .65s linear infinite;
 }
 </style>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+
+{{-- ═══ Full-page loader overlay ═══ --}}
+<div id="cc-page-loader">
+    <div class="cc-loader-card">
+        <div class="cc-loader-spinner"></div>
+        <div class="cc-loader-label" id="cc-loader-label">Processing…</div>
+        <div class="cc-progress-wrap">
+            <div class="cc-progress-bar" id="cc-progress-bar"></div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══ Toast stack ═══ --}}
+<div id="cc-toast-stack"></div>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading…</span>
-            </div>
-            <p>Processing…</p>
-        </div>
-    </div>
-
-    <div class="pay-hero">
+    {{-- Hero --}}
+    <div class="cc-hero">
         <h1><i class="ri-bookmark-line me-2"></i>Class Category Management</h1>
         <p>Manage class categories and their assessment configurations for grading systems.</p>
     </div>
@@ -388,183 +283,87 @@ textarea.form-control {
         </a>
     </div>
 
+    {{-- Stat cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-bookmark-line"></i></div>
-                <div class="stat-value">{{ $classcategories->total() }}</div>
+                <div class="stat-value" id="statTotal">—</div>
                 <div class="stat-label">Total Categories</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-icon"><i class="ri-bar-chart-line"></i></div>
-                <div class="stat-value text-primary">{{ $classcategories->count() }}</div>
-                <div class="stat-label">Showing Now</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
                 <div class="stat-icon"><i class="ri-school-line"></i></div>
-                <div class="stat-value text-success">
-                    {{ $classcategories->where('is_senior', true)->count() }}
-                </div>
+                <div class="stat-value text-success" id="statSenior">—</div>
                 <div class="stat-label">Senior Categories</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-graduation-cap-line"></i></div>
-                <div class="stat-value text-warning">
-                    {{ $classcategories->where('is_senior', false)->count() }}
-                </div>
+                <div class="stat-value text-warning" id="statJunior">—</div>
                 <div class="stat-label">Junior Categories</div>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-file-list-line"></i></div>
+                <div class="stat-value text-primary" id="statWithAssessment">—</div>
+                <div class="stat-label">With Assessment</div>
+            </div>
+        </div>
     </div>
 
+    {{-- Table card --}}
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap">
-            <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
-                <i class="ri-list-check me-2"></i>Class Categories List
-                <span class="badge bg-primary ms-2">{{ $classcategories->total() }}</span>
-            </h5>
-            <div class="d-flex gap-2">
-                @can('Create class-category')
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold" style="color:var(--cc-primary)">
+                    <i class="ri-list-check me-2"></i>Class Categories List
+                    <span class="badge bg-primary ms-2" id="totalBadge">0</span>
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-danger d-none" id="bulkDeleteBtn">
+                        <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                    </button>
+                    @can('Create class-category')
+                    <button class="btn btn-primary" id="createCategoryBtn">
                         <i class="ri-add-line me-1"></i>Create Category
                     </button>
-                @endcan
+                    @endcan
+                </div>
             </div>
         </div>
         <div class="card-body">
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <div class="search-box">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search categories or assessments...">
-                        <i class="ri-search-line search-icon"></i>
-                    </div>
-                </div>
+
+            {{-- Bulk bar --}}
+            <div class="bulk-bar" id="bulkBar">
+                <i class="ri-checkbox-circle-line text-warning"></i>
+                <span id="bulkCount">0</span> category(ies) selected
+                <button class="btn btn-sm btn-danger ms-auto" id="bulkDeleteBtn2">
+                    <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                </button>
             </div>
 
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br>
-                    <ul class="mb-0 mt-2">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show">
-                    <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
             <div class="table-responsive">
-                <table class="category-table" id="categoriesTable">
+                <table class="table cc-table w-100 mb-0" id="categoriesTable">
                     <thead>
                         <tr>
-                            <th width="50">#</th>
+                            <th width="40">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>#</th>
                             <th>Category Name</th>
                             <th>Assessment</th>
                             <th>Grade Type</th>
-                            <th width="120">Last Updated</th>
+                            <th>Subs</th>
+                            <th>Last Updated</th>
                             <th width="100">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
-                        @php $i = ($classcategories->currentPage() - 1) * $classcategories->perPage() + 1; @endphp
-                        @forelse ($classcategories as $sc)
-                            @php
-                                $assessment = $sc->assessments->first();
-                                $subAssessments = $assessment ? $assessment->subAssessments : collect();
-                            @endphp
-                            <tr data-id="{{ $sc->id }}">
-                                <td class="sn">{{ $i++ }}</td>
-                                <td>
-                                    <span class="fw-semibold">{{ $sc->category }}</span>
-                                    <small class="text-muted d-block">ID: {{ $sc->id }}</small>
-                                </td>
-                                <td>
-                                    @if($assessment)
-                                        <div class="fw-semibold">{{ $assessment->name }}</div>
-                                        <div class="small text-muted">Max Score: {{ number_format($assessment->max_score, 2) }}</div>
-                                        @if($subAssessments->count() > 0)
-                                            <div class="mt-1">
-                                                <span class="badge bg-secondary-subtle text-secondary">
-                                                    {{ $subAssessments->count() }} Sub-assessment(s)
-                                                </span>
-                                            </div>
-                                        @endif
-                                    @else
-                                        <span class="text-muted">No Assessment</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="{{ $sc->is_senior ? 'badge-senior' : 'badge-junior' }}">
-                                        {{ $sc->is_senior ? 'Senior' : 'Junior' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="text-muted small">{{ $sc->updated_at->format('d M Y') }}</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        @can('Update class-category')
-                                            <button type="button"
-                                                    class="btn-icon btn-subtle-secondary edit-category-btn"
-                                                    data-id="{{ $sc->id }}"
-                                                    data-category="{{ $sc->category }}"
-                                                    data-is_senior="{{ $sc->is_senior ? 1 : 0 }}"
-                                                    data-assessment-name="{{ $assessment->name ?? '' }}"
-                                                    data-sub-assessments='@json($subAssessments)'>
-                                                <i class="ri-pencil-line"></i>
-                                            </button>
-                                        @endcan
-                                        @can('Delete class-category')
-                                            <button type="button"
-                                                    class="btn-icon btn-subtle-danger delete-category-btn"
-                                                    data-id="{{ $sc->id }}"
-                                                    data-name="{{ $sc->category }}">
-                                                <i class="ri-delete-bin-line"></i>
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center">
-                                    <div class="empty-state">
-                                        <i class="ri-inbox-line"></i>
-                                        <p>No class categories found.</p>
-                                        @can('Create class-category')
-                                            <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                                                <i class="ri-add-line me-1"></i>Create your first category
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+                    <tbody></tbody>
                 </table>
-            </div>
-
-            <div class="row align-items-center mt-3">
-                <div class="col-sm">
-                    <div class="text-muted text-center text-sm-start">
-                        Showing <span class="fw-semibold">{{ $classcategories->count() }}</span> of <span class="fw-semibold">{{ $classcategories->total() }}</span> categories
-                    </div>
-                </div>
-                <div class="col-sm-auto mt-3 mt-sm-0">
-                    {{ $classcategories->links() }}
-                </div>
             </div>
         </div>
     </div>
@@ -573,60 +372,73 @@ textarea.form-control {
 </div>
 </div>
 
-{{-- ADD CATEGORY MODAL --}}
-<div id="addCategoryModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+{{-- ═══════════════════════ CREATE MODAL ════════════════════ --}}
+<div class="modal fade cc-modal" id="createModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 <h5><i class="ri-add-line me-2"></i>Create New Class Category</h5>
             </div>
-            <form id="addCategoryForm">
+            <form id="createForm" autocomplete="off">
                 @csrf
-                <div class="modal-body">
+                <div class="modal-body-loader" id="create-modal-loader">
+                    <div class="inner">
+                        <div class="mbl-spinner"></div>
+                        <div class="mbl-text" id="create-modal-loader-text">Saving…</div>
+                    </div>
+                </div>
+                <div class="modal-body p-4" style="position:relative">
+
+                    {{-- Category Name --}}
                     <div class="mb-3">
-                        <label for="category" class="form-label">Category Name <span class="text-danger">*</span></label>
-                        <input type="text" name="category" id="category" class="form-control" placeholder="e.g., Science, Arts, Commercial" required>
+                        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" name="category" id="create-category" class="form-control" placeholder="e.g., Science, Arts, Commercial" required>
                     </div>
 
+                    {{-- Grade Type --}}
                     <div class="mb-3">
                         <label class="form-label">Grade Type <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-4">
+                        <div class="inline-check-group">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="is_senior" id="junior" value="0" checked>
-                                <label class="form-check-label" for="junior">
-                                    <span class="badge-junior">Junior (A, B, C, D, F)</span>
+                                <input class="form-check-input create-senior-rb" type="radio"
+                                       name="create_is_senior" id="create-junior" value="0" checked>
+                                <label class="form-check-label" for="create-junior">
+                                    <span class="cc-badge cc-badge-junior">Junior (A, B, C, D, F)</span>
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="is_senior" id="senior" value="1">
-                                <label class="form-check-label" for="senior">
-                                    <span class="badge-senior">Senior (A1, B2, B3, C4, C5, C6, D7, E8, F9)</span>
+                                <input class="form-check-input create-senior-rb" type="radio"
+                                       name="create_is_senior" id="create-senior" value="1">
+                                <label class="form-check-label" for="create-senior">
+                                    <span class="cc-badge cc-badge-senior">Senior (A1-F9)</span>
                                 </label>
                             </div>
                         </div>
                     </div>
 
+                    {{-- Assessment Name --}}
                     <div class="mb-3">
-                        <label for="assessment_name" class="form-label">Assessment Name <span class="text-danger">*</span></label>
-                        <input type="text" name="assessments[0][name]" id="assessment_name" class="form-control" placeholder="e.g., First Term Examination" required>
+                        <label class="form-label">Assessment Name <span class="text-danger">*</span></label>
+                        <input type="text" name="assessments[0][name]" id="create-assessment-name" class="form-control" placeholder="e.g., First Term Examination" required>
                     </div>
 
+                    {{-- Sub Assessments --}}
                     <div class="mb-3">
                         <label class="form-label">Sub Assessments <span class="text-danger">*</span></label>
-                        <div id="add-sub-container" class="mb-2"></div>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-sub-btn">
+                        <div id="create-sub-container" class="mb-2"></div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="create-sub-btn">
                             <i class="ri-add-line me-1"></i>Add Sub Assessment
                         </button>
                         <div class="form-text text-muted mt-2">At least one sub-assessment with a valid max score is required.</div>
                     </div>
 
-                    <div class="alert alert-danger d-none" id="addAlertError"></div>
+                    <div class="alert alert-danger d-none" id="create-error-msg"></div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="addBtn">
-                        <i class="ri-save-line me-1"></i>Create Category
+                    <button type="submit" class="btn btn-primary" id="create-save-btn" disabled>
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Create Category</span>
                     </button>
                 </div>
             </form>
@@ -634,46 +446,59 @@ textarea.form-control {
     </div>
 </div>
 
-{{-- EDIT CATEGORY MODAL --}}
-<div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+{{-- ═══════════════════════ EDIT MODAL ══════════════════════ --}}
+<div class="modal fade cc-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 <h5><i class="ri-edit-line me-2"></i>Edit Class Category</h5>
             </div>
-            <form id="editCategoryForm">
+            <form id="editForm" autocomplete="off">
                 @csrf
-                <input type="hidden" name="id" id="edit_id">
-                <div class="modal-body">
+                <input type="hidden" id="edit-category-id">
+                <div class="modal-body-loader" id="edit-modal-loader">
+                    <div class="inner">
+                        <div class="mbl-spinner"></div>
+                        <div class="mbl-text" id="edit-modal-loader-text">Updating…</div>
+                    </div>
+                </div>
+                <div class="modal-body p-4" style="position:relative">
+
+                    {{-- Category Name --}}
                     <div class="mb-3">
-                        <label for="edit_category" class="form-label">Category Name <span class="text-danger">*</span></label>
-                        <input type="text" name="category" id="edit_category" class="form-control" required>
+                        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" name="category" id="edit-category" class="form-control" required>
                     </div>
 
+                    {{-- Grade Type --}}
                     <div class="mb-3">
                         <label class="form-label">Grade Type <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-4">
+                        <div class="inline-check-group">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="is_senior" id="edit_junior" value="0">
-                                <label class="form-check-label" for="edit_junior">
-                                    <span class="badge-junior">Junior</span>
+                                <input class="form-check-input edit-senior-rb" type="radio"
+                                       name="edit_is_senior" id="edit-junior" value="0">
+                                <label class="form-check-label" for="edit-junior">
+                                    <span class="cc-badge cc-badge-junior">Junior (A, B, C, D, F)</span>
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="is_senior" id="edit_senior" value="1">
-                                <label class="form-check-label" for="edit_senior">
-                                    <span class="badge-senior">Senior</span>
+                                <input class="form-check-input edit-senior-rb" type="radio"
+                                       name="edit_is_senior" id="edit-senior" value="1">
+                                <label class="form-check-label" for="edit-senior">
+                                    <span class="cc-badge cc-badge-senior">Senior (A1-F9)</span>
                                 </label>
                             </div>
                         </div>
                     </div>
 
+                    {{-- Assessment Name --}}
                     <div class="mb-3">
-                        <label for="edit_assessment_name" class="form-label">Assessment Name <span class="text-danger">*</span></label>
-                        <input type="text" name="assessments[0][name]" id="edit_assessment_name" class="form-control" required>
+                        <label class="form-label">Assessment Name <span class="text-danger">*</span></label>
+                        <input type="text" name="assessments[0][name]" id="edit-assessment-name" class="form-control" required>
                     </div>
 
+                    {{-- Sub Assessments --}}
                     <div class="mb-3">
                         <label class="form-label">Sub Assessments <span class="text-danger">*</span></label>
                         <div id="edit-sub-container" class="mb-2"></div>
@@ -682,12 +507,12 @@ textarea.form-control {
                         </button>
                     </div>
 
-                    <div class="alert alert-danger d-none" id="editAlertError"></div>
+                    <div class="alert alert-danger d-none" id="edit-error-msg"></div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="updateBtn">
-                        <i class="ri-save-line me-1"></i>Update Category
+                    <button type="submit" class="btn btn-primary" id="edit-update-btn">
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Update Category</span>
                     </button>
                 </div>
             </form>
@@ -695,61 +520,221 @@ textarea.form-control {
     </div>
 </div>
 
-{{-- DELETE CONFIRMATION MODAL --}}
-<div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true">
+{{-- ═══════════════════════ DELETE MODAL ════════════════════ --}}
+<div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center pt-0">
-                <div class="mb-3">
-                    <div class="mx-auto mb-3" style="width: 60px; height: 60px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="ri-delete-bin-line" style="font-size: 28px; color: #dc2626;"></i>
-                    </div>
-                    <h5 class="mb-2">Are you sure?</h5>
-                    <p class="text-muted mb-0">You won't be able to revert this action!</p>
-                    <p class="text-muted small mt-2" id="deleteItemName"></p>
-                </div>
+            <div class="modal-body">
+                <p>Remove <strong id="delete-item-title"></strong>?</p>
+                <p class="text-muted small mb-0">This action cannot be undone.</p>
             </div>
-            <div class="modal-footer border-0 pt-0 pb-4 justify-content-center">
+            <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="ri-delete-bin-line me-1"></i>Yes, Delete
+                <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+                    <i class="ri-delete-bin-line me-1"></i><span class="btn-text">Delete</span>
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-$(document).ready(function() {
-    let addSubIndex = 0;
+$(document).ready(function () {
+
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+    let deleteId = null;
+    let createSubIndex = 0;
     let editSubIndex = 0;
-    let deleteCategoryId = null;
 
-    // Define route URLs
-    const storeUrl = '{{ route("classcategories.store") }}';
-    const updateUrl = '{{ route("classcategories.updateclasscategory") }}';
-    const deleteUrlBase = '{{ url("classcategories") }}';
+    // =========================================================================
+    // LOADING HELPERS
+    // =========================================================================
 
-    function showLoading(show) {
-        $('#loadingOverlay').toggleClass('active', show);
+    const PageLoader = {
+        _prog: 0, _timer: null,
+        show(label = 'Processing…') {
+            $('#cc-loader-label').text(label);
+            $('#cc-progress-bar').css('width', '0%');
+            $('#cc-page-loader').addClass('active');
+            this._prog = 0; this._tick();
+        },
+        _tick() {
+            PageLoader._timer = setInterval(() => {
+                if (PageLoader._prog < 85) {
+                    PageLoader._prog += Math.random() * 8;
+                    $('#cc-progress-bar').css('width', Math.min(PageLoader._prog, 85) + '%');
+                }
+            }, 220);
+        },
+        hide() {
+            clearInterval(this._timer);
+            $('#cc-progress-bar').css('width', '100%');
+            setTimeout(() => $('#cc-page-loader').removeClass('active'), 350);
+        },
+    };
+
+    function showModalLoader(id, text) {
+        $('#' + id + '-modal-loader-text').text(text || 'Processing…');
+        $('#' + id + '-modal-loader').addClass('active');
+    }
+    function hideModalLoader(id) { $('#' + id + '-modal-loader').removeClass('active'); }
+
+    function btnLoad($btn, label) {
+        $btn.data('original-html', $btn.html())
+            .prop('disabled', true).addClass('btn-loading');
+        if (label) $btn.html('<span class="btn-text">' + label + '</span>');
+    }
+    function btnReset($btn) {
+        var orig = $btn.data('original-html');
+        if (orig) $btn.html(orig);
+        $btn.prop('disabled', false).removeClass('btn-loading');
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+    function toast(type, title, msg, duration) {
+        duration = duration || 4000;
+        var icons = {
+            success: 'ri-checkbox-circle-fill',
+            error:   'ri-close-circle-fill',
+            warning: 'ri-alert-fill',
+            info:    'ri-information-fill'
+        };
+        var id  = 'cc-toast-' + Date.now();
+        var $el = $([
+            '<div class="cc-toast cc-toast-' + type + '" id="' + id + '">',
+            '  <span class="cc-toast-icon"><i class="' + (icons[type] || icons.info) + '"></i></span>',
+            '  <div class="cc-toast-body">',
+            '    <div class="cc-toast-title">' + title + '</div>',
+            msg ? '    <div class="cc-toast-msg">' + msg + '</div>' : '',
+            '  </div>',
+            '  <button class="cc-toast-close" onclick="$(\'#' + id + '\').remove()">×</button>',
+            '</div>'
+        ].join(''));
+        $('#cc-toast-stack').append($el);
+        setTimeout(function() { $el.addClass('show'); }, 20);
+        if (duration > 0) {
+            setTimeout(function() {
+                $el.removeClass('show');
+                setTimeout(function() { $el.remove(); }, 350);
+            }, duration);
+        }
+    }
+
+    function showError(selector, msg) {
+        $(selector).removeClass('d-none')
+            .html('<i class="ri-error-warning-line me-1"></i>' + msg);
+    }
+
+    // =========================================================================
+    // DATATABLE (server-side)
+    // =========================================================================
+
+    var table = $('#categoriesTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("classcategories.data") }}',
+            type: 'GET',
+            error: function(xhr) {
+                console.error('DataTables AJAX error:', xhr.status, xhr.responseText);
+                toast('error', 'Load Error', 'Failed to load categories. Please refresh.');
+            }
+        },
+        columns: [
+            // Checkbox
+            {
+                data: 'id', orderable: false, searchable: false,
+                render: function(data) {
+                    return '<input type="checkbox" class="form-check-input row-checkbox" value="' + data + '">';
+                }
+            },
+            // Row index
+            { data: 'DT_RowIndex', orderable: false, searchable: false },
+            // Category Name
+            { data: 'category_info', orderable: false },
+            // Assessment
+            { data: 'assessment_info', orderable: false },
+            // Grade Type
+            { data: 'grade_type', orderable: false },
+            // Sub Count
+            { data: 'sub_count', orderable: false },
+            // Date
+            { data: 'formatted_date', orderable: false },
+            // Actions
+            { data: 'action', orderable: false, searchable: false },
+        ],
+        dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
+             "<'row'<'col-12'tr>>" +
+             "<'row align-items-center mt-3'<'col-sm-5'i><'col-sm-7 text-end'p>>",
+        language: {
+            processing:      '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…',
+            search:          '',
+            searchPlaceholder: 'Search categories…',
+            lengthMenu:      'Show _MENU_ entries',
+            info:            'Showing _START_–_END_ of _TOTAL_ categories',
+            infoEmpty:       'No categories found',
+            zeroRecords:     'No matching categories',
+            emptyTable:      'No class categories created yet',
+        },
+        order: [[1, 'asc']],
+        pageLength: 15,
+        responsive: true,
+        drawCallback: function() {
+            bindCheckboxes();
+            $('#totalBadge').text(this.api().page.info().recordsTotal);
+        },
+    });
+
+    // =========================================================================
+    // STATS
+    // =========================================================================
+
+    function loadStats() {
+        $.get('{{ route("classcategories.stats") }}', function(data) {
+            if (data.stats) {
+                $('#statTotal').text(data.stats.total);
+                $('#statSenior').text(data.stats.senior);
+                $('#statJunior').text(data.stats.junior);
+                $('#statWithAssessment').text(data.stats.with_assessment);
+            }
+        }).fail(function() {
+            $('#statTotal, #statSenior, #statJunior, #statWithAssessment').text('—');
         });
     }
+    loadStats();
+
+    // =========================================================================
+    // CHECKBOXES & BULK BAR
+    // =========================================================================
+
+    function bindCheckboxes() {
+        $('.row-checkbox').off('change').on('change', updateBulkBar);
+    }
+    $('#selectAll').on('change', function() {
+        $('.row-checkbox').prop('checked', this.checked);
+        updateBulkBar();
+    });
+    function updateBulkBar() {
+        var count = $('.row-checkbox:checked').length;
+        $('#bulkBar').toggleClass('show', count > 0);
+        $('#bulkCount').text(count);
+        $('#bulkDeleteBtn').toggleClass('d-none', count === 0);
+        if (count === 0) $('#selectAll').prop('checked', false);
+    }
+
+    // =========================================================================
+    // SUB ASSESSMENT HELPERS
+    // =========================================================================
 
     function addSubAssessment(containerId, subData = null, isEdit = false) {
         const container = document.getElementById(containerId);
-        const currentIndex = isEdit ? editSubIndex++ : addSubIndex++;
+        const currentIndex = isEdit ? editSubIndex++ : createSubIndex++;
         const subHtml = `
             <div class="sub-assessment-row" data-index="${currentIndex}">
                 <div class="row g-2">
@@ -764,7 +749,7 @@ $(document).ready(function() {
                                value="${subData && subData.max_score ? subData.max_score : ''}" required>
                     </div>
                     <div class="col-md-3">
-                        <button type="button" class="btn btn-outline-danger w-100" onclick="$(this).closest('.sub-assessment-row').remove();">
+                        <button type="button" class="btn btn-outline-danger w-100" onclick="$(this).closest('.sub-assessment-row').remove(); updateCreateBtn();">
                             <i class="ri-delete-bin-line"></i> Remove
                         </button>
                     </div>
@@ -772,130 +757,84 @@ $(document).ready(function() {
             </div>
         `;
         $(container).append(subHtml);
+        updateCreateBtn();
     }
 
-    // Add initial sub assessment for add modal
-    addSubAssessment('add-sub-container', null, false);
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m];
+        });
+    }
 
-    $('#add-sub-btn').click(function() {
-        addSubAssessment('add-sub-container', null, false);
+    // Add initial sub assessment for create modal
+    addSubAssessment('create-sub-container', null, false);
+
+    $('#create-sub-btn').click(function() {
+        addSubAssessment('create-sub-container', null, false);
     });
 
     $('#edit-sub-btn').click(function() {
         addSubAssessment('edit-sub-container', null, true);
     });
 
-    // Search functionality
-    $('#searchInput').on('keyup', function() {
-        const value = $(this).val().toLowerCase();
-        $('#tableBody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-        });
-    });
+    // =========================================================================
+    // CREATE MODAL — guard button
+    // =========================================================================
 
-    // ========== ADD CATEGORY ==========
-    $('#addCategoryForm').on('submit', function(e) {
-        e.preventDefault();
-
-        const category = $('#category').val().trim();
-        const isSenior = $('input[name="is_senior"]:checked').val();
-        const assessmentName = $('#assessment_name').val().trim();
-
-        if (!category) {
-            Swal.fire('Error', 'Please enter a category name.', 'error');
-            return;
-        }
-        if (!assessmentName) {
-            Swal.fire('Error', 'Please enter an assessment name.', 'error');
-            return;
-        }
-
-        const subRows = $('#add-sub-container .sub-assessment-row');
-        const subAssessments = [];
-        let validSubs = 0;
-
-        subRows.each(function() {
-            const maxScore = parseFloat($(this).find('input[name*="[max_score]"]').val());
+    function updateCreateBtn() {
+        var category = $('#create-category').val().trim();
+        var assessmentName = $('#create-assessment-name').val().trim();
+        var hasSubs = $('#create-sub-container .sub-assessment-row').length > 0;
+        var hasValidSub = false;
+        
+        $('#create-sub-container .sub-assessment-row').each(function() {
+            var maxScore = parseFloat($(this).find('input[name*="[max_score]"]').val());
             if (!isNaN(maxScore) && maxScore >= 0) {
-                validSubs++;
-                subAssessments.push({
-                    name: $(this).find('input[name*="[name]"]').val() || null,
-                    max_score: maxScore
-                });
+                hasValidSub = true;
             }
         });
+        
+        var ok = category !== '' && assessmentName !== '' && hasSubs && hasValidSub;
+        $('#create-save-btn').prop('disabled', !ok);
+    }
 
-        if (validSubs === 0) {
-            Swal.fire('Error', 'Please add at least one valid sub-assessment with a max score.', 'error');
-            return;
-        }
+    $('#create-category, #create-assessment-name').on('input', updateCreateBtn);
+    $('#create-sub-container').on('change keyup', '.sub-assessment-row input', updateCreateBtn);
 
-        const formData = {
-            category: category,
-            is_senior: parseInt(isSenior),
-            assessments: [{
-                name: assessmentName,
-                sub_assessments: subAssessments
-            }]
-        };
-
-        showLoading(true);
-        $('#addBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Creating...');
-
-        $.ajax({
-            url: storeUrl,
-            method: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'Accept': 'application/json'
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', response.message || 'Failed to create category.', 'error');
-                }
-            },
-            error: function(xhr) {
-                let errorMsg = 'Failed to create category.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-                Swal.fire('Error', errorMsg, 'error');
-            },
-            complete: function() {
-                showLoading(false);
-                $('#addBtn').prop('disabled', false).html('<i class="ri-save-line me-1"></i>Create Category');
-            }
-        });
+    // ── Open CREATE ───────────────────────────────────────────
+    $('#createCategoryBtn').on('click', function() {
+        $('#create-category').val('');
+        $('#create-assessment-name').val('');
+        $('#create-junior').prop('checked', true);
+        $('#create-sub-container').empty();
+        createSubIndex = 0;
+        addSubAssessment('create-sub-container', null, false);
+        $('#create-save-btn').prop('disabled', true);
+        $('#create-error-msg').addClass('d-none').html('');
+        hideModalLoader('create');
+        new bootstrap.Modal(document.getElementById('createModal')).show();
     });
 
-    // ========== EDIT CATEGORY ==========
-    $(document).on('click', '.edit-category-btn', function() {
-        const id = $(this).data('id');
-        const category = $(this).data('category');
-        const isSenior = $(this).data('is_senior');
-        const assessmentName = $(this).data('assessment-name');
-        const subAssessments = $(this).data('sub-assessments');
+    // =========================================================================
+    // EDIT MODAL
+    // =========================================================================
 
-        $('#edit_id').val(id);
-        $('#edit_category').val(category);
-        $('#edit_assessment_name').val(assessmentName);
+    $(document).on('click', '.edit-category-btn', function() {
+        var id = $(this).data('id');
+        var category = $(this).data('category');
+        var isSenior = $(this).data('is_senior');
+        var assessmentName = $(this).data('assessment-name');
+        var subAssessments = $(this).data('sub-assessments');
+
+        $('#edit-category-id').val(id);
+        $('#edit-category').val(category);
+        $('#edit-assessment-name').val(assessmentName);
 
         if (isSenior == 1) {
-            $('#edit_senior').prop('checked', true);
+            $('#edit-senior').prop('checked', true);
         } else {
-            $('#edit_junior').prop('checked', true);
+            $('#edit-junior').prop('checked', true);
         }
 
         $('#edit-sub-container').empty();
@@ -909,141 +848,312 @@ $(document).ready(function() {
             addSubAssessment('edit-sub-container', null, true);
         }
 
-        $('#editModal').modal('show');
+        $('#edit-error-msg').addClass('d-none').html('');
+        hideModalLoader('edit');
+        btnReset($('#edit-update-btn'));
+
+        new bootstrap.Modal(document.getElementById('editModal')).show();
     });
 
-    $('#editCategoryForm').on('submit', function(e) {
+    // =========================================================================
+    // SUBMIT: CREATE
+    // =========================================================================
+
+    $('#createForm').on('submit', function(e) {
         e.preventDefault();
 
-        const id = $('#edit_id').val();
-        const category = $('#edit_category').val().trim();
-        const isSenior = $('input[name="is_senior"]:checked').val();
-        const assessmentName = $('#edit_assessment_name').val().trim();
+        var category = $('#create-category').val().trim();
+        var isSenior = $('input[name="create_is_senior"]:checked').val();
+        var assessmentName = $('#create-assessment-name').val().trim();
 
-        const subRows = $('#edit-sub-container .sub-assessment-row');
-        const subAssessments = [];
-        let validSubs = 0;
-
-        subRows.each(function() {
-            const maxScore = parseFloat($(this).find('input[name*="[max_score]"]').val());
-            if (!isNaN(maxScore) && maxScore >= 0) {
-                validSubs++;
-                subAssessments.push({
-                    name: $(this).find('input[name*="[name]"]').val() || null,
-                    max_score: maxScore
-                });
-            }
-        });
-
-        if (validSubs === 0) {
-            Swal.fire('Error', 'Please add at least one valid sub-assessment with a max score.', 'error');
+        if (!category) {
+            showError('#create-error-msg', 'Please enter a category name.');
+            return;
+        }
+        if (!assessmentName) {
+            showError('#create-error-msg', 'Please enter an assessment name.');
             return;
         }
 
-        const formData = {
-            id: id,
-            category: category,
-            is_senior: parseInt(isSenior),
-            assessments: [{
-                name: assessmentName,
-                sub_assessments: subAssessments
-            }]
-        };
+        var subAssessments = [];
+        var hasValidSub = false;
+        
+        $('#create-sub-container .sub-assessment-row').each(function() {
+            var name = $(this).find('input[name*="[name]"]').val() || null;
+            var maxScore = parseFloat($(this).find('input[name*="[max_score]"]').val());
+            if (!isNaN(maxScore) && maxScore >= 0) {
+                hasValidSub = true;
+                subAssessments.push({ name: name, max_score: maxScore });
+            }
+        });
 
-        showLoading(true);
-        $('#updateBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Updating...');
+        if (!hasValidSub) {
+            showError('#create-error-msg', 'Please add at least one valid sub-assessment with a max score.');
+            return;
+        }
+
+        btnLoad($('#create-save-btn'), 'Saving…');
+        showModalLoader('create', 'Creating category…');
+        $('#create-error-msg').addClass('d-none').html('');
 
         $.ajax({
-            url: updateUrl,
-            method: 'POST',
-            data: JSON.stringify(formData),
+            url: '{{ route("classcategories.store") }}',
+            type: 'POST',
+            data: JSON.stringify({
+                category: category,
+                is_senior: parseInt(isSenior),
+                assessments: [{
+                    name: assessmentName,
+                    sub_assessments: subAssessments
+                }]
+            }),
             contentType: 'application/json',
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Updated!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
-                    });
+
+            success: function(res) {
+                if (res.success) {
+                    $('#createModal').modal('hide');
+                    toast('success', 'Created!', res.message);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
-                    Swal.fire('Error', response.message || 'Failed to update category.', 'error');
+                    hideModalLoader('create');
+                    btnReset($('#create-save-btn'));
+                    updateCreateBtn();
+                    showError('#create-error-msg', res.message || 'Could not create category.');
                 }
             },
+
             error: function(xhr) {
-                let errorMsg = 'Failed to update category.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-                Swal.fire('Error', errorMsg, 'error');
+                hideModalLoader('create');
+                btnReset($('#create-save-btn'));
+                updateCreateBtn();
+                var json = xhr.responseJSON;
+                var msg = (json && json.message) ||
+                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                          'An error occurred.';
+                showError('#create-error-msg', msg);
+                toast('error', 'Failed', msg);
             },
-            complete: function() {
-                showLoading(false);
-                $('#updateBtn').prop('disabled', false).html('<i class="ri-save-line me-1"></i>Update Category');
-            }
         });
     });
 
-    // ========== DELETE CATEGORY ==========
-    $(document).on('click', '.delete-category-btn', function() {
-        deleteCategoryId = $(this).data('id');
-        const categoryName = $(this).data('name');
-        $('#deleteItemName').html(`<strong>${escapeHtml(categoryName)}</strong> will be permanently deleted.`);
-        $('#deleteRecordModal').modal('show');
-    });
+    // =========================================================================
+    // SUBMIT: EDIT
+    // =========================================================================
 
-    $('#confirmDeleteBtn').on('click', function() {
-        if (!deleteCategoryId) return;
+    $('#editForm').on('submit', function(e) {
+        e.preventDefault();
 
-        showLoading(true);
-        const btn = $(this);
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Deleting...');
+        var id = $('#edit-category-id').val();
+        var category = $('#edit-category').val().trim();
+        var isSenior = $('input[name="edit_is_senior"]:checked').val();
+        var assessmentName = $('#edit-assessment-name').val().trim();
+
+        if (!category) {
+            showError('#edit-error-msg', 'Please enter a category name.');
+            return;
+        }
+        if (!assessmentName) {
+            showError('#edit-error-msg', 'Please enter an assessment name.');
+            return;
+        }
+
+        var subAssessments = [];
+        var hasValidSub = false;
+        
+        $('#edit-sub-container .sub-assessment-row').each(function() {
+            var name = $(this).find('input[name*="[name]"]').val() || null;
+            var maxScore = parseFloat($(this).find('input[name*="[max_score]"]').val());
+            if (!isNaN(maxScore) && maxScore >= 0) {
+                hasValidSub = true;
+                subAssessments.push({ name: name, max_score: maxScore });
+            }
+        });
+
+        if (!hasValidSub) {
+            showError('#edit-error-msg', 'Please add at least one valid sub-assessment with a max score.');
+            return;
+        }
+
+        btnLoad($('#edit-update-btn'), 'Updating…');
+        showModalLoader('edit', 'Updating category…');
+        $('#edit-error-msg').addClass('d-none').html('');
 
         $.ajax({
-            url: deleteUrlBase + '/' + deleteCategoryId,
-            method: 'DELETE',
+            url: '{{ route("classcategories.updateclasscategory") }}',
+            type: 'POST',
+            data: JSON.stringify({
+                id: id,
+                category: category,
+                is_senior: parseInt(isSenior),
+                assessments: [{
+                    name: assessmentName,
+                    sub_assessments: subAssessments
+                }]
+            }),
+            contentType: 'application/json',
             headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Deleted!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
-                    });
+
+            success: function(res) {
+                if (res.success) {
+                    $('#editModal').modal('hide');
+                    toast('success', 'Updated!', res.message);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
-                    Swal.fire('Error', response.message || 'Failed to delete category.', 'error');
-                    $('#deleteRecordModal').modal('hide');
+                    hideModalLoader('edit');
+                    btnReset($('#edit-update-btn'));
+                    showError('#edit-error-msg', res.message || 'Could not update category.');
                 }
             },
+
             error: function(xhr) {
-                let errorMsg = 'Failed to delete category.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-                Swal.fire('Error', errorMsg, 'error');
-                $('#deleteRecordModal').modal('hide');
+                hideModalLoader('edit');
+                btnReset($('#edit-update-btn'));
+                var json = xhr.responseJSON;
+                var msg = (json && json.message) ||
+                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                          'An error occurred.';
+                showError('#edit-error-msg', msg);
+                toast('error', 'Failed', msg);
             },
-            complete: function() {
-                showLoading(false);
-                btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Yes, Delete');
-                deleteCategoryId = null;
-            }
         });
     });
+
+    // =========================================================================
+    // DELETE: SINGLE
+    // =========================================================================
+
+    $(document).on('click', '.delete-category-btn', function() {
+        deleteId = $(this).data('id');
+        $('#delete-item-title').text($(this).data('name') || 'this category');
+        btnReset($('#confirm-delete-btn'));
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    });
+
+    $('#confirm-delete-btn').on('click', function() {
+        if (!deleteId) return;
+        var $btn = $(this);
+        btnLoad($btn, 'Deleting…');
+
+        $.ajax({
+            url: '{{ url("classcategories") }}/' + deleteId,
+            type: 'POST',
+            data: { _method: 'DELETE', _token: CSRF },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+
+            success: function(res) {
+                $('#deleteModal').modal('hide');
+                if (res.success) {
+                    toast('success', 'Deleted!', res.message);
+                    table.ajax.reload();
+                    loadStats();
+                } else {
+                    toast('error', 'Cannot Delete', res.message);
+                    Swal.fire({ icon:'error', title:'Cannot Delete',
+                        text: res.message, confirmButtonColor:'#2563eb' });
+                }
+            },
+
+            error: function(xhr) {
+                $('#deleteModal').modal('hide');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to delete.';
+                toast('error', 'Error', msg);
+                Swal.fire('Error!', msg, 'error');
+            },
+
+            complete: function() {
+                btnReset($btn);
+                deleteId = null;
+            },
+        });
+    });
+
+    // =========================================================================
+    // DELETE: BULK
+    // =========================================================================
+
+    function doBulkDelete() {
+        var ids = [];
+        $('.row-checkbox:checked').each(function() {
+            ids.push($(this).val());
+        });
+        
+        if (ids.length === 0) {
+            toast('warning', 'No Selection', 'Please select at least one category to delete.');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Delete ' + ids.length + ' category(ies)?',
+            html: 'This will permanently remove the selected categories and all associated data.<br><strong>This action cannot be undone!</strong>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: function() {
+                return new Promise(function(resolve, reject) {
+                    PageLoader.show('Deleting categories…');
+                    
+                    $.ajax({
+                        url: '{{ route("classcategories.bulk-destroy") }}',
+                        type: 'POST',
+                        data: {
+                            ids: ids,
+                            _token: CSRF
+                        },
+                        traditional: true,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        success: function(res) {
+                            PageLoader.hide();
+                            if (res.success) {
+                                resolve(res);
+                            } else {
+                                reject(res.message || 'Failed to delete categories');
+                            }
+                        },
+                        error: function(xhr) {
+                            PageLoader.hide();
+                            var errorMsg = 'An error occurred while deleting.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            reject(errorMsg);
+                        }
+                    });
+                });
+            }
+        }).then(function(result) {
+            if (result.isConfirmed && result.value) {
+                toast('success', 'Deleted!', result.value.message || 'Categories deleted successfully.');
+                table.ajax.reload();
+                loadStats();
+                $('#selectAll').prop('checked', false);
+                updateBulkBar();
+            }
+        }).catch(function(error) {
+            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete categories.');
+        });
+    }
+
+    $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
+
+    bindCheckboxes();
 });
 </script>
 @endsection
