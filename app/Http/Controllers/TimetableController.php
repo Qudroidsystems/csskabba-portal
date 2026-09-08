@@ -52,7 +52,6 @@ class TimetableController extends Controller
         '#DCFCE7','#FEE2E2','#EDE9FE','#F0F9FF','#FFF7ED',
     ];
 
-    // How long an "editing_at" heartbeat is considered live before it's treated as stale.
     const EDITING_LOCK_TTL_MINUTES = 3;
 
     public function __construct()
@@ -61,8 +60,8 @@ class TimetableController extends Controller
         $this->middleware('permission:Create timetable', ['only' => ['setup', 'saveSettings']]);
         $this->middleware('permission:Edit timetable', ['only' => ['saveSlot', 'bulkUpdateSlots', 'cloneSetting']]);
         $this->middleware('permission:Delete timetable', ['only' => ['deleteSetting']]);
-        $this->middleware('permission:Generate timetable', ['only' => ['autoGenerate', 'autoGenerateWholeSchool', 'applyGenerationTemplate', 'getTeacherAssignments', 'assignTeacherToSubjectclass', 'unassignTeacherFromSubjectclass']]);
-        $this->middleware('permission:View my timetable', ['only' => ['teacherView']]);
+        $this->middleware('permission:Generate timetable', ['only' => ['autoGenerate', 'autoGenerateWholeSchool', 'applyGenerationTemplate', 'getTeacherAssignments']]);
+        $this->middleware('permission:View my timetable', ['only' => ['teacherView', 'exportTeacherTimetable']]);
         $this->middleware('permission:Manage timetable settings', ['only' => ['saveSettings', 'rebuildPeriodsFromAnchors', 'saveHalfDays']]);
         $this->middleware('permission:Manage timetable constraints', ['only' => ['saveConstraints']]);
         $this->middleware('permission:View timetable reports', ['only' => ['workloadDashboard', 'generateAnalytics']]);
@@ -226,8 +225,7 @@ class TimetableController extends Controller
 
     // =========================================================================
     // HELPER: Reject a save when the record was changed by someone else since
-    // the client last loaded it. $expectedUpdatedAt is whatever timestamp the
-    // client last saw; null means "don't check" (e.g. first-ever save).
+    // the client last loaded it.
     // =========================================================================
     private function versionConflictResponse(TimetableSetting $setting, ?string $expectedUpdatedAt): ?JsonResponse
     {
@@ -246,7 +244,6 @@ class TimetableController extends Controller
     // =========================================================================
     // HELPER: For destructive-but-non-mutating-source actions (clone), warn
     // if someone else appears to be actively editing the source right now.
-    // Soft warning only — caller can override with force:true.
     // =========================================================================
     private function editingRecentlyResponse(TimetableSetting $setting, string $actionMessage): ?JsonResponse
     {
@@ -395,8 +392,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // HELPER: For every (day, period) pair, resolve what it actually IS that
-    // day.
+    // HELPER: For every (day, period) pair, resolve what it actually IS that day.
     // =========================================================================
     private function computeDayPeriodMeta(TimetableSetting $setting): array
     {
@@ -1028,7 +1024,7 @@ class TimetableController extends Controller
             'day'        => 'required|string',
             'teacher_id' => 'nullable|integer',
             'room_id'    => 'nullable|integer',
-            'subject_id' => 'nullable|integer', // ADDED for combined session detection
+            'subject_id' => 'nullable|integer',
         ]);
 
         $setting   = TimetableSetting::findOrFail($validated['setting_id']);
@@ -1060,7 +1056,6 @@ class TimetableController extends Controller
                     ->where('schoolclass.id', $teacherConflict->setting->schoolclass_id)->first();
                 $teacherConflict->setting->setRelation('schoolclass', $sc);
 
-                // Check if this is a combined session (same teacher, subject, and room)
                 $isCombined = !empty($validated['room_id']) && !empty($validated['subject_id'])
                     && $teacherConflict->room_id
                     && (int) $validated['room_id'] === (int) $teacherConflict->room_id
@@ -1131,7 +1126,6 @@ class TimetableController extends Controller
                     ->where('schoolclass.id', $roomConflict->setting->schoolclass_id)->first();
                 $roomConflict->setting->setRelation('schoolclass', $sc);
 
-                // Check if this is a combined session (same teacher and subject sharing this room)
                 $isCombinedRoom = !empty($validated['teacher_id']) && !empty($validated['subject_id'])
                     && $roomConflict->teacher_id
                     && (int) $validated['teacher_id'] === (int) $roomConflict->teacher_id
@@ -1245,7 +1239,6 @@ class TimetableController extends Controller
                     ->first();
 
                 if ($conflict) {
-                    // Check if this is a combined session (same teacher, subject, and room)
                     $isCombined = !empty($validated['room_id']) && !empty($validated['subject_id'])
                         && $conflict->room_id
                         && (int) $validated['room_id'] === (int) $conflict->room_id
@@ -1286,7 +1279,6 @@ class TimetableController extends Controller
                             'can_override'          => true,
                         ], 409);
                     }
-                    // else: intentional combined session — fall through to save
                 }
             }
 
@@ -1306,7 +1298,6 @@ class TimetableController extends Controller
                     ->first();
 
                 if ($roomSlotConflict) {
-                    // Check if this is a combined session (same teacher and subject sharing this room)
                     $isCombinedRoom = !empty($validated['teacher_id']) && !empty($validated['subject_id'])
                         && $roomSlotConflict->teacher_id
                         && (int) $validated['teacher_id'] === (int) $roomSlotConflict->teacher_id
@@ -1350,7 +1341,6 @@ class TimetableController extends Controller
                             'can_override'      => true,
                         ], 409);
                     }
-                    // else: intentional combined session — fall through to save
                 }
 
                 $period = TimetablePeriod::find($validated['period_id']);
@@ -1454,7 +1444,6 @@ class TimetableController extends Controller
 
         $conflicts = [];
 
-        // ── TEACHER CONFLICTS ──────────────────────────────────────────────
         $teacherGrouped = $slots->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
 
         foreach ($teacherGrouped as $group) {
@@ -1480,7 +1469,6 @@ class TimetableController extends Controller
                     $a = $groupArr[$i];
                     $b = $groupArr[$j];
 
-                    // Same teacher, same subject, same room = intentional combined class — skip
                     if ($this->isCombinedSession($a, $b)) continue;
 
                     $classA = $this->getClassName($a->setting?->schoolclass);
@@ -1513,7 +1501,6 @@ class TimetableController extends Controller
             }
         }
 
-        // ── ROOM CONFLICTS ────────────────────────────────────────────────
         $allSlotsWithRoom = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
                 $q->where('session_id', $sessionId)->where('is_active', true);
                 if ($termId) $q->where('term_id', $termId);
@@ -1555,8 +1542,6 @@ class TimetableController extends Controller
                     $a = $groupArr[$i];
                     $b = $groupArr[$j];
 
-                    // Same teacher + same subject sharing this room at the same time
-                    // is a deliberate combined class, not a room clash
                     if ($a->teacher_id && $b->teacher_id && $a->teacher_id == $b->teacher_id
                         && $a->subject_id && $b->subject_id && $a->subject_id == $b->subject_id) {
                         continue;
@@ -1603,7 +1588,6 @@ class TimetableController extends Controller
 
     // =========================================================================
     // CHECK CONFLICTS — standalone entry point, no class context needed.
-    // Powers the toolbar "Check Conflicts" button.
     // =========================================================================
     public function checkConflictsScope(Request $request): JsonResponse
     {
@@ -1707,7 +1691,6 @@ class TimetableController extends Controller
                     $crossOccupied[$occ->teacher_id][$occ->day][] = $occ->period_id;
                 });
 
-            // Cross-class room occupancy — only needed when rooms are being assigned.
             $roomOccupied = [];
             if ($includeRooms) {
                 TimetableSlot::whereHas('setting', function ($q) use ($setting) {
@@ -1795,8 +1778,6 @@ class TimetableController extends Controller
             $roomOccupied  = [];
 
             if ($includeRooms) {
-                // Seed with room usage from settings OUTSIDE this batch (same session/term,
-                // but not being regenerated right now) so we never clash with those either.
                 TimetableSlot::whereHas('setting', function ($q) use ($validated, $settings) {
                         $q->where('session_id', $validated['session_id'])->where('is_active', true)
                           ->whereNotIn('id', $settings->pluck('id'));
@@ -1982,7 +1963,6 @@ class TimetableController extends Controller
                     $roomOccupied[$roomId][$day][] = $periodId;
                 }
 
-                // Try to place a double period (consecutive)
                 if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed) {
                     $cooldownOk = true;
                     if ($avoidConsecutiveDoubles) {
@@ -2064,7 +2044,6 @@ class TimetableController extends Controller
             }
         }
 
-        // Fill remaining empty slots as free periods
         foreach ($slotPool as $slot) {
             $key = $slot['day'] . '_' . $slot['period_id'];
             if (!isset($placed[$key])) {
@@ -2378,618 +2357,65 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT CLASS TIMETABLE
-    // =========================================================================
-    public function export(Request $request, int $settingId)
-    {
-        $format      = $request->input('format', 'csv');
-        $orientation = $request->input('orientation', 'horizontal');
-
-        $setting = TimetableSetting::with(['periods', 'session', 'term'])->findOrFail($settingId);
-        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
-            ->where('schoolclass.id', $setting->schoolclass_id)->first();
-        $setting->setRelation('schoolclass', $schoolclass);
-
-        $slots = TimetableSlot::where('setting_id', $settingId)
-            ->with(['subject', 'teacher', 'period', 'room'])->get();
-
-        $dayMeta = $this->computeDayPeriodMeta($setting);
-
-        $grid = []; $subjectColors = []; $colorIdx = 0;
-        foreach ($slots as $slot) {
-            if ($slot->subject_id && !isset($subjectColors[$slot->subject_id])) {
-                $subjectColors[$slot->subject_id] = $colorIdx++ % count(self::SUBJECT_PALETTE);
-            }
-            $grid[$slot->period_id][$slot->day] = [
-                'subject'      => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
-                'subject_code' => $slot->subject?->subject_code ?? '',
-                'teacher'      => $slot->teacher?->name ?? '',
-                'room'         => ($slot->room_id && $slot->room) ? $slot->room->room_name : '',
-                'is_free'      => $slot->is_free ?? !$slot->subject_id,
-                'subject_id'   => $slot->subject_id,
-            ];
-        }
-
-        $days        = $setting->active_days ?? self::DAYS;
-        $periods     = $setting->periods;
-        $className   = $this->getClassName($setting->schoolclass);
-        $sessionName = $setting->session->session ?? 'Session';
-        $termName    = $setting->term?->term ?? 'All Terms';
-
-        return match($format) {
-            'pdf'   => $this->exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation, $dayMeta),
-            default => $this->exportCsv($setting, $periods, $days, $grid, $className, $sessionName, $dayMeta),
-        };
-    }
-
-    // =========================================================================
-    // EXPORT WHOLE SCHOOL TIMETABLE — PDF
-    // =========================================================================
-    public function exportWholeSchool(Request $request)
-    {
-        $sessionId   = $request->input('session_id');
-        $termId      = $request->input('term_id');
-        $orientation = $request->input('orientation', 'horizontal');
-
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
-
-        [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
-
-        if (empty($allTimetables)) return response()->json(['error' => 'No timetables found'], 404);
-
-        return $this->exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation, $overallStats);
-    }
-
-    // =========================================================================
-    // EXPORT WHOLE SCHOOL TIMETABLE — WEB VIEW
-    // =========================================================================
-    public function exportWholeSchoolWeb(Request $request)
-    {
-        $sessionId = $request->input('session_id');
-        $termId    = $request->input('term_id');
-
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
-
-        [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
-
-        if (empty($allTimetables)) {
-            abort(404, 'No timetables found for this session/term.');
-        }
-
-        $pagetitle = 'Whole School Timetable';
-
-        return view('timetable.exports.whole-school-web', array_merge(
-            compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'pagetitle'),
-            [
-                'sessionName'   => $session->session ?? 'Session',
-                'termName'      => $term?->term ?? 'All Terms',
-                'dayColors'     => self::DAY_COLORS,
-                'generatedAt'   => now()->format('d M Y, H:i'),
-            ]
-        ));
-    }
-
-    // =========================================================================
-    // MERGED GRID — PDF
-    // =========================================================================
-    public function exportMergedGrid(Request $request)
-    {
-        $sessionId = $request->input('session_id');
-        $termId    = $request->input('term_id');
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
-
-        $data = $this->buildMergedGridData($sessionId, $termId);
-        if (empty($data['rows'])) return response()->json(['error' => 'No timetables found'], 404);
-
-        $pdf = Pdf::loadView('timetable.exports.merged-grid', $data)->setPaper('a3', 'landscape');
-        $filename = 'merged-timetable-' . str_replace([' ', '/'], '-', $data['sessionName']) . '.pdf';
-        return $pdf->stream($filename);
-    }
-
-    // =========================================================================
-    // MERGED GRID — WEB VIEW
-    // =========================================================================
-    public function mergedGridWeb(Request $request)
-    {
-        $sessionId = $request->input('session_id');
-        $termId    = $request->input('term_id');
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
-
-        $data = $this->buildMergedGridData($sessionId, $termId);
-        if (empty($data['rows'])) abort(404, 'No timetables found for this session/term.');
-
-        $pagetitle = 'Merged Timetable';
-
-        return view('timetable.exports.merged-grid-web', array_merge($data, compact('pagetitle')));
-    }
-
-    // =========================================================================
-    // NOTIFICATIONS
-    // =========================================================================
-    public function sendNotifications(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'setting_id' => 'required|exists:timetable_settings,id',
-            'type'       => 'required|in:daily_summary,weekly_preview,change_alert',
-        ]);
-
-        $setting = TimetableSetting::with([
-            'slots.teacher', 'slots.teacher.staffPicture',
-            'slots.subject', 'slots.period', 'slots.room',
-            'schoolclass', 'session', 'term',
-        ])->findOrFail($validated['setting_id']);
-
-        if ($validated['type'] === 'daily_summary') {
-            $todayHoliday = $this->getHolidayForDate(now(), $setting->session_id, $setting->term_id);
-            if ($todayHoliday && $todayHoliday->is_full_day) {
-                return response()->json(['success' => true, 'message' => "Skipped — today is a holiday ({$todayHoliday->title}).", 'sent' => 0]);
-            }
-        }
-
-        $sent = $this->dispatchNotifications($setting, $validated['type']);
-
-        return response()->json(['success' => true, 'message' => "Notifications sent to {$sent} teacher(s).", 'sent' => $sent]);
-    }
-
-    // =========================================================================
-    // PUBLISH / UNPUBLISH
-    // =========================================================================
-    public function publishSetting(int $settingId): JsonResponse
-    {
-        $setting = TimetableSetting::findOrFail($settingId);
-        $setting->update(['is_published' => true, 'published_at' => now(), 'published_by' => Auth::id()]);
-        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => true]);
-
-        return response()->json(['success' => true, 'message' => 'Timetable published and locked.']);
-    }
-
-    public function unpublishSetting(int $settingId): JsonResponse
-    {
-        $setting = TimetableSetting::findOrFail($settingId);
-        $setting->update(['is_published' => false, 'published_at' => null, 'published_by' => null]);
-        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => false]);
-
-        return response()->json(['success' => true, 'message' => 'Timetable unpublished. It can now be edited.']);
-    }
-
-    public function publishAndNotify(Request $request): JsonResponse
-    {
-        $validated = $request->validate(['setting_id' => 'required|exists:timetable_settings,id']);
-
-        $setting = TimetableSetting::with([
-            'slots.teacher', 'slots.teacher.staffPicture',
-            'slots.subject', 'slots.period', 'slots.room',
-            'schoolclass', 'session', 'term',
-        ])->findOrFail($validated['setting_id']);
-
-        $setting->update(['is_published' => true, 'published_at' => now(), 'published_by' => Auth::id()]);
-        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => true]);
-
-        $sent = $this->dispatchNotifications($setting, 'weekly_preview');
-
-        return response()->json([
-            'success' => true,
-            'message' => "Timetable published and notifications sent to {$sent} teacher(s).",
-            'sent'    => $sent,
-        ]);
-    }
-
-    // =========================================================================
-    // PRIVATE: shared notification-sending logic
-    // =========================================================================
-    private function dispatchNotifications(TimetableSetting $setting, string $type): int
-    {
-        $byTeacher = $setting->slots->whereNotNull('teacher_id')->groupBy('teacher_id');
-        $sent = 0;
-
-        foreach ($byTeacher as $teacherId => $teacherSlots) {
-            $teacher = $teacherSlots->first()->teacher;
-            if (!$teacher || !$teacher->email) continue;
-
-            $notifData = [
-                'teacher'         => $teacher->name,
-                'teacher_picture' => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
-                'class'           => $setting->schoolclass->schoolclass ?? '',
-                'session'         => $setting->session->session ?? '',
-                'term'            => $setting->term?->term ?? '',
-                'slots'           => $teacherSlots->map(fn($s) => [
-                    'day'     => $s->day,
-                    'period'  => $s->period?->name,
-                    'time'    => $this->formatTime($s->period?->start_time ?? '') . ' – ' . $this->formatTime($s->period?->end_time ?? ''),
-                    'subject' => $s->subject?->subject,
-                    'room'    => $s->room?->room_name,
-                ])->toArray(),
-                'type'      => $type,
-                'generated' => now()->format('d M Y H:i'),
-            ];
-
-            try {
-                Mail::to($teacher->email)->send(new TimetableNotificationMail($notifData));
-                foreach ($teacherSlots as $slot) {
-                    TimetableNotification::create([
-                        'teacher_id'   => $teacherId, 'slot_id'    => $slot->id,
-                        'type'         => $type, 'email' => $teacher->email,
-                        'scheduled_at' => now(), 'sent_at'   => now(),
-                        'status'       => 'sent', 'payload'   => json_encode($notifData),
-                    ]);
-                }
-                $sent++;
-            } catch (\Exception $e) {
-                Log::error('Timetable notification failed', ['teacher_id' => $teacherId, 'error' => $e->getMessage()]);
-            }
-        }
-
-        return $sent;
-    }
-
-    // =========================================================================
-    // DELETE / CLONE
-    // =========================================================================
-    public function deleteSetting(Request $request, int $settingId): JsonResponse
-    {
-        $setting = TimetableSetting::findOrFail($settingId);
-
-        if ($conflict = $this->versionConflictResponse($setting, $request->input('expected_updated_at'))) {
-            return $conflict;
-        }
-
-        try { $this->logTimetableChange(Auth::id(), 'delete', 'TimetableSetting', $settingId, null, $setting->toArray()); }
-        catch (\Exception $e) { Log::warning('Audit log failed: ' . $e->getMessage()); }
-        $setting->delete();
-        return response()->json(['success' => true]);
-    }
-
-    public function cloneSetting(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'setting_id'     => 'required|exists:timetable_settings,id',
-            'new_session_id' => 'nullable|exists:schoolsession,id',
-            'new_term_id'    => 'nullable|exists:schoolterm,id',
-            'force'          => 'boolean',
-        ]);
-
-        $oldSetting = TimetableSetting::with(['periods', 'constraints', 'slots', 'editor'])->findOrFail($validated['setting_id']);
-
-        if (empty($validated['force'])
-            && $editingWarning = $this->editingRecentlyResponse($oldSetting, 'Clone anyway?')) {
-            return $editingWarning;
-        }
-
-        DB::beginTransaction();
-        try {
-            $newSetting               = $oldSetting->replicate();
-            $newSetting->session_id   = $validated['new_session_id'] ?? $oldSetting->session_id;
-            $newSetting->term_id      = $validated['new_term_id'] ?? $oldSetting->term_id;
-            $newSetting->is_published = false;
-            $newSetting->published_at = null;
-            $newSetting->published_by = null;
-            $newSetting->editing_by   = null;
-            $newSetting->editing_at   = null;
-            $newSetting->created_by   = Auth::id();
-            $newSetting->updated_by   = Auth::id();
-            $newSetting->save();
-
-            $periodMap = [];
-            foreach ($oldSetting->periods as $period) {
-                $newPeriod             = $period->replicate();
-                $newPeriod->setting_id = $newSetting->id;
-                $newPeriod->save();
-                $periodMap[$period->id] = $newPeriod->id;
-            }
-
-            foreach ($oldSetting->constraints as $constraint) {
-                $newC = $constraint->replicate(); $newC->setting_id = $newSetting->id; $newC->save();
-            }
-
-            $newSlotIds = [];
-            foreach ($oldSetting->slots as $slot) {
-                if (!isset($periodMap[$slot->period_id])) continue;
-                $newSlot = $slot->replicate();
-                $newSlot->setting_id = $newSetting->id;
-                $newSlot->period_id  = $periodMap[$slot->period_id];
-                $newSlot->save();
-                $newSlotIds[] = $newSlot->id;
-            }
-
-            $conflicts = $this->detectTeacherConflictsForSetting($newSetting, $newSlotIds);
-
-            DB::commit();
-            return response()->json([
-                'success'       => true,
-                'setting_id'    => $newSetting->id,
-                'conflicts'     => $conflicts,
-                'has_conflicts' => count($conflicts) > 0,
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    // =========================================================================
-    // PRIVATE: After a clone, flag any teacher conflicts introduced.
-    // =========================================================================
-    private function detectTeacherConflictsForSetting(TimetableSetting $setting, array $slotIds): array
-    {
-        if (empty($slotIds)) return [];
-
-        $newSlots = TimetableSlot::whereIn('id', $slotIds)
-            ->whereNotNull('teacher_id')->where('is_free', false)
-            ->with(['period', 'subject', 'teacher'])->get();
-
-        if ($newSlots->isEmpty()) return [];
-
-        $sessionId = $setting->session_id;
-        $termId    = $setting->term_id;
-
-        $others = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId, $setting) {
-                $q->where('session_id', $sessionId)->where('is_active', true)->where('id', '!=', $setting->id);
-                if ($termId) $q->where('term_id', $termId);
-                else         $q->whereNull('term_id');
-            })
-            ->whereIn('teacher_id', $newSlots->pluck('teacher_id')->unique())
-            ->where('is_free', false)->whereNotNull('subject_id')
-            ->with(['setting.schoolclass', 'subject', 'teacher'])
-            ->get()
-            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
-
-        $conflicts = [];
-        foreach ($newSlots as $newSlot) {
-            $key = $newSlot->teacher_id . '|' . $newSlot->day . '|' . $newSlot->period_id;
-            if (!$others->has($key)) continue;
-
-            $clashing = $others->get($key)->first();
-            
-            // Check if this is a combined session
-            $isCombined = $newSlot->room_id && $clashing->room_id
-                && $newSlot->room_id == $clashing->room_id
-                && $newSlot->subject_id == $clashing->subject_id;
-
-            if ($isCombined) {
-                // Skip combined sessions
-                continue;
-            }
-
-            $newSlot->update(['notes' => trim(($newSlot->notes ? $newSlot->notes . "\n" : '')
-                . "⚠️ Clone conflict: {$newSlot->teacher?->name} is already teaching in "
-                . $this->getClassName($clashing->setting?->schoolclass) . " at this time.")]);
-
-            $conflicts[] = [
-                'teacher'             => $newSlot->teacher?->name ?? 'Unknown',
-                'day'                 => $newSlot->day,
-                'period'              => $newSlot->period?->name,
-                'period_time'         => $this->formatTime($newSlot->period?->start_time ?? '') . ' – ' . $this->formatTime($newSlot->period?->end_time ?? ''),
-                'subject_here'        => $newSlot->subject?->subject,
-                'conflicting_class'   => $this->getClassName($clashing->setting?->schoolclass),
-                'conflicting_subject' => $clashing->subject?->subject,
-            ];
-        }
-
-        return $conflicts;
-    }
-
-    // =========================================================================
-    // BULK UPDATE
-    // =========================================================================
-    public function bulkUpdateSlots(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'setting_id'           => 'required|exists:timetable_settings,id',
-            'updates'              => 'required|array',
-            'updates.*.period_id'  => 'required|exists:timetable_periods,id',
-            'updates.*.day'        => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
-            'updates.*.subject_id' => 'nullable|exists:subject,id',
-            'updates.*.teacher_id' => 'nullable|exists:users,id',
-        ]);
-
-        $setting = TimetableSetting::findOrFail($validated['setting_id']);
-        if ($lock = $this->publishedLockResponse($setting)) return $lock;
-
-        DB::beginTransaction();
-        try {
-            foreach ($validated['updates'] as $update) {
-                TimetableSlot::updateOrCreate(
-                    ['setting_id' => $validated['setting_id'], 'period_id' => $update['period_id'], 'day' => $update['day']],
-                    ['subject_id' => $update['subject_id'] ?? null, 'teacher_id' => $update['teacher_id'] ?? null, 'is_free' => empty($update['subject_id'])]
-                );
-            }
-            DB::commit();
-            return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    // =========================================================================
-    // SUBSTITUTE REQUESTS
-    // =========================================================================
-    public function requestSubstitute(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'slot_id'               => 'required|exists:timetable_slots,id',
-            'substitute_teacher_id' => 'required|exists:users,id',
-            'reason'                => 'required|string|max:500',
-            'assignment_date'       => 'required|date|after_or_equal:today',
-        ]);
-
-        $slot = TimetableSlot::with('setting')->findOrFail($validated['slot_id']);
-        if ($slot->teacher_id != Auth::id()) {
-            return response()->json(['success' => false, 'message' => 'You can only request substitutes for your own classes'], 403);
-        }
-
-        $assignmentDate = Carbon::parse($validated['assignment_date']);
-        $holiday = $this->getHolidayForDate($assignmentDate, $slot->setting?->session_id, $slot->setting?->term_id);
-        if ($holiday && $holiday->is_full_day) {
-            return response()->json([
-                'success' => false,
-                'message' => "That date ({$assignmentDate->format('d M Y')}) is a holiday — {$holiday->title}. No substitute needed.",
-            ], 422);
-        }
-
-        $substitute = SubstituteAssignment::create([
-            'original_teacher_id'   => Auth::id(),
-            'substitute_teacher_id' => $validated['substitute_teacher_id'],
-            'slot_id'               => $slot->id,
-            'assignment_date'       => $validated['assignment_date'],
-            'reason'                => $validated['reason'],
-            'status'                => 'pending',
-        ]);
-
-        return response()->json(['success' => true, 'substitute' => $substitute]);
-    }
-
-    public function approveSubstitute(Request $request, int $substituteId): JsonResponse
-    {
-        $substitute = SubstituteAssignment::findOrFail($substituteId);
-        if (!Auth::user()->can('Approve substitute')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $substitute->update(['status' => 'approved', 'approved_by' => Auth::id(), 'approved_at' => now()]);
-        $slot         = $substitute->slot;
-        $originalName = $substitute->originalTeacher->name ?? 'Unknown';
-        $slot->update([
-            'teacher_id' => $substitute->substitute_teacher_id,
-            'notes'      => ($slot->notes ? $slot->notes . "\n" : '') . "[SUBSTITUTE] Original: {$originalName}, Date: {$substitute->assignment_date}",
-        ]);
-        return response()->json(['success' => true]);
-    }
-
-    public function getSubstituteRequests(Request $request): JsonResponse
-    {
-        $requests = SubstituteAssignment::with(['originalTeacher', 'substituteTeacher', 'slot.period', 'slot.subject'])
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->when($request->date,   fn($q) => $q->whereDate('assignment_date', $request->date))
-            ->orderBy('created_at', 'desc')->paginate($request->per_page ?? 20);
-        return response()->json(['success' => true, 'requests' => $requests]);
-    }
-
-    public function getAvailableSubstitutes(Request $request): JsonResponse
-    {
-        $substitutes = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
-            ->with('staffPicture')->get()
-            ->map(fn($t) => [
-                'id'      => $t->id,
-                'name'    => $t->name,
-                'email'   => $t->email,
-                'picture' => $t->staffPicture
-                    ? asset('storage/staff_avatars/' . $t->staffPicture->picture)
-                    : asset('storage/staff_avatars/default.png'),
-            ]);
-        return response()->json(['success' => true, 'substitutes' => $substitutes]);
-    }
-
-    // =========================================================================
-    // TEACHER AVAILABILITY
-    // =========================================================================
-    public function saveTeacherAvailability(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'teacher_id'                  => 'required|exists:users,id',
-            'availability'                => 'required|array',
-            'availability.*.day'          => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
-            'availability.*.start_time'   => 'required|date_format:H:i',
-            'availability.*.end_time'     => 'required|date_format:H:i|after:start_time',
-            'availability.*.is_available' => 'boolean',
-        ]);
-        foreach ($validated['availability'] as $avail) {
-            TeacherAvailability::updateOrCreate(
-                ['teacher_id' => $validated['teacher_id'], 'day' => $avail['day']],
-                ['start_time' => $avail['start_time'], 'end_time' => $avail['end_time'], 'is_available' => $avail['is_available'] ?? true]
-            );
-        }
-        return response()->json(['success' => true]);
-    }
-
-    public function getTeacherAvailability(int $teacherId): JsonResponse
-    {
-        return response()->json(['success' => true, 'availability' => TeacherAvailability::where('teacher_id', $teacherId)->get()]);
-    }
-
-    // =========================================================================
-    // WORKLOAD DASHBOARD
-    // =========================================================================
-    public function workloadDashboard(Request $request): JsonResponse
-    {
-        $sessionId = $request->session_id ?? Schoolsession::where('status', 'Current')->value('id');
-        $teachers  = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))->with('staffPicture')->get();
-
-        $workloadData = [];
-        foreach ($teachers as $teacher) {
-            $slots = TimetableSlot::where('teacher_id', $teacher->id)
-                ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
-                ->with(['setting.schoolclass', 'subject'])->get();
-
-            $dailyLoad = [];
-            foreach (self::DAYS as $day) $dailyLoad[$day] = $slots->where('day', $day)->count();
-
-            $workloadData[] = [
-                'teacher_id'       => $teacher->id,
-                'teacher_name'     => $teacher->name,
-                'teacher_picture'  => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
-                'periods_assigned' => $slots->count(),
-                'classes_taught'   => $slots->pluck('setting.schoolclass.schoolclass')->filter()->unique()->values(),
-                'subjects_taught'  => $slots->pluck('subject.subject')->filter()->unique()->values(),
-                'daily_load'       => $dailyLoad,
-            ];
-        }
-        usort($workloadData, fn($a, $b) => $b['periods_assigned'] - $a['periods_assigned']);
-        return response()->json(['success' => true, 'workload' => $workloadData]);
-    }
-
-    // =========================================================================
-    // CLASS SUBJECTS
-    // =========================================================================
-    public function getClassSubjects(Request $request): JsonResponse
-    {
-        $subjectTeachers = SubjectTeacher::where('sessionid', $request->input('session_id'))
-            ->when($request->input('term_id'), fn($q) => $q->where('termid', $request->input('term_id')))
-            ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $request->input('class_id')))
-            ->with(['subject', 'staff', 'staff.staffPicture'])->get()
-            ->map(fn($st) => [
-                'subject_id'      => $st->subjectid,
-                'subject_name'    => $st->subject?->subject,
-                'subject_code'    => $st->subject?->subject_code,
-                'teacher_id'      => $st->staffid,
-                'teacher_name'    => $st->staff?->name,
-                'teacher_picture' => $st->staff && $st->staff->staffPicture
-                    ? asset('storage/staff_avatars/' . $st->staff->staffPicture->picture)
-                    : asset('storage/staff_avatars/default.png'),
-            ]);
-        return response()->json(['success' => true, 'data' => $subjectTeachers]);
-    }
-
-    // =========================================================================
-    // TEACHER VIEW
+    // TEACHER VIEW — with Session, Term, and Class filtering
     // =========================================================================
     public function teacherView(Request $request)
     {
         $teacherId = Auth::id();
         $pagetitle = 'My Timetable';
 
-        $sessionId = $request->input('session_id')
-            ?? Schoolsession::where('status', 'Current')->value('id')
+        // Get filters from request
+        $sessionId = $request->input('session_id') 
+            ?? Schoolsession::where('status', 'Current')->value('id') 
             ?? Schoolsession::latest('id')->value('id');
+        
+        $termId = $request->input('term_id') 
+            ?? Schoolterm::latest('id')->value('id');
+        
+        $classId = $request->input('class_id');
 
-        $termId = $request->input('term_id') ?? Schoolterm::latest('id')->value('id');
-
-        $teacher        = User::with('staffPicture')->find($teacherId);
+        $teacher = User::with('staffPicture')->find($teacherId);
         $teacherPicture = $teacher?->staffPicture
-            ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null;
+            ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) 
+            : null;
 
-        $slots = TimetableSlot::where('teacher_id', $teacherId)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
-            ->with(['period', 'subject', 'setting.schoolclass', 'setting.term', 'room'])
-            ->get()->groupBy('day');
+        // Get all classes this teacher teaches
+        $teacherClasses = SubjectTeacher::where('staffid', $teacherId)
+            ->whereHas('subjectclass', fn($q) => $q->whereNotNull('schoolclassid'))
+            ->with(['subjectclass.schoolclass', 'subjectclass.schoolclass.arm'])
+            ->get()
+            ->pluck('subjectclass.schoolclass')
+            ->filter()
+            ->unique('id')
+            ->values();
 
+        // Build the slots query with filters
+        $slotsQuery = TimetableSlot::where('teacher_id', $teacherId)
+            ->whereHas('setting', function($q) use ($sessionId, $termId) {
+                $q->where('session_id', $sessionId)->where('is_active', true);
+                if ($termId) $q->where('term_id', $termId);
+            })
+            ->whereNotNull('subject_id')
+            ->with(['period', 'subject', 'setting.schoolclass', 'setting.term', 'room']);
+
+        // Apply class filter if selected
+        if ($classId) {
+            $slotsQuery->whereHas('setting', function($q) use ($classId) {
+                $q->where('schoolclass_id', $classId);
+            });
+        }
+
+        $slots = $slotsQuery->get()->groupBy('day');
+
+        // Get all periods across settings (for the grid)
         $allPeriods = TimetablePeriod::with('setting')->whereIn(
             'setting_id',
             TimetableSetting::where('session_id', $sessionId)->pluck('id')
         )->orderBy('order')->get()->unique('order');
 
+        // Build day/period meta
         $periodDayMeta = [];
-        $metaCache     = [];
+        $metaCache = [];
         foreach ($allPeriods as $period) {
             if (!$period->setting) continue;
             $sid = $period->setting_id;
@@ -3002,19 +2428,43 @@ class TimetableController extends Controller
             }
         }
 
-        $sessions      = Schoolsession::orderByDesc('id')->get();
-        $terms         = Schoolterm::all();
-        $days          = self::DAYS;
+        // Calculate combined sessions
+        $combinedMap = [];
+        foreach ($slots as $day => $daySlots) {
+            foreach ($daySlots as $slot) {
+                $key = $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id . '|' . $slot->subject_id;
+                if (!isset($combinedMap[$key])) {
+                    $combinedMap[$key] = ['slots' => [], 'room_id' => $slot->room_id];
+                }
+                $combinedMap[$key]['slots'][] = $slot;
+            }
+        }
+
+        // Mark combined slots
+        foreach ($combinedMap as $key => $data) {
+            $count = count($data['slots']);
+            if ($count > 1) {
+                foreach ($data['slots'] as $slot) {
+                    $slot->combined_count = $count;
+                }
+            }
+        }
+
+        $sessions = Schoolsession::orderByDesc('id')->get();
+        $terms = Schoolterm::all();
+        $days = self::DAYS;
         $upcomingSlots = $this->getUpcomingSlots($teacherId, $sessionId);
         $weeklySummary = $this->getWeeklySummary($teacherId, $sessionId);
+        $todaySlots = $slots[date('l')] ?? collect();
 
-        $icsUrl    = URL::signedRoute('timetable.ics', ['teacherId' => $teacherId], now()->addYears(10));
+        $icsUrl = URL::signedRoute('timetable.ics', ['teacherId' => $teacherId], now()->addYears(10));
         $webcalUrl = preg_replace('/^https?:\/\//', 'webcal://', $icsUrl);
 
         return view('timetable.teacher', compact(
             'pagetitle', 'slots', 'days', 'allPeriods', 'sessions', 'terms',
-            'sessionId', 'termId', 'upcomingSlots', 'weeklySummary', 'teacherPicture',
-            'periodDayMeta', 'icsUrl', 'webcalUrl'
+            'sessionId', 'termId', 'classId', 'teacherClasses',
+            'upcomingSlots', 'weeklySummary', 'teacherPicture',
+            'periodDayMeta', 'icsUrl', 'webcalUrl', 'todaySlots'
         ));
     }
 
@@ -3096,6 +2546,55 @@ class TimetableController extends Controller
         return $summary;
     }
 
+    // =========================================================================
+    // EXPORT TEACHER TIMETABLE — CSV
+    // =========================================================================
+    public function exportTeacherTimetable(Request $request)
+    {
+        $teacherId = Auth::id();
+        $sessionId = $request->input('session_id') ?? Schoolsession::where('status', 'Current')->value('id');
+        $termId = $request->input('term_id') ?? Schoolterm::latest('id')->value('id');
+        $classId = $request->input('class_id');
+
+        $query = TimetableSlot::where('teacher_id', $teacherId)
+            ->whereHas('setting', function($q) use ($sessionId, $termId) {
+                $q->where('session_id', $sessionId)->where('is_active', true);
+                if ($termId) $q->where('term_id', $termId);
+            })
+            ->whereNotNull('subject_id')
+            ->with(['period', 'subject', 'setting.schoolclass', 'room']);
+
+        if ($classId) {
+            $query->whereHas('setting', fn($q) => $q->where('schoolclass_id', $classId));
+        }
+
+        $slots = $query->get();
+
+        $handle = fopen('php://temp', 'w+');
+        fputcsv($handle, ['Day', 'Period', 'Start', 'End', 'Subject', 'Class', 'Room', 'Double']);
+
+        foreach ($slots as $slot) {
+            fputcsv($handle, [
+                $slot->day,
+                $slot->period?->name,
+                substr($slot->period?->start_time ?? '', 0, 5),
+                substr($slot->period?->end_time ?? '', 0, 5),
+                $slot->subject?->subject,
+                $slot->setting?->schoolclass?->schoolclass,
+                $slot->room?->room_name,
+                $slot->is_double ? 'Yes' : 'No',
+            ]);
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($csv, 200)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="my-timetable-' . date('Y-m-d') . '.csv"');
+    }
+
     private function scheduleNotification(int $teacherId, int $slotId, string $type): void
     {
         $teacher = User::find($teacherId);
@@ -3135,7 +2634,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // PRIVATE: Export helpers (kept concise)
+    // EXPORT HELPERS (kept from original)
     // =========================================================================
     private function exportCsv($setting, $periods, $days, $grid, $className, $sessionName, $dayMeta)
     {
@@ -3417,5 +2916,513 @@ class TimetableController extends Controller
             'generatedAt' => now()->format('d M Y, H:i'),
             'dayColors'   => self::DAY_COLORS,
         ];
+    }
+
+    // =========================================================================
+    // EXPORT WHOLE SCHOOL TIMETABLE — PDF
+    // =========================================================================
+    public function exportWholeSchool(Request $request)
+    {
+        $sessionId   = $request->input('session_id');
+        $termId      = $request->input('term_id');
+        $orientation = $request->input('orientation', 'horizontal');
+
+        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+
+        [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
+
+        if (empty($allTimetables)) return response()->json(['error' => 'No timetables found'], 404);
+
+        return $this->exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation, $overallStats);
+    }
+
+    // =========================================================================
+    // EXPORT WHOLE SCHOOL TIMETABLE — WEB VIEW
+    // =========================================================================
+    public function exportWholeSchoolWeb(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $termId    = $request->input('term_id');
+
+        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+
+        [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
+
+        if (empty($allTimetables)) {
+            abort(404, 'No timetables found for this session/term.');
+        }
+
+        $pagetitle = 'Whole School Timetable';
+
+        return view('timetable.exports.whole-school-web', array_merge(
+            compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'pagetitle'),
+            [
+                'sessionName'   => $session->session ?? 'Session',
+                'termName'      => $term?->term ?? 'All Terms',
+                'dayColors'     => self::DAY_COLORS,
+                'generatedAt'   => now()->format('d M Y, H:i'),
+            ]
+        ));
+    }
+
+    // =========================================================================
+    // MERGED GRID — PDF
+    // =========================================================================
+    public function exportMergedGrid(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $termId    = $request->input('term_id');
+        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+
+        $data = $this->buildMergedGridData($sessionId, $termId);
+        if (empty($data['rows'])) return response()->json(['error' => 'No timetables found'], 404);
+
+        $pdf = Pdf::loadView('timetable.exports.merged-grid', $data)->setPaper('a3', 'landscape');
+        $filename = 'merged-timetable-' . str_replace([' ', '/'], '-', $data['sessionName']) . '.pdf';
+        return $pdf->stream($filename);
+    }
+
+    // =========================================================================
+    // MERGED GRID — WEB VIEW
+    // =========================================================================
+    public function mergedGridWeb(Request $request)
+    {
+        $sessionId = $request->input('session_id');
+        $termId    = $request->input('term_id');
+        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+
+        $data = $this->buildMergedGridData($sessionId, $termId);
+        if (empty($data['rows'])) abort(404, 'No timetables found for this session/term.');
+
+        $pagetitle = 'Merged Timetable';
+
+        return view('timetable.exports.merged-grid-web', array_merge($data, compact('pagetitle')));
+    }
+
+    // =========================================================================
+    // NOTIFICATIONS / PUBLISH / SUBSTITUTE / AVAILABILITY
+    // =========================================================================
+    public function sendNotifications(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'setting_id' => 'required|exists:timetable_settings,id',
+            'type'       => 'required|in:daily_summary,weekly_preview,change_alert',
+        ]);
+
+        $setting = TimetableSetting::with([
+            'slots.teacher', 'slots.teacher.staffPicture',
+            'slots.subject', 'slots.period', 'slots.room',
+            'schoolclass', 'session', 'term',
+        ])->findOrFail($validated['setting_id']);
+
+        if ($validated['type'] === 'daily_summary') {
+            $todayHoliday = $this->getHolidayForDate(now(), $setting->session_id, $setting->term_id);
+            if ($todayHoliday && $todayHoliday->is_full_day) {
+                return response()->json(['success' => true, 'message' => "Skipped — today is a holiday ({$todayHoliday->title}).", 'sent' => 0]);
+            }
+        }
+
+        $sent = $this->dispatchNotifications($setting, $validated['type']);
+
+        return response()->json(['success' => true, 'message' => "Notifications sent to {$sent} teacher(s).", 'sent' => $sent]);
+    }
+
+    public function publishSetting(int $settingId): JsonResponse
+    {
+        $setting = TimetableSetting::findOrFail($settingId);
+        $setting->update(['is_published' => true, 'published_at' => now(), 'published_by' => Auth::id()]);
+        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => true]);
+
+        return response()->json(['success' => true, 'message' => 'Timetable published and locked.']);
+    }
+
+    public function unpublishSetting(int $settingId): JsonResponse
+    {
+        $setting = TimetableSetting::findOrFail($settingId);
+        $setting->update(['is_published' => false, 'published_at' => null, 'published_by' => null]);
+        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => false]);
+
+        return response()->json(['success' => true, 'message' => 'Timetable unpublished. It can now be edited.']);
+    }
+
+    public function publishAndNotify(Request $request): JsonResponse
+    {
+        $validated = $request->validate(['setting_id' => 'required|exists:timetable_settings,id']);
+
+        $setting = TimetableSetting::with([
+            'slots.teacher', 'slots.teacher.staffPicture',
+            'slots.subject', 'slots.period', 'slots.room',
+            'schoolclass', 'session', 'term',
+        ])->findOrFail($validated['setting_id']);
+
+        $setting->update(['is_published' => true, 'published_at' => now(), 'published_by' => Auth::id()]);
+        $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, ['is_published' => true]);
+
+        $sent = $this->dispatchNotifications($setting, 'weekly_preview');
+
+        return response()->json([
+            'success' => true,
+            'message' => "Timetable published and notifications sent to {$sent} teacher(s).",
+            'sent'    => $sent,
+        ]);
+    }
+
+    private function dispatchNotifications(TimetableSetting $setting, string $type): int
+    {
+        $byTeacher = $setting->slots->whereNotNull('teacher_id')->groupBy('teacher_id');
+        $sent = 0;
+
+        foreach ($byTeacher as $teacherId => $teacherSlots) {
+            $teacher = $teacherSlots->first()->teacher;
+            if (!$teacher || !$teacher->email) continue;
+
+            $notifData = [
+                'teacher'         => $teacher->name,
+                'teacher_picture' => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
+                'class'           => $setting->schoolclass->schoolclass ?? '',
+                'session'         => $setting->session->session ?? '',
+                'term'            => $setting->term?->term ?? '',
+                'slots'           => $teacherSlots->map(fn($s) => [
+                    'day'     => $s->day,
+                    'period'  => $s->period?->name,
+                    'time'    => $this->formatTime($s->period?->start_time ?? '') . ' – ' . $this->formatTime($s->period?->end_time ?? ''),
+                    'subject' => $s->subject?->subject,
+                    'room'    => $s->room?->room_name,
+                ])->toArray(),
+                'type'      => $type,
+                'generated' => now()->format('d M Y H:i'),
+            ];
+
+            try {
+                Mail::to($teacher->email)->send(new TimetableNotificationMail($notifData));
+                foreach ($teacherSlots as $slot) {
+                    TimetableNotification::create([
+                        'teacher_id'   => $teacherId, 'slot_id'    => $slot->id,
+                        'type'         => $type, 'email' => $teacher->email,
+                        'scheduled_at' => now(), 'sent_at'   => now(),
+                        'status'       => 'sent', 'payload'   => json_encode($notifData),
+                    ]);
+                }
+                $sent++;
+            } catch (\Exception $e) {
+                Log::error('Timetable notification failed', ['teacher_id' => $teacherId, 'error' => $e->getMessage()]);
+            }
+        }
+
+        return $sent;
+    }
+
+    public function deleteSetting(Request $request, int $settingId): JsonResponse
+    {
+        $setting = TimetableSetting::findOrFail($settingId);
+
+        if ($conflict = $this->versionConflictResponse($setting, $request->input('expected_updated_at'))) {
+            return $conflict;
+        }
+
+        try { $this->logTimetableChange(Auth::id(), 'delete', 'TimetableSetting', $settingId, null, $setting->toArray()); }
+        catch (\Exception $e) { Log::warning('Audit log failed: ' . $e->getMessage()); }
+        $setting->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function cloneSetting(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'setting_id'     => 'required|exists:timetable_settings,id',
+            'new_session_id' => 'nullable|exists:schoolsession,id',
+            'new_term_id'    => 'nullable|exists:schoolterm,id',
+            'force'          => 'boolean',
+        ]);
+
+        $oldSetting = TimetableSetting::with(['periods', 'constraints', 'slots', 'editor'])->findOrFail($validated['setting_id']);
+
+        if (empty($validated['force'])
+            && $editingWarning = $this->editingRecentlyResponse($oldSetting, 'Clone anyway?')) {
+            return $editingWarning;
+        }
+
+        DB::beginTransaction();
+        try {
+            $newSetting               = $oldSetting->replicate();
+            $newSetting->session_id   = $validated['new_session_id'] ?? $oldSetting->session_id;
+            $newSetting->term_id      = $validated['new_term_id'] ?? $oldSetting->term_id;
+            $newSetting->is_published = false;
+            $newSetting->published_at = null;
+            $newSetting->published_by = null;
+            $newSetting->editing_by   = null;
+            $newSetting->editing_at   = null;
+            $newSetting->created_by   = Auth::id();
+            $newSetting->updated_by   = Auth::id();
+            $newSetting->save();
+
+            $periodMap = [];
+            foreach ($oldSetting->periods as $period) {
+                $newPeriod             = $period->replicate();
+                $newPeriod->setting_id = $newSetting->id;
+                $newPeriod->save();
+                $periodMap[$period->id] = $newPeriod->id;
+            }
+
+            foreach ($oldSetting->constraints as $constraint) {
+                $newC = $constraint->replicate(); $newC->setting_id = $newSetting->id; $newC->save();
+            }
+
+            $newSlotIds = [];
+            foreach ($oldSetting->slots as $slot) {
+                if (!isset($periodMap[$slot->period_id])) continue;
+                $newSlot = $slot->replicate();
+                $newSlot->setting_id = $newSetting->id;
+                $newSlot->period_id  = $periodMap[$slot->period_id];
+                $newSlot->save();
+                $newSlotIds[] = $newSlot->id;
+            }
+
+            $conflicts = $this->detectTeacherConflictsForSetting($newSetting, $newSlotIds);
+
+            DB::commit();
+            return response()->json([
+                'success'       => true,
+                'setting_id'    => $newSetting->id,
+                'conflicts'     => $conflicts,
+                'has_conflicts' => count($conflicts) > 0,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    private function detectTeacherConflictsForSetting(TimetableSetting $setting, array $slotIds): array
+    {
+        if (empty($slotIds)) return [];
+
+        $newSlots = TimetableSlot::whereIn('id', $slotIds)
+            ->whereNotNull('teacher_id')->where('is_free', false)
+            ->with(['period', 'subject', 'teacher'])->get();
+
+        if ($newSlots->isEmpty()) return [];
+
+        $sessionId = $setting->session_id;
+        $termId    = $setting->term_id;
+
+        $others = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId, $setting) {
+                $q->where('session_id', $sessionId)->where('is_active', true)->where('id', '!=', $setting->id);
+                if ($termId) $q->where('term_id', $termId);
+                else         $q->whereNull('term_id');
+            })
+            ->whereIn('teacher_id', $newSlots->pluck('teacher_id')->unique())
+            ->where('is_free', false)->whereNotNull('subject_id')
+            ->with(['setting.schoolclass', 'subject', 'teacher'])
+            ->get()
+            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
+
+        $conflicts = [];
+        foreach ($newSlots as $newSlot) {
+            $key = $newSlot->teacher_id . '|' . $newSlot->day . '|' . $newSlot->period_id;
+            if (!$others->has($key)) continue;
+
+            $clashing = $others->get($key)->first();
+            
+            $isCombined = $newSlot->room_id && $clashing->room_id
+                && $newSlot->room_id == $clashing->room_id
+                && $newSlot->subject_id == $clashing->subject_id;
+
+            if ($isCombined) {
+                continue;
+            }
+
+            $newSlot->update(['notes' => trim(($newSlot->notes ? $newSlot->notes . "\n" : '')
+                . "⚠️ Clone conflict: {$newSlot->teacher?->name} is already teaching in "
+                . $this->getClassName($clashing->setting?->schoolclass) . " at this time.")]);
+
+            $conflicts[] = [
+                'teacher'             => $newSlot->teacher?->name ?? 'Unknown',
+                'day'                 => $newSlot->day,
+                'period'              => $newSlot->period?->name,
+                'period_time'         => $this->formatTime($newSlot->period?->start_time ?? '') . ' – ' . $this->formatTime($newSlot->period?->end_time ?? ''),
+                'subject_here'        => $newSlot->subject?->subject,
+                'conflicting_class'   => $this->getClassName($clashing->setting?->schoolclass),
+                'conflicting_subject' => $clashing->subject?->subject,
+            ];
+        }
+
+        return $conflicts;
+    }
+
+    public function bulkUpdateSlots(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'setting_id'           => 'required|exists:timetable_settings,id',
+            'updates'              => 'required|array',
+            'updates.*.period_id'  => 'required|exists:timetable_periods,id',
+            'updates.*.day'        => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'updates.*.subject_id' => 'nullable|exists:subject,id',
+            'updates.*.teacher_id' => 'nullable|exists:users,id',
+        ]);
+
+        $setting = TimetableSetting::findOrFail($validated['setting_id']);
+        if ($lock = $this->publishedLockResponse($setting)) return $lock;
+
+        DB::beginTransaction();
+        try {
+            foreach ($validated['updates'] as $update) {
+                TimetableSlot::updateOrCreate(
+                    ['setting_id' => $validated['setting_id'], 'period_id' => $update['period_id'], 'day' => $update['day']],
+                    ['subject_id' => $update['subject_id'] ?? null, 'teacher_id' => $update['teacher_id'] ?? null, 'is_free' => empty($update['subject_id'])]
+                );
+            }
+            DB::commit();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function requestSubstitute(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'slot_id'               => 'required|exists:timetable_slots,id',
+            'substitute_teacher_id' => 'required|exists:users,id',
+            'reason'                => 'required|string|max:500',
+            'assignment_date'       => 'required|date|after_or_equal:today',
+        ]);
+
+        $slot = TimetableSlot::with('setting')->findOrFail($validated['slot_id']);
+        if ($slot->teacher_id != Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'You can only request substitutes for your own classes'], 403);
+        }
+
+        $assignmentDate = Carbon::parse($validated['assignment_date']);
+        $holiday = $this->getHolidayForDate($assignmentDate, $slot->setting?->session_id, $slot->setting?->term_id);
+        if ($holiday && $holiday->is_full_day) {
+            return response()->json([
+                'success' => false,
+                'message' => "That date ({$assignmentDate->format('d M Y')}) is a holiday — {$holiday->title}. No substitute needed.",
+            ], 422);
+        }
+
+        $substitute = SubstituteAssignment::create([
+            'original_teacher_id'   => Auth::id(),
+            'substitute_teacher_id' => $validated['substitute_teacher_id'],
+            'slot_id'               => $slot->id,
+            'assignment_date'       => $validated['assignment_date'],
+            'reason'                => $validated['reason'],
+            'status'                => 'pending',
+        ]);
+
+        return response()->json(['success' => true, 'substitute' => $substitute]);
+    }
+
+    public function approveSubstitute(Request $request, int $substituteId): JsonResponse
+    {
+        $substitute = SubstituteAssignment::findOrFail($substituteId);
+        if (!Auth::user()->can('Approve substitute')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        $substitute->update(['status' => 'approved', 'approved_by' => Auth::id(), 'approved_at' => now()]);
+        $slot         = $substitute->slot;
+        $originalName = $substitute->originalTeacher->name ?? 'Unknown';
+        $slot->update([
+            'teacher_id' => $substitute->substitute_teacher_id,
+            'notes'      => ($slot->notes ? $slot->notes . "\n" : '') . "[SUBSTITUTE] Original: {$originalName}, Date: {$substitute->assignment_date}",
+        ]);
+        return response()->json(['success' => true]);
+    }
+
+    public function getSubstituteRequests(Request $request): JsonResponse
+    {
+        $requests = SubstituteAssignment::with(['originalTeacher', 'substituteTeacher', 'slot.period', 'slot.subject'])
+            ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->when($request->date,   fn($q) => $q->whereDate('assignment_date', $request->date))
+            ->orderBy('created_at', 'desc')->paginate($request->per_page ?? 20);
+        return response()->json(['success' => true, 'requests' => $requests]);
+    }
+
+    public function getAvailableSubstitutes(Request $request): JsonResponse
+    {
+        $substitutes = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
+            ->with('staffPicture')->get()
+            ->map(fn($t) => [
+                'id'      => $t->id,
+                'name'    => $t->name,
+                'email'   => $t->email,
+                'picture' => $t->staffPicture
+                    ? asset('storage/staff_avatars/' . $t->staffPicture->picture)
+                    : asset('storage/staff_avatars/default.png'),
+            ]);
+        return response()->json(['success' => true, 'substitutes' => $substitutes]);
+    }
+
+    public function saveTeacherAvailability(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'teacher_id'                  => 'required|exists:users,id',
+            'availability'                => 'required|array',
+            'availability.*.day'          => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'availability.*.start_time'   => 'required|date_format:H:i',
+            'availability.*.end_time'     => 'required|date_format:H:i|after:start_time',
+            'availability.*.is_available' => 'boolean',
+        ]);
+        foreach ($validated['availability'] as $avail) {
+            TeacherAvailability::updateOrCreate(
+                ['teacher_id' => $validated['teacher_id'], 'day' => $avail['day']],
+                ['start_time' => $avail['start_time'], 'end_time' => $avail['end_time'], 'is_available' => $avail['is_available'] ?? true]
+            );
+        }
+        return response()->json(['success' => true]);
+    }
+
+    public function getTeacherAvailability(int $teacherId): JsonResponse
+    {
+        return response()->json(['success' => true, 'availability' => TeacherAvailability::where('teacher_id', $teacherId)->get()]);
+    }
+
+    public function workloadDashboard(Request $request): JsonResponse
+    {
+        $sessionId = $request->session_id ?? Schoolsession::where('status', 'Current')->value('id');
+        $teachers  = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))->with('staffPicture')->get();
+
+        $workloadData = [];
+        foreach ($teachers as $teacher) {
+            $slots = TimetableSlot::where('teacher_id', $teacher->id)
+                ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+                ->with(['setting.schoolclass', 'subject'])->get();
+
+            $dailyLoad = [];
+            foreach (self::DAYS as $day) $dailyLoad[$day] = $slots->where('day', $day)->count();
+
+            $workloadData[] = [
+                'teacher_id'       => $teacher->id,
+                'teacher_name'     => $teacher->name,
+                'teacher_picture'  => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
+                'periods_assigned' => $slots->count(),
+                'classes_taught'   => $slots->pluck('setting.schoolclass.schoolclass')->filter()->unique()->values(),
+                'subjects_taught'  => $slots->pluck('subject.subject')->filter()->unique()->values(),
+                'daily_load'       => $dailyLoad,
+            ];
+        }
+        usort($workloadData, fn($a, $b) => $b['periods_assigned'] - $a['periods_assigned']);
+        return response()->json(['success' => true, 'workload' => $workloadData]);
+    }
+
+    public function getClassSubjects(Request $request): JsonResponse
+    {
+        $subjectTeachers = SubjectTeacher::where('sessionid', $request->input('session_id'))
+            ->when($request->input('term_id'), fn($q) => $q->where('termid', $request->input('term_id')))
+            ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $request->input('class_id')))
+            ->with(['subject', 'staff', 'staff.staffPicture'])->get()
+            ->map(fn($st) => [
+                'subject_id'      => $st->subjectid,
+                'subject_name'    => $st->subject?->subject,
+                'subject_code'    => $st->subject?->subject_code,
+                'teacher_id'      => $st->staffid,
+                'teacher_name'    => $st->staff?->name,
+                'teacher_picture' => $st->staff && $st->staff->staffPicture
+                    ? asset('storage/staff_avatars/' . $st->staff->staffPicture->picture)
+                    : asset('storage/staff_avatars/default.png'),
+            ]);
+        return response()->json(['success' => true, 'data' => $subjectTeachers]);
     }
 }
