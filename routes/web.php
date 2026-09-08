@@ -1158,11 +1158,15 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     Route::patch('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}/comments', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.updateComments');
     Route::get('/classbroadsheet/past-comments/{studentId}', [ClassBroadsheetController::class, 'getPastComments']);
 
-    // compulsory subject class
-
-    Route::get('compulsorysubjectclass/subjects-by-class', [CompulsorySubjectClassController::class, 'subjectsByClass'])->name('compulsorysubjectclass.subjectsByClass');
-    Route::post('compulsorysubjectclass/bulk-destroy', [CompulsorySubjectClassController::class, 'bulkDestroy']) ->name('compulsorysubjectclass.bulkDestroy');
-    Route::post('compulsorysubjectclass/update-pass-average', [CompulsorySubjectClassController::class, 'updatePassAverage'])->name('compulsorysubjectclass.updatePassAverage');
+   
+   // Compulsory Subject Class Routes
+    Route::prefix('compulsorysubjectclass')->group(function () {
+        Route::get('/data', [CompulsorySubjectClassController::class, 'data'])->name('compulsorysubjectclass.data');
+        Route::get('/stats', [CompulsorySubjectClassController::class, 'stats'])->name('compulsorysubjectclass.stats');
+        Route::post('/bulk-destroy', [CompulsorySubjectClassController::class, 'deleteMultiple'])->name('compulsorysubjectclass.bulkDestroy');
+        Route::get('/subjects-by-class', [CompulsorySubjectClassController::class, 'subjectsByClass'])->name('compulsorysubjectclass.subjectsByClass');
+        Route::post('/update-pass-average', [CompulsorySubjectClassController::class, 'updatePassAverage'])->name('compulsorysubjectclass.updatePassAverage');
+    });
     Route::resource('compulsorysubjectclass', CompulsorySubjectClassController::class);
 
     //principal's comment
