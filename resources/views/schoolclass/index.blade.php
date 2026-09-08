@@ -734,9 +734,7 @@ $(document).ready(function () {
 
     // =========================================================================
     // SELECT-ALL HELPERS
-    // =========================================================================
-
-    $('#create-select-all-arms-cb').on('change', function() {
+    // =========================================================================    $('#create-select-all-arms-cb').on('change', function() {
         $('.create-arm-cb').prop('checked', this.checked);
         updateCreateCounts();
     });
@@ -781,21 +779,26 @@ $(document).ready(function () {
         $('#create-save-btn').prop('disabled', true);
         $('#create-error-msg').addClass('d-none').html('');
         hideModalLoader('create');
-        new bootstrap.Modal(document.getElementById('createModal')).show();
+        var createModal = new bootstrap.Modal(document.getElementById('createModal'));
+        createModal.show();
     });
 
     // =========================================================================
-    // EDIT MODAL
+    // EDIT MODAL - FIXED
     // =========================================================================
 
-    $(document).on('click', '.edit-class-btn', function() {
+    $(document).on('click', '.edit-class-btn', function(e) {
+        e.preventDefault();
+        
+        // Get all data attributes
         var id = $(this).data('id');
         var schoolclass = $(this).data('schoolclass');
         var armId = $(this).data('arm-id');
         var categoryIds = $(this).data('category-ids');
 
+        // Populate the edit form
         $('#edit-class-id').val(id);
-        $('#edit-schoolclass').val(schoolclass);
+        $('#edit-schoolclass').val(schoolclass || '');
 
         // Set arm radio
         $('.edit-arm-rb').prop('checked', false);
@@ -803,20 +806,25 @@ $(document).ready(function () {
             $('#edit-arm-' + armId).prop('checked', true);
         }
 
-        // Set category checkboxes
+        // Clear and set category checkboxes
         $('.edit-category-cb').prop('checked', false);
         if (categoryIds) {
-            var ids = categoryIds.split(',').map(id => id.trim());
+            var ids = categoryIds.split(',').map(function(id) { return id.trim(); });
             ids.forEach(function(catId) {
-                $('#edit-category-' + catId).prop('checked', true);
+                if (catId) {
+                    $('#edit-category-' + catId).prop('checked', true);
+                }
             });
         }
 
+        // Reset error messages and loader
         $('#edit-error-msg').addClass('d-none').html('');
         hideModalLoader('edit');
         btnReset($('#edit-update-btn'));
 
-        new bootstrap.Modal(document.getElementById('editModal')).show();
+        // Show the modal
+        var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        editModal.show();
     });
 
     // =========================================================================
@@ -963,7 +971,8 @@ $(document).ready(function () {
         deleteId = $(this).data('id');
         $('#delete-item-title').text($(this).data('name') || 'this class');
         btnReset($('#confirm-delete-btn'));
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
     });
 
     $('#confirm-delete-btn').on('click', function() {
@@ -1005,7 +1014,7 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-    // DELETE: BULK (Complete working version)
+    // DELETE: BULK
     // =========================================================================
 
     function doBulkDelete() {
