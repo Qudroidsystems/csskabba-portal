@@ -57,16 +57,22 @@
 }
 .st-table tr:hover td { background:#f0f9ff; }
 
-/* ── Term badges ─────────────────────────────────────────── */
-.term-badge {
+/* ── Badges ──────────────────────────────────────────────── */
+.st-badge {
     display:inline-flex; align-items:center;
     padding:3px 9px; border-radius:20px;
-    font-size:11px; font-weight:600; margin:2px 2px;
+    font-size:11px; font-weight:600;
 }
-.term-first  { background:#dcfce7; color:#16a34a; }
-.term-second { background:#dbeafe; color:#2563eb; }
-.term-third  { background:#fee2e2; color:#dc2626; }
-.term-other  { background:#f3f4f6; color:#6b7280; }
+.st-badge-session { background:#ccfbf1; color:#0f766e; }
+
+/* ── Term badges ─────────────────────────────────────────── */
+.st-badge-term {
+    margin:1px 2px;
+}
+.st-badge-term-first  { background:#dcfce7; color:#16a34a; }
+.st-badge-term-second { background:#dbeafe; color:#2563eb; }
+.st-badge-term-third  { background:#fee2e2; color:#dc2626; }
+.st-badge-term-other  { background:#f3f4f6; color:#6b7280; }
 
 /* ── Avatar ──────────────────────────────────────────────── */
 .teacher-avatar {
@@ -75,6 +81,17 @@
     cursor:pointer; transition:border-color .15s;
 }
 .teacher-avatar:hover { border-color:var(--st-accent); }
+
+.avatar-initials {
+    width:36px; height:36px; border-radius:50%;
+    background:linear-gradient(135deg, #1e3a5f 0%, #0891b2 100%);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+    border:2px solid var(--st-border);
+    cursor:pointer; flex-shrink:0; user-select:none;
+    transition:border-color .15s, transform .15s;
+}
+.avatar-initials:hover { border-color:var(--st-accent); transform:scale(1.08); }
 
 /* ── DataTables overrides ────────────────────────────────── */
 .dataTables_wrapper .dataTables_filter input {
@@ -316,53 +333,32 @@
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-links-line"></i></div>
-                <div class="stat-value" id="statTotal">{{ $subjectteacher->count() }}</div>
+                <div class="stat-value" id="statTotal">—</div>
                 <div class="stat-label">Total Assignments</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-user-line"></i></div>
-                <div class="stat-value text-primary">{{ $subjectteacher->pluck('userid')->unique()->count() }}</div>
+                <div class="stat-value text-primary" id="statTeachers">—</div>
                 <div class="stat-label">Unique Teachers</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-flask-line"></i></div>
-                <div class="stat-value text-success">{{ $subjectteacher->pluck('subjectid')->unique()->count() }}</div>
+                <div class="stat-value text-success" id="statSubjects">—</div>
                 <div class="stat-label">Subjects Covered</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-calendar-line"></i></div>
-                <div class="stat-value text-warning">{{ $subjectteacher->pluck('sessionid')->unique()->count() }}</div>
+                <div class="stat-value text-warning" id="statSessions">—</div>
                 <div class="stat-label">Sessions Active</div>
             </div>
         </div>
     </div>
-
-    {{-- Alerts --}}
-    @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show">
-            <strong>Whoops!</strong> There were some problems with your input.
-            <ul class="mb-0 mt-1">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    @if (session('danger'))
-        <div class="alert alert-danger alert-dismissible fade show">
-            {{ session('danger') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
 
     {{-- Table card --}}
     <div class="card border-0 shadow-sm">
@@ -370,7 +366,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold" style="color:var(--st-primary)">
                     <i class="ri-list-check me-2"></i>Subject Teacher Assignments
-                    <span class="badge bg-primary ms-2" id="totalBadge">{{ $subjectteacher->count() }}</span>
+                    <span class="badge bg-primary ms-2" id="totalBadge">0</span>
                 </h5>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-danger d-none" id="bulkDeleteBtn">
@@ -405,116 +401,13 @@
                             <th>#</th>
                             <th>Teacher</th>
                             <th>Subject</th>
-                            <th>Code</th>
                             <th>Term(s)</th>
                             <th>Session</th>
-                            <th>Updated</th>
+                            <th>Last Updated</th>
                             <th width="100">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @php
-                            $i = 0;
-                            // Group by teacher+subject+session to avoid duplicate rows for multi-term
-                            $grouped = $subjectteacher->groupBy(function($row) {
-                                return $row->userid . '_' . $row->subjectid . '_' . $row->sessionid;
-                            });
-                        @endphp
-                        @forelse ($grouped as $key => $rows)
-                            @php
-                                $first = $rows->first();
-                                $picture   = $first->avatar ?? 'unnamed.jpg';
-                                $imagePath = asset('storage/staff_avatars/' . $picture);
-                                $fileExists = file_exists(storage_path('app/public/staff_avatars/' . $picture));
-                                $defaultExists = file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
-
-                                // Collect all term names for this group
-                                $termNames = \App\Models\SubjectTeacher::where('staffid', $first->userid)
-                                    ->where('subjectid', $first->subjectid)
-                                    ->where('sessionid', $first->sessionid)
-                                    ->join('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
-                                    ->pluck('schoolterm.term', 'subjectteacher.termid')
-                                    ->toArray();
-                            @endphp
-                            <tr data-id="{{ $first->id }}"
-                                data-destroy-url="{{ route('subjectteacher.destroy', $first->id) }}"
-                                data-staffid="{{ $first->userid }}"
-                                data-subjectid="{{ $first->subjectid }}"
-                                data-sessionid="{{ $first->sessionid }}">
-                                <td>
-                                    <input type="checkbox" class="form-check-input row-checkbox" value="{{ $first->id }}">
-                                </td>
-                                <td>{{ ++$i }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="{{ $imagePath }}"
-                                             alt="{{ $first->staffname }}"
-                                             class="teacher-avatar staff-image"
-                                             data-bs-toggle="modal"
-                                             data-bs-target="#imageViewModal"
-                                             data-image="{{ $imagePath }}"
-                                             data-staffname="{{ $first->staffname }}"
-                                             data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
-                                             data-default-exists="{{ $defaultExists ? 'true' : 'false' }}"
-                                             onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'">
-                                        <span class="fw-semibold text-dark">{{ $first->staffname }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="fw-semibold">{{ $first->subjectname }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-2" style="border-radius:6px;font-size:12px;">
-                                        {{ $first->subjectcode }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @foreach ($termNames as $termId => $termName)
-                                        @php
-                                            $tClass = match(true) {
-                                                str_contains($termName, 'First')  => 'term-first',
-                                                str_contains($termName, 'Second') => 'term-second',
-                                                str_contains($termName, 'Third')  => 'term-third',
-                                                default => 'term-other'
-                                            };
-                                        @endphp
-                                        <span class="term-badge {{ $tClass }}">{{ $termName }}</span>
-                                    @endforeach
-                                </td>
-                                <td>{{ $first->sessionname }}</td>
-                                <td>
-                                    <small class="text-muted">{{ $first->updated_at->format('d M Y') }}</small>
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-1">
-                                        @can('Update subject-teacher')
-                                        <button class="btn btn-sm btn-outline-secondary edit-st-btn" title="Edit"
-                                            data-id="{{ $first->id }}"
-                                            data-staffid="{{ $first->userid }}"
-                                            data-subjectid="{{ $first->subjectid }}"
-                                            data-sessionid="{{ $first->sessionid }}"
-                                            data-termids="{{ implode(',', array_keys($termNames)) }}">
-                                            <i class="ph-pencil"></i>
-                                        </button>
-                                        @endcan
-                                        @can('Delete subject-teacher')
-                                        <button class="btn btn-sm btn-outline-danger delete-st-btn" title="Delete"
-                                            data-id="{{ $first->id }}"
-                                            data-teacher="{{ $first->staffname }}"
-                                            data-subject="{{ $first->subjectname }}"
-                                            data-destroy-url="{{ route('subjectteacher.destroy', $first->id) }}">
-                                            <i class="ph-trash"></i>
-                                        </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center text-muted py-4">No subject teacher assignments found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -585,7 +478,7 @@
                         <div class="inline-check-group">
                             @foreach ($terms as $term)
                                 @php
-                                    $tColor = match(true) {
+                                    $tClass = match(true) {
                                         str_contains($term->term, 'First')  => 'term-first',
                                         str_contains($term->term, 'Second') => 'term-second',
                                         str_contains($term->term, 'Third')  => 'term-third',
@@ -599,7 +492,7 @@
                                            id="add-term-{{ $term->id }}"
                                            value="{{ $term->id }}">
                                     <label class="form-check-label" for="add-term-{{ $term->id }}">
-                                        <span class="term-badge {{ $tColor }}">{{ $term->term }}</span>
+                                        <span class="st-badge st-badge-term {{ $tClass }}">{{ $term->term }}</span>
                                     </label>
                                 </div>
                             @endforeach
@@ -631,7 +524,7 @@
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="add-btn" disabled>
-                        <i class="ri-save-line me-1"></i>Add Assignment
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Add Assignment</span>
                     </button>
                 </div>
             </form>
@@ -698,7 +591,7 @@
                         <div class="inline-check-group">
                             @foreach ($terms as $term)
                                 @php
-                                    $tColor = match(true) {
+                                    $tClass = match(true) {
                                         str_contains($term->term, 'First')  => 'term-first',
                                         str_contains($term->term, 'Second') => 'term-second',
                                         str_contains($term->term, 'Third')  => 'term-third',
@@ -712,7 +605,7 @@
                                            id="edit-term-{{ $term->id }}"
                                            value="{{ $term->id }}">
                                     <label class="form-check-label" for="edit-term-{{ $term->id }}">
-                                        <span class="term-badge {{ $tColor }}">{{ $term->term }}</span>
+                                        <span class="st-badge st-badge-term {{ $tClass }}">{{ $term->term }}</span>
                                     </label>
                                 </div>
                             @endforeach
@@ -744,7 +637,7 @@
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="update-btn">
-                        <i class="ri-save-line me-1"></i>Update
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Update</span>
                     </button>
                 </div>
             </form>
@@ -768,26 +661,8 @@
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirm-delete-btn">
-                    <i class="ri-delete-bin-line me-1"></i>Delete
+                    <i class="ri-delete-bin-line me-1"></i><span class="btn-text">Delete</span>
                 </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- ═══════════════════════ IMAGE PREVIEW MODAL ═════════════ --}}
-<div class="modal fade" id="imageViewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
-        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
-            <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title fw-semibold">Staff Photo</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center pt-2 pb-4">
-                <img id="preview-image" src="" alt="Staff"
-                     class="rounded-circle mb-3"
-                     style="width:160px;height:160px;object-fit:cover;border:4px solid var(--st-border);">
-                <p id="preview-staffname" class="fw-semibold mb-0" style="color:var(--st-primary)"></p>
             </div>
         </div>
     </div>
@@ -800,7 +675,7 @@
 $(document).ready(function () {
 
     const CSRF = $('meta[name="csrf-token"]').attr('content');
-    let deleteUrl = null;
+    let deleteId = null;
 
     // =========================================================================
     // LOADING HELPERS
@@ -833,12 +708,18 @@ $(document).ready(function () {
         $(`#${id}-modal-loader-text`).text(text);
         $(`#${id}-modal-loader`).addClass('active');
     }
-    function hideModalLoader(id) { $(`#${id}-modal-loader`).removeClass('active'); }
+    function hideModalLoader(id) {
+        $(`#${id}-modal-loader`).removeClass('active');
+    }
 
     function btnLoad(selector, loadingText = '') {
         const $btn = $(selector);
-        $btn.data('original-html', $btn.html()).prop('disabled', true).addClass('btn-loading');
-        if (loadingText) $btn.html(`<span class="btn-text">${loadingText}</span>`);
+        $btn.data('original-html', $btn.html())
+            .prop('disabled', true)
+            .addClass('btn-loading');
+        if (loadingText) {
+            $btn.html(`<span class="btn-text">${loadingText}</span>`);
+        }
         return $btn;
     }
     function btnReset(selector) {
@@ -849,9 +730,13 @@ $(document).ready(function () {
     }
 
     function toast(type, title, msg, duration = 4000) {
-        const icons = { success:'ri-checkbox-circle-fill', error:'ri-close-circle-fill',
-                        warning:'ri-alert-fill', info:'ri-information-fill' };
-        const id  = 'toast-' + Date.now();
+        const icons = {
+            success: 'ri-checkbox-circle-fill',
+            error:   'ri-close-circle-fill',
+            warning: 'ri-alert-fill',
+            info:    'ri-information-fill',
+        };
+        const id  = 'st-toast-' + Date.now();
         const $el = $(`
             <div class="st-toast st-toast-${type}" id="${id}">
                 <span class="st-toast-icon"><i class="${icons[type] || icons.info}"></i></span>
@@ -860,39 +745,88 @@ $(document).ready(function () {
                     ${msg ? `<div class="st-toast-msg">${msg}</div>` : ''}
                 </div>
                 <button class="st-toast-close" onclick="$('#${id}').remove()">×</button>
-            </div>`);
+            </div>
+        `);
         $('#st-toast-stack').append($el);
         setTimeout(() => $el.addClass('show'), 20);
         if (duration > 0) {
-            setTimeout(() => { $el.removeClass('show'); setTimeout(() => $el.remove(), 350); }, duration);
+            setTimeout(() => {
+                $el.removeClass('show');
+                setTimeout(() => $el.remove(), 350);
+            }, duration);
         }
     }
 
     function showError(selector, msg) {
-        $(selector).removeClass('d-none').html(`<i class="ri-error-warning-line me-1"></i>${msg}`);
+        $(selector).removeClass('d-none').html(
+            `<i class="ri-error-warning-line me-1"></i>${msg}`
+        );
     }
 
     // =========================================================================
-    // DATATABLE
+    // DATATABLE (server-side)
     // =========================================================================
 
-    const table = $('#subjectTeacherTable').DataTable({
+    var table = $('#subjectTeacherTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("subjectteacher.data") }}',
+            type: 'GET',
+            error: function(xhr) {
+                console.error('DataTables AJAX error:', xhr.status, xhr.responseText);
+                toast('error', 'Load Error', 'Failed to load subject teachers. Please refresh.');
+            }
+        },
+        columns: [
+            { data: 'checkbox', orderable: false, searchable: false },
+            { data: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'teacher_info', orderable: false },
+            { data: 'subject_info', orderable: false },
+            { data: 'term_info', orderable: false },
+            { data: 'session_info', orderable: false },
+            { data: 'formatted_date', orderable: false },
+            { data: 'action', orderable: false, searchable: false },
+        ],
         dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
              "<'row'<'col-12'tr>>" +
              "<'row align-items-center mt-3'<'col-sm-5'i><'col-sm-7 text-end'p>>",
         language: {
-            search: '', searchPlaceholder: 'Search assignments…',
-            lengthMenu: 'Show _MENU_ entries',
-            info: 'Showing _START_–_END_ of _TOTAL_ entries',
-            infoEmpty: 'No assignments found', zeroRecords: 'No matching assignments',
-            emptyTable: 'No subject teacher assignments yet',
+            processing:      '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…',
+            search:          '',
+            searchPlaceholder: 'Search assignments…',
+            lengthMenu:      'Show _MENU_ entries',
+            info:            'Showing _START_–_END_ of _TOTAL_ assignments',
+            infoEmpty:       'No assignments found',
+            zeroRecords:     'No matching assignments',
+            emptyTable:      'No subject teacher assignments yet',
         },
-        order: [[1, 'asc']], pageLength: 15, responsive: true,
-        drawCallback: function () {
+        order: [[1, 'asc']],
+        pageLength: 15,
+        responsive: true,
+        drawCallback: function() {
             bindCheckboxes();
             $('#totalBadge').text(this.api().page.info().recordsTotal);
         },
     });
+
+    // =========================================================================
+    // STATS
+    // =========================================================================
+
+    function loadStats() {
+        $.get('{{ route("subjectteacher.stats") }}', function(data) {
+            if (data.stats) {
+                $('#statTotal').text(data.stats.total);
+                $('#statTeachers').text(data.stats.unique_teachers);
+                $('#statSubjects').text(data.stats.unique_subjects);
+                $('#statSessions').text(data.stats.unique_sessions);
+            }
+        }).fail(function() {
+            $('#statTotal, #statTeachers, #statSubjects, #statSessions').text('—');
+        });
+    }
+    loadStats();
 
     // =========================================================================
     // CHECKBOXES & BULK BAR
@@ -901,11 +835,12 @@ $(document).ready(function () {
     function bindCheckboxes() {
         $('.row-checkbox').off('change').on('change', updateBulkBar);
     }
-    $('#selectAll').on('change', function () {
-        $('.row-checkbox').prop('checked', this.checked); updateBulkBar();
+    $('#selectAll').on('change', function() {
+        $('.row-checkbox').prop('checked', this.checked);
+        updateBulkBar();
     });
     function updateBulkBar() {
-        const count = $('.row-checkbox:checked').length;
+        var count = $('.row-checkbox:checked').length;
         $('#bulkBar').toggleClass('show', count > 0);
         $('#bulkCount').text(count);
         $('#bulkDeleteBtn').toggleClass('d-none', count === 0);
@@ -971,7 +906,7 @@ $(document).ready(function () {
         const staffid   = $(this).data('staffid');
         const subjectid = $(this).data('subjectid');
         const sessionid = $(this).data('sessionid');
-        const termids   = String($(this).data('termids')).split(',').map(s => s.trim());
+        const termids   = String($(this).data('termids') || '').split(',').map(s => s.trim()).filter(s => s);
 
         $('#edit-id').val(id);
         $('#edit-staffid').val(staffid);
@@ -981,9 +916,15 @@ $(document).ready(function () {
         $('.edit-term-checkbox').prop('checked', false);
         $('input[name="sessionid"]').prop('checked', false);
 
-        $(`#edit-subj-${subjectid}`).prop('checked', true);
-        termids.forEach(tid => $(`#edit-term-${tid}`).prop('checked', true));
-        $(`#edit-session-${sessionid}`).prop('checked', true);
+        if (subjectid) {
+            $(`#edit-subj-${subjectid}`).prop('checked', true);
+        }
+        termids.forEach(function(tid) {
+            if (tid) $(`#edit-term-${tid}`).prop('checked', true);
+        });
+        if (sessionid) {
+            $(`#edit-session-${sessionid}`).prop('checked', true);
+        }
 
         $('#edit-error-msg').addClass('d-none').html('');
         $('#edit-subject-search').val('');
@@ -992,32 +933,6 @@ $(document).ready(function () {
         btnReset('#update-btn');
 
         new bootstrap.Modal(document.getElementById('editModal')).show();
-    });
-
-    // =========================================================================
-    // DELETE MODAL
-    // =========================================================================
-
-    $(document).on('click', '.delete-st-btn', function () {
-        deleteUrl = $(this).data('destroy-url');
-        $('#delete-subject-name').text($(this).data('subject'));
-        $('#delete-teacher-name').text($(this).data('teacher'));
-        btnReset('#confirm-delete-btn');
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
-    });
-
-    // =========================================================================
-    // IMAGE PREVIEW
-    // =========================================================================
-
-    $(document).on('click', '.staff-image', function () {
-        const img    = $(this).data('image');
-        const name   = $(this).data('staffname');
-        const exists = $(this).data('file-exists') === 'true';
-        const defEx  = $(this).data('default-exists') === 'true';
-        $('#preview-image').attr('src',
-            (exists || (!exists && defEx)) ? img : '/storage/staff_avatars/unnamed.jpg');
-        $('#preview-staffname').text(name || 'Unknown');
     });
 
     // =========================================================================
@@ -1045,34 +960,37 @@ $(document).ready(function () {
             url:  '{{ route("subjectteacher.store") }}',
             type: 'POST',
             data: {
-                staffid,
+                staffid: staffid,
                 'subjectids[]': subjectids,
-                'termid[]':     termids,
-                sessionid,
+                'termid[]': termids,
+                sessionid: sessionid,
                 _token: CSRF,
             },
             traditional: true,
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-            success(res) {
+            success: function(res) {
                 if (res.success) {
                     $('#addSubjectTeacherModal').modal('hide');
                     toast('success', 'Added!', res.message);
-                    setTimeout(() => {
-                        PageLoader.show('Refreshing data…');
-                        setTimeout(() => location.reload(), 400);
-                    }, 600);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
-                    hideModalLoader('add'); btnReset('#add-btn'); updateAddBtn();
+                    hideModalLoader('add');
+                    btnReset('#add-btn');
+                    updateAddBtn();
                     showError('#add-error-msg', res.message || 'Could not add assignment.');
                 }
             },
 
-            error(xhr) {
-                hideModalLoader('add'); btnReset('#add-btn'); updateAddBtn();
-                const msg = xhr.responseJSON?.message
-                    || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
-                    || 'An error occurred.';
+            error: function(xhr) {
+                hideModalLoader('add');
+                btnReset('#add-btn');
+                updateAddBtn();
+                var json = xhr.responseJSON;
+                var msg = (json && json.message) ||
+                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                          'An error occurred.';
                 showError('#add-error-msg', msg);
                 toast('error', 'Failed', msg);
             },
@@ -1105,35 +1023,36 @@ $(document).ready(function () {
             url:  `{{ url('subjectteacher') }}/${id}`,
             type: 'POST',
             data: {
-                staffid,
+                staffid: staffid,
                 'subjectids[]': subjectids,
-                'termid[]':     termids,
-                sessionid,
+                'termid[]': termids,
+                sessionid: sessionid,
                 _token: CSRF,
                 _method: 'PUT',
             },
             traditional: true,
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-            success(res) {
+            success: function(res) {
                 if (res.success) {
                     $('#editModal').modal('hide');
                     toast('success', 'Updated!', res.message);
-                    setTimeout(() => {
-                        PageLoader.show('Refreshing data…');
-                        setTimeout(() => location.reload(), 400);
-                    }, 600);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
-                    hideModalLoader('edit'); btnReset('#update-btn');
+                    hideModalLoader('edit');
+                    btnReset('#update-btn');
                     showError('#edit-error-msg', res.message || 'Could not update.');
                 }
             },
 
-            error(xhr) {
-                hideModalLoader('edit'); btnReset('#update-btn');
-                const msg = xhr.responseJSON?.message
-                    || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
-                    || 'An error occurred.';
+            error: function(xhr) {
+                hideModalLoader('edit');
+                btnReset('#update-btn');
+                var json = xhr.responseJSON;
+                var msg = (json && json.message) ||
+                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                          'An error occurred.';
                 showError('#edit-error-msg', msg);
                 toast('error', 'Failed', msg);
             },
@@ -1144,21 +1063,31 @@ $(document).ready(function () {
     // DELETE: SINGLE
     // =========================================================================
 
-    $('#confirm-delete-btn').on('click', function () {
-        if (!deleteUrl) return;
-        btnLoad('#confirm-delete-btn', 'Deleting…');
+    $(document).on('click', '.delete-st-btn', function() {
+        deleteId = $(this).data('id');
+        $('#delete-subject-name').text($(this).data('subject') || 'this subject');
+        $('#delete-teacher-name').text($(this).data('teacher') || 'this teacher');
+        btnReset($('#confirm-delete-btn'));
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    });
+
+    $('#confirm-delete-btn').on('click', function() {
+        if (!deleteId) return;
+        var $btn = $(this);
+        btnLoad($btn, 'Deleting…');
 
         $.ajax({
-            url:  deleteUrl, type: 'POST',
+            url: `{{ url('subjectteacher') }}/${deleteId}`,
+            type: 'POST',
             data: { _method: 'DELETE', _token: CSRF },
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-            success(res) {
+            success: function(res) {
                 $('#deleteModal').modal('hide');
                 if (res.success) {
                     toast('success', 'Deleted!', res.message);
-                    PageLoader.show('Removing record…');
-                    setTimeout(() => location.reload(), 500);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
                     toast('error', 'Cannot Delete', res.message);
                     Swal.fire({ icon:'error', title:'Cannot Delete',
@@ -1166,14 +1095,17 @@ $(document).ready(function () {
                 }
             },
 
-            error(xhr) {
+            error: function(xhr) {
                 $('#deleteModal').modal('hide');
-                const msg = xhr.responseJSON?.message || 'Failed to delete.';
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to delete.';
                 toast('error', 'Error', msg);
                 Swal.fire('Error!', msg, 'error');
             },
 
-            complete() { btnReset('#confirm-delete-btn'); deleteUrl = null; },
+            complete: function() {
+                btnReset($btn);
+                deleteId = null;
+            },
         });
     });
 
@@ -1182,43 +1114,71 @@ $(document).ready(function () {
     // =========================================================================
 
     function doBulkDelete() {
-        const ids = $('.row-checkbox:checked').map((i, el) => el.value).get();
-        if (!ids.length) return;
+        var ids = [];
+        $('.row-checkbox:checked').each(function() {
+            ids.push($(this).val());
+        });
+        
+        if (ids.length === 0) {
+            toast('warning', 'No Selection', 'Please select at least one assignment to delete.');
+            return;
+        }
 
         Swal.fire({
-            title: `Delete ${ids.length} assignment(s)?`,
-            text:  'This will remove the selected subject teacher assignments.',
-            icon:  'warning',
-            showCancelButton:    true,
-            confirmButtonColor:  '#dc2626',
-            confirmButtonText:   'Yes, delete all',
-            cancelButtonText:    'Cancel',
+            title: 'Delete ' + ids.length + ' assignment(s)?',
+            html: 'This will permanently remove the selected subject teacher assignments.<br><strong>This action cannot be undone!</strong>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
             showLoaderOnConfirm: true,
-            preConfirm: () => Promise.allSettled(
-                ids.map(id => $.ajax({
-                    url:  `{{ url('subjectteacher') }}/${id}`,
-                    type: 'POST',
-                    data: { _method: 'DELETE', _token: CSRF },
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                }))
-            ),
-            allowOutsideClick: () => !Swal.isLoading(),
-        }).then(result => {
-            if (!result.isConfirmed) return;
-            const successList = result.value.filter(r => r.status === 'fulfilled' && r.value?.success);
-            const failedList  = result.value.filter(r => r.status === 'rejected' || !r.value?.success);
-
-            if (failedList.length === 0) {
-                toast('success', 'Deleted!', `${ids.length} assignment(s) removed.`);
-            } else if (successList.length > 0) {
-                toast('warning', 'Partial Success',
-                    `${successList.length} deleted. ${failedList.length} failed.`);
-            } else {
-                toast('error', 'Failed', 'Could not delete selected assignments.');
+            preConfirm: function() {
+                return new Promise(function(resolve, reject) {
+                    PageLoader.show('Deleting assignments…');
+                    
+                    $.ajax({
+                        url: '{{ route("subjectteacher.bulk-destroy") }}',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            ids: ids,
+                            _token: CSRF
+                        }),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        success: function(res) {
+                            PageLoader.hide();
+                            if (res.success) {
+                                resolve(res);
+                            } else {
+                                reject(res.message || 'Failed to delete assignments');
+                            }
+                        },
+                        error: function(xhr) {
+                            PageLoader.hide();
+                            var errorMsg = 'An error occurred while deleting.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            reject(errorMsg);
+                        }
+                    });
+                });
             }
-
-            PageLoader.show('Refreshing…');
-            setTimeout(() => location.reload(), 600);
+        }).then(function(result) {
+            if (result.isConfirmed && result.value) {
+                toast('success', 'Deleted!', result.value.message || 'Assignments deleted successfully.');
+                table.ajax.reload();
+                loadStats();
+                $('#selectAll').prop('checked', false);
+                updateBulkBar();
+            }
+        }).catch(function(error) {
+            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete assignments.');
         });
     }
 
