@@ -618,6 +618,12 @@ textarea.form-control {
 
 <script>
 $(document).ready(function() {
+    // Prevent DataTables warnings (e.g. "Incorrect column count") from calling
+    // alert() + throwing, which would otherwise halt this ready() callback and
+    // stop the add/edit/delete form handlers below from ever being bound.
+    // Warnings still print to the console, they just won't crash the page.
+    $.fn.dataTable.ext.errMode = 'none';
+
     // Initialize DataTable for search/sort functionality
     var table = $('#armsTable').DataTable({
         pageLength: 10,
