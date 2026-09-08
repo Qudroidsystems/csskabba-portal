@@ -282,11 +282,16 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('staff', StaffController::class);
 
 
-    Route::resource('subjectteacher', SubjectTeacherController::class)->except(['update']);
-    Route::match(['put', 'post'], 'subjectteacher/{id}', [SubjectTeacherController::class, 'update'])->name('subjectteacher.update');
-    Route::get('subjectteacher/{id}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
-    Route::post('subjectteacher/delete', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.delete');
+    // Subject Teacher Routes
+    Route::prefix('subjectteacher')->group(function () {
+        Route::get('/data', [SubjectTeacherController::class, 'data'])->name('subjectteacher.data');
+        Route::get('/stats', [SubjectTeacherController::class, 'stats'])->name('subjectteacher.stats');
+        Route::post('/bulk-destroy', [SubjectTeacherController::class, 'deleteMultiple'])->name('subjectteacher.bulk-destroy');
+        Route::post('/delete-subjectteacher', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
+        Route::get('/get-subjects/{id}', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.get-subjects');
+    });
 
+    Route::resource('subjectteacher', SubjectTeacherController::class);
     // // Class Teacher Management Routes
     // Route::get('classteacher/data', [ClassTeacherController::class, 'data'])->name('classteacher.data');
     // Route::get('classteacher/stats', [ClassTeacherController::class, 'stats'])->name('classteacher.stats');
