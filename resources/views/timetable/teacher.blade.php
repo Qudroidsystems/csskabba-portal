@@ -84,19 +84,79 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0 me-3">
-                                    <div class="avatar-sm bg-info-subtle rounded-circle d-flex align-items-center justify-content-center">
-                                        <i class="ri-calendar-event-line text-info fs-20"></i>
+                                    <div class="avatar-sm bg-danger-subtle rounded-circle d-flex align-items-center justify-content-center">
+                                        <i class="ri-alert-line text-danger fs-20"></i>
                                     </div>
                                 </div>
                                 <div>
-                                    <h6 class="mb-1 text-muted">Today's Classes</h6>
-                                    <h4 class="mb-0">{{ isset($todaySlots) ? $todaySlots->whereNotNull('subject_id')->count() : 0 }}</h4>
+                                    <h6 class="mb-1 text-muted">Conflicts</h6>
+                                    <h4 class="mb-0 text-danger" id="conflictCount">
+                                        {{ $slots->flatten()->whereNotNull('subject_id')->groupBy(function($slot) {
+                                            return $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id;
+                                        })->filter(function($group) {
+                                            return $group->count() > 1 && $group->unique('setting.schoolclass_id')->count() > 1;
+                                        })->count() }}
+                                    </h4>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {{-- Conflicts Alert --}}
+            @php
+                $conflictGroups = $slots->flatten()->whereNotNull('subject_id')->groupBy(function($slot) {
+                    return $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id;
+                })->filter(function($group) {
+                    return $group->count() > 1 && $group->unique('setting.schoolclass_id')->count() > 1;
+                });
+            @endphp
+            @if($conflictGroups->isNotEmpty())
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="ri-alert-line ri-2x me-3 text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 text-danger">
+                                    <i class="ri-error-warning-line me-1"></i>
+                                    Teacher Conflicts Detected!
+                                </h6>
+                                <p class="mb-1 small">You are scheduled to teach multiple classes at the same time:</p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach($conflictGroups as $key => $group)
+                                        @php
+                                            list($teacherId, $day, $periodId) = explode('|', $key);
+                                            $teacher = $group->first()->teacher;
+                                            $period = $group->first()->period;
+                                            $classes = $group->pluck('setting.schoolclass.schoolclass')->unique()->implode(', ');
+                                            $subject = $group->first()->subject;
+                                        @endphp
+                                        <span class="badge bg-danger p-2">
+                                            <i class="ri-time-line me-1"></i>
+                                            {{ $day }} · {{ $period->name ?? '' }}
+                                            <strong class="mx-1">{{ $subject->subject ?? '' }}</strong>
+                                            <span class="text-white-50">→</span>
+                                            {{ $classes }}
+                                            <span class="text-white-50 ms-1">({{ $group->count() }} classes)</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                                <div class="mt-2 small">
+                                    <i class="ri-information-line me-1"></i>
+                                    <strong>Solution:</strong> Assign a <strong>shared room</strong> (e.g., "Computer Lab") to all these slots 
+                                    or use the <strong>Room Management</strong> module to create combined sessions.
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             {{-- Subscription & Export Bar --}}
             <div class="row mb-4">
@@ -441,12 +501,13 @@
                                                     $currentSlot = $slot->firstWhere('period_id', $period->id);
                                                     $hasClass = $currentSlot && !$currentSlot->is_free && $currentSlot->subject;
                                                     $isCombined = $hasClass && ($currentSlot->combined_count ?? 0) > 1;
+                                                    $isConflict = $hasClass && ($currentSlot->conflict_count ?? 0) > 0;
                                                     $meta = $periodDayMeta[$period->id][$day] ?? ['applicable' => true, 'effective_type' => $period->type];
                                                     $isApplicable = $meta['applicable'] ?? true;
                                                     $effectiveType = $meta['effective_type'] ?? $period->type;
                                                 @endphp
                                                 <td class="timetable-cell text-center align-middle {{ $period->is_break || $effectiveType === 'assembly' ? 'bg-light' : '' }}"
-                                                    style="{{ $isCombined ? 'background: rgba(102, 126, 234, 0.08);' : '' }}"
+                                                    style="{{ $isCombined ? 'background: rgba(245, 158, 11, 0.08);' : '' }}{{ $isConflict ? 'border-left: 3px solid #ef4444;' : '' }}"
                                                     @if($hasClass)
                                                         data-bs-toggle="tooltip"
                                                         data-bs-html="true"
@@ -456,7 +517,8 @@
                                                             <small>Class: {{ $currentSlot->setting->schoolclass->schoolclass ?? '' }}</small><br>
                                                             @if($currentSlot->room)<small>Room: {{ $currentSlot->room->room_name ?? $currentSlot->room }}</small><br>@endif
                                                             @if($currentSlot->is_double)<small class='text-primary'>Double Period</small><br>@endif
-                                                            @if($isCombined)<small class='text-warning'>Combined Session</small><br>@endif
+                                                            @if($isCombined)<small class='text-warning'>Combined Session ({{ $currentSlot->combined_count }} classes)</small><br>@endif
+                                                            @if($isConflict)<small class='text-danger'>⚠️ Teacher Conflict</small><br>@endif
                                                             @if($currentSlot->notes)<small>Note: {{ Str::limit($currentSlot->notes, 50) }}</small>@endif
                                                         </div>"
                                                     @endif
@@ -472,12 +534,17 @@
                                                     @elseif(!$isApplicable)
                                                         <span class="text-muted">—</span>
                                                     @elseif($hasClass)
-                                                        <div class="py-2 class-cell {{ $currentSlot->is_double ? 'double-period' : '' }} {{ $isCombined ? 'combined-session' : '' }}">
+                                                        <div class="py-2 class-cell {{ $currentSlot->is_double ? 'double-period' : '' }} {{ $isCombined ? 'combined-session' : '' }} {{ $isConflict ? 'conflict-session' : '' }}">
                                                             <span class="fw-semibold d-block subject-name">
                                                                 {{ $currentSlot->subject->subject ?? 'N/A' }}
                                                                 @if($isCombined)
                                                                     <span class="badge bg-warning-subtle text-warning ms-1" style="font-size:8px;">
                                                                         <i class="ri-git-branch-line me-1"></i>{{ $currentSlot->combined_count ?? 2 }}
+                                                                    </span>
+                                                                @endif
+                                                                @if($isConflict)
+                                                                    <span class="badge bg-danger-subtle text-danger ms-1" style="font-size:8px;">
+                                                                        <i class="ri-alert-line me-1"></i>Conflict
                                                                     </span>
                                                                 @endif
                                                             </span>
@@ -522,6 +589,7 @@
                                 <span><i class="ri-checkbox-blank-circle-fill text-success me-1"></i> Regular Class</span>
                                 <span><i class="ri-checkbox-blank-circle-fill text-primary me-1"></i> Double Period</span>
                                 <span><i class="ri-checkbox-blank-circle-fill text-warning me-1"></i> Combined Session</span>
+                                <span><i class="ri-checkbox-blank-circle-fill text-danger me-1"></i> Conflict</span>
                                 <span><i class="ri-checkbox-blank-circle-fill text-muted me-1"></i> Free Period</span>
                                 <span><i class="ri-coffee-line me-1"></i> Break Time</span>
                                 <span><i class="ri-flag-line me-1"></i> Assembly</span>
@@ -650,6 +718,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const compact = localStorage.getItem('tt_compact') === '1';
     document.getElementById('compactView').checked = compact;
     toggleCompact();
+
+    // Update conflict count
+    const conflictCount = document.getElementById('conflictCount');
+    if (conflictCount && parseInt(conflictCount.textContent) > 0) {
+        conflictCount.style.color = '#dc3545';
+    }
 });
 
 // ============================================================================
@@ -903,6 +977,11 @@ document.addEventListener('DOMContentLoaded', function() {
     background: rgba(245, 158, 11, 0.08);
     border-radius: 4px;
 }
+.class-cell.conflict-session {
+    border-left: 3px solid #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: 4px;
+}
 
 /* ── Compact View ──────────────────────────────────── */
 .teacher-timetable.compact .class-cell {
@@ -1042,6 +1121,9 @@ document.addEventListener('DOMContentLoaded', function() {
     .class-cell.combined-session {
         border-left: 2px solid #f59e0b !important;
     }
+    .class-cell.conflict-session {
+        border-left: 2px solid #ef4444 !important;
+    }
     .text-muted {
         color: #6c757d !important;
     }
@@ -1081,6 +1163,10 @@ document.addEventListener('DOMContentLoaded', function() {
 .badge.bg-info-subtle {
     background: #e0f2fe !important;
     color: #0369a1 !important;
+}
+.badge.bg-danger-subtle {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
 }
 
 /* ── Active filter badges ─────────────────────────── */
