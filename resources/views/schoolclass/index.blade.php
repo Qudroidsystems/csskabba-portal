@@ -734,7 +734,9 @@ $(document).ready(function () {
 
     // =========================================================================
     // SELECT-ALL HELPERS
-    // =========================================================================    $('#create-select-all-arms-cb').on('change', function() {
+    // =========================================================================
+
+    $('#create-select-all-arms-cb').on('change', function() {
         $('.create-arm-cb').prop('checked', this.checked);
         updateCreateCounts();
     });
@@ -779,24 +781,24 @@ $(document).ready(function () {
         $('#create-save-btn').prop('disabled', true);
         $('#create-error-msg').addClass('d-none').html('');
         hideModalLoader('create');
-        var createModal = new bootstrap.Modal(document.getElementById('createModal'));
-        createModal.show();
+        new bootstrap.Modal(document.getElementById('createModal')).show();
     });
 
     // =========================================================================
-    // EDIT MODAL - FIXED
+    // EDIT MODAL - FIXED EVENT DELEGATION
     // =========================================================================
 
+    // Use event delegation on the document for dynamically created elements
     $(document).on('click', '.edit-class-btn', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         
-        // Get all data attributes
-        var id = $(this).data('id');
-        var schoolclass = $(this).data('schoolclass');
-        var armId = $(this).data('arm-id');
-        var categoryIds = $(this).data('category-ids');
+        var $btn = $(this);
+        var id = $btn.data('id');
+        var schoolclass = $btn.data('schoolclass');
+        var armId = $btn.data('arm-id');
+        var categoryIds = $btn.data('category-ids');
 
-        // Populate the edit form
         $('#edit-class-id').val(id);
         $('#edit-schoolclass').val(schoolclass || '');
 
@@ -806,10 +808,10 @@ $(document).ready(function () {
             $('#edit-arm-' + armId).prop('checked', true);
         }
 
-        // Clear and set category checkboxes
+        // Set category checkboxes
         $('.edit-category-cb').prop('checked', false);
         if (categoryIds) {
-            var ids = categoryIds.split(',').map(function(id) { return id.trim(); });
+            var ids = String(categoryIds).split(',').map(function(id) { return id.trim(); });
             ids.forEach(function(catId) {
                 if (catId) {
                     $('#edit-category-' + catId).prop('checked', true);
@@ -817,7 +819,6 @@ $(document).ready(function () {
             });
         }
 
-        // Reset error messages and loader
         $('#edit-error-msg').addClass('d-none').html('');
         hideModalLoader('edit');
         btnReset($('#edit-update-btn'));
@@ -971,8 +972,7 @@ $(document).ready(function () {
         deleteId = $(this).data('id');
         $('#delete-item-title').text($(this).data('name') || 'this class');
         btnReset($('#confirm-delete-btn'));
-        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        deleteModal.show();
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
     });
 
     $('#confirm-delete-btn').on('click', function() {
