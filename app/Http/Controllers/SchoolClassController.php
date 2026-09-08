@@ -65,10 +65,11 @@ class SchoolClassController extends Controller
                 'schoolclass.arm as arm_id',
                 DB::raw('GROUP_CONCAT(DISTINCT classcategories.category ORDER BY classcategories.category SEPARATOR ", ") as classcategory'),
                 DB::raw('GROUP_CONCAT(DISTINCT classcategories.id ORDER BY classcategories.id SEPARATOR "," ) as classcategoryids'),
+                'schoolclass.classcategoryid',
                 'schoolclass.created_at',
                 'schoolclass.updated_at'
             )
-            ->groupBy('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm', 'schoolclass.arm', 'schoolclass.created_at', 'schoolclass.updated_at');
+            ->groupBy('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm', 'schoolclass.arm', 'schoolclass.classcategoryid', 'schoolclass.created_at', 'schoolclass.updated_at');
 
         return DataTables::of($classes)
             ->addIndexColumn()
@@ -169,7 +170,7 @@ class SchoolClassController extends Controller
     }
 
     // =========================================================================
-    // STORE
+    // STORE - UPDATED WITH classcategoryid FIX
     // =========================================================================
 
     public function store(Request $request)
@@ -219,14 +220,23 @@ class SchoolClassController extends Controller
             $armIds = $request->arm_id;
             $categoryIds = $request->classcategoryid;
 
+            // Get the first category ID for the classcategoryid column
+            // This is used as a default/primary category
+            $primaryCategoryId = $categoryIds[0] ?? null;
+
             foreach ($armIds as $armId) {
                 $schoolclass = new Schoolclass();
                 $schoolclass->schoolclass = $request->schoolclass;
                 $schoolclass->arm = $armId;
                 $schoolclass->description = $request->description ?? 'Null';
+                
+                // CRITICAL FIX: Set classcategoryid to the first selected category
+                // This ensures the column has a value
+                $schoolclass->classcategoryid = $primaryCategoryId;
+                
                 $schoolclass->save();
 
-                // Attach categories to pivot table
+                // Attach ALL categories to pivot table
                 $schoolclass->classcategories()->attach($categoryIds);
 
                 $arm = Schoolarm::find($armId);
@@ -238,6 +248,7 @@ class SchoolClassController extends Controller
                     'arm_id' => $schoolclass->arm,
                     'arm_name' => $arm ? $arm->arm : 'Unknown',
                     'classcategories' => $categories->toArray(),
+                    'classcategoryid' => $schoolclass->classcategoryid,
                     'description' => $schoolclass->description,
                     'updated_at' => $schoolclass->updated_at->toISOString(),
                     'created_at' => $schoolclass->created_at->toISOString()
@@ -248,7 +259,8 @@ class SchoolClassController extends Controller
 
             Log::channel('schoolclass')->info('School classes created successfully', [
                 'count' => count($createdRecords),
-                'schoolclass' => $request->schoolclass
+                'schoolclass' => $request->schoolclass,
+                'primary_category_id' => $primaryCategoryId
             ]);
 
             return response()->json([
@@ -273,7 +285,7 @@ class SchoolClassController extends Controller
     }
 
     // =========================================================================
-    // UPDATE
+    // UPDATE - UPDATED WITH classcategoryid FIX
     // =========================================================================
 
     public function update(Request $request, $id)
@@ -321,12 +333,18 @@ class SchoolClassController extends Controller
             $schoolclass->schoolclass = $request->schoolclass;
             $schoolclass->arm = $request->arm_id;
             $schoolclass->description = $request->description ?? 'Null';
+            
+            // CRITICAL FIX: Update classcategoryid to the first selected category
+            $categoryIds = $request->classcategoryid;
+            $schoolclass->classcategoryid = $categoryIds[0] ?? $schoolclass->classcategoryid;
+            
             $schoolclass->save();
 
-            $schoolclass->classcategories()->sync($request->classcategoryid);
+            // Sync ALL categories to pivot table
+            $schoolclass->classcategories()->sync($categoryIds);
 
             $arm = Schoolarm::find($schoolclass->arm);
-            $categories = Classcategory::whereIn('id', $request->classcategoryid)->get(['id', 'category']);
+            $categories = Classcategory::whereIn('id', $categoryIds)->get(['id', 'category']);
 
             $updatedRecord = [
                 'id' => $schoolclass->id,
@@ -334,6 +352,7 @@ class SchoolClassController extends Controller
                 'arm_id' => $schoolclass->arm,
                 'arm_name' => $arm ? $arm->arm : 'Unknown',
                 'classcategories' => $categories->toArray(),
+                'classcategoryid' => $schoolclass->classcategoryid,
                 'description' => $schoolclass->description,
                 'updated_at' => $schoolclass->updated_at->toISOString(),
                 'created_at' => $schoolclass->created_at->toISOString()
@@ -418,100 +437,96 @@ class SchoolClassController extends Controller
     // BULK DESTROY
     // =========================================================================
 
-    // =========================================================================
-// BULK DESTROY
-// =========================================================================
-
-public function deleteMultiple(Request $request)
-{
-    try {
-        // Get ids from request - handle both array and string formats
-        $ids = $request->input('ids');
-        
-        // If ids is a string, try to decode it or convert to array
-        if (is_string($ids)) {
-            // Check if it's a JSON string
-            $decoded = json_decode($ids, true);
-            if (is_array($decoded)) {
-                $ids = $decoded;
-            } else {
-                // If it's a comma-separated string
-                $ids = array_map('trim', explode(',', $ids));
+    public function deleteMultiple(Request $request)
+    {
+        try {
+            // Get ids from request - handle both array and string formats
+            $ids = $request->input('ids');
+            
+            // If ids is a string, try to decode it or convert to array
+            if (is_string($ids)) {
+                // Check if it's a JSON string
+                $decoded = json_decode($ids, true);
+                if (is_array($decoded)) {
+                    $ids = $decoded;
+                } else {
+                    // If it's a comma-separated string
+                    $ids = array_map('trim', explode(',', $ids));
+                }
             }
-        }
-        
-        // Ensure ids is an array
-        if (!is_array($ids)) {
-            $ids = [];
-        }
-        
-        // Filter out any empty values
-        $ids = array_filter($ids);
-        
-        if (empty($ids)) {
+            
+            // Ensure ids is an array
+            if (!is_array($ids)) {
+                $ids = [];
+            }
+            
+            // Filter out any empty values
+            $ids = array_filter($ids);
+            
+            if (empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No classes selected.'
+                ], 400);
+            }
+
+            // Validate that all IDs exist
+            $existingIds = Schoolclass::whereIn('id', $ids)->pluck('id')->toArray();
+            $invalidIds = array_diff($ids, $existingIds);
+            
+            if (!empty($invalidIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Some selected classes do not exist: ' . implode(', ', $invalidIds)
+                ], 400);
+            }
+
+            DB::beginTransaction();
+            
+            $deleted = 0;
+            foreach ($ids as $id) {
+                $schoolclass = Schoolclass::find($id);
+                if ($schoolclass) {
+                    // Detach categories
+                    $schoolclass->classcategories()->detach();
+                    
+                    // Delete from class teacher table
+                    ClassTeacher::where('schoolclassid', $id)->delete();
+                    
+                    // Delete the school class
+                    $schoolclass->delete();
+                    $deleted++;
+                }
+            }
+
+            DB::commit();
+
+            Log::channel('schoolclass')->info('Bulk delete completed', [
+                'total' => count($ids),
+                'deleted' => $deleted
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $deleted . ' class(es) deleted successfully.',
+                'deleted_count' => $deleted
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::channel('schoolclass')->error('Bulk delete failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ids' => $request->input('ids', [])
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'No classes selected.'
-            ], 400);
+                'message' => 'Error deleting classes: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Validate that all IDs exist
-        $existingIds = Schoolclass::whereIn('id', $ids)->pluck('id')->toArray();
-        $invalidIds = array_diff($ids, $existingIds);
-        
-        if (!empty($invalidIds)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Some selected classes do not exist: ' . implode(', ', $invalidIds)
-            ], 400);
-        }
-
-        DB::beginTransaction();
-        
-        $deleted = 0;
-        foreach ($ids as $id) {
-            $schoolclass = Schoolclass::find($id);
-            if ($schoolclass) {
-                // Detach categories
-                $schoolclass->classcategories()->detach();
-                
-                // Delete from class teacher table
-                ClassTeacher::where('schoolclassid', $id)->delete();
-                
-                // Delete the school class
-                $schoolclass->delete();
-                $deleted++;
-            }
-        }
-
-        DB::commit();
-
-        Log::channel('schoolclass')->info('Bulk delete completed', [
-            'total' => count($ids),
-            'deleted' => $deleted
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => $deleted . ' class(es) deleted successfully.',
-            'deleted_count' => $deleted
-        ], 200);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        Log::channel('schoolclass')->error('Bulk delete failed:', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'ids' => $request->input('ids', [])
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Error deleting classes: ' . $e->getMessage()
-        ], 500);
     }
-}
 
     // =========================================================================
     // GET SINGLE CLASS (for edit pre-load)
@@ -527,6 +542,7 @@ public function deleteMultiple(Request $request)
                     'id' => $schoolclass->id,
                     'schoolclass' => $schoolclass->schoolclass,
                     'arm_id' => $schoolclass->arm,
+                    'classcategoryid' => $schoolclass->classcategoryid,
                     'category_ids' => $schoolclass->classcategories->pluck('id')->toArray(),
                 ]
             ]);
