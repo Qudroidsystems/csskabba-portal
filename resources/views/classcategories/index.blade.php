@@ -587,13 +587,27 @@ $(document).ready(function () {
     function hideModalLoader(id) { $('#' + id + '-modal-loader').removeClass('active'); }
 
     function btnLoad($btn, label) {
-        $btn.data('original-html', $btn.html())
-            .prop('disabled', true).addClass('btn-loading');
-        if (label) $btn.html('<span class="btn-text">' + label + '</span>');
+        // Store the original HTML before changing
+        if (!$btn.data('original-html')) {
+            $btn.data('original-html', $btn.html());
+        }
+        $btn.prop('disabled', true).addClass('btn-loading');
+        if (label) {
+            $btn.html('<span class="btn-text">' + label + '</span>');
+        }
+        return $btn;
     }
+    
     function btnReset($btn) {
         var orig = $btn.data('original-html');
-        if (orig) $btn.html(orig);
+        // Only reset if we have the original HTML and the button is in loading state
+        if (orig && $btn.hasClass('btn-loading')) {
+            $btn.html(orig);
+            $btn.removeData('original-html');
+        } else if (orig) {
+            $btn.html(orig);
+            $btn.removeData('original-html');
+        }
         $btn.prop('disabled', false).removeClass('btn-loading');
     }
 
@@ -804,6 +818,7 @@ $(document).ready(function () {
 
     // ── Open CREATE ───────────────────────────────────────────
     $('#createCategoryBtn').on('click', function() {
+        // Reset form fields
         $('#create-category').val('');
         $('#create-assessment-name').val('');
         $('#create-junior').prop('checked', true);
@@ -813,6 +828,14 @@ $(document).ready(function () {
         $('#create-save-btn').prop('disabled', true);
         $('#create-error-msg').addClass('d-none').html('');
         hideModalLoader('create');
+        
+        // CRITICAL FIX: Reset the button state
+        var $btn = $('#create-save-btn');
+        var origHtml = '<i class="ri-save-line me-1"></i><span class="btn-text">Create Category</span>';
+        $btn.html(origHtml);
+        $btn.prop('disabled', true).removeClass('btn-loading');
+        $btn.removeData('original-html');
+        
         new bootstrap.Modal(document.getElementById('createModal')).show();
     });
 
@@ -892,7 +915,8 @@ $(document).ready(function () {
             return;
         }
 
-        btnLoad($('#create-save-btn'), 'Saving…');
+        var $btn = $('#create-save-btn');
+        btnLoad($btn, 'Saving…');
         showModalLoader('create', 'Creating category…');
         $('#create-error-msg').addClass('d-none').html('');
 
@@ -915,14 +939,22 @@ $(document).ready(function () {
             },
 
             success: function(res) {
+                hideModalLoader('create');
+                
                 if (res.success) {
+                    // Reset button before hiding modal
+                    btnReset($btn);
+                    // Reset the button to original state
+                    $btn.html('<i class="ri-save-line me-1"></i><span class="btn-text">Create Category</span>');
+                    $btn.prop('disabled', true).removeClass('btn-loading');
+                    $btn.removeData('original-html');
+                    
                     $('#createModal').modal('hide');
                     toast('success', 'Created!', res.message);
                     table.ajax.reload();
                     loadStats();
                 } else {
-                    hideModalLoader('create');
-                    btnReset($('#create-save-btn'));
+                    btnReset($btn);
                     updateCreateBtn();
                     showError('#create-error-msg', res.message || 'Could not create category.');
                 }
@@ -930,7 +962,7 @@ $(document).ready(function () {
 
             error: function(xhr) {
                 hideModalLoader('create');
-                btnReset($('#create-save-btn'));
+                btnReset($btn);
                 updateCreateBtn();
                 var json = xhr.responseJSON;
                 var msg = (json && json.message) ||
@@ -1005,6 +1037,11 @@ $(document).ready(function () {
 
             success: function(res) {
                 if (res.success) {
+                    // Reset button before hiding modal
+                    btnReset($('#edit-update-btn'));
+                    $('#edit-update-btn').html('<i class="ri-save-line me-1"></i><span class="btn-text">Update Category</span>');
+                    $('#edit-update-btn').removeData('original-html');
+                    
                     $('#editModal').modal('hide');
                     toast('success', 'Updated!', res.message);
                     table.ajax.reload();
