@@ -477,7 +477,7 @@
                                                 <th class="text-center" style="min-width: 120px;">
                                                     <div>{{ $day }}</div>
                                                     <small class="opacity-75" id="dayCount_{{ $day }}">
-                                                        {{ $slots[$day] ?? collect() }}
+                                                        {{ ($slots[$day] ?? collect())->whereNotNull('subject_id')->where('is_free', false)->count() }}
                                                     </small>
                                                 </th>
                                             @endforeach
@@ -914,7 +914,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update day counts
     @foreach($days as $day)
-        const count_{{ $day }} = {{ $slots[$day] ?? collect() }};
+        const count_{{ $day }} = {{ ($slots[$day] ?? collect())->whereNotNull('subject_id')->where('is_free', false)->count() }};
         document.getElementById('dayCount_{{ $day }}').textContent = count_{{ $day }} || 0;
     @endforeach
 });
