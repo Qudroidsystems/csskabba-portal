@@ -418,75 +418,100 @@ class SchoolClassController extends Controller
     // BULK DESTROY
     // =========================================================================
 
-    public function deleteMultiple(Request $request)
-    {
-        try {
-            $ids = $request->input('ids', []);
-            
-            if (empty($ids)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No classes selected.'
-                ], 400);
+    // =========================================================================
+// BULK DESTROY
+// =========================================================================
+
+public function deleteMultiple(Request $request)
+{
+    try {
+        // Get ids from request - handle both array and string formats
+        $ids = $request->input('ids');
+        
+        // If ids is a string, try to decode it or convert to array
+        if (is_string($ids)) {
+            // Check if it's a JSON string
+            $decoded = json_decode($ids, true);
+            if (is_array($decoded)) {
+                $ids = $decoded;
+            } else {
+                // If it's a comma-separated string
+                $ids = array_map('trim', explode(',', $ids));
             }
-
-            // Validate that all IDs exist
-            $existingIds = Schoolclass::whereIn('id', $ids)->pluck('id')->toArray();
-            $invalidIds = array_diff($ids, $existingIds);
-            
-            if (!empty($invalidIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Some selected classes do not exist: ' . implode(', ', $invalidIds)
-                ], 400);
-            }
-
-            DB::beginTransaction();
-            
-            $deleted = 0;
-            foreach ($ids as $id) {
-                $schoolclass = Schoolclass::find($id);
-                if ($schoolclass) {
-                    // Detach categories
-                    $schoolclass->classcategories()->detach();
-                    
-                    // Delete from class teacher table
-                    ClassTeacher::where('schoolclassid', $id)->delete();
-                    
-                    // Delete the school class
-                    $schoolclass->delete();
-                    $deleted++;
-                }
-            }
-
-            DB::commit();
-
-            Log::channel('schoolclass')->info('Bulk delete completed', [
-                'total' => count($ids),
-                'deleted' => $deleted
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => $deleted . ' class(es) deleted successfully.',
-                'deleted_count' => $deleted
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::channel('schoolclass')->error('Bulk delete failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'ids' => $request->input('ids', [])
-            ]);
-
+        }
+        
+        // Ensure ids is an array
+        if (!is_array($ids)) {
+            $ids = [];
+        }
+        
+        // Filter out any empty values
+        $ids = array_filter($ids);
+        
+        if (empty($ids)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting classes: ' . $e->getMessage()
-            ], 500);
+                'message' => 'No classes selected.'
+            ], 400);
         }
+
+        // Validate that all IDs exist
+        $existingIds = Schoolclass::whereIn('id', $ids)->pluck('id')->toArray();
+        $invalidIds = array_diff($ids, $existingIds);
+        
+        if (!empty($invalidIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some selected classes do not exist: ' . implode(', ', $invalidIds)
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        
+        $deleted = 0;
+        foreach ($ids as $id) {
+            $schoolclass = Schoolclass::find($id);
+            if ($schoolclass) {
+                // Detach categories
+                $schoolclass->classcategories()->detach();
+                
+                // Delete from class teacher table
+                ClassTeacher::where('schoolclassid', $id)->delete();
+                
+                // Delete the school class
+                $schoolclass->delete();
+                $deleted++;
+            }
+        }
+
+        DB::commit();
+
+        Log::channel('schoolclass')->info('Bulk delete completed', [
+            'total' => count($ids),
+            'deleted' => $deleted
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $deleted . ' class(es) deleted successfully.',
+            'deleted_count' => $deleted
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        Log::channel('schoolclass')->error('Bulk delete failed:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'ids' => $request->input('ids', [])
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error deleting classes: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     // =========================================================================
     // GET SINGLE CLASS (for edit pre-load)
