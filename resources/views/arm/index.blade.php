@@ -321,28 +321,28 @@ textarea.form-control {
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-group-line"></i></div>
-                <div class="stat-value">{{ $all_arms->total() }}</div>
+                <div class="stat-value" id="statTotal">{{ $all_arms ?? 0 }}</div>
                 <div class="stat-label">Total Arms</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-bar-chart-line"></i></div>
-                <div class="stat-value text-primary">{{ $all_arms->count() }}</div>
+                <div class="stat-value text-primary" id="statShowing">0</div>
                 <div class="stat-label">Showing Now</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-calendar-line"></i></div>
-                <div class="stat-value text-success">{{ $all_arms->where('updated_at', '>=', now()->subDays(30))->count() }}</div>
+                <div class="stat-value text-success">—</div>
                 <div class="stat-label">Last 30 Days</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-pencil-line"></i></div>
-                <div class="stat-value text-warning">{{ $all_arms->where('updated_at', '>=', now()->subDays(7))->count() }}</div>
+                <div class="stat-value text-warning">—</div>
                 <div class="stat-label">Recent Updates</div>
             </div>
         </div>
@@ -352,7 +352,7 @@ textarea.form-control {
         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap">
             <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
                 <i class="ri-list-check me-2"></i>School Arms List
-                <span class="badge bg-primary ms-2">{{ $all_arms->total() }}</span>
+                <span class="badge bg-primary ms-2" id="totalArmsBadge">{{ $all_arms ?? 0 }}</span>
             </h5>
             <div class="d-flex gap-2">
                 @can('Create school-arm')
@@ -374,40 +374,14 @@ textarea.form-control {
                     <div class="col-md-8 text-end">
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="checkbox" id="checkAll">
-                            <label class="form-check-label" for="checkAll">
-                                Select All
-                            </label>
+                            <label class="form-check-label" for="checkAll">Select All</label>
                         </div>
-                        <button class="btn btn-danger btn-sm d-none" id="remove-actions" onclick="deleteMultiple()">
+                        <button class="btn btn-danger btn-sm d-none" id="remove-actions">
                             <i class="ri-delete-bin-line me-1"></i>Delete Selected
                         </button>
                     </div>
                 </div>
             </div>
-
-            @if ($errors->any())
-                <div class="alert alert-danger m-3">
-                    <strong>Whoops!</strong> There were some problems with your input.<br>
-                    <ul class="mb-0 mt-2">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
-                    <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-            @if (session('danger'))
-                <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
-                    <i class="ri-error-warning-line me-2"></i>{{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
 
             <div class="table-responsive">
                 <table class="table arm-table w-100 mb-0" id="armsTable">
@@ -425,77 +399,8 @@ textarea.form-control {
                             <th width="100">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @php $i = 0 @endphp
-                        @forelse ($all_arms as $arm)
-                            <tr data-id="{{ $arm->id }}" data-url="{{ route('schoolarm.deletearm') }}">
-                                <td>
-                                    <div class="form-check">
-                                        <input class="form-check-input chk_child" type="checkbox" value="{{ $arm->id }}">
-                                    </div>
-                                </td>
-                                <td class="sn">{{ ++$i }}</td>
-                                <td class="arm-name">
-                                    <span class="fw-semibold">{{ $arm->arm }}</span>
-                                </td>
-                                <td class="arm-description">{{ $arm->description ?? '—' }}</td>
-                                <td class="arm-updated">
-                                    <span class="text-muted small">{{ $arm->updated_at->format('d M Y') }}</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        @can('Update school-arm')
-                                            <button type="button"
-                                                    class="btn btn-subtle-secondary btn-icon edit-arm-btn"
-                                                    data-id="{{ $arm->id }}"
-                                                    data-arm="{{ $arm->arm }}"
-                                                    data-description="{{ $arm->description }}">
-                                                <i class="ri-pencil-line"></i>
-                                            </button>
-                                        @endcan
-                                        @can('Delete school-arm')
-                                            <button type="button"
-                                                    class="btn btn-subtle-danger btn-icon delete-arm-btn"
-                                                    data-id="{{ $arm->id }}"
-                                                    data-name="{{ $arm->arm }}">
-                                                <i class="ri-delete-bin-line"></i>
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center dataTables_empty">
-                                    <div class="empty-state">
-                                        <i class="ri-inbox-line"></i>
-                                        <p>No school arms found.</p>
-                                        @can('Create school-arm')
-                                            <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#addArmModal">
-                                                <i class="ri-add-line me-1"></i>Create your first arm
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+                    <tbody></tbody>
                 </table>
-            </div>
-
-            <div class="p-3 border-top">
-                <div class="row align-items-center">
-                    <div class="col-sm">
-                        <div class="text-muted text-center text-sm-start">
-                            Showing <span class="fw-semibold">{{ $all_arms->count() }}</span> of <span class="fw-semibold">{{ $all_arms->total() }}</span> arms
-                        </div>
-                    </div>
-                    <div class="col-sm-auto mt-3 mt-sm-0">
-                        <div class="pagination-wrap hstack gap-2 justify-content-center">
-                            {{ $all_arms->links() }}
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -606,61 +511,69 @@ textarea.form-control {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-$(document).ready(function() {
-    // Prevent DataTables from throwing fatal errors that stop the rest of the script
+$(document).ready(function () {
     $.fn.dataTable.ext.errMode = 'none';
 
-    // Safely initialize DataTable
-    var table = null;
-    try {
-        table = $('#armsTable').DataTable({
-            pageLength: 10,
-            order: [[1, 'asc']],
-            language: {
-                search: '',
-                searchPlaceholder: 'Search arms...',
-                lengthMenu: 'Show _MENU_ entries',
-                info: 'Showing _START_–_END_ of _TOTAL_ arms',
-                infoEmpty: 'No arms found',
-                zeroRecords: 'No matching arms',
-            },
-            columnDefs: [
-                { orderable: false, targets: [0, 5] },
-                { orderable: true, targets: [1, 2, 3, 4] }
-            ],
-            dom: 'rtip',
-            destroy: true
-        });
-    } catch (e) {
-        console.warn('DataTables init failed (non-fatal):', e);
-    }
-
-    // Custom search
-    $('#searchInput').on('keyup', function() {
-        if (table) {
-            table.search(this.value).draw();
+    // ── DataTable (Yajra) ────────────────────────────────────
+    var table = $('#armsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('schoolarm.index') }}",
+            type: 'GET'
+        },
+        columns: [
+            { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false },
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'arm', name: 'arm' },
+            { data: 'description', name: 'description' },
+            { data: 'updated_at', name: 'updated_at' },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[2, 'asc']],
+        pageLength: 10,
+        language: {
+            search: '',
+            searchPlaceholder: 'Search arms...',
+            lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_–_END_ of _TOTAL_ arms',
+            infoEmpty: 'No arms found',
+            zeroRecords: 'No matching arms',
+            processing: '<div class="spinner-border text-primary" role="status"></div>'
+        },
+        dom: 'rtip',
+        drawCallback: function () {
+            var info = this.api().page.info();
+            $('#totalArmsBadge').text(info.recordsTotal);
+            $('#statTotal').text(info.recordsTotal);
+            $('#statShowing').text(info.recordsDisplay);
         }
     });
 
-    // CheckAll functionality
-    $('#checkAll, #checkAllTable').on('change', function() {
+    // Custom search
+    $('#searchInput').on('keyup', function () {
+        table.search(this.value).draw();
+    });
+
+    // Select All
+    $('#checkAll, #checkAllTable').on('change', function () {
         var isChecked = $(this).is(':checked');
         $('.chk_child').prop('checked', isChecked);
         $('#remove-actions').toggleClass('d-none', !isChecked);
     });
 
-    $(document).on('change', '.chk_child', function() {
+    $(document).on('change', '.chk_child', function () {
         var anyChecked = $('.chk_child:checked').length > 0;
         $('#remove-actions').toggleClass('d-none', !anyChecked);
-        var allChecked = $('.chk_child:checked').length === $('.chk_child').length;
+
+        var allChecked = $('.chk_child:checked').length === $('.chk_child').length && $('.chk_child').length > 0;
         $('#checkAll, #checkAllTable').prop('checked', allChecked);
     });
 
-    // ── ADD ARM ──────────────────────────────────────────────────────────
-    $('#addArmForm').on('submit', function(e) {
+    // ── ADD ARM ──────────────────────────────────────────────
+    $('#addArmForm').on('submit', function (e) {
         e.preventDefault();
 
-        // Reset validation
         $('#arm, #description').removeClass('is-invalid');
         $('#armError, #descriptionError').text('');
         $('#addAlertError').addClass('d-none');
@@ -676,22 +589,22 @@ $(document).ready(function() {
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
+                    $('#addArmModal').modal('hide');
+                    $('#addArmForm')[0].reset();
+                    table.ajax.reload(null, false);
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Success!',
                         text: response.message,
-                        timer: 2000,
+                        timer: 1800,
                         showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
                     });
-                } else {
-                    $('#addAlertError').removeClass('d-none').text(response.message || 'Something went wrong');
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     var errors = xhr.responseJSON.errors || {};
                     if (errors.arm) {
@@ -702,34 +615,26 @@ $(document).ready(function() {
                         $('#description').addClass('is-invalid');
                         $('#descriptionError').text(errors.description[0]);
                     }
-                    if (xhr.responseJSON.message && !Object.keys(errors).length) {
+                    if (xhr.responseJSON.message && Object.keys(errors).length === 0) {
                         $('#addAlertError').removeClass('d-none').text(xhr.responseJSON.message);
                     }
-                } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    $('#addAlertError').removeClass('d-none').text(xhr.responseJSON.message);
                 } else {
-                    $('#addAlertError').removeClass('d-none').text('An error occurred. Please try again.');
+                    $('#addAlertError').removeClass('d-none')
+                        .text(xhr.responseJSON?.message || 'An error occurred. Please try again.');
                 }
             },
-            complete: function() {
+            complete: function () {
                 submitBtn.prop('disabled', false).html(originalText);
             }
         });
     });
 
-    // ── EDIT ARM ──────────────────────────────────────────────────────────
-    let editArmId = null;
+    // ── EDIT ARM ─────────────────────────────────────────────
+    $(document).on('click', '.edit-arm-btn', function () {
+        $('#edit_id').val($(this).data('id'));
+        $('#edit_arm').val($(this).data('arm'));
+        $('#edit_description').val($(this).data('description') || '');
 
-    $(document).on('click', '.edit-arm-btn', function() {
-        editArmId = $(this).data('id');
-        const armName = $(this).data('arm');
-        const description = $(this).data('description');
-
-        $('#edit_id').val(editArmId);
-        $('#edit_arm').val(armName);
-        $('#edit_description').val(description || '');
-
-        // Reset validation
         $('#edit_arm, #edit_description').removeClass('is-invalid');
         $('#editArmError, #editDescriptionError').text('');
         $('#editAlertError').addClass('d-none');
@@ -737,7 +642,7 @@ $(document).ready(function() {
         $('#editModal').modal('show');
     });
 
-    $('#editArmForm').on('submit', function(e) {
+    $('#editArmForm').on('submit', function (e) {
         e.preventDefault();
 
         const submitBtn = $('#updateBtn');
@@ -751,20 +656,21 @@ $(document).ready(function() {
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
+                    $('#editModal').modal('hide');
+                    table.ajax.reload(null, false);
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Updated!',
                         text: response.message,
-                        timer: 2000,
+                        timer: 1800,
                         showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
                     });
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     var errors = xhr.responseJSON.errors || {};
                     if (errors.arm) {
@@ -775,30 +681,27 @@ $(document).ready(function() {
                         $('#edit_description').addClass('is-invalid');
                         $('#editDescriptionError').text(errors.description[0]);
                     }
-                } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    $('#editAlertError').removeClass('d-none').text(xhr.responseJSON.message);
                 } else {
-                    $('#editAlertError').removeClass('d-none').text('An error occurred. Please try again.');
+                    $('#editAlertError').removeClass('d-none')
+                        .text(xhr.responseJSON?.message || 'An error occurred. Please try again.');
                 }
             },
-            complete: function() {
+            complete: function () {
                 submitBtn.prop('disabled', false).html(originalText);
             }
         });
     });
 
-    // ── DELETE ARM (Single) ──────────────────────────────────────────────
+    // ── SINGLE DELETE ────────────────────────────────────────
     let deleteArmId = null;
-    let deleteArmName = null;
 
-    $(document).on('click', '.delete-arm-btn', function() {
+    $(document).on('click', '.delete-arm-btn', function () {
         deleteArmId = $(this).data('id');
-        deleteArmName = $(this).data('name');
-        $('#deleteItemName').html(`<strong>${deleteArmName}</strong> will be permanently deleted.`);
+        $('#deleteItemName').html(`<strong>${$(this).data('name')}</strong> will be permanently deleted.`);
         $('#deleteRecordModal').modal('show');
     });
 
-    $('#confirmDeleteBtn').on('click', function() {
+    $('#confirmDeleteBtn').on('click', function () {
         if (!deleteArmId) return;
 
         const btn = $(this);
@@ -812,20 +715,21 @@ $(document).ready(function() {
                 armid: deleteArmId,
                 _token: $('meta[name="csrf-token"]').attr('content')
             },
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
+                    $('#deleteRecordModal').modal('hide');
+                    table.ajax.reload(null, false);
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Deleted!',
                         text: response.message,
-                        timer: 2000,
+                        timer: 1800,
                         showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
                     });
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error!',
@@ -833,92 +737,77 @@ $(document).ready(function() {
                 });
                 $('#deleteRecordModal').modal('hide');
             },
-            complete: function() {
+            complete: function () {
                 btn.prop('disabled', false).html(originalText);
                 deleteArmId = null;
             }
         });
     });
-});
 
-// ── BULK DELETE ──────────────────────────────────────────────────────────
-function deleteMultiple() {
-    const selectedIds = [];
-    $('.chk_child:checked').each(function() {
-        selectedIds.push($(this).val());
-    });
-
-    if (selectedIds.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'No Selection',
-            text: 'Please select at least one arm to delete.'
+    // ── BULK DELETE ──────────────────────────────────────────
+    $('#remove-actions').on('click', function () {
+        const selectedIds = [];
+        $('.chk_child:checked').each(function () {
+            selectedIds.push($(this).val());
         });
-        return;
-    }
 
-    Swal.fire({
-        title: 'Delete Multiple Arms?',
-        text: `You are about to delete ${selectedIds.length} arm(s). This action cannot be undone!`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, delete them!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $('#loadingOverlay').addClass('active');
+        if (selectedIds.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Selection',
+                text: 'Please select at least one arm to delete.'
+            });
+            return;
+        }
 
-            let completed = 0;
-            let errors = 0;
+        Swal.fire({
+            title: 'Delete Multiple Arms?',
+            text: `You are about to delete ${selectedIds.length} arm(s). This action cannot be undone!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#loadingOverlay').addClass('active');
 
-            selectedIds.forEach(id => {
                 $.ajax({
-                    url: '{{ route("schoolarm.deletearm") }}',
+                    url: '{{ route("schoolarm.bulkDelete") }}',
                     method: 'POST',
                     data: {
-                        armid: id,
+                        ids: selectedIds,
                         _token: $('meta[name="csrf-token"]').attr('content')
                     },
-                    success: function(response) {
-                        completed++;
-                        if (!response.success) {
-                            errors++;
-                        }
+                    success: function (response) {
+                        $('#loadingOverlay').removeClass('active');
+                        table.ajax.reload(null, false);
+
+                        // Uncheck all
+                        $('#checkAll, #checkAllTable').prop('checked', false);
+                        $('#remove-actions').addClass('d-none');
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: response.message || `${selectedIds.length} arm(s) deleted successfully.`,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
                     },
-                    error: function() {
-                        errors++;
-                        completed++;
-                    },
-                    complete: function() {
-                        if (completed === selectedIds.length) {
-                            $('#loadingOverlay').removeClass('active');
-                            if (errors === 0) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted!',
-                                    text: `${completed} arm(s) deleted successfully.`,
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Partial Success',
-                                    text: `${completed - errors} arm(s) deleted, ${errors} failed.`
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            }
-                        }
+                    error: function (xhr) {
+                        $('#loadingOverlay').removeClass('active');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: xhr.responseJSON?.message || 'Failed to delete selected arms.'
+                        });
                     }
                 });
-            });
-        }
+            }
+        });
     });
-}
+});
 </script>
 @endsection

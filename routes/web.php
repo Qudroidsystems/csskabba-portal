@@ -320,6 +320,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('schoolarm/updatearm', [SchoolArmController::class, 'updatearm'])->name('schoolarm.updatearm');
     Route::post('/schoolclass/deletes-schoolclass', [SchoolClassController::class, 'deleteschoolclass'])->name('schoolclass.deleteschoolclass');
     Route::get('/schoolclasses/{getArms}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getArms');
+    Route::post('schoolarm/bulk-delete', [SchoolArmController::class, 'bulkDelete'])->name('schoolarm.bulkDelete');
 
     Route::get('schoolclass', [SchoolClassController::class, 'index'])->name('schoolclass.index');
     Route::post('schoolclass', [SchoolClassController::class, 'store'])->name('schoolclass.store');
