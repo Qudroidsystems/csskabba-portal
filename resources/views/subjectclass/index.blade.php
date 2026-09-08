@@ -57,16 +57,18 @@
 }
 .sc-table tr:hover td { background:#eff6ff; }
 
-/* ── Term badges ─────────────────────────────────────────── */
-.term-badge {
+/* ── Badges ──────────────────────────────────────────────── */
+.sc-badge {
     display:inline-flex; align-items:center;
     padding:3px 9px; border-radius:20px;
     font-size:11px; font-weight:600;
 }
-.term-first  { background:#dcfce7; color:#16a34a; }
-.term-second { background:#dbeafe; color:#2563eb; }
-.term-third  { background:#fee2e2; color:#dc2626; }
-.term-other  { background:#f3f4f6; color:#6b7280; }
+.sc-badge-class    { background:#dbeafe; color:#2563eb; }
+.sc-badge-session  { background:#ccfbf1; color:#0f766e; }
+.sc-badge-term-first  { background:#dcfce7; color:#16a34a; }
+.sc-badge-term-second { background:#dbeafe; color:#2563eb; }
+.sc-badge-term-third  { background:#fee2e2; color:#dc2626; }
+.sc-badge-term-other  { background:#f3f4f6; color:#6b7280; }
 
 /* ── Avatar ──────────────────────────────────────────────── */
 .teacher-avatar {
@@ -75,6 +77,17 @@
     cursor:pointer; transition:border-color .15s;
 }
 .teacher-avatar:hover { border-color:var(--sc-accent); }
+
+.avatar-initials {
+    width:36px; height:36px; border-radius:50%;
+    background:linear-gradient(135deg, #1e3a5f 0%, #0891b2 100%);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; letter-spacing:.5px;
+    border:2px solid var(--sc-border);
+    cursor:pointer; flex-shrink:0; user-select:none;
+    transition:border-color .15s, transform .15s;
+}
+.avatar-initials:hover { border-color:var(--sc-accent); transform:scale(1.08); }
 
 /* ── DataTables overrides ────────────────────────────────── */
 .dataTables_wrapper .dataTables_filter input {
@@ -208,8 +221,6 @@
     font-size:14px; font-weight:600;
     color:var(--sc-primary); margin-bottom:12px;
 }
-
-/* ── Progress bar inside loader ──────────────────────────── */
 .sc-progress-wrap {
     width:160px; height:5px;
     background:#e2e8f0; border-radius:99px; overflow:hidden;
@@ -295,9 +306,7 @@
     animation:sc-spin .65s linear infinite;
 }
 .btn-loading.btn-outline-secondary::after,
-.btn-loading.btn-outline-danger::after {
-    border-top-color:currentColor;
-}
+.btn-loading.btn-outline-danger::after { border-top-color:currentColor; }
 .btn-loading.btn-light::after { border-top-color:#374151; }
 </style>
 
@@ -332,57 +341,32 @@
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-book-2-line"></i></div>
-                <div class="stat-value" id="statTotal">{{ $subjectclasses->count() }}</div>
+                <div class="stat-value" id="statTotal">—</div>
                 <div class="stat-label">Total Assignments</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-user-star-line"></i></div>
-                <div class="stat-value text-primary" id="statTeachers">{{ $subjectclasses->pluck('subteacherid')->unique()->count() }}</div>
+                <div class="stat-value text-primary" id="statTeachers">—</div>
                 <div class="stat-label">Unique Teachers</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-building-line"></i></div>
-                <div class="stat-value text-success" id="statClasses">{{ $subjectclasses->pluck('schoolclassid')->unique()->count() }}</div>
+                <div class="stat-value text-success" id="statClasses">—</div>
                 <div class="stat-label">Classes Covered</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-flask-line"></i></div>
-                <div class="stat-value text-warning" id="statSubjects">{{ $subjectclasses->pluck('subjectid')->unique()->count() }}</div>
+                <div class="stat-value text-warning" id="statSubjects">—</div>
                 <div class="stat-label">Unique Subjects</div>
             </div>
         </div>
     </div>
-
-    {{-- Alerts --}}
-    @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show">
-            <strong>Whoops!</strong> There were some problems with your input.
-            <ul class="mb-0 mt-1">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    @if (session('danger'))
-        <div class="alert alert-danger alert-dismissible fade show">
-            {{ session('danger') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
 
     {{-- Table card --}}
     <div class="card border-0 shadow-sm">
@@ -390,7 +374,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold" style="color:var(--sc-primary)">
                     <i class="ri-list-check me-2"></i>Subject Class Assignments
-                    <span class="badge bg-primary ms-2" id="totalBadge">{{ $subjectclasses->count() }}</span>
+                    <span class="badge bg-primary ms-2" id="totalBadge">0</span>
                 </h5>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-danger d-none" id="bulkDeleteBtn">
@@ -423,105 +407,17 @@
                                 <input type="checkbox" id="selectAll" class="form-check-input">
                             </th>
                             <th>#</th>
-                            <th>Subject Teacher</th>
+                            <th>Teacher</th>
                             <th>Subject</th>
                             <th>Class</th>
-                            <th>Arm</th>
                             <th>Term</th>
                             <th>Session</th>
+                            <th>Registrations</th>
                             <th>Updated</th>
                             <th width="100">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @php $i = 0; @endphp
-                        @forelse ($subjectclasses as $sc)
-                            @php
-                                $picture       = $sc->picture ?? 'unnamed.jpg';
-                                $imagePath     = asset('storage/staff_avatars/' . $picture);
-                                $fileExists    = file_exists(storage_path('app/public/staff_avatars/' . $picture));
-                                $defaultExists = file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
-
-                                $termClass = match(true) {
-                                    str_contains($sc->termname ?? '', 'First')  => 'term-first',
-                                    str_contains($sc->termname ?? '', 'Second') => 'term-second',
-                                    str_contains($sc->termname ?? '', 'Third')  => 'term-third',
-                                    default => 'term-other'
-                                };
-                            @endphp
-                            <tr data-scid="{{ $sc->scid }}"
-                                data-destroy-url="{{ route('subjectclass.destroy', $sc->scid) }}"
-                                data-schoolclassid="{{ $sc->schoolclassid }}"
-                                data-subteacherid="{{ $sc->subteacherid }}"
-                                data-staffid="{{ $sc->staffid }}">
-                                <td>
-                                    <input type="checkbox" class="form-check-input row-checkbox" value="{{ $sc->scid }}">
-                                </td>
-                                <td>{{ ++$i }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="{{ $imagePath }}"
-                                             alt="{{ $sc->teachername }}"
-                                             class="teacher-avatar staff-image"
-                                             data-bs-toggle="modal"
-                                             data-bs-target="#imageViewModal"
-                                             data-image="{{ $imagePath }}"
-                                             data-teachername="{{ $sc->teachername }}"
-                                             data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
-                                             data-default-exists="{{ $defaultExists ? 'true' : 'false' }}"
-                                             data-picture="{{ $sc->picture ?? 'none' }}"
-                                             onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'">
-                                        <span class="fw-semibold text-dark">{{ $sc->teachername }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="fw-semibold">{{ $sc->subjectname }}</span>
-                                    <br><small class="text-muted">{{ $sc->subjectcode }}</small>
-                                </td>
-                                <td>{{ $sc->sclass }}</td>
-                                <td>{{ $sc->schoolarm }}</td>
-                                <td>
-                                    <span class="term-badge {{ $termClass }}">
-                                        {{ $sc->termname }}
-                                    </span>
-                                </td>
-                                <td>{{ $sc->sessionname }}</td>
-                                <td>
-                                    <small class="text-muted">{{ $sc->updated_at->format('d M Y') }}</small>
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-1">
-                                        @can('Update subject-class')
-                                        <button class="btn btn-sm btn-outline-secondary edit-sc-btn" title="Change Teacher"
-                                            data-scid="{{ $sc->scid }}"
-                                            data-staffid="{{ $sc->staffid }}"
-                                            data-teachername="{{ $sc->teachername }}"
-                                            data-subjectname="{{ $sc->subjectname }}"
-                                            data-subjectcode="{{ $sc->subjectcode }}"
-                                            data-termname="{{ $sc->termname }}"
-                                            data-sessionname="{{ $sc->sessionname }}"
-                                            data-classname="{{ $sc->sclass }} ({{ $sc->schoolarm }})">
-                                            <i class="ph-pencil"></i>
-                                        </button>
-                                        @endcan
-                                        @can('Delete subject-class')
-                                        <button class="btn btn-sm btn-outline-danger delete-sc-btn" title="Delete"
-                                            data-scid="{{ $sc->scid }}"
-                                            data-subject="{{ $sc->subjectname }}"
-                                            data-teacher="{{ $sc->teachername }}"
-                                            data-destroy-url="{{ route('subjectclass.destroy', $sc->scid) }}">
-                                            <i class="ph-trash"></i>
-                                        </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="10" class="text-center text-muted py-4">No subject class assignments found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -541,7 +437,6 @@
             </div>
             <form id="add-subjectclass-form" autocomplete="off">
                 @csrf
-                {{-- Modal body loader --}}
                 <div class="modal-body-loader" id="add-modal-loader">
                     <div class="inner">
                         <div class="mbl-spinner"></div>
@@ -603,7 +498,7 @@
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="add-btn" disabled>
-                        <i class="ri-save-line me-1"></i>Add Subject Class
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Add Subject Class</span>
                     </button>
                 </div>
             </form>
@@ -611,7 +506,7 @@
     </div>
 </div>
 
-{{-- ═══════════════════════ EDIT MODAL (Change Teacher Only) ══════════════════════ --}}
+{{-- ═══════════════════════ EDIT MODAL ══════════════════════ --}}
 <div class="modal fade sc-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -624,7 +519,6 @@
                 <input type="hidden" id="edit-id">
                 <input type="hidden" id="edit-old-staffid">
 
-                {{-- Modal body loader --}}
                 <div class="modal-body-loader" id="edit-modal-loader">
                     <div class="inner">
                         <div class="mbl-spinner"></div>
@@ -695,7 +589,7 @@
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="update-btn">
-                        <i class="ri-save-line me-1"></i>Update Teacher
+                        <i class="ri-save-line me-1"></i><span class="btn-text">Update Teacher</span>
                     </button>
                 </div>
             </form>
@@ -720,26 +614,8 @@
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirm-delete-btn">
-                    <i class="ri-delete-bin-line me-1"></i>Delete
+                    <i class="ri-delete-bin-line me-1"></i><span class="btn-text">Delete</span>
                 </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- ═══════════════════════ IMAGE PREVIEW MODAL ═════════════ --}}
-<div class="modal fade" id="imageViewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
-        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
-            <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title fw-semibold">Staff Photo</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center pt-2 pb-4">
-                <img id="preview-image" src="" alt="Staff"
-                     class="rounded-circle mb-3"
-                     style="width:160px;height:160px;object-fit:cover;border:4px solid var(--sc-border);">
-                <p id="preview-teachername" class="fw-semibold mb-0" style="color:var(--sc-primary)"></p>
             </div>
         </div>
     </div>
@@ -752,25 +628,20 @@
 $(document).ready(function () {
 
     const CSRF = $('meta[name="csrf-token"]').attr('content');
-    let deleteUrl  = null;
-    let deleteScId = null;
+    let deleteId = null;
 
     // =========================================================================
     // LOADING HELPERS
     // =========================================================================
 
     const PageLoader = {
-        _prog: 0,
-        _timer: null,
-
+        _prog: 0, _timer: null,
         show(label = 'Processing…') {
             $('#sc-loader-label').text(label);
             $('#sc-progress-bar').css('width', '0%');
             $('#sc-page-loader').addClass('active');
-            this._prog = 0;
-            this._tick();
+            this._prog = 0; this._tick();
         },
-
         _tick() {
             PageLoader._timer = setInterval(() => {
                 if (PageLoader._prog < 85) {
@@ -779,7 +650,6 @@ $(document).ready(function () {
                 }
             }, 220);
         },
-
         hide() {
             clearInterval(this._timer);
             $('#sc-progress-bar').css('width', '100%');
@@ -819,7 +689,7 @@ $(document).ready(function () {
             warning: 'ri-alert-fill',
             info:    'ri-information-fill',
         };
-        const id  = 'toast-' + Date.now();
+        const id  = 'sc-toast-' + Date.now();
         const $el = $(`
             <div class="sc-toast sc-toast-${type}" id="${id}">
                 <span class="sc-toast-icon"><i class="${icons[type] || icons.info}"></i></span>
@@ -840,31 +710,78 @@ $(document).ready(function () {
         }
     }
 
+    function showError(selector, msg) {
+        $(selector).removeClass('d-none').html(
+            `<i class="ri-error-warning-line me-1"></i>${msg}`
+        );
+    }
+
     // =========================================================================
-    // DATATABLE
+    // DATATABLE (server-side)
     // =========================================================================
 
-    const table = $('#subjectClassTable').DataTable({
+    var table = $('#subjectClassTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("subjectclass.data") }}',
+            type: 'GET',
+            error: function(xhr) {
+                console.error('DataTables AJAX error:', xhr.status, xhr.responseText);
+                toast('error', 'Load Error', 'Failed to load assignments. Please refresh.');
+            }
+        },
+        columns: [
+            { data: 'checkbox', orderable: false, searchable: false },
+            { data: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'teacher_info', orderable: false },
+            { data: 'subject_info', orderable: false },
+            { data: 'class_info', orderable: false },
+            { data: 'term_info', orderable: false },
+            { data: 'session_info', orderable: false },
+            { data: 'registration_count', orderable: false },
+            { data: 'formatted_date', orderable: false },
+            { data: 'action', orderable: false, searchable: false },
+        ],
         dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
              "<'row'<'col-12'tr>>" +
              "<'row align-items-center mt-3'<'col-sm-5'i><'col-sm-7 text-end'p>>",
         language: {
-            search:            '',
+            processing:      '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading…',
+            search:          '',
             searchPlaceholder: 'Search assignments…',
-            lengthMenu:        'Show _MENU_ entries',
-            info:              'Showing _START_–_END_ of _TOTAL_ entries',
-            infoEmpty:         'No assignments found',
-            zeroRecords:       'No matching assignments',
-            emptyTable:        'No subject class assignments yet',
+            lengthMenu:      'Show _MENU_ entries',
+            info:            'Showing _START_–_END_ of _TOTAL_ assignments',
+            infoEmpty:       'No assignments found',
+            zeroRecords:     'No matching assignments',
+            emptyTable:      'No subject class assignments yet',
         },
-        order:      [[1, 'asc']],
+        order: [[1, 'asc']],
         pageLength: 15,
         responsive: true,
-        drawCallback: function () {
+        drawCallback: function() {
             bindCheckboxes();
             $('#totalBadge').text(this.api().page.info().recordsTotal);
         },
     });
+
+    // =========================================================================
+    // STATS
+    // =========================================================================
+
+    function loadStats() {
+        $.get('{{ route("subjectclass.stats") }}', function(data) {
+            if (data.stats) {
+                $('#statTotal').text(data.stats.total);
+                $('#statTeachers').text(data.stats.unique_teachers);
+                $('#statClasses').text(data.stats.unique_classes);
+                $('#statSubjects').text(data.stats.unique_subjects);
+            }
+        }).fail(function() {
+            $('#statTotal, #statTeachers, #statClasses, #statSubjects').text('—');
+        });
+    }
+    loadStats();
 
     // =========================================================================
     // CHECKBOXES & BULK BAR
@@ -873,14 +790,12 @@ $(document).ready(function () {
     function bindCheckboxes() {
         $('.row-checkbox').off('change').on('change', updateBulkBar);
     }
-
-    $('#selectAll').on('change', function () {
+    $('#selectAll').on('change', function() {
         $('.row-checkbox').prop('checked', this.checked);
         updateBulkBar();
     });
-
     function updateBulkBar() {
-        const count = $('.row-checkbox:checked').length;
+        var count = $('.row-checkbox:checked').length;
         $('#bulkBar').toggleClass('show', count > 0);
         $('#bulkCount').text(count);
         $('#bulkDeleteBtn').toggleClass('d-none', count === 0);
@@ -915,7 +830,8 @@ $(document).ready(function () {
         $('#add-btn').prop('disabled', !ok);
     }
 
-    $('#createSubjectClassBtn').on('click', function () {
+    // ── Open ADD ──────────────────────────────────────────────
+    $('#createSubjectClassBtn').on('click', function() {
         $('#add-schoolclassid').val('');
         $('.add-teacher-checkbox').prop('checked', false);
         $('#add-selected-count').text(0);
@@ -928,13 +844,13 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-    // EDIT MODAL — open: populate context info + pre-select current teacher
+    // EDIT MODAL
     // =========================================================================
 
     $(document).on('click', '.edit-sc-btn', function () {
         const $btn = $(this);
 
-        const scid        = $btn.data('scid');
+        const id          = $btn.data('id');
         const staffId     = $btn.data('staffid');
         const teacherName = $btn.data('teachername');
         const subjectName = $btn.data('subjectname');
@@ -943,11 +859,9 @@ $(document).ready(function () {
         const sessionName = $btn.data('sessionname');
         const className   = $btn.data('classname');
 
-        // Store IDs
-        $('#edit-id').val(scid);
+        $('#edit-id').val(id);
         $('#edit-old-staffid').val(staffId);
 
-        // Populate locked context display
         $('#ctx-subject').text(subjectName || '—');
         $('#ctx-subject-code').text(subjectCode || '');
         $('#ctx-class').text(className || '—');
@@ -955,10 +869,7 @@ $(document).ready(function () {
         $('#ctx-session').text(sessionName || '—');
         $('#ctx-current-teacher').text(teacherName || '—');
 
-        // Pre-select current staff in dropdown, but leave blank so user must consciously pick
         $('#edit-new-staffid').val('');
-
-        // Reset UI
         $('#edit-staff-change-warning').addClass('d-none');
         $('#edit-error-msg').addClass('d-none').html('');
         hideModalLoader('edit');
@@ -980,33 +891,18 @@ $(document).ready(function () {
     // =========================================================================
 
     $(document).on('click', '.delete-sc-btn', function () {
-        deleteUrl  = $(this).data('destroy-url');
-        deleteScId = $(this).data('scid');
+        deleteId = $(this).data('id');
         $('#delete-subject-name').text($(this).data('subject'));
         $('#delete-teacher-name').text($(this).data('teacher'));
-        btnReset('#confirm-delete-btn');
+        btnReset($('#confirm-delete-btn'));
         new bootstrap.Modal(document.getElementById('deleteModal')).show();
-    });
-
-    // =========================================================================
-    // IMAGE PREVIEW
-    // =========================================================================
-
-    $(document).on('click', '.staff-image', function () {
-        const img    = $(this).data('image');
-        const name   = $(this).data('teachername');
-        const exists = $(this).data('file-exists') === 'true';
-        const defEx  = $(this).data('default-exists') === 'true';
-        $('#preview-image').attr('src',
-            (exists || (!exists && defEx)) ? img : '/storage/staff_avatars/unnamed.jpg');
-        $('#preview-teachername').text(name || 'Unknown');
     });
 
     // =========================================================================
     // SUBMIT: ADD
     // =========================================================================
 
-    $('#add-subjectclass-form').on('submit', function (e) {
+    $('#add-subjectclass-form').on('submit', function(e) {
         e.preventDefault();
 
         const schoolclassid     = $('#add-schoolclassid').val();
@@ -1032,14 +928,12 @@ $(document).ready(function () {
             traditional: true,
             headers:     { 'X-Requested-With': 'XMLHttpRequest' },
 
-            success(res) {
+            success: function(res) {
                 if (res.success) {
                     $('#addSubjectClassModal').modal('hide');
                     toast('success', 'Added!', res.message);
-                    setTimeout(() => {
-                        PageLoader.show('Refreshing data…');
-                        setTimeout(() => location.reload(), 400);
-                    }, 600);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
                     hideModalLoader('add');
                     btnReset('#add-btn');
@@ -1048,13 +942,14 @@ $(document).ready(function () {
                 }
             },
 
-            error(xhr) {
+            error: function(xhr) {
                 hideModalLoader('add');
                 btnReset('#add-btn');
                 updateAddBtn();
-                const msg = xhr.responseJSON?.message
-                    || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
-                    || 'An error occurred.';
+                var json = xhr.responseJSON;
+                var msg = (json && json.message) ||
+                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                          'An error occurred.';
                 showError('#add-error-msg', msg);
                 toast('error', 'Failed', msg);
             },
@@ -1062,10 +957,10 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-    // SUBMIT: EDIT — sends only new_staffid to the update() endpoint
+    // SUBMIT: EDIT
     // =========================================================================
 
-    $('#edit-subjectclass-form').on('submit', function (e) {
+    $('#edit-subjectclass-form').on('submit', function(e) {
         e.preventDefault();
 
         const id         = $('#edit-id').val();
@@ -1079,7 +974,7 @@ $(document).ready(function () {
 
         const teacherChanged = String(newStaffId) !== String(oldStaffId);
 
-        const doUpdate = () => {
+        const doUpdate = function() {
             btnLoad('#update-btn', 'Updating…');
             showModalLoader('edit', 'Updating teacher & cascading records…');
             $('#edit-error-msg').addClass('d-none').html('');
@@ -1090,14 +985,12 @@ $(document).ready(function () {
                 data:    { new_staffid: newStaffId, _token: CSRF, _method: 'PUT' },
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-                success(res) {
+                success: function(res) {
                     if (res.success) {
                         $('#editModal').modal('hide');
                         toast('success', 'Updated!', res.message);
-                        setTimeout(() => {
-                            PageLoader.show('Refreshing data…');
-                            setTimeout(() => location.reload(), 400);
-                        }, 600);
+                        table.ajax.reload();
+                        loadStats();
                     } else {
                         hideModalLoader('edit');
                         btnReset('#update-btn');
@@ -1105,12 +998,13 @@ $(document).ready(function () {
                     }
                 },
 
-                error(xhr) {
+                error: function(xhr) {
                     hideModalLoader('edit');
                     btnReset('#update-btn');
-                    const msg = xhr.responseJSON?.message
-                        || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
-                        || 'An error occurred.';
+                    var json = xhr.responseJSON;
+                    var msg = (json && json.message) ||
+                              (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
+                              'An error occurred.';
                     showError('#edit-error-msg', msg);
                     toast('error', 'Failed', msg);
                 },
@@ -1126,9 +1020,8 @@ $(document).ready(function () {
                 confirmButtonColor: '#2563eb',
                 confirmButtonText:  'Yes, update',
                 cancelButtonText:   'Cancel',
-            }).then(result => { if (result.isConfirmed) doUpdate(); });
+            }).then(function(result) { if (result.isConfirmed) doUpdate(); });
         } else {
-            // Same teacher selected — no-op, just close
             toast('info', 'No Change', 'The selected teacher is already assigned to this subject class.');
             $('#editModal').modal('hide');
         }
@@ -1138,44 +1031,40 @@ $(document).ready(function () {
     // DELETE: SINGLE
     // =========================================================================
 
-    $('#confirm-delete-btn').on('click', function () {
-        if (!deleteUrl) return;
-
-        btnLoad('#confirm-delete-btn', 'Deleting…');
+    $('#confirm-delete-btn').on('click', function() {
+        if (!deleteId) return;
+        var $btn = $(this);
+        btnLoad($btn, 'Deleting…');
 
         $.ajax({
-            url:     deleteUrl,
-            type:    'POST',
-            data:    { _method: 'DELETE', _token: CSRF },
+            url: `{{ url('subjectclass') }}/${deleteId}`,
+            type: 'POST',
+            data: { _method: 'DELETE', _token: CSRF },
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
-            success(res) {
+            success: function(res) {
                 $('#deleteModal').modal('hide');
                 if (res.success) {
                     toast('success', 'Deleted!', res.message);
-                    PageLoader.show('Removing record…');
-                    setTimeout(() => location.reload(), 500);
+                    table.ajax.reload();
+                    loadStats();
                 } else {
                     toast('error', 'Cannot Delete', res.message);
-                    Swal.fire({
-                        icon:               'error',
-                        title:              'Cannot Delete',
-                        text:               res.message,
-                        confirmButtonColor: '#2563eb',
-                    });
+                    Swal.fire({ icon:'error', title:'Cannot Delete',
+                        text: res.message, confirmButtonColor:'#2563eb' });
                 }
             },
 
-            error(xhr) {
+            error: function(xhr) {
                 $('#deleteModal').modal('hide');
-                const msg = xhr.responseJSON?.message || 'Failed to delete.';
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to delete.';
                 toast('error', 'Error', msg);
                 Swal.fire('Error!', msg, 'error');
             },
 
-            complete() {
-                btnReset('#confirm-delete-btn');
-                deleteUrl = null;
+            complete: function() {
+                btnReset($btn);
+                deleteId = null;
             },
         });
     });
@@ -1185,66 +1074,75 @@ $(document).ready(function () {
     // =========================================================================
 
     function doBulkDelete() {
-        const ids = $('.row-checkbox:checked').map((i, el) => el.value).get();
-        if (!ids.length) return;
+        var ids = [];
+        $('.row-checkbox:checked').each(function() {
+            ids.push($(this).val());
+        });
+        
+        if (ids.length === 0) {
+            toast('warning', 'No Selection', 'Please select at least one assignment to delete.');
+            return;
+        }
 
         Swal.fire({
-            title:             `Delete ${ids.length} assignment(s)?`,
-            text:              'Assignments with student records or scores cannot be deleted.',
-            icon:              'warning',
-            showCancelButton:   true,
+            title: 'Delete ' + ids.length + ' assignment(s)?',
+            html: 'Assignments with student records or scores cannot be deleted.<br><strong>This action cannot be undone!</strong>',
+            icon: 'warning',
+            showCancelButton: true,
             confirmButtonColor: '#dc2626',
-            confirmButtonText:  'Yes, delete all',
-            cancelButtonText:   'Cancel',
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
             showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return Promise.allSettled(
-                    ids.map(id =>
-                        $.ajax({
-                            url:     `{{ url('subjectclass') }}/${id}`,
-                            type:    'POST',
-                            data:    { _method: 'DELETE', _token: CSRF },
-                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                        })
-                    )
-                );
-            },
-            allowOutsideClick: () => !Swal.isLoading(),
-        }).then(result => {
-            if (!result.isConfirmed) return;
-
-            const results     = result.value;
-            const successList = results.filter(r =>
-                r.status === 'fulfilled' && r.value?.success);
-            const failedList  = results.filter(r =>
-                r.status === 'rejected'  || !r.value?.success);
-
-            if (failedList.length === 0) {
-                toast('success', 'Deleted!', `${ids.length} assignment(s) removed.`);
-            } else if (successList.length > 0) {
-                toast('warning', 'Partial Success',
-                    `${successList.length} deleted. ${failedList.length} blocked (records exist).`);
-            } else {
-                toast('error', 'Cannot Delete',
-                    'All selected assignments have existing records and cannot be deleted.');
+            preConfirm: function() {
+                return new Promise(function(resolve, reject) {
+                    PageLoader.show('Deleting assignments…');
+                    
+                    $.ajax({
+                        url: '{{ route("subjectclass.bulk-destroy") }}',
+                        type: 'POST',
+                        data: {
+                            ids: ids,
+                            _token: CSRF
+                        },
+                        traditional: true,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        success: function(res) {
+                            PageLoader.hide();
+                            if (res.success) {
+                                resolve(res);
+                            } else {
+                                reject(res.message || 'Failed to delete assignments');
+                            }
+                        },
+                        error: function(xhr) {
+                            PageLoader.hide();
+                            var errorMsg = 'An error occurred while deleting.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            reject(errorMsg);
+                        }
+                    });
+                });
             }
-
-            PageLoader.show('Refreshing…');
-            setTimeout(() => location.reload(), 600);
+        }).then(function(result) {
+            if (result.isConfirmed && result.value) {
+                toast('success', 'Deleted!', result.value.message || 'Assignments deleted successfully.');
+                table.ajax.reload();
+                loadStats();
+                $('#selectAll').prop('checked', false);
+                updateBulkBar();
+            }
+        }).catch(function(error) {
+            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete assignments.');
         });
     }
 
     $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
-
-    // =========================================================================
-    // HELPERS
-    // =========================================================================
-
-    function showError(selector, msg) {
-        $(selector).removeClass('d-none').html(
-            `<i class="ri-error-warning-line me-1"></i>${msg}`
-        );
-    }
 
     bindCheckboxes();
 });

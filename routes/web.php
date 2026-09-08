@@ -17,6 +17,7 @@ use App\Http\Controllers\ClassBroadsheetController;
 use App\Http\Controllers\ClasscategoryController;
 use App\Http\Controllers\ClassOperationController;
 use App\Http\Controllers\ClassTeacherController;
+use App\Http\Controllers\ClubController;
 use App\Http\Controllers\CompulsorySubjectClassController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceUserMappingController;
@@ -50,6 +51,7 @@ use App\Http\Controllers\PromotionSettingController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\Reports\AnalysisReportController;
 use App\Http\Controllers\Reports\FinancialReportController;
+use App\Http\Controllers\Reports\ReminderController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RoomController;
@@ -85,7 +87,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
 use App\Http\Controllers\ViewStudentMockReportController;
 use App\Http\Controllers\ViewStudentReportController;
-use App\Http\Controllers\Reports\ReminderController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -256,15 +257,24 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/updateuserrole', [RoleController::class, 'updateuserrole'])->name('roles.updateuserrole');
     Route::delete('roles/removeuserrole/{userid}/{roleid}', [RoleController::class, 'removeuserrole'])->name('roles.removeuserrole');
 
-    Route::resource('subject', SubjectController::class);
-    Route::get('/subjectid/{subjectid}', [SubjectController::class, 'deletesubject'])->name('subject.deletesubject');
-    Route::post('subjectid', [SubjectController::class, 'updatesubject'])->name('subject.updatesubject');
+   // Subject Routes
+    Route::prefix('subject')->group(function () {
+        Route::get('/data', [SubjectController::class, 'data'])->name('subject.data');
+        Route::get('/stats', [SubjectController::class, 'stats'])->name('subject.stats');
+        Route::post('/bulk-destroy', [SubjectController::class, 'deleteMultiple'])->name('subject.bulk-destroy');
+        Route::post('/delete-subject', [SubjectController::class, 'deletesubject'])->name('subject.deletesubject');
+    });
+
+    // Subject Class Routes
+    Route::prefix('subjectclass')->group(function () {
+        Route::get('/data', [SubjectClassController::class, 'data'])->name('subjectclass.data');
+        Route::get('/stats', [SubjectClassController::class, 'stats'])->name('subjectclass.stats');
+        Route::post('/bulk-destroy', [SubjectClassController::class, 'deleteMultiple'])->name('subjectclass.bulk-destroy');
+        Route::post('/delete-subjectclass', [SubjectClassController::class, 'deletesubjectclass'])->name('subjectclass.deletesubjectclass');
+        Route::get('/assignments/{subjectClassId}', [SubjectClassController::class, 'assignments'])->name('subjectclass.assignments');
+    });
 
     Route::resource('subjectclass', SubjectClassController::class);
-    Route::delete('subjectclass/deletesubjectclass/{subjectclassid}', [SubjectClassController::class, 'deletesubjectclass'])->name('subjectclass.deletesubjectclass');
-    Route::get('/subjectclass/assignments/{subjectteacherid}', [SubjectClassController::class, 'assignments'])->name('subjectclass.assignments');
-    Route::get('/subjectclass/assignments-by-teacher/{subjectTeacherId}', [SubjectClassController::class, 'assignmentsBySubjectTeacher'])->name('subjectclass.assignmentsByTeacher');
-
 
     Route::resource('staff', StaffController::class);
 
