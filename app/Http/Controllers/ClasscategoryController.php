@@ -370,80 +370,106 @@ class ClasscategoryController extends Controller
     // BULK DESTROY
     // =========================================================================
 
-    public function deleteMultiple(Request $request)
-    {
-        try {
-            $ids = $request->input('ids', []);
-            
-            if (empty($ids)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No categories selected.'
-                ], 400);
+   // =========================================================================
+// BULK DESTROY
+// =========================================================================
+
+public function deleteMultiple(Request $request)
+{
+    try {
+        // Get ids from request - handle both array and string formats
+        $ids = $request->input('ids');
+        
+        // If ids is a string, try to decode it or convert to array
+        if (is_string($ids)) {
+            // Check if it's a JSON string
+            $decoded = json_decode($ids, true);
+            if (is_array($decoded)) {
+                $ids = $decoded;
+            } else {
+                // If it's a comma-separated string
+                $ids = array_map('trim', explode(',', $ids));
             }
-
-            // Validate that all IDs exist
-            $existingIds = Classcategory::whereIn('id', $ids)->pluck('id')->toArray();
-            $invalidIds = array_diff($ids, $existingIds);
-            
-            if (!empty($invalidIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Some selected categories do not exist.'
-                ], 400);
-            }
-
-            // Check if any are in use
-            $inUse = DB::table('schoolclass')
-                ->whereIn('classcategoryid', $ids)
-                ->exists();
-                
-            if ($inUse) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Some categories are being used by school classes and cannot be deleted.'
-                ], 422);
-            }
-
-            DB::beginTransaction();
-            
-            $deleted = 0;
-            foreach ($ids as $id) {
-                $category = Classcategory::find($id);
-                if ($category) {
-                    $category->delete();
-                    $deleted++;
-                }
-            }
-
-            DB::commit();
-
-            Log::info('Bulk delete completed', [
-                'total' => count($ids),
-                'deleted' => $deleted
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => $deleted . ' category(ies) deleted successfully.',
-                'deleted_count' => $deleted
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('Bulk delete failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+        }
+        
+        // Ensure ids is an array
+        if (!is_array($ids)) {
+            $ids = [];
+        }
+        
+        // Filter out any empty values
+        $ids = array_filter($ids);
+        
+        if (empty($ids)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting categories: ' . $e->getMessage()
-            ], 500);
+                'message' => 'No categories selected.'
+            ], 400);
         }
-    }
 
+        // Validate that all IDs exist
+        $existingIds = Classcategory::whereIn('id', $ids)->pluck('id')->toArray();
+        $invalidIds = array_diff($ids, $existingIds);
+        
+        if (!empty($invalidIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some selected categories do not exist.'
+            ], 400);
+        }
+
+        // Check if any are in use by school classes
+        $inUse = DB::table('schoolclass')
+            ->whereIn('classcategoryid', $ids)
+            ->exists();
+            
+        if ($inUse) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some categories are being used by school classes and cannot be deleted.'
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        
+        $deleted = 0;
+        foreach ($ids as $id) {
+            $category = Classcategory::find($id);
+            if ($category) {
+                // Delete assessments and sub-assessments (cascade should handle this)
+                $category->delete();
+                $deleted++;
+            }
+        }
+
+        DB::commit();
+
+        Log::info('Bulk delete completed', [
+            'total' => count($ids),
+            'deleted' => $deleted
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $deleted . ' category(ies) deleted successfully.',
+            'deleted_count' => $deleted
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        Log::error('Bulk delete failed:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'ids' => $request->input('ids', [])
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error deleting categories: ' . $e->getMessage()
+        ], 500);
+    }
+}
     // =========================================================================
     // HELPERS
     // =========================================================================
