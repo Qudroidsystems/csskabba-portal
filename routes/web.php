@@ -68,6 +68,7 @@ use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffImageUploadController;
 use App\Http\Controllers\StudentAssessmentController;
+use App\Http\Controllers\StudentClassOperationsController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentHouseController;
 use App\Http\Controllers\StudentIdCardController;
