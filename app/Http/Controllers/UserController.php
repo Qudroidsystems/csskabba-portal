@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StaffUserBatchTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Imports\StaffUsersImport;
 use App\Models\BioModel;
@@ -14,10 +15,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Facades\Excel;  // ← correct (Facade)
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
