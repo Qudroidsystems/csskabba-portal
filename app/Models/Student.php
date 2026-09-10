@@ -27,10 +27,21 @@ class Student extends Model
         'student_status', 'nin_number', 'blood_group', 'mother_tongue',
         'reason_for_leaving', 'admissionNo', 'admission_date',
         'admissionYear', 'permanent_address', 'sport_house', 'email', 'city',
+
+        // Added — these columns exist in studentRegistration but were missing
+        // from $fillable, so mass-assignment was silently dropping them.
+        'genotype',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'allergies_medical_conditions',
     ];
 
     protected $casts = [
-        'dateofbirth'    => 'date',
+        // dateofbirth is a varchar(255) column and may hold 'N/A' for
+        // partially-filled imports. Casting it to 'date' makes
+        // Carbon::parse('N/A') throw on access, so the cast is removed.
+        // If you migrate the column to a real DATE NULL, re-enable this cast.
+        // 'dateofbirth'    => 'date',
         'admission_date' => 'date',
         'created_at'     => 'datetime',
         'updated_at'     => 'datetime',
@@ -145,15 +156,15 @@ class Student extends Model
         }
 
         return [
-            'student_id'       => $this->id,
-            'current_class_id' => $currentTerm->schoolclassId,
-            'current_class'    => $currentTerm->schoolClass?->schoolclass,
-            'current_class_arm'=> $currentTerm->schoolClass?->armRelation?->arm,
-            'current_term_id'  => $currentTerm->termId,
-            'current_term'     => $currentTerm->term?->name,
+            'student_id'         => $this->id,
+            'current_class_id'   => $currentTerm->schoolclassId,
+            'current_class'      => $currentTerm->schoolClass?->schoolclass,
+            'current_class_arm'  => $currentTerm->schoolClass?->armRelation?->arm,
+            'current_term_id'    => $currentTerm->termId,
+            'current_term'       => $currentTerm->term?->name,
             'current_session_id' => $currentTerm->sessionId,
-            'current_session'  => $currentTerm->session?->name,
-            'is_current'       => $currentTerm->is_current,
+            'current_session'    => $currentTerm->session?->name,
+            'is_current'         => $currentTerm->is_current,
         ];
     }
 
@@ -182,7 +193,7 @@ class Student extends Model
         return $query->whereHas('currentTerm', fn($q) => $q->where('sessionId', $sessionId));
     }
 
-    // ── NEW: Scholarship relationship ─────────────────────────────────────
+    // ── Scholarship relationship ──────────────────────────────────────────
 
     public function scholarshipAssignments()
     {

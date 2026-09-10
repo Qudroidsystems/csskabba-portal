@@ -23,6 +23,7 @@ use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithUpserts;
@@ -36,6 +37,7 @@ class StudentsImport implements
     WithValidation,
     SkipsOnFailure,
     SkipsOnError,
+    SkipsEmptyRows,
     WithUpserts,
     WithUpsertColumns,
     WithMultipleSheets
@@ -76,7 +78,6 @@ class StudentsImport implements
 
     /**
      * ONLY import the "Student Data" sheet.
-     * This is the critical fix.
      */
     public function sheets(): array
     {
@@ -89,6 +90,27 @@ class StudentsImport implements
     {
         $this->progressKey = $progressKey;
         $this->totalRows   = $totalRows;
+    }
+
+    /**
+     * Treat a row as "empty" (and therefore skipped BEFORE validation)
+     * when the only populated cells are the locked Class/Term/Session
+     * ID columns that the template pre-fills on every row.
+     *
+     * Columns 15, 16, 17 are the locked IDs (0-indexed).
+     */
+    public function isEmptyWhen(array $row): bool
+    {
+        $editable = $row;
+        unset($editable[15], $editable[16], $editable[17]);
+
+        foreach ($editable as $value) {
+            if (!is_null($value) && trim((string) $value) !== '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function model(array $row)
@@ -121,6 +143,15 @@ class StudentsImport implements
         $lastSchool   = $clean($row[13] ?? null);
         $lastClass    = $clean($row[14] ?? null);
 
+        // Normalise DOB to Y-m-d if it parsed as a date; otherwise store as-is.
+        if ($dob) {
+            try {
+                $dob = \Carbon\Carbon::parse($dob)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // leave as-is — column is varchar
+            }
+        }
+
         $fatherTitle      = $clean($row[18] ?? null);
         $fatherName       = $clean($row[19] ?? null);
         $fatherPhone      = $clean($row[20] ?? null);
@@ -146,7 +177,8 @@ class StudentsImport implements
         $clubName              = $clean($row[39] ?? null);
         $sportName             = $clean($row[40] ?? null);
 
-        // Skip completely empty rows (only locked IDs present)
+        // Belt-and-braces skip — SkipsEmptyRows should already have handled it,
+        // but keep this so the guard holds even if the trait changes.
         if (!$admissionNo && !$lastname && !$firstname) {
             return null;
         }
@@ -168,19 +200,22 @@ class StudentsImport implements
             $allergiesMedical, $guardianName, $guardianRelationship, $guardianPhone,
             $whatsappNumber, $clubName, $sportName, $rowNumber
         ) {
-           $student = Student::updateOrCreate(
+            $student = Student::updateOrCreate(
                 ['admissionNo' => $admissionNo],
                 [
-                    // NOT NULL, no default — must always have a value
-                    'title'            => $title            ?? 'N/A',
-                    'firstname'        => $firstname,                 // required input
-                    'lastname'         => $lastname,                  // required input
+                    // NOT NULL, no default — must always have a value.
+                    // 'title' and 'future_ambition' are not collected by the
+                    // batch template, so they are hardcoded rather than
+                    // referencing undefined variables.
+                    'title'            => 'N/A',
+                    'firstname'        => $firstname,
+                    'lastname'         => $lastname,
                     'othername'        => $othername        ?? 'N/A',
                     'gender'           => $gender           ?? 'N/A',
-                    'future_ambition'  => $futureAmbition   ?? 'N/A', // <-- WAS MISSING
+                    'future_ambition'  => 'N/A',
                     'home_address2'    => $homeAddress      ?? 'N/A',
                     'dateofbirth'      => $dob              ?? 'N/A', // varchar — safe
-                    'age'              => $age              ?? 'N/A', // varchar — safe, NO is_numeric cast
+                    'age'              => $age              ?? 'N/A', // varchar — safe
                     'placeofbirth'     => $placeOfBirth     ?? 'N/A',
                     'religion'         => $religion         ?? 'N/A',
                     'nationality'      => $nationality      ?? 'N/A',
@@ -188,14 +223,14 @@ class StudentsImport implements
                     'local'            => $local            ?? 'N/A',
                     'last_school'      => $lastSchool       ?? 'N/A',
                     'last_class'       => $lastClass        ?? 'N/A',
-                    'registeredBy'     => $this->userId     ?? '0',   // NOT NULL — cannot be null
+                    'registeredBy'     => $this->userId     ?? '0',   // NOT NULL
 
-                    // Nullable in DB — null is fine, but 'N/A' is also valid
-                    'blood_group'      => $bloodGroup,                // nullable, null OK
-                    'genotype'         => $genotype,                  // nullable, null OK
-                    'emergency_contact_name'       => $emergencyContactName,       // nullable
-                    'emergency_contact_phone'      => $emergencyContactPhone,      // nullable
-                    'allergies_medical_conditions' => $allergiesMedical,           // nullable
+                    // Nullable in DB — null is fine
+                    'blood_group'                  => $bloodGroup,
+                    'genotype'                     => $genotype,
+                    'emergency_contact_name'       => $emergencyContactName,
+                    'emergency_contact_phone'      => $emergencyContactPhone,
+                    'allergies_medical_conditions' => $allergiesMedical,
 
                     // Defaults
                     'batchid'          => $this->batchid,
@@ -204,6 +239,7 @@ class StudentsImport implements
                     'student_category' => 'Day',
                 ]
             );
+
             ParentRegistration::updateOrCreate(
                 ['studentId' => $student->id],
                 [
@@ -346,7 +382,8 @@ class StudentsImport implements
             '1'  => 'required|string|max:100',
             '2'  => 'required|string|max:100',
             '4'  => 'nullable|in:Male,Female',
-            '7'  => 'nullable|numeric|min:1|max:100',
+            // age is a varchar column — do NOT require numeric.
+            // (Users may legitimately leave it blank; the template says so.)
 
             '15' => function ($attribute, $value, $fail) {
                 if ((int) $value !== $this->sclassid) {
@@ -395,7 +432,10 @@ class StudentsImport implements
     {
         return [
             'title', 'firstname', 'lastname', 'othername', 'gender',
-            'home_address', 'home_address2', 'dateofbirth', 'age', 'placeofbirth',
+            // NOTE: 'home_address' is NOT a column in studentRegistration —
+            // only 'home_address2' exists. Removed to avoid silent upsert
+            // failures on a non-existent key.
+            'home_address2', 'dateofbirth', 'age', 'placeofbirth',
             'religion', 'nationality', 'state', 'local', 'last_school', 'last_class',
             'blood_group', 'genotype', 'emergency_contact_name', 'emergency_contact_phone',
             'allergies_medical_conditions',
