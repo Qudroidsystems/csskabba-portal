@@ -10,6 +10,10 @@ use App\Models\PromotionStatus;
 use App\Models\ParentRegistration;
 use App\Models\Studentpersonalityprofile;
 use App\Models\StudentCurrentTerm;
+use App\Models\Club;
+use App\Models\Sport;
+use App\Models\StudentClub;
+use App\Models\StudentSport;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -115,6 +119,13 @@ class StudentsImport implements
         $guardianPhone         = $clean($row[37] ?? null);
         $whatsappNumber        = $clean($row[38] ?? null);
 
+        // Optional — matched by name against the clubs/sports tables below.
+        // Not validated in rules() for the same reason state/local aren't:
+        // the template's Excel dropdown is a soft (warning-style) suggestion,
+        // not a hard server-side constraint.
+        $clubName  = $clean($row[39] ?? null);
+        $sportName = $clean($row[40] ?? null);
+
         $rowNumber = $this->startRow() + $this->rowCounter - 1;
 
         if (!$admissionNo || !$lastname || !$firstname) {
@@ -130,7 +141,7 @@ class StudentsImport implements
             $parentAddress, $parentReligion,
             $bloodGroup, $genotype, $emergencyContactName, $emergencyContactPhone,
             $allergiesMedical, $guardianName, $guardianRelationship, $guardianPhone,
-            $whatsappNumber
+            $whatsappNumber, $clubName, $sportName
         ) {
             // 1. Student (upsert by admissionNo)
             $student = Student::updateOrCreate(
@@ -244,6 +255,30 @@ class StudentsImport implements
                 $this->sessionid,
                 true   // mark as current
             );
+
+            // 9. Club — optional, matched by name (case-insensitive).
+            // Silently skipped if not found, matching the soft-validation
+            // approach used for state/local above.
+            if ($clubName) {
+                $club = Club::whereRaw('LOWER(club) = ?', [strtolower($clubName)])->first();
+                if ($club) {
+                    StudentClub::updateOrCreate(
+                        ['studentid' => $student->id],
+                        ['clubid' => $club->id, 'termid' => $this->termid, 'sessionid' => $this->sessionid]
+                    );
+                }
+            }
+
+            // 10. Sport — optional, matched by name (case-insensitive).
+            if ($sportName) {
+                $sport = Sport::whereRaw('LOWER(sport) = ?', [strtolower($sportName)])->first();
+                if ($sport) {
+                    StudentSport::updateOrCreate(
+                        ['studentid' => $student->id],
+                        ['sportid' => $sport->id, 'termid' => $this->termid, 'sessionid' => $this->sessionid]
+                    );
+                }
+            }
 
             return $student;
         });

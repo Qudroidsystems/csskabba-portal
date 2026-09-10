@@ -1819,6 +1819,30 @@ use Spatie\Permission\Models\Role;
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
+                                                        <label for="clubid" class="form-label">Club</label>
+                                                        <select id="clubid" name="clubid" class="form-control">
+                                                            <option value="">Select Club (optional)</option>
+                                                            @foreach ($clubs as $club)
+                                                                <option value="{{ $club->id }}">{{ $club->club }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="sportid" class="form-label">Sport</label>
+                                                        <select id="sportid" name="sportid" class="form-control">
+                                                            <option value="">Select Sport (optional)</option>
+                                                            @foreach ($sports as $sport)
+                                                                <option value="{{ $sport->id }}">{{ $sport->sport }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
                                                         <label for="genotype" class="form-label">Genotype</label>
                                                         <select id="genotype" name="genotype" class="form-control">
                                                             <option value="">Select Genotype</option>
@@ -2323,6 +2347,30 @@ use Spatie\Permission\Models\Role;
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
+                                                    <label for="editClubid" class="form-label">Club</label>
+                                                    <select id="editClubid" name="clubid" class="form-control">
+                                                        <option value="">Select Club (optional)</option>
+                                                        @foreach ($clubs as $club)
+                                                            <option value="{{ $club->id }}">{{ $club->club }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editSportid" class="form-label">Sport</label>
+                                                    <select id="editSportid" name="sportid" class="form-control">
+                                                        <option value="">Select Sport (optional)</option>
+                                                        @foreach ($sports as $sport)
+                                                            <option value="{{ $sport->id }}">{{ $sport->sport }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
                                                     <label for="editGenotype" class="form-label">Genotype</label>
                                                     <select id="editGenotype" name="genotype" class="form-control">
                                                         <option value="">Select Genotype</option>
@@ -2696,6 +2744,14 @@ use Spatie\Permission\Models\Role;
                                                     <tr>
                                                         <th>School House:</th>
                                                         <td id="viewSchoolHouse">-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Club:</th>
+                                                        <td id="viewClub">-</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Sport:</th>
+                                                        <td id="viewSport">-</td>
                                                     </tr>
                                                 </table>
                                             </div>
@@ -4086,6 +4142,12 @@ use Spatie\Permission\Models\Role;
                 }
             }
 
+            const clubSelect = document.getElementById('editClubid');
+            if (clubSelect) clubSelect.value = student.clubid || '';
+
+            const sportSelect = document.getElementById('editSportid');
+            if (sportSelect) sportSelect.value = student.sportid || '';
+
             // State and LGA
             if (student.state) {
                 StateLGAManager.setEditStateAndLGA(student.state, student.local);
@@ -4249,6 +4311,8 @@ use Spatie\Permission\Models\Role;
 
             this.safeSetText('viewStudentStatus', student.student_status || '-');
             this.safeSetText('viewSchoolHouse', student.school_house || '-');
+            this.safeSetText('viewClub', student.club_name || 'Not Assigned');
+            this.safeSetText('viewSport', student.sport_name || 'Not Assigned');
             this.safeSetText('viewAdmittedDate', Utils.formatDate(student.admission_date, 'short'));
 
             // Student Status Indicator

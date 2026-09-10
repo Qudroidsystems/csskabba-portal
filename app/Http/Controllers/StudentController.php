@@ -31,6 +31,10 @@ use App\Models\Studentpersonalityprofile;
 use App\Models\Studentpersonalityprofiles;
 use App\Models\Studentpicture;
 use App\Models\Subjectclass;
+use App\Models\Club;
+use App\Models\Sport;
+use App\Models\StudentClub;
+use App\Models\StudentSport;
 use App\Models\SubjectRegistrationStatus;
 use App\Traits\ImageManager as TraitsImageManager;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -73,6 +77,8 @@ class StudentController extends Controller
         $schoolsessions = Schoolsession::select('id', 'session as name')->get();
         $currentSession = Schoolsession::where('status', 'Current')->first();
         $schoolhouses = Schoolhouse::all();
+        $clubs = Club::orderBy('club')->get(['id', 'club']);
+        $sports = Sport::orderBy('sport')->get(['id', 'sport']);
 
         $status_counts = Student::groupBy('statusId')
             ->selectRaw("CASE WHEN statusId = 1 THEN 'Old Student' ELSE 'New Student' END as student_status, COUNT(*) as student_count")
@@ -124,6 +130,8 @@ class StudentController extends Controller
             'schoolterms',
             'schoolsessions',
             'schoolhouses',
+            'clubs',
+            'sports',
             'currentSession',
             'status_counts',
             'student_status_counts',
@@ -210,6 +218,10 @@ class StudentController extends Controller
                 ->leftJoin('parentRegistration',  'parentRegistration.studentId',  '=', 'studentRegistration.id')
                 ->leftJoin('studenthouses',       'studenthouses.studentid',       '=', 'studentRegistration.id')
                 ->leftJoin('schoolhouses',        'schoolhouses.id',               '=', 'studenthouses.schoolhouse')
+                ->leftJoin('studentclubs',        'studentclubs.studentid',        '=', 'studentRegistration.id')
+                ->leftJoin('clubs',                'clubs.id',                      '=', 'studentclubs.clubid')
+                ->leftJoin('studentsports',       'studentsports.studentid',       '=', 'studentRegistration.id')
+                ->leftJoin('sports',               'sports.id',                     '=', 'studentsports.sportid')
                 ->whereIn('studentRegistration.id', $studentIds)
                 ->select([
                     'studentRegistration.*',
@@ -235,6 +247,10 @@ class StudentController extends Controller
                     'parentRegistration.guardian_phone',
                     'parentRegistration.whatsapp_number',
                     'schoolhouses.house as school_house',
+                    'studentclubs.clubid',
+                    'clubs.club as club_name',
+                    'studentsports.sportid',
+                    'sports.sport as sport_name',
                 ])
                 ->orderBy('studentRegistration.created_at', 'desc')
                 ->get();
@@ -330,6 +346,10 @@ class StudentController extends Controller
                         'whatsapp_number'       => $student->whatsapp_number,
                         'office_address'    => $student->office_address,
                         'school_house'      => $student->school_house,
+                        'clubid'            => $student->clubid,
+                        'club_name'         => $student->club_name,
+                        'sportid'           => $student->sportid,
+                        'sport_name'        => $student->sport_name,
                     ];
                 } catch (\Exception $e) {
                     Log::error('Error processing student ID '.($student->id ?? 'unknown').': '.$e->getMessage());
@@ -402,6 +422,8 @@ class StudentController extends Controller
                 'student_category'   => 'required|in:Day,Boarding',
                 'schoolclassid'      => 'required|exists:schoolclass,id',
                 'schoolhouseid'      => 'required|exists:schoolhouses,id',
+                'clubid'             => 'nullable|exists:clubs,id',
+                'sportid'            => 'nullable|exists:sports,id',
                 'termid'             => 'required|exists:schoolterm,id',
                 'sessionid'          => 'required|exists:schoolsession,id',
                 'statusId'           => 'required|in:1,2',
@@ -535,6 +557,24 @@ class StudentController extends Controller
             $studenthouses->termid    = $request->termid;
             $studenthouses->sessionid = $request->sessionid;
             $studenthouses->save();
+
+            if ($request->filled('clubid')) {
+                StudentClub::create([
+                    'studentid' => $studentId,
+                    'clubid'    => $request->clubid,
+                    'termid'    => $request->termid,
+                    'sessionid' => $request->sessionid,
+                ]);
+            }
+
+            if ($request->filled('sportid')) {
+                StudentSport::create([
+                    'studentid' => $studentId,
+                    'sportid'   => $request->sportid,
+                    'termid'    => $request->termid,
+                    'sessionid' => $request->sessionid,
+                ]);
+            }
 
             $studentpersonalityprofiles              = new Studentpersonalityprofile();
             $studentpersonalityprofiles->studentid   = $studentId;
@@ -703,6 +743,10 @@ class StudentController extends Controller
                 ->leftJoin('schoolsession',     'schoolsession.id',       '=','studentclass.sessionid')
                 ->leftJoin('studenthouses',     'studenthouses.studentId','=','studentRegistration.id')
                 ->leftJoin('schoolhouses',      'schoolhouses.id',        '=','studenthouses.schoolhouse')
+                ->leftJoin('studentclubs',      'studentclubs.studentid', '=','studentRegistration.id')
+                ->leftJoin('clubs',             'clubs.id',               '=','studentclubs.clubid')
+                ->leftJoin('studentsports',     'studentsports.studentid','=','studentRegistration.id')
+                ->leftJoin('sports',            'sports.id',              '=','studentsports.sportid')
                 ->select([
                     'studentRegistration.id',
                     'studentRegistration.admissionNo',
@@ -764,6 +808,10 @@ class StudentController extends Controller
                     'studentpicture.picture',
                     'studenthouses.schoolhouse as schoolhouseid',
                     'schoolhouses.house as school_house',
+                    'studentclubs.clubid',
+                    'clubs.club as club_name',
+                    'studentsports.sportid',
+                    'sports.sport as sport_name',
                 ])
                 ->first();
 
@@ -853,6 +901,8 @@ public function update(Request $request, $id): JsonResponse
             'student_category'   => 'required|in:Day,Boarding',
             'schoolclassid'      => 'required|exists:schoolclass,id',
             'schoolhouseid'      => 'nullable|exists:schoolhouses,id',
+            'clubid'             => 'nullable|exists:clubs,id',
+            'sportid'            => 'nullable|exists:sports,id',
             'termid'             => 'required|exists:schoolterm,id',
             'sessionid'          => 'required|exists:schoolsession,id',
             'statusId'           => 'required|in:1,2',
@@ -1039,6 +1089,23 @@ public function update(Request $request, $id): JsonResponse
             );
         }
 
+        // Club & Sport — keyed on studentid alone (matches their actual
+        // primary key), so a student has at most one of each at a time,
+        // with termid/sessionid updated to reflect when it was last set.
+        if ($request->filled('clubid')) {
+            StudentClub::updateOrCreate(
+                ['studentid' => $id],
+                ['clubid' => $request->clubid, 'termid' => $request->termid, 'sessionid' => $request->sessionid]
+            );
+        }
+
+        if ($request->filled('sportid')) {
+            StudentSport::updateOrCreate(
+                ['studentid' => $id],
+                ['sportid' => $request->sportid, 'termid' => $request->termid, 'sessionid' => $request->sessionid]
+            );
+        }
+
         // 7. Personality profile
         Studentpersonalityprofile::firstOrCreate([
             'studentid'     => $id,
@@ -1130,6 +1197,8 @@ public function update(Request $request, $id): JsonResponse
                 'student_status'     => $student->student_status,
                 'future_ambition'    => $student->future_ambition,
                 'permanent_address'  => $student->home_address2,
+                'clubid'             => $request->clubid,
+                'sportid'            => $request->sportid,
             ],
         ], 200);
 
@@ -1193,6 +1262,8 @@ public function update(Request $request, $id): JsonResponse
 
             SubjectRegistrationStatus::where('studentId', $id)->delete();
             Studenthouse::where('studentid', $id)->delete();
+            StudentClub::where('studentid', $id)->delete();
+            StudentSport::where('studentid', $id)->delete();
             Studentpersonalityprofile::where('studentid', $id)->delete();
             StudentCurrentTerm::where('studentId', $id)->delete();
 
@@ -1233,6 +1304,8 @@ public function update(Request $request, $id): JsonResponse
                 Broadsheet::where('studentId', $id)->delete();
                 SubjectRegistrationStatus::where('studentId', $id)->delete();
                 Studenthouse::where('studentid', $id)->delete();
+                StudentClub::where('studentid', $id)->delete();
+                StudentSport::where('studentid', $id)->delete();
                 Studentpersonalityprofile::where('studentid', $id)->delete();
                 StudentCurrentTerm::where('studentId', $id)->delete();
             }
@@ -1290,6 +1363,8 @@ public function update(Request $request, $id): JsonResponse
                 Studentpicture::where('studentid', $studentId)->delete();
                 SubjectRegistrationStatus::where('studentId', $studentId)->delete();
                 Studenthouse::where('studentid', $studentId)->delete();
+                StudentClub::where('studentid', $studentId)->delete();
+                StudentSport::where('studentid', $studentId)->delete();
                 Studentpersonalityprofile::where('studentid', $studentId)->delete();
                 StudentCurrentTerm::where('studentId', $studentId)->delete();
             }

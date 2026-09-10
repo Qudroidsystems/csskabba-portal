@@ -351,349 +351,485 @@
 
 </div></div></div>
 
+{{-- ══════════════════════════════════════════════════════════════════
+     REQUIRED LIBRARIES
+     These are loaded explicitly because layouts.master does NOT provide
+     them globally (index.blade.php loads them the same way). Without
+     axios, the script below throws a ReferenceError on line 1 and every
+     feature on this page silently fails.
+     ══════════════════════════════════════════════════════════════════ --}}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 /* ══════════════════════════════════════════════════════════════════
    CSRF / SHARED HELPERS
    ══════════════════════════════════════════════════════════════════ */
-const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
-axios.defaults.headers.common['X-CSRF-TOKEN'] = CSRF;
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+(function () {
+    'use strict';
 
-function showToast(msg, type = 'info') {
-    const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
-    const id = 'toast_' + Date.now();
-    document.body.insertAdjacentHTML('beforeend',
-        `<div id="${id}" class="toast align-items-center border-0 show" role="alert"
-          style="position:fixed;bottom:20px;right:20px;z-index:99999;background:${colors[type]||colors.info};min-width:280px;border-radius:10px;color:#fff;">
-          <div class="d-flex p-3"><div class="me-auto">${msg}</div>
-          <button class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`);
-    setTimeout(() => document.getElementById(id)?.remove(), 4000);
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' };
-    return text.toString().replace(/[&<>"']/g, m => map[m]);
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   SECTION SWITCHER
-   ══════════════════════════════════════════════════════════════════ */
-function switchSection(section) {
-    const roster = document.getElementById('sectionRoster');
-    const termreg = document.getElementById('sectionTermReg');
-    const navRoster = document.getElementById('navRoster');
-    const navTermReg = document.getElementById('navTermReg');
-
-    if (section === 'roster') {
-        roster.classList.remove('d-none');
-        termreg.classList.add('d-none');
-        navRoster.classList.add('active');
-        navRoster.style.background = 'var(--ss-primary)'; navRoster.style.borderColor = 'var(--ss-primary)'; navRoster.classList.remove('btn-outline-secondary'); navRoster.classList.add('btn-primary');
-        navTermReg.classList.remove('active','btn-primary'); navTermReg.classList.add('btn-outline-secondary'); navTermReg.style.background=''; navTermReg.style.borderColor='';
-    } else {
-        termreg.classList.remove('d-none');
-        roster.classList.add('d-none');
-        navTermReg.classList.add('active','btn-primary'); navTermReg.classList.remove('btn-outline-secondary');
-        navTermReg.style.background = 'var(--ss-primary)'; navTermReg.style.borderColor = 'var(--ss-primary)';
-        navRoster.classList.remove('active','btn-primary'); navRoster.classList.add('btn-outline-secondary'); navRoster.style.background=''; navRoster.style.borderColor='';
+    // ── Pre-flight: fail loudly instead of silently killing the page ──
+    if (typeof axios === 'undefined') {
+        console.error('[class-operations] axios failed to load. Aborting.');
+        document.body.insertAdjacentHTML('afterbegin',
+            '<div class="alert alert-danger m-3"><strong>Page script failed to load axios.</strong> Please refresh or contact support.</div>');
+        return;
     }
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   SECTION 1 — ROSTER MANAGER
-   (bulk activity status, student type, assign current term)
-   ══════════════════════════════════════════════════════════════════ */
-const RosterManager = {
-    currentFilters: null,
-    currentStudents: [],
-
-    async loadRoster() {
-        const classId   = document.getElementById('rosterClass').value;
-        const sessionId = document.getElementById('rosterSession').value;
-
-        if (!classId || !sessionId) {
-            showToast('Please select both a class and a session.', 'warning');
-            return;
-        }
-
-        this.currentFilters = { class_id: classId, session_id: sessionId };
-
-        const btn = document.getElementById('loadRosterBtn');
-        btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Loading…';
-
-        try {
-            const { data } = await axios.get('/students/by-class-session', { params: this.currentFilters });
-            btn.disabled = false; btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Roster';
-
-            if (!data.success) { showToast(data.message || 'Failed to load roster.', 'danger'); return; }
-
-            this.currentStudents = data.students;
-            this.renderStats(data.stats);
-            this.renderTable(data.students);
-
-            document.getElementById('rosterStatsRow').classList.remove('d-none');
-            document.getElementById('rosterCard').classList.remove('d-none');
-            document.getElementById('rosterEmptyNote').classList.add('d-none');
-        } catch (err) {
-            btn.disabled = false; btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Roster';
-            showToast(err.response?.data?.message || 'Error loading roster.', 'danger');
-        }
-    },
-
-    renderStats(stats) {
-        document.getElementById('statTotal').textContent    = stats.total;
-        document.getElementById('statActive').textContent   = stats.active;
-        document.getElementById('statInactive').textContent = stats.inactive;
-        document.getElementById('statNew').textContent      = stats.new_students;
-    },
-
-    renderTable(students) {
-        const tbody = document.getElementById('rosterTableBody');
-        document.getElementById('rosterCount').textContent = students.length;
-
-        // Fresh roster = no selection yet, so the term-assign action starts disabled.
-        this.updateAssignTermButtonState();
-
-        if (!students.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No students found for this class/session.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = students.map(s => {
-            const initials = (s.firstname?.charAt(0) || '') + (s.lastname?.charAt(0) || '');
-            const activityPill = s.student_status === 'Active'
-                ? '<span class="status-pill active"><i class="ri-checkbox-circle-line"></i>Active</span>'
-                : '<span class="status-pill inactive"><i class="ri-pause-circle-line"></i>Inactive</span>';
-            const typePill = s.statusId == 2
-                ? '<span class="status-pill new"><i class="ri-star-line"></i>New</span>'
-                : '<span class="status-pill old"><i class="ri-history-line"></i>Old</span>';
-
-            return `
-                <tr data-student-id="${s.id}">
-                    <td><div class="form-check mb-0"><input class="form-check-input roster-checkbox" type="checkbox" value="${s.id}"></div></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="avatar-title bg-soft-primary rounded-circle" style="width:34px;height:34px;">${initials}</div>
-                            <div>
-                                <div class="fw-semibold">${escapeHtml(s.lastname)} ${escapeHtml(s.firstname)}</div>
-                                <small class="text-muted">${escapeHtml(s.othername || '')}</small>
-                            </div>
-                        </div>
-                    </td>
-                    <td>${escapeHtml(s.admissionNo || 'N/A')}</td>
-                    <td>${escapeHtml(s.schoolclass || '')} ${escapeHtml(s.arm || '')}</td>
-                    <td>${activityPill}</td>
-                    <td>${typePill}</td>
-                </tr>
-            `;
-        }).join('');
-    },
-
-    getSelectedIds() {
-        return Array.from(document.querySelectorAll('.roster-checkbox:checked')).map(cb => cb.value);
-    },
-
-    /**
-     * The Assign/Update Term action only makes sense once at least one
-     * roster row is checked — disable it entirely rather than letting
-     * someone open the modal and hit a "select someone first" toast.
-     */
-    updateAssignTermButtonState() {
-        const btn = document.getElementById('assignTermOpenBtn');
-        if (!btn) return;
-        const hasSelection = this.getSelectedIds().length > 0;
-        btn.disabled = !hasSelection;
-        btn.title = hasSelection ? '' : 'Select at least one student to enable this';
-    },
-
-    async bulkUpdateStatus(updateType, value) {
-        const ids = this.getSelectedIds();
-        if (!ids.length) { showToast('Select at least one student first.', 'warning'); return; }
-
-        const label = updateType === 'student_type' ? (value === 'old' ? 'Old Student' : 'New Student') : value;
-        const confirmed = await Swal.fire({
-            title: 'Confirm Update',
-            text: `Update ${ids.length} student(s) to "${label}"?`,
-            icon: 'question', showCancelButton: true, confirmButtonText: 'Yes, update',
-        }).then(r => r.isConfirmed);
-        if (!confirmed) return;
-
-        try {
-            const { data } = await axios.post('/students/bulk-update-status', {
-                student_ids: ids, update_type: updateType, value,
-            });
-            if (data.success) { showToast(data.message, 'success'); this.loadRoster(); }
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to update status.', 'danger');
-        }
-    },
-
-    async assignTerm() {
-        const ids       = this.getSelectedIds();
-        const classId   = document.getElementById('assignTermClass').value;
-        const termId    = document.getElementById('assignTermTerm').value;
-        const sessionId = document.getElementById('assignTermSession').value;
-        const isCurrent = document.getElementById('assignTermIsCurrent').checked;
-
-        if (!ids.length) { showToast('Select at least one student in the roster first.', 'warning'); return; }
-        if (!classId || !termId || !sessionId) { showToast('Please select class, term, and session.', 'warning'); return; }
-
-        try {
-            const { data } = await axios.post('/students/bulk-update-current-term', {
-                student_ids: ids, schoolclassId: classId, termId, sessionId, is_current: isCurrent,
-            });
-            bootstrap.Modal.getInstance(document.getElementById('assignTermModal'))?.hide();
-            if (data.success) { showToast(data.message, 'success'); this.loadRoster(); }
-            else { showToast(data.message || 'Failed to assign term.', 'danger'); }
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to assign term.', 'danger');
-        }
-    },
-};
-
-document.getElementById('loadRosterBtn')?.addEventListener('click', () => RosterManager.loadRoster());
-
-document.getElementById('rosterCheckAll')?.addEventListener('change', function () {
-    document.querySelectorAll('.roster-checkbox').forEach(cb => cb.checked = this.checked);
-    RosterManager.updateAssignTermButtonState();
-});
-
-// Individual row checkboxes are rendered dynamically, so listen at the
-// document level rather than trying to bind one-by-one after every render.
-document.addEventListener('change', function (e) {
-    if (e.target.classList.contains('roster-checkbox')) {
-        RosterManager.updateAssignTermButtonState();
+    if (typeof Swal === 'undefined') {
+        console.warn('[class-operations] SweetAlert2 not loaded — confirm dialogs will fall back to native confirm().');
     }
-});
-document.getElementById('assignTermModal')?.addEventListener('show.bs.modal', function () {
-    document.getElementById('assignTermSelectedCount').textContent = RosterManager.getSelectedIds().length;
-});
 
-/* ══════════════════════════════════════════════════════════════════
-   SECTION 2 — TERM REGISTRATION MANAGER
-   ══════════════════════════════════════════════════════════════════ */
-const TermRegistrationManager = {
-    currentFilters: null,
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!CSRF) {
+        console.error('[class-operations] CSRF meta tag missing — check layouts.master.');
+    }
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = CSRF || '';
+    axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-    async loadRegistrations() {
-        const termId    = document.getElementById('termRegTerm').value;
-        const sessionId = document.getElementById('termRegSession').value;
-        const classId   = document.getElementById('termRegClass').value;
-
-        if (!termId || !sessionId) {
-            showToast('Please select both a term and a session.', 'warning');
-            return;
+    // ── Confirmation helper: uses Swal if present, falls back to confirm() ──
+    function confirmAction(title, text, confirmText) {
+        if (typeof Swal !== 'undefined') {
+            return Swal.fire({
+                title: title,
+                text: text,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: confirmText || 'Yes',
+                cancelButtonText: 'Cancel',
+            }).then(r => r.isConfirmed);
         }
+        return Promise.resolve(window.confirm(title + '\n\n' + (text || '')));
+    }
 
-        this.currentFilters = { term_id: termId, session_id: sessionId, class_id: classId || null };
+    // ── Toast helper ──
+    window.showToast = function (msg, type = 'info') {
+        const colors = { success: '#16a34a', warning: '#d97706', danger: '#dc2626', info: '#2563eb' };
+        const id = 'toast_' + Date.now();
+        document.body.insertAdjacentHTML('beforeend',
+            `<div id="${id}" class="toast align-items-center border-0 show" role="alert"
+              style="position:fixed;bottom:20px;right:20px;z-index:99999;background:${colors[type] || colors.info};min-width:280px;border-radius:10px;color:#fff;">
+              <div class="d-flex p-3"><div class="me-auto">${msg}</div>
+              <button class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`);
+        setTimeout(() => document.getElementById(id)?.remove(), 4000);
+    };
 
-        const btn = document.getElementById('loadTermRegBtn');
-        btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Loading…';
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.toString().replace(/[&<>"']/g, m => map[m]);
+    }
 
-        try {
-            const { data } = await axios.get('/students-in-term', { params: this.currentFilters });
-            btn.disabled = false; btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Registrations';
+    /* ══════════════════════════════════════════════════════════════
+       SECTION SWITCHER
+       ══════════════════════════════════════════════════════════════ */
+    window.switchSection = function (section) {
+        const roster = document.getElementById('sectionRoster');
+        const termreg = document.getElementById('sectionTermReg');
+        const navRoster = document.getElementById('navRoster');
+        const navTermReg = document.getElementById('navTermReg');
 
-            if (!data.success) { showToast(data.message || 'Failed to load registrations.', 'danger'); return; }
-
-            this.render(data.students);
-            document.getElementById('termRegCard').classList.remove('d-none');
-            document.getElementById('termRegEmptyNote').classList.add('d-none');
-        } catch (err) {
-            btn.disabled = false; btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Registrations';
-            showToast(err.response?.data?.message || 'Error loading registrations.', 'danger');
+        if (section === 'roster') {
+            roster.classList.remove('d-none');
+            termreg.classList.add('d-none');
+            navRoster.classList.add('active', 'btn-primary');
+            navRoster.classList.remove('btn-outline-secondary');
+            navRoster.style.background = 'var(--ss-primary)';
+            navRoster.style.borderColor = 'var(--ss-primary)';
+            navTermReg.classList.remove('active', 'btn-primary');
+            navTermReg.classList.add('btn-outline-secondary');
+            navTermReg.style.background = '';
+            navTermReg.style.borderColor = '';
+        } else {
+            termreg.classList.remove('d-none');
+            roster.classList.add('d-none');
+            navTermReg.classList.add('active', 'btn-primary');
+            navTermReg.classList.remove('btn-outline-secondary');
+            navTermReg.style.background = 'var(--ss-primary)';
+            navTermReg.style.borderColor = 'var(--ss-primary)';
+            navRoster.classList.remove('active', 'btn-primary');
+            navRoster.classList.add('btn-outline-secondary');
+            navRoster.style.background = '';
+            navRoster.style.borderColor = '';
         }
-    },
+    };
 
-    render(students) {
-        const container = document.getElementById('registrationCards');
-        document.getElementById('termRegCount').textContent = students.length;
+    /* ══════════════════════════════════════════════════════════════
+       SECTION 1 — ROSTER MANAGER
+       ══════════════════════════════════════════════════════════════ */
+    const RosterManager = {
+        currentFilters: null,
+        currentStudents: [],
 
-        if (!students.length) {
-            container.innerHTML = '<div class="col-12"><div class="alert alert-warning text-center mb-0">No students registered for this term.</div></div>';
-            return;
-        }
+        async loadRoster() {
+            const classId   = document.getElementById('rosterClass').value;
+            const sessionId = document.getElementById('rosterSession').value;
 
-        container.innerHTML = students.map(s => {
-            const initials = (s.firstname?.charAt(0) || '') + (s.lastname?.charAt(0) || '');
-            const currentBadge = s.is_current ? '<span class="status-pill current position-absolute top-0 end-0 m-2"><i class="ri-check-line"></i>Current</span>' : '';
+            if (!classId || !sessionId) {
+                showToast('Please select both a class and a session.', 'warning');
+                return;
+            }
 
-            return `
-                <div class="col-md-4 col-lg-3 mb-3">
-                    <div class="reg-card card h-100" data-registration-id="${s.registration_id}">
-                        <div class="card-body position-relative">
-                            ${currentBadge}
-                            <div class="form-check position-absolute top-0 start-0 m-2">
-                                <input class="form-check-input term-reg-checkbox" type="checkbox" value="${s.registration_id}">
+            this.currentFilters = { class_id: classId, session_id: sessionId };
+
+            const btn = document.getElementById('loadRosterBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ri-loader-4-line"></i> Loading…';
+
+            try {
+                const { data } = await axios.get('/students/by-class-session', { params: this.currentFilters });
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Roster';
+
+                if (!data.success) {
+                    showToast(data.message || 'Failed to load roster.', 'danger');
+                    return;
+                }
+
+                this.currentStudents = data.students || [];
+
+                // Stats: prefer server-provided block; fall back to client-side derivation
+                // so the page keeps working even if the controller doesn't return `stats`.
+                const stats = data.stats || this.deriveStats(this.currentStudents);
+
+                this.renderStats(stats);
+                this.renderTable(this.currentStudents);
+
+                document.getElementById('rosterStatsRow').classList.remove('d-none');
+                document.getElementById('rosterCard').classList.remove('d-none');
+                document.getElementById('rosterEmptyNote').classList.add('d-none');
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Roster';
+                console.error('[class-operations] loadRoster failed', err);
+                showToast(err.response?.data?.message || 'Error loading roster.', 'danger');
+            }
+        },
+
+        deriveStats(students) {
+            return {
+                total: students.length,
+                active: students.filter(s => s.student_status === 'Active').length,
+                inactive: students.filter(s => s.student_status !== 'Active').length,
+                new_students: students.filter(s => s.statusId == 2).length,
+            };
+        },
+
+        renderStats(stats) {
+            document.getElementById('statTotal').textContent    = stats.total ?? 0;
+            document.getElementById('statActive').textContent   = stats.active ?? 0;
+            document.getElementById('statInactive').textContent = stats.inactive ?? 0;
+            document.getElementById('statNew').textContent      = stats.new_students ?? 0;
+        },
+
+        renderTable(students) {
+            const tbody = document.getElementById('rosterTableBody');
+            document.getElementById('rosterCount').textContent = students.length;
+
+            // Fresh roster = no selection yet, so the term-assign action starts disabled.
+            this.updateAssignTermButtonState();
+
+            // Reset header "select all"
+            const checkAll = document.getElementById('rosterCheckAll');
+            if (checkAll) checkAll.checked = false;
+
+            if (!students.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No students found for this class/session.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = students.map(s => {
+                const initials = (s.firstname?.charAt(0) || '') + (s.lastname?.charAt(0) || '');
+                const activityPill = s.student_status === 'Active'
+                    ? '<span class="status-pill active"><i class="ri-checkbox-circle-line"></i>Active</span>'
+                    : '<span class="status-pill inactive"><i class="ri-pause-circle-line"></i>Inactive</span>';
+                const typePill = s.statusId == 2
+                    ? '<span class="status-pill new"><i class="ri-star-line"></i>New</span>'
+                    : '<span class="status-pill old"><i class="ri-history-line"></i>Old</span>';
+
+                return `
+                    <tr data-student-id="${s.id}">
+                        <td><div class="form-check mb-0"><input class="form-check-input roster-checkbox" type="checkbox" value="${s.id}"></div></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-title bg-soft-primary rounded-circle" style="width:34px;height:34px;">${initials}</div>
+                                <div>
+                                    <div class="fw-semibold">${escapeHtml(s.lastname)} ${escapeHtml(s.firstname)}</div>
+                                    <small class="text-muted">${escapeHtml(s.othername || '')}</small>
+                                </div>
                             </div>
-                            <div class="text-center mb-3 mt-2">
-                                <div class="avatar-title bg-soft-primary rounded-circle mx-auto mb-2" style="width:70px;height:70px;font-size:26px;">${initials || 'ST'}</div>
-                                <h6 class="mb-1 fw-semibold">${escapeHtml(s.fullname)}</h6>
-                                <p class="text-muted small mb-2">${escapeHtml(s.admissionNo)}</p>
+                        </td>
+                        <td>${escapeHtml(s.admissionNo || 'N/A')}</td>
+                        <td>${escapeHtml(s.schoolclass || '')} ${escapeHtml(s.arm || '')}</td>
+                        <td>${activityPill}</td>
+                        <td>${typePill}</td>
+                    </tr>
+                `;
+            }).join('');
+        },
+
+        getSelectedIds() {
+            return Array.from(document.querySelectorAll('.roster-checkbox:checked')).map(cb => cb.value);
+        },
+
+        updateAssignTermButtonState() {
+            const btn = document.getElementById('assignTermOpenBtn');
+            if (!btn) return;
+            const hasSelection = this.getSelectedIds().length > 0;
+            btn.disabled = !hasSelection;
+            btn.title = hasSelection ? '' : 'Select at least one student to enable this';
+        },
+
+        async bulkUpdateStatus(updateType, value) {
+            const ids = this.getSelectedIds();
+            if (!ids.length) { showToast('Select at least one student first.', 'warning'); return; }
+
+            const label = updateType === 'student_type'
+                ? (value === 'old' ? 'Old Student' : 'New Student')
+                : value;
+
+            const confirmed = await confirmAction(
+                'Confirm Update',
+                `Update ${ids.length} student(s) to "${label}"?`,
+                'Yes, update'
+            );
+            if (!confirmed) return;
+
+            try {
+                const { data } = await axios.post('/students/bulk-update-status', {
+                    student_ids: ids,
+                    update_type: updateType,
+                    value: value,
+                });
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    this.loadRoster();
+                } else {
+                    showToast(data.message || 'Update failed.', 'danger');
+                }
+            } catch (err) {
+                console.error('[class-operations] bulkUpdateStatus failed', err);
+                showToast(err.response?.data?.message || 'Failed to update status.', 'danger');
+            }
+        },
+
+        async assignTerm() {
+            const ids       = this.getSelectedIds();
+            const classId   = document.getElementById('assignTermClass').value;
+            const termId    = document.getElementById('assignTermTerm').value;
+            const sessionId = document.getElementById('assignTermSession').value;
+            const isCurrent = document.getElementById('assignTermIsCurrent').checked;
+
+            if (!ids.length) { showToast('Select at least one student in the roster first.', 'warning'); return; }
+            if (!classId || !termId || !sessionId) { showToast('Please select class, term, and session.', 'warning'); return; }
+
+            try {
+                const { data } = await axios.post('/students/bulk-update-current-term', {
+                    student_ids: ids,
+                    schoolclassId: classId,
+                    termId: termId,
+                    sessionId: sessionId,
+                    is_current: isCurrent,
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById('assignTermModal'))?.hide();
+
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    this.loadRoster();
+                } else {
+                    showToast(data.message || 'Failed to assign term.', 'danger');
+                }
+            } catch (err) {
+                console.error('[class-operations] assignTerm failed', err);
+                showToast(err.response?.data?.message || 'Failed to assign term.', 'danger');
+            }
+        },
+    };
+
+    window.RosterManager = RosterManager;
+
+    /* ══════════════════════════════════════════════════════════════
+       SECTION 2 — TERM REGISTRATION MANAGER
+       ══════════════════════════════════════════════════════════════ */
+    const TermRegistrationManager = {
+        currentFilters: null,
+
+        async loadRegistrations() {
+            const termId    = document.getElementById('termRegTerm').value;
+            const sessionId = document.getElementById('termRegSession').value;
+            const classId   = document.getElementById('termRegClass').value;
+
+            if (!termId || !sessionId) {
+                showToast('Please select both a term and a session.', 'warning');
+                return;
+            }
+
+            this.currentFilters = {
+                term_id: termId,
+                session_id: sessionId,
+                class_id: classId || null,
+            };
+
+            const btn = document.getElementById('loadTermRegBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ri-loader-4-line"></i> Loading…';
+
+            try {
+                const { data } = await axios.get('/students-in-term', { params: this.currentFilters });
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Registrations';
+
+                if (!data.success) {
+                    showToast(data.message || 'Failed to load registrations.', 'danger');
+                    return;
+                }
+
+                this.render(data.students || []);
+
+                document.getElementById('termRegCard').classList.remove('d-none');
+                document.getElementById('termRegEmptyNote').classList.add('d-none');
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ri-search-line me-1"></i>Load Registrations';
+                console.error('[class-operations] loadRegistrations failed', err);
+                showToast(err.response?.data?.message || 'Error loading registrations.', 'danger');
+            }
+        },
+
+        render(students) {
+            const container = document.getElementById('registrationCards');
+            document.getElementById('termRegCount').textContent = students.length;
+
+            // Reset the "select all" checkbox for a fresh render
+            const checkAll = document.getElementById('termRegCheckAll');
+            if (checkAll) checkAll.checked = false;
+
+            if (!students.length) {
+                container.innerHTML = '<div class="col-12"><div class="alert alert-warning text-center mb-0">No students registered for this term.</div></div>';
+                return;
+            }
+
+            container.innerHTML = students.map(s => {
+                const initials = (s.firstname?.charAt(0) || '') + (s.lastname?.charAt(0) || '');
+                const currentBadge = s.is_current
+                    ? '<span class="status-pill current position-absolute top-0 end-0 m-2"><i class="ri-check-line"></i>Current</span>'
+                    : '';
+
+                return `
+                    <div class="col-md-4 col-lg-3 mb-3">
+                        <div class="reg-card card h-100" data-registration-id="${s.registration_id}">
+                            <div class="card-body position-relative">
+                                ${currentBadge}
+                                <div class="form-check position-absolute top-0 start-0 m-2">
+                                    <input class="form-check-input term-reg-checkbox" type="checkbox" value="${s.registration_id}">
+                                </div>
+                                <div class="text-center mb-3 mt-2">
+                                    <div class="avatar-title bg-soft-primary rounded-circle mx-auto mb-2" style="width:70px;height:70px;font-size:26px;">${initials || 'ST'}</div>
+                                    <h6 class="mb-1 fw-semibold">${escapeHtml(s.fullname)}</h6>
+                                    <p class="text-muted small mb-2">${escapeHtml(s.admissionNo)}</p>
+                                </div>
+                                <div class="d-flex flex-column gap-1 mb-3 small">
+                                    <div><i class="ri-school-line text-muted me-2"></i>${escapeHtml(s.class)} ${escapeHtml(s.arm)}</div>
+                                    <div><i class="ri-calendar-line text-muted me-2"></i>Reg: ${s.registered_at}</div>
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm w-100" onclick="TermRegistrationManager.removeSingle(${s.registration_id}, '${escapeHtml(s.fullname)}')">
+                                    <i class="ri-user-unfollow-line me-1"></i>Remove from Term
+                                </button>
                             </div>
-                            <div class="d-flex flex-column gap-1 mb-3 small">
-                                <div><i class="ri-school-line text-muted me-2"></i>${escapeHtml(s.class)} ${escapeHtml(s.arm)}</div>
-                                <div><i class="ri-calendar-line text-muted me-2"></i>Reg: ${s.registered_at}</div>
-                            </div>
-                            <button class="btn btn-outline-danger btn-sm w-100" onclick="TermRegistrationManager.removeSingle(${s.registration_id}, '${escapeHtml(s.fullname)}')">
-                                <i class="ri-user-unfollow-line me-1"></i>Remove from Term
-                            </button>
                         </div>
                     </div>
-                </div>
-            `;
-        }).join('');
-    },
+                `;
+            }).join('');
+        },
 
-    getSelectedIds() {
-        return Array.from(document.querySelectorAll('.term-reg-checkbox:checked')).map(cb => cb.value);
-    },
+        getSelectedIds() {
+            return Array.from(document.querySelectorAll('.term-reg-checkbox:checked')).map(cb => cb.value);
+        },
 
-    async removeSingle(registrationId, name) {
-        const confirmed = await Swal.fire({
-            title: 'Confirm Removal', text: `Remove ${name} from this term registration?`,
-            icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626', confirmButtonText: 'Yes, remove',
-        }).then(r => r.isConfirmed);
-        if (!confirmed) return;
+        async removeSingle(registrationId, name) {
+            const confirmed = await confirmAction(
+                'Confirm Removal',
+                `Remove ${name} from this term registration?`,
+                'Yes, remove'
+            );
+            if (!confirmed) return;
 
-        try {
-            const { data } = await axios.post('/students/remove-from-term', { registration_id: registrationId });
-            if (data.success) { showToast(data.message, 'success'); this.loadRegistrations(); }
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to remove student.', 'danger');
+            try {
+                const { data } = await axios.post('/students/remove-from-term', {
+                    registration_id: registrationId,
+                });
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    this.loadRegistrations();
+                } else {
+                    showToast(data.message || 'Removal failed.', 'danger');
+                }
+            } catch (err) {
+                console.error('[class-operations] removeSingle failed', err);
+                showToast(err.response?.data?.message || 'Failed to remove student.', 'danger');
+            }
+        },
+
+        async bulkRemoveFromTerm() {
+            const ids = this.getSelectedIds();
+            if (!ids.length) { showToast('Select at least one student first.', 'warning'); return; }
+
+            const confirmed = await confirmAction(
+                'Confirm Bulk Removal',
+                `Remove ${ids.length} student(s) from this term registration?`,
+                'Yes, remove all'
+            );
+            if (!confirmed) return;
+
+            try {
+                const { data } = await axios.post('/students/bulk-remove-from-term', {
+                    registration_ids: ids,
+                });
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    this.loadRegistrations();
+                } else {
+                    showToast(data.message || 'Bulk removal failed.', 'danger');
+                }
+            } catch (err) {
+                console.error('[class-operations] bulkRemoveFromTerm failed', err);
+                showToast(err.response?.data?.message || 'Failed to remove students.', 'danger');
+            }
+        },
+    };
+
+    window.TermRegistrationManager = TermRegistrationManager;
+
+    /* ══════════════════════════════════════════════════════════════
+       EVENT BINDINGS
+       ══════════════════════════════════════════════════════════════ */
+    document.getElementById('loadRosterBtn')?.addEventListener('click', () => RosterManager.loadRoster());
+    document.getElementById('loadTermRegBtn')?.addEventListener('click', () => TermRegistrationManager.loadRegistrations());
+
+    document.getElementById('rosterCheckAll')?.addEventListener('change', function () {
+        document.querySelectorAll('.roster-checkbox').forEach(cb => cb.checked = this.checked);
+        RosterManager.updateAssignTermButtonState();
+    });
+
+    document.getElementById('termRegCheckAll')?.addEventListener('change', function () {
+        document.querySelectorAll('.term-reg-checkbox').forEach(cb => cb.checked = this.checked);
+    });
+
+    // Row checkboxes are rendered dynamically, so listen at the document level
+    // rather than rebinding one-by-one after every render.
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('roster-checkbox')) {
+            RosterManager.updateAssignTermButtonState();
         }
-    },
+    });
 
-    async bulkRemoveFromTerm() {
-        const ids = this.getSelectedIds();
-        if (!ids.length) { showToast('Select at least one student first.', 'warning'); return; }
+    document.getElementById('assignTermModal')?.addEventListener('show.bs.modal', function () {
+        document.getElementById('assignTermSelectedCount').textContent = RosterManager.getSelectedIds().length;
+    });
 
-        const confirmed = await Swal.fire({
-            title: 'Confirm Bulk Removal', text: `Remove ${ids.length} student(s) from this term registration?`,
-            icon: 'warning', showCancelButton: true, confirmButtonColor: '#dc2626', confirmButtonText: 'Yes, remove all',
-        }).then(r => r.isConfirmed);
-        if (!confirmed) return;
-
-        try {
-            const { data } = await axios.post('/students/bulk-remove-from-term', { registration_ids: ids });
-            if (data.success) { showToast(data.message, 'success'); this.loadRegistrations(); }
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to remove students.', 'danger');
-        }
-    },
-};
-
-document.getElementById('loadTermRegBtn')?.addEventListener('click', () => TermRegistrationManager.loadRegistrations());
-document.getElementById('termRegCheckAll')?.addEventListener('change', function () {
-    document.querySelectorAll('.term-reg-checkbox').forEach(cb => cb.checked = this.checked);
-});
-
-/* SweetAlert2 lazy load, in case the layout doesn't already include it */
-if (typeof Swal === 'undefined') {
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-    document.head.appendChild(s);
-}
+    console.log('[class-operations] Initialized successfully.');
+})();
 </script>
 @endsection

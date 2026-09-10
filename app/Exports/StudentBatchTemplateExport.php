@@ -13,6 +13,8 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use App\Models\Club;
+use App\Models\Sport;
 
 /**
  * Generates a locked-down spreadsheet template for batch student uploads.
@@ -34,19 +36,20 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  *  31 genotype                     36 guardian_relationship
  *  32 emergency_contact_name       37 guardian_phone
  *  33 emergency_contact_phone      38 whatsapp_number (parent/guardian)
- *  34 allergies_medical_conditions
+ *  34 allergies_medical_conditions 39 club (matched by name)
+ *                                  40 sport (matched by name)
  */
 class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, WithColumnWidths, WithEvents
 {
     protected const EDITABLE_COLUMNS = [
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
         'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD',
-        'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM',
+        'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO',
     ];
 
     protected const LOCKED_COLUMNS = ['P', 'Q', 'R'];
 
-    protected const TOTAL_COLUMNS = 39;
+    protected const TOTAL_COLUMNS = 41;
 
     protected int $schoolclassid;
     protected int $termid;
@@ -135,6 +138,8 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
             'Guardian Relationship to Student',
             'Guardian Phone',
             'Parent/Guardian WhatsApp Number',
+            'Club (optional)',
+            'Sport (optional)',
         ];
     }
 
@@ -150,6 +155,7 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
             'AC' => 20, 'AD' => 16,
             'AE' => 14, 'AF' => 10, 'AG' => 22, 'AH' => 22, 'AI' => 28,
             'AJ' => 20, 'AK' => 24, 'AL' => 16, 'AM' => 20,
+            'AN' => 18, 'AO' => 18,
         ];
     }
 
@@ -159,7 +165,7 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet   = $event->sheet->getDelegate();
                 $lastRow = $this->rows + 1; // +1 for header row
-                $lastCol = 'AM';
+                $lastCol = 'AO';
 
                 // ----- Header styling -----
                 $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
@@ -237,9 +243,25 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                 }
 
                 $listSheet->getColumnDimension('A')->setWidth(20);
+
+                // ----- Club and Sport name lists (dynamic, from DB) -----
+                $clubNames = Club::orderBy('club')->pluck('club')->filter()->values();
+                foreach ($clubNames as $i => $clubName) {
+                    $listSheet->setCellValue('B' . ($i + 1), $clubName);
+                }
+                $listSheet->getColumnDimension('B')->setWidth(20);
+
+                $sportNames = Sport::orderBy('sport')->pluck('sport')->filter()->values();
+                foreach ($sportNames as $i => $sportName) {
+                    $listSheet->setCellValue('C' . ($i + 1), $sportName);
+                }
+                $listSheet->getColumnDimension('C')->setWidth(20);
+
                 $listSheet->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
 
                 $stateRange = 'Lists!$A$1:$A$' . count($states);
+                $clubRange  = 'Lists!$B$1:$B$' . max(1, $clubNames->count());
+                $sportRange = 'Lists!$C$1:$C$' . max(1, $sportNames->count());
 
                 for ($row = 2; $row <= $lastRow; $row++) {
                     $validation = $sheet->getCell("K{$row}")->getDataValidation();
@@ -251,6 +273,33 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                     $validation->setErrorTitle('Unrecognised State');
                     $validation->setError('This state is not in the standard list — double-check the spelling.');
                     $validation->setFormula1($stateRange);
+                }
+
+                // ----- Club dropdown (column AN) — warning-style since it's
+                //       optional and matched by name on import -----
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $validation = $sheet->getCell("AN{$row}")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_WARNING);
+                    $validation->setAllowBlank(true);
+                    $validation->setShowDropDown(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Unrecognised Club');
+                    $validation->setError('This club name was not found — double-check the spelling, or leave blank.');
+                    $validation->setFormula1($clubRange);
+                }
+
+                // ----- Sport dropdown (column AO) — warning-style, same reasoning -----
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $validation = $sheet->getCell("AO{$row}")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_WARNING);
+                    $validation->setAllowBlank(true);
+                    $validation->setShowDropDown(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Unrecognised Sport');
+                    $validation->setError('This sport name was not found — double-check the spelling, or leave blank.');
+                    $validation->setFormula1($sportRange);
                 }
 
                 // ----- Blood Group dropdown (column AE) -----
@@ -299,6 +348,7 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                     ['6. Save the file and upload it back through the Batch Upload screen.'],
                     ['7. Blood Group and Genotype have dropdown lists — please use them instead of typing freely.'],
                     ['8. Guardian and Emergency Contact columns are optional but recommended where applicable.'],
+                    ['9. Club and Sport are optional — pick from the dropdown list, or leave blank.'],
                     [''],
                     ['Notes:'],
                     ['- Admission No must be unique.'],
