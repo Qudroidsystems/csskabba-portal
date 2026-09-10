@@ -73,7 +73,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-1 text-muted">Classes Taught</h6>
-                                    <h4 class="mb-0">{{ $slots->flatten()->whereNotNull('subject_id')->pluck('setting.schoolclass.schoolclass')->unique()->count() }}</h4>
+                                    <h4 class="mb-0">{{ $slots->flatten()->whereNotNull('subject_id')->pluck('class_full_name')->filter()->unique()->count() }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -91,11 +91,7 @@
                                 <div>
                                     <h6 class="mb-1 text-muted">Conflicts</h6>
                                     <h4 class="mb-0 text-danger" id="conflictCount">
-                                        {{ $slots->flatten()->whereNotNull('subject_id')->groupBy(function($slot) {
-                                            return $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id;
-                                        })->filter(function($group) {
-                                            return $group->count() > 1 && $group->unique('setting.schoolclass_id')->count() > 1;
-                                        })->count() }}
+                                        {{ $conflictGroups->count() }}
                                     </h4>
                                 </div>
                             </div>
@@ -104,14 +100,13 @@
                 </div>
             </div>
 
-            {{-- Conflicts Alert --}}
-            @php
-                $conflictGroups = $slots->flatten()->whereNotNull('subject_id')->groupBy(function($slot) {
-                    return $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id;
-                })->filter(function($group) {
-                    return $group->count() > 1 && $group->unique('setting.schoolclass_id')->count() > 1;
-                });
-            @endphp
+            {{--
+                Conflicts Alert
+                $conflictGroups comes from the controller, grouped by
+                teacher+day+CLOCK-TIME (not period_id) — so a genuine
+                double-booking across two different class arms at the same
+                time is actually detected and shown here.
+            --}}
             @if($conflictGroups->isNotEmpty())
             <div class="row mb-4">
                 <div class="col-lg-12">
@@ -129,15 +124,18 @@
                                 <div class="d-flex flex-wrap gap-2">
                                     @foreach($conflictGroups as $key => $group)
                                         @php
-                                            list($teacherId, $day, $periodId) = explode('|', $key);
-                                            $teacher = $group->first()->teacher;
-                                            $period = $group->first()->period;
-                                            $classes = $group->pluck('setting.schoolclass.schoolclass')->unique()->implode(', ');
-                                            $subject = $group->first()->subject;
+                                            $parts = explode('|', $key, 3);
+                                            $day = $parts[1] ?? '';
+                                            $first = $group->first();
+                                            $classes = $group->pluck('class_full_name')->unique()->implode(', ');
+                                            $subject = $first->subject;
+                                            $periodLabel = $first->period
+                                                ? ($first->period->name . ' (' . substr($first->period->start_time, 0, 5) . ' - ' . substr($first->period->end_time, 0, 5) . ')')
+                                                : $day;
                                         @endphp
                                         <span class="badge bg-danger p-2">
                                             <i class="ri-time-line me-1"></i>
-                                            {{ $day }} · {{ $period->name ?? '' }}
+                                            {{ $day }} · {{ $periodLabel }}
                                             <strong class="mx-1">{{ $subject->subject ?? '' }}</strong>
                                             <span class="text-white-50">→</span>
                                             {{ $classes }}
@@ -230,7 +228,7 @@
                                         <option value="">All Classes</option>
                                         @foreach($teacherClasses as $class)
                                             <option value="{{ $class->id }}" {{ $classId == $class->id ? 'selected' : '' }}>
-                                                {{ $class->schoolclass }}{{ $class->arm_name ? ' ' . $class->arm_name : '' }}
+                                                {{ $class->full_name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -276,7 +274,7 @@
                         @if($classId)
                             <span class="badge bg-warning-subtle text-warning p-2">
                                 <i class="ri-school-line me-1"></i>
-                                {{ $teacherClasses->firstWhere('id', $classId)->schoolclass ?? 'Class' }}
+                                {{ $teacherClasses->firstWhere('id', $classId)->full_name ?? 'Class' }}
                                 <a href="?{{ http_build_query(array_merge(request()->query(), ['class_id' => ''])) }}" class="text-danger ms-1" title="Remove filter">
                                     <i class="ri-close-line"></i>
                                 </a>
@@ -314,7 +312,7 @@
                                     </p>
                                     @if($classId)
                                         <span class="badge bg-white text-primary mt-2">
-                                            <i class="ri-school-line me-1"></i> Filtered by: {{ $teacherClasses->firstWhere('id', $classId)->schoolclass ?? '' }}
+                                            <i class="ri-school-line me-1"></i> Filtered by: {{ $teacherClasses->firstWhere('id', $classId)->full_name ?? '' }}
                                         </span>
                                     @endif
                                 </div>
@@ -349,10 +347,15 @@
                                             <strong>{{ $slot->subject->subject ?? '—' }}</strong>
                                             <span class="text-muted mx-1">·</span>
                                             {{ $slot->period->name ?? '' }}
+                                            <span class="text-muted mx-1">·</span>
+                                            {{ $slot->class_full_name ?? '' }}
                                             @if($slot->room) <i class="ri-door-line ms-1"></i>{{ $slot->room->room_name ?? $slot->room }} @endif
                                             @if($slot->is_double) <span class="badge bg-primary ms-1">Double</span> @endif
-                                            @if(isset($slot->combined_count) && $slot->combined_count > 1)
+                                            @if(($slot->combined_count ?? 0) > 1 && !($slot->conflict_count ?? 0))
                                                 <span class="badge bg-warning ms-1">Combined</span>
+                                            @endif
+                                            @if(($slot->conflict_count ?? 0) > 0)
+                                                <span class="badge bg-danger ms-1">Conflict</span>
                                             @endif
                                         </span>
                                     @endforeach
@@ -498,29 +501,52 @@
                                             @foreach($days as $day)
                                                 @php
                                                     $slot = $slots[$day] ?? collect();
-                                                    $currentSlot = $slot->firstWhere('period_id', $period->id);
-                                                    $hasClass = $currentSlot && !$currentSlot->is_free && $currentSlot->subject;
-                                                    $isCombined = $hasClass && ($currentSlot->combined_count ?? 0) > 1;
-                                                    $isConflict = $hasClass && ($currentSlot->conflict_count ?? 0) > 0;
+
+                                                    // Match by CLOCK TIME, not period_id — every class/arm owns its
+                                                    // own TimetablePeriod rows, so the same 09:20–10:00 slot has a
+                                                    // different period_id in every class's timetable. Matching by
+                                                    // period_id (the old bug) silently dropped any other class the
+                                                    // teacher had at the same time from this cell.
+                                                    $matches = $slot->filter(function ($s) use ($period) {
+                                                        return $s->period
+                                                            && substr($s->period->start_time, 0, 5) === substr($period->start_time, 0, 5)
+                                                            && substr($s->period->end_time, 0, 5) === substr($period->end_time, 0, 5);
+                                                    })->values();
+
+                                                    $classSlots = $matches->filter(fn($s) => !$s->is_free && $s->subject)->values();
+                                                    $hasClass = $classSlots->isNotEmpty();
+                                                    $cellHasConflict = $classSlots->contains(fn($s) => ($s->conflict_count ?? 0) > 0);
+                                                    $cellHasCombined = $classSlots->contains(fn($s) => ($s->combined_count ?? 0) > 1);
+
                                                     $meta = $periodDayMeta[$period->id][$day] ?? ['applicable' => true, 'effective_type' => $period->type];
                                                     $isApplicable = $meta['applicable'] ?? true;
                                                     $effectiveType = $meta['effective_type'] ?? $period->type;
+
+                                                    $tooltipHtml = '';
+                                                    if ($hasClass) {
+                                                        $tooltipHtml = $classSlots->map(function ($s) {
+                                                            $lines = [];
+                                                            $lines[] = "<strong class='d-block mb-1'>" . e($s->subject->subject ?? '') . "</strong>";
+                                                            $lines[] = "<small>Class: " . e($s->class_full_name ?? '') . "</small><br>";
+                                                            if ($s->room) $lines[] = "<small>Room: " . e($s->room->room_name ?? '') . "</small><br>";
+                                                            if ($s->is_double) $lines[] = "<small class='text-primary'>Double Period</small><br>";
+                                                            if (($s->conflict_count ?? 0) > 0) {
+                                                                $lines[] = "<small class='text-danger'>⚠️ Teacher Conflict</small><br>";
+                                                            } elseif (($s->combined_count ?? 0) > 1) {
+                                                                $lines[] = "<small class='text-warning'>Combined Session</small><br>";
+                                                            }
+                                                            if ($s->notes) $lines[] = "<small>Note: " . e(Str::limit($s->notes, 50)) . "</small>";
+                                                            return implode('', $lines);
+                                                        })->implode('<hr class="my-1">');
+                                                    }
                                                 @endphp
                                                 <td class="timetable-cell text-center align-middle {{ $period->is_break || $effectiveType === 'assembly' ? 'bg-light' : '' }}"
-                                                    style="{{ $isCombined ? 'background: rgba(245, 158, 11, 0.08);' : '' }}{{ $isConflict ? 'border-left: 3px solid #ef4444;' : '' }}"
+                                                    style="{{ $cellHasCombined && !$cellHasConflict ? 'background: rgba(245, 158, 11, 0.08);' : '' }}{{ $cellHasConflict ? 'border-left: 3px solid #ef4444;' : '' }}"
                                                     @if($hasClass)
                                                         data-bs-toggle="tooltip"
                                                         data-bs-html="true"
                                                         data-bs-placement="top"
-                                                        title="<div class='text-start' style='max-width:280px;'>
-                                                            <strong class='d-block mb-1'>{{ $currentSlot->subject->subject ?? '' }}</strong>
-                                                            <small>Class: {{ $currentSlot->setting->schoolclass->schoolclass ?? '' }}</small><br>
-                                                            @if($currentSlot->room)<small>Room: {{ $currentSlot->room->room_name ?? $currentSlot->room }}</small><br>@endif
-                                                            @if($currentSlot->is_double)<small class='text-primary'>Double Period</small><br>@endif
-                                                            @if($isCombined)<small class='text-warning'>Combined Session ({{ $currentSlot->combined_count }} classes)</small><br>@endif
-                                                            @if($isConflict)<small class='text-danger'>⚠️ Teacher Conflict</small><br>@endif
-                                                            @if($currentSlot->notes)<small>Note: {{ Str::limit($currentSlot->notes, 50) }}</small>@endif
-                                                        </div>"
+                                                        title="<div class='text-start' style='max-width:280px;'>{!! $tooltipHtml !!}</div>"
                                                     @endif
                                                 >
                                                     @if($effectiveType === 'assembly')
@@ -534,34 +560,40 @@
                                                     @elseif(!$isApplicable)
                                                         <span class="text-muted">—</span>
                                                     @elseif($hasClass)
-                                                        <div class="py-2 class-cell {{ $currentSlot->is_double ? 'double-period' : '' }} {{ $isCombined ? 'combined-session' : '' }} {{ $isConflict ? 'conflict-session' : '' }}">
-                                                            <span class="fw-semibold d-block subject-name">
-                                                                {{ $currentSlot->subject->subject ?? 'N/A' }}
-                                                                @if($isCombined)
-                                                                    <span class="badge bg-warning-subtle text-warning ms-1" style="font-size:8px;">
-                                                                        <i class="ri-git-branch-line me-1"></i>{{ $currentSlot->combined_count ?? 2 }}
-                                                                    </span>
-                                                                @endif
-                                                                @if($isConflict)
-                                                                    <span class="badge bg-danger-subtle text-danger ms-1" style="font-size:8px;">
-                                                                        <i class="ri-alert-line me-1"></i>Conflict
-                                                                    </span>
-                                                                @endif
-                                                            </span>
-                                                            <small class="text-muted class-name">
-                                                                {{ $currentSlot->setting->schoolclass->schoolclass ?? '' }}
-                                                            </small>
-                                                            @if($currentSlot->room)
-                                                                <small class="text-muted d-block room-name" style="font-size:10px;">
-                                                                    <i class="ri-door-line"></i> {{ $currentSlot->room->room_name ?? $currentSlot->room }}
-                                                                </small>
-                                                            @endif
-                                                            @if($currentSlot->is_double)
-                                                                <span class="badge bg-primary-subtle text-primary mt-1" style="font-size:9px;">
-                                                                    <i class="ri-repeat-2-line me-1"></i>Double
+                                                        @foreach($classSlots as $currentSlot)
+                                                            @php
+                                                                $isCombined = ($currentSlot->combined_count ?? 0) > 1;
+                                                                $isConflict = ($currentSlot->conflict_count ?? 0) > 0;
+                                                            @endphp
+                                                            <div class="py-2 class-cell {{ $currentSlot->is_double ? 'double-period' : '' }} {{ $isCombined && !$isConflict ? 'combined-session' : '' }} {{ $isConflict ? 'conflict-session' : '' }} {{ !$loop->last ? 'mb-1 border-bottom pb-1' : '' }}">
+                                                                <span class="fw-semibold d-block subject-name">
+                                                                    {{ $currentSlot->subject->subject ?? 'N/A' }}
+                                                                    @if($isCombined && !$isConflict)
+                                                                        <span class="badge bg-warning-subtle text-warning ms-1" style="font-size:8px;">
+                                                                            <i class="ri-git-branch-line me-1"></i>{{ $currentSlot->combined_count ?? 2 }}
+                                                                        </span>
+                                                                    @endif
+                                                                    @if($isConflict)
+                                                                        <span class="badge bg-danger-subtle text-danger ms-1" style="font-size:8px;">
+                                                                            <i class="ri-alert-line me-1"></i>Conflict
+                                                                        </span>
+                                                                    @endif
                                                                 </span>
-                                                            @endif
-                                                        </div>
+                                                                <small class="text-muted class-name">
+                                                                    {{ $currentSlot->class_full_name ?? '' }}
+                                                                </small>
+                                                                @if($currentSlot->room)
+                                                                    <small class="text-muted d-block room-name" style="font-size:10px;">
+                                                                        <i class="ri-door-line"></i> {{ $currentSlot->room->room_name ?? '' }}
+                                                                    </small>
+                                                                @endif
+                                                                @if($currentSlot->is_double)
+                                                                    <span class="badge bg-primary-subtle text-primary mt-1" style="font-size:9px;">
+                                                                        <i class="ri-repeat-2-line me-1"></i>Double
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
                                                     @else
                                                         <span class="text-muted free-period">
                                                             <i class="ri-subtract-line"></i>
@@ -634,7 +666,7 @@
                                         <option value="{{ $slot->id }}">
                                             {{ $slot->day }} - {{ $slot->period->name }}:
                                             {{ $slot->subject->subject }}
-                                            ({{ $slot->setting->schoolclass->schoolclass ?? 'Unknown' }})
+                                            ({{ $slot->class_full_name ?? 'Unknown' }})
                                         </option>
                                     @endif
                                 @endforeach

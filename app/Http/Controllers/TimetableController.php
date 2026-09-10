@@ -118,6 +118,44 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
+    // HELPER: Canonical day+clock-time signature for matching slots ACROSS
+    // settings. Every TimetableSetting (i.e. every class/arm) owns its own
+    // TimetablePeriod rows, so "period_id" is only meaningful *within* a
+    // single setting — the same 09:20–10:00 slot has a different period_id
+    // in every class's timetable. Any comparison that needs to span multiple
+    // settings (conflict checks, auto-generate occupancy tracking, cloning,
+    // the teacher's merged grid) MUST key on day + start_time + end_time
+    // instead of period_id, or cross-arm clashes are silently invisible.
+    // =========================================================================
+    private function periodTimeSignature(?TimetablePeriod $period): ?string
+    {
+        if (!$period || !$period->start_time || !$period->end_time) return null;
+        return substr($period->start_time, 0, 5) . '-' . substr($period->end_time, 0, 5);
+    }
+
+    // =========================================================================
+    // HELPER: Base query for slots in OTHER settings occupying the same
+    // day + clock-time as $period, within a session/term scope.
+    // =========================================================================
+    private function crossSettingSlotsAtTime(TimetablePeriod $period, string $day, int $sessionId, ?int $termId, ?int $excludeSettingId = null)
+    {
+        return TimetableSlot::query()
+            ->join('timetable_periods', 'timetable_periods.id', '=', 'timetable_slots.period_id')
+            ->where('timetable_slots.day', $day)
+            ->whereRaw('substr(timetable_periods.start_time, 1, 5) = ?', [substr($period->start_time, 0, 5)])
+            ->whereRaw('substr(timetable_periods.end_time, 1, 5) = ?', [substr($period->end_time, 0, 5)])
+            ->where('timetable_slots.is_free', false)
+            ->whereNotNull('timetable_slots.subject_id')
+            ->when($excludeSettingId, fn($q) => $q->where('timetable_slots.setting_id', '!=', $excludeSettingId))
+            ->whereHas('setting', function ($q) use ($sessionId, $termId) {
+                $q->where('session_id', $sessionId)->where('is_active', true);
+                if ($termId) $q->where('term_id', $termId);
+                else         $q->whereNull('term_id');
+            })
+            ->select('timetable_slots.*');
+    }
+
+    // =========================================================================
     // HELPER: Human-readable suggestion text
     // =========================================================================
     private function buildSuggestionText(string $teacherName, string $className, array $alternatives): string
@@ -146,6 +184,9 @@ class TimetableController extends Controller
             ->orderBy('order')
             ->get();
 
+        // The teacher's busy CLOCK-TIME slots across every one of their
+        // settings/classes — not just this one. Keyed by day+time, since
+        // period_id from another setting can't be compared to this one.
         $teacherBusyKeys = TimetableSlot::whereHas('setting', function($q) use ($sessionId, $termId) {
                 $q->where('session_id', $sessionId)->where('is_active', true);
                 if ($termId) $q->where('term_id', $termId);
@@ -154,13 +195,15 @@ class TimetableController extends Controller
             ->where('teacher_id', $teacherId)
             ->where('is_free', false)
             ->whereNotNull('subject_id')
+            ->with('period:id,start_time,end_time')
             ->get(['day', 'period_id'])
-            ->mapWithKeys(fn($s) => [$s->day . '_' . $s->period_id => true]);
+            ->filter(fn($s) => $s->period)
+            ->mapWithKeys(fn($s) => [$s->day . '|' . $this->periodTimeSignature($s->period) => true]);
 
         foreach ($days as $day) {
             foreach ($periods as $period) {
                 if ($day === $currentDay && $period->id == $currentPeriodId) continue;
-                if ($teacherBusyKeys->has($day . '_' . $period->id)) continue;
+                if ($teacherBusyKeys->has($day . '|' . $this->periodTimeSignature($period))) continue;
                 $slot       = TimetableSlot::where('setting_id', $settingId)
                     ->where('period_id', $period->id)->where('day', $day)->first();
                 $isSlotFree = !$slot || $slot->is_free || !$slot->subject_id;
@@ -184,13 +227,24 @@ class TimetableController extends Controller
     // =========================================================================
     private function findAlternativeRooms($excludeRoomId, $periodId, $day, $sessionId, $termId): array
     {
+        $period = TimetablePeriod::find($periodId);
+        if (!$period) return [];
+
         return Room::where('is_active', true)
             ->when($excludeRoomId, fn($q) => $q->where('id', '!=', $excludeRoomId))
-            ->whereNotIn('id', function($q) use ($periodId, $day, $sessionId, $termId) {
-                $q->select('room_id')->from('timetable_slots')
-                  ->where('period_id', $periodId)->where('day', $day)
-                  ->whereNotNull('room_id')->where('is_free', false)
-                  ->whereIn('setting_id', function($q2) use ($sessionId, $termId) {
+            ->whereNotIn('id', function($q) use ($period, $day, $sessionId, $termId) {
+                // Match by CLOCK TIME, not period_id — a room booked under a
+                // different setting's period row for the same 09:20–10:00
+                // slot would otherwise be missed entirely.
+                $q->select('timetable_slots.room_id')
+                  ->from('timetable_slots')
+                  ->join('timetable_periods', 'timetable_periods.id', '=', 'timetable_slots.period_id')
+                  ->where('timetable_slots.day', $day)
+                  ->whereRaw('substr(timetable_periods.start_time, 1, 5) = ?', [substr($period->start_time, 0, 5)])
+                  ->whereRaw('substr(timetable_periods.end_time, 1, 5) = ?', [substr($period->end_time, 0, 5)])
+                  ->whereNotNull('timetable_slots.room_id')
+                  ->where('timetable_slots.is_free', false)
+                  ->whereIn('timetable_slots.setting_id', function($q2) use ($sessionId, $termId) {
                       $q2->select('id')->from('timetable_settings')
                          ->where('session_id', $sessionId)->where('is_active', true);
                       if ($termId) $q2->where('term_id', $termId);
@@ -1036,19 +1090,12 @@ class TimetableController extends Controller
         $warnings  = [];
 
         if (!empty($validated['teacher_id'])) {
-            $teacherConflict = TimetableSlot::where('period_id', $validated['period_id'])
-                ->where('day', $validated['day'])
-                ->where('teacher_id', $validated['teacher_id'])
-                ->where('setting_id', '!=', $validated['setting_id'])
-                ->where('is_free', false)
-                ->whereNotNull('subject_id')
-                ->whereHas('setting', function ($q) use ($sessionId, $termId) {
-                    $q->where('session_id', $sessionId)->where('is_active', true);
-                    if ($termId) $q->where('term_id', $termId);
-                    else         $q->whereNull('term_id');
-                })
-                ->with(['setting', 'subject'])
-                ->first();
+            $teacherConflict = $period
+                ? $this->crossSettingSlotsAtTime($period, $validated['day'], $sessionId, $termId, $validated['setting_id'])
+                    ->where('timetable_slots.teacher_id', $validated['teacher_id'])
+                    ->with(['setting', 'subject'])
+                    ->first()
+                : null;
 
             if ($teacherConflict) {
                 $sc = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
@@ -1106,19 +1153,12 @@ class TimetableController extends Controller
         }
 
         if (!empty($validated['room_id'])) {
-            $roomConflict = TimetableSlot::where('period_id', $validated['period_id'])
-                ->where('day', $validated['day'])
-                ->where('room_id', $validated['room_id'])
-                ->where('setting_id', '!=', $validated['setting_id'])
-                ->where('is_free', false)
-                ->whereNotNull('subject_id')
-                ->whereHas('setting', function ($q) use ($sessionId, $termId) {
-                    $q->where('session_id', $sessionId)->where('is_active', true);
-                    if ($termId) $q->where('term_id', $termId);
-                    else         $q->whereNull('term_id');
-                })
-                ->with(['setting', 'subject', 'teacher'])
-                ->first();
+            $roomConflict = $period
+                ? $this->crossSettingSlotsAtTime($period, $validated['day'], $sessionId, $termId, $validated['setting_id'])
+                    ->where('timetable_slots.room_id', $validated['room_id'])
+                    ->with(['setting', 'subject', 'teacher'])
+                    ->first()
+                : null;
 
             if ($roomConflict) {
                 $sc = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
@@ -1214,6 +1254,7 @@ class TimetableController extends Controller
 
         $sessionId = $currentSetting->session_id;
         $termId    = $currentSetting->term_id;
+        $period    = TimetablePeriod::find($validated['period_id']);
 
         $currentSchoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
@@ -1223,18 +1264,9 @@ class TimetableController extends Controller
 
         if (empty($validated['force_save'])) {
 
-            if (!empty($validated['teacher_id'])) {
-                $conflict = TimetableSlot::where('period_id', $validated['period_id'])
-                    ->where('day', $validated['day'])
-                    ->where('teacher_id', $validated['teacher_id'])
-                    ->where('setting_id', '!=', $validated['setting_id'])
-                    ->where('is_free', false)
-                    ->whereNotNull('subject_id')
-                    ->whereHas('setting', function ($q) use ($sessionId, $termId) {
-                        $q->where('session_id', $sessionId)->where('is_active', true);
-                        if ($termId) $q->where('term_id', $termId);
-                        else         $q->whereNull('term_id');
-                    })
+            if (!empty($validated['teacher_id']) && $period) {
+                $conflict = $this->crossSettingSlotsAtTime($period, $validated['day'], $sessionId, $termId, $validated['setting_id'])
+                    ->where('timetable_slots.teacher_id', $validated['teacher_id'])
                     ->with(['setting', 'subject', 'period', 'teacher'])
                     ->first();
 
@@ -1282,18 +1314,9 @@ class TimetableController extends Controller
                 }
             }
 
-            if (!empty($validated['room_id'])) {
-                $roomSlotConflict = TimetableSlot::where('period_id', $validated['period_id'])
-                    ->where('day', $validated['day'])
-                    ->where('room_id', $validated['room_id'])
-                    ->where('setting_id', '!=', $validated['setting_id'])
-                    ->where('is_free', false)
-                    ->whereNotNull('subject_id')
-                    ->whereHas('setting', function ($q) use ($sessionId, $termId) {
-                        $q->where('session_id', $sessionId)->where('is_active', true);
-                        if ($termId) $q->where('term_id', $termId);
-                        else         $q->whereNull('term_id');
-                    })
+            if (!empty($validated['room_id']) && $period) {
+                $roomSlotConflict = $this->crossSettingSlotsAtTime($period, $validated['day'], $sessionId, $termId, $validated['setting_id'])
+                    ->where('timetable_slots.room_id', $validated['room_id'])
                     ->with(['setting', 'subject', 'period', 'teacher'])
                     ->first();
 
@@ -1343,7 +1366,6 @@ class TimetableController extends Controller
                     }
                 }
 
-                $period = TimetablePeriod::find($validated['period_id']);
                 if ($period) {
                     $bookedConflict = RoomBooking::where('room_id', $validated['room_id'])
                         ->where('day', $validated['day'])
@@ -1444,7 +1466,12 @@ class TimetableController extends Controller
 
         $conflicts = [];
 
-        $teacherGrouped = $slots->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
+        // Group by CLOCK TIME, not period_id — otherwise two different
+        // classes/arms taught by the same teacher at the same time never
+        // land in the same group, because each setting owns its own
+        // TimetablePeriod rows (different period_id for the same time).
+        $teacherGrouped = $slots->filter(fn($s) => $s->period)
+            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period));
 
         foreach ($teacherGrouped as $group) {
             if ($group->count() < 2) continue;
@@ -1523,7 +1550,9 @@ class TimetableController extends Controller
             }
         }
 
-        $roomGrouped = $allSlotsWithRoom->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $s->period_id);
+        // Same fix for rooms — group by CLOCK TIME, not period_id.
+        $roomGrouped = $allSlotsWithRoom->filter(fn($s) => $s->period)
+            ->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period));
 
         foreach ($roomGrouped as $group) {
             if ($group->count() < 2) continue;
@@ -1616,8 +1645,10 @@ class TimetableController extends Controller
             ->whereNotNull('teacher_id')
             ->where('is_free', false)
             ->whereNotNull('subject_id')
-            ->get(['teacher_id', 'day', 'period_id', 'subject_id', 'room_id'])
-            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id)
+            ->with('period:id,start_time,end_time')
+            ->get(['id', 'teacher_id', 'day', 'period_id', 'subject_id', 'room_id'])
+            ->filter(fn($s) => $s->period)
+            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period))
             ->sum(function ($group) {
                 $arr = $group->values();
                 $count = 0;
@@ -1633,8 +1664,10 @@ class TimetableController extends Controller
             ->whereNotNull('room_id')
             ->where('is_free', false)
             ->whereNotNull('subject_id')
-            ->get(['room_id', 'day', 'period_id', 'teacher_id', 'subject_id'])
-            ->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $s->period_id)
+            ->with('period:id,start_time,end_time')
+            ->get(['id', 'room_id', 'day', 'period_id', 'teacher_id', 'subject_id'])
+            ->filter(fn($s) => $s->period)
+            ->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period))
             ->sum(function ($group) {
                 $arr = $group->values();
                 $count = 0;
@@ -1679,6 +1712,10 @@ class TimetableController extends Controller
 
             $includeRooms = $validated['include_rooms'] ?? false;
 
+            // Cross-setting occupancy is tracked by CLOCK TIME (day + start +
+            // end), never by period_id — period_id only has meaning within
+            // the setting that owns the row, so keying by it here would let
+            // the generator double-book a teacher across two class arms.
             $crossOccupied = [];
             TimetableSlot::whereHas('setting', function ($q) use ($setting) {
                     $q->where('session_id', $setting->session_id)->where('is_active', true)->where('id', '!=', $setting->id);
@@ -1686,9 +1723,11 @@ class TimetableController extends Controller
                     else                   $q->whereNull('term_id');
                 })
                 ->whereNotNull('teacher_id')->where('is_free', false)
+                ->with('period:id,start_time,end_time')
                 ->get(['teacher_id', 'period_id', 'day'])
                 ->each(function ($occ) use (&$crossOccupied) {
-                    $crossOccupied[$occ->teacher_id][$occ->day][] = $occ->period_id;
+                    if (!$occ->period) return;
+                    $crossOccupied[$occ->teacher_id][$occ->day][] = $this->periodTimeSignature($occ->period);
                 });
 
             $roomOccupied = [];
@@ -1699,9 +1738,11 @@ class TimetableController extends Controller
                         else                   $q->whereNull('term_id');
                     })
                     ->whereNotNull('room_id')->where('is_free', false)
+                    ->with('period:id,start_time,end_time')
                     ->get(['room_id', 'period_id', 'day'])
                     ->each(function ($occ) use (&$roomOccupied) {
-                        $roomOccupied[$occ->room_id][$occ->day][] = $occ->period_id;
+                        if (!$occ->period) return;
+                        $roomOccupied[$occ->room_id][$occ->day][] = $this->periodTimeSignature($occ->period);
                     });
             }
 
@@ -1774,6 +1815,10 @@ class TimetableController extends Controller
                     ->update(['is_published' => false, 'published_at' => null, 'published_by' => null]);
             }
 
+            // Cross-setting occupancy, keyed by CLOCK TIME (see note above).
+            // Each class in $settings accumulates its own placements into
+            // these maps as the loop below progresses, so by the time SSS2
+            // is generated, SSS1's freshly-placed slots already block it.
             $crossOccupied = [];
             $roomOccupied  = [];
 
@@ -1785,9 +1830,11 @@ class TimetableController extends Controller
                         else                                $q->whereNull('term_id');
                     })
                     ->whereNotNull('room_id')->where('is_free', false)
+                    ->with('period:id,start_time,end_time')
                     ->get(['room_id', 'period_id', 'day'])
                     ->each(function ($occ) use (&$roomOccupied) {
-                        $roomOccupied[$occ->room_id][$occ->day][] = $occ->period_id;
+                        if (!$occ->period) return;
+                        $roomOccupied[$occ->room_id][$occ->day][] = $this->periodTimeSignature($occ->period);
                     });
             }
 
@@ -1826,6 +1873,15 @@ class TimetableController extends Controller
 
     // =========================================================================
     // PRIVATE: Core slot-placement logic
+    //
+    // NOTE ON $crossOccupied / $roomOccupied: these are keyed by
+    // [teacherId/roomId][day][] = "HH:MM-HH:MM" time-signature strings, NOT
+    // period_id. period_id is only meaningful within the setting that owns
+    // the TimetablePeriod row — two different classes' "Period 3" are two
+    // different rows with two different ids even though they're both
+    // 09:20–10:00. Comparing raw period_id across settings (the original
+    // bug) meant the generator could never see that a teacher was already
+    // booked in a different class/arm at the same clock time.
     // =========================================================================
     private function runAutoGenerateCore(
         TimetableSetting $setting,
@@ -1889,13 +1945,14 @@ class TimetableController extends Controller
             foreach ($slotPool as $slot) {
                 $day = $slot['day'];
                 $periodId = $slot['period_id'];
+                $timeSig = $slot['time_sig'];
                 $key = $day . '_' . $periodId;
 
                 if (isset($placed[$key])) continue;
 
                 if ($teacherId) {
                     if (in_array($periodId, $teacherDaySlot[$teacherId][$day] ?? [])) continue;
-                    if (in_array($periodId, $crossOccupied[$teacherId][$day] ?? [])) continue;
+                    if (in_array($timeSig, $crossOccupied[$teacherId][$day] ?? [])) continue;
                     if (!$this->isTeacherAvailableForPeriod($teacherId, $day, $periodId, $setting, $availabilityMap)) continue;
                 }
 
@@ -1930,13 +1987,14 @@ class TimetableController extends Controller
                 $slot = $candidate['slot'];
                 $day = $slot['day'];
                 $periodId = $slot['period_id'];
+                $timeSig = $slot['time_sig'];
                 $key = $candidate['key'];
 
                 if (isset($placed[$key])) continue;
                 if ($maxPerDay && ($lessonsPlacedByDay[$day] ?? 0) >= $maxPerDay) continue;
 
                 $roomId = $includeRooms
-                    ? $this->pickAvailableRoom($availableRoomIds, $day, $periodId, $roomOccupied)
+                    ? $this->pickAvailableRoom($availableRoomIds, $day, $timeSig, $roomOccupied)
                     : null;
                 if ($includeRooms && !$roomId) $roomShortfallCount++;
 
@@ -1957,10 +2015,10 @@ class TimetableController extends Controller
 
                 if ($teacherId) {
                     $teacherDaySlot[$teacherId][$day][] = $periodId;
-                    $crossOccupied[$teacherId][$day][] = $periodId;
+                    $crossOccupied[$teacherId][$day][] = $timeSig;
                 }
                 if ($roomId) {
-                    $roomOccupied[$roomId][$day][] = $periodId;
+                    $roomOccupied[$roomId][$day][] = $timeSig;
                 }
 
                 if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed) {
@@ -1982,10 +2040,11 @@ class TimetableController extends Controller
 
                         if ($nextPeriod && $nextApplicable) {
                             $nextKey = $day . '_' . $nextPeriod->id;
+                            $nextTimeSig = $this->periodTimeSignature($nextPeriod);
 
                             $teacherConflict = $teacherId && (
                                 in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []) ||
-                                in_array($nextPeriod->id, $crossOccupied[$teacherId][$day] ?? [])
+                                in_array($nextTimeSig, $crossOccupied[$teacherId][$day] ?? [])
                             );
 
                             $teacherAvailableNext = !$teacherId
@@ -1996,10 +2055,10 @@ class TimetableController extends Controller
                             if (!isset($placed[$nextKey]) && !$teacherConflict && $teacherAvailableNext) {
                                 $nextRoomId = $roomId;
                                 if ($includeRooms && $nextRoomId
-                                    && in_array($nextPeriod->id, $roomOccupied[$nextRoomId][$day] ?? [])
+                                    && in_array($nextTimeSig, $roomOccupied[$nextRoomId][$day] ?? [])
                                 ) {
                                     $nextRoomId = $this->pickAvailableRoom(
-                                        $availableRoomIds, $day, $nextPeriod->id, $roomOccupied
+                                        $availableRoomIds, $day, $nextTimeSig, $roomOccupied
                                     );
                                     if (!$nextRoomId) $roomShortfallCount++;
                                 }
@@ -2020,10 +2079,10 @@ class TimetableController extends Controller
 
                                 if ($teacherId) {
                                     $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
-                                    $crossOccupied[$teacherId][$day][] = $nextPeriod->id;
+                                    $crossOccupied[$teacherId][$day][] = $nextTimeSig;
                                 }
                                 if ($nextRoomId) {
-                                    $roomOccupied[$nextRoomId][$day][] = $nextPeriod->id;
+                                    $roomOccupied[$nextRoomId][$day][] = $nextTimeSig;
                                 }
 
                                 $placedThisSubject++;
@@ -2173,12 +2232,13 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // PRIVATE: First free room for a given day/period
+    // PRIVATE: First free room for a given day/clock-time (keyed by time
+    // signature — see note on $roomOccupied in runAutoGenerateCore).
     // =========================================================================
-    private function pickAvailableRoom(array $availableRoomIds, string $day, int $periodId, array &$roomOccupied): ?int
+    private function pickAvailableRoom(array $availableRoomIds, string $day, string $timeSig, array &$roomOccupied): ?int
     {
         foreach ($availableRoomIds as $roomId) {
-            if (!in_array($periodId, $roomOccupied[$roomId][$day] ?? [])) {
+            if (!in_array($timeSig, $roomOccupied[$roomId][$day] ?? [])) {
                 return $roomId;
             }
         }
@@ -2215,6 +2275,7 @@ class TimetableController extends Controller
                     'day'               => $day,
                     'period_id'         => $period->id,
                     'period_order'      => $period->order,
+                    'time_sig'          => $this->periodTimeSignature($period),
                     'is_break_adjacent' => $this->isBreakAdjacent($period, $setting->periods),
                 ];
             }
@@ -2379,7 +2440,10 @@ class TimetableController extends Controller
             ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) 
             : null;
 
-        // Get all classes this teacher teaches
+        // Get all classes this teacher teaches — with the arm attached and
+        // resolved so "SSS 1" doesn't silently collapse two different arms
+        // (SSS 1 arm4, SSS 1 arm5, SSS 1 arm8...) into one indistinguishable
+        // dropdown entry.
         $teacherClasses = SubjectTeacher::where('staffid', $teacherId)
             ->whereHas('subjectclass', fn($q) => $q->whereNotNull('schoolclassid'))
             ->with(['subjectclass.schoolclass', 'subjectclass.schoolclass.arm'])
@@ -2387,7 +2451,11 @@ class TimetableController extends Controller
             ->pluck('subjectclass.schoolclass')
             ->filter()
             ->unique('id')
-            ->values();
+            ->values()
+            ->map(function ($class) {
+                $class->full_name = $this->getClassName($class);
+                return $class;
+            });
 
         // Build the slots query with filters
         $slotsQuery = TimetableSlot::where('teacher_id', $teacherId)
@@ -2396,7 +2464,7 @@ class TimetableController extends Controller
                 if ($termId) $q->where('term_id', $termId);
             })
             ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting.schoolclass', 'setting.term', 'room']);
+            ->with(['period', 'subject', 'setting.schoolclass', 'setting.schoolclass.arm', 'setting.term', 'room']);
 
         // Apply class filter if selected
         if ($classId) {
@@ -2407,50 +2475,75 @@ class TimetableController extends Controller
 
         // IMPORTANT: Get the slots as a collection, NOT JSON
         $slotsCollection = $slotsQuery->get();
-        
+
+        // Attach display-safe, arm-aware class names and a day/time
+        // signature to every slot up front — the grid, alerts, and
+        // conflict detection below all key off these instead of the raw
+        // "schoolclass" column (which drops the arm) or period_id (which
+        // isn't comparable across settings).
+        foreach ($slotsCollection as $slot) {
+            $slot->class_full_name = $this->getClassName($slot->setting?->schoolclass);
+            $slot->time_sig = $slot->period ? $this->periodTimeSignature($slot->period) : null;
+        }
+
         // Group by day
         $slots = $slotsCollection->groupBy('day');
 
-        // Calculate combined sessions and conflicts
+        // Calculate combined sessions and conflicts by CLOCK TIME, not
+        // period_id. Two different class arms taught by this teacher at
+        // 09:20–10:00 have two different period_id values (one per
+        // setting) — grouping by period_id, as before, meant a genuine
+        // double-booking across arms was never detected and only one of
+        // the two classes ever rendered in the grid cell.
         $combinedMap = [];
-        $conflictMap = [];
-        
         foreach ($slotsCollection as $slot) {
-            $key = $slot->teacher_id . '|' . $slot->day . '|' . $slot->period_id;
-            
-            // Track combined sessions (same teacher, day, period)
-            if (!isset($combinedMap[$key])) {
-                $combinedMap[$key] = [];
-            }
+            if (!$slot->time_sig) continue;
+            $key = $slot->teacher_id . '|' . $slot->day . '|' . $slot->time_sig;
             $combinedMap[$key][] = $slot;
         }
-        
-        // Mark combined slots and detect conflicts
+
         foreach ($combinedMap as $key => $slotGroup) {
             $count = count($slotGroup);
-            // Get unique classes in this group
-            $uniqueClasses = collect($slotGroup)->pluck('setting.schoolclass_id')->unique()->count();
-            
-            if ($count > 1) {
-                foreach ($slotGroup as $slot) {
-                    // If multiple classes but same room (or no room), it's a combined session
-                    $slot->combined_count = $count;
-                    $slot->conflict_count = 0;
-                    
-                    // If multiple classes and different rooms OR no room, it's a conflict
-                    // Since room_id is null for all, this is a conflict
-                    if ($uniqueClasses > 1) {
-                        $slot->conflict_count = $count;
+            if ($count <= 1) {
+                $slotGroup[0]->combined_count = 1;
+                $slotGroup[0]->conflict_count = 0;
+                continue;
+            }
+
+            foreach ($slotGroup as $i => $slotA) {
+                $conflictWithAnother = false;
+                foreach ($slotGroup as $j => $slotB) {
+                    if ($i === $j) continue;
+                    if (!$this->isCombinedSession($slotA, $slotB)) {
+                        $conflictWithAnother = true;
+                        break;
                     }
                 }
+                $slotA->combined_count = $count;
+                $slotA->conflict_count = $conflictWithAnother ? $count : 0;
             }
         }
 
-        // Get all periods across settings (for the grid)
-        $allPeriods = TimetablePeriod::with('setting')->whereIn(
-            'setting_id',
-            TimetableSetting::where('session_id', $sessionId)->pluck('id')
-        )->orderBy('order')->get()->unique('order');
+        // Groups that represent a REAL conflict (different classes, not a
+        // legitimate same-teacher/subject/room combined session) — used to
+        // drive the top-of-page alert and stat card.
+        $conflictGroups = collect($combinedMap)
+            ->map(fn($group) => collect($group))
+            ->filter(fn($group) => $group->contains(fn($s) => ($s->conflict_count ?? 0) > 0));
+
+        // Get all periods across settings (for the grid) — deduplicated by
+        // actual CLOCK TIME rather than the "order" column, since "order"
+        // is only guaranteed consistent within one setting's own period
+        // list, not across every class/arm's independently-built schedule.
+        $allPeriods = TimetablePeriod::with('setting')
+            ->whereIn(
+                'setting_id',
+                TimetableSetting::where('session_id', $sessionId)->pluck('id')
+            )
+            ->orderBy('start_time')
+            ->get()
+            ->unique(fn($p) => substr($p->start_time, 0, 5) . '|' . substr($p->end_time, 0, 5))
+            ->values();
 
         // Build day/period meta
         $periodDayMeta = [];
@@ -2481,7 +2574,7 @@ class TimetableController extends Controller
             'pagetitle', 'slots', 'days', 'allPeriods', 'sessions', 'terms',
             'sessionId', 'termId', 'classId', 'teacherClasses',
             'upcomingSlots', 'weeklySummary', 'teacherPicture',
-            'periodDayMeta', 'icsUrl', 'webcalUrl', 'todaySlots'
+            'periodDayMeta', 'icsUrl', 'webcalUrl', 'todaySlots', 'conflictGroups'
         ));
     }
     // =========================================================================
@@ -2497,7 +2590,7 @@ class TimetableController extends Controller
         $slots = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
             ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting.schoolclass', 'setting.term', 'room'])->get();
+            ->with(['period', 'subject', 'setting.schoolclass', 'setting.schoolclass.arm', 'setting.term', 'room'])->get();
 
         return $slots
             ->map(function ($slot) use ($dayMap, $todayIndex, $now, $today) {
@@ -2537,7 +2630,7 @@ class TimetableController extends Controller
                 'period'  => $item['slot']->period?->name,
                 'time'    => $this->formatTime($item['slot']->period?->start_time ?? '') . ' – ' . $this->formatTime($item['slot']->period?->end_time ?? ''),
                 'subject' => $item['slot']->subject?->subject,
-                'class'   => $item['slot']->setting?->schoolclass?->schoolclass,
+                'class'   => $this->getClassName($item['slot']->setting?->schoolclass),
                 'room'    => $item['slot']->room?->room_name,
             ])
             ->values()->toArray();
@@ -2548,7 +2641,7 @@ class TimetableController extends Controller
         $slots = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
             ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting.schoolclass', 'room'])->get();
+            ->with(['period', 'subject', 'setting.schoolclass', 'setting.schoolclass.arm', 'room'])->get();
 
         $summary = [];
         foreach (self::DAYS as $day) {
@@ -2556,7 +2649,7 @@ class TimetableController extends Controller
             $summary[$day] = [
                 'count'    => $ds->count(),
                 'subjects' => $ds->pluck('subject.subject')->filter()->unique()->values()->toArray(),
-                'classes'  => $ds->pluck('setting.schoolclass.schoolclass')->filter()->unique()->values()->toArray(),
+                'classes'  => $ds->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->filter()->unique()->values()->toArray(),
             ];
         }
         return $summary;
@@ -2578,7 +2671,7 @@ class TimetableController extends Controller
                 if ($termId) $q->where('term_id', $termId);
             })
             ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting.schoolclass', 'room']);
+            ->with(['period', 'subject', 'setting.schoolclass', 'setting.schoolclass.arm', 'room']);
 
         if ($classId) {
             $query->whereHas('setting', fn($q) => $q->where('schoolclass_id', $classId));
@@ -2596,7 +2689,7 @@ class TimetableController extends Controller
                 substr($slot->period?->start_time ?? '', 0, 5),
                 substr($slot->period?->end_time ?? '', 0, 5),
                 $slot->subject?->subject,
-                $slot->setting?->schoolclass?->schoolclass,
+                $this->getClassName($slot->setting?->schoolclass),
                 $slot->room?->room_name,
                 $slot->is_double ? 'Yes' : 'No',
             ]);
@@ -2717,6 +2810,132 @@ class TimetableController extends Controller
         return $pdf->stream($filename);
     }
 
+    // =========================================================================
+    // PRIVATE: Staff analytics for a session/term scope — per-teacher
+    // workload, class/subject/room frequency, daily load, and genuine
+    // conflict count (grouped by CLOCK TIME, same rule as everywhere else
+    // in this controller — see periodTimeSignature()). Feeds the staff
+    // dropdown + cross-highlight on the merged grid and whole-school views.
+    // =========================================================================
+    private function buildStaffAnalytics(int $sessionId, ?int $termId): array
+    {
+        $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
+                $q->where('session_id', $sessionId)->where('is_active', true);
+                if ($termId) $q->where('term_id', $termId);
+                else         $q->whereNull('term_id');
+            })
+            ->whereNotNull('teacher_id')
+            ->where('is_free', false)
+            ->whereNotNull('subject_id')
+            ->with(['period', 'subject', 'teacher', 'teacher.staffPicture', 'room', 'setting.schoolclass', 'setting.schoolclass.arm'])
+            ->get();
+
+        $emptySummary = [
+            'total_staff'           => 0,
+            'total_periods'         => 0,
+            'avg_periods_per_staff' => 0,
+            'busiest_staff'         => null,
+            'most_conflicted_staff' => null,
+        ];
+
+        if ($slots->isEmpty()) {
+            return ['staff' => [], 'summary' => $emptySummary];
+        }
+
+        // Which individual slot IDs sit inside a genuine (non-combined)
+        // double-booking, grouped by teacher+day+clock-time.
+        $conflictSlotIds = [];
+        $grouped = $slots->filter(fn($s) => $s->period)
+            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period));
+
+        foreach ($grouped as $group) {
+            if ($group->count() < 2) continue;
+            $arr = $group->values();
+            for ($i = 0; $i < $arr->count(); $i++) {
+                for ($j = $i + 1; $j < $arr->count(); $j++) {
+                    if (!$this->isCombinedSession($arr[$i], $arr[$j])) {
+                        $conflictSlotIds[$arr[$i]->id] = true;
+                        $conflictSlotIds[$arr[$j]->id] = true;
+                    }
+                }
+            }
+        }
+
+        $staff = [];
+
+        foreach ($slots->groupBy('teacher_id') as $teacherId => $teacherSlots) {
+            $teacher = $teacherSlots->first()->teacher;
+            if (!$teacher) continue;
+
+            $classes   = [];
+            $subjects  = [];
+            $rooms     = [];
+            $dailyLoad = array_fill_keys(self::DAYS, 0);
+            $conflictCount = 0;
+
+            foreach ($teacherSlots as $slot) {
+                $className = $this->getClassName($slot->setting?->schoolclass);
+                $classes[$className] = ($classes[$className] ?? 0) + 1;
+
+                $subjectName = $slot->subject?->subject ?? 'Unknown';
+                $subjects[$subjectName] = ($subjects[$subjectName] ?? 0) + 1;
+
+                if ($slot->room) {
+                    $roomName = $slot->room->room_name;
+                    $rooms[$roomName] = ($rooms[$roomName] ?? 0) + 1;
+                }
+
+                if (isset($dailyLoad[$slot->day])) $dailyLoad[$slot->day]++;
+                if (isset($conflictSlotIds[$slot->id])) $conflictCount++;
+            }
+
+            arsort($classes);
+            arsort($subjects);
+            arsort($rooms);
+
+            $maxLoad    = max($dailyLoad);
+            $busiestDay = $maxLoad > 0 ? array_search($maxLoad, $dailyLoad) : null;
+
+            $staff[] = [
+                'id'             => (int) $teacherId,
+                'name'           => $teacher->name,
+                'email'          => $teacher->email,
+                'picture'        => $teacher->staffPicture
+                    ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture)
+                    : asset('storage/staff_avatars/default.png'),
+                'total_periods'  => $teacherSlots->count(),
+                'class_count'    => count($classes),
+                'subject_count'  => count($subjects),
+                'classes'        => $classes,
+                'subjects'       => $subjects,
+                'rooms'          => $rooms,
+                'daily_load'     => $dailyLoad,
+                'busiest_day'    => $busiestDay,
+                'conflict_count' => $conflictCount,
+            ];
+        }
+
+        usort($staff, fn($a, $b) => $b['total_periods'] <=> $a['total_periods']);
+
+        $totalStaff   = count($staff);
+        $totalPeriods = array_sum(array_column($staff, 'total_periods'));
+        $busiest      = $staff[0] ?? null;
+        $mostConflicted = collect($staff)->sortByDesc('conflict_count')->first();
+
+        return [
+            'staff'   => $staff,
+            'summary' => [
+                'total_staff'           => $totalStaff,
+                'total_periods'         => $totalPeriods,
+                'avg_periods_per_staff' => $totalStaff > 0 ? round($totalPeriods / $totalStaff, 1) : 0,
+                'busiest_staff'         => $busiest ? ['name' => $busiest['name'], 'periods' => $busiest['total_periods']] : null,
+                'most_conflicted_staff' => ($mostConflicted && $mostConflicted['conflict_count'] > 0)
+                    ? ['name' => $mostConflicted['name'], 'conflicts' => $mostConflicted['conflict_count']]
+                    : null,
+            ],
+        ];
+    }
+
     private function buildClassStats(array $grid, $periods, array $days, array $dayMeta): array
     {
         $totalSlots = 0; $filled = 0;
@@ -2766,7 +2985,7 @@ class TimetableController extends Controller
         $term       = $termId ? Schoolterm::find($termId) : null;
 
         if ($settings->isEmpty()) {
-            return [[], $schoolInfo, $session, $term, []];
+            return [[], $schoolInfo, $session, $term, [], ['staff' => [], 'summary' => []]];
         }
 
         $allTimetables = [];
@@ -2779,10 +2998,11 @@ class TimetableController extends Controller
             $grid = [];
             foreach ($slots as $slot) {
                 $grid[$slot->period_id][$slot->day] = [
-                    'subject' => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
-                    'teacher' => $slot->teacher?->name ?? '',
-                    'room'    => ($slot->room_id && $slot->room) ? $slot->room->room_name : '',
-                    'is_free' => $slot->is_free ?? !$slot->subject_id,
+                    'subject'    => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
+                    'teacher'    => $slot->teacher?->name ?? '',
+                    'teacher_id' => $slot->teacher_id,
+                    'room'       => ($slot->room_id && $slot->room) ? $slot->room->room_name : '',
+                    'is_free'    => $slot->is_free ?? !$slot->subject_id,
                 ];
             }
 
@@ -2807,7 +3027,9 @@ class TimetableController extends Controller
             'total_conflicts' => $this->countConflictsForScope((int) $sessionId, $termId ? (int) $termId : null)['total'],
         ];
 
-        return [$allTimetables, $schoolInfo, $session, $term, $overallStats];
+        $staffAnalytics = $this->buildStaffAnalytics((int) $sessionId, $termId ? (int) $termId : null);
+
+        return [$allTimetables, $schoolInfo, $session, $term, $overallStats, $staffAnalytics];
     }
 
     private function buildMergedGridData($sessionId, $termId): array
@@ -2829,7 +3051,8 @@ class TimetableController extends Controller
         if ($settings->isEmpty()) {
             return ['rows' => [], 'days' => [], 'classColors' => [], 'classList' => [],
                     'schoolInfo' => $schoolInfo, 'sessionName' => $session->session ?? 'Session',
-                    'termName' => $term?->term ?? 'All Terms', 'generatedAt' => now()->format('d M Y, H:i')];
+                    'termName' => $term?->term ?? 'All Terms', 'generatedAt' => now()->format('d M Y, H:i'),
+                    'staffAnalytics' => ['staff' => [], 'summary' => []]];
         }
 
         $classColorPalette = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16','#6366F1','#D946EF'];
@@ -2848,10 +3071,11 @@ class TimetableController extends Controller
             $grid  = [];
             foreach ($slots as $slot) {
                 $grid[$slot->period_id][$slot->day] = [
-                    'subject' => $slot->subject?->subject,
-                    'teacher' => $slot->teacher?->name,
-                    'room'    => $slot->room?->room_name,
-                    'is_free' => $slot->is_free ?? !$slot->subject_id,
+                    'subject'    => $slot->subject?->subject,
+                    'teacher'    => $slot->teacher?->name,
+                    'teacher_id' => $slot->teacher_id,
+                    'room'       => $slot->room?->room_name,
+                    'is_free'    => $slot->is_free ?? !$slot->subject_id,
                 ];
             }
 
@@ -2903,12 +3127,28 @@ class TimetableController extends Controller
                     if (!$slotInfo || $slotInfo['is_free']) continue;
 
                     $entries[] = [
-                        'class'   => $className,
-                        'subject' => $slotInfo['subject'] ?? '—',
-                        'teacher' => $slotInfo['teacher'] ?? '',
-                        'room'    => $slotInfo['room'] ?? '',
-                        'color'   => $classColors[$className],
+                        'class'       => $className,
+                        'subject'     => $slotInfo['subject'] ?? '—',
+                        'teacher'     => $slotInfo['teacher'] ?? '',
+                        'teacher_id'  => $slotInfo['teacher_id'] ?? null,
+                        'room'        => $slotInfo['room'] ?? '',
+                        'color'       => $classColors[$className],
+                        'is_conflict' => false,
                     ];
+                }
+
+                // Mark a genuine teacher double-booking within this cell —
+                // same teacher appearing under two different classes at the
+                // same day+time. Drives the red conflict indicator and the
+                // staff-conflict count shown when that teacher is selected.
+                $byTeacherInCell = collect($entries)->filter(fn($e) => $e['teacher_id'])->groupBy('teacher_id');
+                foreach ($byTeacherInCell as $tId => $group) {
+                    if ($group->count() > 1) {
+                        foreach ($entries as &$entryRef) {
+                            if ($entryRef['teacher_id'] == $tId) $entryRef['is_conflict'] = true;
+                        }
+                        unset($entryRef);
+                    }
                 }
 
                 $rowEntries[$day] = [
@@ -2922,15 +3162,16 @@ class TimetableController extends Controller
         }
 
         return [
-            'rows'        => $mergedRows,
-            'days'        => $allDaysUnion,
-            'classColors' => $classColors,
-            'classList'   => array_keys($classColors),
-            'schoolInfo'  => $schoolInfo,
-            'sessionName' => $session->session ?? 'Session',
-            'termName'    => $term?->term ?? 'All Terms',
-            'generatedAt' => now()->format('d M Y, H:i'),
-            'dayColors'   => self::DAY_COLORS,
+            'rows'           => $mergedRows,
+            'days'           => $allDaysUnion,
+            'classColors'    => $classColors,
+            'classList'      => array_keys($classColors),
+            'schoolInfo'     => $schoolInfo,
+            'sessionName'    => $session->session ?? 'Session',
+            'termName'       => $term?->term ?? 'All Terms',
+            'generatedAt'    => now()->format('d M Y, H:i'),
+            'dayColors'      => self::DAY_COLORS,
+            'staffAnalytics' => $this->buildStaffAnalytics((int) $sessionId, $termId ? (int) $termId : null),
         ];
     }
 
@@ -2962,7 +3203,7 @@ class TimetableController extends Controller
 
         if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
 
-        [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
+        [$allTimetables, $schoolInfo, $session, $term, $overallStats, $staffAnalytics] = $this->buildWholeSchoolExportData($sessionId, $termId);
 
         if (empty($allTimetables)) {
             abort(404, 'No timetables found for this session/term.');
@@ -2971,7 +3212,7 @@ class TimetableController extends Controller
         $pagetitle = 'Whole School Timetable';
 
         return view('timetable.exports.whole-school-web', array_merge(
-            compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'pagetitle'),
+            compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'pagetitle', 'staffAnalytics'),
             [
                 'sessionName'   => $session->session ?? 'Session',
                 'termName'      => $term?->term ?? 'All Terms',
@@ -3095,7 +3336,7 @@ class TimetableController extends Controller
             $notifData = [
                 'teacher'         => $teacher->name,
                 'teacher_picture' => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
-                'class'           => $setting->schoolclass->schoolclass ?? '',
+                'class'           => $this->getClassName($setting->schoolclass),
                 'session'         => $setting->session->session ?? '',
                 'term'            => $setting->term?->term ?? '',
                 'slots'           => $teacherSlots->map(fn($s) => [
@@ -3209,6 +3450,14 @@ class TimetableController extends Controller
         }
     }
 
+    // =========================================================================
+    // PRIVATE: Detect teacher conflicts for a freshly cloned setting.
+    // Grouped by CLOCK TIME, not period_id — the clone gets brand-new
+    // TimetablePeriod rows (via $periodMap), so its slots' period_id values
+    // never coincide with any other setting's rows even at the identical
+    // wall-clock time. period_id-based grouping here effectively never
+    // fired.
+    // =========================================================================
     private function detectTeacherConflictsForSetting(TimetableSetting $setting, array $slotIds): array
     {
         if (empty($slotIds)) return [];
@@ -3229,13 +3478,15 @@ class TimetableController extends Controller
             })
             ->whereIn('teacher_id', $newSlots->pluck('teacher_id')->unique())
             ->where('is_free', false)->whereNotNull('subject_id')
-            ->with(['setting.schoolclass', 'subject', 'teacher'])
+            ->with(['setting.schoolclass', 'subject', 'teacher', 'period'])
             ->get()
-            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $s->period_id);
+            ->filter(fn($s) => $s->period)
+            ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period));
 
         $conflicts = [];
         foreach ($newSlots as $newSlot) {
-            $key = $newSlot->teacher_id . '|' . $newSlot->day . '|' . $newSlot->period_id;
+            if (!$newSlot->period) continue;
+            $key = $newSlot->teacher_id . '|' . $newSlot->day . '|' . $this->periodTimeSignature($newSlot->period);
             if (!$others->has($key)) continue;
 
             $clashing = $others->get($key)->first();
@@ -3404,7 +3655,7 @@ class TimetableController extends Controller
         foreach ($teachers as $teacher) {
             $slots = TimetableSlot::where('teacher_id', $teacher->id)
                 ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
-                ->with(['setting.schoolclass', 'subject'])->get();
+                ->with(['setting.schoolclass', 'setting.schoolclass.arm', 'subject'])->get();
 
             $dailyLoad = [];
             foreach (self::DAYS as $day) $dailyLoad[$day] = $slots->where('day', $day)->count();
@@ -3414,7 +3665,7 @@ class TimetableController extends Controller
                 'teacher_name'     => $teacher->name,
                 'teacher_picture'  => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
                 'periods_assigned' => $slots->count(),
-                'classes_taught'   => $slots->pluck('setting.schoolclass.schoolclass')->filter()->unique()->values(),
+                'classes_taught'   => $slots->map(fn($s) => $this->getClassName($s->setting?->schoolclass))->filter()->unique()->values(),
                 'subjects_taught'  => $slots->pluck('subject.subject')->filter()->unique()->values(),
                 'daily_load'       => $dailyLoad,
             ];
