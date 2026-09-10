@@ -14,29 +14,19 @@ use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use Maatwebsite\Excel\Validators\Failure;
 
 class StaffUsersImport implements
     ToModel,
     WithStartRow,
     WithValidation,
     SkipsOnFailure,
-    SkipsOnError,
-    WithMultipleSheets
+    SkipsOnError
 {
     use Importable, SkipsFailures, SkipsErrors;
 
     protected int $rowCounter = 0;
     protected array $created = [];
     protected array $skipped = [];
-
-    public function sheets(): array
-    {
-        return [
-            'Staff Users' => $this,
-        ];
-    }
 
     public function model(array $row)
     {
@@ -57,8 +47,8 @@ class StaffUsersImport implements
             return null;
         }
 
-        // Force Staff role only
-        if (strtolower($role) !== 'staff' && $role !== '') {
+        // Accept only the exact role "Staff" (case-insensitive)
+        if ($role !== '' && strcasecmp($role, 'Staff') !== 0) {
             $this->skipped[] = "Row " . ($this->rowCounter + 1) . ": Role must be 'Staff' (got '{$role}').";
             return null;
         }
@@ -74,9 +64,10 @@ class StaffUsersImport implements
             'password' => Hash::make($password),
         ]);
 
+        // Force the literal role "Staff"
         $user->syncRoles(['Staff']);
 
-        // Optional basic bio record
+        // Optional bio record
         BioModel::updateOrCreate(
             ['user_id' => $user->id],
             [
@@ -91,7 +82,10 @@ class StaffUsersImport implements
             'email' => $user->email,
         ];
 
-        Log::info("Staff user imported", ['email' => $email, 'user_id' => $user->id]);
+        Log::info('Staff user imported', [
+            'email'   => $email,
+            'user_id' => $user->id,
+        ]);
 
         return $user;
     }
@@ -99,26 +93,23 @@ class StaffUsersImport implements
     public function rules(): array
     {
         return [
-            '0' => 'required|string|max:255',          // Name
-            '1' => 'required|email|max:255',           // Email
-            '3' => 'required|string|min:6|max:100',    // Password
+            '0' => 'nullable|string|max:255',
+            '1' => 'nullable|email|max:255',
+            '3' => 'nullable|string|min:6|max:100',
         ];
     }
 
     public function customValidationMessages()
     {
         return [
-            '0.required' => 'Full Name is required.',
-            '1.required' => 'Email is required.',
-            '1.email'    => 'Email must be a valid email address.',
-            '3.required' => 'Password is required.',
-            '3.min'      => 'Password must be at least 6 characters.',
+            '1.email' => 'Email must be a valid email address.',
+            '3.min'   => 'Password must be at least 6 characters.',
         ];
     }
 
     public function startRow(): int
     {
-        return 2;
+        return 2; // skip header
     }
 
     public function getCreated(): array

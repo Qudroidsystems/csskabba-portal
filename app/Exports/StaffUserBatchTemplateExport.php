@@ -11,7 +11,6 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class StaffUserBatchTemplateExport implements FromArray, WithHeadings, WithTitle, WithColumnWidths, WithEvents
 {
@@ -29,7 +28,7 @@ class StaffUserBatchTemplateExport implements FromArray, WithHeadings, WithTitle
 
     public function array(): array
     {
-        // Pre-fill Role column (index 2) with "Staff" on every blank row
+        // Pre-fill Role column (index 2) with "Staff"
         $blank = ['', '', 'Staff', ''];
         return array_fill(0, $this->rows, $blank);
     }
@@ -64,7 +63,10 @@ class StaffUserBatchTemplateExport implements FromArray, WithHeadings, WithTitle
 
                 // Header styling
                 $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
-                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'font' => [
+                        'bold'  => true,
+                        'color' => ['rgb' => 'FFFFFF'],
+                    ],
                     'fill' => [
                         'fillType'   => Fill::FILL_SOLID,
                         'startColor' => ['rgb' => '1E3A5F'],
@@ -77,13 +79,15 @@ class StaffUserBatchTemplateExport implements FromArray, WithHeadings, WithTitle
                 $sheet->getRowDimension(1)->setRowHeight(28);
                 $sheet->freezePane('A2');
 
-                // Locked Role column (C) – grey
+                // Locked Role column (C) – grey background
                 $sheet->getStyle("C2:C{$lastRow}")->applyFromArray([
                     'fill' => [
                         'fillType'   => Fill::FILL_SOLID,
                         'startColor' => ['rgb' => 'E9ECEF'],
                     ],
-                    'font' => ['color' => ['rgb' => '6C757D']],
+                    'font' => [
+                        'color' => ['rgb' => '6C757D'],
+                    ],
                 ]);
 
                 // Unlock editable columns
@@ -93,7 +97,7 @@ class StaffUserBatchTemplateExport implements FromArray, WithHeadings, WithTitle
                         ->setLocked(Protection::PROTECTION_UNPROTECTED);
                 }
 
-                // Sheet protection (no password – just prevents accidental edit of Role)
+                // Protect the sheet (no password)
                 $sheet->getProtection()->setSheet(true);
                 $sheet->getProtection()->setSort(false);
                 $sheet->getProtection()->setInsertRows(false);
@@ -112,10 +116,10 @@ class StaffUserBatchTemplateExport implements FromArray, WithHeadings, WithTitle
                     ['3. Required columns are marked with an asterisk (*).'],
                     ['4. Password will be hashed automatically on import.'],
                     ['5. Email must be unique in the system.'],
-                    ['6. Save the file and upload it via the Users page → Bulk Import Staff.'],
+                    ['6. Save the file and upload it via the Users page → Import Staff.'],
                     [''],
                     ['Notes:'],
-                    ['- Role is always set to "Staff". Other roles are not accepted by this importer.'],
+                    ['- Role is always set to "Staff". Other roles are not accepted.'],
                     ['- Existing users with the same email will be skipped.'],
                 ], null, 'A1');
 
@@ -123,9 +127,10 @@ class StaffUserBatchTemplateExport implements FromArray, WithHeadings, WithTitle
                 $info->getStyle('A3')->applyFromArray(['font' => ['bold' => true]]);
                 $info->getColumnDimension('A')->setWidth(80);
 
+                // Move Instructions to front
                 $spreadsheet->removeSheetByIndex($spreadsheet->getIndex($info));
                 $spreadsheet->addSheet($info, 0);
-                $spreadsheet->setActiveSheetIndex(0);
+                $spreadsheet->setActiveSheetIndex(1); // Staff Users sheet becomes active
             },
         ];
     }

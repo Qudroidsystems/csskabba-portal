@@ -1134,7 +1134,7 @@ class UserController extends Controller
 
 
     /**
- * Generate a blank Excel template for bulk staff user creation.
+ * Download blank template for bulk Staff user creation
  */
 public function generateStaffTemplate(Request $request)
 {
@@ -1142,8 +1142,7 @@ public function generateStaffTemplate(Request $request)
         'rows' => 'nullable|integer|min:1|max:200',
     ]);
 
-    $rows = (int) $request->input('rows', 30);
-
+    $rows     = (int) $request->input('rows', 30);
     $filename = 'Staff_Users_Batch_Template_' . now()->format('Ymd-His') . '.xlsx';
 
     return Excel::download(
@@ -1153,7 +1152,7 @@ public function generateStaffTemplate(Request $request)
 }
 
 /**
- * Import staff users from the filled template.
+ * Import Staff users from the filled template
  */
 public function importStaffUsers(Request $request): JsonResponse
 {
@@ -1178,11 +1177,10 @@ public function importStaffUsers(Request $request): JsonResponse
 
     try {
         $import = new StaffUsersImport();
-
         Excel::import($import, $request->file('filesheet'));
 
-        $created = $import->getCreated();
-        $skipped = $import->getSkipped();
+        $created  = $import->getCreated();
+        $skipped  = $import->getSkipped();
         $failures = $import->failures();
 
         $message = count($created) . ' staff user(s) created successfully.';
@@ -1191,11 +1189,11 @@ public function importStaffUsers(Request $request): JsonResponse
         }
 
         return response()->json([
-            'success'  => true,
-            'message'  => $message,
-            'created'  => $created,
-            'skipped'  => $skipped,
-            'failures' => collect($failures)->map(fn ($f) => [
+            'success'       => true,
+            'message'       => $message,
+            'created'       => $created,
+            'skipped'       => $skipped,
+            'failures'      => collect($failures)->map(fn ($f) => [
                 'row'       => $f->row(),
                 'attribute' => $f->attribute(),
                 'errors'    => $f->errors(),
