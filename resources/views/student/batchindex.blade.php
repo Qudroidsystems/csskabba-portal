@@ -42,7 +42,7 @@
     position: relative; z-index: 1;
 }
 
-/* Status pill badges (same visual family as scoresheet lock-badge) */
+/* Status pill badges */
 .status-pill {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 4px 10px; border-radius: 20px;
@@ -56,11 +56,11 @@
 /* Filter bar */
 .filter-card { background: var(--ss-card); border: 1px solid var(--ss-border); border-radius: var(--ss-radius); box-shadow: var(--ss-shadow); }
 
-/* Modal headers — gradient/primary, matching scoresheet modals */
+/* Modal headers */
 .ss-modal-header { background: var(--ss-primary); border: none; }
 .ss-modal-header .modal-title { color: #fff; }
 
-/* Progress bars (upload / batch import) */
+/* Progress bars */
 .ss-progress-wrap { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius: 10px; background:#fefce8; }
 .ss-progress-track { height:6px; border-radius:4px; background:#f1f5f9; overflow:hidden; margin-top:4px; }
 .ss-progress-fill  { height:100%; border-radius:4px; transition:width .3s ease; }
@@ -76,7 +76,7 @@
 }
 #deleteRecordModal .spinner-border { width: 1.5rem; height: 1.5rem; }
 
-/* Toast (lightweight, non-blocking notifications) */
+/* Toast */
 .ss-toast {
     position: fixed; bottom: 20px; right: 20px; z-index: 99999;
     min-width: 280px; border-radius: 10px; color: #fff;
@@ -438,7 +438,7 @@
                                     <select id="termid" name="termid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Term</option>
                                         @foreach ($schoolterms as $sc)
-                                            <option value="{{ $sc->id }}">{{ $sc->term }}</option>
+                                            <option value="{{ $sc->id }}">{{ $sc->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -447,7 +447,7 @@
                                     <select id="sessionid" name="sessionid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Session</option>
                                         @foreach ($schoolsessions as $sc)
-                                            <option value="{{ $sc->id }}">{{ $sc->session }}</option>
+                                            <option value="{{ $sc->id }}">{{ $sc->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -600,7 +600,7 @@
 
 
 <script>
-    /* ══ Toast helper (ported from scoresheet, non-blocking notices) ══ */
+    /* ══ Toast helper ══ */
     function showToast(msg, type = 'info') {
         const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
         const id = 'toast_' + Date.now();
@@ -614,16 +614,6 @@
 
     // ============================================================
     // MODAL BACKDROP CLEANUP
-    //
-    // Bootstrap can leave a stray .modal-backdrop + body.modal-open
-    // behind when a modal is hidden programmatically (e.g. right after
-    // an axios blob download finishes and we call modal.hide()). That
-    // leftover backdrop is what makes the page look permanently dimmed
-    // even though no modal is visibly open.
-    //
-    // This only strips the backdrop when NO modal is currently shown,
-    // so it's safe for modal-to-modal handoffs (Add Batch -> Progress
-    // modal) where a backdrop should legitimately stay.
     // ============================================================
     function cleanupStrayModalBackdrop() {
         const anyModalOpen = document.querySelector('.modal.show');
@@ -655,19 +645,7 @@
         });
 
         // ============================================================
-        // CHOICES.JS RE-INIT FIX
-        //
-        // The three <select data-choices> elements inside the "Generate
-        // Template" modal (#tpl_schoolclassid, #tpl_termid, #tpl_sessionid)
-        // sit inside a Bootstrap modal that is display:none on page load.
-        // If the theme's global init script builds Choices.js instances
-        // for [data-choices] elements once on DOMContentLoaded, it can't
-        // measure hidden elements correctly, and the resulting dropdown
-        // UI can visually show a selection without ever updating the
-        // real underlying <select>.value.
-        //
-        // Fix: destroy + rebuild the Choices.js instance for those three
-        // selects every time the modal is actually shown.
+        // CHOICES.JS RE-INIT – Generate Template Modal
         // ============================================================
         function initChoicesForTemplateModal() {
             ['tpl_schoolclassid', 'tpl_termid', 'tpl_sessionid'].forEach(function (id) {
@@ -693,6 +671,43 @@
 
             generateTemplateModalEl.addEventListener('hidden.bs.modal', function () {
                 ['tpl_schoolclassid', 'tpl_termid', 'tpl_sessionid'].forEach(function (id) {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    if (el._choicesInstance) {
+                        try { el._choicesInstance.setChoiceByValue(''); } catch (e) {}
+                    }
+                    el.value = '';
+                });
+            });
+        }
+
+        // ============================================================
+        // CHOICES.JS RE-INIT – Add Batch Modal (FIXED)
+        // ============================================================
+        function initChoicesForAddBatchModal() {
+            ['schoolclassid', 'termid', 'sessionid'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (!el || typeof Choices === 'undefined') return;
+
+                if (el._choicesInstance) {
+                    try { el._choicesInstance.destroy(); } catch (e) {}
+                    el._choicesInstance = null;
+                }
+
+                el._choicesInstance = new Choices(el, {
+                    searchEnabled: true,
+                    shouldSort: false,
+                    itemSelectText: '',
+                });
+            });
+        }
+
+        const addBatchModalEl = document.getElementById('addBatchModal');
+        if (addBatchModalEl) {
+            addBatchModalEl.addEventListener('shown.bs.modal', initChoicesForAddBatchModal);
+
+            addBatchModalEl.addEventListener('hidden.bs.modal', function () {
+                ['schoolclassid', 'termid', 'sessionid'].forEach(function (id) {
                     const el = document.getElementById(id);
                     if (!el) return;
                     if (el._choicesInstance) {
@@ -840,9 +855,6 @@
                     if (modal) modal.hide();
                     showToast('Template downloaded successfully!', 'success');
 
-                    // Safety net: the 'hidden.bs.modal' listener above should
-                    // handle this, but in case the blob-download timing races
-                    // past Bootstrap's own cleanup, force it after a short delay.
                     setTimeout(cleanupStrayModalBackdrop, 350);
                 })
                 .catch(async function (error) {
@@ -927,7 +939,7 @@
             bar.textContent = '0%';
             bar.className = 'progress-bar progress-bar-striped progress-bar-animated';
             bar.style.background = 'var(--ss-primary)';
-            message.textContent = 'Starting import...';
+            message.textContent = 'Waiting to start...';
             count.textContent = '0 / 0 rows';
             resultIcon.classList.add('d-none');
             resultIcon.innerHTML = '';
@@ -982,7 +994,7 @@
             }, 1500);
         }
 
-        // ===== View import errors (from table row button or progress modal) =====
+        // ===== View import errors =====
         document.querySelectorAll('.view-errors-btn').forEach(button => {
             button.addEventListener('click', function () {
                 showImportErrors(this.getAttribute('data-id'));
