@@ -337,6 +337,14 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                 <button type="button" class="u-btn primary" id="openAddUserModalBtn">
                     <i class="bi bi-plus-circle"></i> Add User
                 </button>
+                @can('Create user')
+                    <button type="button" class="u-btn ghost" data-bs-toggle="modal" data-bs-target="#generateStaffTemplateModal">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Staff Template
+                    </button>
+                    <button type="button" class="u-btn success" data-bs-toggle="modal" data-bs-target="#importStaffModal">
+                        <i class="bi bi-upload"></i> Import Staff
+                    </button>
+                @endcan
                 <button type="button" class="u-btn success" id="openAddStudentModalBtn">
                     <i class="bi bi-person-plus"></i> Add Student
                 </button>
@@ -627,6 +635,69 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
             </div>
         </div>
     </div>
+
+
+    <div class="modal fade u-modal" id="generateStaffTemplateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="u-modal-hero">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5><i class="bi bi-file-earmark-spreadsheet me-2"></i>Generate Staff Template</h5>
+                <p>Download a blank Excel file for bulk staff creation</p>
+            </div>
+            <div class="u-modal-body">
+                <div class="mb-3">
+                    <label class="u-form-label">Number of blank rows</label>
+                    <input type="number" id="staff_tpl_rows" class="u-form-input" value="30" min="1" max="200">
+                </div>
+                <div class="alert alert-info small mb-0">
+                    Role is locked to <strong>Staff</strong>. Only fill Name, Email and Password.
+                </div>
+            </div>
+            <div class="u-modal-footer">
+                <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="u-btn primary" id="downloadStaffTemplateBtn">
+                    <i class="bi bi-download me-1"></i> Download Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade u-modal" id="importStaffModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="u-modal-hero">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5><i class="bi bi-upload me-2"></i>Import Staff Users</h5>
+                <p>Upload the filled template to create Staff accounts</p>
+            </div>
+            <form id="import-staff-form" enctype="multipart/form-data">
+                @csrf
+                <div class="u-modal-body">
+                    <div class="mb-3">
+                        <label class="u-form-label">Excel File (.xlsx / .xls / .csv)</label>
+                        <input type="file" name="filesheet" id="staff_filesheet" class="u-form-input" accept=".xlsx,.xls,.csv" required>
+                    </div>
+                    <div class="alert alert-warning small">
+                        Only users with the <strong>Staff</strong> role will be created. Existing emails are skipped.
+                    </div>
+                    <div id="staff-import-result" class="d-none"></div>
+                </div>
+                <div class="u-modal-footer">
+                    <button type="button" class="u-btn ghost" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="u-btn success" id="importStaffBtn">
+                        <i class="bi bi-check-circle me-1"></i> Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 
     {{-- ══════════════════════════════════════════════════════
          EDIT USER MODAL
@@ -1165,6 +1236,55 @@ document.addEventListener('DOMContentLoaded', function () {
             options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
         });
     }
+
+
+
+    // Download Staff Template
+document.getElementById('downloadStaffTemplateBtn')?.addEventListener('click', function () {
+    const rows = document.getElementById('staff_tpl_rows')?.value || 30;
+    window.location.href = `{{ route('users.staff.template') }}?rows=${rows}`;
+});
+
+// Import Staff Users
+document.getElementById('import-staff-form')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('importStaffBtn');
+    const resultDiv = document.getElementById('staff-import-result');
+    const formData = new FormData(this);
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing…';
+
+    fetch('{{ route("users.staff.import") }}', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        resultDiv.classList.remove('d-none');
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success border-0">
+                    <strong>${data.message}</strong>
+                    ${data.skipped?.length ? `<ul class="mb-0 mt-2 small">${data.skipped.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
+                </div>`;
+            setTimeout(() => location.reload(), 1800);
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger border-0">${data.message || 'Import failed'}</div>`;
+        }
+    })
+    .catch(() => {
+        resultDiv.classList.remove('d-none');
+        resultDiv.innerHTML = `<div class="alert alert-danger border-0">Network error</div>`;
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Import';
+    });
+});
+
+
 
     // ============================================================
     // MASS STUDENT MANAGEMENT

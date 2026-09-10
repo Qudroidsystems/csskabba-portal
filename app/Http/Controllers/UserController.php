@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Imports\StaffUsersImport;
 use App\Models\BioModel;
 use App\Models\Student;
 use App\Models\Studentpicture;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Excel;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -1127,4 +1129,84 @@ class UserController extends Controller
             'credentials' => $credentials,
         ]);
     }
+
+
+    /**
+ * Generate a blank Excel template for bulk staff user creation.
+ */
+public function generateStaffTemplate(Request $request)
+{
+    $request->validate([
+        'rows' => 'nullable|integer|min:1|max:200',
+    ]);
+
+    $rows = (int) $request->input('rows', 30);
+
+    $filename = 'Staff_Users_Batch_Template_' . now()->format('Ymd-His') . '.xlsx';
+
+    return Excel::download(
+        new StaffUserBatchTemplateExport($rows),
+        $filename
+    );
+}
+
+/**
+ * Import staff users from the filled template.
+ */
+public function importStaffUsers(Request $request): JsonResponse
+{
+    $validator = Validator::make($request->all(), [
+        'filesheet' => 'required|mimes:xlsx,xls,csv|max:10240',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors'  => $validator->errors(),
+        ], 422);
+    }
+
+    if (!auth()->user()->hasPermissionTo('Create user')) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You do not have permission to create users.',
+        ], 403);
+    }
+
+    try {
+        $import = new StaffUsersImport();
+
+        Excel::import($import, $request->file('filesheet'));
+
+        $created = $import->getCreated();
+        $skipped = $import->getSkipped();
+        $failures = $import->failures();
+
+        $message = count($created) . ' staff user(s) created successfully.';
+        if (count($skipped) > 0) {
+            $message .= ' ' . count($skipped) . ' row(s) skipped.';
+        }
+
+        return response()->json([
+            'success'  => true,
+            'message'  => $message,
+            'created'  => $created,
+            'skipped'  => $skipped,
+            'failures' => collect($failures)->map(fn ($f) => [
+                'row'       => $f->row(),
+                'attribute' => $f->attribute(),
+                'errors'    => $f->errors(),
+            ])->values(),
+            'created_count' => count($created),
+            'skipped_count' => count($skipped),
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Staff user import failed: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Import failed: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 }

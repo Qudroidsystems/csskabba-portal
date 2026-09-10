@@ -184,6 +184,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         // Delete user
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::get('/users/staff/template', [UserController::class, 'generateStaffTemplate'])->name('users.staff.template');
+        Route::post('/users/staff/import', [UserController::class, 'importStaffUsers'])->name('users.staff.import');
 
         // Resource route - MUST BE LAST
         Route::resource('users', UserController::class);
