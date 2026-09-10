@@ -27,17 +27,26 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  *  5  homeaddress        13 lastschool         21 office_address      29 parent_religion
  *  6  dob                14 lastclass          22 father_occupation
  *  7  age                15 schoolclassid (locked) 23 mother_title
+ *
+ * Extended fields — appended at the end (not inserted into the block above)
+ * so templates/imports already in circulation keep working unchanged:
+ *  30 blood_group                  35 guardian_name
+ *  31 genotype                     36 guardian_relationship
+ *  32 emergency_contact_name       37 guardian_phone
+ *  33 emergency_contact_phone      38 whatsapp_number (parent/guardian)
+ *  34 allergies_medical_conditions
  */
 class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, WithColumnWidths, WithEvents
 {
     protected const EDITABLE_COLUMNS = [
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
         'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA', 'AB', 'AC', 'AD',
+        'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM',
     ];
 
     protected const LOCKED_COLUMNS = ['P', 'Q', 'R'];
 
-    protected const TOTAL_COLUMNS = 30;
+    protected const TOTAL_COLUMNS = 39;
 
     protected int $schoolclassid;
     protected int $termid;
@@ -117,6 +126,15 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
             'Mother Office Address',
             'Parent Address',
             'Parent Religion',
+            'Blood Group',
+            'Genotype',
+            'Emergency Contact Name',
+            'Emergency Contact Phone',
+            'Allergies / Medical Conditions',
+            'Guardian Name (if applicable)',
+            'Guardian Relationship to Student',
+            'Guardian Phone',
+            'Parent/Guardian WhatsApp Number',
         ];
     }
 
@@ -130,6 +148,8 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
             'S'  => 12, 'T'  => 18, 'U'  => 16, 'V'  => 20, 'W'  => 18,
             'X'  => 12, 'Y'  => 18, 'Z'  => 16, 'AA' => 18, 'AB' => 22,
             'AC' => 20, 'AD' => 16,
+            'AE' => 14, 'AF' => 10, 'AG' => 22, 'AH' => 22, 'AI' => 28,
+            'AJ' => 20, 'AK' => 24, 'AL' => 16, 'AM' => 20,
         ];
     }
 
@@ -139,7 +159,7 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet   = $event->sheet->getDelegate();
                 $lastRow = $this->rows + 1; // +1 for header row
-                $lastCol = 'AD';
+                $lastCol = 'AM';
 
                 // ----- Header styling -----
                 $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
@@ -233,6 +253,32 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                     $validation->setFormula1($stateRange);
                 }
 
+                // ----- Blood Group dropdown (column AE) -----
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $validation = $sheet->getCell("AE{$row}")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_STOP);
+                    $validation->setAllowBlank(true);
+                    $validation->setShowDropDown(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Invalid Blood Group');
+                    $validation->setError('Please select a valid blood group from the dropdown.');
+                    $validation->setFormula1('"A+,A-,B+,B-,AB+,AB-,O+,O-"');
+                }
+
+                // ----- Genotype dropdown (column AF) -----
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $validation = $sheet->getCell("AF{$row}")->getDataValidation();
+                    $validation->setType(DataValidation::TYPE_LIST);
+                    $validation->setErrorStyle(DataValidation::STYLE_STOP);
+                    $validation->setAllowBlank(true);
+                    $validation->setShowDropDown(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Invalid Genotype');
+                    $validation->setError('Please select a valid genotype from the dropdown.');
+                    $validation->setFormula1('"AA,AS,SS,AC,SC,CC"');
+                }
+
                 // ----- Instructions sheet -----
                 $infoSheet = $spreadsheet->createSheet();
                 $infoSheet->setTitle('Instructions');
@@ -251,6 +297,8 @@ class StudentBatchTemplateExport implements FromArray, WithHeadings, WithTitle, 
                     ['4. Gender and State have dropdown lists — please use them instead of typing freely.'],
                     ['5. Required columns are marked with an asterisk (*).'],
                     ['6. Save the file and upload it back through the Batch Upload screen.'],
+                    ['7. Blood Group and Genotype have dropdown lists — please use them instead of typing freely.'],
+                    ['8. Guardian and Emergency Contact columns are optional but recommended where applicable.'],
                     [''],
                     ['Notes:'],
                     ['- Admission No must be unique.'],

@@ -102,6 +102,19 @@ class StudentsImport implements
         $parentAddress    = $clean($row[28] ?? null);
         $parentReligion   = $clean($row[29] ?? null);
 
+        // ── Extended fields (appended at the end — see StudentBatchTemplateExport
+        //    column-layout comment; kept out of the original 0-29 range so
+        //    existing templates/imports already in circulation keep working) ──
+        $bloodGroup            = $clean($row[30] ?? null);
+        $genotype              = $clean($row[31] ?? null);
+        $emergencyContactName  = $clean($row[32] ?? null);
+        $emergencyContactPhone = $clean($row[33] ?? null);
+        $allergiesMedical      = $clean($row[34] ?? null);
+        $guardianName          = $clean($row[35] ?? null);
+        $guardianRelationship  = $clean($row[36] ?? null);
+        $guardianPhone         = $clean($row[37] ?? null);
+        $whatsappNumber        = $clean($row[38] ?? null);
+
         $rowNumber = $this->startRow() + $this->rowCounter - 1;
 
         if (!$admissionNo || !$lastname || !$firstname) {
@@ -114,33 +127,41 @@ class StudentsImport implements
             $lastSchool, $lastClass,
             $fatherTitle, $fatherName, $fatherPhone, $officeAddress, $fatherOccupation,
             $motherTitle, $motherName, $motherPhone, $motherOccupation, $motherOfficeAddr,
-            $parentAddress, $parentReligion
+            $parentAddress, $parentReligion,
+            $bloodGroup, $genotype, $emergencyContactName, $emergencyContactPhone,
+            $allergiesMedical, $guardianName, $guardianRelationship, $guardianPhone,
+            $whatsappNumber
         ) {
             // 1. Student (upsert by admissionNo)
             $student = Student::updateOrCreate(
                 ['admissionNo' => $admissionNo],
                 [
-                    'title'            => 'N/A',
-                    'firstname'        => $firstname,
-                    'lastname'         => $lastname,
-                    'othername'        => $othername,
-                    'gender'           => $gender,
-                    'home_address'     => $homeAddress,
-                    'home_address2'    => $homeAddress ?? 'N/A',
-                    'dateofbirth'      => $dob,
-                    'age'              => is_numeric($age) ? (int) $age : null,
-                    'placeofbirth'     => $placeOfBirth,
-                    'religion'         => $religion,
-                    'nationality'      => $nationality,
-                    'state'            => $state,
-                    'local'            => $local,
-                    'last_school'      => $lastSchool,
-                    'last_class'       => $lastClass,
-                    'registeredBy'     => $this->userId,
-                    'batchid'          => $this->batchid,
-                    'statusId'         => 1,          // Old student for batch uploads
-                    'student_status'   => 'Active',
-                    'student_category' => 'Day',
+                    'title'                       => 'N/A',
+                    'firstname'                   => $firstname,
+                    'lastname'                    => $lastname,
+                    'othername'                   => $othername,
+                    'gender'                      => $gender,
+                    'home_address'                => $homeAddress,
+                    'home_address2'               => $homeAddress ?? 'N/A',
+                    'dateofbirth'                 => $dob,
+                    'age'                         => is_numeric($age) ? (int) $age : null,
+                    'placeofbirth'                => $placeOfBirth,
+                    'religion'                    => $religion,
+                    'nationality'                 => $nationality,
+                    'state'                       => $state,
+                    'local'                       => $local,
+                    'last_school'                 => $lastSchool,
+                    'last_class'                  => $lastClass,
+                    'blood_group'                 => $bloodGroup,
+                    'genotype'                    => $genotype,
+                    'emergency_contact_name'      => $emergencyContactName,
+                    'emergency_contact_phone'     => $emergencyContactPhone,
+                    'allergies_medical_conditions'=> $allergiesMedical,
+                    'registeredBy'                => $this->userId,
+                    'batchid'                     => $this->batchid,
+                    'statusId'                    => 1,          // Old student for batch uploads
+                    'student_status'              => 'Active',
+                    'student_category'            => 'Day',
                 ]
             );
 
@@ -160,6 +181,10 @@ class StudentsImport implements
                     'mother_office_address' => $motherOfficeAddr,
                     'parent_address'        => $parentAddress,
                     'religion'              => $parentReligion,
+                    'guardian_name'         => $guardianName,
+                    'guardian_relationship' => $guardianRelationship,
+                    'guardian_phone'        => $guardianPhone,
+                    'whatsapp_number'       => $whatsappNumber,
                 ]
             );
 
@@ -266,6 +291,8 @@ class StudentsImport implements
                     $fail('Session ID does not match the selected session for this batch.');
                 }
             },
+            '30' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            '31' => 'nullable|in:AA,AS,SS,AC,SC,CC',
         ];
     }
 
@@ -276,6 +303,8 @@ class StudentsImport implements
             '1.required' => 'Surname is required.',
             '2.required' => 'First name is required.',
             '4.in'       => 'Gender must be Male or Female.',
+            '30.in'      => 'Blood Group must be one of A+, A-, B+, B-, AB+, AB-, O+, O-.',
+            '31.in'      => 'Genotype must be one of AA, AS, SS, AC, SC, CC.',
         ];
     }
 
@@ -295,6 +324,8 @@ class StudentsImport implements
             'title', 'firstname', 'lastname', 'othername', 'gender',
             'home_address', 'home_address2', 'dateofbirth', 'age', 'placeofbirth',
             'religion', 'nationality', 'state', 'local', 'last_school', 'last_class',
+            'blood_group', 'genotype', 'emergency_contact_name', 'emergency_contact_phone',
+            'allergies_medical_conditions',
             'registeredBy', 'batchid', 'statusId', 'student_status',
         ];
     }
