@@ -27,6 +27,7 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithUpsertColumns;
+use Maatwebsite\Excel\Validators\Failure;
 
 class StudentsImport implements
     ToModel,
@@ -61,6 +62,15 @@ class StudentsImport implements
         $this->sessionid = $sessionid;
         $this->batchid   = $batchid;
         $this->userId    = $userId;
+
+        // Debug: show what IDs the import expects
+        Log::info('StudentsImport started', [
+            'batch_id'       => $this->batchid,
+            'expected_class' => $this->sclassid,
+            'expected_term'  => $this->termid,
+            'expected_session' => $this->sessionid,
+            'user_id'        => $this->userId,
+        ]);
     }
 
     public function setProgressTracking(string $progressKey, int $totalRows): void
@@ -73,6 +83,21 @@ class StudentsImport implements
     {
         $this->rowCounter++;
         $this->reportProgress();
+
+        $rowNumber = $this->startRow() + $this->rowCounter - 1;
+
+        // ---------- DEBUG: log the raw row data ----------
+        Log::debug("Import row {$rowNumber} data", [
+            'row_number' => $rowNumber,
+            'admissionNo'=> $row[0]  ?? null,
+            'surname'    => $row[1]  ?? null,
+            'firstname'  => $row[2]  ?? null,
+            'gender'     => $row[4]  ?? null,
+            'class_id'   => $row[15] ?? null,   // locked column
+            'term_id'    => $row[16] ?? null,   // locked column
+            'session_id' => $row[17] ?? null,   // locked column
+            'full_row'   => $row,               // remove later if too noisy
+        ]);
 
         $clean = fn ($v) => (is_null($v) || trim((string) $v) === '') ? null : trim((string) $v);
 
@@ -106,9 +131,7 @@ class StudentsImport implements
         $parentAddress    = $clean($row[28] ?? null);
         $parentReligion   = $clean($row[29] ?? null);
 
-        // ── Extended fields (appended at the end — see StudentBatchTemplateExport
-        //    column-layout comment; kept out of the original 0-29 range so
-        //    existing templates/imports already in circulation keep working) ──
+        // Extended fields
         $bloodGroup            = $clean($row[30] ?? null);
         $genotype              = $clean($row[31] ?? null);
         $emergencyContactName  = $clean($row[32] ?? null);
@@ -118,18 +141,13 @@ class StudentsImport implements
         $guardianRelationship  = $clean($row[36] ?? null);
         $guardianPhone         = $clean($row[37] ?? null);
         $whatsappNumber        = $clean($row[38] ?? null);
-
-        // Optional — matched by name against the clubs/sports tables below.
-        // Not validated in rules() for the same reason state/local aren't:
-        // the template's Excel dropdown is a soft (warning-style) suggestion,
-        // not a hard server-side constraint.
-        $clubName  = $clean($row[39] ?? null);
-        $sportName = $clean($row[40] ?? null);
-
-        $rowNumber = $this->startRow() + $this->rowCounter - 1;
+        $clubName              = $clean($row[39] ?? null);
+        $sportName             = $clean($row[40] ?? null);
 
         if (!$admissionNo || !$lastname || !$firstname) {
-            throw new \Exception("Row {$rowNumber}: Admission No, Surname and First Name are required.");
+            $msg = "Row {$rowNumber}: Admission No, Surname and First Name are required.";
+            Log::warning($msg, compact('admissionNo', 'lastname', 'firstname'));
+            throw new \Exception($msg);
         }
 
         return DB::transaction(function () use (
@@ -141,9 +159,9 @@ class StudentsImport implements
             $parentAddress, $parentReligion,
             $bloodGroup, $genotype, $emergencyContactName, $emergencyContactPhone,
             $allergiesMedical, $guardianName, $guardianRelationship, $guardianPhone,
-            $whatsappNumber, $clubName, $sportName
+            $whatsappNumber, $clubName, $sportName, $rowNumber
         ) {
-            // 1. Student (upsert by admissionNo)
+            // 1. Student
             $student = Student::updateOrCreate(
                 ['admissionNo' => $admissionNo],
                 [
@@ -170,7 +188,7 @@ class StudentsImport implements
                     'allergies_medical_conditions'=> $allergiesMedical,
                     'registeredBy'                => $this->userId,
                     'batchid'                     => $this->batchid,
-                    'statusId'                    => 1,          // Old student for batch uploads
+                    'statusId'                    => 1,
                     'student_status'              => 'Active',
                     'student_category'            => 'Day',
                 ]
@@ -247,18 +265,16 @@ class StudentsImport implements
                 'sessionid'     => $this->sessionid,
             ]);
 
-            // 8. Current Term – use the official model method
+            // 8. Current Term
             StudentCurrentTerm::registerTerm(
                 $student->id,
                 $this->sclassid,
                 $this->termid,
                 $this->sessionid,
-                true   // mark as current
+                true
             );
 
-            // 9. Club — optional, matched by name (case-insensitive).
-            // Silently skipped if not found, matching the soft-validation
-            // approach used for state/local above.
+            // 9. Club
             if ($clubName) {
                 $club = Club::whereRaw('LOWER(club) = ?', [strtolower($clubName)])->first();
                 if ($club) {
@@ -269,7 +285,7 @@ class StudentsImport implements
                 }
             }
 
-            // 10. Sport — optional, matched by name (case-insensitive).
+            // 10. Sport
             if ($sportName) {
                 $sport = Sport::whereRaw('LOWER(sport) = ?', [strtolower($sportName)])->first();
                 if ($sport) {
@@ -280,8 +296,32 @@ class StudentsImport implements
                 }
             }
 
+            Log::info("Row {$rowNumber} imported successfully", [
+                'admissionNo' => $admissionNo,
+                'student_id'  => $student->id,
+            ]);
+
             return $student;
         });
+    }
+
+    /**
+     * Called by Maatwebsite when a row fails validation.
+     * We log the exact failures so we can see them in laravel.log
+     */
+    public function onFailure(Failure ...$failures)
+    {
+        foreach ($failures as $failure) {
+            Log::warning('Import validation failure', [
+                'row'       => $failure->row(),
+                'attribute' => $failure->attribute(),
+                'errors'    => $failure->errors(),
+                'values'    => $failure->values(),   // the actual cell values that failed
+            ]);
+        }
+
+        // Still collect them the normal way (SkipsFailures trait)
+        $this->failures = array_merge($this->failures ?? [], $failures);
     }
 
     protected function reportProgress(): void
@@ -290,7 +330,6 @@ class StudentsImport implements
             return;
         }
 
-        // Update every 5 rows or on the last row
         if ($this->rowCounter % 5 !== 0 && $this->rowCounter < $this->totalRows) {
             return;
         }
@@ -311,21 +350,48 @@ class StudentsImport implements
             '2'  => 'required|string|max:100',
             '4'  => 'nullable|in:Male,Female',
             '7'  => 'nullable|numeric|min:1|max:100',
+
+            // These three are the most common reason for "all rows failed"
             '15' => function ($attribute, $value, $fail) {
-                if ((int) $value !== $this->sclassid) {
-                    $fail('Class ID does not match the selected class for this batch.');
+                $expected = $this->sclassid;
+                $actual   = (int) $value;
+                if ($actual !== $expected) {
+                    Log::warning('Class ID mismatch', [
+                        'row_attribute' => $attribute,
+                        'expected'      => $expected,
+                        'actual'        => $value,
+                        'actual_int'    => $actual,
+                    ]);
+                    $fail("Class ID does not match the selected class for this batch. Expected {$expected}, got {$value}");
                 }
             },
             '16' => function ($attribute, $value, $fail) {
-                if ((int) $value !== $this->termid) {
-                    $fail('Term ID does not match the selected term for this batch.');
+                $expected = $this->termid;
+                $actual   = (int) $value;
+                if ($actual !== $expected) {
+                    Log::warning('Term ID mismatch', [
+                        'row_attribute' => $attribute,
+                        'expected'      => $expected,
+                        'actual'        => $value,
+                        'actual_int'    => $actual,
+                    ]);
+                    $fail("Term ID does not match the selected term for this batch. Expected {$expected}, got {$value}");
                 }
             },
             '17' => function ($attribute, $value, $fail) {
-                if ((int) $value !== $this->sessionid) {
-                    $fail('Session ID does not match the selected session for this batch.');
+                $expected = $this->sessionid;
+                $actual   = (int) $value;
+                if ($actual !== $expected) {
+                    Log::warning('Session ID mismatch', [
+                        'row_attribute' => $attribute,
+                        'expected'      => $expected,
+                        'actual'        => $value,
+                        'actual_int'    => $actual,
+                    ]);
+                    $fail("Session ID does not match the selected session for this batch. Expected {$expected}, got {$value}");
                 }
             },
+
             '30' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
             '31' => 'nullable|in:AA,AS,SS,AC,SC,CC',
         ];
