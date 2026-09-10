@@ -130,16 +130,43 @@ class ProcessStudentBatchImport implements ShouldQueue
         ], now()->addMinutes(45));
     }
 
-    protected function countDataRows(): int
-    {
-        try {
-            $rows = Excel::toArray([], $this->filePath, 'local')[0] ?? [];
+protected function countDataRows(): int
+{
+    try {
+        // Only read the "Student Data" sheet
+        $sheets = Excel::toArray([], $this->filePath, 'local');
+
+        // Find the sheet named "Student Data"
+        // (Maatwebsite returns sheets in the order they appear)
+        $dataSheet = null;
+
+        // Try by name first (safer)
+        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile(
+            Storage::disk('local')->path($this->filePath)
+        );
+        $spreadsheet = $reader->load(Storage::disk('local')->path($this->filePath));
+
+        $sheet = $spreadsheet->getSheetByName('Student Data');
+        if ($sheet) {
+            $rows = $sheet->toArray();
             return max(0, count($rows) - 1); // exclude header
-        } catch (\Throwable $e) {
-            Log::warning('Could not pre-count batch import rows: ' . $e->getMessage());
-            return 0;
         }
+
+        // Fallback: first sheet that has the expected headers
+        foreach ($sheets as $sheetRows) {
+            if (!empty($sheetRows[0]) && in_array('Admission No*', $sheetRows[0])) {
+                return max(0, count($sheetRows) - 1);
+            }
+        }
+
+        // Last resort
+        return max(0, count($sheets[0] ?? []) - 1);
+
+    } catch (\Throwable $e) {
+        Log::warning('Could not pre-count batch import rows: ' . $e->getMessage());
+        return 0;
     }
+}
 
     protected function markFailed(StudentBatchModel $batch, string $message, int $total = 0): void
     {

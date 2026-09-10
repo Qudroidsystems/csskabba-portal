@@ -174,7 +174,7 @@ class StudentsImport implements
                     'title'                        => 'N/A',
                     'firstname'                    => $firstname,
                     'lastname'                     => $lastname,
-                    'othername'                    => $othername,
+                    'othername'                    => $othername ?? 'N/A',   // ← changed
                     'gender'                       => $gender,
                     'home_address'                 => $homeAddress,
                     'home_address2'                => $homeAddress ?? 'N/A',
