@@ -27,6 +27,7 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithUpsertColumns;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Validators\Failure;
 
 class StudentsImport implements
@@ -36,7 +37,8 @@ class StudentsImport implements
     SkipsOnFailure,
     SkipsOnError,
     WithUpserts,
-    WithUpsertColumns
+    WithUpsertColumns,
+    WithMultipleSheets
 {
     use Importable, SkipsFailures, SkipsErrors;
 
@@ -63,14 +65,24 @@ class StudentsImport implements
         $this->batchid   = $batchid;
         $this->userId    = $userId;
 
-        // Debug: show what IDs the import expects
         Log::info('StudentsImport started', [
-            'batch_id'       => $this->batchid,
-            'expected_class' => $this->sclassid,
-            'expected_term'  => $this->termid,
+            'batch_id'         => $this->batchid,
+            'expected_class'   => $this->sclassid,
+            'expected_term'    => $this->termid,
             'expected_session' => $this->sessionid,
-            'user_id'        => $this->userId,
+            'user_id'          => $this->userId,
         ]);
+    }
+
+    /**
+     * ONLY import the "Student Data" sheet.
+     * This is the critical fix.
+     */
+    public function sheets(): array
+    {
+        return [
+            'Student Data' => $this,
+        ];
     }
 
     public function setProgressTracking(string $progressKey, int $totalRows): void
@@ -86,22 +98,14 @@ class StudentsImport implements
 
         $rowNumber = $this->startRow() + $this->rowCounter - 1;
 
-        // ---------- DEBUG: log the raw row data ----------
-        Log::debug("Import row {$rowNumber} data", [
-            'row_number' => $rowNumber,
-            'admissionNo'=> $row[0]  ?? null,
-            'surname'    => $row[1]  ?? null,
-            'firstname'  => $row[2]  ?? null,
-            'gender'     => $row[4]  ?? null,
-            'class_id'   => $row[15] ?? null,   // locked column
-            'term_id'    => $row[16] ?? null,   // locked column
-            'session_id' => $row[17] ?? null,   // locked column
-            'full_row'   => $row,               // remove later if too noisy
-        ]);
-
         $clean = fn ($v) => (is_null($v) || trim((string) $v) === '') ? null : trim((string) $v);
 
+        // Cast admission number to string (Excel often returns it as int/float)
         $admissionNo  = $clean($row[0] ?? null);
+        if ($admissionNo !== null) {
+            $admissionNo = (string) $admissionNo;
+        }
+
         $lastname     = $clean($row[1] ?? null);
         $firstname    = $clean($row[2] ?? null);
         $othername    = $clean($row[3] ?? null);
@@ -117,7 +121,6 @@ class StudentsImport implements
         $lastSchool   = $clean($row[13] ?? null);
         $lastClass    = $clean($row[14] ?? null);
 
-        // Parent fields
         $fatherTitle      = $clean($row[18] ?? null);
         $fatherName       = $clean($row[19] ?? null);
         $fatherPhone      = $clean($row[20] ?? null);
@@ -131,7 +134,6 @@ class StudentsImport implements
         $parentAddress    = $clean($row[28] ?? null);
         $parentReligion   = $clean($row[29] ?? null);
 
-        // Extended fields
         $bloodGroup            = $clean($row[30] ?? null);
         $genotype              = $clean($row[31] ?? null);
         $emergencyContactName  = $clean($row[32] ?? null);
@@ -144,9 +146,14 @@ class StudentsImport implements
         $clubName              = $clean($row[39] ?? null);
         $sportName             = $clean($row[40] ?? null);
 
+        // Skip completely empty rows (only locked IDs present)
+        if (!$admissionNo && !$lastname && !$firstname) {
+            return null;
+        }
+
         if (!$admissionNo || !$lastname || !$firstname) {
             $msg = "Row {$rowNumber}: Admission No, Surname and First Name are required.";
-            Log::warning($msg, compact('admissionNo', 'lastname', 'firstname'));
+            Log::warning($msg);
             throw new \Exception($msg);
         }
 
@@ -161,40 +168,38 @@ class StudentsImport implements
             $allergiesMedical, $guardianName, $guardianRelationship, $guardianPhone,
             $whatsappNumber, $clubName, $sportName, $rowNumber
         ) {
-            // 1. Student
             $student = Student::updateOrCreate(
                 ['admissionNo' => $admissionNo],
                 [
-                    'title'                       => 'N/A',
-                    'firstname'                   => $firstname,
-                    'lastname'                    => $lastname,
-                    'othername'                   => $othername,
-                    'gender'                      => $gender,
-                    'home_address'                => $homeAddress,
-                    'home_address2'               => $homeAddress ?? 'N/A',
-                    'dateofbirth'                 => $dob,
-                    'age'                         => is_numeric($age) ? (int) $age : null,
-                    'placeofbirth'                => $placeOfBirth,
-                    'religion'                    => $religion,
-                    'nationality'                 => $nationality,
-                    'state'                       => $state,
-                    'local'                       => $local,
-                    'last_school'                 => $lastSchool,
-                    'last_class'                  => $lastClass,
-                    'blood_group'                 => $bloodGroup,
-                    'genotype'                    => $genotype,
-                    'emergency_contact_name'      => $emergencyContactName,
-                    'emergency_contact_phone'     => $emergencyContactPhone,
-                    'allergies_medical_conditions'=> $allergiesMedical,
-                    'registeredBy'                => $this->userId,
-                    'batchid'                     => $this->batchid,
-                    'statusId'                    => 1,
-                    'student_status'              => 'Active',
-                    'student_category'            => 'Day',
+                    'title'                        => 'N/A',
+                    'firstname'                    => $firstname,
+                    'lastname'                     => $lastname,
+                    'othername'                    => $othername,
+                    'gender'                       => $gender,
+                    'home_address'                 => $homeAddress,
+                    'home_address2'                => $homeAddress ?? 'N/A',
+                    'dateofbirth'                  => $dob,
+                    'age'                          => is_numeric($age) ? (int) $age : null,
+                    'placeofbirth'                 => $placeOfBirth,
+                    'religion'                     => $religion,
+                    'nationality'                  => $nationality,
+                    'state'                        => $state,
+                    'local'                        => $local,
+                    'last_school'                  => $lastSchool,
+                    'last_class'                   => $lastClass,
+                    'blood_group'                  => $bloodGroup,
+                    'genotype'                     => $genotype,
+                    'emergency_contact_name'       => $emergencyContactName,
+                    'emergency_contact_phone'      => $emergencyContactPhone,
+                    'allergies_medical_conditions' => $allergiesMedical,
+                    'registeredBy'                 => $this->userId,
+                    'batchid'                      => $this->batchid,
+                    'statusId'                     => 1,
+                    'student_status'               => 'Active',
+                    'student_category'             => 'Day',
                 ]
             );
 
-            // 2. Parent
             ParentRegistration::updateOrCreate(
                 ['studentId' => $student->id],
                 [
@@ -217,13 +222,11 @@ class StudentsImport implements
                 ]
             );
 
-            // 3. Picture
             Studentpicture::firstOrCreate(
                 ['studentid' => $student->id],
                 ['picture' => 'unnamed.jpg']
             );
 
-            // 4. Studentclass
             Studentclass::updateOrCreate(
                 [
                     'studentId' => $student->id,
@@ -233,7 +236,6 @@ class StudentsImport implements
                 ['schoolclassid' => $this->sclassid]
             );
 
-            // 5. PromotionStatus
             PromotionStatus::updateOrCreate(
                 [
                     'studentId'     => $student->id,
@@ -247,7 +249,6 @@ class StudentsImport implements
                 ]
             );
 
-            // 6. Student house
             Studenthouse::updateOrCreate(
                 [
                     'studentid' => $student->id,
@@ -257,7 +258,6 @@ class StudentsImport implements
                 ['schoolhouse' => null]
             );
 
-            // 7. Personality profile
             Studentpersonalityprofile::firstOrCreate([
                 'studentid'     => $student->id,
                 'schoolclassid' => $this->sclassid,
@@ -265,7 +265,6 @@ class StudentsImport implements
                 'sessionid'     => $this->sessionid,
             ]);
 
-            // 8. Current Term
             StudentCurrentTerm::registerTerm(
                 $student->id,
                 $this->sclassid,
@@ -274,7 +273,6 @@ class StudentsImport implements
                 true
             );
 
-            // 9. Club
             if ($clubName) {
                 $club = Club::whereRaw('LOWER(club) = ?', [strtolower($clubName)])->first();
                 if ($club) {
@@ -285,7 +283,6 @@ class StudentsImport implements
                 }
             }
 
-            // 10. Sport
             if ($sportName) {
                 $sport = Sport::whereRaw('LOWER(sport) = ?', [strtolower($sportName)])->first();
                 if ($sport) {
@@ -305,10 +302,6 @@ class StudentsImport implements
         });
     }
 
-    /**
-     * Called by Maatwebsite when a row fails validation.
-     * We log the exact failures so we can see them in laravel.log
-     */
     public function onFailure(Failure ...$failures)
     {
         foreach ($failures as $failure) {
@@ -316,11 +309,10 @@ class StudentsImport implements
                 'row'       => $failure->row(),
                 'attribute' => $failure->attribute(),
                 'errors'    => $failure->errors(),
-                'values'    => $failure->values(),   // the actual cell values that failed
+                'values'    => $failure->values(),
             ]);
         }
 
-        // Still collect them the normal way (SkipsFailures trait)
         $this->failures = array_merge($this->failures ?? [], $failures);
     }
 
@@ -345,50 +337,26 @@ class StudentsImport implements
     public function rules(): array
     {
         return [
-            '0'  => 'required|string|max:50',
+            // Allow both string and numeric admission numbers
+            '0'  => 'required|max:50',
             '1'  => 'required|string|max:100',
             '2'  => 'required|string|max:100',
             '4'  => 'nullable|in:Male,Female',
             '7'  => 'nullable|numeric|min:1|max:100',
 
-            // These three are the most common reason for "all rows failed"
             '15' => function ($attribute, $value, $fail) {
-                $expected = $this->sclassid;
-                $actual   = (int) $value;
-                if ($actual !== $expected) {
-                    Log::warning('Class ID mismatch', [
-                        'row_attribute' => $attribute,
-                        'expected'      => $expected,
-                        'actual'        => $value,
-                        'actual_int'    => $actual,
-                    ]);
-                    $fail("Class ID does not match the selected class for this batch. Expected {$expected}, got {$value}");
+                if ((int) $value !== $this->sclassid) {
+                    $fail("Class ID does not match. Expected {$this->sclassid}, got {$value}");
                 }
             },
             '16' => function ($attribute, $value, $fail) {
-                $expected = $this->termid;
-                $actual   = (int) $value;
-                if ($actual !== $expected) {
-                    Log::warning('Term ID mismatch', [
-                        'row_attribute' => $attribute,
-                        'expected'      => $expected,
-                        'actual'        => $value,
-                        'actual_int'    => $actual,
-                    ]);
-                    $fail("Term ID does not match the selected term for this batch. Expected {$expected}, got {$value}");
+                if ((int) $value !== $this->termid) {
+                    $fail("Term ID does not match. Expected {$this->termid}, got {$value}");
                 }
             },
             '17' => function ($attribute, $value, $fail) {
-                $expected = $this->sessionid;
-                $actual   = (int) $value;
-                if ($actual !== $expected) {
-                    Log::warning('Session ID mismatch', [
-                        'row_attribute' => $attribute,
-                        'expected'      => $expected,
-                        'actual'        => $value,
-                        'actual_int'    => $actual,
-                    ]);
-                    $fail("Session ID does not match the selected session for this batch. Expected {$expected}, got {$value}");
+                if ((int) $value !== $this->sessionid) {
+                    $fail("Session ID does not match. Expected {$this->sessionid}, got {$value}");
                 }
             },
 
