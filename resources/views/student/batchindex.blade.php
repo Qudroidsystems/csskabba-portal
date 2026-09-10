@@ -598,6 +598,7 @@
     </div>
 </div>
 
+
 <script>
     /* ══ Toast helper (ported from scoresheet, non-blocking notices) ══ */
     function showToast(msg, type = 'info') {
@@ -609,6 +610,29 @@
               <div class="toast-body"><div class="me-auto">${msg}</div>
               <button class="btn-close btn-close-white ms-2" onclick="this.closest('.ss-toast').remove()"></button></div></div>`);
         setTimeout(() => document.getElementById(id)?.remove(), 4000);
+    }
+
+    // ============================================================
+    // MODAL BACKDROP CLEANUP
+    //
+    // Bootstrap can leave a stray .modal-backdrop + body.modal-open
+    // behind when a modal is hidden programmatically (e.g. right after
+    // an axios blob download finishes and we call modal.hide()). That
+    // leftover backdrop is what makes the page look permanently dimmed
+    // even though no modal is visibly open.
+    //
+    // This only strips the backdrop when NO modal is currently shown,
+    // so it's safe for modal-to-modal handoffs (Add Batch -> Progress
+    // modal) where a backdrop should legitimately stay.
+    // ============================================================
+    function cleanupStrayModalBackdrop() {
+        const anyModalOpen = document.querySelector('.modal.show');
+        if (!anyModalOpen) {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }
     }
 
     let currentDeleteId = null;
@@ -625,6 +649,11 @@
         const updateForm = document.getElementById('update-class-form');
         const addBatchForm = document.getElementById('add-batch-form');
 
+        // Attach the backdrop cleanup to every modal on this page.
+        document.querySelectorAll('.modal').forEach(function (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrop);
+        });
+
         // ============================================================
         // CHOICES.JS RE-INIT FIX
         //
@@ -635,23 +664,16 @@
         // for [data-choices] elements once on DOMContentLoaded, it can't
         // measure hidden elements correctly, and the resulting dropdown
         // UI can visually show a selection without ever updating the
-        // real underlying <select>.value — so "Please select class,
-        // term, and session" fires even though you picked all three.
+        // real underlying <select>.value.
         //
         // Fix: destroy + rebuild the Choices.js instance for those three
-        // selects every time the modal is actually shown, so Choices.js
-        // measures them while visible.
+        // selects every time the modal is actually shown.
         // ============================================================
         function initChoicesForTemplateModal() {
             ['tpl_schoolclassid', 'tpl_termid', 'tpl_sessionid'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el || typeof Choices === 'undefined') return;
 
-                // Destroy any existing instance (whether created by this
-                // function before, or by a global init script) so we get
-                // a clean re-measure. Choices.js stores no public "is this
-                // already a Choices instance" flag, so we track it
-                // ourselves on the element.
                 if (el._choicesInstance) {
                     try { el._choicesInstance.destroy(); } catch (e) {}
                     el._choicesInstance = null;
@@ -669,8 +691,6 @@
         if (generateTemplateModalEl) {
             generateTemplateModalEl.addEventListener('shown.bs.modal', initChoicesForTemplateModal);
 
-            // Also clear the values + destroy instances on close, so stale
-            // selections from a previous open don't linger visually.
             generateTemplateModalEl.addEventListener('hidden.bs.modal', function () {
                 ['tpl_schoolclassid', 'tpl_termid', 'tpl_sessionid'].forEach(function (id) {
                     const el = document.getElementById(id);
@@ -819,6 +839,11 @@
                     const modal = bootstrap.Modal.getInstance(document.getElementById('generateTemplateModal'));
                     if (modal) modal.hide();
                     showToast('Template downloaded successfully!', 'success');
+
+                    // Safety net: the 'hidden.bs.modal' listener above should
+                    // handle this, but in case the blob-download timing races
+                    // past Bootstrap's own cleanup, force it after a short delay.
+                    setTimeout(cleanupStrayModalBackdrop, 350);
                 })
                 .catch(async function (error) {
                     let message = 'Failed to generate template.';

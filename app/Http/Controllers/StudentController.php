@@ -2013,10 +2013,25 @@ public function generateBatchTemplate(Request $request)
         $term    = Schoolterm::findOrFail($request->termid);
         $session = Schoolsession::findOrFail($request->sessionid);
 
-        $className = $class->schoolclass . ($class->arm ? ' - ' . $class->arm : '');
+        $className = $class->schoolclass . ($class->arm ? ' ' . $class->arm : '');
         $rows      = (int) $request->input('rows', 30);
 
-        $filename = 'student-batch-template-' . now()->format('Ymd-His') . '.xlsx';
+        // ── Build a filesystem-safe filename from class/arm, term, and session ──
+        $sanitize = function (string $value): string {
+            $value = str_replace(['/', '\\'], '-', $value);          // "2026/2027" -> "2026-2027"
+            $value = preg_replace('/[^A-Za-z0-9\- ]/', '', $value);  // strip anything else unsafe
+            $value = preg_replace('/\s+/', '-', trim($value));       // spaces -> dashes
+            $value = preg_replace('/-+/', '-', $value);              // collapse repeated dashes
+            return $value;
+        };
+
+        $filename = sprintf(
+            '%s_%s_%s_Batch-Template_%s.xlsx',
+            $sanitize($className),
+            $sanitize($term->term),
+            $sanitize($session->session),
+            now()->format('Ymd-His')
+        );
 
         return Excel::download(
             new \App\Exports\StudentBatchTemplateExport(
