@@ -23,7 +23,6 @@ use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithUpserts;
@@ -37,7 +36,6 @@ class StudentsImport implements
     WithValidation,
     SkipsOnFailure,
     SkipsOnError,
-    SkipsEmptyRows,
     WithUpserts,
     WithUpsertColumns,
     WithMultipleSheets
@@ -53,6 +51,14 @@ class StudentsImport implements
     protected int $rowCounter = 0;
     protected ?string $progressKey = null;
     protected int $totalRows = 0;
+
+    /**
+     * Set by prepareForValidation() when the current row contains only
+     * the locked Class/Term/Session IDs (cols 15, 16, 17) and nothing
+     * else. rules() consults this to no-op its `required` checks on
+     * template blank rows.
+     */
+    protected bool $currentRowSkipped = false;
 
     public function __construct(
         int $schoolclassid,
@@ -93,28 +99,46 @@ class StudentsImport implements
     }
 
     /**
-     * Treat a row as "empty" (and therefore skipped BEFORE validation)
-     * when the only populated cells are the locked Class/Term/Session
-     * ID columns that the template pre-fills on every row.
+     * Runs BEFORE rules() for every row.
      *
-     * Columns 15, 16, 17 are the locked IDs (0-indexed).
+     * The batch template pre-fills columns P/Q/R (indexes 15/16/17) with
+     * the locked Class/Term/Session IDs on every blank row. That makes
+     * those rows non-empty from the validator's point of view, so the
+     * `required` rules on admission number / surname / first name fire
+     * on all of them.
+     *
+     * SkipsEmptyRows' isEmptyWhen() is NOT consulted by the
+     * ToModel + WithValidation pipeline (it only applies to the
+     * toCollection()/toArray() path), so we handle the skip here:
+     * if the only populated cells are 15/16/17, flag the row and let
+     * rules() no-op.
      */
-    public function isEmptyWhen(array $row): bool
+    public function prepareForValidation($data, $index)
     {
-        $editable = $row;
+        $this->currentRowSkipped = false;
+
+        $editable = $data;
         unset($editable[15], $editable[16], $editable[17]);
 
         foreach ($editable as $value) {
             if (!is_null($value) && trim((string) $value) !== '') {
-                return false;
+                return $data;   // row has real content — validate normally
             }
         }
 
-        return true;
+        $this->currentRowSkipped = true;
+        return $data;
     }
 
     public function model(array $row)
     {
+        // If prepareForValidation() flagged this as a blank template row,
+        // skip it outright — no import, no logging noise.
+        if ($this->currentRowSkipped) {
+            $this->currentRowSkipped = false;
+            return null;
+        }
+
         $this->rowCounter++;
         $this->reportProgress();
 
@@ -177,8 +201,8 @@ class StudentsImport implements
         $clubName              = $clean($row[39] ?? null);
         $sportName             = $clean($row[40] ?? null);
 
-        // Belt-and-braces skip — SkipsEmptyRows should already have handled it,
-        // but keep this so the guard holds even if the trait changes.
+        // Belt-and-braces skip — if a row somehow reaches here with no
+        // name data, drop it.
         if (!$admissionNo && !$lastname && !$firstname) {
             return null;
         }
@@ -204,9 +228,9 @@ class StudentsImport implements
                 ['admissionNo' => $admissionNo],
                 [
                     // NOT NULL, no default — must always have a value.
-                    // 'title' and 'future_ambition' are not collected by the
-                    // batch template, so they are hardcoded rather than
-                    // referencing undefined variables.
+                    // 'title' and 'future_ambition' are not collected by
+                    // the batch template, so they are hardcoded rather
+                    // than referencing undefined variables.
                     'title'            => 'N/A',
                     'firstname'        => $firstname,
                     'lastname'         => $lastname,
@@ -377,25 +401,52 @@ class StudentsImport implements
     public function rules(): array
     {
         return [
-            // Allow both string and numeric admission numbers
-            '0'  => 'required|max:50',
-            '1'  => 'required|string|max:100',
-            '2'  => 'required|string|max:100',
+            '0' => [
+                function ($attribute, $value, $fail) {
+                    if ($this->currentRowSkipped) return;
+                    if (is_null($value) || trim((string) $value) === '') {
+                        $fail('Admission number is required.');
+                    }
+                },
+                'max:50',
+            ],
+            '1' => [
+                function ($attribute, $value, $fail) {
+                    if ($this->currentRowSkipped) return;
+                    if (is_null($value) || trim((string) $value) === '') {
+                        $fail('Surname is required.');
+                    }
+                },
+                'max:100',
+            ],
+            '2' => [
+                function ($attribute, $value, $fail) {
+                    if ($this->currentRowSkipped) return;
+                    if (is_null($value) || trim((string) $value) === '') {
+                        $fail('First name is required.');
+                    }
+                },
+                'max:100',
+            ],
             '4'  => 'nullable|in:Male,Female',
-            // age is a varchar column — do NOT require numeric.
-            // (Users may legitimately leave it blank; the template says so.)
+            // '7' (age) is intentionally not validated here — the column
+            // is varchar(255) and the template tells users to leave it
+            // blank when unknown.
 
             '15' => function ($attribute, $value, $fail) {
+                if ($this->currentRowSkipped) return;
                 if ((int) $value !== $this->sclassid) {
                     $fail("Class ID does not match. Expected {$this->sclassid}, got {$value}");
                 }
             },
             '16' => function ($attribute, $value, $fail) {
+                if ($this->currentRowSkipped) return;
                 if ((int) $value !== $this->termid) {
                     $fail("Term ID does not match. Expected {$this->termid}, got {$value}");
                 }
             },
             '17' => function ($attribute, $value, $fail) {
+                if ($this->currentRowSkipped) return;
                 if ((int) $value !== $this->sessionid) {
                     $fail("Session ID does not match. Expected {$this->sessionid}, got {$value}");
                 }
@@ -409,12 +460,9 @@ class StudentsImport implements
     public function customValidationMessages()
     {
         return [
-            '0.required' => 'Admission number is required.',
-            '1.required' => 'Surname is required.',
-            '2.required' => 'First name is required.',
-            '4.in'       => 'Gender must be Male or Female.',
-            '30.in'      => 'Blood Group must be one of A+, A-, B+, B-, AB+, AB-, O+, O-.',
-            '31.in'      => 'Genotype must be one of AA, AS, SS, AC, SC, CC.',
+            '4.in'  => 'Gender must be Male or Female.',
+            '30.in' => 'Blood Group must be one of A+, A-, B+, B-, AB+, AB-, O+, O-.',
+            '31.in' => 'Genotype must be one of AA, AS, SS, AC, SC, CC.',
         ];
     }
 
