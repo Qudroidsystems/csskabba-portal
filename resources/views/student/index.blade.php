@@ -3422,6 +3422,39 @@ use Spatie\Permission\Models\Role;
             axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
             axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             return true;
+        },
+
+        // ── Extract a human-readable message from an axios error ──
+        extractErrorMessage: function(error, fallback = 'Something went wrong.') {
+            if (!error) return fallback;
+
+            // Timeout / network error
+            if (error.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
+            if (!error.response) return error.message || 'Network error — check your connection.';
+
+            const { status, data } = error.response;
+
+            // Laravel validation errors: { message, errors: { field: [msgs] } }
+            if (data && typeof data === 'object') {
+                if (data.message) return data.message;
+                if (data.errors) {
+                    const firstField = Object.keys(data.errors)[0];
+                    if (firstField && Array.isArray(data.errors[firstField])) {
+                        return data.errors[firstField][0];
+                    }
+                }
+            }
+
+            // HTML response (login page redirect, error page, etc.)
+            if (typeof data === 'string' && data.trim().startsWith('<')) {
+                if (status === 419) return 'Session expired. Please refresh the page and log in again.';
+                if (status === 401 || status === 403) return 'You are not authorized. Please log in again.';
+                if (status === 500) return 'Server error (500). Check storage/logs/laravel.log for details.';
+                if (status === 404) return 'Endpoint not found (404). The route may have been renamed.';
+                return `Server returned HTML (status ${status}). You may have been logged out.`;
+            }
+
+            return fallback;
         }
     };
 
@@ -3472,13 +3505,38 @@ use Spatie\Permission\Models\Role;
 
                 const response = await axios.get(`/students/optimized?${params.toString()}`);
 
-                if (response.data.success) {
-                    return response.data.data;
-                } else {
-                    throw new Error(response.data.message || 'Failed to fetch students');
+                // ── Defensive response validation ──
+                if (!response.data || typeof response.data !== 'object') {
+                    throw new Error('Server returned an unexpected response (not JSON).');
                 }
+
+                if (!response.data.success) {
+                    throw new Error(response.data.message || 'Server reported success=false.');
+                }
+
+                // The JS expects `data.data` to be a Laravel paginator object
+                const payload = response.data.data;
+                if (!payload || typeof payload !== 'object') {
+                    throw new Error('Server response is missing the "data" payload.');
+                }
+
+                if (!Array.isArray(payload.data)) {
+                    throw new Error('Server response "data.data" is not an array. Check the controller\'s return shape.');
+                }
+
+                return payload;
             } catch (error) {
                 Utils.log('API Error - getStudents', error, 'error');
+
+                // Log the raw server response for diagnosis
+                if (error.response) {
+                    Utils.log('  → HTTP status:', error.response.status, 'error');
+                    Utils.log('  → Response body:', error.response.data, 'error');
+                    Utils.log('  → Request URL:', error.config?.url, 'error');
+                }
+
+                // Attach a friendly message for the caller
+                error.userMessage = Utils.extractErrorMessage(error, 'Failed to load students.');
                 throw error;
             }
         },
@@ -3498,6 +3556,7 @@ use Spatie\Permission\Models\Role;
                 }
             } catch (error) {
                 Utils.log('API Error - getStudent', error, 'error');
+                error.userMessage = Utils.extractErrorMessage(error, 'Failed to fetch student.');
                 throw error;
             }
         },
@@ -3511,6 +3570,7 @@ use Spatie\Permission\Models\Role;
                 return response.data;
             } catch (error) {
                 Utils.log('API Error - deleteStudent', error, 'error');
+                error.userMessage = Utils.extractErrorMessage(error, 'Failed to delete student.');
                 throw error;
             }
         },
@@ -3524,6 +3584,7 @@ use Spatie\Permission\Models\Role;
                 return response.data;
             } catch (error) {
                 Utils.log('API Error - deleteMultipleStudents', error, 'error');
+                error.userMessage = Utils.extractErrorMessage(error, 'Failed to delete students.');
                 throw error;
             }
         },
@@ -5037,7 +5098,12 @@ use Spatie\Permission\Models\Role;
 
             } catch (error) {
                 Utils.log('Error fetching students', error, 'error');
-                Utils.showError('Failed to load students. Please try again.');
+
+                // Surface the real reason from the server (or a friendly fallback)
+                const message = error.userMessage
+                    || Utils.extractErrorMessage(error, 'Failed to load students. Please try again.');
+
+                Utils.showError(message, 'Failed to Load Students');
 
             } finally {
                 Utils.hideLoading();
@@ -5072,7 +5138,7 @@ use Spatie\Permission\Models\Role;
             } catch (error) {
                 Utils.hideLoading();
                 Utils.log('Error viewing student', error, 'error');
-                Utils.showError('Failed to load student data.');
+                Utils.showError(error.userMessage || 'Failed to load student data.');
             }
         },
 
@@ -5103,7 +5169,7 @@ use Spatie\Permission\Models\Role;
             } catch (error) {
                 Utils.hideLoading();
                 Utils.log('Error editing student', error, 'error');
-                Utils.showError('Failed to load student for editing: ' + (error.message || 'Unknown error'));
+                Utils.showError(error.userMessage || 'Failed to load student for editing: ' + (error.message || 'Unknown error'));
             }
         },
 
@@ -5122,7 +5188,7 @@ use Spatie\Permission\Models\Role;
                     Utils.showSuccess('Student has been deleted.');
                 } catch (error) {
                     Utils.log('Error deleting student', error, 'error');
-                    Utils.showError('Failed to delete student.');
+                    Utils.showError(error.userMessage || 'Failed to delete student.');
                 }
             }
         },
@@ -5150,7 +5216,7 @@ use Spatie\Permission\Models\Role;
                     SelectionManager.clearAllSelections();
                 } catch (error) {
                     Utils.log('Error deleting multiple students', error, 'error');
-                    Utils.showError('Failed to delete selected students.');
+                    Utils.showError(error.userMessage || 'Failed to delete selected students.');
                 }
             }
         }
@@ -5574,10 +5640,12 @@ use Spatie\Permission\Models\Role;
                     if (avatarImg) {
                         avatarImg.src = 'https://via.placeholder.com/120x120/667eea/ffffff?text=Photo';
                     }
+                } else {
+                    Utils.showError(response.data.message || 'Failed to save student.');
                 }
             } catch (error) {
                 Swal.close();
-                Utils.showError('Failed to save student.');
+                Utils.showError(Utils.extractErrorMessage(error, 'Failed to save student.'));
             }
         },
 
@@ -5614,10 +5682,12 @@ use Spatie\Permission\Models\Role;
                     if (modal) modal.hide();
                     await StudentManager.fetchStudents();
                     Utils.showSuccess(response.data.message || 'Student updated successfully.');
+                } else {
+                    Utils.showError(response.data.message || 'Failed to update student.');
                 }
             } catch (error) {
                 Swal.close();
-                Utils.showError('Failed to update student.');
+                Utils.showError(Utils.extractErrorMessage(error, 'Failed to update student.'));
             }
         }
     };
