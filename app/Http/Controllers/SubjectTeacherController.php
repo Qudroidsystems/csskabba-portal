@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use App\Models\SubjectTeacher;
+use App\Models\Broadsheets;
+use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Subject;
-use App\Models\Schoolsession;
-use App\Models\User;
-use App\Models\Broadsheets;
 use App\Models\Subjectclass;
 use App\Models\SubjectRegistrationStatus;
-use Illuminate\Support\Facades\Log;
+use App\Models\SubjectTeacher;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 class SubjectTeacherController extends Controller
