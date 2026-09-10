@@ -168,38 +168,42 @@ class StudentsImport implements
             $allergiesMedical, $guardianName, $guardianRelationship, $guardianPhone,
             $whatsappNumber, $clubName, $sportName, $rowNumber
         ) {
-            $student = Student::updateOrCreate(
+           $student = Student::updateOrCreate(
                 ['admissionNo' => $admissionNo],
                 [
-                    'title'                        => 'N/A',
-                    'firstname'                    => $firstname,
-                    'lastname'                     => $lastname,
-                    'othername'                    => $othername ?? 'N/A',   // ← changed
-                    'gender'                       => $gender,
-                    'home_address'                 => $homeAddress,
-                    'home_address2'                => $homeAddress ?? 'N/A',
-                    'dateofbirth'                  => $dob,
-                    'age'                          => is_numeric($age) ? (int) $age : null,
-                    'placeofbirth'                 => $placeOfBirth,
-                    'religion'                     => $religion,
-                    'nationality'                  => $nationality,
-                    'state'                        => $state,
-                    'local'                        => $local,
-                    'last_school'                  => $lastSchool,
-                    'last_class'                   => $lastClass,
-                    'blood_group'                  => $bloodGroup,
-                    'genotype'                     => $genotype,
-                    'emergency_contact_name'       => $emergencyContactName,
-                    'emergency_contact_phone'      => $emergencyContactPhone,
-                    'allergies_medical_conditions' => $allergiesMedical,
-                    'registeredBy'                 => $this->userId,
-                    'batchid'                      => $this->batchid,
-                    'statusId'                     => 1,
-                    'student_status'               => 'Active',
-                    'student_category'             => 'Day',
+                    // NOT NULL, no default — must always have a value
+                    'title'            => $title            ?? 'N/A',
+                    'firstname'        => $firstname,                 // required input
+                    'lastname'         => $lastname,                  // required input
+                    'othername'        => $othername        ?? 'N/A',
+                    'gender'           => $gender           ?? 'N/A',
+                    'future_ambition'  => $futureAmbition   ?? 'N/A', // <-- WAS MISSING
+                    'home_address2'    => $homeAddress      ?? 'N/A',
+                    'dateofbirth'      => $dob              ?? 'N/A', // varchar — safe
+                    'age'              => $age              ?? 'N/A', // varchar — safe, NO is_numeric cast
+                    'placeofbirth'     => $placeOfBirth     ?? 'N/A',
+                    'religion'         => $religion         ?? 'N/A',
+                    'nationality'      => $nationality      ?? 'N/A',
+                    'state'            => $state            ?? 'N/A',
+                    'local'            => $local            ?? 'N/A',
+                    'last_school'      => $lastSchool       ?? 'N/A',
+                    'last_class'       => $lastClass        ?? 'N/A',
+                    'registeredBy'     => $this->userId     ?? '0',   // NOT NULL — cannot be null
+
+                    // Nullable in DB — null is fine, but 'N/A' is also valid
+                    'blood_group'      => $bloodGroup,                // nullable, null OK
+                    'genotype'         => $genotype,                  // nullable, null OK
+                    'emergency_contact_name'       => $emergencyContactName,       // nullable
+                    'emergency_contact_phone'      => $emergencyContactPhone,      // nullable
+                    'allergies_medical_conditions' => $allergiesMedical,           // nullable
+
+                    // Defaults
+                    'batchid'          => $this->batchid,
+                    'statusId'         => 1,
+                    'student_status'   => 'Active',
+                    'student_category' => 'Day',
                 ]
             );
-
             ParentRegistration::updateOrCreate(
                 ['studentId' => $student->id],
                 [
