@@ -130,43 +130,48 @@ class ProcessStudentBatchImport implements ShouldQueue
         ], now()->addMinutes(45));
     }
 
-protected function countDataRows(): int
-{
-    try {
-        // Only read the "Student Data" sheet
-        $sheets = Excel::toArray([], $this->filePath, 'local');
+    /**
+     * Count rows that actually contain student data, ignoring the
+     * locked Class/Term/Session ID columns (15, 16, 17) that the
+     * template pre-fills on every blank row.
+     */
+    protected function countDataRows(): int
+    {
+        try {
+            $path = Storage::disk('local')->path($this->filePath);
 
-        // Find the sheet named "Student Data"
-        // (Maatwebsite returns sheets in the order they appear)
-        $dataSheet = null;
+            $reader      = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
+            $spreadsheet = $reader->load($path);
 
-        // Try by name first (safer)
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile(
-            Storage::disk('local')->path($this->filePath)
-        );
-        $spreadsheet = $reader->load(Storage::disk('local')->path($this->filePath));
-
-        $sheet = $spreadsheet->getSheetByName('Student Data');
-        if ($sheet) {
-            $rows = $sheet->toArray();
-            return max(0, count($rows) - 1); // exclude header
-        }
-
-        // Fallback: first sheet that has the expected headers
-        foreach ($sheets as $sheetRows) {
-            if (!empty($sheetRows[0]) && in_array('Admission No*', $sheetRows[0])) {
-                return max(0, count($sheetRows) - 1);
+            $sheet = $spreadsheet->getSheetByName('Student Data');
+            if (!$sheet) {
+                return 0;
             }
+
+            $rows  = $sheet->toArray();
+            $count = 0;
+
+            // Skip header row (index 0)
+            foreach (array_slice($rows, 1) as $row) {
+                // Ignore the locked Class/Term/Session ID columns
+                $editable = $row;
+                unset($editable[15], $editable[16], $editable[17]);
+
+                foreach ($editable as $value) {
+                    if (!is_null($value) && trim((string) $value) !== '') {
+                        $count++;
+                        break;
+                    }
+                }
+            }
+
+            return $count;
+
+        } catch (\Throwable $e) {
+            Log::warning('Could not pre-count batch import rows: ' . $e->getMessage());
+            return 0;
         }
-
-        // Last resort
-        return max(0, count($sheets[0] ?? []) - 1);
-
-    } catch (\Throwable $e) {
-        Log::warning('Could not pre-count batch import rows: ' . $e->getMessage());
-        return 0;
     }
-}
 
     protected function markFailed(StudentBatchModel $batch, string $message, int $total = 0): void
     {

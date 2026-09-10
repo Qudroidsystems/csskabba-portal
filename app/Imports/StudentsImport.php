@@ -115,6 +115,12 @@ class StudentsImport implements
      */
     public function prepareForValidation($data, $index)
     {
+        // Diagnostic — remove once confirmed working.
+        Log::info('prepareForValidation called', [
+            'index'  => $index,
+            'row'    => array_slice($data, 0, 5),
+        ]);
+
         $this->currentRowSkipped = false;
 
         $editable = $data;
@@ -429,9 +435,6 @@ class StudentsImport implements
                 'max:100',
             ],
             '4'  => 'nullable|in:Male,Female',
-            // '7' (age) is intentionally not validated here — the column
-            // is varchar(255) and the template tells users to leave it
-            // blank when unknown.
 
             '15' => function ($attribute, $value, $fail) {
                 if ($this->currentRowSkipped) return;
