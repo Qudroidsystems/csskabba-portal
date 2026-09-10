@@ -625,6 +625,64 @@
         const updateForm = document.getElementById('update-class-form');
         const addBatchForm = document.getElementById('add-batch-form');
 
+        // ============================================================
+        // CHOICES.JS RE-INIT FIX
+        //
+        // The three <select data-choices> elements inside the "Generate
+        // Template" modal (#tpl_schoolclassid, #tpl_termid, #tpl_sessionid)
+        // sit inside a Bootstrap modal that is display:none on page load.
+        // If the theme's global init script builds Choices.js instances
+        // for [data-choices] elements once on DOMContentLoaded, it can't
+        // measure hidden elements correctly, and the resulting dropdown
+        // UI can visually show a selection without ever updating the
+        // real underlying <select>.value — so "Please select class,
+        // term, and session" fires even though you picked all three.
+        //
+        // Fix: destroy + rebuild the Choices.js instance for those three
+        // selects every time the modal is actually shown, so Choices.js
+        // measures them while visible.
+        // ============================================================
+        function initChoicesForTemplateModal() {
+            ['tpl_schoolclassid', 'tpl_termid', 'tpl_sessionid'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (!el || typeof Choices === 'undefined') return;
+
+                // Destroy any existing instance (whether created by this
+                // function before, or by a global init script) so we get
+                // a clean re-measure. Choices.js stores no public "is this
+                // already a Choices instance" flag, so we track it
+                // ourselves on the element.
+                if (el._choicesInstance) {
+                    try { el._choicesInstance.destroy(); } catch (e) {}
+                    el._choicesInstance = null;
+                }
+
+                el._choicesInstance = new Choices(el, {
+                    searchEnabled: true,
+                    shouldSort: false,
+                    itemSelectText: '',
+                });
+            });
+        }
+
+        const generateTemplateModalEl = document.getElementById('generateTemplateModal');
+        if (generateTemplateModalEl) {
+            generateTemplateModalEl.addEventListener('shown.bs.modal', initChoicesForTemplateModal);
+
+            // Also clear the values + destroy instances on close, so stale
+            // selections from a previous open don't linger visually.
+            generateTemplateModalEl.addEventListener('hidden.bs.modal', function () {
+                ['tpl_schoolclassid', 'tpl_termid', 'tpl_sessionid'].forEach(function (id) {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    if (el._choicesInstance) {
+                        try { el._choicesInstance.setChoiceByValue(''); } catch (e) {}
+                    }
+                    el.value = '';
+                });
+            });
+        }
+
         // ===== Delete batch =====
         deleteButtons.forEach(button => {
             button.addEventListener('click', function () {
