@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class AttendanceTermSetting extends Model
 {
@@ -11,23 +14,121 @@ class AttendanceTermSetting extends Model
     protected $table = 'attendance_term_settings';
 
     protected $fillable = [
-        'term_id', 'session_id', 'resumption_date', 'vacation_date',
-        'track_morning', 'track_afternoon', 'created_by',
+        'term_id',
+        'session_id',
+        'resumption_date',
+        'vacation_date',
+        'resumption_time',
+        'closing_time',
+        'morning_end_time',
+        'late_grace_minutes',
+        'track_morning',
+        'track_afternoon',
+        'created_by',
     ];
 
     protected $casts = [
-        'resumption_date' => 'date',
-        'vacation_date'   => 'date',
-        'track_morning'   => 'boolean',
-        'track_afternoon' => 'boolean',
+        'resumption_date'    => 'date',
+        'vacation_date'      => 'date',
+        'track_morning'      => 'boolean',
+        'track_afternoon'    => 'boolean',
+        'late_grace_minutes' => 'integer',
     ];
 
     // ── Relationships ─────────────────────────────────────────
-    public function term()    { return $this->belongsTo(Schoolterm::class,   'term_id'); }
-    public function session() { return $this->belongsTo(Schoolsession::class,'session_id'); }
-    public function creator() { return $this->belongsTo(User::class,         'created_by'); }
+    public function term()
+    {
+        return $this->belongsTo(Schoolterm::class, 'term_id');
+    }
 
-    // ── Helpers ───────────────────────────────────────────────
+    public function session()
+    {
+        return $this->belongsTo(Schoolsession::class, 'session_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // ── Time helpers (used by DeviceAttendanceProcessor) ──────
+
+    /**
+     * The instant after which a morning punch is considered late:
+     * resumption_time + late_grace_minutes, on the given date.
+     */
+    public function morningCutoffFor(Carbon $date): Carbon
+    {
+        return $date->copy()
+            ->setTimeFromTimeString($this->resumption_time ?: '08:00:00')
+            ->addMinutes($this->late_grace_minutes ?? 0);
+    }
+
+    /**
+     * The instant at/after which a punch is treated as afternoon.
+     */
+    public function afternoonStartFor(Carbon $date): Carbon
+    {
+        return $date->copy()
+            ->setTimeFromTimeString($this->morning_end_time ?: '12:00:00');
+    }
+
+    /**
+     * The instant after which the school day is considered closed.
+     * Currently informational (blades display it); kept here so a future
+     * rule ("punch after closing = ignore") has a single source of truth.
+     */
+    public function closingAtFor(Carbon $date): Carbon
+    {
+        return $date->copy()
+            ->setTimeFromTimeString($this->closing_time ?: '14:00:00');
+    }
+
+    /**
+     * Resumption + closing for a given day, formatted for display.
+     */
+    public function schoolHoursLabel(): string
+    {
+        $in  = $this->resumption_time
+            ? Carbon::parse($this->resumption_time)->format('g:i A')
+            : '8:00 AM';
+        $out = $this->closing_time
+            ? Carbon::parse($this->closing_time)->format('g:i A')
+            : '2:00 PM';
+
+        return "{$in} – {$out}";
+    }
+
+    // ── Cached lookup for the processor ───────────────────────
+
+    /**
+     * The active term setting — "current session + current term".
+     * Cached briefly because DeviceAttendanceProcessor hits this on
+     * every single punch. Call ::forget() whenever settings change.
+     */
+    public static function current(): ?self
+    {
+        return cache()->remember('attendance_term_settings.current', 120, function () {
+            $session = Schoolsession::where('status', 'Current')->first();
+            $term    = Schoolterm::where('status', 'Current')->first();
+
+            if (!$session || !$term) {
+                return null;
+            }
+
+            return static::where('term_id', $term->id)
+                ->where('session_id', $session->id)
+                ->first();
+        });
+    }
+
+    public static function forget(): void
+    {
+        cache()->forget('attendance_term_settings.current');
+    }
+
+    // ── Calendar helpers (unchanged behaviour) ────────────────
+
     /** Total weekdays in the term, minus holidays. */
     public function totalSchoolDays(): int
     {
@@ -46,7 +147,7 @@ class AttendanceTermSetting extends Model
     }
 
     /** Collect all individual holiday dates for this term. */
-    public function getHolidayDates(): \Illuminate\Support\Collection
+    public function getHolidayDates(): Collection
     {
         $holidays = AttendanceHoliday::forTerm($this->term_id, $this->session_id)->get();
 
@@ -68,7 +169,7 @@ class AttendanceTermSetting extends Model
     /** Check whether this setting covers a given date. */
     public function coversDate(string $date): bool
     {
-        $d = \Carbon\Carbon::parse($date);
+        $d = Carbon::parse($date);
         return $d->between($this->resumption_date, $this->vacation_date);
     }
 }

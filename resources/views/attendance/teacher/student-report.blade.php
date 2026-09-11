@@ -1,183 +1,385 @@
 @extends('layouts.master')
 @section('content')
 
+<style>
+:root {
+    --sr-primary: #1e3a5f;
+    --sr-accent:  #2563eb;
+    --sr-success: #16a34a;
+    --sr-warning: #d97706;
+    --sr-danger:  #dc2626;
+    --sr-muted:   #6b7280;
+    --sr-border:  #e2e8f0;
+    --sr-radius:  10px;
+    --sr-shadow:  0 1px 4px rgba(0,0,0,.08);
+}
+
+.sr-hero {
+    background: linear-gradient(135deg, var(--sr-primary) 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--sr-radius);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+.sr-hero::before {
+    content:'';
+    position:absolute;
+    top:-60px; right:-60px;
+    width:220px; height:220px;
+    background:rgba(255,255,255,.06);
+    border-radius:50%;
+}
+.sr-hero h4 {
+    color:#fff;
+    font-weight:700;
+    margin:0;
+    position:relative;
+    font-size:20px;
+}
+.sr-hero p {
+    color:rgba(255,255,255,.75);
+    margin:2px 0 0;
+    font-size:13px;
+    position:relative;
+}
+.sr-hero-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,.35);
+    flex-shrink: 0;
+}
+.sr-hero-avatar-fallback {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 3px solid rgba(255,255,255,.35);
+    flex-shrink: 0;
+}
+
+.sr-hours-banner {
+    background: #eff6ff;
+    color: #1e3a5f;
+    border-radius: var(--sr-radius);
+    padding: 10px 16px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.sr-hours-banner i { font-size: 20px; }
+.sr-hours-banner .badge { font-weight: 600; }
+
+.sr-stat-card {
+    background:#fff;
+    border:1px solid var(--sr-border);
+    border-radius:var(--sr-radius);
+    padding:14px 16px;
+    text-align:center;
+    transition:transform .15s, box-shadow .15s;
+}
+.sr-stat-card:hover {
+    transform:translateY(-2px);
+    box-shadow:var(--sr-shadow);
+}
+.sr-stat-card .stat-value {
+    font-size:22px;
+    font-weight:700;
+}
+.sr-stat-card .stat-label {
+    font-size:11px;
+    color:var(--sr-muted);
+    margin-top:2px;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+
+.sr-card {
+    background:#fff;
+    border:1px solid var(--sr-border);
+    border-radius:var(--sr-radius);
+    box-shadow:var(--sr-shadow);
+    overflow:hidden;
+}
+.sr-card .card-header {
+    background:#fff;
+    border-bottom:1px solid var(--sr-border);
+    padding:14px 20px;
+    font-weight:700;
+    font-size:14px;
+    color:var(--sr-primary);
+}
+
+.sr-table th {
+    background:var(--sr-primary);
+    color:#fff;
+    padding:12px 16px;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+}
+.sr-table td {
+    padding:11px 16px;
+    vertical-align:middle;
+    border-bottom:1px solid var(--sr-border);
+    font-size:13px;
+}
+.sr-table tr:hover td {
+    background:#eff6ff;
+}
+
+.sr-progress {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.sr-progress > span {
+    display:block;
+    height:100%;
+}
+
+@media (max-width: 768px) {
+    .sr-hero { padding: 18px; }
+    .sr-hero h4 { font-size:16px; }
+    .sr-table th, .sr-table td { padding:8px 10px; font-size:12px; }
+}
+</style>
+
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">Student Attendance Report</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="{{ route('attendance.my-classes') }}">Attendance</a></li>
-                                <li class="breadcrumb-item"><a href="{{ route('attendance.class-summary', [$classId, $termId, $sessionId]) }}">Class Summary</a></li>
-                                <li class="breadcrumb-item active">Student Report</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @if($student)
+            {{-- ── Hero ─────────────────────────────────────────────── --}}
             @php
-                $img = $student->picture
-                    ? asset('storage/student_avatars/'.basename($student->picture))
-                    : asset('storage/student_avatars/unnamed.jpg');
-            @endphp
-            <div class="row g-3 mb-3">
-                <div class="col-lg-7">
-                    <div class="card border-0 shadow-sm mb-0" style="border-left:4px solid #2563eb !important;">
-                        <div class="card-body py-3">
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="{{ $img }}" class="rounded-circle"
-                                     style="width:60px;height:60px;object-fit:cover;border:3px solid #bfdbfe;"
-                                     onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-                                <div>
-                                    <h5 class="fw-bold mb-1">{{ $student->lname }} {{ $student->fname }} {{ $student->mname }}</h5>
-                                    <div class="text-muted mb-2" style="font-size:13px;">Adm: {{ $student->admissionno }}</div>
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        <span class="badge bg-success-subtle text-success">{{ $class?->schoolclass }} {{ $class?->arms?->arm }}</span>
-                                        <span class="badge bg-primary-subtle text-primary">{{ $term?->term }}</span>
-                                        <span class="badge bg-info-subtle text-info">{{ $session?->session }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-5 d-flex align-items-center justify-content-end gap-2 flex-wrap">
-                    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-                        <i class="ri-printer-line me-1"></i>Print
-                    </button>
-                    <a href="{{ route('attendance.class-summary', [$classId, $termId, $sessionId]) }}"
-                       class="btn btn-outline-secondary btn-sm">
-                        <i class="ri-arrow-left-line me-1"></i>Back to Summary
-                    </a>
-                </div>
-            </div>
-            @endif
-
-            @php
-                $pct      = $summary ? (float) $summary->attendance_percentage : 0;
+                $initials = strtoupper(substr($student?->fname ?? 'S', 0, 1) . substr($student?->lname ?? '', 0, 1));
+                $photoPath = $student?->picture
+                    ? asset('storage/student_avatars/' . basename($student->picture))
+                    : null;
+                $pct = $summary ? (float) $summary->attendance_percentage : 0;
                 $pctColor = $pct >= 80 ? 'success' : ($pct >= 60 ? 'warning' : 'danger');
-                $totalDays= $setting?->totalSchoolDays() ?? ($summary?->total_school_days ?? 0);
             @endphp
-
-            <div class="row g-2 mb-3">
-                @foreach([
-                    ['School Days', $totalDays, 'secondary'],
-                    ['Present', $summary?->days_present ?? 0, 'success'],
-                    ['Absent', $summary?->days_absent ?? 0, 'danger'],
-                    ['Sick Leave', $summary?->days_sick_leave ?? 0, 'warning'],
-                    ['Excused', $summary?->days_excused ?? 0, 'info'],
-                    ['Late', $summary?->days_late ?? 0, 'secondary'],
-                ] as [$label, $val, $color])
-                <div class="col-4 col-md-2">
-                    <div class="card border text-center mb-0 py-2">
-                        <div class="fw-bold fs-4 text-{{ $color }}">{{ $val }}</div>
-                        <div class="text-muted" style="font-size:11px;">{{ $label }}</div>
+            <div class="sr-hero d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3 position-relative">
+                    @if($photoPath)
+                        <img src="{{ $photoPath }}" class="sr-hero-avatar" alt="{{ $student->fname }}">
+                    @else
+                        <div class="sr-hero-avatar-fallback">{{ $initials ?: 'S' }}</div>
+                    @endif
+                    <div>
+                        <h4><i class="ri-user-line me-2"></i>{{ $student?->lname }} {{ $student?->fname }} {{ $student?->mname }}</h4>
+                        <p>
+                            {{ $student?->admissionno ?? '—' }}
+                            · {{ $class?->schoolclass }} {{ $class?->arms?->arm }}
+                            · {{ $term?->term }} {{ $session?->session }}
+                        </p>
                     </div>
                 </div>
-                @endforeach
-                <div class="col-4 col-md-2">
-                    <div class="card border text-center mb-0 py-2">
-                        <div class="fw-bold fs-4 text-{{ $pctColor }}">{{ $pct }}%</div>
-                        <div class="text-muted" style="font-size:11px;">Attendance</div>
-                    </div>
+                <div class="d-flex gap-2 position-relative">
+                    <a href="{{ route('attendance.register', [$classId, $termId, $sessionId]) }}"
+                       class="btn btn-light btn-sm">
+                        <i class="ri-arrow-left-line me-1"></i>Back to Register
+                    </a>
+                    @can('View attendance-class-summary')
+                    <a href="{{ route('attendance.class-summary', [$classId, $termId, $sessionId]) }}"
+                       class="btn btn-light btn-sm">
+                        <i class="ri-bar-chart-2-line me-1"></i>Class Summary
+                    </a>
+                    @endcan
                 </div>
             </div>
 
-            @if($summary && $totalDays > 0)
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <h6 class="fw-semibold mb-3"><i class="ri-bar-chart-2-line me-2 text-primary"></i>Breakdown</h6>
-                    @php
-                        $prP = round(($summary->days_present    / $totalDays) * 100, 1);
-                        $abP = round(($summary->days_absent     / $totalDays) * 100, 1);
-                        $skP = round(($summary->days_sick_leave / $totalDays) * 100, 1);
-                        $exP = round(($summary->days_excused    / $totalDays) * 100, 1);
-                        $ltP = round(($summary->days_late       / $totalDays) * 100, 1);
-                    @endphp
-                    <div class="progress mb-3" style="height:12px;border-radius:99px;">
-                        <div class="progress-bar bg-success" style="width:{{ $prP }}%" title="Present"></div>
-                        <div class="progress-bar" style="width:{{ $ltP }}%;background:#fb923c;" title="Late"></div>
-                        <div class="progress-bar bg-warning" style="width:{{ $skP }}%" title="Sick"></div>
-                        <div class="progress-bar bg-info" style="width:{{ $exP }}%" title="Excused"></div>
-                        <div class="progress-bar bg-danger" style="width:{{ $abP }}%" title="Absent"></div>
-                    </div>
-                    <div class="d-flex gap-3 flex-wrap" style="font-size:12px;">
-                        <span><span class="badge bg-success me-1">&nbsp;</span>Present ({{ $prP }}%)</span>
-                        <span><span class="badge me-1" style="background:#fb923c;">&nbsp;</span>Late ({{ $ltP }}%)</span>
-                        <span><span class="badge bg-warning me-1">&nbsp;</span>Sick ({{ $skP }}%)</span>
-                        <span><span class="badge bg-info me-1">&nbsp;</span>Excused ({{ $exP }}%)</span>
-                        <span><span class="badge bg-danger me-1">&nbsp;</span>Absent ({{ $abP }}%)</span>
-                    </div>
+            {{-- ── School hours banner ─────────────────────────────── --}}
+            @if($setting)
+            <div class="sr-hours-banner">
+                <i class="ri-time-line"></i>
+                <div>
+                    <strong>School Hours:</strong>
+                    Resumption
+                    <span class="badge bg-primary">
+                        {{ \Illuminate\Support\Carbon::parse($setting->resumption_time ?? '08:00:00')->format('g:i A') }}
+                    </span>
+                    &nbsp;·&nbsp;
+                    Closing
+                    <span class="badge bg-secondary">
+                        {{ \Illuminate\Support\Carbon::parse($setting->closing_time ?? '14:00:00')->format('g:i A') }}
+                    </span>
+                    @if($setting->track_afternoon)
+                        &nbsp;·&nbsp;
+                        Afternoon starts
+                        <span class="badge bg-info text-dark">
+                            {{ \Illuminate\Support\Carbon::parse($setting->morning_end_time ?? '12:00:00')->format('g:i A') }}
+                        </span>
+                    @endif
+                    @if(($setting->late_grace_minutes ?? 0) > 0)
+                        &nbsp;·&nbsp;
+                        <span class="text-muted">Grace: {{ $setting->late_grace_minutes }} min</span>
+                    @endif
                 </div>
             </div>
             @endif
 
-            <div class="card shadow-sm">
-                <div class="card-header d-flex align-items-center py-3">
-                    <h5 class="card-title mb-0 flex-grow-1">
-                        <i class="ri-calendar-line me-2 text-primary"></i>Daily Attendance Log
-                    </h5>
-                    <span class="badge bg-dark-subtle text-dark">{{ $records->count() }} records</span>
+            {{-- ── Term summary stat cards ─────────────────────────── --}}
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md-3 col-lg">
+                    <div class="sr-stat-card">
+                        <div class="stat-value text-success">{{ $summary->days_present ?? 0 }}</div>
+                        <div class="stat-label">Present</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg">
+                    <div class="sr-stat-card">
+                        <div class="stat-value text-danger">{{ $summary->days_absent ?? 0 }}</div>
+                        <div class="stat-label">Absent</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg">
+                    <div class="sr-stat-card">
+                        <div class="stat-value text-warning">{{ $summary->days_sick_leave ?? 0 }}</div>
+                        <div class="stat-label">Sick</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg">
+                    <div class="sr-stat-card">
+                        <div class="stat-value text-info">{{ $summary->days_excused ?? 0 }}</div>
+                        <div class="stat-label">Excused</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg">
+                    <div class="sr-stat-card">
+                        <div class="stat-value text-secondary">{{ $summary->days_late ?? 0 }}</div>
+                        <div class="stat-label">Late</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg">
+                    <div class="sr-stat-card">
+                        <div class="stat-value text-{{ $pctColor }}">{{ $pct }}%</div>
+                        <div class="stat-label">Attendance</div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Attendance progress bar ─────────────────────────── --}}
+            @php
+                $totalDays = $summary->total_school_days ?? ($setting?->totalSchoolDays() ?? 0);
+            @endphp
+            <div class="sr-card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="ri-bar-chart-line me-2 text-primary"></i>Term Attendance Progress</span>
+                    <span class="fw-bold text-{{ $pctColor }}">
+                        {{ $pct }}%
+                        <small class="text-muted fw-normal ms-1">({{ $totalDays }} school days)</small>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="sr-progress">
+                        <span class="bg-{{ $pctColor }}" style="width: {{ min($pct, 100) }}%"></span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 text-muted" style="font-size:11px;">
+                        <span>0%</span>
+                        <span>Target: 80%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Daily log ───────────────────────────────────────── --}}
+            <div class="sr-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="ri-calendar-line me-2 text-primary"></i>Daily Log</span>
+                    <span class="badge bg-primary">{{ $records->count() }} record{{ $records->count() === 1 ? '' : 's' }}</span>
                 </div>
                 <div class="card-body p-0">
-                    @if($records->isNotEmpty())
                     <div class="table-responsive">
-                        <table class="table table-nowrap align-middle mb-0">
-                            <thead style="background:#1e3a5f;">
+                        <table class="table sr-table mb-0">
+                            <thead>
                                 <tr>
-                                    <th class="text-white">#</th>
-                                    <th class="text-white">Date</th>
-                                    <th class="text-white">Day</th>
-                                    <th class="text-white">Period</th>
-                                    <th class="text-white">Status</th>
-                                    <th class="text-white">Notes</th>
+                                    <th style="width:44px;">#</th>
+                                    <th>Date</th>
+                                    <th>Period</th>
+                                    <th>Status</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
+                                    <th>Source</th>
+                                    <th>Notes</th>
                                 </tr>
                             </thead>
                             <tbody>
-                            @foreach($records as $i => $rec)
-                            @php
-                                $sc = ['present'=>'success','absent'=>'danger','sick_leave'=>'warning','excused'=>'info','late'=>'secondary'];
-                                $si = ['present'=>'ri-check-line','absent'=>'ri-close-line','sick_leave'=>'ri-heart-pulse-line','excused'=>'ri-file-text-line','late'=>'ri-time-line'];
-                                $c  = $sc[$rec->status] ?? 'secondary';
-                                $ic = $si[$rec->status] ?? 'ri-question-line';
-                            @endphp
-                            <tr>
-                                <td class="text-muted">{{ $i+1 }}</td>
-                                <td><strong>{{ $rec->attendance_date->format('d M Y') }}</strong></td>
-                                <td class="text-muted">{{ $rec->attendance_date->format('l') }}</td>
-                                <td>
-                                    <span class="badge {{ $rec->period === 'morning' ? 'bg-primary-subtle text-primary' : 'bg-info-subtle text-info' }}">
-                                        {{ ucfirst($rec->period) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-{{ $c }}-subtle text-{{ $c }} fw-semibold">
-                                        <i class="{{ $ic }} me-1"></i>
-                                        {{ \App\Models\StudentAttendance::statusLabel($rec->status) }}
-                                    </span>
-                                </td>
-                                <td class="text-muted" style="font-size:12px;">{{ $rec->notes ?? '—' }}</td>
-                            </tr>
-                            @endforeach
+                            @forelse($records as $i => $r)
+                                @php
+                                    $statusColors = [
+                                        'present'    => 'success',
+                                        'absent'     => 'danger',
+                                        'sick_leave' => 'warning',
+                                        'excused'    => 'info',
+                                        'late'       => 'secondary',
+                                    ];
+                                    $sc = $statusColors[$r->status] ?? 'secondary';
+                                    $label = ucfirst(str_replace('_', ' ', $r->status));
+                                @endphp
+                                <tr>
+                                    <td class="text-muted">{{ $i + 1 }}</td>
+                                    <td>
+                                        <div class="fw-semibold">
+                                            {{ \Illuminate\Support\Carbon::parse($r->attendance_date)->format('D, d M Y') }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ $r->period === 'afternoon' ? 'info' : 'primary' }}-subtle text-{{ $r->period === 'afternoon' ? 'info' : 'primary' }}">
+                                            {{ ucfirst($r->period ?? 'morning') }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ $sc }}-subtle text-{{ $sc }} fw-semibold">
+                                            {{ $label }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">
+                                        {{ $r->time_in ? \Illuminate\Support\Carbon::parse($r->time_in)->format('g:i A') : '—' }}
+                                    </td>
+                                    <td class="text-muted">
+                                        {{ $r->time_out ? \Illuminate\Support\Carbon::parse($r->time_out)->format('g:i A') : '—' }}
+                                    </td>
+                                    <td>
+                                        @if($r->source === 'device')
+                                            <span class="badge bg-dark-subtle text-dark">
+                                                <i class="ri-fingerprint-line me-1"></i>Device
+                                            </span>
+                                        @else
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="ri-user-line me-1"></i>Manual
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="text-muted" style="font-size:12px;">
+                                        {{ $r->notes ?? '—' }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        <i class="ri-inbox-line ri-2x d-block mb-2"></i>
+                                        No attendance records yet for this term.
+                                    </td>
+                                </tr>
+                            @endforelse
                             </tbody>
                         </table>
                     </div>
-                    @else
-                    <div class="text-center py-5">
-                        <i class="ri-calendar-line ri-2x d-block mb-2 text-muted"></i>
-                        <p class="text-muted mb-0">No attendance records found for this student.</p>
-                    </div>
-                    @endif
                 </div>
             </div>
 
         </div>
     </div>
 </div>
+
 @endsection

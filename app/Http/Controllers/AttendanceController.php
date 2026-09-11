@@ -62,94 +62,105 @@ class AttendanceController extends Controller
     // REGISTER PAGE  –  mark attendance for a class on a specific date
     // =========================================================================
 
-    public function register(Request $request, int $classId, int $termId, int $sessionId)
-    {
-        $user = Auth::user();
+public function register(Request $request, int $classId, int $termId, int $sessionId)
+{
+    $user = Auth::user();
 
-        // Authorise – must be class teacher or admin
-        if (!$user->hasRole(['admin', 'super-admin'])) {
-            ClassTeacher::where('staffid', $user->id)
-                ->where('schoolclassid', $classId)
-                ->where('termid', $termId)
-                ->where('sessionid', $sessionId)
-                ->firstOrFail();
-        }
-
-        // Resolve date
-        $date = $request->input('date', today()->toDateString());
-        try {
-            $date = Carbon::parse($date)->toDateString();
-        } catch (\Exception $e) {
-            $date = today()->toDateString();
-        }
-
-        $period = $request->input('period', 'morning');
-
-        // Term setting
-        $setting = AttendanceTermSetting::where('term_id', $termId)
-            ->where('session_id', $sessionId)
-            ->first();
-
-        if (!$setting) {
-            return redirect()->back()->with('error', 'Attendance has not been configured for this term. Please ask admin to set it up.');
-        }
-
-        // Validate period choice
-        if ($period === 'afternoon' && !$setting->track_afternoon) {
-            $period = 'morning';
-        }
-
-        // Check if date is a holiday
-        $isHoliday = $this->isHolidayDate($date, $termId, $sessionId);
-
-        // Fetch students
-        $students = Studentclass::where('studentclass.schoolclassid', $classId)
-            ->where('studentclass.sessionid', $sessionId)
-            ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->orderBy('studentRegistration.lastname')
-            ->orderBy('studentRegistration.firstname')
-            ->get([
-                'studentRegistration.id',
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname as fname',
-                'studentRegistration.lastname as lname',
-                'studentRegistration.othername as mname',
-                'studentRegistration.gender',
-                'studentpicture.picture',
-            ]);
-
-        // Fetch existing attendance for this date+period
-        $existing = StudentAttendance::where('schoolclass_id', $classId)
-            ->where('term_id', $termId)
-            ->where('session_id', $sessionId)
-            ->where('attendance_date', $date)
-            ->where('period', $period)
-            ->pluck('status', 'student_id');
-
-        // Calendar – generate school days for date picker
-        $calendarDays = $this->buildCalendarDays($setting, $termId, $sessionId);
-
-       // CORRECT - gets all columns, keyed by student_id
-        $summaries = AttendanceSummary::where('schoolclass_id', $classId)
-            ->where('term_id', $termId)
-            ->where('session_id', $sessionId)
-            ->get()
-            ->keyBy('student_id');
-
-        $schoolclass = Schoolclass::with('arms')->find($classId);
-        $term        = Schoolterm::find($termId);
-        $session     = Schoolsession::find($sessionId);
-
-        $pagetitle = "Attendance – {$schoolclass->schoolclass} {$schoolclass->arms?->arm}";
-
-        return view('attendance.teacher.register', compact(
-            'students', 'existing', 'setting', 'date', 'period',
-            'classId', 'termId', 'sessionId', 'isHoliday',
-            'calendarDays', 'summaries', 'schoolclass', 'term', 'session', 'pagetitle'
-        ));
+    // Authorise – must be class teacher or admin
+    if (!$user->hasRole(['admin', 'super-admin'])) {
+        ClassTeacher::where('staffid', $user->id)
+            ->where('schoolclassid', $classId)
+            ->where('termid', $termId)
+            ->where('sessionid', $sessionId)
+            ->firstOrFail();
     }
 
+    // Resolve date
+    $date = $request->input('date', today()->toDateString());
+    try {
+        $date = Carbon::parse($date)->toDateString();
+    } catch (\Exception $e) {
+        $date = today()->toDateString();
+    }
+
+    $period = $request->input('period', 'morning');
+
+    // Term setting
+    $setting = AttendanceTermSetting::where('term_id', $termId)
+        ->where('session_id', $sessionId)
+        ->first();
+
+    if (!$setting) {
+        return redirect()->back()->with('error', 'Attendance has not been configured for this term. Please ask admin to set it up.');
+    }
+
+    // Validate period choice
+    if ($period === 'afternoon' && !$setting->track_afternoon) {
+        $period = 'morning';
+    }
+
+    // Check if date is a holiday
+    $isHoliday = $this->isHolidayDate($date, $termId, $sessionId);
+
+    // Fetch students
+    $students = Studentclass::where('studentclass.schoolclassid', $classId)
+        ->where('studentclass.sessionid', $sessionId)
+        ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->orderBy('studentRegistration.lastname')
+        ->orderBy('studentRegistration.firstname')
+        ->get([
+            'studentRegistration.id',
+            'studentRegistration.admissionNo as admissionno',
+            'studentRegistration.firstname as fname',
+            'studentRegistration.lastname as lname',
+            'studentRegistration.othername as mname',
+            'studentRegistration.gender',
+            'studentpicture.picture',
+        ]);
+
+    // Fetch existing attendance for this date+period
+    $existing = StudentAttendance::where('schoolclass_id', $classId)
+        ->where('term_id', $termId)
+        ->where('session_id', $sessionId)
+        ->where('attendance_date', $date)
+        ->where('period', $period)
+        ->pluck('status', 'student_id');
+
+    // Calendar – generate school days for date picker
+    $calendarDays = $this->buildCalendarDays($setting, $termId, $sessionId);
+
+    // Summaries keyed by student_id
+    $summaries = AttendanceSummary::where('schoolclass_id', $classId)
+        ->where('term_id', $termId)
+        ->where('session_id', $sessionId)
+        ->get()
+        ->keyBy('student_id');
+
+    $schoolclass = Schoolclass::with('arms')->find($classId);
+    $term        = Schoolterm::find($termId);
+    $session     = Schoolsession::find($sessionId);
+
+    // ── NEW: school-hours labels for the blade ─────────────────
+    $resumptionLabel = $setting->resumption_time
+        ? Carbon::parse($setting->resumption_time)->format('g:i A')
+        : '8:00 AM';
+    $closingLabel = $setting->closing_time
+        ? Carbon::parse($setting->closing_time)->format('g:i A')
+        : '2:00 PM';
+    $morningEndLabel = $setting->morning_end_time
+        ? Carbon::parse($setting->morning_end_time)->format('g:i A')
+        : '12:00 PM';
+
+    $pagetitle = "Attendance – {$schoolclass->schoolclass} {$schoolclass->arms?->arm}";
+
+    return view('attendance.teacher.register', compact(
+        'students', 'existing', 'setting', 'date', 'period',
+        'classId', 'termId', 'sessionId', 'isHoliday',
+        'calendarDays', 'summaries', 'schoolclass', 'term', 'session',
+        'pagetitle', 'resumptionLabel', 'closingLabel', 'morningEndLabel'
+    ));
+}
     // =========================================================================
     // SAVE ATTENDANCE  –  handles both full-class save and single-student toggle
     // =========================================================================

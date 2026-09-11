@@ -63,7 +63,6 @@
                                         <div class="card-body">
                                             <form id="settingForm">
                                                 @csrf
-                                                {{-- Hidden field to hold the ID when editing --}}
                                                 <input type="hidden" id="settingId" name="setting_id" value="">
 
                                                 <div class="row g-3">
@@ -93,6 +92,33 @@
                                                         <label class="form-label fw-semibold">Vacation Date <span class="text-danger">*</span></label>
                                                         <input type="date" name="vacation_date" id="vacationDate" class="form-control" required>
                                                     </div>
+
+                                                    {{-- ── NEW: admin-editable school hours ── --}}
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-semibold">Resumption Time <span class="text-danger">*</span></label>
+                                                        <input type="time" name="resumption_time" id="resumptionTime" class="form-control"
+                                                               value="{{ old('resumption_time', '08:00') }}" required>
+                                                        <small class="text-muted" style="font-size:11px;">Punches after this (+ grace) are <strong>late</strong>.</small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-semibold">Closing Time <span class="text-danger">*</span></label>
+                                                        <input type="time" name="closing_time" id="closingTime" class="form-control"
+                                                               value="{{ old('closing_time', '14:00') }}" required>
+                                                        <small class="text-muted" style="font-size:11px;">End of the school day.</small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-semibold">Morning Ends At <span class="text-danger">*</span></label>
+                                                        <input type="time" name="morning_end_time" id="morningEndTime" class="form-control"
+                                                               value="{{ old('morning_end_time', '12:00') }}" required>
+                                                        <small class="text-muted" style="font-size:11px;">Punches after this go to the afternoon period.</small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label fw-semibold">Grace (minutes)</label>
+                                                        <input type="number" name="late_grace_minutes" id="lateGrace" class="form-control"
+                                                               min="0" max="120" value="{{ old('late_grace_minutes', 0) }}">
+                                                        <small class="text-muted" style="font-size:11px;">Free minutes before "late" applies.</small>
+                                                    </div>
+
                                                     <div class="col-md-6">
                                                         <label class="form-label fw-semibold">Periods to Track</label>
                                                         <div class="d-flex gap-4 mt-1">
@@ -137,6 +163,8 @@
                                                             <th class="text-white">Session</th>
                                                             <th class="text-white">Resumption</th>
                                                             <th class="text-white">Vacation</th>
+                                                            <th class="text-white">Resumption&nbsp;Time</th>
+                                                            <th class="text-white">Closing&nbsp;Time</th>
                                                             <th class="text-white text-center">Morning</th>
                                                             <th class="text-white text-center">Afternoon</th>
                                                             <th class="text-white text-center">School Days</th>
@@ -150,6 +178,16 @@
                                                         <td>{{ $s->session?->session }}</td>
                                                         <td>{{ $s->resumption_date->format('d M Y') }}</td>
                                                         <td>{{ $s->vacation_date->format('d M Y') }}</td>
+                                                        <td>
+                                                            <span class="badge bg-primary-subtle text-primary">
+                                                                {{ \Illuminate\Support\Carbon::parse($s->resumption_time ?? '08:00:00')->format('g:i A') }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary-subtle text-secondary">
+                                                                {{ \Illuminate\Support\Carbon::parse($s->closing_time ?? '14:00:00')->format('g:i A') }}
+                                                            </span>
+                                                        </td>
                                                         <td class="text-center">
                                                             @if($s->track_morning)
                                                                 <span class="badge bg-success-subtle text-success"><i class="ri-check-line"></i></span>
@@ -177,6 +215,10 @@
                                                                         {{ $s->session_id }},
                                                                         '{{ $s->resumption_date->toDateString() }}',
                                                                         '{{ $s->vacation_date->toDateString() }}',
+                                                                        '{{ \Illuminate\Support\Carbon::parse($s->resumption_time ?? '08:00:00')->format('H:i') }}',
+                                                                        '{{ \Illuminate\Support\Carbon::parse($s->closing_time ?? '14:00:00')->format('H:i') }}',
+                                                                        '{{ \Illuminate\Support\Carbon::parse($s->morning_end_time ?? '12:00:00')->format('H:i') }}',
+                                                                        {{ (int) ($s->late_grace_minutes ?? 0) }},
                                                                         {{ $s->track_morning ? 'true' : 'false' }},
                                                                         {{ $s->track_afternoon ? 'true' : 'false' }}
                                                                     )"
@@ -194,7 +236,7 @@
                                                     </tr>
                                                     @empty
                                                     <tr>
-                                                        <td colspan="8" class="text-center py-4 text-muted">
+                                                        <td colspan="10" class="text-center py-4 text-muted">
                                                             <i class="ri-inbox-line ri-2x d-block mb-1"></i>No settings configured yet.
                                                         </td>
                                                     </tr>
@@ -361,23 +403,26 @@ function showToast(msg, type = 'success') {
 }
 
 // ── Edit Setting ──────────────────────────────────────────────────────────────
-function editSetting(id, termId, sessionId, resumption, vacation, morning, afternoon) {
-    // Populate form fields
-    document.getElementById('settingId').value       = id;
-    document.getElementById('termId').value          = termId;
-    document.getElementById('sessionId').value       = sessionId;
-    document.getElementById('resumptionDate').value  = resumption;
-    document.getElementById('vacationDate').value    = vacation;
-    document.getElementById('trackMorning').checked  = morning;
-    document.getElementById('trackAfternoon').checked= afternoon;
+function editSetting(id, termId, sessionId, resumption, vacation,
+                     resumptionTime, closingTime, morningEnd, grace,
+                     morning, afternoon) {
+    document.getElementById('settingId').value        = id;
+    document.getElementById('termId').value           = termId;
+    document.getElementById('sessionId').value        = sessionId;
+    document.getElementById('resumptionDate').value   = resumption;
+    document.getElementById('vacationDate').value     = vacation;
+    document.getElementById('resumptionTime').value   = resumptionTime;
+    document.getElementById('closingTime').value      = closingTime;
+    document.getElementById('morningEndTime').value   = morningEnd;
+    document.getElementById('lateGrace').value        = grace;
+    document.getElementById('trackMorning').checked   = morning;
+    document.getElementById('trackAfternoon').checked = afternoon;
 
-    // Update UI to show edit mode
-    document.getElementById('formTitle').textContent    = 'Edit Term Calendar';
-    document.getElementById('saveBtnText').textContent  = 'Update Setting';
+    document.getElementById('formTitle').textContent       = 'Edit Term Calendar';
+    document.getElementById('saveBtnText').textContent     = 'Update Setting';
     document.getElementById('resetFormBtn').style.display  = 'inline-block';
     document.getElementById('cancelEditBtn').style.display = 'inline-block';
 
-    // Scroll to form
     document.getElementById('settingForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -391,6 +436,10 @@ function resetSettingForm() {
     document.getElementById('cancelEditBtn').style.display = 'none';
     document.getElementById('trackMorning').checked        = true;
     document.getElementById('trackAfternoon').checked      = false;
+    document.getElementById('resumptionTime').value        = '08:00';
+    document.getElementById('closingTime').value           = '14:00';
+    document.getElementById('morningEndTime').value        = '12:00';
+    document.getElementById('lateGrace').value             = 0;
 }
 
 @can('Create attendance-settings')
@@ -402,11 +451,9 @@ document.getElementById('settingForm')?.addEventListener('submit', async functio
 
     const settingId = document.getElementById('settingId').value;
 
-    // If editing, send PUT to update route; if new, send POST to store route
-    const url    = settingId
+    const url = settingId
         ? `/attendance/settings/${settingId}`
         : '{{ route('attendance.settings.store') }}';
-    const method = settingId ? 'POST' : 'POST'; // Laravel needs POST + _method for PUT
 
     if (settingId) {
         fd.set('_method', 'PUT');
@@ -426,7 +473,11 @@ document.getElementById('settingForm')?.addEventListener('submit', async functio
 @can('Create attendance-holidays')
 document.getElementById('holidayForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const r = await fetch('{{ route('attendance.holidays.store') }}', { method:'POST', headers:{'X-CSRF-TOKEN':csrfToken()}, body: new FormData(this) });
+    const r = await fetch('{{ route('attendance.holidays.store') }}', {
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':csrfToken()},
+        body: new FormData(this)
+    });
     const d = await r.json();
     showToast(d.message, d.success ? 'success' : 'danger');
     if (d.success) setTimeout(() => location.reload(), 1000);

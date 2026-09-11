@@ -38,6 +38,36 @@
             </div>
             @endif
 
+            {{-- ── NEW: School Hours Banner ──────────────────────────────────── --}}
+            @if(isset($setting))
+            <div class="school-hours-banner mb-3">
+                <i class="ri-time-line"></i>
+                <div style="font-size:13px;">
+                    <strong>School Hours:</strong>
+                    Resumption
+                    <span class="badge bg-primary">
+                        {{ $resumptionLabel ?? \Illuminate\Support\Carbon::parse($setting->resumption_time ?? '08:00:00')->format('g:i A') }}
+                    </span>
+                    &nbsp;·&nbsp;
+                    Closing
+                    <span class="badge bg-secondary">
+                        {{ $closingLabel ?? \Illuminate\Support\Carbon::parse($setting->closing_time ?? '14:00:00')->format('g:i A') }}
+                    </span>
+                    @if($setting->track_afternoon)
+                        &nbsp;·&nbsp;
+                        Afternoon starts
+                        <span class="badge bg-info text-dark">
+                            {{ $morningEndLabel ?? \Illuminate\Support\Carbon::parse($setting->morning_end_time ?? '12:00:00')->format('g:i A') }}
+                        </span>
+                    @endif
+                    @if(($setting->late_grace_minutes ?? 0) > 0)
+                        &nbsp;·&nbsp;
+                        <span class="text-muted">Grace: {{ $setting->late_grace_minutes }} min</span>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             {{-- Header Info --}}
             <div class="row g-3 mb-3">
                 <div class="col-lg-6">
@@ -136,12 +166,24 @@
                                 <option value="morning"   {{ $period === 'morning'   ? 'selected' : '' }}>🌅 Morning</option>
                                 <option value="afternoon" {{ $period === 'afternoon' ? 'selected' : '' }}>🌇 Afternoon</option>
                             </select>
+                            {{-- NEW: hours hint under the switcher --}}
+                            <div class="text-muted mt-1" style="font-size:10.5px;line-height:1.3;">
+                                Morning: {{ $resumptionLabel ?? '8:00 AM' }} – {{ $morningEndLabel ?? '12:00 PM' }}
+                                @if($setting->track_afternoon)
+                                    <br>Afternoon: {{ $morningEndLabel ?? '12:00 PM' }} – {{ $closingLabel ?? '2:00 PM' }}
+                                @endif
+                            </div>
                         </div>
                         @else
                         <input type="hidden" id="periodSelect" value="{{ $period }}">
                         <div class="align-self-end">
                             <span class="badge bg-primary-subtle text-primary px-3 py-2">
                                 {{ ucfirst($period) }} Session
+                                <span class="ms-1" style="opacity:.75;">
+                                    ({{ $period === 'afternoon'
+                                        ? ($morningEndLabel ?? '12:00 PM') . ' – ' . ($closingLabel ?? '2:00 PM')
+                                        : ($resumptionLabel ?? '8:00 AM') . ' – ' . ($morningEndLabel ?? '12:00 PM') }})
+                                </span>
                             </span>
                         </div>
                         @endif
@@ -470,8 +512,23 @@ function showToast(msg, type = 'success') {
 
 refreshStats();
 </script>
+
 <style>
 @keyframes fadeIn { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
 .att-status-btn { font-size: 12px; padding: 4px 8px; white-space: nowrap; }
+
+/* ── NEW: School hours banner ── */
+.school-hours-banner {
+    background: #eff6ff;
+    color: #1e3a5f;
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.school-hours-banner i { font-size: 20px; }
+.school-hours-banner .badge { font-weight: 600; }
 </style>
 @endsection

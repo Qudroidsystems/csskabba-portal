@@ -19,29 +19,25 @@ use Illuminate\Support\Carbon;
  * Turns a single raw device punch (DeviceAttendanceLog) into either a
  * StudentAttendance row or a StaffAttendance row, based on the PIN mapping.
  *
- * Called synchronously from Api\DeviceAttendanceController::store() and from
- * DeviceUserMappingController::reprocessPendingLogs() at current volumes
- * (~1,200 mapped users). If punch volume grows significantly, dispatch
- * process() from a queued Job instead of calling it inline.
+ * Student lateness / afternoon cutoffs now come from AttendanceTermSetting
+ * (admin-editable). Staff lateness comes from StaffAttendanceTimeSetting.
  */
 class DeviceAttendanceProcessor
 {
-    // Adjust these to match the school's actual bell schedule, or move to a
-    // settings table later if different periods need different cutoffs.
-    const MORNING_CUTOFF  = '08:00:00'; // punch after this = 'late' for students (morning period)
-    const AFTERNOON_START = '12:00:00'; // punches after this go to the afternoon period
-
-    // Staff lateness now comes from StaffAttendanceTimeSetting::current()
-    // (admin-configurable, see StaffAttendanceTimeSettingController) instead
-    // of a hardcoded cutoff.
+    // Fallbacks only — used if no term setting exists for the current term.
+    const DEFAULT_MORNING_CUTOFF  = '08:00:00';
+    const DEFAULT_AFTERNOON_START = '12:00:00';
 
     public function process(DeviceAttendanceLog $log): void
     {
         // Device outage days are excluded from processing entirely so nobody
-        // gets a spurious attendance row (or spurious absence) recorded for that date.
+        // gets a spurious attendance row (or spurious absence) for that date.
         $punchDate = Carbon::parse($log->punch_time)->toDateString();
         if (DeviceOutageDate::where('outage_date', $punchDate)->exists()) {
-            $log->update(['processing_status' => 'error', 'process_note' => 'Punch date flagged as device outage']);
+            $log->update([
+                'processing_status' => 'error',
+                'process_note'      => 'Punch date flagged as device outage',
+            ]);
             return;
         }
 
@@ -51,7 +47,10 @@ class DeviceAttendanceProcessor
             ->first();
 
         if (!$mapping) {
-            $log->update(['processing_status' => 'unmapped', 'process_note' => 'No mapping for this PIN']);
+            $log->update([
+                'processing_status' => 'unmapped',
+                'process_note'      => 'No mapping for this PIN',
+            ]);
             return;
         }
 
@@ -63,7 +62,10 @@ class DeviceAttendanceProcessor
             }
             $log->update(['processing_status' => 'processed', 'process_note' => null]);
         } catch (\Exception $e) {
-            $log->update(['processing_status' => 'error', 'process_note' => $e->getMessage()]);
+            $log->update([
+                'processing_status' => 'error',
+                'process_note'      => $e->getMessage(),
+            ]);
         }
     }
 
@@ -93,8 +95,22 @@ class DeviceAttendanceProcessor
             throw new \RuntimeException('Attendance not configured for the current term.');
         }
 
-        $period = ($time >= self::AFTERNOON_START && $setting->track_afternoon) ? 'afternoon' : 'morning';
-        $status = ($period === 'morning' && $time > self::MORNING_CUTOFF) ? 'late' : 'present';
+        // ── Times now come from the admin-configurable term setting ──
+        // Fallbacks guard against legacy rows saved before the migration.
+        $dayStart       = $punch->copy()->startOfDay();
+        $morningCutoff  = $setting->resumption_time
+            ? $setting->morningCutoffFor($dayStart)
+            : $dayStart->copy()->setTimeFromTimeString(self::DEFAULT_MORNING_CUTOFF);
+        $afternoonStart = $setting->morning_end_time
+            ? $setting->afternoonStartFor($dayStart)
+            : $dayStart->copy()->setTimeFromTimeString(self::DEFAULT_AFTERNOON_START);
+
+        $isAfternoon = $setting->track_afternoon && $punch->gte($afternoonStart);
+        $period      = $isAfternoon ? 'afternoon' : 'morning';
+
+        // Status only evaluated for morning punches; afternoon punches are
+        // always 'present' (no separate afternoon lateness rule yet).
+        $status = (!$isAfternoon && $punch->gt($morningCutoff)) ? 'late' : 'present';
 
         $keys = [
             'student_id'      => $studentId,
@@ -105,8 +121,8 @@ class DeviceAttendanceProcessor
             'period'          => $period,
         ];
 
-        // First punch of the period sets status + time_in and is never downgraded
-        // by a later duplicate punch; every subsequent punch that day updates time_out.
+        // First punch of the period sets status + time_in and is never
+        // downgraded by a later duplicate punch; subsequent punches update time_out.
         $existing = StudentAttendance::where($keys)->first();
 
         $attendance = StudentAttendance::updateOrCreate($keys, [
@@ -118,11 +134,13 @@ class DeviceAttendanceProcessor
 
         // Only rebuild when this punch could actually have changed the summary:
         // a brand-new row, or a status change. Every later "time_out only"
-        // punch for an already-recorded student/period skips this entirely —
-        // this is what keeps a morning rush of repeat punches cheap.
+        // punch skips this entirely — keeps a morning rush of repeat punches cheap.
         if (!$existing || $existing->status !== $attendance->status) {
             AttendanceSettingController::rebuildSummary(
-                $studentId, $studentClass->schoolclassid, $term->id, $session->id
+                $studentId,
+                $studentClass->schoolclassid,
+                $term->id,
+                $session->id
             );
         }
     }
@@ -137,9 +155,8 @@ class DeviceAttendanceProcessor
             ->where('attendance_date', $date)
             ->first();
 
-        // Status is decided once, on the FIRST punch of the day, exactly like
-        // the student path above — a later time_out-only punch never
-        // downgrades an already-recorded 'present' to 'late' or vice versa.
+        // Status is decided once, on the FIRST punch of the day — a later
+        // time_out-only punch never downgrades an already-recorded status.
         if ($existing) {
             $status = $existing->status;
         } else {

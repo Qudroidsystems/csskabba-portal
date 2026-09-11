@@ -20,7 +20,7 @@ class AttendanceSettingController extends Controller
     public function __construct()
     {
         $this->middleware('permission:View attendance-settings',   ['only' => ['index']]);
-        $this->middleware('permission:Create attendance-settings', ['only' => ['store']]);
+        $this->middleware('permission:Create attendance-settings', ['only' => ['store', 'update']]);
         $this->middleware('permission:Delete attendance-settings', ['only' => ['destroy']]);
 
         $this->middleware('permission:View attendance-holidays',   ['only' => ['holidays']]);
@@ -45,46 +45,31 @@ class AttendanceSettingController extends Controller
         return view('attendance.admin.settings', compact('settings', 'terms', 'sessions', 'holidays', 'pagetitle'));
     }
 
-
-    public function update(Request $request, $id)
+    // Shared validation rules for store() and update().
+    private function settingRules(): array
     {
-        $validated = $request->validate([
-            'term_id'         => 'required|exists:schoolterm,id',
-            'session_id'      => 'required|exists:schoolsession,id',
-            'resumption_date' => 'required|date',
-            'vacation_date'   => 'required|date|after:resumption_date',
-            'track_morning'   => 'boolean',
-            'track_afternoon' => 'boolean',
-        ]);
-
-        $validated['track_morning']   = $request->boolean('track_morning', true);
-        $validated['track_afternoon'] = $request->boolean('track_afternoon', false);
-
-        try {
-            $setting = AttendanceTermSetting::findOrFail($id);
-            $setting->update($validated);
-
-            return response()->json(['success' => true, 'message' => 'Term setting updated successfully.', 'data' => $setting]);
-        } catch (\Exception $e) {
-            Log::error('AttendanceSetting update error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
+        return [
+            'term_id'            => 'required|exists:schoolterm,id',
+            'session_id'         => 'required|exists:schoolsession,id',
+            'resumption_date'    => 'required|date',
+            'vacation_date'      => 'required|date|after:resumption_date',
+            'resumption_time'    => 'required|date_format:H:i',
+            'closing_time'       => 'required|date_format:H:i|after:resumption_time',
+            'morning_end_time'   => 'required|date_format:H:i|after:resumption_time|before:closing_time',
+            'late_grace_minutes' => 'nullable|integer|min:0|max:120',
+            'track_morning'      => 'boolean',
+            'track_afternoon'    => 'boolean',
+        ];
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'term_id'         => 'required|exists:schoolterm,id',
-            'session_id'      => 'required|exists:schoolsession,id',
-            'resumption_date' => 'required|date',
-            'vacation_date'   => 'required|date|after:resumption_date',
-            'track_morning'   => 'boolean',
-            'track_afternoon' => 'boolean',
-        ]);
+        $validated = $request->validate($this->settingRules());
 
-        $validated['created_by']      = Auth::id();
-        $validated['track_morning']   = $request->boolean('track_morning', true);
-        $validated['track_afternoon'] = $request->boolean('track_afternoon', false);
+        $validated['created_by']         = Auth::id();
+        $validated['track_morning']      = $request->boolean('track_morning', true);
+        $validated['track_afternoon']    = $request->boolean('track_afternoon', false);
+        $validated['late_grace_minutes'] = (int) ($validated['late_grace_minutes'] ?? 0);
 
         try {
             $setting = AttendanceTermSetting::updateOrCreate(
@@ -92,9 +77,41 @@ class AttendanceSettingController extends Controller
                 $validated
             );
 
-            return response()->json(['success' => true, 'message' => 'Term attendance setting saved.', 'data' => $setting]);
+            // Bust the processor's cached lookup so new times apply immediately.
+            AttendanceTermSetting::forget();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Term attendance setting saved.',
+                'data'    => $setting,
+            ]);
         } catch (\Exception $e) {
             Log::error('AttendanceSetting store error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate($this->settingRules());
+
+        $validated['track_morning']      = $request->boolean('track_morning', true);
+        $validated['track_afternoon']    = $request->boolean('track_afternoon', false);
+        $validated['late_grace_minutes'] = (int) ($validated['late_grace_minutes'] ?? 0);
+
+        try {
+            $setting = AttendanceTermSetting::findOrFail($id);
+            $setting->update($validated);
+
+            AttendanceTermSetting::forget();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Term setting updated successfully.',
+                'data'    => $setting,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('AttendanceSetting update error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -102,6 +119,7 @@ class AttendanceSettingController extends Controller
     public function destroy($id)
     {
         AttendanceTermSetting::findOrFail($id)->delete();
+        AttendanceTermSetting::forget();
         return response()->json(['success' => true, 'message' => 'Setting deleted.']);
     }
 
@@ -161,7 +179,6 @@ class AttendanceSettingController extends Controller
                 ->with(['student', 'schoolclass'])
                 ->get();
 
-            // Group by class for the report
             $classes = $summaries->groupBy('schoolclass_id');
         }
 
