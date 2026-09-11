@@ -98,10 +98,11 @@ class DeviceUserMappingController extends Controller
 
         if ($type === 'staff') {
             // Staff accounts live on `users` (role = 'Staff'); `staffbioinfo`
-            // is a separate, often-incomplete details table. Source the
-            // people from User so we find everyone who's actually a staff
-            // member, and explicitly exclude anyone who's also a student
-            // (dual-role edge case) — "staff who are not students".
+            // is a separate details table that's often missing for staff who
+            // were created before HR data entry caught up. Source the people
+            // from User so we find everyone who's actually a staff member,
+            // and explicitly exclude anyone who's also a student (dual-role
+            // edge case) — "staff who are not students".
             $query = User::query()
                 ->staff() // scopeStaff(): whereHas('roles', fn($q) => $q->where('name', 'Staff'))
                 ->whereDoesntHave('roles', fn($r) => $r->where('name', 'Student'))
@@ -123,21 +124,46 @@ class DeviceUserMappingController extends Controller
 
             // staffbioinfo.id is what the rest of the pipeline (StaffAttendance,
             // StaffAttendanceController, DeviceAttendanceProcessor) keys off,
-            // so a staff user without that row yet can't be mapped safely.
-            // Run `php artisan staff:backfill-bioinfo` to fix any that show
-            // up filtered out here.
+            // so a staff user without that row can't be mapped safely.
+            //
+            // Fix: auto-provision the staffbioinfo row on the fly instead of
+            // filtering these users out. `id` and `userid` are the only
+            // NOT NULL columns with no default on staffbioinfo, so this is
+            // safe — everything else (employmentid, department, etc.) can be
+            // filled in later from the staff profile screen.
+            //
+            // The try/catch + null-safe operators + final filter below are
+            // kept as a defensive fallback: if provisioning ever fails (race
+            // condition, a future schema change reintroducing a required
+            // column, etc.) we log it and drop just that one row instead of
+            // breaking the picker for everyone else.
             $results = $users
                 ->map(function ($u) {
                     $staff = $u->staffemploymentDetails;
+
+                    if (!$staff) {
+                        try {
+                            $staff = Staff::firstOrCreate(
+                                ['userid' => $u->id],
+                                [
+                                    'email'  => $u->email,
+                                    'gender' => $u->gender,
+                                ]
+                            );
+                        } catch (\Exception $e) {
+                            Log::error(
+                                'Failed to auto-provision staffbioinfo for user ' . $u->id . ': ' . $e->getMessage()
+                            );
+                            $staff = null;
+                        }
+                    }
+
                     return [
                         'id'       => $staff?->id,
                         'text'     => $u->name . ($staff?->employmentid ? " ({$staff->employmentid})" : ''),
                         'photo'    => $u->avatar_url,
                         'subtitle' => $staff?->job_title ?? $staff?->position ?? 'Staff',
                         'meta'     => [
-                            // employmentid isn't populated yet for most staff — fall
-                            // back to the users.id so the picker still shows a
-                            // stable identifier instead of a blank "—".
                             'Staff ID'   => $staff?->employmentid ?: ('U-' . $u->id),
                             'Department' => $staff?->department ?? '—',
                         ],
