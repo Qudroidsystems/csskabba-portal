@@ -1,29 +1,30 @@
-{{-- resources/views/attendance/admin/school-attendance-report.blade.php --}}
+{{-- resources/views/attendance/admin/staff-report.blade.php
+     This is the view StaffAttendanceController@report() actually renders
+     ('attendance.admin.staff-report') — NOT attendance/staff/staff-attendance-detail.blade.php. --}}
 @extends('layouts.master')
 @section('content')
-
 <style>
 :root {
-    --sar2-primary: #1e3a5f;
-    --sar2-accent:  #2563eb;
-    --sar2-success: #16a34a;
-    --sar2-warning: #d97706;
-    --sar2-danger:  #dc2626;
-    --sar2-muted:   #6b7280;
-    --sar2-border:  #e2e8f0;
-    --sar2-radius:  10px;
-    --sar2-shadow:  0 1px 4px rgba(0,0,0,.08);
+    --sad-primary: #1e3a5f;
+    --sad-accent:  #2563eb;
+    --sad-success: #16a34a;
+    --sad-warning: #d97706;
+    --sad-danger:  #dc2626;
+    --sad-muted:   #6b7280;
+    --sad-border:  #e2e8f0;
+    --sad-radius:  10px;
+    --sad-shadow:  0 1px 4px rgba(0,0,0,.08);
 }
 
-.sar2-hero {
-    background: linear-gradient(135deg, var(--sar2-primary) 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--sar2-radius);
+.sad-hero {
+    background: linear-gradient(135deg, var(--sad-primary) 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--sad-radius);
     padding: 24px 28px;
     margin-bottom: 24px;
     position: relative;
     overflow: hidden;
 }
-.sar2-hero::before {
+.sad-hero::before {
     content:'';
     position:absolute;
     top:-60px;
@@ -33,324 +34,355 @@
     background:rgba(255,255,255,.06);
     border-radius:50%;
 }
-.sar2-hero h4 {
+.sad-hero h4 {
     color:#fff;
     font-weight:700;
     margin:0;
     position:relative;
 }
-.sar2-hero p {
+.sad-hero p {
     color:rgba(255,255,255,.75);
     margin:0;
     font-size:13px;
     position:relative;
 }
+.sad-hero-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid rgba(255,255,255,.4);
+    flex-shrink: 0;
+    object-fit: cover;
+}
 
-.sar2-stat-card {
+.sad-stat-card {
     background:#fff;
-    border:1px solid var(--sar2-border);
-    border-radius:var(--sar2-radius);
+    border:1px solid var(--sad-border);
+    border-radius:var(--sad-radius);
     padding:14px 16px;
     text-align:center;
     transition:transform .15s, box-shadow .15s;
 }
-.sar2-stat-card:hover {
+.sad-stat-card:hover {
     transform:translateY(-2px);
-    box-shadow:var(--sar2-shadow);
+    box-shadow:var(--sad-shadow);
 }
-.sar2-stat-card .stat-value {
-    font-size:24px;
+.sad-stat-card .stat-value {
+    font-size:20px;
     font-weight:700;
 }
-.sar2-stat-card .stat-label {
+.sad-stat-card .stat-label {
     font-size:11px;
-    color:var(--sar2-muted);
+    color:var(--sad-muted);
     margin-top:2px;
 }
 
-.sar2-card {
+.sad-card {
     background:#fff;
-    border:1px solid var(--sar2-border);
-    border-radius:var(--sar2-radius);
-    box-shadow:var(--sar2-shadow);
+    border:1px solid var(--sad-border);
+    border-radius:var(--sad-radius);
+    box-shadow:var(--sad-shadow);
     overflow:hidden;
 }
-.sar2-card .card-header {
+.sad-card .card-header {
     background:#fff;
-    border-bottom:1px solid var(--sar2-border);
+    border-bottom:1px solid var(--sad-border);
     padding:16px 20px;
     font-weight:700;
     font-size:14px;
-    color:var(--sar2-primary);
+    color:var(--sad-primary);
 }
 
-.sar2-table th {
-    background:var(--sar2-primary);
+.sad-table th {
+    background:var(--sad-primary);
     color:#fff;
     padding:12px 16px;
     font-weight:600;
     font-size:13px;
     border:none;
 }
-.sar2-table td {
+.sad-table td {
     padding:12px 16px;
     vertical-align:middle;
-    border-bottom:1px solid var(--sar2-border);
+    border-bottom:1px solid var(--sad-border);
     font-size:13px;
 }
-.sar2-table tr:hover td {
+.sad-table tr:hover td {
     background:#eff6ff;
 }
 
-.sar2-form-label {
-    font-size:13px;
-    font-weight:600;
-    color:#374151;
-    margin-bottom:6px;
-}
-.sar2-form-control, .sar2-form-select {
-    border:1.5px solid var(--sar2-border);
+.sad-form-control {
+    border:1.5px solid var(--sad-border);
     border-radius:8px;
     font-size:13px;
     padding:9px 14px;
     transition:border .15s;
 }
-.sar2-form-control:focus, .sar2-form-select:focus {
-    border-color:var(--sar2-accent);
+.sad-form-control:focus {
+    border-color:var(--sad-accent);
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
     outline:none;
 }
+.sad-form-control-sm {
+    padding:6px 10px;
+    border-radius:7px;
+}
+.sad-weekday-row { display:flex; gap:6px; flex-wrap:wrap; }
+.sad-weekday-chip {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#fff; border:1px solid var(--sad-border);
+    border-radius:20px; padding:4px 10px;
+    font-size:11px; cursor:pointer; user-select:none;
+}
+.sad-weekday-chip input { accent-color:#dc2626; }
+.sad-weekday-chip.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
 
-.sar2-avatar {
-    width:32px;
-    height:32px;
-    border-radius:50%;
-    object-fit:cover;
-    border:2px solid var(--sar2-border);
+/* ── School-hours banner ── */
+.sad-hours-banner {
+    background: #eff6ff;
+    color: #1e3a5f;
+    border-radius: var(--sad-radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    border: 1px solid #dbeafe;
+}
+.sad-hours-banner i { font-size: 20px; }
+.sad-hours-banner .badge { font-weight: 600; }
+.sad-hours-banner .sad-grace-pill {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+/* ── Late cell ── */
+.sad-late-by {
+    font-weight: 700;
+    color: #b45309;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+.sad-late-by .mins { color: #dc2626; }
+.sad-ontime {
+    color: #16a34a;
+    font-weight: 600;
+    font-size: 12.5px;
 }
 </style>
 
-<div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
+<div class="main-content"><div class="page-content"><div class="container-fluid">
 
-            {{-- ══ HERO ═══════════════════════════════════════════════════════════ --}}
-            <div class="sar2-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div>
-                    <h4><i class="ri-bar-chart-2-line me-2"></i>School Attendance Report</h4>
-                    <p>Comprehensive attendance overview across all classes</p>
-                </div>
+    {{-- ══ HERO ═══════════════════════════════════════════════════════════ --}}
+    <div class="sad-hero d-flex align-items-center justify-content-between flex-wrap gap-2">
+        @php
+            $initials = strtoupper(substr($staff->full_name,0,1) . (strpos($staff->full_name,' ')!==false ? substr($staff->full_name, strpos($staff->full_name,' ')+1, 1) : ''));
+        @endphp
+        <div class="d-flex align-items-center gap-3">
+            @if($staff->user?->avatar_url)
+            <img src="{{ $staff->user->avatar_url }}" class="sad-hero-avatar" alt="{{ $staff->full_name }}">
+            @else
+            <div class="sad-hero-avatar">{{ $initials ?: 'S' }}</div>
+            @endif
+            <div>
+                <h4><i class="ri-user-line me-2"></i>Staff Attendance – {{ $staff->full_name }}</h4>
+                <p>{{ $staff->employmentid }} · {{ $staff->department ?? '—' }}</p>
             </div>
+        </div>
+        <a href="{{ route('staff-attendance.index') }}" class="btn btn-light btn-sm">
+            <i class="ri-arrow-left-line me-1"></i>Back to Report
+        </a>
+    </div>
 
-            {{-- ══ FILTER ════════════════════════════════════════════════════════ --}}
-            <div class="sar2-card mb-3">
-                <div class="card-body">
-                    <form method="GET" action="{{ route('attendance.school-report') }}">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-md-3">
-                                <label class="sar2-form-label">Term</label>
-                                <select name="term_id" class="sar2-form-select">
-                                    <option value="">All Terms</option>
-                                    @foreach($terms as $t)
-                                        <option value="{{ $t->id }}" {{ $termId == $t->id ? 'selected' : '' }}>{{ $t->term }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="sar2-form-label">Session</label>
-                                <select name="session_id" class="sar2-form-select">
-                                    <option value="">All Sessions</option>
-                                    @foreach($sessions as $s)
-                                        <option value="{{ $s->id }}" {{ $sessionId == $s->id ? 'selected' : '' }}>{{ $s->session }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="ri-search-line me-1"></i>Generate Report
-                                </button>
-                            </div>
-                            @if($termId && $sessionId)
-                            <div class="col-md-2">
-                                <button type="button" onclick="window.print()" class="btn btn-outline-secondary w-100">
-                                    <i class="ri-printer-line me-1"></i>Print
-                                </button>
-                            </div>
-                            @endif
+    {{-- ══ SCHOOL HOURS / LATE EXPECTATION BANNER ═══════════════════════ --}}
+    @php
+        $currentTermSetting = \App\Models\AttendanceTermSetting::current();
+        $resumptionLabel = $currentTermSetting?->resumption_time
+            ? \Illuminate\Support\Carbon::parse($currentTermSetting->resumption_time)->format('g:i A')
+            : '8:00 AM';
+        $closingLabel = $currentTermSetting?->closing_time
+            ? \Illuminate\Support\Carbon::parse($currentTermSetting->closing_time)->format('g:i A')
+            : '2:00 PM';
+        $graceMinutes = (int) ($currentTermSetting->late_grace_minutes ?? 0);
+        $expectedBy = $currentTermSetting?->resumption_time
+            ? \Illuminate\Support\Carbon::parse($currentTermSetting->resumption_time)->addMinutes($graceMinutes)->format('g:i A')
+            : '8:00 AM';
+    @endphp
+    @if($currentTermSetting)
+    <div class="sad-hours-banner">
+        <i class="ri-time-line"></i>
+        <div class="flex-grow-1">
+            <strong>School Hours:</strong>
+            Resumption <span class="badge bg-primary">{{ $resumptionLabel }}</span>
+            &nbsp;·&nbsp;
+            Closing <span class="badge bg-secondary">{{ $closingLabel }}</span>
+            &nbsp;·&nbsp;
+            Expected clock-in by
+            <span class="badge bg-dark">{{ $expectedBy }}</span>
+            @if($graceMinutes > 0)
+                <span class="sad-grace-pill ms-2">
+                    <i class="ri-timer-line me-1"></i>{{ $graceMinutes }} min grace
+                </span>
+            @else
+                <span class="sad-grace-pill ms-2" style="background:#e2e8f0;color:#475569;">
+                    <i class="ri-timer-line me-1"></i>No grace
+                </span>
+            @endif
+        </div>
+    </div>
+    @endif
+
+    {{-- ══ STATS + FILTER ═══════════════════════════════════════════════ --}}
+    <div class="row g-3 mb-3">
+        <div class="col-lg-7">
+            <div class="sad-card">
+                <div class="card-body py-3">
+                    <form method="GET" class="d-flex gap-2 align-items-end flex-wrap">
+                        <input type="hidden" name="weekday_filter_submitted" value="1">
+                        <div>
+                            <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">From</label>
+                            <input type="date" name="date_from" value="{{ $dateFrom }}" class="sad-form-control sad-form-control-sm" style="width:150px;">
                         </div>
+                        <div>
+                            <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">To</label>
+                            <input type="date" name="date_to" value="{{ $dateTo }}" class="sad-form-control sad-form-control-sm" style="width:150px;">
+                        </div>
+                        <div>
+                            <label class="text-muted" style="font-size:11px;display:block;margin-bottom:4px;">Exclude Weekdays</label>
+                            @php
+                                $weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                $excludedWeekdaysSet = collect($excludedWeekdays ?? [])->map(fn($d) => (int) $d);
+                            @endphp
+                            <div class="sad-weekday-row">
+                                @foreach($weekdayLabels as $dayNum => $dayLabel)
+                                <label class="sad-weekday-chip {{ $excludedWeekdaysSet->contains($dayNum) ? 'checked' : '' }}">
+                                    <input type="checkbox" name="excluded_weekdays[]" value="{{ $dayNum }}"
+                                           {{ $excludedWeekdaysSet->contains($dayNum) ? 'checked' : '' }}
+                                           onchange="this.closest('label').classList.toggle('checked', this.checked)">
+                                    {{ $dayLabel }}
+                                </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm"><i class="ri-search-line me-1"></i>Filter</button>
                     </form>
                 </div>
             </div>
-
-            @if($termId && $sessionId && $summaries->isNotEmpty())
-
-            {{-- ══ STATS ════════════════════════════════════════════════════════ --}}
-            @php
-                $avgPct  = round($summaries->avg('attendance_percentage'), 1);
-                $totP    = $summaries->sum('days_present');
-                $totA    = $summaries->sum('days_absent');
-                $totS    = $summaries->sum('days_sick_leave');
-                $above80 = $summaries->where('attendance_percentage', '>=', 80)->count();
-                $below60 = $summaries->where('attendance_percentage', '<',  60)->count();
-                $avgCol  = $avgPct >= 80 ? 'success' : ($avgPct >= 60 ? 'warning' : 'danger');
-            @endphp
-            <div class="row g-3 mb-3">
-                <div class="col-6 col-md-3 col-lg">
-                    <div class="sar2-stat-card">
-                        <div class="stat-value text-primary">{{ $summaries->count() }}</div>
-                        <div class="stat-label">Students</div>
+        </div>
+        <div class="col-lg-5">
+            <div class="row g-2">
+                @foreach([
+                    ['Present', $present, 'success'],
+                    ['Late', $late, 'secondary'],
+                    ['Excused', $excused, 'info'],
+                    ['Absent', $absent, 'danger'],
+                ] as [$label, $val, $color])
+                <div class="col-3">
+                    <div class="sad-stat-card">
+                        <div class="stat-value text-{{ $color }}">{{ $val }}</div>
+                        <div class="stat-label">{{ $label }}</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3 col-lg">
-                    <div class="sar2-stat-card">
-                        <div class="stat-value text-{{ $avgCol }}">{{ $avgPct }}%</div>
-                        <div class="stat-label">School Avg</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg">
-                    <div class="sar2-stat-card">
-                        <div class="stat-value text-success">{{ $above80 }}</div>
-                        <div class="stat-label">Above 80%</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg">
-                    <div class="sar2-stat-card">
-                        <div class="stat-value text-danger">{{ $below60 }}</div>
-                        <div class="stat-label">Below 60%</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg">
-                    <div class="sar2-stat-card">
-                        <div class="stat-value text-success">{{ $totP }}</div>
-                        <div class="stat-label">Total Present</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg">
-                    <div class="sar2-stat-card">
-                        <div class="stat-value text-danger">{{ $totA }}</div>
-                        <div class="stat-label">Total Absent</div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg">
-                    <div class="sar2-stat-card">
-                        <div class="stat-value text-warning">{{ $totS }}</div>
-                        <div class="stat-label">Sick Leave</div>
-                    </div>
-                </div>
+                @endforeach
             </div>
-
-            {{-- ══ TABLE ════════════════════════════════════════════════════════ --}}
-            <div class="sar2-card">
-                <div class="card-header d-flex align-items-center">
-                    <h5 class="card-title mb-0 flex-grow-1">
-                        <i class="ri-group-line me-2 text-primary"></i>All Students
-                        <span class="badge bg-dark-subtle text-dark ms-1">{{ $summaries->count() }}</span>
-                    </h5>
-                    <div class="input-group input-group-sm" style="width:240px;">
-                        <span class="input-group-text"><i class="ri-search-line"></i></span>
-                        <input type="text" class="form-control" id="srch" placeholder="Search student or class…">
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table sar2-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Student</th>
-                                    <th>Class</th>
-                                    <th class="text-center">Present</th>
-                                    <th class="text-center">Absent</th>
-                                    <th class="text-center">Sick</th>
-                                    <th class="text-center">Excused</th>
-                                    <th class="text-center">Late</th>
-                                    <th>Attendance</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="rptRows">
-                            @foreach($summaries as $i => $s)
-                            @php
-                                $pct = (float) $s->attendance_percentage;
-                                $col = $pct >= 80 ? 'success' : ($pct >= 60 ? 'warning' : 'danger');
-                                $img = ($s->student && $s->student->picture)
-                                    ? asset('storage/student_avatars/'.basename($s->student->picture))
-                                    : asset('storage/student_avatars/unnamed.jpg');
-                                $sName = strtolower(($s->student->lname ?? '').' '.($s->student->fname ?? ''));
-                                $cName = strtolower($s->schoolclass?->schoolclass ?? '');
-                            @endphp
-                            <tr data-search="{{ $sName }} {{ $cName }}">
-                                <td class="text-muted fw-medium">{{ $i+1 }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="{{ $img }}" class="sar2-avatar"
-                                             onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-                                        <div>
-                                            <div class="fw-semibold" style="font-size:13px;">{{ $s->student?->lname }} {{ $s->student?->fname }}</div>
-                                            <div class="text-muted" style="font-size:11px;">{{ $s->student?->admissionNo }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-primary-subtle text-primary">{{ $s->schoolclass?->schoolclass }}</span>
-                                </td>
-                                <td class="text-center"><span class="badge bg-success-subtle text-success fw-semibold">{{ $s->days_present }}</span></td>
-                                <td class="text-center"><span class="badge bg-danger-subtle text-danger fw-semibold">{{ $s->days_absent }}</span></td>
-                                <td class="text-center"><span class="badge bg-warning-subtle text-warning fw-semibold">{{ $s->days_sick_leave }}</span></td>
-                                <td class="text-center"><span class="badge bg-info-subtle text-info fw-semibold">{{ $s->days_excused }}</span></td>
-                                <td class="text-center"><span class="badge bg-secondary-subtle text-secondary fw-semibold">{{ $s->days_late }}</span></td>
-                                <td style="min-width:160px;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="progress flex-grow-1" style="height:6px;">
-                                            <div class="progress-bar bg-{{ $col }}" style="width:{{ $pct }}%"></div>
-                                        </div>
-                                        <span class="fw-bold text-{{ $col }}" style="font-size:12px;min-width:38px;">{{ $pct }}%</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    @can('View attendance-student-report')
-                                    <a href="{{ route('attendance.student-report', [$s->student_id, $s->schoolclass_id, $termId, $sessionId]) }}"
-                                       class="btn btn-outline-primary btn-sm" style="font-size:11px;">
-                                        Details <i class="ri-arrow-right-line ms-1"></i>
-                                    </a>
-                                    @endcan
-                                </td>
-                            </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            @elseif($termId && $sessionId && $summaries->isEmpty())
-            <div class="sar2-card">
-                <div class="card-body text-center py-5">
-                    <i class="ri-inbox-line ri-3x d-block mb-3 text-muted"></i>
-                    <h5 class="text-muted">No Attendance Data Found</h5>
-                    <p class="text-muted mb-0">No records exist for the selected term and session.</p>
-                </div>
-            </div>
-            @else
-            <div class="sar2-card">
-                <div class="card-body text-center py-5">
-                    <i class="ri-bar-chart-2-line ri-3x d-block mb-3 text-muted"></i>
-                    <h5 class="text-muted">Select Term & Session</h5>
-                    <p class="text-muted mb-0">Choose a term and session above to generate the school-wide attendance report.</p>
-                </div>
-            </div>
-            @endif
-
         </div>
     </div>
-</div>
 
-<script>
-document.getElementById('srch')?.addEventListener('input', function() {
-    const q = this.value.toLowerCase();
-    document.querySelectorAll('#rptRows tr').forEach(r => {
-        r.style.display = (!q || r.dataset.search.includes(q)) ? '' : 'none';
-    });
-});
-</script>
+    {{-- ══ DAILY LOG TABLE ══════════════════════════════════════════════ --}}
+    <div class="sad-card">
+        <div class="card-header d-flex align-items-center">
+            <h5 class="card-title mb-0 flex-grow-1"><i class="ri-calendar-line me-2 text-primary"></i>Daily Log</h5>
+            <span class="fw-bold text-{{ $pct >= 80 ? 'success' : ($pct >= 60 ? 'warning' : 'danger') }}">{{ $pct }}% attendance</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table sad-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Expected</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
+                            <th>Late By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($calendar as $day)
+                        @php
+                            // 'excluded' = admin ticked this date in the Exclude Days panel
+                            // for this report only (see StaffAttendanceController::resolveExcludedDates).
+                            // 'outage'   = a persisted DeviceOutageDate.
+                            $sc = ['present'=>'success','late'=>'secondary','excused'=>'info','absent'=>'danger','outage'=>'dark','excluded'=>'warning'];
+                            $c  = $sc[$day['status']] ?? 'secondary';
+                            $statusLabel = $day['status'] === 'excluded' ? 'Excluded' : ucfirst($day['status']);
+
+                            // Compute minutes late for this row, if the staff member was late.
+                            $minutesLate = null;
+                            if ($day['status'] === 'late' && !empty($day['time_in']) && $currentTermSetting?->resumption_time) {
+                                $punchDate = \Illuminate\Support\Carbon::parse($day['date'] ?? $day['label']);
+                                $expected  = \Illuminate\Support\Carbon::parse(
+                                    $punchDate->toDateString().' '.$currentTermSetting->resumption_time
+                                )->addMinutes($graceMinutes);
+                                $actual = \Illuminate\Support\Carbon::parse($punchDate->toDateString().' '.$day['time_in']);
+                                $minutesLate = max(0, $expected->diffInMinutes($actual, false));
+                            }
+                        @endphp
+                        <tr>
+                            <td><strong>{{ $day['label'] }}</strong></td>
+                            <td><span class="badge bg-{{ $c }}-subtle text-{{ $c }} fw-semibold">{{ $statusLabel }}</span></td>
+                            <td class="text-muted" style="font-size:12px;">
+                                @if($day['status'] === 'absent' || $day['status'] === 'outage' || $day['status'] === 'excluded')
+                                    —
+                                @else
+                                    {{ $expectedBy }}
+                                    @if($graceMinutes > 0)
+                                        <span class="text-muted" style="font-size:10.5px;">(+{{ $graceMinutes }}m)</span>
+                                    @endif
+                                @endif
+                            </td>
+                            <td class="text-muted">{{ $day['time_in'] ?? '—' }}</td>
+                            <td class="text-muted">{{ $day['time_out'] ?? '—' }}</td>
+                            <td>
+                                @if($day['status'] === 'late' && $minutesLate !== null)
+                                    @php
+                                        $h = intdiv($minutesLate, 60);
+                                        $m = $minutesLate % 60;
+                                        $human = $h > 0 ? "{$h}h {$m}m" : "{$m}m";
+                                    @endphp
+                                    <span class="sad-late-by">
+                                        <i class="ri-timer-flash-line me-1"></i>
+                                        <span class="mins">{{ $human }}</span> late
+                                    </span>
+                                @elseif($day['status'] === 'present')
+                                    <span class="sad-ontime"><i class="ri-check-line me-1"></i>On time</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="text-center py-5 text-muted">
+                            <i class="ri-inbox-line ri-2x d-block mb-2"></i>No working days in this range.
+                        </td></tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-3 py-2 text-muted" style="font-size:11px;">
+                Late = clocked in after <strong>{{ $expectedBy }}</strong>
+                @if($graceMinutes > 0) (resumption {{ $resumptionLabel }} + {{ $graceMinutes }}-min grace) @endif.
+            </div>
+        </div>
+    </div>
+
+</div></div></div>
 @endsection

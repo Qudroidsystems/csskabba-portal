@@ -208,6 +208,31 @@
 }
 .sar-weekday-chip input { accent-color:#dc2626; }
 .sar-weekday-chip.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
+
+/* ── School-hours banner ── */
+.sar-hours-banner {
+    background: #eff6ff;
+    color: #1e3a5f;
+    border-radius: var(--sar-radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    border: 1px solid #dbeafe;
+}
+.sar-hours-banner i { font-size: 20px; }
+.sar-hours-banner .badge { font-weight: 600; }
+.sar-hours-banner .sar-grace-pill {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+}
 </style>
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
@@ -225,9 +250,6 @@
             </a>
             @endcan
             @php
-                // Carries every active filter (date range, excluded weekdays, ad-hoc
-                // excluded dates) straight through to the export — nothing to keep
-                // in sync by hand if another filter gets added later.
                 $exportParams = array_filter([
                     'date_from'                 => $dateFrom,
                     'date_to'                   => $dateTo,
@@ -243,6 +265,47 @@
             <span class="badge bg-light text-dark align-self-center">Device-driven</span>
         </div>
     </div>
+
+    {{-- ══ SCHOOL HOURS / LATE EXPECTATION BANNER ═══════════════════════ --}}
+    @php
+        $currentTermSetting = \App\Models\AttendanceTermSetting::current();
+        $resumptionLabel = $currentTermSetting?->resumption_time
+            ? \Illuminate\Support\Carbon::parse($currentTermSetting->resumption_time)->format('g:i A')
+            : '8:00 AM';
+        $closingLabel = $currentTermSetting?->closing_time
+            ? \Illuminate\Support\Carbon::parse($currentTermSetting->closing_time)->format('g:i A')
+            : '2:00 PM';
+        $graceMinutes = (int) ($currentTermSetting->late_grace_minutes ?? 0);
+        $expectedBy = $currentTermSetting?->resumption_time
+            ? \Illuminate\Support\Carbon::parse($currentTermSetting->resumption_time)->addMinutes($graceMinutes)->format('g:i A')
+            : '8:00 AM';
+    @endphp
+    @if($currentTermSetting)
+    <div class="sar-hours-banner">
+        <i class="ri-time-line"></i>
+        <div class="flex-grow-1">
+            <strong>School Hours:</strong>
+            Resumption <span class="badge bg-primary">{{ $resumptionLabel }}</span>
+            &nbsp;·&nbsp;
+            Closing <span class="badge bg-secondary">{{ $closingLabel }}</span>
+            &nbsp;·&nbsp;
+            Staff must clock in by
+            <span class="badge bg-dark">{{ $expectedBy }}</span>
+            @if($graceMinutes > 0)
+                <span class="sar-grace-pill ms-2">
+                    <i class="ri-timer-line me-1"></i>{{ $graceMinutes }} min grace
+                </span>
+            @else
+                <span class="sar-grace-pill ms-2" style="background:#e2e8f0;color:#475569;">
+                    <i class="ri-timer-line me-1"></i>No grace
+                </span>
+            @endif
+            <span class="text-muted ms-2" style="font-size:11.5px;">
+                — anyone clocking in after <strong>{{ $expectedBy }}</strong> is marked <em>late</em>.
+            </span>
+        </div>
+    </div>
+    @endif
 
     {{-- ══ FILTER ════════════════════════════════════════════════════════ --}}
     <div class="sar-card mb-3">
@@ -289,10 +352,6 @@
                     </div>
                 </div>
 
-                {{-- Exclude-days panel: ticked dates ride along as excluded_dates[] on the
-                     same GET request. Your controller's working-day / per-staff calculation
-                     needs to subtract these — same idea as the outage dates below, just
-                     scoped to this one report view instead of being saved permanently. --}}
                 <div class="sar-exclude-panel w-100" id="excludePanel">
                     <div class="mb-2" style="font-size:11.5px;color:var(--sar-muted);">
                         Tick any specific dates in this range to leave out of the calculation (e.g. a one-off holiday). For recurring days like every Saturday, use "Exclude Weekdays" above instead.
@@ -303,9 +362,7 @@
         </div>
     </div>
 
-    {{-- ══ SUMMARY STATS ═══════════════════════════════════════════════════
-         Computed straight from $rows below — no new controller variables
-         needed for this row. --}}
+    {{-- ══ SUMMARY STATS ═══════════════════════════════════════════════════ --}}
     @php
         $totalStaffCount = $rows->count();
         $sumPresent = $rows->sum('days_present');
@@ -352,11 +409,7 @@
         </div>
     </div>
 
-    {{-- ══ TREND CHART ═══════════════════════════════════════════════════
-         Optional — only renders if the controller passes $dailyTrend, e.g.:
-         $dailyTrend = [['date' => '2026-08-01', 'rate' => 82], ...]
-         Same shape as $attendance_trend already used on the dashboard, so
-         you likely already have a query that produces this. --}}
+    {{-- ══ TREND CHART ═══════════════════════════════════════════════════ --}}
     @if(isset($dailyTrend) && count($dailyTrend))
     <div class="sar-card mb-3">
         <div class="card-header">Attendance Trend — {{ $dateFrom }} to {{ $dateTo }}</div>
@@ -366,9 +419,7 @@
     </div>
     @endif
 
-    {{-- ══ DEPARTMENT BREAKDOWN ═════════════════════════════════════════
-         Optional — only renders if the controller passes $deptBreakdown, e.g.:
-         $deptBreakdown = [['department' => 'Academics', 'avg' => 88, 'count' => 24], ...] --}}
+    {{-- ══ DEPARTMENT BREAKDOWN ═════════════════════════════════════════ --}}
     @if(isset($deptBreakdown) && count($deptBreakdown))
     <div class="sar-card mb-3">
         <div class="card-header">Attendance by Department</div>
@@ -465,7 +516,16 @@
                             </td>
                             <td class="text-muted" style="font-size:12px;">{{ $r->department ?? '—' }}</td>
                             <td class="text-center"><span class="badge bg-success-subtle text-success">{{ $r->days_present }}</span></td>
-                            <td class="text-center"><span class="badge bg-secondary-subtle text-secondary">{{ $r->days_late }}</span></td>
+                            <td class="text-center">
+                                @if($r->days_late > 0)
+                                    <span class="badge bg-warning-subtle text-warning fw-semibold"
+                                          title="Staff clocked in after {{ $expectedBy }} on {{ $r->days_late }} day(s)">
+                                        <i class="ri-time-line me-1"></i>{{ $r->days_late }}
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary-subtle text-secondary">0</span>
+                                @endif
+                            </td>
                             <td class="text-center"><span class="badge bg-info-subtle text-info">{{ $r->days_excused }}</span></td>
                             <td class="text-center"><span class="badge bg-danger-subtle text-danger">{{ $r->days_absent }}</span></td>
                             <td style="min-width:150px;">
@@ -500,7 +560,11 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-3 py-2 text-muted" style="font-size:11px;">*Absent is inferred — no device punch recorded for that working day.</div>
+            <div class="px-3 py-2 text-muted" style="font-size:11px;">
+                *Absent is inferred — no device punch recorded for that working day.
+                Late means the staff member clocked in after <strong>{{ $expectedBy }}</strong>
+                @if($graceMinutes > 0) (resumption + {{ $graceMinutes }}-min grace) @endif.
+            </div>
         </div>
     </div>
 
@@ -579,11 +643,7 @@ function removeOutage(id) {
     .catch(e => console.error(e));
 }
 
-/* ── Exclude-days panel ──
-   Builds a checkbox per date in the currently selected range. Checked
-   dates are appended to the filter form as excluded_dates[] hidden inputs
-   right before submit. Already-checked dates from the URL (e.g. after a
-   filter round-trip) are restored on load. */
+/* ── Exclude-days panel ── */
 const alreadyExcluded = new Set(@json(request('excluded_dates', [])));
 
 function buildExcludeList() {
@@ -597,8 +657,6 @@ function buildExcludeList() {
     let cur = new Date(from + 'T00:00:00');
     const end = new Date(to + 'T00:00:00');
 
-    // Cap at 62 days so this stays a checklist, not a wall of text, for
-    // very wide ranges.
     let guard = 0;
     while (cur <= end && guard < 62) {
         const iso = cur.toISOString().slice(0, 10);
@@ -628,8 +686,6 @@ document.getElementById('dateFromInput').addEventListener('change', buildExclude
 document.getElementById('dateToInput').addEventListener('change', buildExcludeList);
 
 document.getElementById('reportFilterForm').addEventListener('submit', function() {
-    // Strip any stale hidden inputs from a previous submit, then add one
-    // per currently-checked exclude-day box.
     this.querySelectorAll('input[name="excluded_dates[]"]').forEach(el => el.remove());
     document.querySelectorAll('#excludeDayList input:checked').forEach(cb => {
         const hidden = document.createElement('input');
@@ -645,7 +701,7 @@ if (alreadyExcluded.size) {
     buildExcludeList();
 }
 
-/* ── Optional charts (only run if the controller passed the data) ── */
+/* ── Optional charts ── */
 @if(isset($dailyTrend) && count($dailyTrend))
 new Chart(document.getElementById('sarTrendChart'), {
     type: 'line',
