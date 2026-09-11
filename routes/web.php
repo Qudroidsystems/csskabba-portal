@@ -392,7 +392,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('batch/import-progress', [StudentController::class, 'getBatchImportProgress'])->name('student.batch.importProgress');
             Route::get('batch/{id}/errors', [StudentController::class, 'getBatchImportErrors'])->name('student.batch.errors');
             // Batch bulk delete (POST — takes an array of batch IDs)
-            Route::post('/batch/bulk-delete', [StudentController::class, 'deleteStudentBatchMultiple'])->name('student.batch.bulkDelete');});
+            Route::post('batch/bulk-delete', [StudentController::class, 'deleteStudentBatchMultiple'])->name('student.batch.bulkDelete');});
 
         // ------------------------------------------------
         // Class & Term Operations (new dedicated page + roster actions)
