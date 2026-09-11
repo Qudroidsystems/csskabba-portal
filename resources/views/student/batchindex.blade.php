@@ -89,72 +89,56 @@
 #batchListTable input[type="checkbox"] { cursor: pointer; }
 #checkAll { cursor: pointer; }
 
-/* ── Template checkbox groups (Generate Template modal) ── */
-.tpl-checkbox-group {
+/* ── Template picker (checkbox multi-select) ───────────────────── */
+.tpl-picker {
     border: 1px solid var(--ss-border);
-    border-radius: 8px;
-    overflow: hidden;
+    border-radius: var(--ss-radius);
     background: #fff;
+    display: flex;
+    flex-direction: column;
     height: 100%;
+    min-height: 260px;
 }
-.tpl-checkbox-header {
+.tpl-picker-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background: #f1f5f9;
     border-bottom: 1px solid var(--ss-border);
-    font-size: 12.5px;
+    background: #f8fafc;
+    border-radius: var(--ss-radius) var(--ss-radius) 0 0;
 }
-.tpl-checkbox-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
+.tpl-picker-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--ss-primary);
 }
-.tpl-checkbox-actions .btn-link {
-    color: var(--ss-accent);
-    text-decoration: none;
-    font-size: 11px;
-    padding: 0;
-    border: none;
-    background: none;
-}
-.tpl-checkbox-actions .btn-link:hover { text-decoration: underline; }
-.tpl-checkbox-list {
-    max-height: 240px;
+.tpl-picker-actions { font-size: 11px; display: flex; gap: 4px; align-items: center; }
+.tpl-picker-actions .btn-link { text-decoration: none; font-size: 11px; }
+.tpl-picker-search { margin: 8px 12px 0; width: calc(100% - 24px); }
+.tpl-picker-body {
+    flex: 1 1 auto;
     overflow-y: auto;
-    padding: 4px 0;
+    padding: 8px 12px 12px;
+    max-height: 260px;
 }
-.tpl-checkbox-item {
+.tpl-check {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
+    padding: 5px 6px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 12.5px;
     transition: background .12s;
     margin: 0;
 }
-.tpl-checkbox-item:hover { background: #f0f6ff; }
-.tpl-checkbox-item input[type="checkbox"] {
-    cursor: pointer;
-    margin: 0;
-    flex-shrink: 0;
-    width: 15px;
-    height: 15px;
-    accent-color: var(--ss-accent);
-}
-.tpl-checkbox-item input[type="checkbox"]:checked + span {
-    font-weight: 600;
-    color: var(--ss-primary);
-}
-.tpl-checkbox-empty {
-    padding: 12px;
-    font-size: 12px;
-    color: var(--ss-muted);
-    text-align: center;
-}
+.tpl-check:hover { background: #f0f6ff; }
+.tpl-check input[type="checkbox"] { cursor: pointer; margin: 0; flex-shrink: 0; }
+.tpl-check span { user-select: none; }
+.tpl-check.is-hidden { display: none; }
 </style>
 
 <div class="main-content">
@@ -416,16 +400,17 @@
                 </div>
             </div>
 
-            {{-- ══ GENERATE TEMPLATE MODAL — CHECKBOX UI ═════════════════════ --}}
+            {{-- ══ GENERATE TEMPLATE MODAL ═══════════════════════════════════ --}}
             <div id="generateTemplateModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
                     <div class="modal-content border-0 shadow-lg">
                         <div class="modal-header ss-modal-header">
                             <h5 class="modal-title"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Generate Batch Upload Template</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body position-relative">
-                            <div id="template-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.85); z-index: 1000;">
+                            <div id="template-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                                 style="background: rgba(255,255,255,0.85); z-index: 1000;">
                                 <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
                                 <span class="ms-2">Generating template(s)...</span>
                             </div>
@@ -439,89 +424,95 @@
                             </div>
 
                             <div class="row g-3">
-                                {{-- Classes & Arms --}}
+                                {{-- Classes --}}
                                 <div class="col-md-4">
-                                    <div class="tpl-checkbox-group">
-                                        <div class="tpl-checkbox-header">
-                                            <label class="fw-semibold mb-0">School Class &amp; Arm</label>
-                                            <div class="tpl-checkbox-actions">
-                                                <button type="button" class="btn btn-link btn-sm tpl-select-all" data-target="tpl_schoolclassid">All</button>
-                                                <span class="text-muted">|</span>
-                                                <button type="button" class="btn btn-link btn-sm tpl-clear-all" data-target="tpl_schoolclassid">None</button>
+                                    <div class="tpl-picker">
+                                        <div class="tpl-picker-head">
+                                            <span class="tpl-picker-title">School Class &amp; Arm</span>
+                                            <div class="tpl-picker-actions">
+                                                <button type="button" class="btn btn-link btn-sm p-0" data-tpl-toggle="tpl_schoolclass">All</button>
+                                                <span class="text-muted">·</span>
+                                                <button type="button" class="btn btn-link btn-sm p-0 text-muted" data-tpl-clear="tpl_schoolclass">Clear</button>
                                             </div>
                                         </div>
-                                        <div class="tpl-checkbox-list" id="tpl_schoolclassid">
-                                            @forelse ($schoolclasses as $sc)
-                                                <label class="tpl-checkbox-item">
+                                        <input type="text" class="form-control form-control-sm tpl-picker-search mb-2"
+                                               placeholder="Search classes..." data-tpl-search="tpl_schoolclass">
+                                        <div class="tpl-picker-body" id="tpl_schoolclass">
+                                            @foreach ($schoolclasses as $sc)
+                                                <label class="tpl-check">
                                                     <input type="checkbox" name="tpl_schoolclassid[]" value="{{ $sc->id }}">
                                                     <span>{{ $sc->schoolclass }} - {{ $sc->arm }}</span>
                                                 </label>
-                                            @empty
-                                                <div class="tpl-checkbox-empty">No classes available</div>
-                                            @endforelse
+                                            @endforeach
                                         </div>
                                     </div>
                                 </div>
 
                                 {{-- Terms --}}
                                 <div class="col-md-4">
-                                    <div class="tpl-checkbox-group">
-                                        <div class="tpl-checkbox-header">
-                                            <label class="fw-semibold mb-0">Term</label>
-                                            <div class="tpl-checkbox-actions">
-                                                <button type="button" class="btn btn-link btn-sm tpl-select-all" data-target="tpl_termid">All</button>
-                                                <span class="text-muted">|</span>
-                                                <button type="button" class="btn btn-link btn-sm tpl-clear-all" data-target="tpl_termid">None</button>
+                                    <div class="tpl-picker">
+                                        <div class="tpl-picker-head">
+                                            <span class="tpl-picker-title">Term</span>
+                                            <div class="tpl-picker-actions">
+                                                <button type="button" class="btn btn-link btn-sm p-0" data-tpl-toggle="tpl_term">All</button>
+                                                <span class="text-muted">·</span>
+                                                <button type="button" class="btn btn-link btn-sm p-0 text-muted" data-tpl-clear="tpl_term">Clear</button>
                                             </div>
                                         </div>
-                                        <div class="tpl-checkbox-list" id="tpl_termid">
-                                            @forelse ($schoolterms as $sc)
-                                                <label class="tpl-checkbox-item">
+                                        <input type="text" class="form-control form-control-sm tpl-picker-search mb-2"
+                                               placeholder="Search terms..." data-tpl-search="tpl_term">
+                                        <div class="tpl-picker-body" id="tpl_term">
+                                            @foreach ($schoolterms as $sc)
+                                                <label class="tpl-check">
                                                     <input type="checkbox" name="tpl_termid[]" value="{{ $sc->id }}">
                                                     <span>{{ $sc->name }}</span>
                                                 </label>
-                                            @empty
-                                                <div class="tpl-checkbox-empty">No terms available</div>
-                                            @endforelse
+                                            @endforeach
                                         </div>
                                     </div>
                                 </div>
 
                                 {{-- Sessions --}}
                                 <div class="col-md-4">
-                                    <div class="tpl-checkbox-group">
-                                        <div class="tpl-checkbox-header">
-                                            <label class="fw-semibold mb-0">Session</label>
-                                            <div class="tpl-checkbox-actions">
-                                                <button type="button" class="btn btn-link btn-sm tpl-select-all" data-target="tpl_sessionid">All</button>
-                                                <span class="text-muted">|</span>
-                                                <button type="button" class="btn btn-link btn-sm tpl-clear-all" data-target="tpl_sessionid">None</button>
+                                    <div class="tpl-picker">
+                                        <div class="tpl-picker-head">
+                                            <span class="tpl-picker-title">Session</span>
+                                            <div class="tpl-picker-actions">
+                                                <button type="button" class="btn btn-link btn-sm p-0" data-tpl-toggle="tpl_session">All</button>
+                                                <span class="text-muted">·</span>
+                                                <button type="button" class="btn btn-link btn-sm p-0 text-muted" data-tpl-clear="tpl_session">Clear</button>
                                             </div>
                                         </div>
-                                        <div class="tpl-checkbox-list" id="tpl_sessionid">
-                                            @forelse ($schoolsessions as $sc)
-                                                <label class="tpl-checkbox-item">
+                                        <input type="text" class="form-control form-control-sm tpl-picker-search mb-2"
+                                               placeholder="Search sessions..." data-tpl-search="tpl_session">
+                                        <div class="tpl-picker-body" id="tpl_session">
+                                            @foreach ($schoolsessions as $sc)
+                                                <label class="tpl-check">
                                                     <input type="checkbox" name="tpl_sessionid[]" value="{{ $sc->id }}">
                                                     <span>{{ $sc->name }}</span>
                                                 </label>
-                                            @empty
-                                                <div class="tpl-checkbox-empty">No sessions available</div>
-                                            @endforelse
+                                            @endforeach
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3 mt-3">
-                                <label for="tpl_rows" class="form-label fw-semibold">Number of blank rows (per template)</label>
-                                <input type="number" id="tpl_rows" class="form-control" value="30" min="1" max="500">
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-4">
+                                    <label for="tpl_rows" class="form-label fw-semibold">Blank rows (per template)</label>
+                                    <input type="number" id="tpl_rows" class="form-control" value="30" min="1" max="500">
+                                </div>
+                                <div class="col-md-8 d-flex align-items-end">
+                                    <div id="tpl-combo-count" class="small text-muted mb-2"></div>
+                                </div>
                             </div>
-                            <div id="tpl-combo-count" class="small text-muted mt-n2 mb-3"></div>
-                            <div class="alert alert-danger d-none" id="template-alert-error-msg"></div>
+
+                            <div class="alert alert-danger d-none mt-3 mb-0" id="template-alert-error-msg"></div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" id="generate-template-btn" style="background:var(--ss-primary);border-color:var(--ss-primary);">
+                            <button type="button" class="btn btn-primary" id="generate-template-btn"
+                                    style="background:var(--ss-primary);border-color:var(--ss-primary);">
                                 <i class="bi bi-download me-1"></i> Generate &amp; Download
                             </button>
                         </div>
@@ -757,8 +748,7 @@
     let lastProgressKey = null;
 
     // ══════════════════════════════════════════════════════════
-    // MULTIPLE DELETE HELPERS — Global scope so they survive
-    // any DOM re-render and can be referenced from anywhere.
+    // MULTIPLE DELETE HELPERS
     // ══════════════════════════════════════════════════════════
     function getChkChildren() {
         return document.querySelectorAll('#batchListTable tbody input[name="chk_child"]');
@@ -800,7 +790,7 @@
     }
 
     // ============================================================
-    // MULTIPLE DELETE – Global handler (referenced by onclick)
+    // MULTIPLE DELETE – Global handler
     // ============================================================
     window.deleteMultiple = function () {
         const selectedIds = Array.from(getChkChildren())
@@ -858,14 +848,11 @@
 
     // ============================================================
     // MULTIPLE DELETE — Global delegated listeners
-    // Registered OUTSIDE DOMContentLoaded so they attach
-    // immediately and survive any late re-render of the table.
     // ============================================================
     document.addEventListener('change', function (e) {
         const t = e.target;
         if (!t || t.type !== 'checkbox') return;
 
-        // "Select all" checkbox (in thead)
         if (t.id === 'checkAll') {
             const isChecked = t.checked;
             getChkChildren().forEach(function (chk) { chk.checked = isChecked; });
@@ -874,7 +861,6 @@
             return;
         }
 
-        // Individual row checkbox
         if (t.name === 'chk_child' && t.closest('#batchListTable')) {
             syncCheckAllState();
             refreshRowHighlight();
@@ -882,8 +868,6 @@
         }
     });
 
-    // Fallback: also handle click on the label so toggling is bulletproof
-    // even if a theme script calls preventDefault on the input.
     document.addEventListener('click', function (e) {
         const label = e.target.closest('#batchListTable label.form-check-label');
         if (!label) return;
@@ -891,17 +875,125 @@
         if (!td) return;
         const chk = td.querySelector('input[name="chk_child"]');
         if (!chk) return;
-        // If the label had a matching 'for', the browser would have already
-        // toggled the checkbox — guard with a microtask check.
         setTimeout(function () {
-            // Nothing to do — the change event fires naturally.
-            // Just resync header state in case the browser missed it.
             syncCheckAllState();
             refreshRowHighlight();
             toggleRemoveActions();
         }, 0);
     });
 
+    // ============================================================
+    // TEMPLATE PICKER — checkbox multi-select (global scope)
+    // ============================================================
+    function tplPickerItems(groupId) {
+        const root = document.getElementById(groupId);
+        return root ? Array.from(root.querySelectorAll('input[type="checkbox"]')) : [];
+    }
+
+    function tplCheckedValues(groupId) {
+        return tplPickerItems(groupId)
+            .filter(chk => chk.checked)
+            .map(chk => chk.value);
+    }
+
+    function updateComboCount() {
+        const countEl = document.getElementById('tpl-combo-count');
+        if (!countEl) return;
+
+        const c = tplCheckedValues('tpl_schoolclass').length;
+        const t = tplCheckedValues('tpl_term').length;
+        const s = tplCheckedValues('tpl_session').length;
+        const total = c * t * s;
+
+        if (total === 0) {
+            countEl.textContent = '';
+            countEl.classList.remove('text-danger');
+            return;
+        }
+
+        countEl.textContent = total === 1
+            ? '1 template will be generated.'
+            : `${total} templates will be generated (downloaded as a .zip).`;
+
+        countEl.classList.toggle('text-danger', total > 60);
+        if (total > 60) {
+            countEl.textContent += ' Please narrow your selection — max 60 at a time.';
+        }
+    }
+
+    function resetTemplatePicker() {
+        ['tpl_schoolclass', 'tpl_term', 'tpl_session'].forEach(function (id) {
+            tplPickerItems(id).forEach(chk => { chk.checked = false; });
+            const search = document.querySelector(`[data-tpl-search="${id}"]`);
+            if (search) {
+                search.value = '';
+                applyTplSearch(id, '');
+            }
+        });
+        updateComboCount();
+        const err = document.getElementById('template-alert-error-msg');
+        if (err) err.classList.add('d-none');
+    }
+
+    function applyTplSearch(groupId, term) {
+        const needle = (term || '').trim().toLowerCase();
+        tplPickerItems(groupId).forEach(function (chk) {
+            const label = chk.closest('.tpl-check');
+            if (!label) return;
+            const text = (label.textContent || '').toLowerCase();
+            label.classList.toggle('is-hidden', needle !== '' && !text.includes(needle));
+        });
+    }
+
+    /* Delegated listeners for template picker — global, attach once */
+    document.addEventListener('change', function (e) {
+        const t = e.target;
+        if (!t || t.type !== 'checkbox') return;
+        if (t.closest('#tpl_schoolclass, #tpl_term, #tpl_session')) {
+            updateComboCount();
+        }
+    });
+
+    document.addEventListener('input', function (e) {
+        const t = e.target;
+        if (t && t.matches('[data-tpl-search]')) {
+            applyTplSearch(t.getAttribute('data-tpl-search'), t.value);
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        const toggleBtn = e.target.closest('[data-tpl-toggle]');
+        if (toggleBtn) {
+            e.preventDefault();
+            const groupId = toggleBtn.getAttribute('data-tpl-toggle');
+            const items = tplPickerItems(groupId).filter(function (chk) {
+                const label = chk.closest('.tpl-check');
+                return !label || !label.classList.contains('is-hidden');
+            });
+            const allChecked = items.length > 0 && items.every(chk => chk.checked);
+            items.forEach(chk => { chk.checked = !allChecked; });
+            updateComboCount();
+            return;
+        }
+
+        const clearBtn = e.target.closest('[data-tpl-clear]');
+        if (clearBtn) {
+            e.preventDefault();
+            const groupId = clearBtn.getAttribute('data-tpl-clear');
+            tplPickerItems(groupId).forEach(chk => { chk.checked = false; });
+            updateComboCount();
+        }
+    });
+
+    const generateTemplateModalEl = document.getElementById('generateTemplateModal');
+    if (generateTemplateModalEl) {
+        generateTemplateModalEl.addEventListener('shown.bs.modal', updateComboCount);
+        generateTemplateModalEl.addEventListener('hidden.bs.modal', resetTemplatePicker);
+    }
+
+    // ============================================================
+    // MAIN INIT
+    // ============================================================
     document.addEventListener('DOMContentLoaded', function () {
         const deleteButtons = document.querySelectorAll('.remove-item-btn');
         const updateButtons = document.querySelectorAll('.update-item-btn');
@@ -911,103 +1003,13 @@
         const updateForm = document.getElementById('update-class-form');
         const addBatchForm = document.getElementById('add-batch-form');
 
-        // Attach the backdrop cleanup to every modal on this page.
         document.querySelectorAll('.modal').forEach(function (modalEl) {
             modalEl.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrop);
         });
 
-        // Ensure consistent initial state
         syncCheckAllState();
         refreshRowHighlight();
         toggleRemoveActions();
-
-        // ============================================================
-        // TEMPLATE MODAL – Checkbox UI (replaces Choices.js multi-select)
-        // ============================================================
-        const TPL_GROUP_IDS = ['tpl_schoolclassid', 'tpl_termid', 'tpl_sessionid'];
-        const MAX_COMBINATIONS = 60;
-
-        function getCheckedValues(groupId) {
-            return Array.from(
-                document.querySelectorAll(`#${groupId} input[type="checkbox"]:checked`)
-            ).map(cb => cb.value).filter(Boolean);
-        }
-
-        function updateComboCount() {
-            const countEl = document.getElementById('tpl-combo-count');
-            if (!countEl) return;
-
-            const c = getCheckedValues('tpl_schoolclassid').length;
-            const t = getCheckedValues('tpl_termid').length;
-            const s = getCheckedValues('tpl_sessionid').length;
-            const total = c * t * s;
-
-            if (total === 0) {
-                countEl.textContent = '';
-                countEl.classList.remove('text-danger');
-                return;
-            }
-
-            countEl.textContent = total === 1
-                ? '1 template will be generated.'
-                : `${total} templates will be generated (downloaded as a .zip).`;
-
-            countEl.classList.toggle('text-danger', total > MAX_COMBINATIONS);
-            if (total > MAX_COMBINATIONS) {
-                countEl.textContent += ` Please narrow your selection — max ${MAX_COMBINATIONS} at a time.`;
-            }
-        }
-
-        function resetTemplateCheckboxes() {
-            TPL_GROUP_IDS.forEach(function (groupId) {
-                document.querySelectorAll(`#${groupId} input[type="checkbox"]`).forEach(cb => {
-                    cb.checked = false;
-                });
-            });
-            updateComboCount();
-
-            const errorMsg = document.getElementById('template-alert-error-msg');
-            if (errorMsg) errorMsg.classList.add('d-none');
-        }
-
-        // Delegated listener — checkbox changes inside the template groups
-        document.addEventListener('change', function (e) {
-            const cb = e.target;
-            if (cb && cb.type === 'checkbox' && cb.closest('.tpl-checkbox-list')) {
-                updateComboCount();
-            }
-        });
-
-        // Delegated listener — Select All / None buttons
-        document.addEventListener('click', function (e) {
-            const selectAllBtn = e.target.closest('.tpl-select-all');
-            const clearAllBtn  = e.target.closest('.tpl-clear-all');
-
-            if (selectAllBtn) {
-                const groupId = selectAllBtn.getAttribute('data-target');
-                document.querySelectorAll(`#${groupId} input[type="checkbox"]`).forEach(cb => {
-                    cb.checked = true;
-                });
-                updateComboCount();
-                return;
-            }
-
-            if (clearAllBtn) {
-                const groupId = clearAllBtn.getAttribute('data-target');
-                document.querySelectorAll(`#${groupId} input[type="checkbox"]`).forEach(cb => {
-                    cb.checked = false;
-                });
-                updateComboCount();
-            }
-        });
-
-        // Reset on modal close
-        const generateTemplateModalEl = document.getElementById('generateTemplateModal');
-        if (generateTemplateModalEl) {
-            generateTemplateModalEl.addEventListener('hidden.bs.modal', function () {
-                resetTemplateCheckboxes();
-            });
-        }
 
         // ============================================================
         // CHOICES.JS RE-INIT – Add Batch Modal
@@ -1132,13 +1134,13 @@
             });
         }
 
-        // ===== Generate template(s) — checkbox-based multi-select =====
+        // ===== Generate template(s) — checkbox multi-select =====
         const generateBtn = document.getElementById('generate-template-btn');
         if (generateBtn) {
             generateBtn.addEventListener('click', function () {
-                const schoolclassids = getCheckedValues('tpl_schoolclassid');
-                const termids        = getCheckedValues('tpl_termid');
-                const sessionids     = getCheckedValues('tpl_sessionid');
+                const schoolclassids = tplCheckedValues('tpl_schoolclass');
+                const termids        = tplCheckedValues('tpl_term');
+                const sessionids     = tplCheckedValues('tpl_session');
                 const rows           = document.getElementById('tpl_rows').value || 30;
                 const errorMsg       = document.getElementById('template-alert-error-msg');
                 const loader         = document.getElementById('template-loader');
@@ -1152,8 +1154,8 @@
                 }
 
                 const totalCombinations = schoolclassids.length * termids.length * sessionids.length;
-                if (totalCombinations > MAX_COMBINATIONS) {
-                    errorMsg.textContent = `That's ${totalCombinations} combinations — please narrow your selection to ${MAX_COMBINATIONS} or fewer at a time.`;
+                if (totalCombinations > 60) {
+                    errorMsg.textContent = `That's ${totalCombinations} combinations — please narrow your selection to 60 or fewer at a time.`;
                     errorMsg.classList.remove('d-none');
                     return;
                 }
