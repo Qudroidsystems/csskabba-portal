@@ -2757,6 +2757,16 @@ class TimetableController extends Controller
             ?? Schoolsession::latest('id')->value('id');
         
         $termId = $request->input('term_id') 
+            // Term IDs are NOT scoped per-session, so "latest id" can pick a
+            // term row belonging to a totally different session — even one
+            // that happens to share the same display name (e.g. another
+            // session's own "Third Term"). That mismatched term_id then
+            // matches zero TimetableSettings for THIS session, leaving the
+            // grid empty while unfiltered widgets (upcoming/weekly, which
+            // never filtered by term) kept showing data. Prefer the term
+            // actually flagged current; only fall back to "latest id" if
+            // nothing is flagged.
+            ?? Schoolterm::where('status', true)->value('id')
             ?? Schoolterm::latest('id')->value('id');
         
         $classId = $request->input('class_id');
@@ -2889,8 +2899,8 @@ class TimetableController extends Controller
         $sessions = Schoolsession::orderByDesc('id')->get();
         $terms = Schoolterm::all();
         $days = self::DAYS;
-        $upcomingSlots = $this->getUpcomingSlots($teacherId, $sessionId);
-        $weeklySummary = $this->getWeeklySummary($teacherId, $sessionId);
+        $upcomingSlots = $this->getUpcomingSlots($teacherId, $sessionId, $termId);
+        $weeklySummary = $this->getWeeklySummary($teacherId, $sessionId, $termId);
         $todaySlots = $slots[date('l')] ?? collect();
 
         $icsUrl = URL::signedRoute('timetable.ics', ['teacherId' => $teacherId], now()->addYears(10));
@@ -2906,7 +2916,7 @@ class TimetableController extends Controller
     // =========================================================================
     // PRIVATE: Upcoming slots / weekly summary for teacher view
     // =========================================================================
-    private function getUpcomingSlots(int $teacherId, int $sessionId): array
+    private function getUpcomingSlots(int $teacherId, int $sessionId, ?int $termId = null): array
     {
         $dayMap     = ['monday' => 0, 'tuesday' => 1, 'wednesday' => 2, 'thursday' => 3, 'friday' => 4];
         $today      = strtolower(now()->format('l'));
@@ -2914,7 +2924,10 @@ class TimetableController extends Controller
         $now        = Carbon::now();
 
         $slots = TimetableSlot::where('teacher_id', $teacherId)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
+            ->whereHas('setting', function ($q) use ($sessionId, $termId) {
+                $q->where('session_id', $sessionId)->where('is_active', true);
+                if ($termId) $q->where('term_id', $termId);
+            })
             ->whereNotNull('subject_id')
             ->with(['period', 'subject', 'setting.schoolclass', 'setting.schoolclass.armRelation', 'setting.term', 'room'])->get();
 
@@ -2962,10 +2975,13 @@ class TimetableController extends Controller
             ->values()->toArray();
     }
 
-    private function getWeeklySummary(int $teacherId, int $sessionId): array
+    private function getWeeklySummary(int $teacherId, int $sessionId, ?int $termId = null): array
     {
         $slots = TimetableSlot::where('teacher_id', $teacherId)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
+            ->whereHas('setting', function ($q) use ($sessionId, $termId) {
+                $q->where('session_id', $sessionId)->where('is_active', true);
+                if ($termId) $q->where('term_id', $termId);
+            })
             ->whereNotNull('subject_id')
             ->with(['period', 'subject', 'setting.schoolclass', 'setting.schoolclass.armRelation', 'room'])->get();
 
@@ -2988,7 +3004,9 @@ class TimetableController extends Controller
     {
         $teacherId = Auth::id();
         $sessionId = $request->input('session_id') ?? Schoolsession::where('status', 'Current')->value('id');
-        $termId = $request->input('term_id') ?? Schoolterm::latest('id')->value('id');
+        $termId = $request->input('term_id')
+            ?? Schoolterm::where('status', true)->value('id')
+            ?? Schoolterm::latest('id')->value('id');
         $classId = $request->input('class_id');
 
         $query = TimetableSlot::where('teacher_id', $teacherId)
