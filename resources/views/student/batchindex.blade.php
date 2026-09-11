@@ -84,6 +84,10 @@
     box-shadow: 0 8px 24px rgba(0,0,0,.18);
 }
 .ss-toast .toast-body { display:flex; align-items:center; padding: 12px 14px; }
+
+/* Force checkbox pointer cursor and kill theme interference */
+#batchListTable input[type="checkbox"] { cursor: pointer; }
+#checkAll { cursor: pointer; }
 </style>
 
 <div class="main-content">
@@ -237,7 +241,7 @@
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         @can('Create student-bulk-upload')
-                                            <button class="btn btn-light text-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
+                                            <button type="button" class="btn btn-light text-danger d-none" id="remove-actions"><i class="ri-delete-bin-2-line"></i></button>
                                             <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#generateTemplateModal"><i class="bi bi-file-earmark-spreadsheet align-baseline me-1"></i> Generate Template</button>
                                             <button type="button" class="btn btn-warning add-btn" data-bs-toggle="modal" data-bs-target="#addBatchModal"><i class="bi bi-plus-circle align-baseline me-1"></i> New Batch Upload</button>
                                         @endcan
@@ -249,7 +253,12 @@
                                     <table class="table table-nowrap align-middle mb-0" id="batchListTable">
                                         <thead>
                                             <tr>
-                                                <th style="width:44px;"><div class="form-check mb-0"><input class="form-check-input" type="checkbox" value="option" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
+                                                <th style="width:44px;">
+                                                    <div class="form-check mb-0">
+                                                        <input class="form-check-input" type="checkbox" id="checkAll">
+                                                        <label class="form-check-label" for="checkAll"></label>
+                                                    </div>
+                                                </th>
                                                 <th class="sort cursor-pointer" data-sort="sn">SN</th>
                                                 <th class="sort cursor-pointer" data-sort="title">Batch Title</th>
                                                 <th class="sort cursor-pointer" data-sort="schoolclass">School Class</th>
@@ -281,8 +290,8 @@
                                                 <tr data-row-id="{{ $sc->id }}">
                                                     <td class="id" data-id="{{ $sc->id }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sc->id }}">
-                                                            <label class="form-check-label"></label>
+                                                            <input class="form-check-input chk-child" type="checkbox" name="chk_child" value="{{ $sc->id }}" id="chk_{{ $sc->id }}">
+                                                            <label class="form-check-label" for="chk_{{ $sc->id }}"></label>
                                                         </div>
                                                     </td>
                                                     <td class="sn">{{ ++$i }}</td>
@@ -631,6 +640,152 @@
     let importPollTimer = null;
     let lastProgressKey = null;
 
+    // ══════════════════════════════════════════════════════════
+    // MULTIPLE DELETE HELPERS — Global scope so they survive
+    // any DOM re-render and can be referenced from anywhere.
+    // ══════════════════════════════════════════════════════════
+    function getChkChildren() {
+        return document.querySelectorAll('#batchListTable tbody input[name="chk_child"]');
+    }
+
+    function toggleRemoveActions() {
+        const removeActionsBtn = document.getElementById('remove-actions');
+        if (!removeActionsBtn) return;
+        const anyChecked = Array.from(getChkChildren()).some(c => c.checked);
+        removeActionsBtn.classList.toggle('d-none', !anyChecked);
+    }
+
+    function refreshRowHighlight() {
+        getChkChildren().forEach(function (chk) {
+            const row = chk.closest('tr');
+            if (row) row.classList.toggle('selected-row', chk.checked);
+        });
+    }
+
+    function syncCheckAllState() {
+        const checkAll = document.getElementById('checkAll');
+        if (!checkAll) return;
+        const kids = getChkChildren();
+        const total = kids.length;
+        const checked = Array.from(kids).filter(c => c.checked).length;
+        checkAll.checked = total > 0 && checked === total;
+        checkAll.indeterminate = checked > 0 && checked < total;
+    }
+
+    function clearAllSelections() {
+        getChkChildren().forEach(function (chk) { chk.checked = false; });
+        const checkAll = document.getElementById('checkAll');
+        if (checkAll) {
+            checkAll.checked = false;
+            checkAll.indeterminate = false;
+        }
+        refreshRowHighlight();
+        toggleRemoveActions();
+    }
+
+    // ============================================================
+    // MULTIPLE DELETE – Global handler (referenced by onclick)
+    // ============================================================
+    window.deleteMultiple = function () {
+        const selectedIds = Array.from(getChkChildren())
+            .filter(chk => chk.checked)
+            .map(chk => chk.value || chk.closest('tr')?.querySelector('td.id')?.getAttribute('data-id'))
+            .filter(Boolean);
+
+        if (selectedIds.length === 0) {
+            showToast('Please select at least one batch to delete.', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Are you sure?',
+            html: `You are about to delete <strong>${selectedIds.length}</strong> batch(es).<br>
+                   All students, pictures, and related records in those batches will be permanently removed.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: () => !Swal.isLoading(),
+            preConfirm: () => {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                return axios.post('{{ route("student.batch.bulkDelete") }}', {
+                    ids: selectedIds
+                }, {
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.data)
+                .catch(error => {
+                    Swal.showValidationMessage(
+                        error.response?.data?.message || 'Failed to delete batches.'
+                    );
+                });
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: result.value?.message || 'Batches deleted successfully.',
+                    timer: 1600,
+                    showConfirmButton: false
+                }).then(() => window.location.reload());
+            }
+        });
+    };
+
+    // ============================================================
+    // MULTIPLE DELETE — Global delegated listeners
+    // Registered OUTSIDE DOMContentLoaded so they attach
+    // immediately and survive any late re-render of the table.
+    // ============================================================
+    document.addEventListener('change', function (e) {
+        const t = e.target;
+        if (!t || t.type !== 'checkbox') return;
+
+        // "Select all" checkbox (in thead)
+        if (t.id === 'checkAll') {
+            const isChecked = t.checked;
+            getChkChildren().forEach(function (chk) { chk.checked = isChecked; });
+            refreshRowHighlight();
+            toggleRemoveActions();
+            return;
+        }
+
+        // Individual row checkbox
+        if (t.name === 'chk_child' && t.closest('#batchListTable')) {
+            syncCheckAllState();
+            refreshRowHighlight();
+            toggleRemoveActions();
+        }
+    });
+
+    // Fallback: also handle click on the label so toggling is bulletproof
+    // even if a theme script calls preventDefault on the input.
+    document.addEventListener('click', function (e) {
+        const label = e.target.closest('#batchListTable label.form-check-label');
+        if (!label) return;
+        const td = label.closest('td.id');
+        if (!td) return;
+        const chk = td.querySelector('input[name="chk_child"]');
+        if (!chk) return;
+        // If the label had a matching 'for', the browser would have already
+        // toggled the checkbox — guard with a microtask check.
+        setTimeout(function () {
+            // Nothing to do — the change event fires naturally.
+            // Just resync header state in case the browser missed it.
+            syncCheckAllState();
+            refreshRowHighlight();
+            toggleRemoveActions();
+        }, 0);
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         const deleteButtons = document.querySelectorAll('.remove-item-btn');
         const updateButtons = document.querySelectorAll('.update-item-btn');
@@ -640,15 +795,15 @@
         const updateForm = document.getElementById('update-class-form');
         const addBatchForm = document.getElementById('add-batch-form');
 
-        // ── Multiple Delete: checkbox state ─────────────────────────
-        const checkAll         = document.getElementById('checkAll');
-        const removeActionsBtn = document.getElementById('remove-actions');
-        const chkChildren      = document.querySelectorAll('input[name="chk_child"]');
-
         // Attach the backdrop cleanup to every modal on this page.
         document.querySelectorAll('.modal').forEach(function (modalEl) {
             modalEl.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrop);
         });
+
+        // Ensure consistent initial state
+        syncCheckAllState();
+        refreshRowHighlight();
+        toggleRemoveActions();
 
         // ============================================================
         // CHOICES.JS RE-INIT – Generate Template Modal
@@ -723,99 +878,6 @@
                 });
             });
         }
-
-        // ============================================================
-        // MULTIPLE DELETE – checkbox wiring
-        // ============================================================
-        function toggleRemoveActions() {
-            if (!removeActionsBtn) return;
-            const anyChecked = Array.from(chkChildren).some(c => c.checked);
-            removeActionsBtn.classList.toggle('d-none', !anyChecked);
-        }
-
-        function refreshRowHighlight() {
-            chkChildren.forEach(function (chk) {
-                const row = chk.closest('tr');
-                if (row) row.classList.toggle('selected-row', chk.checked);
-            });
-        }
-
-        if (checkAll) {
-            checkAll.addEventListener('change', function () {
-                chkChildren.forEach(function (chk) {
-                    chk.checked = checkAll.checked;
-                });
-                refreshRowHighlight();
-                toggleRemoveActions();
-            });
-        }
-
-        chkChildren.forEach(function (chk) {
-            chk.addEventListener('change', function () {
-                const allChecked = chkChildren.length > 0 &&
-                    Array.from(chkChildren).every(c => c.checked);
-                if (checkAll) checkAll.checked = allChecked;
-                refreshRowHighlight();
-                toggleRemoveActions();
-            });
-        });
-
-        // ============================================================
-        // MULTIPLE DELETE – global handler (called via onclick)
-        // ============================================================
-        window.deleteMultiple = function () {
-            const selectedIds = Array.from(chkChildren)
-                .filter(chk => chk.checked)
-                .map(chk => chk.value || chk.closest('tr')?.querySelector('td.id')?.getAttribute('data-id'))
-                .filter(Boolean);
-
-            if (selectedIds.length === 0) {
-                showToast('Please select at least one batch to delete.', 'warning');
-                return;
-            }
-
-            Swal.fire({
-                title: 'Are you sure?',
-                html: `You are about to delete <strong>${selectedIds.length}</strong> batch(es).<br>
-                       All students, pictures, and related records in those batches will be permanently removed.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, delete them!',
-                cancelButtonText: 'Cancel',
-                showLoaderOnConfirm: true,
-                allowOutsideClick: () => !Swal.isLoading(),
-                preConfirm: () => {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-                    return axios.post('{{ route("student.batch.bulkDelete") }}', {
-                        ids: selectedIds
-                    }, {
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.data)
-                    .catch(error => {
-                        Swal.showValidationMessage(
-                            error.response?.data?.message || 'Failed to delete batches.'
-                        );
-                    });
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Deleted!',
-                        text: result.value?.message || 'Batches deleted successfully.',
-                        timer: 1600,
-                        showConfirmButton: false
-                    }).then(() => window.location.reload());
-                }
-            });
-        };
 
         // ===== Delete single batch =====
         deleteButtons.forEach(button => {
