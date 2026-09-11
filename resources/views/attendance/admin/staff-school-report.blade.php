@@ -186,7 +186,7 @@
 /* ── Chart panel ── */
 .sar-chart-panel { padding:16px 20px 20px; }
 
-/* ── Avatar, matching the Users blade treatment ── */
+/* ── Avatar ── */
 .sar-avatar {
     width: 36px; height: 36px;
     border-radius: 50%;
@@ -267,33 +267,20 @@
     </div>
 
     {{-- ══ SCHOOL HOURS / LATE EXPECTATION BANNER ═══════════════════════ --}}
-    @php
-        $currentTermSetting = \App\Models\AttendanceTermSetting::current();
-        $resumptionLabel = $currentTermSetting?->resumption_time
-            ? \Illuminate\Support\Carbon::parse($currentTermSetting->resumption_time)->format('g:i A')
-            : '8:00 AM';
-        $closingLabel = $currentTermSetting?->closing_time
-            ? \Illuminate\Support\Carbon::parse($currentTermSetting->closing_time)->format('g:i A')
-            : '2:00 PM';
-        $graceMinutes = (int) ($currentTermSetting->late_grace_minutes ?? 0);
-        $expectedBy = $currentTermSetting?->resumption_time
-            ? \Illuminate\Support\Carbon::parse($currentTermSetting->resumption_time)->addMinutes($graceMinutes)->format('g:i A')
-            : '8:00 AM';
-    @endphp
-    @if($currentTermSetting)
+    @if(!empty($timeContext))
     <div class="sar-hours-banner">
         <i class="ri-time-line"></i>
         <div class="flex-grow-1">
             <strong>School Hours:</strong>
-            Resumption <span class="badge bg-primary">{{ $resumptionLabel }}</span>
+            Resumption <span class="badge bg-primary">{{ $timeContext['resumption_label'] }}</span>
             &nbsp;·&nbsp;
-            Closing <span class="badge bg-secondary">{{ $closingLabel }}</span>
+            Closing <span class="badge bg-secondary">{{ $timeContext['closing_label'] }}</span>
             &nbsp;·&nbsp;
             Staff must clock in by
-            <span class="badge bg-dark">{{ $expectedBy }}</span>
-            @if($graceMinutes > 0)
+            <span class="badge bg-dark">{{ $timeContext['expected_by'] }}</span>
+            @if($timeContext['grace_minutes'] > 0)
                 <span class="sar-grace-pill ms-2">
-                    <i class="ri-timer-line me-1"></i>{{ $graceMinutes }} min grace
+                    <i class="ri-timer-line me-1"></i>{{ $timeContext['grace_minutes'] }} min grace
                 </span>
             @else
                 <span class="sar-grace-pill ms-2" style="background:#e2e8f0;color:#475569;">
@@ -301,7 +288,7 @@
                 </span>
             @endif
             <span class="text-muted ms-2" style="font-size:11.5px;">
-                — anyone clocking in after <strong>{{ $expectedBy }}</strong> is marked <em>late</em>.
+                — anyone clocking in after <strong>{{ $timeContext['expected_by'] }}</strong> is marked <em>late</em>.
             </span>
         </div>
     </div>
@@ -519,7 +506,7 @@
                             <td class="text-center">
                                 @if($r->days_late > 0)
                                     <span class="badge bg-warning-subtle text-warning fw-semibold"
-                                          title="Staff clocked in after {{ $expectedBy }} on {{ $r->days_late }} day(s)">
+                                          title="Clocked in after {{ $timeContext['expected_by'] ?? '8:00 AM' }} on {{ $r->days_late }} day(s)">
                                         <i class="ri-time-line me-1"></i>{{ $r->days_late }}
                                     </span>
                                 @else
@@ -562,8 +549,10 @@
             </div>
             <div class="px-3 py-2 text-muted" style="font-size:11px;">
                 *Absent is inferred — no device punch recorded for that working day.
-                Late means the staff member clocked in after <strong>{{ $expectedBy }}</strong>
-                @if($graceMinutes > 0) (resumption + {{ $graceMinutes }}-min grace) @endif.
+                Late means the staff member clocked in after <strong>{{ $timeContext['expected_by'] ?? '8:00 AM' }}</strong>
+                @if(($timeContext['grace_minutes'] ?? 0) > 0)
+                    (resumption {{ $timeContext['resumption_label'] }} + {{ $timeContext['grace_minutes'] }}-min grace)
+                @endif.
             </div>
         </div>
     </div>

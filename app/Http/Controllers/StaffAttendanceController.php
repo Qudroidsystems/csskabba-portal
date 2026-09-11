@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\StaffAttendanceExport;
+use App\Models\AttendanceTermSetting;
 use App\Models\DeviceOutageDate;
 use App\Models\Staff;
 use App\Models\StaffAttendance;
@@ -34,6 +35,10 @@ use Maatwebsite\Excel\Facades\Excel;
  * never had a row before either). Outage/ad-hoc dates still render as a
  * visible row labeled 'outage' or 'excluded' so it's clear why a specific
  * date has no attendance data.
+ *
+ * Lateness context (expected clock-in time, grace window, closing time)
+ * comes from AttendanceTermSetting::current() and is passed into both
+ * views so blades don't have to query it themselves.
  */
 class StaffAttendanceController extends Controller
 {
@@ -53,7 +58,10 @@ class StaffAttendanceController extends Controller
     {
         $data = $this->buildSchoolReportData($request);
 
-        return view('attendance.admin.staff-school-report', $data + ['pagetitle' => 'Staff Attendance Report']);
+        return view('attendance.admin.staff-school-report', $data + [
+            'pagetitle'   => 'Staff Attendance Report',
+            'timeContext' => $this->buildTimeContext(),
+        ]);
     }
 
     // =========================================================================
@@ -171,7 +179,10 @@ class StaffAttendanceController extends Controller
             'staff', 'records', 'calendar', 'workingDays',
             'present', 'late', 'excused', 'absent', 'pct',
             'dateFrom', 'dateTo', 'pagetitle'
-        ) + ['excludedWeekdays' => $excl['weekdays']]);
+        ) + [
+            'excludedWeekdays' => $excl['weekdays'],
+            'timeContext'      => $this->buildTimeContext(),
+        ]);
     }
 
     // =========================================================================
@@ -322,9 +333,28 @@ class StaffAttendanceController extends Controller
         return $count;
     }
 
+    /**
+     * Builds the per-day calendar for the individual staff report.
+     *
+     * Each day now carries:
+     *   - 'date'         — raw Y-m-d (used by blade to compute minutes late)
+     *   - 'label'        — human label, e.g. "Mon, 08 Sep"
+     *   - 'status'       — present | late | absent | excused | outage | excluded
+     *   - 'time_in'      — "g:i A" formatted (or null)
+     *   - 'time_out'     — "g:i A" formatted (or null)
+     *   - 'expected_by'  — "g:i A" cutoff instant for this weekday (null for
+     *                      outage/excluded rows)
+     *   - 'minutes_late' — int, non-null only when status === 'late'
+     *
+     * Passing these in from the controller keeps the blade free of any
+     * date arithmetic and keeps the grace window in exactly one place.
+     */
     private function buildCalendarWithRecords(string $dateFrom, string $dateTo, $records, array $excl): array
     {
         $byDate = $records->keyBy(fn($r) => Carbon::parse($r->attendance_date)->toDateString());
+
+        $setting      = AttendanceTermSetting::current();
+        $graceMinutes = (int) ($setting->late_grace_minutes ?? 0);
 
         $days    = [];
         $current = Carbon::parse($dateFrom);
@@ -342,22 +372,53 @@ class StaffAttendanceController extends Controller
 
             if ($excl['visible']->contains($key)) {
                 $days[] = [
-                    'date'     => $key,
-                    'label'    => $current->format('D, d M'),
+                    'date'         => $key,
+                    'label'        => $current->format('D, d M'),
                     // 'outage' = flagged device downtime, 'excluded' = admin ticked it
                     // in the report's Exclude Days panel for this view only.
-                    'status'   => $excl['outages']->contains($key) ? 'outage' : 'excluded',
-                    'time_in'  => null,
-                    'time_out' => null,
+                    'status'       => $excl['outages']->contains($key) ? 'outage' : 'excluded',
+                    'time_in'      => null,
+                    'time_out'     => null,
+                    'expected_by'  => null,
+                    'minutes_late' => null,
                 ];
             } else {
-                $rec = $byDate->get($key);
+                $rec    = $byDate->get($key);
+                $status = $rec->status ?? 'absent'; // inferred when no device record exists
+
+                $timeIn  = $rec?->time_in  ? Carbon::parse($rec->time_in)->format('g:i A')  : null;
+                $timeOut = $rec?->time_out ? Carbon::parse($rec->time_out)->format('g:i A') : null;
+
+                // Expected cutoff for this specific day, when a term setting exists.
+                $expectedBy   = null;
+                $minutesLate  = null;
+
+                if ($setting && $setting->resumption_time) {
+                    $expected = $current->copy()
+                        ->setTimeFromTimeString($setting->resumption_time)
+                        ->addMinutes($graceMinutes);
+
+                    $expectedBy = $expected->format('g:i A');
+
+                    if ($status === 'late' && $rec?->time_in) {
+                        $actual      = $current->copy()->setTimeFromTimeString(
+                            Carbon::parse($rec->time_in)->format('H:i:s')
+                        );
+                        // diffInMinutes(false) keeps the sign; we clamp at 0
+                        // so a late punch that somehow precedes the cutoff
+                        // (shouldn't happen, but defensive) reads as 0m.
+                        $minutesLate = max(0, $expected->diffInMinutes($actual, false));
+                    }
+                }
+
                 $days[] = [
-                    'date'     => $key,
-                    'label'    => $current->format('D, d M'),
-                    'status'   => $rec->status ?? 'absent', // inferred when no device record exists
-                    'time_in'  => $rec?->time_in,
-                    'time_out' => $rec?->time_out,
+                    'date'         => $key,
+                    'label'        => $current->format('D, d M'),
+                    'status'       => $status,
+                    'time_in'      => $timeIn,
+                    'time_out'     => $timeOut,
+                    'expected_by'  => $expectedBy,
+                    'minutes_late' => $minutesLate,
                 ];
             }
 
@@ -365,5 +426,53 @@ class StaffAttendanceController extends Controller
         }
 
         return $days;
+    }
+
+    /**
+     * One immutable snapshot of the lateness context for the current term,
+     * used by both staff blades to render the school-hours banner and
+     * "expected by" text without each blade re-querying.
+     *
+     * Returns null when there's no current session/term setting — the
+     * blades hide the banner in that case.
+     *
+     * Keys:
+     *   resumption_label  — "8:00 AM"
+     *   closing_label     — "2:00 PM"
+     *   morning_end_label — "12:00 PM"
+     *   grace_minutes     — int
+     *   expected_by       — "8:00 AM" (resumption + grace)
+     *   setting           — the AttendanceTermSetting model itself, in case
+     *                       a blade wants anything else off it
+     */
+    private function buildTimeContext(): ?array
+    {
+        $setting = AttendanceTermSetting::current();
+        if (!$setting) {
+            return null;
+        }
+
+        $graceMinutes = (int) ($setting->late_grace_minutes ?? 0);
+
+        $resumption = $setting->resumption_time
+            ? Carbon::parse($setting->resumption_time)
+            : null;
+        $closing = $setting->closing_time
+            ? Carbon::parse($setting->closing_time)
+            : null;
+        $morningEnd = $setting->morning_end_time
+            ? Carbon::parse($setting->morning_end_time)
+            : null;
+
+        return [
+            'setting'           => $setting,
+            'resumption_label'  => $resumption ? $resumption->format('g:i A')  : '8:00 AM',
+            'closing_label'     => $closing    ? $closing->format('g:i A')     : '2:00 PM',
+            'morning_end_label' => $morningEnd ? $morningEnd->format('g:i A')  : '12:00 PM',
+            'grace_minutes'     => $graceMinutes,
+            'expected_by'       => $resumption
+                ? $resumption->copy()->addMinutes($graceMinutes)->format('g:i A')
+                : '8:00 AM',
+        ];
     }
 }

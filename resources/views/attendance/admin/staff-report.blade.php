@@ -138,6 +138,45 @@
 }
 .sad-weekday-chip input { accent-color:#dc2626; }
 .sad-weekday-chip.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
+
+/* ── School-hours banner ── */
+.sad-hours-banner {
+    background: #eff6ff;
+    color: #1e3a5f;
+    border-radius: var(--sad-radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    border: 1px solid #dbeafe;
+}
+.sad-hours-banner i { font-size: 20px; }
+.sad-hours-banner .badge { font-weight: 600; }
+.sad-hours-banner .sad-grace-pill {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+/* ── Late cell ── */
+.sad-late-by {
+    font-weight: 700;
+    color: #b45309;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+.sad-late-by .mins { color: #dc2626; }
+.sad-ontime {
+    color: #16a34a;
+    font-weight: 600;
+    font-size: 12.5px;
+}
 </style>
 
 <div class="main-content"><div class="page-content"><div class="container-fluid">
@@ -162,6 +201,30 @@
             <i class="ri-arrow-left-line me-1"></i>Back to Report
         </a>
     </div>
+
+    {{-- ══ SCHOOL HOURS / LATE EXPECTATION BANNER ═══════════════════════ --}}
+    @if(!empty($timeContext))
+    <div class="sad-hours-banner">
+        <i class="ri-time-line"></i>
+        <div class="flex-grow-1">
+            <strong>School Hours:</strong>
+            Resumption <span class="badge bg-primary">{{ $timeContext['resumption_label'] }}</span>
+            &nbsp;·&nbsp;
+            Closing <span class="badge bg-secondary">{{ $timeContext['closing_label'] }}</span>
+            &nbsp;·&nbsp;
+            Expected clock-in by <span class="badge bg-dark">{{ $timeContext['expected_by'] }}</span>
+            @if($timeContext['grace_minutes'] > 0)
+                <span class="sad-grace-pill ms-2">
+                    <i class="ri-timer-line me-1"></i>{{ $timeContext['grace_minutes'] }} min grace
+                </span>
+            @else
+                <span class="sad-grace-pill ms-2" style="background:#e2e8f0;color:#475569;">
+                    <i class="ri-timer-line me-1"></i>No grace
+                </span>
+            @endif
+        </div>
+    </div>
+    @endif
 
     {{-- ══ STATS + FILTER ═══════════════════════════════════════════════ --}}
     <div class="row g-3 mb-3">
@@ -232,33 +295,69 @@
                         <tr>
                             <th>Date</th>
                             <th>Status</th>
+                            <th>Expected</th>
                             <th>Time In</th>
                             <th>Time Out</th>
+                            <th>Late By</th>
                         </tr>
                     </thead>
                     <tbody>
                     @forelse($calendar as $day)
                         @php
-                            // 'excluded' = admin ticked this date in the Exclude Days panel
-                            // for this report only (see StaffAttendanceController::resolveExcludedDates).
-                            // 'outage'   = a persisted DeviceOutageDate.
                             $sc = ['present'=>'success','late'=>'secondary','excused'=>'info','absent'=>'danger','outage'=>'dark','excluded'=>'warning'];
                             $c  = $sc[$day['status']] ?? 'secondary';
                             $statusLabel = $day['status'] === 'excluded' ? 'Excluded' : ucfirst($day['status']);
                         @endphp
                         <tr>
                             <td><strong>{{ $day['label'] }}</strong></td>
-                            <td><span class="badge bg-{{ $c }}-subtle text-{{ $c }} fw-semibold">{{ $statusLabel }}</span></td>
+                            <td>
+                                <span class="badge bg-{{ $c }}-subtle text-{{ $c }} fw-semibold">
+                                    {{ $statusLabel }}
+                                </span>
+                            </td>
+                            <td class="text-muted" style="font-size:12px;">
+                                @if(in_array($day['status'], ['absent', 'outage', 'excluded']) || empty($day['expected_by']))
+                                    —
+                                @else
+                                    {{ $day['expected_by'] }}
+                                    @if(($timeContext['grace_minutes'] ?? 0) > 0)
+                                        <span class="text-muted" style="font-size:10.5px;">(+{{ $timeContext['grace_minutes'] }}m)</span>
+                                    @endif
+                                @endif
+                            </td>
                             <td class="text-muted">{{ $day['time_in'] ?? '—' }}</td>
                             <td class="text-muted">{{ $day['time_out'] ?? '—' }}</td>
+                            <td>
+                                @if($day['status'] === 'late' && $day['minutes_late'] !== null)
+                                    @php
+                                        $h = intdiv($day['minutes_late'], 60);
+                                        $m = $day['minutes_late'] % 60;
+                                        $human = $h > 0 ? "{$h}h {$m}m" : "{$m}m";
+                                    @endphp
+                                    <span class="sad-late-by">
+                                        <i class="ri-timer-flash-line me-1"></i>
+                                        <span class="mins">{{ $human }}</span> late
+                                    </span>
+                                @elseif($day['status'] === 'present')
+                                    <span class="sad-ontime"><i class="ri-check-line me-1"></i>On time</span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="text-center py-5 text-muted">
+                        <tr><td colspan="6" class="text-center py-5 text-muted">
                             <i class="ri-inbox-line ri-2x d-block mb-2"></i>No working days in this range.
                         </td></tr>
                     @endforelse
                     </tbody>
                 </table>
+            </div>
+            <div class="px-3 py-2 text-muted" style="font-size:11px;">
+                Late = clocked in after <strong>{{ $timeContext['expected_by'] ?? '8:00 AM' }}</strong>
+                @if(($timeContext['grace_minutes'] ?? 0) > 0)
+                    (resumption {{ $timeContext['resumption_label'] }} + {{ $timeContext['grace_minutes'] }}-min grace)
+                @endif.
             </div>
         </div>
     </div>
