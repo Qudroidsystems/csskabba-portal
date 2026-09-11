@@ -2165,4 +2165,157 @@ public function deleteStudentBatchMultiple(Request $request): JsonResponse
     }
 }
 
+/**
+ * Generate one or more locked Excel templates for batch student upload,
+ * across any combination of selected classes, terms, and sessions.
+ * A single combination downloads as .xlsx; multiple combinations are
+ * bundled into a .zip.
+ */
+public function generateBatchTemplateBulk(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'schoolclassids'   => 'required|array|min:1',
+        'schoolclassids.*' => 'integer|exists:schoolclass,id',
+        'termids'          => 'required|array|min:1',
+        'termids.*'        => 'integer|exists:schoolterm,id',
+        'sessionids'       => 'required|array|min:1',
+        'sessionids.*'     => 'integer|exists:schoolsession,id',
+        'rows'             => 'nullable|integer|min:1|max:500',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed: ' . $validator->errors()->first(),
+            'errors'  => $validator->errors(),
+        ], 422);
+    }
+
+    $classIds   = array_unique($request->input('schoolclassids'));
+    $termIds    = array_unique($request->input('termids'));
+    $sessionIds = array_unique($request->input('sessionids'));
+    $rows       = (int) $request->input('rows', 30);
+
+    $totalCombinations = count($classIds) * count($termIds) * count($sessionIds);
+    $maxCombinations    = 60;
+
+    if ($totalCombinations > $maxCombinations) {
+        return response()->json([
+            'success' => false,
+            'message' => "That's {$totalCombinations} combinations — please select {$maxCombinations} or fewer at a time.",
+        ], 422);
+    }
+
+    $sanitize = function (string $value): string {
+        $value = str_replace(['/', '\\'], '-', $value);
+        $value = preg_replace('/[^A-Za-z0-9\- ]/', '', $value);
+        $value = preg_replace('/\s+/', '-', trim($value));
+        $value = preg_replace('/-+/', '-', $value);
+        return $value;
+    };
+
+    $batchDirName     = 'batch-templates-' . now()->format('Ymd-His') . '-' . uniqid();
+    $batchDirRelative = 'temp/' . $batchDirName;
+    $batchDirAbsolute = storage_path('app/' . $batchDirRelative);
+
+    try {
+        $classes = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
+            ->whereIn('schoolclass.id', $classIds)
+            ->get()->keyBy('id');
+
+        $terms    = Schoolterm::whereIn('id', $termIds)->get()->keyBy('id');
+        $sessions = Schoolsession::whereIn('id', $sessionIds)->get()->keyBy('id');
+
+        Storage::disk('local')->makeDirectory($batchDirRelative);
+
+        $generatedFiles = [];
+
+        foreach ($classIds as $classId) {
+            $class     = $classes[$classId];
+            $className = $class->schoolclass . ($class->arm ? ' ' . $class->arm : '');
+
+            foreach ($termIds as $termId) {
+                $term = $terms[$termId];
+
+                foreach ($sessionIds as $sessionId) {
+                    $session = $sessions[$sessionId];
+
+                    $filename = sprintf(
+                        '%s_%s_%s_Batch-Template.xlsx',
+                        $sanitize($className),
+                        $sanitize($term->term),
+                        $sanitize($session->session)
+                    );
+
+                    Excel::store(
+                        new \App\Exports\StudentBatchTemplateExport(
+                            (int) $classId,
+                            (int) $termId,
+                            (int) $sessionId,
+                            $rows,
+                            $className,
+                            $term->term,
+                            $session->session
+                        ),
+                        $batchDirRelative . '/' . $filename,
+                        'local'
+                    );
+
+                    $generatedFiles[] = [
+                        'path'     => $batchDirAbsolute . DIRECTORY_SEPARATOR . $filename,
+                        'filename' => $filename,
+                    ];
+                }
+            }
+        }
+
+        // Clean up the (now empty, after download) temp directory once the response has been sent.
+        app()->terminating(function () use ($batchDirAbsolute) {
+            if (is_dir($batchDirAbsolute)) {
+                array_map('unlink', glob($batchDirAbsolute . '/*') ?: []);
+                @rmdir($batchDirAbsolute);
+            }
+        });
+
+        // Single combination — just hand back the xlsx directly.
+        if (count($generatedFiles) === 1) {
+            $file = $generatedFiles[0];
+            return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
+        }
+
+        // Multiple combinations — zip them up.
+        $zipFilename = 'Batch-Templates_' . now()->format('Ymd-His') . '.zip';
+        $zipAbsolute = $batchDirAbsolute . '.zip';
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipAbsolute, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \Exception('Could not create zip archive for templates.');
+        }
+        foreach ($generatedFiles as $file) {
+            $zip->addFile($file['path'], $file['filename']);
+        }
+        $zip->close();
+
+        // The files are safely inside the zip now — remove the loose copies immediately.
+        foreach ($generatedFiles as $file) {
+            @unlink($file['path']);
+        }
+
+        return response()->download($zipAbsolute, $zipFilename)->deleteFileAfterSend(true);
+
+    } catch (\Exception $e) {
+        Log::error('Failed to generate bulk batch templates: ' . $e->getMessage());
+
+        if (is_dir($batchDirAbsolute)) {
+            array_map('unlink', glob($batchDirAbsolute . '/*') ?: []);
+            @rmdir($batchDirAbsolute);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to generate template(s): ' . $e->getMessage(),
+        ], 500);
+    }
+}
 }

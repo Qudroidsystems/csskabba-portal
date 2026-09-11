@@ -384,17 +384,17 @@ Route::group(['middleware' => ['auth']], function () {
         // Bulk / Batch Upload  (fixed segments — before the resource route)
         // ------------------------------------------------
         Route::prefix('student')->group(function () {
-            Route::get('bulkupload', [StudentController::class, 'bulkupload'])->name('student.bulkupload');
-            Route::post('bulkuploadsave', [StudentController::class, 'bulkuploadsave'])->name('student.bulkuploadsave');
-            Route::get('batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
-            Route::delete('deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
-            Route::get('batch/generate-template', [StudentController::class, 'generateBatchTemplate'])->name('student.batch.generateTemplate');
-            Route::get('batch/import-progress', [StudentController::class, 'getBatchImportProgress'])->name('student.batch.importProgress');
-            Route::get('batch/{id}/errors', [StudentController::class, 'getBatchImportErrors'])->name('student.batch.errors');
-            // Batch bulk delete (POST — takes an array of batch IDs)
-            Route::post('batch/bulk-delete', [StudentController::class, 'deleteStudentBatchMultiple'])->name('student.batch.bulkDelete');});
-
-        // ------------------------------------------------
+        Route::get('bulkupload', [StudentController::class, 'bulkupload'])->name('student.bulkupload');
+        Route::post('bulkuploadsave', [StudentController::class, 'bulkuploadsave'])->name('student.bulkuploadsave');
+        Route::get('batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
+        Route::delete('deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
+        Route::get('batch/generate-template', [StudentController::class, 'generateBatchTemplate'])->name('student.batch.generateTemplate');
+        Route::post('batch/generate-template-bulk', [StudentController::class, 'generateBatchTemplateBulk'])->name('student.batch.generateTemplateBulk');
+        Route::get('batch/import-progress', [StudentController::class, 'getBatchImportProgress'])->name('student.batch.importProgress');
+        Route::get('batch/{id}/errors', [StudentController::class, 'getBatchImportErrors'])->name('student.batch.errors');
+        // Batch bulk delete (POST — takes an array of batch IDs)
+        Route::post('batch/bulk-delete', [StudentController::class, 'deleteStudentBatchMultiple'])->name('student.batch.bulkDelete');});
+            // ------------------------------------------------
         // Class & Term Operations (new dedicated page + roster actions)
         // ------------------------------------------------
         Route::get('student/class-operations', [StudentClassOperationsController::class, 'index'])
