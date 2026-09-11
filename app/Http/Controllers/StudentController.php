@@ -2059,4 +2059,110 @@ public function generateBatchTemplate(Request $request)
     }
 }
 
+
+/**
+ * Delete multiple student batches (and all students belonging to them).
+ */
+public function deleteStudentBatchMultiple(Request $request): JsonResponse
+{
+    $validator = Validator::make($request->all(), [
+        'ids'   => 'required|array|min:1',
+        'ids.*' => 'required|integer|exists:student_batch_upload,id',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid batch selection: ' . $validator->errors()->first(),
+            'errors'  => $validator->errors(),
+        ], 422);
+    }
+
+    try {
+        if (!Schema::hasTable('student_batch_upload')) {
+            throw new \Exception('student_batch_upload table does not exist');
+        }
+        if (!Schema::hasColumn('studentRegistration', 'batchid')) {
+            throw new \Exception('batchid column missing on studentRegistration');
+        }
+
+        DB::beginTransaction();
+
+        $batches      = StudentBatchModel::whereIn('id', $request->ids)->get();
+        $deletedCount = 0;
+
+        foreach ($batches as $batch) {
+            $studentIds = Student::where('batchid', $batch->id)->pluck('id');
+
+            foreach ($studentIds as $studentId) {
+                // Picture
+                $picture = Studentpicture::where('studentid', $studentId)->first();
+                if ($picture && $picture->picture) {
+                    $this->deleteImage($picture->picture);
+                }
+
+                // Bill payments
+                $billPayments = StudentBillPayment::where('student_id', $studentId)->get();
+                foreach ($billPayments as $bp) {
+                    StudentBillPaymentRecord::where('student_bill_payment_id', $bp->id)->delete();
+                    $bp->delete();
+                }
+                StudentBillPaymentBook::where('student_id', $studentId)->delete();
+                StudentBillInvoice::where('student_id', $studentId)->delete();
+
+                // Broadsheet records (real + mock)
+                $bsRecords = BroadsheetRecord::where('student_id', $studentId)->get();
+                foreach ($bsRecords as $r) {
+                    Broadsheets::where('broadsheet_record_id', $r->id)->delete();
+                    $r->delete();
+                }
+
+                $bsMockRecords = BroadsheetRecordMock::where('student_id', $studentId)->get();
+                foreach ($bsMockRecords as $r) {
+                    BroadsheetsMock::where('broadsheet_records_mock_id', $r->id)->delete();
+                    $r->delete();
+                }
+
+                // Related records
+                Studentclass::where('studentId', $studentId)->delete();
+                PromotionStatus::where('studentId', $studentId)->delete();
+                ParentRegistration::where('studentId', $studentId)->delete();
+                Studentpicture::where('studentid', $studentId)->delete();
+                SubjectRegistrationStatus::where('studentId', $studentId)->delete();
+                Studenthouse::where('studentid', $studentId)->delete();
+                StudentClub::where('studentid', $studentId)->delete();
+                StudentSport::where('studentid', $studentId)->delete();
+                Studentpersonalityprofile::where('studentid', $studentId)->delete();
+                StudentCurrentTerm::where('studentId', $studentId)->delete();
+            }
+
+            // Delete students belonging to this batch, then the batch itself
+            Student::where('batchid', $batch->id)->delete();
+            $batch->delete();
+            $deletedCount++;
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$deletedCount} batch(es) deleted successfully.",
+        ], 200);
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'One or more batches were not found.',
+        ], 404);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Error deleting multiple batches: {$e->getMessage()}\n{$e->getTraceAsString()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to delete batches: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
 }

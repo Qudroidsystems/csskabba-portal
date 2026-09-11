@@ -41,6 +41,7 @@
     transform: translateY(-1px);
     position: relative; z-index: 1;
 }
+#batchListTable tbody tr.selected-row { background: #eef4ff !important; box-shadow: inset 3px 0 0 var(--ss-accent); }
 
 /* Status pill badges */
 .status-pill {
@@ -277,10 +278,10 @@
                                                         default      => 'ri-close-line',
                                                     };
                                                 @endphp
-                                                <tr>
+                                                <tr data-row-id="{{ $sc->id }}">
                                                     <td class="id" data-id="{{ $sc->id }}">
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child">
+                                                            <input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sc->id }}">
                                                             <label class="form-check-label"></label>
                                                         </div>
                                                     </td>
@@ -639,6 +640,11 @@
         const updateForm = document.getElementById('update-class-form');
         const addBatchForm = document.getElementById('add-batch-form');
 
+        // ── Multiple Delete: checkbox state ─────────────────────────
+        const checkAll         = document.getElementById('checkAll');
+        const removeActionsBtn = document.getElementById('remove-actions');
+        const chkChildren      = document.querySelectorAll('input[name="chk_child"]');
+
         // Attach the backdrop cleanup to every modal on this page.
         document.querySelectorAll('.modal').forEach(function (modalEl) {
             modalEl.addEventListener('hidden.bs.modal', cleanupStrayModalBackdrop);
@@ -682,7 +688,7 @@
         }
 
         // ============================================================
-        // CHOICES.JS RE-INIT – Add Batch Modal (FIXED)
+        // CHOICES.JS RE-INIT – Add Batch Modal
         // ============================================================
         function initChoicesForAddBatchModal() {
             ['schoolclassid', 'termid', 'sessionid'].forEach(function (id) {
@@ -718,7 +724,100 @@
             });
         }
 
-        // ===== Delete batch =====
+        // ============================================================
+        // MULTIPLE DELETE – checkbox wiring
+        // ============================================================
+        function toggleRemoveActions() {
+            if (!removeActionsBtn) return;
+            const anyChecked = Array.from(chkChildren).some(c => c.checked);
+            removeActionsBtn.classList.toggle('d-none', !anyChecked);
+        }
+
+        function refreshRowHighlight() {
+            chkChildren.forEach(function (chk) {
+                const row = chk.closest('tr');
+                if (row) row.classList.toggle('selected-row', chk.checked);
+            });
+        }
+
+        if (checkAll) {
+            checkAll.addEventListener('change', function () {
+                chkChildren.forEach(function (chk) {
+                    chk.checked = checkAll.checked;
+                });
+                refreshRowHighlight();
+                toggleRemoveActions();
+            });
+        }
+
+        chkChildren.forEach(function (chk) {
+            chk.addEventListener('change', function () {
+                const allChecked = chkChildren.length > 0 &&
+                    Array.from(chkChildren).every(c => c.checked);
+                if (checkAll) checkAll.checked = allChecked;
+                refreshRowHighlight();
+                toggleRemoveActions();
+            });
+        });
+
+        // ============================================================
+        // MULTIPLE DELETE – global handler (called via onclick)
+        // ============================================================
+        window.deleteMultiple = function () {
+            const selectedIds = Array.from(chkChildren)
+                .filter(chk => chk.checked)
+                .map(chk => chk.value || chk.closest('tr')?.querySelector('td.id')?.getAttribute('data-id'))
+                .filter(Boolean);
+
+            if (selectedIds.length === 0) {
+                showToast('Please select at least one batch to delete.', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `You are about to delete <strong>${selectedIds.length}</strong> batch(es).<br>
+                       All students, pictures, and related records in those batches will be permanently removed.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete them!',
+                cancelButtonText: 'Cancel',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !Swal.isLoading(),
+                preConfirm: () => {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                    return axios.post('{{ route("student.batch.bulkDelete") }}', {
+                        ids: selectedIds
+                    }, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.data)
+                    .catch(error => {
+                        Swal.showValidationMessage(
+                            error.response?.data?.message || 'Failed to delete batches.'
+                        );
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: result.value?.message || 'Batches deleted successfully.',
+                        timer: 1600,
+                        showConfirmButton: false
+                    }).then(() => window.location.reload());
+                }
+            });
+        };
+
+        // ===== Delete single batch =====
         deleteButtons.forEach(button => {
             button.addEventListener('click', function () {
                 currentDeleteId = this.getAttribute('data-id');
