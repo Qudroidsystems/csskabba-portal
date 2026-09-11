@@ -2197,7 +2197,7 @@ public function generateBatchTemplateBulk(Request $request)
     $rows       = (int) $request->input('rows', 30);
 
     $totalCombinations = count($classIds) * count($termIds) * count($sessionIds);
-    $maxCombinations    = 60;
+    $maxCombinations   = 60;
 
     if ($totalCombinations > $maxCombinations) {
         return response()->json([
@@ -2227,7 +2227,17 @@ public function generateBatchTemplateBulk(Request $request)
         $terms    = Schoolterm::whereIn('id', $termIds)->get()->keyBy('id');
         $sessions = Schoolsession::whereIn('id', $sessionIds)->get()->keyBy('id');
 
-        Storage::disk('local')->makeDirectory($batchDirRelative);
+        // Make the temp dir (recursive so 'temp/' is created if missing).
+        if (!is_dir($batchDirAbsolute)) {
+            if (!mkdir($batchDirAbsolute, 0775, true) && !is_dir($batchDirAbsolute)) {
+                throw new \Exception("Could not create temp directory: {$batchDirAbsolute}");
+            }
+        }
+
+        // Verify it's actually writable
+        if (!is_writable($batchDirAbsolute)) {
+            throw new \Exception("Temp directory is not writable: {$batchDirAbsolute}");
+        }
 
         $generatedFiles = [];
 
@@ -2248,68 +2258,148 @@ public function generateBatchTemplateBulk(Request $request)
                         $sanitize($session->session)
                     );
 
-                    Excel::store(
-                        new \App\Exports\StudentBatchTemplateExport(
-                            (int) $classId,
-                            (int) $termId,
-                            (int) $sessionId,
-                            $rows,
-                            $className,
-                            $term->term,
-                            $session->session
-                        ),
-                        $batchDirRelative . '/' . $filename,
-                        'local'
-                    );
+                    // Ensure unique filename even if sanitization collides
+                    $absolutePath = $batchDirAbsolute . DIRECTORY_SEPARATOR . $filename;
+                    if (file_exists($absolutePath)) {
+                        $filename = pathinfo($filename, PATHINFO_FILENAME)
+                            . '_' . substr(uniqid(), -5) . '.xlsx';
+                        $absolutePath = $batchDirAbsolute . DIRECTORY_SEPARATOR . $filename;
+                    }
+
+                    // IMPORTANT: Excel::store() is synchronous when writing to
+                    // a local disk, but we must ensure the file exists before
+                    // trying to zip it. Also wrap in try/catch so we know which
+                    // combination failed.
+                    try {
+                        Excel::store(
+                            new \App\Exports\StudentBatchTemplateExport(
+                                (int) $classId,
+                                (int) $termId,
+                                (int) $sessionId,
+                                $rows,
+                                $className,
+                                $term->term,
+                                $session->session
+                            ),
+                            $batchDirRelative . '/' . $filename,
+                            'local'
+                        );
+                    } catch (\Exception $e) {
+                        Log::error("Failed to write template for class={$classId} term={$termId} session={$sessionId}: " . $e->getMessage());
+                        throw new \Exception("Failed to generate template for {$className} / {$term->term} / {$session->session}: " . $e->getMessage());
+                    }
+
+                    // Confirm the file is really on disk now
+                    if (!file_exists($absolutePath) || filesize($absolutePath) === 0) {
+                        // Some Excel writers buffer asynchronously; try a tiny
+                        // forced read to trigger flush on some drivers.
+                        clearstatcache(true, $absolutePath);
+
+                        if (!file_exists($absolutePath)) {
+                            throw new \Exception("Template file was not written to disk: {$filename}");
+                        }
+                        if (filesize($absolutePath) === 0) {
+                            throw new \Exception("Template file was written but is empty: {$filename}");
+                        }
+                    }
 
                     $generatedFiles[] = [
-                        'path'     => $batchDirAbsolute . DIRECTORY_SEPARATOR . $filename,
+                        'path'     => $absolutePath,
                         'filename' => $filename,
                     ];
                 }
             }
         }
 
-        // Clean up the (now empty, after download) temp directory once the response has been sent.
-        app()->terminating(function () use ($batchDirAbsolute) {
-            if (is_dir($batchDirAbsolute)) {
-                array_map('unlink', glob($batchDirAbsolute . '/*') ?: []);
-                @rmdir($batchDirAbsolute);
-            }
-        });
+        if (empty($generatedFiles)) {
+            throw new \Exception('No templates were generated.');
+        }
 
-        // Single combination — just hand back the xlsx directly.
+        // Single combination — hand back the xlsx directly.
         if (count($generatedFiles) === 1) {
             $file = $generatedFiles[0];
-            return response()->download($file['path'], $file['filename'])->deleteFileAfterSend(true);
+            return response()->download($file['path'], $file['filename'])
+                ->deleteFileAfterSend(true);
         }
 
         // Multiple combinations — zip them up.
         $zipFilename = 'Batch-Templates_' . now()->format('Ymd-His') . '.zip';
         $zipAbsolute = $batchDirAbsolute . '.zip';
 
-        $zip = new \ZipArchive();
-        if ($zip->open($zipAbsolute, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            throw new \Exception('Could not create zip archive for templates.');
+        if (!class_exists('ZipArchive')) {
+            throw new \Exception('PHP ZipArchive extension is not available.');
         }
-        foreach ($generatedFiles as $file) {
-            $zip->addFile($file['path'], $file['filename']);
-        }
-        $zip->close();
 
-        // The files are safely inside the zip now — remove the loose copies immediately.
+        $zip = new \ZipArchive();
+        $openResult = $zip->open($zipAbsolute, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        if ($openResult !== true) {
+            throw new \Exception("Could not create zip archive (code: {$openResult}).");
+        }
+
+        foreach ($generatedFiles as $file) {
+            // Final safety check — file MUST exist and be readable
+            if (!is_readable($file['path'])) {
+                $zip->close();
+                throw new \Exception("Template file became unreadable before zipping: {$file['filename']}");
+            }
+
+            if (!$zip->addFile($file['path'], $file['filename'])) {
+                $zip->close();
+                throw new \Exception("Failed to add {$file['filename']} to the zip archive.");
+            }
+        }
+
+        if (!$zip->close()) {
+            throw new \Exception('Failed to finalize the zip archive.');
+        }
+
+        if (!file_exists($zipAbsolute)) {
+            throw new \Exception('Zip archive was not created on disk.');
+        }
+
+        // Loose xlsx files are now safely inside the zip — clean them up.
         foreach ($generatedFiles as $file) {
             @unlink($file['path']);
         }
 
-        return response()->download($zipAbsolute, $zipFilename)->deleteFileAfterSend(true);
+        // Register a terminating cleanup that removes the zip after the
+        // response has been fully streamed to the client.
+        $zipPathToDelete = $zipAbsolute;
+        $dirToDelete     = $batchDirAbsolute;
+        app()->terminating(function () use ($zipPathToDelete, $dirToDelete) {
+            if (file_exists($zipPathToDelete)) {
+                @unlink($zipPathToDelete);
+            }
+            if (is_dir($dirToDelete)) {
+                $files = glob($dirToDelete . DIRECTORY_SEPARATOR . '*') ?: [];
+                foreach ($files as $f) {
+                    @unlink($f);
+                }
+                @rmdir($dirToDelete);
+            }
+        });
+
+        return response()->download($zipAbsolute, $zipFilename)
+            ->deleteFileAfterSend(false); // handled by terminating()
 
     } catch (\Exception $e) {
-        Log::error('Failed to generate bulk batch templates: ' . $e->getMessage());
+        Log::error('Failed to generate bulk batch templates: ' . $e->getMessage(), [
+            'classIds'   => $classIds,
+            'termIds'    => $termIds,
+            'sessionIds' => $sessionIds,
+            'trace'      => $e->getTraceAsString(),
+        ]);
 
-        if (is_dir($batchDirAbsolute)) {
-            array_map('unlink', glob($batchDirAbsolute . '/*') ?: []);
+        // Best-effort cleanup on failure
+        if (isset($batchDirAbsolute) && is_dir($batchDirAbsolute)) {
+            $files = glob($batchDirAbsolute . DIRECTORY_SEPARATOR . '*') ?: [];
+            foreach ($files as $f) {
+                @unlink($f);
+            }
             @rmdir($batchDirAbsolute);
+        }
+        if (isset($zipAbsolute) && file_exists($zipAbsolute)) {
+            @unlink($zipAbsolute);
         }
 
         return response()->json([
