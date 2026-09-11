@@ -20,7 +20,6 @@
 .mg-filter select { border:1.5px solid var(--mg-border); border-radius:10px; padding:8px 12px; font-size:13px; min-width:200px; }
 .mg-filter label { font-size:12px; font-weight:700; color:var(--mg-navy); margin-bottom:0; }
 
-/* ── Staff Analysis panel ─────────────────────────── */
 .mg-staff-card { background:#fff; border:1px solid var(--mg-border); border-radius:var(--mg-radius); box-shadow:var(--mg-shadow); padding:18px 20px; margin-bottom:18px; }
 .mg-staff-card h5 { font-size:14px; font-weight:700; color:var(--mg-navy); margin:0 0 12px; display:flex; align-items:center; gap:8px; }
 .mg-staff-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:14px; }
@@ -45,7 +44,6 @@
 .mg-daily-chip.busiest { background:#FFFBEB; border-color:#fbbf24; }
 .mg-conflict-banner { background:#FEF2F2; border:1px solid #fecaca; color:#b91c1c; border-radius:10px; padding:8px 14px; font-size:12.5px; font-weight:600; margin-top:10px; }
 
-/* ── Workload leaderboard ─────────────────────────── */
 .mg-board { width:100%; border-collapse:collapse; font-size:12.5px; }
 .mg-board th { text-align:left; padding:8px 10px; font-size:10.5px; text-transform:uppercase; color:#94a3b8; border-bottom:2px solid var(--mg-border); }
 .mg-board td { padding:8px 10px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
@@ -60,6 +58,11 @@ table.mg-grid th { background:#0f2342; color:#fff; padding:10px 6px; text-align:
 table.mg-grid th.period-th { width:110px; }
 table.mg-grid td { border:1px solid var(--mg-border); padding:6px; vertical-align:top; }
 table.mg-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:700; white-space:nowrap; }
+table.mg-grid.is-vertical td.period-col {
+    white-space: nowrap;
+    min-width: 90px;
+    color: #fff;
+}
 .mg-ptime { font-weight:400; font-size:10.5px; color:#94a3b8; }
 .mg-break { background:#FFFBEB; color:#d97706; font-weight:700; font-size:11px; text-align:center; }
 .mg-free  { color:#cbd5e1; font-size:11px; text-align:center; }
@@ -72,7 +75,6 @@ table.mg-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:7
 .mg-chip .tch { color:#64748b; font-size:10px; }
 .mg-chip.dimmed { opacity:.15; }
 .mg-chip.mg-conflict-chip { box-shadow: inset 0 0 0 1px #fecaca; }
-/* Border-line staff indicator — added/removed by JS when a staff member is selected */
 .mg-chip.mg-staff-highlight { box-shadow: 0 0 0 2px #dc2626 inset; }
 
 @media print {
@@ -87,16 +89,11 @@ table.mg-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:7
     <div>
         <h1><i class="ri-layout-grid-line me-2"></i>Master Timetable — All Classes Merged</h1>
         <p>{{ $schoolInfo->school_name ?? 'School' }} · {{ $sessionName }} · {{ $termName }} · Generated {{ $generatedAt }}</p>
+        <p style="margin-top:6px;"><i class="ri-layout-column-line me-1"></i>{{ ucfirst($orientation ?? 'horizontal') }} layout</p>
     </div>
     <button class="mg-print-btn no-print" onclick="window.print()"><i class="ri-printer-line me-1"></i>Print / Save PDF</button>
 </div>
 
-{{--
-    STAFF ANALYSIS PANEL
-    $staffAnalytics comes from the controller: ['staff' => [...per-teacher...], 'summary' => [...]]
-    Grouped by teacher+day+clock-time (not period_id), so a genuine
-    cross-class double-booking is correctly counted here.
---}}
 <div class="mg-staff-card no-print">
     <h5><i class="ri-bar-chart-grouped-line"></i>Staff Analysis</h5>
 
@@ -121,7 +118,6 @@ table.mg-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:7
     </div>
     @endif
 
-    {{-- Per-staff detail, populated by JS from window.STAFF_ANALYTICS --}}
     <div id="mgStaffDetail">
         <div class="mg-staff-cols">
             <div>
@@ -138,7 +134,6 @@ table.mg-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:7
         <div id="mgStaffConflictBanner"></div>
     </div>
 
-    {{-- Full workload leaderboard — click a row to select that staff --}}
     <h6 style="font-size:12.5px;font-weight:700;color:#334155;margin-top:18px;">All Staff — Workload Leaderboard</h6>
     <div style="overflow-x:auto;">
         <table class="mg-board">
@@ -186,51 +181,99 @@ table.mg-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:7
     </select>
 </div>
 
+@php $isVertical = ($orientation ?? 'horizontal') === 'vertical'; @endphp
+
 <div class="mg-card">
     <div style="overflow-x:auto;">
-        <table class="mg-grid">
+        <table class="mg-grid {{ $isVertical ? 'is-vertical' : '' }}">
             <thead>
                 <tr>
-                    <th class="period-th">Period</th>
-                    @foreach($days as $day)
-                        <th style="background:{{ $dayColors[$day] ?? '#1565C0' }}">{{ $day }}</th>
-                    @endforeach
+                    @if ($isVertical)
+                        <th class="period-th">Day</th>
+                        @foreach ($rows as $row)
+                            <th style="background:#1565C0">
+                                {{ $row['label'] }}<br>
+                                <span style="font-weight:normal;font-size:10px;">{{ $row['time'] }}</span>
+                            </th>
+                        @endforeach
+                    @else
+                        <th class="period-th">Period</th>
+                        @foreach ($days as $day)
+                            <th style="background:{{ $dayColors[$day] ?? '#1565C0' }}">{{ $day }}</th>
+                        @endforeach
+                    @endif
                 </tr>
             </thead>
             <tbody>
-                @foreach($rows as $row)
-                <tr>
-                    <td class="period-col">
-                        {{ $row['label'] }}<br><span class="mg-ptime">{{ $row['time'] }}</span>
-                    </td>
-                    @foreach($days as $day)
-                        @php $cell = $row['days'][$day] ?? ['entries'=>[],'is_break'=>false,'applicable'=>false]; @endphp
-                        @if(!$cell['applicable'])
-                            <td class="mg-na">—</td>
-                        @elseif($cell['is_break'])
-                            <td class="mg-break">☕ Break</td>
-                        @elseif(empty($cell['entries']))
-                            <td class="mg-free">Free</td>
-                        @else
-                            <td>
-                                @foreach($cell['entries'] as $e)
-                                    <div class="mg-chip {{ !empty($e['is_conflict']) ? 'mg-conflict-chip' : '' }}"
-                                         data-cls="{{ $e['class'] }}"
-                                         data-teacher-id="{{ $e['teacher_id'] ?? '' }}"
-                                         style="background:{{ $e['color'] }}18;border-left:3px solid {{ $e['color'] }};">
-                                        <span class="cls" style="color:{{ $e['color'] }};">{{ $e['class'] }}</span>
-                                        @if(!empty($e['is_conflict']))<i class="ri-alert-line text-danger" style="font-size:10px;" title="Teacher double-booked"></i>@endif
-                                        <br>
-                                        <span class="subj">{{ $e['subject'] }}</span>
-                                        @if($e['teacher'])<span class="tch"> · {{ $e['teacher'] }}</span>@endif
-                                        @if($e['room'])<span class="tch"> · {{ $e['room'] }}</span>@endif
-                                    </div>
-                                @endforeach
+                @if ($isVertical)
+                    @foreach ($days as $day)
+                        <tr>
+                            <td class="period-col" style="background:{{ $dayColors[$day] ?? '#0f2342' }};color:#fff;">
+                                {{ $day }}
                             </td>
-                        @endif
+                            @foreach ($rows as $row)
+                                @php $cell = $row['days'][$day] ?? ['entries'=>[],'is_break'=>false,'applicable'=>false]; @endphp
+                                @if(!$cell['applicable'])
+                                    <td class="mg-na">—</td>
+                                @elseif($cell['is_break'])
+                                    <td class="mg-break">☕ Break</td>
+                                @elseif(empty($cell['entries']))
+                                    <td class="mg-free">Free</td>
+                                @else
+                                    <td>
+                                        @foreach($cell['entries'] as $e)
+                                            <div class="mg-chip {{ !empty($e['is_conflict']) ? 'mg-conflict-chip' : '' }}"
+                                                 data-cls="{{ $e['class'] }}"
+                                                 data-teacher-id="{{ $e['teacher_id'] ?? '' }}"
+                                                 style="background:{{ $e['color'] }}18;border-left:3px solid {{ $e['color'] }};">
+                                                <span class="cls" style="color:{{ $e['color'] }};">{{ $e['class'] }}</span>
+                                                @if(!empty($e['is_conflict']))<i class="ri-alert-line text-danger" style="font-size:10px;" title="Teacher double-booked"></i>@endif
+                                                <br>
+                                                <span class="subj">{{ $e['subject'] }}</span>
+                                                @if($e['teacher'])<span class="tch"> · {{ $e['teacher'] }}</span>@endif
+                                                @if($e['room'])<span class="tch"> · {{ $e['room'] }}</span>@endif
+                                            </div>
+                                        @endforeach
+                                    </td>
+                                @endif
+                            @endforeach
+                        </tr>
                     @endforeach
-                </tr>
-                @endforeach
+                @else
+                    @foreach($rows as $row)
+                    <tr>
+                        <td class="period-col">
+                            {{ $row['label'] }}<br><span class="mg-ptime">{{ $row['time'] }}</span>
+                        </td>
+                        @foreach($days as $day)
+                            @php $cell = $row['days'][$day] ?? ['entries'=>[],'is_break'=>false,'applicable'=>false]; @endphp
+                            @if(!$cell['applicable'])
+                                <td class="mg-na">—</td>
+                            @elseif($cell['is_break'])
+                                <td class="mg-break">☕ Break</td>
+                            @elseif(empty($cell['entries']))
+                                <td class="mg-free">Free</td>
+                            @else
+                                <td>
+                                    @foreach($cell['entries'] as $e)
+                                        <div class="mg-chip {{ !empty($e['is_conflict']) ? 'mg-conflict-chip' : '' }}"
+                                             data-cls="{{ $e['class'] }}"
+                                             data-teacher-id="{{ $e['teacher_id'] ?? '' }}"
+                                             style="background:{{ $e['color'] }}18;border-left:3px solid {{ $e['color'] }};">
+                                            <span class="cls" style="color:{{ $e['color'] }};">{{ $e['class'] }}</span>
+                                            @if(!empty($e['is_conflict']))<i class="ri-alert-line text-danger" style="font-size:10px;" title="Teacher double-booked"></i>@endif
+                                            <br>
+                                            <span class="subj">{{ $e['subject'] }}</span>
+                                            @if($e['teacher'])<span class="tch"> · {{ $e['teacher'] }}</span>@endif
+                                            @if($e['room'])<span class="tch"> · {{ $e['room'] }}</span>@endif
+                                        </div>
+                                    @endforeach
+                                </td>
+                            @endif
+                        @endforeach
+                    </tr>
+                    @endforeach
+                @endif
             </tbody>
         </table>
     </div>
@@ -251,14 +294,12 @@ function mgFilterClass(cls) {
 function mgStaffSelect(staffId) {
     document.getElementById('mgStaffFilter').value = staffId || '';
 
-    // Border-line highlight every chip belonging to this staff, dim the rest.
     document.querySelectorAll('.mg-chip').forEach(chip => {
         const matches = !!staffId && String(chip.dataset.teacherId) === String(staffId);
         chip.classList.toggle('mg-staff-highlight', matches);
         chip.classList.toggle('dimmed', !!staffId && !matches);
     });
 
-    // Highlight the selected row in the leaderboard.
     document.querySelectorAll('.mg-board-row').forEach(row => {
         row.classList.toggle('mg-board-selected', String(row.dataset.staffId) === String(staffId));
     });

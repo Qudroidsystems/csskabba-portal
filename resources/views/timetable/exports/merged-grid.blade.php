@@ -37,6 +37,8 @@
 </head>
 <body>
 
+@php $isVertical = ($orientation ?? 'horizontal') === 'vertical'; @endphp
+
 <div class="school-header">
     <table>
         <tr class="school-header-top">
@@ -65,42 +67,83 @@
 <table class="mgrid">
     <thead>
         <tr>
-            <th class="period-th">Period</th>
-            @foreach($days as $day)
-                <th style="background:{{ $dayColors[$day] ?? '#1565C0' }}">{{ $day }}</th>
-            @endforeach
+            @if ($isVertical)
+                <th class="period-th">Day</th>
+                @foreach ($rows as $row)
+                    <th style="background:#1565C0">
+                        {{ $row['label'] }}<br>
+                        <span style="font-weight:normal">{{ $row['time'] }}</span>
+                    </th>
+                @endforeach
+            @else
+                <th class="period-th">Period</th>
+                @foreach ($days as $day)
+                    <th style="background:{{ $dayColors[$day] ?? '#1565C0' }}">{{ $day }}</th>
+                @endforeach
+            @endif
         </tr>
     </thead>
     <tbody>
-        @foreach($rows as $row)
-        <tr>
-            <td class="period-col">
-                <div class="p-name">{{ $row['label'] }}</div>
-                <div class="p-time">{{ $row['time'] }}</div>
-            </td>
-            @foreach($days as $day)
-                @php $cell = $row['days'][$day] ?? ['entries'=>[],'is_break'=>false,'applicable'=>false]; @endphp
-                @if(!$cell['applicable'])
-                    <td class="na-cell">—</td>
-                @elseif($cell['is_break'])
-                    <td class="break-cell">☕ Break</td>
-                @elseif(empty($cell['entries']))
-                    <td class="free-cell">Free</td>
-                @else
-                    <td>
-                        @foreach($cell['entries'] as $e)
-                            <div class="chip" style="background:{{ $e['color'] }}18;border-left:3px solid {{ $e['color'] }};">
-                                <span class="cls" style="color:{{ $e['color'] }};">{{ $e['class'] }}</span><br>
-                                <span class="subj">{{ $e['subject'] }}</span>
-                                @if($e['teacher'])<span class="tch"> · {{ $e['teacher'] }}</span>@endif
-                                @if($e['room'])<span class="tch"> · {{ $e['room'] }}</span>@endif
-                            </div>
-                        @endforeach
+        @if ($isVertical)
+            @foreach ($days as $day)
+                <tr>
+                    <td class="period-col" style="background:{{ $dayColors[$day] ?? '#0f2342' }};color:#fff;">
+                        <div class="p-name">{{ $day }}</div>
                     </td>
-                @endif
+                    @foreach ($rows as $row)
+                        @php $cell = $row['days'][$day] ?? ['entries'=>[],'is_break'=>false,'applicable'=>false]; @endphp
+                        @if(!$cell['applicable'])
+                            <td class="na-cell">—</td>
+                        @elseif($cell['is_break'])
+                            <td class="break-cell">☕ Break</td>
+                        @elseif(empty($cell['entries']))
+                            <td class="free-cell">Free</td>
+                        @else
+                            <td>
+                                @foreach($cell['entries'] as $e)
+                                    <div class="chip" style="background:{{ $e['color'] }}18;border-left:3px solid {{ $e['color'] }};">
+                                        <span class="cls" style="color:{{ $e['color'] }};">{{ $e['class'] }}</span><br>
+                                        <span class="subj">{{ $e['subject'] }}</span>
+                                        @if($e['teacher'])<span class="tch"> · {{ $e['teacher'] }}</span>@endif
+                                        @if($e['room'])<span class="tch"> · {{ $e['room'] }}</span>@endif
+                                    </div>
+                                @endforeach
+                            </td>
+                        @endif
+                    @endforeach
+                </tr>
             @endforeach
-        </tr>
-        @endforeach
+        @else
+            @foreach($rows as $row)
+            <tr>
+                <td class="period-col">
+                    <div class="p-name">{{ $row['label'] }}</div>
+                    <div class="p-time">{{ $row['time'] }}</div>
+                </td>
+                @foreach($days as $day)
+                    @php $cell = $row['days'][$day] ?? ['entries'=>[],'is_break'=>false,'applicable'=>false]; @endphp
+                    @if(!$cell['applicable'])
+                        <td class="na-cell">—</td>
+                    @elseif($cell['is_break'])
+                        <td class="break-cell">☕ Break</td>
+                    @elseif(empty($cell['entries']))
+                        <td class="free-cell">Free</td>
+                    @else
+                        <td>
+                            @foreach($cell['entries'] as $e)
+                                <div class="chip" style="background:{{ $e['color'] }}18;border-left:3px solid {{ $e['color'] }};">
+                                    <span class="cls" style="color:{{ $e['color'] }};">{{ $e['class'] }}</span><br>
+                                    <span class="subj">{{ $e['subject'] }}</span>
+                                    @if($e['teacher'])<span class="tch"> · {{ $e['teacher'] }}</span>@endif
+                                    @if($e['room'])<span class="tch"> · {{ $e['room'] }}</span>@endif
+                                </div>
+                            @endforeach
+                        </td>
+                    @endif
+                @endforeach
+            </tr>
+            @endforeach
+        @endif
     </tbody>
 </table>
 

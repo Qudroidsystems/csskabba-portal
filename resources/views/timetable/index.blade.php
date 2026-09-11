@@ -1,7 +1,6 @@
 {{-- resources/views/timetable/index.blade.php --}}
 @extends('layouts.master')
 
-
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
 <style>
@@ -38,7 +37,6 @@
     100% { opacity: 1; transform: scale(1); }
 }
 
-/* Generic press feedback for buttons inside the module */
 .timetable-container .btn {
     transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
@@ -241,7 +239,6 @@
     font-weight: 600;
 }
 
-/* Fade the pane in every time it's switched to (display:none → block replays this) */
 .tab-content-pane {
     animation: fadeIn 0.25s ease;
 }
@@ -511,7 +508,7 @@
 }
 @keyframes rtcSlideIn {
     from { opacity:0; transform:translateY(-6px); }
-    to { opacity:1; transform:translateY(0); }
+    to   { opacity:1; transform:translateY(0); }
 }
 .rtc-error   { background: #FFF1F2; border: 1px solid #FECDD3; }
 .rtc-warning { background: #FFFBEB; border: 1px solid #FDE68A; }
@@ -884,7 +881,7 @@
             <button class="btn btn-outline-light btn-sm" onclick="openGenerationWizardModal()">
                 <i class="ri-magic-line me-1"></i>Generation Wizard
             </button>
-           
+
             <button class="btn btn-outline-light btn-sm" onclick="openConflictScopeModal()">
                 <i class="ri-shield-cross-line me-1"></i>Check Conflicts
             </button>
@@ -1432,7 +1429,7 @@
                     </select>
                 </div>
                 <div class="mb-3" id="wsOrientationWrap">
-                    <label class="form-label fw-semibold">Orientation <span class="text-muted fw-normal">(PDF, per-class only)</span></label>
+                    <label class="form-label fw-semibold">Orientation</label>
                     <select class="form-select" id="wholeSchoolOrientation">
                         <option value="horizontal">Horizontal Layout (Days as columns)</option>
                         <option value="vertical">Vertical Layout (Days as rows)</option>
@@ -1804,7 +1801,7 @@ function getSubjectColor(subjectId) {
 }
 
 // ============================================================================
-// ROUTES — Using route() helper with the correct route names
+// ROUTES
 // ============================================================================
 const ROUTES = {
     setup:                      '{{ route("timetable.setup") }}',
@@ -1836,9 +1833,6 @@ const ROUTES = {
 
 const CSRF = '{{ csrf_token() }}';
 
-// ============================================================================
-// URL HELPER — Replaces :id placeholder with the actual ID
-// ============================================================================
 function url(base, id) {
     return base.replace(/:id\b/, id);
 }
@@ -2653,7 +2647,6 @@ function openSlotModal(periodId, day) {
 
     new bootstrap.Modal(document.getElementById('editSlotModal')).show();
 
-    // Run conflict check if there's a teacher or room already assigned
     if (slot.teacher_id || slot.room_id) {
         setTimeout(runRealtimeConflictCheck, 300);
     }
@@ -2757,7 +2750,6 @@ async function runRealtimeConflictCheck() {
             inner.appendChild(div);
         });
 
-        // ── UPDATED WARNINGS RENDERER ──────────────────────────────────
         data.warnings.forEach(w => {
             const div = document.createElement('div');
             const isCombined = w.type === 'combined_session';
@@ -3023,7 +3015,6 @@ async function runScopeConflictCheck() {
     }
 }
 
-// Shared renderer — used by both the toolbar modal and the per-class Conflicts tab.
 function renderConflictsHtml(data) {
     if (!data.conflict_count) {
         return `<div class="text-center py-4">
@@ -3140,7 +3131,8 @@ function selectWsMode(btn) {
     btn.classList.add('active');
     const mode = btn.dataset.mode;
     document.getElementById('wholeSchoolMode').value = mode;
-    document.getElementById('wsOrientationWrap').style.display = mode === 'per_class' ? '' : 'none';
+    // Orientation now applies to BOTH per-class and merged — always show the dropdown.
+    document.getElementById('wsOrientationWrap').style.display = '';
 }
 
 function exportWholeSchoolTimetable(type = 'pdf') {
@@ -3151,15 +3143,14 @@ function exportWholeSchoolTimetable(type = 'pdf') {
 
     if (!sessionId) return Swal.fire('Error', 'Please select a session.', 'error');
 
-    let base;
-    if (mode === 'merged') {
-        base = type === 'web' ? ROUTES.mergedGridWeb : ROUTES.exportMergedGrid;
-    } else {
-        base = type === 'web' ? ROUTES.exportWholeSchoolWeb : ROUTES.exportWholeSchool;
-    }
+    const base = mode === 'merged'
+        ? (type === 'web' ? ROUTES.mergedGridWeb : ROUTES.exportMergedGrid)
+        : (type === 'web' ? ROUTES.exportWholeSchoolWeb : ROUTES.exportWholeSchool);
 
-    let qs = `?session_id=${sessionId}&term_id=${termId || ''}`;
-    if (mode === 'per_class' && type === 'pdf') qs += `&orientation=${orientation}`;
+    // Always send orientation — all four backend paths now honour it.
+    const qs = `?session_id=${encodeURIComponent(sessionId)}`
+             + `&term_id=${encodeURIComponent(termId || '')}`
+             + `&orientation=${encodeURIComponent(orientation)}`;
 
     window.open(base + qs, '_blank');
 }
@@ -3421,10 +3412,10 @@ async function submitGenerationWizard(alsoGenerate) {
             bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
 
             const conflictNote = genData.conflict_summary?.total
-                ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i> 
-                    ${genData.conflict_summary.total} conflict(s) detected 
-                    (${genData.conflict_summary.teacher_conflicts} teacher, 
-                    ${genData.conflict_summary.room_conflicts} room). 
+                ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i>
+                    ${genData.conflict_summary.total} conflict(s) detected
+                    (${genData.conflict_summary.teacher_conflicts} teacher,
+                    ${genData.conflict_summary.room_conflicts} room).
                     Open a class → Conflicts tab to resolve.</p>`
                 : `<p class="text-success mt-2" style="font-size:12px">
                     <i class="ri-check-line"></i> No conflicts across the generated classes.</p>`;
@@ -3456,10 +3447,10 @@ async function submitGenerationWizard(alsoGenerate) {
                     bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
 
                     const forceConflictNote = forceData.conflict_summary?.total
-                        ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i> 
-                            ${forceData.conflict_summary.total} conflict(s) detected 
-                            (${forceData.conflict_summary.teacher_conflicts} teacher, 
-                            ${forceData.conflict_summary.room_conflicts} room). 
+                        ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i>
+                            ${forceData.conflict_summary.total} conflict(s) detected
+                            (${forceData.conflict_summary.teacher_conflicts} teacher,
+                            ${forceData.conflict_summary.room_conflicts} room).
                             Open a class → Conflicts tab to resolve.</p>`
                         : `<p class="text-success mt-2" style="font-size:12px">
                             <i class="ri-check-line"></i> No conflicts across the generated classes.</p>`;

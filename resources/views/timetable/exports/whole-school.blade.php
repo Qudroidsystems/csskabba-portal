@@ -6,10 +6,7 @@
     @page { margin: 16px; }
     body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color:#1E293B; }
 
-    /* ── School header (mirrors broadsheet style) ── */
-    .school-header {
-        border: 2px solid #0f2342; border-radius: 6px; overflow: hidden; margin-bottom: 10px;
-    }
+    .school-header { border: 2px solid #0f2342; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
     .school-header table { width:100%; border-collapse:collapse; }
     .school-header .logo-cell { width:60px; text-align:center; vertical-align:middle; padding:6px; }
     .school-header .logo-cell img { width:50px; height:50px; border-radius:50%; object-fit:contain; border:2px solid rgba(255,255,255,.3); }
@@ -19,7 +16,6 @@
     .school-header-top .motto { font-size:8.5px; font-style:italic; opacity:.7; text-align:center; margin-top:2px; }
     .school-header-bottom { background:#1565C0; color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:700; letter-spacing:1.5px; }
 
-    /* ── Overall summary strip ── */
     .summary-strip { display:table; width:100%; border:1px solid #CBD5E1; border-radius:6px; background:#F8FAFC; margin-bottom:10px; }
     .summary-strip .s-cell { display:table-cell; text-align:center; padding:6px 10px; border-right:1px solid #CBD5E1; }
     .summary-strip .s-cell:last-child { border-right:none; }
@@ -42,7 +38,6 @@
     .free { color:#CBD5E1; font-size:9px; }
     .break-cell { background:#FFFBEB; color:#D97706; font-weight:bold; font-size:9px; }
 
-    /* ── Per-class stats footer ── */
     .class-stats { display:table; width:100%; margin-top:8px; border:1px solid #E2E8F0; border-radius:6px; background:#F8FAFC; }
     .class-stats .cs-cell { display:table-cell; text-align:center; padding:5px 4px; border-right:1px solid #E2E8F0; }
     .class-stats .cs-cell:last-child { border-right:none; }
@@ -52,7 +47,8 @@
 </head>
 <body>
 
-{{-- School header --}}
+@php $isVertical = ($orientation ?? 'horizontal') === 'vertical'; @endphp
+
 <div class="school-header">
     <table>
         <tr class="school-header-top">
@@ -76,7 +72,6 @@
     <div class="school-header-bottom">Whole School Timetable — {{ $sessionName }} · {{ $termName }}</div>
 </div>
 
-{{-- Overall summary --}}
 @if(!empty($overallStats))
 <div class="summary-strip">
     <div class="s-cell"><div class="s-lbl">Classes</div><div class="s-val">{{ $overallStats['total_classes'] ?? '—' }}</div></div>
@@ -102,8 +97,7 @@
         </span>
     </div>
 
-    {{-- Days as rows, periods as columns (vertical) or vice versa (horizontal) — unchanged from before --}}
-    @if ($orientation === 'vertical')
+    @if ($isVertical)
         <table class="grid">
             <thead>
                 <tr>
@@ -189,7 +183,6 @@
         </table>
     @endif
 
-    {{-- Per-class summary/stats — item 2 --}}
     <div class="class-stats">
         <div class="cs-cell"><div class="cs-lbl">Total Slots</div><div class="cs-val">{{ $tt['stats']['total_slots'] ?? 0 }}</div></div>
         <div class="cs-cell"><div class="cs-lbl">Filled</div><div class="cs-val" style="color:#16A34A">{{ $tt['stats']['filled_slots'] ?? 0 }}</div></div>

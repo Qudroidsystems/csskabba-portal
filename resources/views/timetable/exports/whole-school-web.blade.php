@@ -29,7 +29,6 @@
 .ttw-search input { width:100%; padding:9px 14px 9px 36px; border:1.5px solid var(--tt-border); border-radius:10px; font-size:13px; }
 .ttw-search i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--tt-muted); }
 
-/* ── Staff Analysis panel ─────────────────────────── */
 .ttw-staff-card { background:#fff; border:1px solid var(--tt-border); border-radius:var(--tt-radius); box-shadow:var(--tt-shadow); padding:18px 20px; margin-bottom:22px; }
 .ttw-staff-card h5 { font-size:14px; font-weight:700; color:var(--tt-navy); margin:0 0 12px; display:flex; align-items:center; gap:8px; }
 .ttw-staff-filter { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
@@ -75,12 +74,16 @@ table.ttw-grid { width:100%; border-collapse:collapse; font-size:12px; }
 table.ttw-grid th { background:#1E293B; color:#fff; padding:8px 6px; text-align:center; font-size:11px; text-transform:uppercase; }
 table.ttw-grid td { border:1px solid var(--tt-border); padding:6px; text-align:center; vertical-align:middle; transition:box-shadow .15s ease, opacity .15s ease; }
 table.ttw-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:700; white-space:nowrap; }
+table.ttw-grid.is-vertical td.period-col {
+    white-space: nowrap;
+    min-width: 90px;
+    color: #fff;
+}
 .ttw-subject { font-weight:700; font-size:12px; color:var(--tt-navy); }
 .ttw-teacher { font-size:10.5px; color:#475569; }
 .ttw-room { font-size:10px; color:#94a3b8; }
 .ttw-free { color:#cbd5e1; font-size:11px; }
 .ttw-break { background:#FFFBEB; color:#d97706; font-weight:700; font-size:11px; }
-/* Border-line staff indicator — added/removed by JS when a staff member is selected */
 td.ttw-staff-highlight { box-shadow: inset 0 0 0 2px #dc2626; background:#FEF2F2; }
 td.ttw-dimmed { opacity:.25; }
 
@@ -99,6 +102,7 @@ td.ttw-dimmed { opacity:.25; }
         <div class="pills">
             <span class="ttw-pill"><i class="ri-building-line me-1"></i>{{ $overallStats['total_classes'] ?? 0 }} classes</span>
             <span class="ttw-pill"><i class="ri-user-line me-1"></i>{{ $overallStats['total_teachers'] ?? 0 }} teachers involved</span>
+            <span class="ttw-pill"><i class="ri-layout-column-line me-1"></i>{{ ucfirst($orientation ?? 'horizontal') }} layout</span>
         </div>
     </div>
     <button class="ttw-print-btn no-print" onclick="window.print()"><i class="ri-printer-line me-1"></i>Print / Save PDF</button>
@@ -116,10 +120,6 @@ td.ttw-dimmed { opacity:.25; }
     </div>
 </div>
 
-{{--
-    STAFF ANALYSIS PANEL
-    $staffAnalytics comes from the controller: ['staff' => [...per-teacher...], 'summary' => [...]]
---}}
 <div class="ttw-staff-card no-print">
     <h5><i class="ri-bar-chart-grouped-line"></i>Staff Analysis</h5>
 
@@ -144,7 +144,6 @@ td.ttw-dimmed { opacity:.25; }
     </div>
     @endif
 
-    {{-- Per-staff detail, populated by JS from window.STAFF_ANALYTICS --}}
     <div id="ttwStaffDetail">
         <div class="ttw-staff-cols">
             <div>
@@ -161,7 +160,6 @@ td.ttw-dimmed { opacity:.25; }
         <div id="ttwStaffConflictBanner"></div>
     </div>
 
-    {{-- Full workload leaderboard — click a row to select that staff --}}
     <h6 style="font-size:12.5px;font-weight:700;color:#334155;margin-top:18px;">All Staff — Workload Leaderboard</h6>
     <div style="overflow-x:auto;">
         <table class="ttw-board">
@@ -200,6 +198,8 @@ td.ttw-dimmed { opacity:.25; }
     </div>
 </div>
 
+@php $isVertical = ($orientation ?? 'horizontal') === 'vertical'; @endphp
+
 <div id="ttwClassList">
 @foreach ($allTimetables as $tt)
     <div class="ttw-class-card" data-class-name="{{ strtolower($tt['class_name']) }}">
@@ -215,45 +215,88 @@ td.ttw-dimmed { opacity:.25; }
             </div>
         </div>
         <div style="overflow-x:auto;">
-            <table class="ttw-grid">
+            <table class="ttw-grid {{ $isVertical ? 'is-vertical' : '' }}">
                 <thead>
                     <tr>
-                        <th style="background:#0f2342;">Period</th>
-                        @foreach ($tt['days'] as $day)
-                            <th style="background:{{ $dayColors[$day] ?? '#1565C0' }}">{{ $day }}</th>
-                        @endforeach
+                        @if ($isVertical)
+                            <th style="background:#0f2342;">Day</th>
+                            @foreach ($tt['periods'] as $period)
+                                <th style="background:#1565C0;">
+                                    {{ $period->name }}<br>
+                                    <span style="font-weight:normal;font-size:10px;">
+                                        {{ substr($period->start_time,0,5) }}–{{ substr($period->end_time,0,5) }}
+                                    </span>
+                                </th>
+                            @endforeach
+                        @else
+                            <th style="background:#0f2342;">Period</th>
+                            @foreach ($tt['days'] as $day)
+                                <th style="background:{{ $dayColors[$day] ?? '#1565C0' }}">{{ $day }}</th>
+                            @endforeach
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($tt['periods'] as $period)
-                    <tr>
-                        <td class="period-col">
-                            {{ $period->name }}<br>
-                            <span style="font-weight:400;color:#94a3b8;font-size:10px;">{{ substr($period->start_time,0,5) }}–{{ substr($period->end_time,0,5) }}</span>
-                        </td>
+                    @if ($isVertical)
                         @foreach ($tt['days'] as $day)
-                            @php
-                                $meta    = $tt['day_meta'][$day][$period->id] ?? null;
-                                $isBreak = in_array($period->type, ['short_break','long_break','assembly'])
-                                           && ($meta['effective_type'] ?? $period->type) !== 'lesson';
-                                $slot    = $tt['grid'][$period->id][$day] ?? null;
-                            @endphp
-                            @if ($isBreak)
-                                <td class="ttw-break">{{ ucfirst(str_replace('_',' ',$period->type)) }}</td>
-                            @elseif (!$meta || !($meta['applicable'] ?? true))
-                                <td>—</td>
-                            @elseif (!$slot || $slot['is_free'])
-                                <td class="ttw-free">Free</td>
-                            @else
-                                <td data-teacher-id="{{ $slot['teacher_id'] ?? '' }}">
-                                    <div class="ttw-subject">{{ $slot['subject'] }}</div>
-                                    @if($slot['teacher'])<div class="ttw-teacher">{{ $slot['teacher'] }}</div>@endif
-                                    @if($slot['room'])<div class="ttw-room">{{ $slot['room'] }}</div>@endif
+                            <tr>
+                                <td class="period-col" style="background:{{ $dayColors[$day] ?? '#0f2342' }};color:#fff;">
+                                    {{ $day }}
                                 </td>
-                            @endif
+                                @foreach ($tt['periods'] as $period)
+                                    @php
+                                        $meta    = $tt['day_meta'][$day][$period->id] ?? null;
+                                        $isBreak = in_array($period->type, ['short_break','long_break','assembly'])
+                                                   && ($meta['effective_type'] ?? $period->type) !== 'lesson';
+                                        $slot    = $tt['grid'][$period->id][$day] ?? null;
+                                    @endphp
+                                    @if ($isBreak)
+                                        <td class="ttw-break">{{ ucfirst(str_replace('_',' ',$period->type)) }}</td>
+                                    @elseif (!$meta || !($meta['applicable'] ?? true))
+                                        <td>—</td>
+                                    @elseif (!$slot || $slot['is_free'])
+                                        <td class="ttw-free">Free</td>
+                                    @else
+                                        <td data-teacher-id="{{ $slot['teacher_id'] ?? '' }}">
+                                            <div class="ttw-subject">{{ $slot['subject'] }}</div>
+                                            @if($slot['teacher'])<div class="ttw-teacher">{{ $slot['teacher'] }}</div>@endif
+                                            @if($slot['room'])<div class="ttw-room">{{ $slot['room'] }}</div>@endif
+                                        </td>
+                                    @endif
+                                @endforeach
+                            </tr>
                         @endforeach
-                    </tr>
-                    @endforeach
+                    @else
+                        @foreach ($tt['periods'] as $period)
+                        <tr>
+                            <td class="period-col">
+                                {{ $period->name }}<br>
+                                <span style="font-weight:400;color:#94a3b8;font-size:10px;">{{ substr($period->start_time,0,5) }}–{{ substr($period->end_time,0,5) }}</span>
+                            </td>
+                            @foreach ($tt['days'] as $day)
+                                @php
+                                    $meta    = $tt['day_meta'][$day][$period->id] ?? null;
+                                    $isBreak = in_array($period->type, ['short_break','long_break','assembly'])
+                                               && ($meta['effective_type'] ?? $period->type) !== 'lesson';
+                                    $slot    = $tt['grid'][$period->id][$day] ?? null;
+                                @endphp
+                                @if ($isBreak)
+                                    <td class="ttw-break">{{ ucfirst(str_replace('_',' ',$period->type)) }}</td>
+                                @elseif (!$meta || !($meta['applicable'] ?? true))
+                                    <td>—</td>
+                                @elseif (!$slot || $slot['is_free'])
+                                    <td class="ttw-free">Free</td>
+                                @else
+                                    <td data-teacher-id="{{ $slot['teacher_id'] ?? '' }}">
+                                        <div class="ttw-subject">{{ $slot['subject'] }}</div>
+                                        @if($slot['teacher'])<div class="ttw-teacher">{{ $slot['teacher'] }}</div>@endif
+                                        @if($slot['room'])<div class="ttw-room">{{ $slot['room'] }}</div>@endif
+                                    </td>
+                                @endif
+                            @endforeach
+                        </tr>
+                        @endforeach
+                    @endif
                 </tbody>
             </table>
         </div>
@@ -276,8 +319,6 @@ document.getElementById('ttwSearch').addEventListener('input', function() {
 function ttwStaffSelect(staffId) {
     document.getElementById('ttwStaffFilter').value = staffId || '';
 
-    // Border-line highlight every cell belonging to this staff across
-    // every class card, dim the rest so the pattern is easy to scan.
     document.querySelectorAll('td[data-teacher-id]').forEach(cell => {
         const matches = !!staffId && cell.dataset.teacherId === String(staffId);
         cell.classList.toggle('ttw-staff-highlight', matches);

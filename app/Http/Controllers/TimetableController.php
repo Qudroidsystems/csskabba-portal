@@ -65,7 +65,7 @@ class TimetableController extends Controller
         $this->middleware('permission:Manage timetable settings', ['only' => ['saveSettings', 'rebuildPeriodsFromAnchors', 'saveHalfDays', 'saveFreePeriods']]);
         $this->middleware('permission:Manage timetable constraints', ['only' => ['saveConstraints']]);
         $this->middleware('permission:View timetable reports', ['only' => ['workloadDashboard', 'generateAnalytics']]);
-        $this->middleware('permission:Export timetable', ['only' => ['export', 'exportWholeSchool']]);
+        $this->middleware('permission:Export timetable', ['only' => ['export', 'exportWholeSchool', 'exportWholeSchoolWeb', 'exportMergedGrid', 'mergedGridWeb']]);
         $this->middleware('permission:Request substitute', ['only' => ['requestSubstitute']]);
         $this->middleware('permission:Approve substitute', ['only' => ['approveSubstitute']]);
         $this->middleware('permission:View substitute requests', ['only' => ['getSubstituteRequests']]);
@@ -90,22 +90,8 @@ class TimetableController extends Controller
     private function resolveArmName($schoolclass): string
     {
         if (!$schoolclass) return '';
-
-        // Raw-joined lookups (the many `leftJoin('schoolarm', ...)->select([
-        // ..., 'schoolarm.arm as arm_name'])` calls throughout this
-        // controller) alias the arm's display name onto `arm_name` directly
-        // — these never touch the real `arm` column or any Eloquent
-        // relation at all, so check this first.
         if (!empty($schoolclass->arm_name)) return ' ' . $schoolclass->arm_name;
 
-        // For genuine Schoolclass Eloquent models: the FK column AND the
-        // relation method are BOTH named `arm` (see Schoolclass::arm()) —
-        // and Eloquent always resolves a raw attribute before a same-named
-        // relation, so `$schoolclass->arm` here is ALWAYS the raw numeric
-        // FK, never the related Schoolarm model, no matter what was
-        // eager-loaded under the name 'arm'. `armRelation()` is the
-        // distinctly-named relation on this model that actually avoids the
-        // collision — use that instead.
         $arm = $schoolclass->armRelation ?? null;
         if (is_object($arm) && isset($arm->arm)) return ' ' . $arm->arm;
 
@@ -138,13 +124,7 @@ class TimetableController extends Controller
 
     // =========================================================================
     // HELPER: Canonical day+clock-time signature for matching slots ACROSS
-    // settings. Every TimetableSetting (i.e. every class/arm) owns its own
-    // TimetablePeriod rows, so "period_id" is only meaningful *within* a
-    // single setting — the same 09:20–10:00 slot has a different period_id
-    // in every class's timetable. Any comparison that needs to span multiple
-    // settings (conflict checks, auto-generate occupancy tracking, cloning,
-    // the teacher's merged grid) MUST key on day + start_time + end_time
-    // instead of period_id, or cross-arm clashes are silently invisible.
+    // settings.
     // =========================================================================
     private function periodTimeSignature(?TimetablePeriod $period): ?string
     {
@@ -203,9 +183,6 @@ class TimetableController extends Controller
             ->orderBy('order')
             ->get();
 
-        // The teacher's busy CLOCK-TIME slots across every one of their
-        // settings/classes — not just this one. Keyed by day+time, since
-        // period_id from another setting can't be compared to this one.
         $teacherBusyKeys = TimetableSlot::whereHas('setting', function($q) use ($sessionId, $termId) {
                 $q->where('session_id', $sessionId)->where('is_active', true);
                 if ($termId) $q->where('term_id', $termId);
@@ -252,9 +229,6 @@ class TimetableController extends Controller
         return Room::where('is_active', true)
             ->when($excludeRoomId, fn($q) => $q->where('id', '!=', $excludeRoomId))
             ->whereNotIn('id', function($q) use ($period, $day, $sessionId, $termId) {
-                // Match by CLOCK TIME, not period_id — a room booked under a
-                // different setting's period row for the same 09:20–10:00
-                // slot would otherwise be missed entirely.
                 $q->select('timetable_slots.room_id')
                   ->from('timetable_slots')
                   ->join('timetable_periods', 'timetable_periods.id', '=', 'timetable_slots.period_id')
@@ -297,8 +271,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Reject a save when the record was changed by someone else since
-    // the client last loaded it.
+    // HELPER: Version conflict
     // =========================================================================
     private function versionConflictResponse(TimetableSetting $setting, ?string $expectedUpdatedAt): ?JsonResponse
     {
@@ -315,8 +288,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // HELPER: For destructive-but-non-mutating-source actions (clone), warn
-    // if someone else appears to be actively editing the source right now.
+    // HELPER: Editing-recently warning (for clone)
     // =========================================================================
     private function editingRecentlyResponse(TimetableSetting $setting, string $actionMessage): ?JsonResponse
     {
@@ -348,7 +320,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // ICS CALENDAR FEED — public, signed-URL, no session auth required.
+    // ICS CALENDAR FEED
     // =========================================================================
     public function exportIcs(int $teacherId)
     {
@@ -372,9 +344,6 @@ class TimetableController extends Controller
             ->header('Cache-Control', 'no-cache');
     }
 
-    // =========================================================================
-    // PRIVATE: Build the raw ICS document for a teacher's weekly slots.
-    // =========================================================================
     private function buildIcsFeed(User $teacher, Schoolsession $session, $slots): string
     {
         $tz        = config('app.timezone', 'UTC');
@@ -465,7 +434,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // HELPER: For every (day, period) pair, resolve what it actually IS that day.
+    // HELPER: Day/period applicability metadata
     // =========================================================================
     private function computeDayPeriodMeta(TimetableSetting $setting): array
     {
@@ -497,9 +466,6 @@ class TimetableController extends Controller
         return $meta;
     }
 
-    // =========================================================================
-    // HELPER: Is this period immediately before/after a break or assembly?
-    // =========================================================================
     private function isBreakAdjacent(TimetablePeriod $period, $allPeriods): bool
     {
         $ordered = $allPeriods->sortBy('order')->values();
@@ -510,9 +476,6 @@ class TimetableController extends Controller
         return $isNonLesson($ordered->get($idx - 1)) || $isNonLesson($ordered->get($idx + 1));
     }
 
-    // =========================================================================
-    // HELPER: Turn a generation-wizard template into a periods[] array.
-    // =========================================================================
     private function buildPeriodsFromTemplate(array $template): array
     {
         $periods = [];
@@ -923,11 +886,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // FREE PERIODS — admin picks exactly WHICH day/period slots are forced
-    // free for this specific class/arm, plus the target weekly count.
-    // Forced slots are excluded from placement entirely during generation
-    // (see runAutoGenerateCore's $forcedFreeKeys) — they are not just a
-    // count the generator happens to land on, they are guaranteed free.
+    // FREE PERIODS
     // =========================================================================
     public function saveFreePeriods(Request $request): JsonResponse
     {
@@ -942,11 +901,6 @@ class TimetableController extends Controller
         $setting = TimetableSetting::findOrFail($validated['setting_id']);
         if ($lock = $this->publishedLockResponse($setting)) return $lock;
 
-        // Guard: every chosen period must actually belong to THIS setting —
-        // period_id is only meaningful within the setting that owns the row
-        // (see periodTimeSignature()'s note elsewhere in this file), so a
-        // period_id from another class's timetable must be rejected here
-        // rather than silently accepted and never matching anything.
         $ownPeriodIds = TimetablePeriod::where('setting_id', $setting->id)->pluck('id')->all();
         $slots = collect($validated['preferred_free_slots'] ?? [])
             ->filter(fn($s) => in_array((int) $s['period_id'], $ownPeriodIds, true))
@@ -998,16 +952,6 @@ class TimetableController extends Controller
             'deprioritize_break_adjacent' => 'boolean',
         ]);
 
-        // When the wizard doesn't specify particular classes, "apply to
-        // everything" must mean literally every school class — not just
-        // the ones that already happen to have a SubjectTeacher row for
-        // this session. The old fallback derived scope from SubjectTeacher,
-        // which silently limited "whole school" generation to however many
-        // classes already had subject/teacher assignments configured (this
-        // is why only 8 of the school's classes were ever showing up).
-        // A class with no subjects/teachers assigned yet still gets a
-        // timetable shell here (all periods free) so the admin can see it
-        // exists and fill it in later — it's simply not left out.
         $classIds = $validated['schoolclass_ids'] ?? Schoolclass::pluck('id')->toArray();
 
         if (empty($classIds)) {
@@ -1044,9 +988,6 @@ class TimetableController extends Controller
                     'short_break_duration_minutes' => $validated['short_break_duration'],
                     'long_break_duration_minutes'  => $validated['long_break_duration'],
                     'active_days'                  => $validated['active_days'],
-                    // Per-class-arm override wins over the wizard-wide value,
-                    // so the admin can e.g. give SSS1 arm4 three free periods
-                    // and SSS2 arm4 only one, from the same wizard run.
                     'free_periods_per_week'        => $validated['free_periods_map'][$classId]
                                                         ?? $validated['free_periods_per_week']
                                                         ?? null,
@@ -1500,18 +1441,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // RESOLVE CONFLICT — applies a suggested fix directly from the
-    // conflicts modal. Two modes:
-    //   action=move        move the slot to a different day/period within
-    //                       its own class's timetable (uses the 'day' /
-    //                       'period_id' / 'alternatives[].day' / [].period_id
-    //                       already returned by buildConflictReport()).
-    //   action=change_room reassign the room, keeping day/period as-is
-    //                       (uses 'alternative_rooms[].id' from a
-    //                       room_conflict entry).
-    // Re-validates against a NEW clash at the destination before committing,
-    // so picking a suggestion can never silently create a different
-    // conflict in its place.
+    // RESOLVE CONFLICT
     // =========================================================================
     public function resolveConflict(Request $request): JsonResponse
     {
@@ -1586,10 +1516,6 @@ class TimetableController extends Controller
                     'period_id' => $validated['target_period_id'],
                 ]);
 
-                // Leave the vacated slot as a genuine free period rather than
-                // a hole with no row at all, so the class's own grid stays
-                // fully populated and consistent with how auto-generate
-                // fills gaps.
                 TimetableSlot::updateOrCreate(
                     ['setting_id' => $setting->id, 'day' => $oldDay, 'period_id' => $oldPeriodId],
                     ['subject_id' => null, 'teacher_id' => null, 'room_id' => null, 'is_double' => false, 'is_free' => true, 'notes' => null]
@@ -1624,7 +1550,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // CHECK CONFLICTS — standalone entry point for per-class tab
+    // CHECK CONFLICTS
     // =========================================================================
     public function checkConflicts(int $settingId): JsonResponse
     {
@@ -1634,9 +1560,6 @@ class TimetableController extends Controller
         );
     }
 
-    // =========================================================================
-    // PRIVATE: Shared conflict-detection logic
-    // =========================================================================
     private function buildConflictReport(int $sessionId, ?int $termId): array
     {
         $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
@@ -1663,10 +1586,6 @@ class TimetableController extends Controller
 
         $conflicts = [];
 
-        // Group by CLOCK TIME, not period_id — otherwise two different
-        // classes/arms taught by the same teacher at the same time never
-        // land in the same group, because each setting owns its own
-        // TimetablePeriod rows (different period_id for the same time).
         $teacherGrouped = $slots->filter(fn($s) => $s->period)
             ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period));
 
@@ -1694,10 +1613,6 @@ class TimetableController extends Controller
                     $classA = $this->getClassName($a->setting?->schoolclass);
                     $classB = $this->getClassName($b->setting?->schoolclass);
 
-                    // Alternatives are computed against slot A specifically
-                    // (not just the group's first slot) so the "Resolve"
-                    // button in the modal always moves the exact slot the
-                    // suggestion was generated for.
                     $alternativesForA = $this->findAlternativeSlots(
                         $a->teacher_id, $a->period_id, $a->day, $a->setting
                     );
@@ -1752,7 +1667,6 @@ class TimetableController extends Controller
             }
         }
 
-        // Same fix for rooms — group by CLOCK TIME, not period_id.
         $roomGrouped = $allSlotsWithRoom->filter(fn($s) => $s->period)
             ->groupBy(fn($s) => $s->room_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period));
 
@@ -1823,9 +1737,6 @@ class TimetableController extends Controller
         ];
     }
 
-    // =========================================================================
-    // CHECK CONFLICTS — standalone entry point, no class context needed.
-    // =========================================================================
     public function checkConflictsScope(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -1838,15 +1749,12 @@ class TimetableController extends Controller
         );
     }
 
-    // =========================================================================
-    // PRIVATE: Fast conflict count across a scope (for generation summary)
-    // =========================================================================
     private function countConflictsForScope(int $sessionId, ?int $termId): array
     {
         $scopeFilter = function ($q) use ($sessionId, $termId) {
             $q->where('session_id', $sessionId)->where('is_active', true);
             if ($termId) $q->where('term_id', $termId);
-            else $q->whereNull('term_id');
+            else         $q->whereNull('term_id');
         };
 
         $teacherConflicts = TimetableSlot::whereHas('setting', $scopeFilter)
@@ -1899,7 +1807,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // AUTO-GENERATE (single class)
+    // AUTO-GENERATE
     // =========================================================================
     public function autoGenerate(Request $request): JsonResponse
     {
@@ -1923,17 +1831,9 @@ class TimetableController extends Controller
 
             $includeRooms = $validated['include_rooms'] ?? false;
 
-            // Explicit or freshly-rolled random seed — returned to the
-            // caller so a result the admin likes can be reproduced later by
-            // resending the same seed, even though generation is random by
-            // default now (see runAutoGenerateCore's shuffle/jitter).
             $usedSeed = $validated['seed'] ?? random_int(1, 2147483647);
             mt_srand($usedSeed);
 
-            // Cross-setting occupancy is tracked by CLOCK TIME (day + start +
-            // end), never by period_id — period_id only has meaning within
-            // the setting that owns the row, so keying by it here would let
-            // the generator double-book a teacher across two class arms.
             $crossOccupied = [];
             TimetableSlot::whereHas('setting', function ($q) use ($setting) {
                     $q->where('session_id', $setting->session_id)->where('is_active', true)->where('id', '!=', $setting->id);
@@ -1974,7 +1874,7 @@ class TimetableController extends Controller
                 'generated_at'     => now(),
             ]);
 
-            mt_srand(); // reseed randomly so a persistent worker isn't stuck on this seed for unrelated requests
+            mt_srand();
 
             DB::commit();
             return response()->json([
@@ -2047,16 +1947,9 @@ class TimetableController extends Controller
                     ->update(['is_published' => false, 'published_at' => null, 'published_by' => null]);
             }
 
-            // One seed for the whole batch — reproducible as a unit, so
-            // resending the same seed regenerates the identical whole-school
-            // layout rather than each class re-randomizing independently.
             $usedSeed = $validated['seed'] ?? random_int(1, 2147483647);
             mt_srand($usedSeed);
 
-            // Cross-setting occupancy, keyed by CLOCK TIME (see note above).
-            // Each class in $settings accumulates its own placements into
-            // these maps as the loop below progresses, so by the time SSS2
-            // is generated, SSS1's freshly-placed slots already block it.
             $crossOccupied = [];
             $roomOccupied  = [];
 
@@ -2095,11 +1988,11 @@ class TimetableController extends Controller
             }
 
             $conflictSummary = $this->countConflictsForScope(
-                $validated['session_id'], 
+                $validated['session_id'],
                 $validated['term_id'] ?? null
             );
 
-            mt_srand(); // reseed randomly so a persistent worker isn't stuck on this seed for unrelated requests
+            mt_srand();
 
             DB::commit();
             return response()->json([
@@ -2121,15 +2014,6 @@ class TimetableController extends Controller
 
     // =========================================================================
     // PRIVATE: Core slot-placement logic
-    //
-    // NOTE ON $crossOccupied / $roomOccupied: these are keyed by
-    // [teacherId/roomId][day][] = "HH:MM-HH:MM" time-signature strings, NOT
-    // period_id. period_id is only meaningful within the setting that owns
-    // the TimetablePeriod row — two different classes' "Period 3" are two
-    // different rows with two different ids even though they're both
-    // 09:20–10:00. Comparing raw period_id across settings (the original
-    // bug) meant the generator could never see that a teacher was already
-    // booked in a different class/arm at the same clock time.
     // =========================================================================
     private function runAutoGenerateCore(
         TimetableSetting $setting,
@@ -2146,23 +2030,10 @@ class TimetableController extends Controller
 
         $dayMeta     = $this->computeDayPeriodMeta($setting);
 
-        // Randomize the pool order up front. usort()/Collection::sortBy()
-        // are stable as of PHP 8, so shuffling here — and again when the
-        // requirements are ordered below — is what makes two consecutive
-        // "Generate" clicks produce different (but equally valid) results
-        // instead of the same layout every time, since candidates that tie
-        // on score keep this shuffled relative order rather than always
-        // resolving to whichever slot happens to come first in the day/
-        // period loop.
         $slotPool    = collect($this->buildWeightedSlotPool($days, $setting, $dayMeta))->shuffle()->values()->all();
         $totalSlots  = count($slotPool);
         $freeTarget  = $setting->free_periods_per_week ?? 0;
 
-        // Admin-selected forced-free slots for this specific class/arm (see
-        // saveFreePeriods()) — these are excluded from placement entirely,
-        // not just budgeted around, so the admin's explicit choice of WHEN
-        // a class is free is always honoured regardless of what the
-        // randomizer would otherwise have picked.
         $forcedFreeKeys = [];
         foreach (($setting->preferred_free_slots ?? []) as $pf) {
             if (!empty($pf['day']) && !empty($pf['period_id'])) {
@@ -2179,12 +2050,6 @@ class TimetableController extends Controller
             ->get()
             ->groupBy('subjectid');
 
-        // Prefer the smallest room that still fits the class, rather than
-        // the alphabetically-first free room regardless of size — avoids
-        // parking a 15-student class in the largest hall while a class of
-        // 60 gets squeezed into a room that's actually too small. Falls
-        // back to plain alphabetical order when we have no enrollment data
-        // to estimate class size from, so this never blocks generation.
         $availableRoomIds = [];
         if ($includeRooms) {
             $classSize = $this->estimateClassSize($classId, $sessionId, $setting->term_id);
@@ -2204,11 +2069,6 @@ class TimetableController extends Controller
         $lessonsPlacedByDay = [];
         $maxPerDay = $setting->max_lessons_per_day ?? null;
 
-        // Shuffle before sorting by periods_per_week — the sort is stable,
-        // so subjects with an equal periods_per_week value still process in
-        // a randomized order each run instead of always following their
-        // database id/insertion order (another source of "always identical
-        // output" in the original version).
         $requirements = $constraints
             ->shuffle()
             ->sortBy(fn($c) => $c->periods_per_week)
@@ -2255,11 +2115,6 @@ class TimetableController extends Controller
                 $currentDayLoad = $lessonsPlacedByDay[$day] ?? 0;
                 $score -= ($currentDayLoad * 2);
 
-                // Small random jitter so candidates that would otherwise
-                // tie exactly on score don't always resolve in the same
-                // order — this, combined with the slotPool/requirements
-                // shuffle above, is what makes each "Generate" run produce
-                // a genuinely different layout.
                 $score += mt_rand(-3, 3);
 
                 $candidates[] = [
@@ -2421,9 +2276,6 @@ class TimetableController extends Controller
         ];
     }
 
-    // =========================================================================
-    // PRIVATE: Count how many times a subject is already placed
-    // =========================================================================
     private function countSubjectPlaced(array $placed, int $subjectId): int
     {
         $count = 0;
@@ -2433,9 +2285,6 @@ class TimetableController extends Controller
         return $count;
     }
 
-    // =========================================================================
-    // PRIVATE: Load teacher availability data
-    // =========================================================================
     private function loadTeacherAvailability($subjectTeachers): array
     {
         $availabilityMap = [];
@@ -2453,14 +2302,6 @@ class TimetableController extends Controller
         return $availabilityMap;
     }
 
-    // =========================================================================
-    // PRIVATE: Rough class-size estimate for capacity-aware room picking.
-    // We have no direct "class roll" model, so this approximates class size
-    // as the largest per-subject registration count for the class — most
-    // schools have at least one subject (core/compulsory) taken by nearly
-    // the whole class, so the max is a reasonable stand-in. Returns null
-    // (never blocks generation) when there's no registration data yet.
-    // =========================================================================
     private function estimateClassSize(int $classId, int $sessionId, ?int $termId): ?int
     {
         $subjectclassIds = Subjectclass::where('schoolclassid', $classId)->pluck('id');
@@ -2477,9 +2318,6 @@ class TimetableController extends Controller
         return $max ? (int) $max : null;
     }
 
-    // =========================================================================
-    // PRIVATE: Ensure a setting has at least one constraint row
-    // =========================================================================
     private function ensureConstraintsExist(TimetableSetting $setting): \Illuminate\Support\Collection
     {
         $constraints = $setting->constraints->keyBy('subject_id');
@@ -2510,11 +2348,6 @@ class TimetableController extends Controller
         }
 
         $freeTarget = $setting->free_periods_per_week ?? 0;
-        // Admin-forced-free slots (see saveFreePeriods) are guaranteed free
-        // regardless of free_periods_per_week — the default-constraint
-        // budget must account for whichever number is larger, or the
-        // auto-generated periods_per_week values can overshoot what
-        // runAutoGenerateCore's placementBudget will actually allow.
         $forcedFreeCount = count($setting->preferred_free_slots ?? []);
         $budget = max(0, $totalLessonSlots - max($freeTarget, $forcedFreeCount));
 
@@ -2523,7 +2356,7 @@ class TimetableController extends Controller
         }
 
         $subjectCount = $subjectTeachers->count();
-        
+
         $base = $subjectCount > 0 ? intdiv($budget, $subjectCount) : 0;
         $base = max(1, min($base, 8));
         $remainder = $budget - ($base * $subjectCount);
@@ -2557,10 +2390,6 @@ class TimetableController extends Controller
         return $setting->constraints->keyBy('subject_id');
     }
 
-    // =========================================================================
-    // PRIVATE: First free room for a given day/clock-time (keyed by time
-    // signature — see note on $roomOccupied in runAutoGenerateCore).
-    // =========================================================================
     private function pickAvailableRoom(array $availableRoomIds, string $day, string $timeSig, array &$roomOccupied): ?int
     {
         foreach ($availableRoomIds as $roomId) {
@@ -2571,9 +2400,6 @@ class TimetableController extends Controller
         return null;
     }
 
-    // =========================================================================
-    // PRIVATE: Is this teacher free for a given day/period?
-    // =========================================================================
     private function isTeacherAvailableForPeriod(int $teacherId, string $day, int $periodId, TimetableSetting $setting, array $availabilityMap): bool
     {
         $windows = $availabilityMap[$teacherId][$day] ?? null;
@@ -2620,7 +2446,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // TEACHER ASSIGNMENTS — READ-ONLY
+    // TEACHER ASSIGNMENTS
     // =========================================================================
     public function getTeacherAssignments(Request $request): JsonResponse
     {
@@ -2682,7 +2508,7 @@ class TimetableController extends Controller
                 $pictures = DB::table('staffpicture')
                     ->whereIn('staffid', $teacherIds)
                     ->get(['staffid', 'picture']);
-                
+
                 foreach ($pictures as $pic) {
                     $teacherPictures[$pic->staffid] = $pic->picture;
                 }
@@ -2693,7 +2519,7 @@ class TimetableController extends Controller
 
             foreach ($assignments as $row) {
                 $className = trim(($row->class_name ?? '') . ' ' . ($row->arm_name ?? ''));
-                
+
                 $data = [
                     'subjectclass_id' => $row->subjectclass_id,
                     'subject_id' => $row->subject_id,
@@ -2709,7 +2535,7 @@ class TimetableController extends Controller
                         $byTeacher[$row->teacher_id] = [
                             'teacher_id' => $row->teacher_id,
                             'teacher_name' => $row->teacher_name ?? 'Unknown Teacher',
-                            'teacher_picture' => isset($teacherPictures[$row->teacher_id]) 
+                            'teacher_picture' => isset($teacherPictures[$row->teacher_id])
                                 ? asset('storage/staff_avatars/' . $teacherPictures[$row->teacher_id])
                                 : asset('storage/staff_avatars/default.png'),
                             'assignments' => [],
@@ -2744,42 +2570,28 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // TEACHER VIEW — with Session, Term, and Class filtering
+    // TEACHER VIEW
     // =========================================================================
-   public function teacherView(Request $request)
+    public function teacherView(Request $request)
     {
         $teacherId = Auth::id();
         $pagetitle = 'My Timetable';
 
-        // Get filters from request
-        $sessionId = $request->input('session_id') 
-            ?? Schoolsession::where('status', 'Current')->value('id') 
+        $sessionId = $request->input('session_id')
+            ?? Schoolsession::where('status', 'Current')->value('id')
             ?? Schoolsession::latest('id')->value('id');
-        
-        $termId = $request->input('term_id') 
-            // Term IDs are NOT scoped per-session, so "latest id" can pick a
-            // term row belonging to a totally different session — even one
-            // that happens to share the same display name (e.g. another
-            // session's own "Third Term"). That mismatched term_id then
-            // matches zero TimetableSettings for THIS session, leaving the
-            // grid empty while unfiltered widgets (upcoming/weekly, which
-            // never filtered by term) kept showing data. Prefer the term
-            // actually flagged current; only fall back to "latest id" if
-            // nothing is flagged.
+
+        $termId = $request->input('term_id')
             ?? Schoolterm::where('status', true)->value('id')
             ?? Schoolterm::latest('id')->value('id');
-        
+
         $classId = $request->input('class_id');
 
         $teacher = User::with('staffPicture')->find($teacherId);
         $teacherPicture = $teacher?->staffPicture
-            ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) 
+            ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture)
             : null;
 
-        // Get all classes this teacher teaches — with the arm attached and
-        // resolved so "SSS 1" doesn't silently collapse two different arms
-        // (SSS 1 arm4, SSS 1 arm5, SSS 1 arm8...) into one indistinguishable
-        // dropdown entry.
         $teacherClasses = SubjectTeacher::where('staffid', $teacherId)
             ->whereHas('subjectclass', fn($q) => $q->whereNotNull('schoolclassid'))
             ->with(['subjectclass.schoolclass', 'subjectclass.schoolclass.armRelation'])
@@ -2793,7 +2605,6 @@ class TimetableController extends Controller
                 return $class;
             });
 
-        // Build the slots query with filters
         $slotsQuery = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', function($q) use ($sessionId, $termId) {
                 $q->where('session_id', $sessionId)->where('is_active', true);
@@ -2802,35 +2613,21 @@ class TimetableController extends Controller
             ->whereNotNull('subject_id')
             ->with(['period', 'subject', 'setting.schoolclass', 'setting.schoolclass.armRelation', 'setting.term', 'room']);
 
-        // Apply class filter if selected
         if ($classId) {
             $slotsQuery->whereHas('setting', function($q) use ($classId) {
                 $q->where('schoolclass_id', $classId);
             });
         }
 
-        // IMPORTANT: Get the slots as a collection, NOT JSON
         $slotsCollection = $slotsQuery->get();
 
-        // Attach display-safe, arm-aware class names and a day/time
-        // signature to every slot up front — the grid, alerts, and
-        // conflict detection below all key off these instead of the raw
-        // "schoolclass" column (which drops the arm) or period_id (which
-        // isn't comparable across settings).
         foreach ($slotsCollection as $slot) {
             $slot->class_full_name = $this->getClassName($slot->setting?->schoolclass);
             $slot->time_sig = $slot->period ? $this->periodTimeSignature($slot->period) : null;
         }
 
-        // Group by day
         $slots = $slotsCollection->groupBy('day');
 
-        // Calculate combined sessions and conflicts by CLOCK TIME, not
-        // period_id. Two different class arms taught by this teacher at
-        // 09:20–10:00 have two different period_id values (one per
-        // setting) — grouping by period_id, as before, meant a genuine
-        // double-booking across arms was never detected and only one of
-        // the two classes ever rendered in the grid cell.
         $combinedMap = [];
         foreach ($slotsCollection as $slot) {
             if (!$slot->time_sig) continue;
@@ -2860,17 +2657,10 @@ class TimetableController extends Controller
             }
         }
 
-        // Groups that represent a REAL conflict (different classes, not a
-        // legitimate same-teacher/subject/room combined session) — used to
-        // drive the top-of-page alert and stat card.
         $conflictGroups = collect($combinedMap)
             ->map(fn($group) => collect($group))
             ->filter(fn($group) => $group->contains(fn($s) => ($s->conflict_count ?? 0) > 0));
 
-        // Get all periods across settings (for the grid) — deduplicated by
-        // actual CLOCK TIME rather than the "order" column, since "order"
-        // is only guaranteed consistent within one setting's own period
-        // list, not across every class/arm's independently-built schedule.
         $allPeriods = TimetablePeriod::with('setting')
             ->whereIn(
                 'setting_id',
@@ -2881,7 +2671,6 @@ class TimetableController extends Controller
             ->unique(fn($p) => substr($p->start_time, 0, 5) . '|' . substr($p->end_time, 0, 5))
             ->values();
 
-        // Build day/period meta
         $periodDayMeta = [];
         $metaCache = [];
         foreach ($allPeriods as $period) {
@@ -2913,9 +2702,7 @@ class TimetableController extends Controller
             'periodDayMeta', 'icsUrl', 'webcalUrl', 'todaySlots', 'conflictGroups'
         ));
     }
-    // =========================================================================
-    // PRIVATE: Upcoming slots / weekly summary for teacher view
-    // =========================================================================
+
     private function getUpcomingSlots(int $teacherId, int $sessionId, ?int $termId = null): array
     {
         $dayMap     = ['monday' => 0, 'tuesday' => 1, 'wednesday' => 2, 'thursday' => 3, 'friday' => 4];
@@ -3087,7 +2874,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT HELPERS (kept from original)
+    // EXPORT HELPERS
     // =========================================================================
     private function exportCsv($setting, $periods, $days, $grid, $className, $sessionName, $dayMeta)
     {
@@ -3129,7 +2916,7 @@ class TimetableController extends Controller
         $pdf = Pdf::loadView('timetable.exports.pdf', compact(
             'setting', 'periods', 'days', 'grid', 'subjectColors',
             'className', 'sessionName', 'termName', 'orientation', 'dayMeta'
-        ))->setPaper($orientation === 'vertical' ? 'a4' : 'a3', 'landscape');
+        ))->setPaper($orientation === 'vertical' ? 'a4' : 'a3', $orientation === 'vertical' ? 'portrait' : 'landscape');
 
         return $pdf->stream('timetable-' . str_replace(' ', '-', $className) . '.pdf');
     }
@@ -3148,19 +2935,12 @@ class TimetableController extends Controller
             'dayColors'     => self::DAY_COLORS,
             'generatedAt'   => now()->format('d M Y, H:i'),
             'overallStats'  => $overallStats,
-        ])->setPaper($orientation === 'vertical' ? 'a4' : 'a3', 'landscape');
+        ])->setPaper($orientation === 'vertical' ? 'a4' : 'a3', $orientation === 'vertical' ? 'portrait' : 'landscape');
 
         $filename = 'whole-school-timetable-' . str_replace([' ', '/'], '-', $sessionName) . '.pdf';
         return $pdf->stream($filename);
     }
 
-    // =========================================================================
-    // PRIVATE: Staff analytics for a session/term scope — per-teacher
-    // workload, class/subject/room frequency, daily load, and genuine
-    // conflict count (grouped by CLOCK TIME, same rule as everywhere else
-    // in this controller — see periodTimeSignature()). Feeds the staff
-    // dropdown + cross-highlight on the merged grid and whole-school views.
-    // =========================================================================
     private function buildStaffAnalytics(int $sessionId, ?int $termId): array
     {
         $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
@@ -3186,8 +2966,6 @@ class TimetableController extends Controller
             return ['staff' => [], 'summary' => $emptySummary];
         }
 
-        // Which individual slot IDs sit inside a genuine (non-combined)
-        // double-booking, grouped by teacher+day+clock-time.
         $conflictSlotIds = [];
         $grouped = $slots->filter(fn($s) => $s->period)
             ->groupBy(fn($s) => $s->teacher_id . '|' . $s->day . '|' . $this->periodTimeSignature($s->period));
@@ -3396,6 +3174,7 @@ class TimetableController extends Controller
             return ['rows' => [], 'days' => [], 'classColors' => [], 'classList' => [],
                     'schoolInfo' => $schoolInfo, 'sessionName' => $session->session ?? 'Session',
                     'termName' => $term?->term ?? 'All Terms', 'generatedAt' => now()->format('d M Y, H:i'),
+                    'dayColors' => self::DAY_COLORS,
                     'staffAnalytics' => ['staff' => [], 'summary' => []]];
         }
 
@@ -3481,10 +3260,6 @@ class TimetableController extends Controller
                     ];
                 }
 
-                // Mark a genuine teacher double-booking within this cell —
-                // same teacher appearing under two different classes at the
-                // same day+time. Drives the red conflict indicator and the
-                // staff-conflict count shown when that teacher is selected.
                 $byTeacherInCell = collect($entries)->filter(fn($e) => $e['teacher_id'])->groupBy('teacher_id');
                 foreach ($byTeacherInCell as $tId => $group) {
                     if ($group->count() > 1) {
@@ -3520,21 +3295,26 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT WHOLE SCHOOL TIMETABLE — PDF
+    // EXPORT WHOLE SCHOOL TIMETABLE — PDF (per-class)
     // =========================================================================
     public function exportWholeSchool(Request $request)
     {
-        $sessionId   = $request->input('session_id');
-        $termId      = $request->input('term_id');
-        $orientation = $request->input('orientation', 'horizontal');
+        $validated = $request->validate([
+            'session_id'  => 'required|exists:schoolsession,id',
+            'term_id'     => 'nullable|exists:schoolterm,id',
+            'orientation' => 'nullable|in:horizontal,vertical',
+        ]);
 
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+        $orientation = $validated['orientation'] ?? 'horizontal';
 
-        [$allTimetables, $schoolInfo, $session, $term, $overallStats] = $this->buildWholeSchoolExportData($sessionId, $termId);
+        [$allTimetables, $schoolInfo, $session, $term, $overallStats] =
+            $this->buildWholeSchoolExportData($validated['session_id'], $validated['term_id'] ?? null);
 
         if (empty($allTimetables)) return response()->json(['error' => 'No timetables found'], 404);
 
-        return $this->exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation, $overallStats);
+        return $this->exportWholeSchoolPdf(
+            $allTimetables, $schoolInfo, $session, $term, $orientation, $overallStats
+        );
     }
 
     // =========================================================================
@@ -3542,26 +3322,30 @@ class TimetableController extends Controller
     // =========================================================================
     public function exportWholeSchoolWeb(Request $request)
     {
-        $sessionId = $request->input('session_id');
-        $termId    = $request->input('term_id');
+        $validated = $request->validate([
+            'session_id'  => 'required|exists:schoolsession,id',
+            'term_id'     => 'nullable|exists:schoolterm,id',
+            'orientation' => 'nullable|in:horizontal,vertical',
+        ]);
 
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+        $orientation = $validated['orientation'] ?? 'horizontal';
 
-        [$allTimetables, $schoolInfo, $session, $term, $overallStats, $staffAnalytics] = $this->buildWholeSchoolExportData($sessionId, $termId);
+        [$allTimetables, $schoolInfo, $session, $term, $overallStats, $staffAnalytics] =
+            $this->buildWholeSchoolExportData($validated['session_id'], $validated['term_id'] ?? null);
 
         if (empty($allTimetables)) {
             abort(404, 'No timetables found for this session/term.');
         }
 
-        $pagetitle = 'Whole School Timetable';
-
         return view('timetable.exports.whole-school-web', array_merge(
-            compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'pagetitle', 'staffAnalytics'),
+            compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'staffAnalytics'),
             [
-                'sessionName'   => $session->session ?? 'Session',
-                'termName'      => $term?->term ?? 'All Terms',
-                'dayColors'     => self::DAY_COLORS,
-                'generatedAt'   => now()->format('d M Y, H:i'),
+                'pagetitle'   => 'Whole School Timetable',
+                'orientation' => $orientation,
+                'sessionName' => $session->session ?? 'Session',
+                'termName'    => $term?->term ?? 'All Terms',
+                'dayColors'   => self::DAY_COLORS,
+                'generatedAt' => now()->format('d M Y, H:i'),
             ]
         ));
     }
@@ -3571,14 +3355,22 @@ class TimetableController extends Controller
     // =========================================================================
     public function exportMergedGrid(Request $request)
     {
-        $sessionId = $request->input('session_id');
-        $termId    = $request->input('term_id');
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+        $validated = $request->validate([
+            'session_id'  => 'required|exists:schoolsession,id',
+            'term_id'     => 'nullable|exists:schoolterm,id',
+            'orientation' => 'nullable|in:horizontal,vertical',
+        ]);
 
-        $data = $this->buildMergedGridData($sessionId, $termId);
+        $orientation = $validated['orientation'] ?? 'horizontal';
+        $data        = $this->buildMergedGridData($validated['session_id'], $validated['term_id'] ?? null);
+
         if (empty($data['rows'])) return response()->json(['error' => 'No timetables found'], 404);
 
-        $pdf = Pdf::loadView('timetable.exports.merged-grid', $data)->setPaper('a3', 'landscape');
+        $data['orientation'] = $orientation;
+
+        $pdf = Pdf::loadView('timetable.exports.merged-grid', $data)
+            ->setPaper($orientation === 'vertical' ? 'a4' : 'a3', $orientation === 'vertical' ? 'portrait' : 'landscape');
+
         $filename = 'merged-timetable-' . str_replace([' ', '/'], '-', $data['sessionName']) . '.pdf';
         return $pdf->stream($filename);
     }
@@ -3588,16 +3380,21 @@ class TimetableController extends Controller
     // =========================================================================
     public function mergedGridWeb(Request $request)
     {
-        $sessionId = $request->input('session_id');
-        $termId    = $request->input('term_id');
-        if (!$sessionId) return response()->json(['error' => 'Session is required'], 400);
+        $validated = $request->validate([
+            'session_id'  => 'required|exists:schoolsession,id',
+            'term_id'     => 'nullable|exists:schoolterm,id',
+            'orientation' => 'nullable|in:horizontal,vertical',
+        ]);
 
-        $data = $this->buildMergedGridData($sessionId, $termId);
+        $orientation = $validated['orientation'] ?? 'horizontal';
+        $data        = $this->buildMergedGridData($validated['session_id'], $validated['term_id'] ?? null);
+
         if (empty($data['rows'])) abort(404, 'No timetables found for this session/term.');
 
-        $pagetitle = 'Merged Timetable';
-
-        return view('timetable.exports.merged-grid-web', array_merge($data, compact('pagetitle')));
+        return view('timetable.exports.merged-grid-web', array_merge($data, [
+            'pagetitle'   => 'Merged Timetable',
+            'orientation' => $orientation,
+        ]));
     }
 
     // =========================================================================
@@ -3668,16 +3465,6 @@ class TimetableController extends Controller
         ]);
     }
 
-    // =========================================================================
-    // PUBLISH + SAVE NAMED SNAPSHOT
-    // "Lock it in" once the admin is satisfied with a generated result.
-    // Publishes the LIVE setting as before (so it behaves exactly like
-    // publishSetting for anyone still viewing/editing that class), AND
-    // deep-replicates it into a separate, frozen, named row (is_snapshot =
-    // true) via replicateSettingDeep(). The live setting can keep being
-    // regenerated or edited later — the snapshot never changes and stays
-    // retrievable under its name via getSavedTimetables()/getGrid().
-    // =========================================================================
     public function publishAndSaveSnapshot(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -3722,13 +3509,6 @@ class TimetableController extends Controller
         }
     }
 
-    // =========================================================================
-    // SAVED TIMETABLES — list of named, locked snapshots (see
-    // publishAndSaveSnapshot above). Each one can be opened read-only via
-    // getGrid($snapshotId) / getSetting($snapshotId) — a snapshot is just a
-    // TimetableSetting row like any other, so those endpoints work on it
-    // unchanged.
-    // =========================================================================
     public function getSavedTimetables(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -3827,15 +3607,6 @@ class TimetableController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // =========================================================================
-    // PRIVATE: Deep-replicate a setting — periods, constraints, and slots —
-    // into a new TimetableSetting row. Shared by cloneSetting() (editable
-    // copy into a different session/term) and saveGenerationSnapshot()
-    // (frozen, named, historical copy of the live setting). $overrides is
-    // applied to the new setting after the base replicate() so callers can
-    // set is_published, is_snapshot, generation_name, etc. without this
-    // helper needing to know about every possible use case.
-    // =========================================================================
     private function replicateSettingDeep(TimetableSetting $source, array $overrides = []): array
     {
         $new = $source->replicate();
@@ -3918,14 +3689,6 @@ class TimetableController extends Controller
         }
     }
 
-    // =========================================================================
-    // PRIVATE: Detect teacher conflicts for a freshly cloned setting.
-    // Grouped by CLOCK TIME, not period_id — the clone gets brand-new
-    // TimetablePeriod rows (via $periodMap), so its slots' period_id values
-    // never coincide with any other setting's rows even at the identical
-    // wall-clock time. period_id-based grouping here effectively never
-    // fired.
-    // =========================================================================
     private function detectTeacherConflictsForSetting(TimetableSetting $setting, array $slotIds): array
     {
         if (empty($slotIds)) return [];
@@ -3958,7 +3721,7 @@ class TimetableController extends Controller
             if (!$others->has($key)) continue;
 
             $clashing = $others->get($key)->first();
-            
+
             $isCombined = $newSlot->room_id && $clashing->room_id
                 && $newSlot->room_id == $clashing->room_id
                 && $newSlot->subject_id == $clashing->subject_id;
