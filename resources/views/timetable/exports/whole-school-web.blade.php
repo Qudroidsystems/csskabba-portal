@@ -74,11 +74,7 @@ table.ttw-grid { width:100%; border-collapse:collapse; font-size:12px; }
 table.ttw-grid th { background:#1E293B; color:#fff; padding:8px 6px; text-align:center; font-size:11px; text-transform:uppercase; }
 table.ttw-grid td { border:1px solid var(--tt-border); padding:6px; text-align:center; vertical-align:middle; transition:box-shadow .15s ease, opacity .15s ease; }
 table.ttw-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:700; white-space:nowrap; }
-table.ttw-grid.is-vertical td.period-col {
-    white-space: nowrap;
-    min-width: 90px;
-    color: #fff;
-}
+table.ttw-grid.is-vertical td.period-col { white-space: nowrap; min-width: 90px; color: #fff; }
 .ttw-subject { font-weight:700; font-size:12px; color:var(--tt-navy); }
 .ttw-teacher { font-size:10.5px; color:#475569; }
 .ttw-room { font-size:10px; color:#94a3b8; }
@@ -165,12 +161,8 @@ td.ttw-dimmed { opacity:.25; }
         <table class="ttw-board">
             <thead>
                 <tr>
-                    <th>Staff</th>
-                    <th>Total Periods</th>
-                    <th>Classes</th>
-                    <th>Subjects</th>
-                    <th>Busiest Day</th>
-                    <th>Conflicts</th>
+                    <th>Staff</th><th>Total Periods</th><th>Classes</th>
+                    <th>Subjects</th><th>Busiest Day</th><th>Conflicts</th>
                 </tr>
             </thead>
             <tbody>
@@ -318,26 +310,21 @@ document.getElementById('ttwSearch').addEventListener('input', function() {
 
 function ttwStaffSelect(staffId) {
     document.getElementById('ttwStaffFilter').value = staffId || '';
-
     document.querySelectorAll('td[data-teacher-id]').forEach(cell => {
         const matches = !!staffId && cell.dataset.teacherId === String(staffId);
         cell.classList.toggle('ttw-staff-highlight', matches);
         cell.classList.toggle('ttw-dimmed', !!staffId && !matches);
     });
-
     document.querySelectorAll('.ttw-board-row').forEach(row => {
         row.classList.toggle('ttw-board-selected', String(row.dataset.staffId) === String(staffId));
     });
-
     const detail = document.getElementById('ttwStaffDetail');
     if (!staffId || !window.STAFF_ANALYTICS[staffId]) {
         detail.classList.remove('active');
         return;
     }
-
     const s = window.STAFF_ANALYTICS[staffId];
     detail.classList.add('active');
-
     const renderFreq = (obj, max) => Object.entries(obj || {}).map(([name, count]) => `
         <div class="ttw-freq-row">
             <span class="name">${name}</span>
@@ -345,12 +332,10 @@ function ttwStaffSelect(staffId) {
             <span class="ttw-freq-count">${count}</span>
         </div>
     `).join('') || '<div class="text-muted small">None</div>';
-
     const classMax = Math.max(0, ...Object.values(s.classes || {}));
     const subjectMax = Math.max(0, ...Object.values(s.subjects || {}));
     document.getElementById('ttwStaffClasses').innerHTML = renderFreq(s.classes, classMax);
     document.getElementById('ttwStaffSubjects').innerHTML = renderFreq(s.subjects, subjectMax);
-
     const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
     document.getElementById('ttwStaffDailyLoad').innerHTML = days.map(d => `
         <div class="ttw-daily-chip ${d === s.busiest_day ? 'busiest' : ''}">
@@ -358,7 +343,6 @@ function ttwStaffSelect(staffId) {
             <div class="n">${(s.daily_load && s.daily_load[d]) || 0}</div>
         </div>
     `).join('');
-
     document.getElementById('ttwStaffConflictBanner').innerHTML = s.conflict_count > 0
         ? `<div class="ttw-conflict-banner"><i class="ri-alert-line me-1"></i>${s.name} has ${s.conflict_count} period(s) with a genuine double-booking across classes — check the highlighted cells above.</div>`
         : '';

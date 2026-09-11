@@ -58,11 +58,7 @@ table.mg-grid th { background:#0f2342; color:#fff; padding:10px 6px; text-align:
 table.mg-grid th.period-th { width:110px; }
 table.mg-grid td { border:1px solid var(--mg-border); padding:6px; vertical-align:top; }
 table.mg-grid td.period-col { background:#F8FAFC; text-align:left; font-weight:700; white-space:nowrap; }
-table.mg-grid.is-vertical td.period-col {
-    white-space: nowrap;
-    min-width: 90px;
-    color: #fff;
-}
+table.mg-grid.is-vertical td.period-col { white-space: nowrap; min-width: 90px; color: #fff; }
 .mg-ptime { font-weight:400; font-size:10.5px; color:#94a3b8; }
 .mg-break { background:#FFFBEB; color:#d97706; font-weight:700; font-size:11px; text-align:center; }
 .mg-free  { color:#cbd5e1; font-size:11px; text-align:center; }
@@ -139,12 +135,8 @@ table.mg-grid.is-vertical td.period-col {
         <table class="mg-board">
             <thead>
                 <tr>
-                    <th>Staff</th>
-                    <th>Total Periods</th>
-                    <th>Classes</th>
-                    <th>Subjects</th>
-                    <th>Busiest Day</th>
-                    <th>Conflicts</th>
+                    <th>Staff</th><th>Total Periods</th><th>Classes</th>
+                    <th>Subjects</th><th>Busiest Day</th><th>Conflicts</th>
                 </tr>
             </thead>
             <tbody>
@@ -293,26 +285,21 @@ function mgFilterClass(cls) {
 
 function mgStaffSelect(staffId) {
     document.getElementById('mgStaffFilter').value = staffId || '';
-
     document.querySelectorAll('.mg-chip').forEach(chip => {
         const matches = !!staffId && String(chip.dataset.teacherId) === String(staffId);
         chip.classList.toggle('mg-staff-highlight', matches);
         chip.classList.toggle('dimmed', !!staffId && !matches);
     });
-
     document.querySelectorAll('.mg-board-row').forEach(row => {
         row.classList.toggle('mg-board-selected', String(row.dataset.staffId) === String(staffId));
     });
-
     const detail = document.getElementById('mgStaffDetail');
     if (!staffId || !window.STAFF_ANALYTICS[staffId]) {
         detail.classList.remove('active');
         return;
     }
-
     const s = window.STAFF_ANALYTICS[staffId];
     detail.classList.add('active');
-
     const renderFreq = (obj, max) => Object.entries(obj || {}).map(([name, count]) => `
         <div class="mg-freq-row">
             <span class="name">${name}</span>
@@ -320,12 +307,10 @@ function mgStaffSelect(staffId) {
             <span class="mg-freq-count">${count}</span>
         </div>
     `).join('') || '<div class="text-muted small">None</div>';
-
     const classMax = Math.max(0, ...Object.values(s.classes || {}));
     const subjectMax = Math.max(0, ...Object.values(s.subjects || {}));
     document.getElementById('mgStaffClasses').innerHTML = renderFreq(s.classes, classMax);
     document.getElementById('mgStaffSubjects').innerHTML = renderFreq(s.subjects, subjectMax);
-
     const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
     document.getElementById('mgStaffDailyLoad').innerHTML = days.map(d => `
         <div class="mg-daily-chip ${d === s.busiest_day ? 'busiest' : ''}">
@@ -333,7 +318,6 @@ function mgStaffSelect(staffId) {
             <div class="n">${(s.daily_load && s.daily_load[d]) || 0}</div>
         </div>
     `).join('');
-
     document.getElementById('mgStaffConflictBanner').innerHTML = s.conflict_count > 0
         ? `<div class="mg-conflict-banner"><i class="ri-alert-line me-1"></i>${s.name} has ${s.conflict_count} period(s) with a genuine double-booking across classes — check the highlighted chips above.</div>`
         : '';

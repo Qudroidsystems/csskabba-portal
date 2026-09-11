@@ -4,17 +4,19 @@
 <meta charset="utf-8">
 <style>
     @page { margin: 16px; }
-    body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color:#1E293B; }
+    body { font-family: DejaVu Sans, sans-serif; font-size: {{ 10 * ($bodyScale ?? 1.0) }}px; color:#1E293B; }
 
     .school-header { border: 2px solid #0f2342; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
     .school-header table { width:100%; border-collapse:collapse; }
-    .school-header .logo-cell { width:60px; text-align:center; vertical-align:middle; padding:6px; }
-    .school-header .logo-cell img { width:50px; height:50px; border-radius:50%; object-fit:contain; border:2px solid rgba(255,255,255,.3); }
+    .school-header .logo-cell { width:64px; text-align:center; vertical-align:middle; padding:6px; background:#0f2342; }
+    .school-header .logo-cell img { width:52px; height:52px; border-radius:50%; object-fit:contain; border:2px solid rgba(255,255,255,.35); }
     .school-header-top { background:#0f2342; color:#fff; }
-    .school-header-top .name { font-size:16px; font-weight:700; text-transform:uppercase; letter-spacing:1px; text-align:center; }
-    .school-header-top .addr { font-size:9px; opacity:.8; text-align:center; margin-top:2px; }
-    .school-header-top .motto { font-size:8.5px; font-style:italic; opacity:.7; text-align:center; margin-top:2px; }
-    .school-header-bottom { background:#1565C0; color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:700; letter-spacing:1.5px; }
+    .school-header-top .name { font-size: {{ 16 * ($bodyScale ?? 1.0) }}px; font-weight:700; text-transform:uppercase; letter-spacing:1px; text-align:center; }
+    .school-header-top .addr { font-size: {{ 8.5 * ($bodyScale ?? 1.0) }}px; opacity:.85; text-align:center; margin-top:2px; }
+    .school-header-top .motto { font-size: {{ 8 * ($bodyScale ?? 1.0) }}px; font-style:italic; opacity:.7; text-align:center; margin-top:2px; }
+    .school-header-top .contact { font-size: {{ 8 * ($bodyScale ?? 1.0) }}px; opacity:.85; text-align:center; margin-top:3px; }
+    .school-header-top .contact span { display:inline-block; margin:0 6px; }
+    .school-header-bottom { background:#1565C0; color:#fff; text-align:center; padding:6px; font-size: {{ 12 * ($bodyScale ?? 1.0) }}px; font-weight:700; letter-spacing:1.5px; }
 
     .summary-strip { display:table; width:100%; border:1px solid #CBD5E1; border-radius:6px; background:#F8FAFC; margin-bottom:10px; }
     .summary-strip .s-cell { display:table-cell; text-align:center; padding:6px 10px; border-right:1px solid #CBD5E1; }
@@ -47,29 +49,50 @@
 </head>
 <body>
 
-@php $isVertical = ($orientation ?? 'horizontal') === 'vertical'; @endphp
+@php
+    $isVertical = ($orientation ?? 'horizontal') === 'vertical';
+
+    $schoolInfo = $schoolInfo ?? (object) [];
+    $logo       = $schoolInfo->logo_base64 ?? null;
+    $schoolName = $schoolInfo->school_name  ?? 'School';
+    $address    = $schoolInfo->school_address ?? null;
+    $motto      = $schoolInfo->school_motto   ?? null;
+    $phones     = $schoolInfo->formatted_phones ?? null;
+    $email      = $schoolInfo->school_email   ?? null;
+    $website    = $schoolInfo->school_website ?? null;
+@endphp
 
 <div class="school-header">
     <table>
         <tr class="school-header-top">
             <td class="logo-cell">
-                @if(!empty($schoolInfo?->logo_base64))
-                    <img src="{{ $schoolInfo->logo_base64 }}" alt="Logo">
+                @if($logo)
+                    <img src="{{ $logo }}" alt="Logo">
                 @endif
             </td>
             <td>
-                <div class="name">{{ $schoolInfo->school_name ?? 'School' }}</div>
-                @if(!empty($schoolInfo?->school_address))
-                    <div class="addr">{{ $schoolInfo->school_address }}</div>
+                <div class="name">{{ $schoolName }}</div>
+                @if($address)
+                    <div class="addr">{{ $address }}</div>
                 @endif
-                @if(!empty($schoolInfo?->school_motto))
-                    <div class="motto">"{{ $schoolInfo->school_motto }}"</div>
+                @if($motto)
+                    <div class="motto">"{{ $motto }}"</div>
+                @endif
+                @if($phones || $email || $website)
+                    <div class="contact">
+                        @if($phones && $phones !== '-')<span>📞 {{ $phones }}</span>@endif
+                        @if($email)<span>✉ {{ $email }}</span>@endif
+                        @if($website)<span>🌐 {{ $website }}</span>@endif
+                    </div>
                 @endif
             </td>
-            <td style="width:60px;"></td>
+            <td style="width:64px;"></td>
         </tr>
     </table>
-    <div class="school-header-bottom">Whole School Timetable — {{ $sessionName }} · {{ $termName }}</div>
+    <div class="school-header-bottom">
+        Whole School Timetable — {{ $sessionName }} · {{ $termName }}
+        @if(!empty($paperSize)) · {{ strtoupper($paperSize) }} @endif
+    </div>
 </div>
 
 @if(!empty($overallStats))

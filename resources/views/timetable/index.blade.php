@@ -17,109 +17,54 @@
     --tt-shadow:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
 }
 
-/* ── Reset & Base ─────────────────────────────────── */
-.timetable-container * {
-    box-sizing: border-box;
-}
+.timetable-container * { box-sizing: border-box; }
 
-/* ── Global animation keyframes ───────────────────── */
 @keyframes fadeSlideUp {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes popIn {
     0%   { opacity: 0; transform: scale(0.92); }
     60%  { opacity: 1; transform: scale(1.02); }
     100% { opacity: 1; transform: scale(1); }
 }
 
-.timetable-container .btn {
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-.timetable-container .btn:active {
-    transform: scale(0.96);
-}
+.timetable-container .btn { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.timetable-container .btn:active { transform: scale(0.96); }
 
 /* ── Page header ──────────────────────────────────── */
 .tt-page-header {
     background: linear-gradient(135deg, #1565C0 0%, #6A1B9A 100%);
-    border-radius: 16px;
-    padding: 24px 28px;
-    color: #fff;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
+    border-radius: 16px; padding: 24px 28px; color: #fff; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
     animation: fadeSlideUp 0.45s ease both;
 }
-.tt-page-header h4 {
-    color: #fff;
-    margin: 0;
-    font-size: 20px;
-    font-weight: 700;
-}
-.tt-page-header p {
-    color: rgba(255,255,255,.75);
-    margin: 4px 0 0;
-    font-size: 13px;
-}
-.tt-page-header .btn {
-    border-color: rgba(255,255,255,.3);
-    color: #fff;
-}
-.tt-page-header .btn:hover {
-    background: rgba(255,255,255,.15);
-    border-color: rgba(255,255,255,.5);
-}
+.tt-page-header h4 { color: #fff; margin: 0; font-size: 20px; font-weight: 700; }
+.tt-page-header p  { color: rgba(255,255,255,.75); margin: 4px 0 0; font-size: 13px; }
+.tt-page-header .btn { border-color: rgba(255,255,255,.3); color: #fff; }
+.tt-page-header .btn:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.5); }
 
 /* ── Cards ────────────────────────────────────────── */
 .tt-card {
-    background: #fff;
-    border: 1px solid var(--tt-border);
-    border-radius: var(--tt-radius);
-    box-shadow: var(--tt-shadow);
-    overflow: hidden;
-    animation: fadeSlideUp 0.45s ease both;
-    animation-delay: .05s;
+    background: #fff; border: 1px solid var(--tt-border); border-radius: var(--tt-radius);
+    box-shadow: var(--tt-shadow); overflow: hidden;
+    animation: fadeSlideUp 0.45s ease both; animation-delay: .05s;
 }
 .tt-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--tt-border);
-    background: var(--tt-surface);
-    flex-wrap: wrap;
-    gap: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--tt-border);
+    background: var(--tt-surface); flex-wrap: wrap; gap: 8px;
 }
-.tt-card-header h6 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1E293B;
-}
-.tt-card-body {
-    padding: 20px;
-}
+.tt-card-header h6 { margin: 0; font-size: 14px; font-weight: 600; color: #1E293B; }
+.tt-card-body { padding: 20px; }
 
-/* ── Setting cards list ───────────────────────────── */
+/* ── Setting cards ───────────────────────────────── */
 .setting-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 18px;
-    border: 1px solid var(--tt-border);
-    border-radius: 10px;
-    background: #fff;
-    transition: all 0.18s ease;
-    margin-bottom: 10px;
-    cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border: 1px solid var(--tt-border); border-radius: 10px;
+    background: #fff; transition: all 0.18s ease; margin-bottom: 10px; cursor: pointer;
     animation: fadeSlideUp 0.35s ease both;
 }
 .setting-card:nth-child(1) { animation-delay: .02s; }
@@ -128,388 +73,109 @@
 .setting-card:nth-child(4) { animation-delay: .14s; }
 .setting-card:nth-child(5) { animation-delay: .18s; }
 .setting-card:nth-child(n+6) { animation-delay: .20s; }
-.setting-card:hover {
-    border-color: var(--tt-blue);
-    box-shadow: 0 0 0 3px rgba(21,101,192,.08);
-    transform: translateY(-1px);
-}
-.setting-card:active {
-    transform: scale(0.99);
-}
-.setting-card:last-child {
-    margin-bottom: 0;
-}
-.setting-card .sc-select {
-    display: flex;
-    align-items: center;
-    margin-right: 12px;
-    flex-shrink: 0;
-}
-.setting-card .sc-select input {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
+.setting-card:hover { border-color: var(--tt-blue); box-shadow: 0 0 0 3px rgba(21,101,192,.08); transform: translateY(-1px); }
+.setting-card:active { transform: scale(0.99); }
+.setting-card:last-child { margin-bottom: 0; }
+.setting-card .sc-select { display: flex; align-items: center; margin-right: 12px; flex-shrink: 0; }
+.setting-card .sc-select input { width: 18px; height: 18px; cursor: pointer; }
 .setting-card .sc-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
+    width: 42px; height: 42px; border-radius: 10px;
     background: linear-gradient(135deg, #E3F2FD, #EDE7F6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.setting-card .sc-icon i {
-    font-size: 20px;
-    color: var(--tt-blue);
-}
-.setting-card .sc-body {
-    flex: 1;
-    margin: 0 14px;
-    min-width: 0;
-}
-.setting-card .sc-body .sc-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1E293B;
-    margin-bottom: 2px;
-}
-.setting-card .sc-body .sc-meta {
-    font-size: 12px;
-    color: #64748B;
-    word-break: break-word;
-}
-.setting-card .sc-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.setting-card.is-selected {
-    border-color: var(--tt-blue);
-    background: rgba(21,101,192,.04);
-    box-shadow: 0 0 0 3px rgba(21,101,192,.1);
-}
+.setting-card .sc-icon i { font-size: 20px; color: var(--tt-blue); }
+.setting-card .sc-body { flex: 1; margin: 0 14px; min-width: 0; }
+.setting-card .sc-body .sc-title { font-size: 14px; font-weight: 600; color: #1E293B; margin-bottom: 2px; }
+.setting-card .sc-body .sc-meta  { font-size: 12px; color: #64748B; word-break: break-word; }
+.setting-card .sc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.setting-card.is-selected { border-color: var(--tt-blue); background: rgba(21,101,192,.04); box-shadow: 0 0 0 3px rgba(21,101,192,.1); }
 
 /* ── Tabs ─────────────────────────────────────────── */
-.tt-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 2px solid var(--tt-border);
-    margin-bottom: 24px;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-}
+.tt-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--tt-border); margin-bottom: 24px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
 .tt-tab {
-    padding: 10px 18px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #64748B;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    transition: all 0.15s;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    flex-shrink: 0;
+    padding: 10px 18px; font-size: 13px; font-weight: 500; color: #64748B; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s;
+    white-space: nowrap; display: flex; align-items: center; gap: 6px;
+    text-decoration: none; background: none; border-top: none; border-left: none; border-right: none; flex-shrink: 0;
 }
-.tt-tab:hover {
-    color: var(--tt-blue);
-    background: rgba(21,101,192,.04);
-}
-.tt-tab.active {
-    color: var(--tt-blue);
-    border-bottom-color: var(--tt-blue);
-    font-weight: 600;
-}
-.tt-tab .tab-badge {
-    font-size: 10px;
-    padding: 1px 6px;
-    background: #EF4444;
-    color: #fff;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.tab-content-pane {
-    animation: fadeIn 0.25s ease;
-}
+.tt-tab:hover { color: var(--tt-blue); background: rgba(21,101,192,.04); }
+.tt-tab.active { color: var(--tt-blue); border-bottom-color: var(--tt-blue); font-weight: 600; }
+.tt-tab .tab-badge { font-size: 10px; padding: 1px 6px; background: #EF4444; color: #fff; border-radius: 10px; font-weight: 600; }
+.tab-content-pane { animation: fadeIn 0.25s ease; }
 
 /* ── Timetable grid ───────────────────────────────── */
-.tt-grid-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-.tt-grid {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 700px;
-    animation: fadeIn 0.3s ease;
-}
-.tt-grid th {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    padding: 12px 10px;
-    text-align: center;
-    white-space: nowrap;
-}
-.tt-grid th.period-th {
-    background: #1E293B;
-    color: #fff;
-    width: 100px;
-    text-align: left;
-    padding-left: 14px;
-}
+.tt-grid-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tt-grid { width: 100%; border-collapse: collapse; min-width: 700px; animation: fadeIn 0.3s ease; }
+.tt-grid th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 12px 10px; text-align: center; white-space: nowrap; }
+.tt-grid th.period-th { background: #1E293B; color: #fff; width: 100px; text-align: left; padding-left: 14px; }
 .tt-grid th.monday-th    { background: var(--tt-blue);   color: #fff; }
 .tt-grid th.tuesday-th   { background: var(--tt-purple); color: #fff; }
 .tt-grid th.wednesday-th { background: var(--tt-green);  color: #fff; }
 .tt-grid th.thursday-th  { background: var(--tt-orange); color: #fff; }
 .tt-grid th.friday-th    { background: var(--tt-pink);   color: #fff; }
-.tt-grid td {
-    border: 1px solid var(--tt-border);
-    vertical-align: middle;
-    padding: 0;
-    transition: all 0.15s;
-}
-.tt-grid td.period-td {
-    background: var(--tt-surface);
-    padding: 10px 14px;
-    min-width: 100px;
-}
-.tt-grid .period-td .pname {
-    font-size: 12px;
-    font-weight: 700;
-    color: #1E293B;
-}
-.tt-grid .period-td .ptime {
-    font-size: 11px;
-    color: #94A3B8;
-    margin-top: 2px;
-}
+.tt-grid td { border: 1px solid var(--tt-border); vertical-align: middle; padding: 0; transition: all 0.15s; }
+.tt-grid td.period-td { background: var(--tt-surface); padding: 10px 14px; min-width: 100px; }
+.tt-grid .period-td .pname { font-size: 12px; font-weight: 700; color: #1E293B; }
+.tt-grid .period-td .ptime { font-size: 11px; color: #94A3B8; margin-top: 2px; }
 
-/* ── Generation animation ─────────────────────────── */
+/* ── Grid cells ───────────────────────────────────── */
 .tt-cell {
-    cursor: pointer;
-    padding: 8px;
-    min-height: 68px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    cursor: pointer; padding: 8px; min-height: 68px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     transition: opacity 0.28s ease, transform 0.15s cubic-bezier(.34,1.56,.64,1), background 0.15s ease;
     min-width: 80px;
 }
-.tt-cell:hover {
-    background: rgba(21,101,192,.06) !important;
-}
-.tt-cell:active {
-    transform: scale(0.94);
-}
-.tt-cell.is-free {
-    background: #FAFAFA;
-}
-.tt-cell.is-double {
-    background: rgba(21,101,192,.05);
-}
-.tt-cell.is-break {
-    background: #FFFBEB;
-    cursor: default;
-}
-.tt-cell.is-break:hover {
-    background: #FFFBEB !important;
-}
-.tt-cell.is-break:active {
-    transform: none;
-}
-.tt-cell .cell-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgba(255,255,255,.8);
-    box-shadow: 0 2px 6px rgba(0,0,0,.15);
-    margin-bottom: 5px;
-}
-.tt-cell .cell-avatar-placeholder {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #E3F2FD, #EDE7F6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 5px;
-}
-.tt-cell .cell-avatar-placeholder i {
-    font-size: 16px;
-    color: var(--tt-blue);
-}
-.tt-cell .cell-subject {
-    font-size: 11px;
-    font-weight: 700;
-    color: #1E293B;
-    line-height: 1.3;
-}
-.tt-cell .cell-teacher {
-    font-size: 10px;
-    color: #64748B;
-    margin-top: 1px;
-}
-.tt-cell .cell-room {
-    font-size: 10px;
-    color: #94A3B8;
-    margin-top: 1px;
-}
-.tt-cell .cell-room i {
-    font-size: 9px;
-    margin-right: 2px;
-}
-.tt-cell .cell-free {
-    font-size: 11px;
-    color: #CBD5E1;
-}
-.tt-cell .cell-break {
-    font-size: 11px;
-    color: #D97706;
-    font-weight: 600;
-}
-.tt-cell .cell-double-badge {
-    font-size: 9px;
-    padding: 1px 5px;
-    background: rgba(21,101,192,.12);
-    color: var(--tt-blue);
-    border-radius: 4px;
-    font-weight: 700;
-    margin-top: 3px;
-}
-.tt-cell.has-subject {
-    border-left: 3px solid;
-}
-.tt-cell.cell-building {
-    opacity: 0;
-    transform: scale(0.75);
-}
+.tt-cell:hover { background: rgba(21,101,192,.06) !important; }
+.tt-cell:active { transform: scale(0.94); }
+.tt-cell.is-free { background: #FAFAFA; }
+.tt-cell.is-double { background: rgba(21,101,192,.05); }
+.tt-cell.is-break { background: #FFFBEB; cursor: default; }
+.tt-cell.is-break:hover { background: #FFFBEB !important; }
+.tt-cell.is-break:active { transform: none; }
+.tt-cell .cell-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.8); box-shadow: 0 2px 6px rgba(0,0,0,.15); margin-bottom: 5px; }
+.tt-cell .cell-avatar-placeholder { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #E3F2FD, #EDE7F6); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
+.tt-cell .cell-avatar-placeholder i { font-size: 16px; color: var(--tt-blue); }
+.tt-cell .cell-subject { font-size: 11px; font-weight: 700; color: #1E293B; line-height: 1.3; }
+.tt-cell .cell-teacher { font-size: 10px; color: #64748B; margin-top: 1px; }
+.tt-cell .cell-room    { font-size: 10px; color: #94A3B8; margin-top: 1px; }
+.tt-cell .cell-room i  { font-size: 9px; margin-right: 2px; }
+.tt-cell .cell-free    { font-size: 11px; color: #CBD5E1; }
+.tt-cell .cell-break   { font-size: 11px; color: #D97706; font-weight: 600; }
+.tt-cell .cell-double-badge { font-size: 9px; padding: 1px 5px; background: rgba(21,101,192,.12); color: var(--tt-blue); border-radius: 4px; font-weight: 700; margin-top: 3px; }
+.tt-cell.has-subject { border-left: 3px solid; }
+.tt-cell.cell-building { opacity: 0; transform: scale(0.75); }
 .tt-generating-banner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     background: linear-gradient(135deg,#EFF6FF,#F5F3FF);
-    border: 1px solid #BFDBFE;
-    border-radius: 10px;
-    padding: 10px 16px;
-    margin: 0 0 12px;
-    font-size: 13px;
-    color: #1565C0;
-    font-weight: 600;
-    animation: fadeSlideUp 0.25s ease both;
+    border: 1px solid #BFDBFE; border-radius: 10px; padding: 10px 16px; margin: 0 0 12px;
+    font-size: 13px; color: #1565C0; font-weight: 600; animation: fadeSlideUp 0.25s ease both;
 }
 .tt-generating-banner .spinner-border { width: 16px; height: 16px; border-width: 2px; }
-.tt-generating-skip {
-    margin-left: auto;
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748B;
-    cursor: pointer;
-    text-decoration: underline;
-}
+.tt-generating-skip { margin-left: auto; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer; text-decoration: underline; }
 
-/* ── Staff picture toggle ─────────────────────────── */
 .hide-avatars .cell-avatar,
-.hide-avatars .cell-avatar-placeholder {
-    display: none !important;
-}
+.hide-avatars .cell-avatar-placeholder { display: none !important; }
 
 /* ── Constraints table ────────────────────────────── */
-#constraintsTable {
-    font-size: 13px;
-}
-#constraintsTable td {
-    vertical-align: middle;
-    padding: 8px 6px;
-}
-#constraintsTable input[type="number"] {
-    width: 70px;
-}
-#constraintsTable select[multiple] {
-    min-height: 50px;
-    font-size: 12px;
-}
+#constraintsTable { font-size: 13px; }
+#constraintsTable td { vertical-align: middle; padding: 8px 6px; }
+#constraintsTable input[type="number"] { width: 70px; }
+#constraintsTable select[multiple] { min-height: 50px; font-size: 12px; }
 
 /* ── Conflict items ───────────────────────────────── */
-.conflict-item {
-    border: 1px solid #FEE2E2;
-    background: #FFF5F5;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    animation: fadeSlideUp 0.3s ease both;
-}
-.conflict-item.room-conflict {
-    border-color: #FED7AA;
-    background: #FFF7ED;
-}
-.conflict-item:last-child {
-    margin-bottom: 0;
-}
-.conflict-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-.conflict-avatar-ph {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #FEE2E2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.conflict-avatar-ph.room {
-    background: #FED7AA;
-}
-.conflict-avatar-ph i {
-    color: #EF4444;
-}
-.conflict-avatar-ph.room i {
-    color: #EA580C;
-}
+.conflict-item { border: 1px solid #FEE2E2; background: #FFF5F5; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 14px; animation: fadeSlideUp 0.3s ease both; }
+.conflict-item.room-conflict { border-color: #FED7AA; background: #FFF7ED; }
+.conflict-item:last-child { margin-bottom: 0; }
+.conflict-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.conflict-avatar-ph { width: 44px; height: 44px; border-radius: 50%; background: #FEE2E2; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.conflict-avatar-ph.room { background: #FED7AA; }
+.conflict-avatar-ph i { color: #EF4444; }
+.conflict-avatar-ph.room i { color: #EA580C; }
 
 /* ── Real-time conflict panel ─────── */
-.rtc-panel {
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    font-size: 12px;
-    animation: rtcSlideIn 0.2s ease;
-}
-.rtc-panel:last-child {
-    margin-bottom: 0;
-}
-@keyframes rtcSlideIn {
-    from { opacity:0; transform:translateY(-6px); }
-    to   { opacity:1; transform:translateY(0); }
-}
+.rtc-panel { border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; font-size: 12px; animation: rtcSlideIn 0.2s ease; }
+.rtc-panel:last-child { margin-bottom: 0; }
+@keyframes rtcSlideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
 .rtc-error   { background: #FFF1F2; border: 1px solid #FECDD3; }
 .rtc-warning { background: #FFFBEB; border: 1px solid #FDE68A; }
 .rtc-clear   { background: #F0FDF4; border: 1px solid #BBF7D0; }
@@ -519,343 +185,95 @@
 .rtc-msg.green { color: #15803d; }
 .rtc-detail  { color: #64748B; font-size: 11px; margin-bottom: 6px; }
 .rtc-alts    { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.rtc-alt-badge {
-    font-size: 10px;
-    padding: 3px 8px;
-    background: #dcfce7;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-}
-.rtc-alt-badge:hover {
-    background: #16a34a;
-    color: #fff;
-    border-color: #16a34a;
-}
-.rtc-room-alt {
-    font-size: 10px;
-    padding: 3px 8px;
-    background: #EFF6FF;
-    color: #1565C0;
-    border: 1px solid #BFDBFE;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-}
-.rtc-room-alt:hover {
-    background: #1565C0;
-    color: #fff;
-}
-.rtc-spinner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: #64748B;
-    padding: 10px 0;
-}
-.rtc-spinner .spinner-border {
-    width: 14px;
-    height: 14px;
-    border-width: 2px;
-}
+.rtc-alt-badge { font-size: 10px; padding: 3px 8px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; border-radius: 6px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.rtc-alt-badge:hover { background: #16a34a; color: #fff; border-color: #16a34a; }
+.rtc-room-alt { font-size: 10px; padding: 3px 8px; background: #EFF6FF; color: #1565C0; border: 1px solid #BFDBFE; border-radius: 6px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.rtc-room-alt:hover { background: #1565C0; color: #fff; }
+.rtc-spinner { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748B; padding: 10px 0; }
+.rtc-spinner .spinner-border { width: 14px; height: 14px; border-width: 2px; }
 
 /* ── Conflict suggestion box ─────── */
-.conflict-suggestion {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    margin-top: 8px;
-}
-.conflict-suggestion .alt-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 6px;
-}
-.alt-badge {
-    font-size: 11px;
-    padding: 4px 8px;
-    background: #dcfce7;
-    color: #15803d;
-    border-radius: 6px;
-    cursor: pointer;
-    border: 1px solid #bbf7d0;
-    transition: all .15s;
-}
-.alt-badge:hover {
-    background: #16a34a;
-    color: #fff;
-}
+.conflict-suggestion { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-top: 8px; }
+.conflict-suggestion .alt-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.alt-badge { font-size: 11px; padding: 4px 8px; background: #dcfce7; color: #15803d; border-radius: 6px; cursor: pointer; border: 1px solid #bbf7d0; transition: all .15s; }
+.alt-badge:hover { background: #16a34a; color: #fff; }
 
-/* ── Export buttons ───────────────────────────────── */
-.export-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-}
+.export-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 /* ── Tom Select overrides ─────── */
-.ts-wrapper .ts-control {
-    border-color: #D1D5DB;
-    border-radius: 6px;
-    min-height: 38px;
-    font-size: 14px;
-}
-.ts-wrapper.focus .ts-control {
-    border-color: #1565C0;
-    box-shadow: 0 0 0 3px rgba(21,101,192,.12);
-}
-.ts-dropdown {
-    font-size: 13px;
-}
-.ts-dropdown .option {
-    padding: 8px 12px;
-}
+.ts-wrapper .ts-control { border-color: #D1D5DB; border-radius: 6px; min-height: 38px; font-size: 14px; }
+.ts-wrapper.focus .ts-control { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.12); }
+.ts-dropdown { font-size: 13px; }
+.ts-dropdown .option { padding: 8px 12px; }
 .ts-dropdown .option:hover,
-.ts-dropdown .option.active {
-    background: #EFF6FF;
-    color: #1565C0;
-}
+.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
 
-/* ── Editing presence banner ──────────────────────── */
-#editingBanner {
-    border: 1px solid #FDE68A;
-    background: #FFFBEB;
-    color: #92400E;
-    border-radius: 8px;
-    padding: 10px 16px;
-}
+#editingBanner { border: 1px solid #FDE68A; background: #FFFBEB; color: #92400E; border-radius: 8px; padding: 10px 16px; }
 
-/* ── Periods table ────────────────────────────────── */
 #periodsTable .form-control-sm,
-#periodsTable .form-select-sm {
-    font-size: 13px;
-    padding: 4px 8px;
-}
-#periodsTable td {
-    padding: 6px 4px;
-    vertical-align: middle;
-}
-#periodsTable .period-order {
-    font-size: 13px;
-    font-weight: 600;
-    color: #94A3B8;
-}
-#periodsTable tr {
-    animation: fadeIn 0.2s ease;
-}
+#periodsTable .form-select-sm { font-size: 13px; padding: 4px 8px; }
+#periodsTable td { padding: 6px 4px; vertical-align: middle; }
+#periodsTable .period-order { font-size: 13px; font-weight: 600; color: #94A3B8; }
+#periodsTable tr { animation: fadeIn 0.2s ease; }
 
-/* ── Modal styles ────────────────────────────────── */
-.modal-content {
-    border-radius: 14px;
-    overflow: hidden;
-    border: none;
-    box-shadow: 0 20px 60px rgba(0,0,0,.18);
-    animation: popIn 0.22s ease;
-}
-.modal-header.bg-gradient-primary {
-    background: linear-gradient(135deg, #1565C0, #6A1B9A);
-}
-.modal-header .modal-title {
-    color: #fff;
-}
-.modal-header .btn-close-white {
-    filter: brightness(0) invert(1);
-}
+.modal-content { border-radius: 14px; overflow: hidden; border: none; box-shadow: 0 20px 60px rgba(0,0,0,.18); animation: popIn 0.22s ease; }
+.modal-header.bg-gradient-primary { background: linear-gradient(135deg, #1565C0, #6A1B9A); }
+.modal-header .modal-title { color: #fff; }
+.modal-header .btn-close-white { filter: brightness(0) invert(1); }
 
-/* ── Half days rows ──────────────────────────────── */
-.wiz-half-day-row {
-    background: var(--tt-surface);
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--tt-border);
-    animation: fadeSlideUp 0.2s ease both;
-}
+.wiz-half-day-row { background: var(--tt-surface); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--tt-border); animation: fadeSlideUp 0.2s ease both; }
 
-/* ── Teacher assignment table ─────────────────────── */
-#teacherAssignmentContainer table tr {
-    animation: fadeIn 0.2s ease;
-}
-.assignment-teacher-select {
-    min-width: 220px;
-}
-.ta-row-status {
-    font-size: 15px;
-}
+#teacherAssignmentContainer table tr { animation: fadeIn 0.2s ease; }
+.assignment-teacher-select { min-width: 220px; }
+.ta-row-status { font-size: 15px; }
 
-/* ── Whole-School export mode toggle ──────────────── */
-.ws-mode-toggle {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-.ws-mode-btn {
-    flex: 1;
-    border: 1.5px solid var(--tt-border);
-    background: #fff;
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #64748B;
-    cursor: pointer;
-    text-align: left;
-    transition: all .15s;
-}
+.ws-mode-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+.ws-mode-btn { flex: 1; border: 1.5px solid var(--tt-border); background: #fff; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; font-weight: 600; color: #64748B; cursor: pointer; text-align: left; transition: all .15s; }
 .ws-mode-btn i { font-size: 16px; display:block; margin-bottom: 4px; color: var(--tt-blue); }
-.ws-mode-btn.active {
-    border-color: var(--tt-blue);
-    background: rgba(21,101,192,.06);
-    color: var(--tt-blue);
-    box-shadow: 0 0 0 3px rgba(21,101,192,.1);
-}
+.ws-mode-btn.active { border-color: var(--tt-blue); background: rgba(21,101,192,.06); color: var(--tt-blue); box-shadow: 0 0 0 3px rgba(21,101,192,.1); }
 .ws-mode-btn small { display:block; font-weight:400; color:#94A3B8; margin-top:2px; }
 
-/* ── Utility ──────────────────────────────────────── */
-.cursor-pointer {
-    cursor: pointer;
-}
-.flex-1 {
-    flex: 1;
-}
-.opacity-30 {
-    opacity: 0.3;
-}
-.opacity-50 {
-    opacity: 0.5;
-}
-.bg-success-subtle {
-    background: #DCFCE7;
-}
-.text-success {
-    color: #15803d;
-}
-.bg-warning-subtle {
-    background: #FEF3C7;
-}
-.text-warning {
-    color: #D97706;
-}
-.bg-primary-subtle {
-    background: #EFF6FF;
-}
-.text-primary {
-    color: #1565C0;
-}
+.cursor-pointer { cursor: pointer; }
+.flex-1 { flex: 1; }
+.opacity-30 { opacity: 0.3; }
+.opacity-50 { opacity: 0.5; }
+.bg-success-subtle { background: #DCFCE7; }
+.text-success { color: #15803d; }
+.bg-warning-subtle { background: #FEF3C7; }
+.text-warning { color: #D97706; }
+.bg-primary-subtle { background: #EFF6FF; }
+.text-primary { color: #1565C0; }
 
-/* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
-    .tt-page-header {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-    }
-    .tt-page-header .d-flex {
-        justify-content: center;
-    }
-    .tt-tabs {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .tt-tab {
-        font-size: 12px;
-        padding: 8px 12px;
-    }
-    .export-group {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    .tt-card-header {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-    }
-    .tt-card-header .d-flex {
-        justify-content: center;
-    }
-    .setting-card {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .setting-card .sc-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
-    .tt-grid-wrapper {
-        margin: 0 -12px;
-        padding: 0 12px;
-    }
-    #constraintsTable {
-        font-size: 12px;
-    }
-    #constraintsTable input[type="number"] {
-        width: 50px;
-    }
-    #constraintsTable select[multiple] {
-        min-height: 40px;
-        font-size: 11px;
-    }
-    .conflict-item {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .conflict-avatar,
-    .conflict-avatar-ph {
-        align-self: center;
-    }
-    .ws-mode-toggle {
-        flex-direction: column;
-    }
+    .tt-page-header { flex-direction: column; align-items: stretch; text-align: center; }
+    .tt-page-header .d-flex { justify-content: center; }
+    .tt-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tt-tab { font-size: 12px; padding: 8px 12px; }
+    .export-group { flex-wrap: wrap; justify-content: center; }
+    .tt-card-header { flex-direction: column; align-items: stretch; text-align: center; }
+    .tt-card-header .d-flex { justify-content: center; }
+    .setting-card { flex-wrap: wrap; gap: 8px; }
+    .setting-card .sc-actions { width: 100%; justify-content: flex-end; }
+    .tt-grid-wrapper { margin: 0 -12px; padding: 0 12px; }
+    #constraintsTable { font-size: 12px; }
+    #constraintsTable input[type="number"] { width: 50px; }
+    #constraintsTable select[multiple] { min-height: 40px; font-size: 11px; }
+    .conflict-item { flex-direction: column; align-items: stretch; }
+    .conflict-avatar, .conflict-avatar-ph { align-self: center; }
+    .ws-mode-toggle { flex-direction: column; }
 }
-
 @media (max-width: 576px) {
-    .tt-page-header {
-        padding: 16px 18px;
-        border-radius: 12px;
-    }
-    .tt-page-header h4 {
-        font-size: 17px;
-    }
-    .tt-card-body {
-        padding: 14px;
-    }
-    .setting-card {
-        padding: 10px 12px;
-    }
-    .tt-grid td.period-td {
-        padding: 6px 8px;
-        min-width: 70px;
-    }
-    .tt-cell {
-        min-height: 50px;
-        padding: 4px;
-        min-width: 60px;
-    }
-    .tt-cell .cell-subject {
-        font-size: 10px;
-    }
-    .tt-cell .cell-avatar {
-        width: 28px;
-        height: 28px;
-    }
-    .tt-cell .cell-avatar-placeholder {
-        width: 28px;
-        height: 28px;
-    }
-    .tt-cell .cell-avatar-placeholder i {
-        font-size: 13px;
-    }
-    .assignment-teacher-select {
-        min-width: 160px;
-    }
+    .tt-page-header { padding: 16px 18px; border-radius: 12px; }
+    .tt-page-header h4 { font-size: 17px; }
+    .tt-card-body { padding: 14px; }
+    .setting-card { padding: 10px 12px; }
+    .tt-grid td.period-td { padding: 6px 8px; min-width: 70px; }
+    .tt-cell { min-height: 50px; padding: 4px; min-width: 60px; }
+    .tt-cell .cell-subject { font-size: 10px; }
+    .tt-cell .cell-avatar { width: 28px; height: 28px; }
+    .tt-cell .cell-avatar-placeholder { width: 28px; height: 28px; }
+    .tt-cell .cell-avatar-placeholder i { font-size: 13px; }
+    .assignment-teacher-select { min-width: 160px; }
 }
 </style>
 
@@ -881,7 +299,6 @@
             <button class="btn btn-outline-light btn-sm" onclick="openGenerationWizardModal()">
                 <i class="ri-magic-line me-1"></i>Generation Wizard
             </button>
-
             <button class="btn btn-outline-light btn-sm" onclick="openConflictScopeModal()">
                 <i class="ri-shield-cross-line me-1"></i>Check Conflicts
             </button>
@@ -1056,7 +473,7 @@
                     </button>
                 </div>
 
-                {{-- ── TAB: Periods & Settings ── --}}
+                {{-- TAB: Periods & Settings --}}
                 <div id="periodsTab" class="tab-content-pane">
                     <div class="row g-4">
                         <div class="col-lg-5">
@@ -1138,7 +555,7 @@
                     </div>
                 </div>
 
-                {{-- ── TAB: Constraints ── --}}
+                {{-- TAB: Constraints --}}
                 <div id="constraintsTab" class="tab-content-pane" style="display:none">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <div>
@@ -1170,7 +587,7 @@
                     </div>
                 </div>
 
-                {{-- ── TAB: Grid ── --}}
+                {{-- TAB: Grid --}}
                 <div id="gridTab" class="tab-content-pane" style="display:none">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <div>
@@ -1185,6 +602,12 @@
                             <select id="exportOrientation" class="form-select form-select-sm" style="width:auto">
                                 <option value="horizontal">Horizontal Layout</option>
                                 <option value="vertical">Vertical Layout</option>
+                            </select>
+                            <select id="exportPaper" class="form-select form-select-sm" style="width:auto">
+                                @foreach(\App\Http\Controllers\TimetableController::PAPER_SIZES as $size)
+                                    @php $meta = \App\Http\Controllers\TimetableController::PAPER_LABELS[$size] ?? [strtoupper($size)]; @endphp
+                                    <option value="{{ $size }}" {{ $size === 'a3' ? 'selected' : '' }}>{{ $meta[0] }}</option>
+                                @endforeach
                             </select>
                             <button class="btn btn-sm btn-outline-secondary" onclick="loadTimetableGrid()">
                                 <i class="ri-refresh-line me-1"></i>Refresh
@@ -1210,7 +633,7 @@
                     </div>
                 </div>
 
-                {{-- ── TAB: Conflicts ── --}}
+                {{-- TAB: Conflicts --}}
                 <div id="conflictsTab" class="tab-content-pane" style="display:none">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <div>
@@ -1233,21 +656,18 @@
                         </div>
                     </div>
                 </div>
-
-            </div>{{-- /card-body --}}
-        </div>{{-- /tt-card --}}
-    </div>{{-- /timetableEditor --}}
+            </div>
+        </div>
+    </div>
 
 </div>
 </div>
 </div>
 
-{{-- ============================================================ --}}
-{{-- TEACHER ASSIGNMENT MODAL (READ-ONLY)                         --}}
-{{-- ============================================================ --}}
+{{-- TEACHER ASSIGNMENT MODAL --}}
 <div class="modal fade" id="teacherAssignModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+    <div class="modal-content">
       <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#6A1B9A)">
         <h5 class="modal-title text-white"><i class="ri-user-search-line me-2"></i>View Teacher Assignments</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -1257,7 +677,7 @@
           <i class="ri-information-line ri-lg mt-1"></i>
           <div>
             <strong>Read-only view.</strong> This screen only shows the current teacher–subject–class mapping used by the timetable generator.
-            To assign or change teachers, use the main <strong>Subject / Class management</strong> screens. Timetable operations never create or update those records.
+            To assign or change teachers, use the main <strong>Subject / Class management</strong> screens.
           </div>
         </div>
         <div class="row g-3 mb-3">
@@ -1284,12 +704,10 @@
             <input type="text" class="form-control" id="taSearchInput" placeholder="Filter by class, subject or teacher…" oninput="renderTeacherAssignmentTable()">
           </div>
         </div>
-
         <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" id="taSummaryBar" style="display:none">
             <span class="badge bg-success-subtle text-success" id="taAssignedCount">0 assigned</span>
             <span class="badge bg-warning-subtle text-warning" id="taUnassignedCount">0 unassigned</span>
         </div>
-
         <div id="teacherAssignmentContainer">
             <div class="text-center py-5 text-muted">
                 <i class="ri-user-search-line ri-3x d-block mb-3 opacity-30"></i>
@@ -1304,9 +722,7 @@
   </div>
 </div>
 
-{{-- ============================================================ --}}
-{{-- EDIT SLOT MODAL                                              --}}
-{{-- ============================================================ --}}
+{{-- EDIT SLOT MODAL --}}
 <div class="modal fade" id="editSlotModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -1332,12 +748,10 @@
                     </div>
                 </div>
             </div>
-
             <div class="modal-body" style="padding:20px 24px">
                 <input type="hidden" id="editSlotSettingId">
                 <input type="hidden" id="editSlotPeriodId">
                 <input type="hidden" id="editSlotDay">
-
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Subject</label>
@@ -1366,8 +780,6 @@
                         <textarea class="form-control" id="editSlotNotes" rows="2" placeholder="Optional notes…"></textarea>
                     </div>
                 </div>
-
-                {{-- Real-time conflict panel --}}
                 <div id="slotConflictPanel" style="display:none;margin-top:16px">
                     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748B;margin-bottom:8px">
                         <i class="ri-shield-check-line me-1"></i>Conflict Check
@@ -1375,7 +787,6 @@
                     <div id="slotConflictInner"></div>
                 </div>
             </div>
-
             <div class="modal-footer border-0 pt-0" style="padding:0 24px 20px">
                 <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary px-4" id="saveSlotBtn" onclick="saveSlot()">
@@ -1386,18 +797,15 @@
     </div>
 </div>
 
-{{-- ============================================================ --}}
-{{-- WHOLE SCHOOL EXPORT MODAL — Per-Class or Merged Grid          --}}
-{{-- ============================================================ --}}
+{{-- WHOLE SCHOOL EXPORT MODAL --}}
 <div class="modal fade" id="wholeSchoolExportModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:14px;overflow:hidden">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="ri-school-line me-2"></i>Export Whole School</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-
                 <div class="ws-mode-toggle">
                     <button type="button" class="ws-mode-btn active" data-mode="per_class" onclick="selectWsMode(this)">
                         <i class="ri-file-copy-2-line"></i>Per-Class
@@ -1435,6 +843,12 @@
                         <option value="vertical">Vertical Layout (Days as rows)</option>
                     </select>
                 </div>
+                <div class="mb-3" id="wsPaperWrap">
+                    @include('timetable.partials.paper-select', [
+                        'selectId' => 'wholeSchoolPaper',
+                        'selected' => 'a3',
+                    ])
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -1449,9 +863,10 @@
     </div>
 </div>
 
+{{-- CONFLICT SCOPE MODAL --}}
 <div class="modal fade" id="conflictScopeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+    <div class="modal-content">
       <div class="modal-header" style="background:linear-gradient(135deg,#DC2626,#EA580C)">
         <h5 class="modal-title text-white"><i class="ri-shield-cross-line me-2"></i>Check Conflicts — Session / Term</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -1494,10 +909,10 @@
   </div>
 </div>
 
-{{-- Clone Modal --}}
+{{-- CLONE MODAL --}}
 <div class="modal fade" id="cloneModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:14px;overflow:hidden">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="ri-file-copy-line me-2"></i>Clone Timetable</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1531,12 +946,10 @@
     </div>
 </div>
 
-{{-- ============================================================ --}}
-{{-- GENERATION WIZARD MODAL                                      --}}
-{{-- ============================================================ --}}
+{{-- GENERATION WIZARD MODAL --}}
 <div class="modal fade" id="generationWizardModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+    <div class="modal-content">
       <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#6A1B9A)">
         <h5 class="modal-title text-white"><i class="ri-magic-line me-2"></i>Generation Wizard</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -1601,7 +1014,6 @@
             <label class="form-label fw-semibold">Period Length (min)</label>
             <input type="number" class="form-control" id="wizPeriodDuration" min="20" max="90" value="40">
           </div>
-
           <div class="col-md-3">
             <label class="form-label fw-semibold">Short Break After Period</label>
             <input type="number" class="form-control" id="wizShortBreakAfter" min="1" placeholder="e.g. 2">
@@ -1618,7 +1030,6 @@
             <label class="form-label fw-semibold">Long Break (min)</label>
             <input type="number" class="form-control" id="wizLongBreakDuration" min="10" max="90" value="40">
           </div>
-
           <div class="col-md-3 d-flex align-items-end">
             <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" id="wizAssemblyFirstPeriod" onchange="toggleWizardAssemblyDay()">
@@ -1641,7 +1052,6 @@
             <label class="form-label fw-semibold">Max Lessons / Day <span class="text-muted fw-normal">(optional)</span></label>
             <input type="number" class="form-control" id="wizMaxLessonsPerDay" min="1" placeholder="No cap">
           </div>
-
           <div class="col-12">
             <label class="form-label fw-semibold">Active Days</label>
             <div class="d-flex flex-wrap gap-3 mt-1">
@@ -1650,9 +1060,9 @@
                   <input class="form-check-input wiz-active-day mt-0" type="checkbox" value="{{ $day }}" checked>
                   {{ $day }}
                 </label>
-              @endforeach            </div>
+              @endforeach
+            </div>
           </div>
-
           <div class="col-12">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="wizDeprioritizeBreakAdjacent" checked>
@@ -1685,7 +1095,6 @@
           <h6 class="mb-3"><i class="ri-magic-line me-2"></i>Generating Timetables…</h6>
           <div id="wizProgressList" style="max-height:320px;overflow-y:auto"></div>
         </div>
-
       </div>
       <div class="modal-footer">
         <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -1700,12 +1109,10 @@
   </div>
 </div>
 
-{{-- ============================================================ --}}
-{{-- ANCHOR-BASED QUICK REBUILD MODAL (single class)              --}}
-{{-- ============================================================ --}}
+{{-- ANCHOR REBUILD MODAL --}}
 <div class="modal fade" id="anchorRebuildModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:14px;overflow:hidden">
+    <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="ri-flashlight-line me-2"></i>Quick Rebuild Periods</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1770,9 +1177,6 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// ============================================================================
-// GLOBALS
-// ============================================================================
 let currentSettingId  = null;
 let currentSetting    = null;
 let currentSettingVersion = null;
@@ -1800,9 +1204,6 @@ function getSubjectColor(subjectId) {
     return subjectColorMap[subjectId];
 }
 
-// ============================================================================
-// ROUTES
-// ============================================================================
 const ROUTES = {
     setup:                      '{{ route("timetable.setup") }}',
     saveSettings:               '{{ route("timetable.save-settings") }}',
@@ -1832,28 +1233,18 @@ const ROUTES = {
 };
 
 const CSRF = '{{ csrf_token() }}';
+function url(base, id) { return base.replace(/:id\b/, id); }
 
-function url(base, id) {
-    return base.replace(/:id\b/, id);
-}
-
-// ============================================================================
-// UTILITIES
-// ============================================================================
 function escapeHtml(str) {
     if (str == null) return '';
     return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
-
 function apiFetch(endpoint, method = 'GET', body = null) {
     const opts = { method, headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } };
     if (body && method !== 'GET') { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     return fetch(endpoint, opts);
 }
-
-function showLoader() {
-    Swal.fire({ title: 'Processing…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
-}
+function showLoader() { Swal.fire({ title: 'Processing…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() }); }
 function hideLoader() { Swal.close(); }
 
 function showTab(tabId, btn) {
@@ -1862,7 +1253,6 @@ function showTab(tabId, btn) {
     document.getElementById(tabId).style.display = '';
     if (btn) btn.classList.add('active');
 }
-
 function closeEditor() {
     stopEditingHeartbeat();
     document.getElementById('timetableEditor').style.display = 'none';
@@ -1870,9 +1260,7 @@ function closeEditor() {
     currentSettingVersion = null;
 }
 
-// ============================================================================
-// TEACHER ASSIGNMENT MODAL — READ-ONLY
-// ============================================================================
+/* ── Teacher assignment modal ── */
 function openTeacherAssignModal() {
     document.getElementById('teacherAssignmentContainer').innerHTML = `
         <div class="text-center py-5 text-muted">
@@ -1883,28 +1271,23 @@ function openTeacherAssignModal() {
     document.getElementById('taSearchInput').value = '';
     new bootstrap.Modal(document.getElementById('teacherAssignModal')).show();
 }
-
 async function loadTeacherAssignments() {
     const sessionId = document.getElementById('taSessionId').value;
     const termId    = document.getElementById('taTermId').value;
     const container = document.getElementById('teacherAssignmentContainer');
-
     if (!sessionId) {
         container.innerHTML = `<div class="text-center py-5 text-muted"><p>Select a session to view subject/teacher assignments.</p></div>`;
         document.getElementById('taSummaryBar').style.display = 'none';
         taRows = [];
         return;
     }
-
     container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Loading assignments…</p></div>';
-
     try {
         const params = new URLSearchParams({ session_id: sessionId });
         if (termId) params.set('term_id', termId);
         const res  = await apiFetch(`${ROUTES.getTeacherAssignments}?${params.toString()}`, 'GET');
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Failed to load.');
-
         taData = data;
         taRows = buildAssignmentRows(data);
         renderTeacherAssignmentTable();
@@ -1912,7 +1295,6 @@ async function loadTeacherAssignments() {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load: ${escapeHtml(e.message)}</div>`;
     }
 }
-
 function buildAssignmentRows(data) {
     const rows = [];
     (data.unassigned || []).forEach(u => rows.push({ ...u, teacher_id: null, teacher_name: null }));
@@ -1925,44 +1307,35 @@ function buildAssignmentRows(data) {
     );
     return rows;
 }
-
 function renderTeacherAssignmentTable() {
     const container = document.getElementById('teacherAssignmentContainer');
     const search    = (document.getElementById('taSearchInput').value || '').toLowerCase().trim();
-
     if (!taRows.length) {
         document.getElementById('taSummaryBar').style.display = 'none';
         container.innerHTML = `<div class="text-center py-5 text-muted">
             <i class="ri-information-line ri-2x d-block mb-2"></i>
-            <p>No subjects assigned to any class for this session/term yet.
-            Assign subjects and teachers in the main <strong>Subject / Class management</strong> screens first.
-            The timetable module only reads those assignments for generation.</p>
+            <p>No subjects assigned to any class for this session/term yet.</p>
         </div>`;
         return;
     }
-
     const filtered = !search ? taRows : taRows.filter(r =>
         (r.class_name || '').toLowerCase().includes(search) ||
         (r.subject_name || '').toLowerCase().includes(search) ||
         (r.teacher_name || '').toLowerCase().includes(search)
     );
-
     const assignedCount   = taRows.filter(r => r.teacher_id).length;
     const unassignedCount = taRows.length - assignedCount;
     document.getElementById('taSummaryBar').style.display = '';
     document.getElementById('taAssignedCount').textContent   = `${assignedCount} assigned`;
     document.getElementById('taUnassignedCount').textContent = `${unassignedCount} unassigned`;
-
     if (!filtered.length) {
         container.innerHTML = `<div class="text-center py-4 text-muted"><p>No matches for "${escapeHtml(search)}".</p></div>`;
         return;
     }
-
     let html = `<div class="table-responsive"><table class="table table-hover align-middle mb-0">
         <thead class="table-light"><tr>
             <th>Class</th><th>Subject</th><th>Teacher</th><th style="width:90px">Status</th>
         </tr></thead><tbody>`;
-
     filtered.forEach(row => {
         const hasTeacher = !!row.teacher_id;
         const teacherCell = hasTeacher
@@ -1971,7 +1344,6 @@ function renderTeacherAssignmentTable() {
         const statusBadge = hasTeacher
             ? `<span class="badge bg-success-subtle text-success">Ready</span>`
             : `<span class="badge bg-warning-subtle text-warning">Missing</span>`;
-
         html += `<tr>
             <td>${escapeHtml(row.class_name || '—')}</td>
             <td>${escapeHtml(row.subject_name || '—')}</td>
@@ -1979,24 +1351,18 @@ function renderTeacherAssignmentTable() {
             <td>${statusBadge}</td>
         </tr>`;
     });
-
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
-// ============================================================================
-// MULTI-SELECT DELETE
-// ============================================================================
+/* ── Multi-select delete ── */
 function toggleSettingSelection(id, checked) {
     if (checked) selectedSettingIds.add(id);
     else selectedSettingIds.delete(id);
-
     const card = document.querySelector(`.setting-card[data-id="${id}"]`);
     if (card) card.classList.toggle('is-selected', checked);
-
     updateBulkDeleteUI();
 }
-
 function toggleSelectAllSettings(checked) {
     document.querySelectorAll('.setting-select-checkbox').forEach(cb => {
         cb.checked = checked;
@@ -2008,7 +1374,6 @@ function toggleSelectAllSettings(checked) {
     });
     updateBulkDeleteUI();
 }
-
 function updateBulkDeleteUI() {
     const btn   = document.getElementById('bulkDeleteBtn');
     const count = selectedSettingIds.size;
@@ -2016,7 +1381,6 @@ function updateBulkDeleteUI() {
         btn.disabled  = count === 0;
         btn.innerHTML = `<i class="ri-delete-bin-line me-1"></i>Delete Selected${count ? ' (' + count + ')' : ''}`;
     }
-
     const allCbs      = document.querySelectorAll('.setting-select-checkbox');
     const selectAllCb = document.getElementById('selectAllSettings');
     if (selectAllCb) {
@@ -2024,11 +1388,9 @@ function updateBulkDeleteUI() {
         selectAllCb.indeterminate = count > 0 && count < allCbs.length;
     }
 }
-
 async function bulkDeleteSelectedSettings() {
     const ids = [...selectedSettingIds];
     if (!ids.length) return;
-
     const result = await Swal.fire({
         title: `Delete ${ids.length} Timetable${ids.length > 1 ? 's' : ''}?`,
         text: 'This will permanently delete the selected timetables and all their slots.',
@@ -2036,7 +1398,6 @@ async function bulkDeleteSelectedSettings() {
         confirmButtonColor: '#DC2626', confirmButtonText: `Yes, delete ${ids.length}!`,
     });
     if (!result.isConfirmed) return;
-
     showLoader();
     const outcomes = await Promise.all(ids.map(async (id) => {
         const card      = document.querySelector(`.setting-card[data-id="${id}"]`);
@@ -2045,49 +1406,34 @@ async function bulkDeleteSelectedSettings() {
             const res  = await apiFetch(url(ROUTES.deleteSetting, id), 'DELETE', { expected_updated_at: updatedAt });
             const data = await res.json();
             return { id, success: !!data.success };
-        } catch (e) {
-            return { id, success: false };
-        }
+        } catch (e) { return { id, success: false }; }
     }));
     hideLoader();
-
     selectedSettingIds.clear();
     const failedCount  = outcomes.filter(o => !o.success).length;
     const successCount = outcomes.length - failedCount;
-
     if (!failedCount) {
         Swal.fire({ icon: 'success', title: 'Deleted!', text: `${successCount} timetable(s) removed.`, timer: 1800, showConfirmButton: false });
     } else {
-        Swal.fire('Partially Completed', `${successCount} deleted, ${failedCount} failed (possibly changed or already removed by someone else). Reloading list…`, 'warning');
+        Swal.fire('Partially Completed', `${successCount} deleted, ${failedCount} failed. Reloading list…`, 'warning');
     }
-    setTimeout(() => location.reload(), successCount || failedCount ? 1800 : 100);
+    setTimeout(() => location.reload(), 1800);
 }
 
-// ============================================================================
-// LOAD / CREATE
-// ============================================================================
+/* ── Load / create ── */
 async function loadOrCreateSetting() {
     const classId   = document.getElementById('classSelect').value;
     const sessionId = document.getElementById('sessionSelect').value;
     const termId    = document.getElementById('termSelect').value || null;
     if (!classId || !sessionId) return Swal.fire('Required', 'Please select Class and Session.', 'warning');
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.setup, 'POST', { schoolclass_id: classId, session_id: sessionId, term_id: termId });
         const data = await res.json();
-        if (data.success) {
-            await loadSetting(data.setting_id);
-        } else {
-            hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
-        }
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+        if (data.success) await loadSetting(data.setting_id);
+        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
-
 async function loadSetting(settingId) {
     showLoader();
     try {
@@ -2098,7 +1444,6 @@ async function loadSetting(settingId) {
             Swal.fire('Error', 'Failed to load timetable: ' + (data.message || 'Failed to load'), 'error');
             return;
         }
-
         currentSettingId      = settingId;
         currentSetting        = data.setting;
         currentSettingVersion = data.setting.updated_at;
@@ -2136,50 +1481,36 @@ async function loadSetting(settingId) {
             {name:'Period 4',type:'lesson'},{name:'Long Break',type:'long_break'},
             {name:'Period 5',type:'lesson'},{name:'Period 6',type:'lesson'},
         ]);
-
         loadConstraintsIntoTable(data.setting.constraints || []);
 
         hideLoader();
         document.getElementById('timetableEditor').style.display = '';
         document.getElementById('timetableEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
         showTab('periodsTab', document.querySelector('.tt-tab'));
-
     } catch (e) {
         hideLoader();
         Swal.fire('Error', 'Failed to load timetable: ' + e.message, 'error');
     }
 }
 
-// ============================================================================
-// EDITING HEARTBEAT
-// ============================================================================
+/* ── Editing heartbeat ── */
 function startEditingHeartbeat(settingId) {
     stopEditingHeartbeat();
     editingHeartbeatTimer = setInterval(() => {
         apiFetch(url(ROUTES.heartbeat, settingId), 'POST').catch(() => {});
     }, 60000);
 }
-
 function stopEditingHeartbeat() {
-    if (editingHeartbeatTimer) {
-        clearInterval(editingHeartbeatTimer);
-        editingHeartbeatTimer = null;
-    }
-    if (currentSettingId) {
-        apiFetch(url(ROUTES.releaseEditing, currentSettingId), 'POST').catch(() => {});
-    }
+    if (editingHeartbeatTimer) { clearInterval(editingHeartbeatTimer); editingHeartbeatTimer = null; }
+    if (currentSettingId) apiFetch(url(ROUTES.releaseEditing, currentSettingId), 'POST').catch(() => {});
 }
-
 window.addEventListener('beforeunload', stopEditingHeartbeat);
 
-// ============================================================================
-// PERIODS
-// ============================================================================
+/* ── Periods ── */
 function loadPeriodsIntoTable(periods) {
     document.getElementById('periodsBody').innerHTML = '';
     periods.forEach((p, i) => addPeriodRow(p.name, p.type, i + 1));
 }
-
 function addPeriodRow(name = '', type = 'lesson', order = null) {
     const tbody  = document.getElementById('periodsBody');
     const rowNum = order ?? (tbody.querySelectorAll('tr').length + 1);
@@ -2202,27 +1533,23 @@ function addPeriodRow(name = '', type = 'lesson', order = null) {
     tbody.appendChild(tr);
     reorderPeriods();
 }
-
 function reorderPeriods() {
     document.querySelectorAll('#periodsBody tr').forEach((tr, i) => {
         const cell = tr.querySelector('.period-order');
         if (cell) cell.textContent = i + 1;
     });
 }
-
 function getPeriodsFromTable() {
     return [...document.querySelectorAll('#periodsBody tr')].map(tr => ({
         name: tr.querySelector('.period-name')?.value?.trim(),
         type: tr.querySelector('.period-type')?.value,
     })).filter(p => p.name);
 }
-
 async function saveSettings() {
     const periods    = getPeriodsFromTable();
     const activeDays = [...document.querySelectorAll('.active-day-checkbox:checked')].map(cb => cb.value);
     if (!periods.length)    return Swal.fire('Error', 'Add at least one period.', 'error');
     if (!activeDays.length) return Swal.fire('Error', 'Select at least one active day.', 'error');
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.saveSettings, 'POST', {
@@ -2241,22 +1568,12 @@ async function saveSettings() {
             hideLoader();
             Swal.fire({ icon:'success', title:'Saved!', timer:1600, showConfirmButton:false });
             await loadSetting(currentSettingId);
-        } else if (data.has_version_conflict) {
-            hideLoader();
-            handleVersionConflict(data);
-        } else {
-            hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
-        }
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+        } else if (data.has_version_conflict) { hideLoader(); handleVersionConflict(data); }
+        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-// ============================================================================
-// CONSTRAINTS
-// ============================================================================
+/* ── Constraints ── */
 function loadConstraintsIntoTable(constraints) {
     const tbody = document.getElementById('constraintsBody');
     tbody.innerHTML = '';
@@ -2288,12 +1605,10 @@ function loadConstraintsIntoTable(constraints) {
         tbody.appendChild(tr);
     });
 }
-
 function genDayOptions(selected) {
     return ['Monday','Tuesday','Wednesday','Thursday','Friday']
         .map(d => `<option value="${d}" ${selected.includes(d)?'selected':''}>${d}</option>`).join('');
 }
-
 function getConstraintsFromTable() {
     return [...document.querySelectorAll('#constraintsBody tr')].map(tr => {
         const sid = tr.querySelector('.constraint-subject-id')?.value;
@@ -2309,7 +1624,6 @@ function getConstraintsFromTable() {
         };
     }).filter(Boolean);
 }
-
 async function saveConstraints() {
     const constraints = getConstraintsFromTable();
     if (!constraints.length) return Swal.fire('Error', 'No constraints to save.', 'error');
@@ -2321,22 +1635,12 @@ async function saveConstraints() {
             currentSettingVersion = data.updated_at;
             hideLoader();
             Swal.fire({ icon:'success', title:'Saved!', timer:1400, showConfirmButton:false });
-        } else if (data.has_version_conflict) {
-            hideLoader();
-            handleVersionConflict(data);
-        } else {
-            hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
-        }
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+        } else if (data.has_version_conflict) { hideLoader(); handleVersionConflict(data); }
+        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-// ============================================================================
-// AUTO-GENERATE
-// ============================================================================
+/* ── Auto-generate ── */
 async function generateTimetable() {
     const result = await Swal.fire({
         title: 'Auto-Generate Timetable?',
@@ -2354,7 +1658,6 @@ async function generateTimetable() {
     });
     if (!result.isConfirmed) return;
     const includeRooms = result.value?.includeRooms ?? true;
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.autoGenerate, 'POST', {
@@ -2369,12 +1672,11 @@ async function generateTimetable() {
             showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
             await loadTimetableGridAnimated();
             silentConflictCheck();
-
             const shortfall = data.stats?.room_shortfall_count
-                ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> ${data.stats.room_shortfall_count} lesson(s) couldn't get a room — not enough rooms free at those times.</p>`
+                ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> ${data.stats.room_shortfall_count} lesson(s) couldn't get a room.</p>`
                 : '';
             const unplaced = data.stats?.unplaced_subjects?.length
-                ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed — check the Constraints/Conflicts tabs.</p>`
+                ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed.</p>`
                 : '';
             const needsAttention = !!(shortfall || unplaced);
             Swal.fire({
@@ -2383,22 +1685,12 @@ async function generateTimetable() {
                 timer: needsAttention ? undefined : 1800,
                 showConfirmButton: needsAttention,
             });
-        } else if (data.has_version_conflict) {
-            hideLoader();
-            handleVersionConflict(data);
-        } else {
-            hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
-        }
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+        } else if (data.has_version_conflict) { hideLoader(); handleVersionConflict(data); }
+        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-// ============================================================================
-// TIMETABLE GRID
-// ============================================================================
+/* ── Grid ── */
 async function loadTimetableGrid() {
     if (!currentSettingId) return;
     const container = document.getElementById('timetableGridContainer');
@@ -2418,7 +1710,6 @@ async function loadTimetableGrid() {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load grid: ${escapeHtml(e.message)}</div>`;
     }
 }
-
 async function loadTimetableGridAnimated() {
     if (!currentSettingId) return;
     const container = document.getElementById('timetableGridContainer');
@@ -2438,7 +1729,6 @@ async function loadTimetableGridAnimated() {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load grid: ${escapeHtml(e.message)}</div>`;
     }
 }
-
 function renderGrid(options = {}) {
     const animate   = !!options.animate;
     const container = document.getElementById('timetableGridContainer');
@@ -2447,31 +1737,25 @@ function renderGrid(options = {}) {
         return;
     }
     const dayThClasses = {Monday:'monday-th',Tuesday:'tuesday-th',Wednesday:'wednesday-th',Thursday:'thursday-th',Friday:'friday-th'};
-
     let html = `<table class="tt-grid"><thead><tr>
         <th class="period-th">Period</th>
         ${currentDays.map(d => `<th class="${dayThClasses[d]||''}">${escapeHtml(d)}</th>`).join('')}
     </tr></thead><tbody>`;
-
     let cellSeq = 0;
     const buildingCells = [];
-
     currentPeriods.forEach(period => {
         const isBreak   = period.is_break || ['short_break','long_break'].includes(period.type);
         const startTime = (period.start_time || '').slice(0, 5);
         const endTime   = (period.end_time   || '').slice(0, 5);
-
         html += `<tr><td class="period-td">
             <div class="pname">${escapeHtml(period.name)}</div>
             <div class="ptime">${startTime} – ${endTime}</div>
         </td>`;
-
         currentDays.forEach(day => {
             const slot   = currentGrid[period.id]?.[day] || null;
             const isFree = !slot || slot.is_free || (!slot.subject_id && !slot.teacher_id);
             cellSeq++;
             const cellId = `c${cellSeq}`;
-
             if (isBreak) {
                 html += `<td><div class="tt-cell is-break"><span class="cell-break">☕ Break</span></div></td>`;
             } else if (isFree) {
@@ -2493,10 +1777,8 @@ function renderGrid(options = {}) {
                 const teacherHtml = slot.teacher
                     ? `<span class="cell-teacher">${escapeHtml(slot.teacher.split(' ')[0])}</span>`
                     : '';
-
                 const animClass = animate ? ' cell-building' : '';
                 if (animate) buildingCells.push(cellId);
-
                 html += `<td onclick="openSlotModal(${period.id},'${day}')" ${borderStyle}>
                     <div class="tt-cell has-subject${slot.is_double?' is-double':''}${animClass}" data-cell-id="${cellId}">
                         ${avatarHtml}
@@ -2510,12 +1792,8 @@ function renderGrid(options = {}) {
     html += '</tbody></table>';
     container.innerHTML = html;
     applyStaffPictureVisibility();
-
-    if (animate && buildingCells.length) {
-        playGridBuildAnimation(container, buildingCells);
-    }
+    if (animate && buildingCells.length) playGridBuildAnimation(container, buildingCells);
 }
-
 function playGridBuildAnimation(container, cellIds) {
     const banner = document.createElement('div');
     banner.className = 'tt-generating-banner';
@@ -2525,17 +1803,11 @@ function playGridBuildAnimation(container, cellIds) {
         <span id="ttGeneratingText">Placing lessons… 0 / ${cellIds.length}</span>
         <span class="tt-generating-skip" onclick="skipGridBuildAnimation()">Skip animation</span>`;
     container.prepend(banner);
-
     let i = 0;
     const total     = cellIds.length;
     const stepDelay = total > 60 ? 12 : total > 30 ? 20 : 35;
-
     window._ttBuildTimer = setInterval(() => {
-        if (i >= total) {
-            clearInterval(window._ttBuildTimer);
-            finishGridBuildAnimation();
-            return;
-        }
+        if (i >= total) { clearInterval(window._ttBuildTimer); finishGridBuildAnimation(); return; }
         const el = container.querySelector(`[data-cell-id="${cellIds[i]}"]`);
         if (el) el.classList.remove('cell-building');
         i++;
@@ -2543,42 +1815,32 @@ function playGridBuildAnimation(container, cellIds) {
         if (textEl) textEl.textContent = `Placing lessons… ${i} / ${total}`;
     }, stepDelay);
 }
-
 function skipGridBuildAnimation() {
     if (window._ttBuildTimer) clearInterval(window._ttBuildTimer);
     document.querySelectorAll('#timetableGridContainer .cell-building').forEach(el => el.classList.remove('cell-building'));
     finishGridBuildAnimation();
 }
-
 function finishGridBuildAnimation() {
     const banner = document.getElementById('ttGeneratingBanner');
     if (banner) banner.remove();
 }
-
 function applyStaffPictureVisibility() {
     const show = localStorage.getItem('tt_show_staff_pictures') !== '0';
     const cb = document.getElementById('toggleStaffPictures');
     if (cb) cb.checked = show;
     document.getElementById('timetableGridContainer')?.classList.toggle('hide-avatars', !show);
 }
-
 function toggleStaffPictureVisibility() {
     const show = document.getElementById('toggleStaffPictures').checked;
     localStorage.setItem('tt_show_staff_pictures', show ? '1' : '0');
     document.getElementById('timetableGridContainer')?.classList.toggle('hide-avatars', !show);
 }
 
-// ============================================================================
-// ROOM DROPDOWN (Tom Select)
-// ============================================================================
+/* ── Room dropdown ── */
 function updateRoomDropdown(rooms) {
-    if (roomTomSelect) {
-        roomTomSelect.destroy();
-        roomTomSelect = null;
-    }
+    if (roomTomSelect) { roomTomSelect.destroy(); roomTomSelect = null; }
     const el = document.getElementById('editSlotRoom');
     if (!el) return;
-
     roomTomSelect = new TomSelect(el, {
         valueField: 'id',
         labelField: 'label',
@@ -2590,18 +1852,14 @@ function updateRoomDropdown(rooms) {
     });
 }
 
-// ============================================================================
-// EDIT SLOT MODAL
-// ============================================================================
+/* ── Edit slot modal ── */
 function openSlotModal(periodId, day) {
     const period = currentPeriods.find(p => p.id == periodId);
     if (!period) return;
     const slot = currentGrid[periodId]?.[day] || {};
-
     document.getElementById('editSlotSettingId').value = currentSettingId;
     document.getElementById('editSlotPeriodId').value  = periodId;
     document.getElementById('editSlotDay').value       = day;
-
     const startFmt = (period.start_time || '').slice(0, 5);
     const endFmt   = (period.end_time   || '').slice(0, 5);
     document.getElementById('editSlotPeriodName').textContent = period.name + ' · ' + startFmt + ' – ' + endFmt;
@@ -2609,20 +1867,14 @@ function openSlotModal(periodId, day) {
     document.getElementById('editSlotContext').textContent    = period.name + ' · ' + day;
     document.getElementById('editSlotNotes').value            = slot.notes || '';
     document.getElementById('editSlotIsDouble').checked       = slot.is_double || false;
-
     resetConflictPanel();
-
-    if (roomTomSelect) {
-        roomTomSelect.setValue(slot.room_id ? slot.room_id.toString() : '', true);
-    }
-
+    if (roomTomSelect) roomTomSelect.setValue(slot.room_id ? slot.room_id.toString() : '', true);
     const avatarDiv = document.getElementById('editTeacherAvatar');
     if (slot.teacher_picture) {
         avatarDiv.innerHTML = `<img src="${slot.teacher_picture}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`;
     } else {
         avatarDiv.innerHTML = `<i class="ri-user-line text-white ri-xl"></i>`;
     }
-
     const subjectSel = document.getElementById('editSlotSubject');
     subjectSel.innerHTML = '<option value="">— Free Period —</option>';
     availableSubjects.forEach(s => {
@@ -2632,7 +1884,6 @@ function openSlotModal(periodId, day) {
         opt.selected = (slot.subject_id == s.subject_id);
         subjectSel.appendChild(opt);
     });
-
     const teacherSel = document.getElementById('editSlotTeacher');
     teacherSel.innerHTML = '<option value="">— No Teacher —</option>';
     const uniqueTeachers = new Map();
@@ -2644,14 +1895,9 @@ function openSlotModal(periodId, day) {
         opt.selected = (slot.teacher_id == id);
         teacherSel.appendChild(opt);
     });
-
     new bootstrap.Modal(document.getElementById('editSlotModal')).show();
-
-    if (slot.teacher_id || slot.room_id) {
-        setTimeout(runRealtimeConflictCheck, 300);
-    }
+    if (slot.teacher_id || slot.room_id) setTimeout(runRealtimeConflictCheck, 300);
 }
-
 function onSubjectChange() {
     const sel = document.getElementById('editSlotSubject');
     const opt = sel.options[sel.selectedIndex];
@@ -2660,7 +1906,6 @@ function onSubjectChange() {
     onTeacherChange();
     debounceConflictCheck();
 }
-
 function onTeacherChange() {
     const tid = document.getElementById('editSlotTeacher').value;
     if (!tid) { debounceConflictCheck(); return; }
@@ -2672,36 +1917,27 @@ function onTeacherChange() {
     debounceConflictCheck();
 }
 
-// ============================================================================
-// REAL-TIME CONFLICT CHECK
-// ============================================================================
+/* ── Realtime conflict ── */
 function debounceConflictCheck() {
     clearTimeout(conflictCheckTimer);
     const panel = document.getElementById('slotConflictPanel');
     const inner = document.getElementById('slotConflictInner');
     const teacherId = document.getElementById('editSlotTeacher').value;
     const roomId    = roomTomSelect ? roomTomSelect.getValue() : '';
-    if (!teacherId && !roomId) {
-        resetConflictPanel();
-        return;
-    }
+    if (!teacherId && !roomId) { resetConflictPanel(); return; }
     panel.style.display = '';
     inner.innerHTML = `<div class="rtc-spinner"><div class="spinner-border text-primary"></div><span>Checking for conflicts…</span></div>`;
     conflictCheckTimer = setTimeout(runRealtimeConflictCheck, 400);
 }
-
 async function runRealtimeConflictCheck() {
     const teacherId = document.getElementById('editSlotTeacher').value;
     const roomId    = roomTomSelect ? roomTomSelect.getValue() : '';
     const periodId  = document.getElementById('editSlotPeriodId').value;
     const day       = document.getElementById('editSlotDay').value;
     const settingId = document.getElementById('editSlotSettingId').value;
-
     const panel = document.getElementById('slotConflictPanel');
     const inner = document.getElementById('slotConflictInner');
-
     if (!teacherId && !roomId) { resetConflictPanel(); return; }
-
     try {
         const res  = await apiFetch(ROUTES.checkSlotConflict, 'POST', {
             setting_id: parseInt(settingId),
@@ -2714,14 +1950,11 @@ async function runRealtimeConflictCheck() {
         });
         const data = await res.json();
         if (!data.success) return;
-
         inner.innerHTML = '';
         panel.style.display = '';
-
         data.conflicts.forEach(c => {
             const div = document.createElement('div');
             div.className = 'rtc-panel ' + (c.severity === 'error' ? 'rtc-error' : 'rtc-warning');
-
             let altsHtml = '';
             if (c.alternatives?.length) {
                 altsHtml += '<div class="rtc-alts">'
@@ -2739,7 +1972,6 @@ async function runRealtimeConflictCheck() {
                         </span>`
                     ).join('') + '</div>';
             }
-
             div.innerHTML = `
                 <div class="rtc-icon">${c.icon}</div>
                 <div class="rtc-body">
@@ -2749,7 +1981,6 @@ async function runRealtimeConflictCheck() {
                 </div>`;
             inner.appendChild(div);
         });
-
         data.warnings.forEach(w => {
             const div = document.createElement('div');
             const isCombined = w.type === 'combined_session';
@@ -2758,14 +1989,12 @@ async function runRealtimeConflictCheck() {
                 <div class="rtc-body"><div class="rtc-msg${isCombined ? ' green' : ''}">${escapeHtml(w.message)}</div></div>`;
             inner.appendChild(div);
         });
-
         if (!data.conflicts.length && !data.warnings.length) {
             inner.innerHTML = `<div class="rtc-panel rtc-clear">
                 <div class="rtc-icon">✅</div>
                 <div class="rtc-body"><div class="rtc-msg green">No conflicts detected for this slot.</div></div>
             </div>`;
         }
-
         const saveBtn = document.getElementById('saveSlotBtn');
         if (data.has_error) {
             saveBtn.innerHTML = '<i class="ri-alert-line me-2"></i>Save Anyway (Override)';
@@ -2774,12 +2003,8 @@ async function runRealtimeConflictCheck() {
             saveBtn.innerHTML = '<i class="ri-save-line me-2"></i>Save Slot';
             saveBtn.className = 'btn btn-primary px-4';
         }
-
-    } catch (e) {
-        inner.innerHTML = '';
-    }
+    } catch (e) { inner.innerHTML = ''; }
 }
-
 function resetConflictPanel() {
     document.getElementById('slotConflictPanel').style.display = 'none';
     document.getElementById('slotConflictInner').innerHTML = '';
@@ -2789,22 +2014,17 @@ function resetConflictPanel() {
         saveBtn.className = 'btn btn-primary px-4';
     }
 }
-
 function closeModalAndOpenSlot(periodId, day) {
     const modal = bootstrap.Modal.getInstance(document.getElementById('editSlotModal'));
     if (modal) modal.hide();
     loadTimetableGrid().then(() => openSlotModal(periodId, day));
 }
-
 function switchToRoom(roomId, label) {
     if (!roomTomSelect) return;
     const idStr = roomId.toString();
-    if (!roomTomSelect.getOption(idStr)) {
-        roomTomSelect.addOption({ value: idStr, label: label });
-    }
+    if (!roomTomSelect.getOption(idStr)) roomTomSelect.addOption({ value: idStr, label: label });
     roomTomSelect.setValue(idStr);
 }
-
 async function silentConflictCheck() {
     if (!currentSettingId) return;
     try {
@@ -2812,18 +2032,12 @@ async function silentConflictCheck() {
         const data = await res.json();
         if (!data.success) return;
         const badge = document.getElementById('conflictBadgeTab');
-        if (data.conflict_count > 0) {
-            badge.style.display = '';
-            badge.textContent   = data.conflict_count;
-        } else {
-            badge.style.display = 'none';
-        }
-    } catch (e) { /* silent */ }
+        if (data.conflict_count > 0) { badge.style.display = ''; badge.textContent = data.conflict_count; }
+        else badge.style.display = 'none';
+    } catch (e) {}
 }
 
-// ============================================================================
-// SAVE SLOT
-// ============================================================================
+/* ── Save slot ── */
 async function saveSlot() {
     const roomId = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
     const payload = {
@@ -2837,12 +2051,10 @@ async function saveSlot() {
         notes:      document.getElementById('editSlotNotes').value || null,
         is_double:  document.getElementById('editSlotIsDouble').checked,
     };
-
     showLoader();
     try {
         const res    = await apiFetch(ROUTES.saveSlot, 'POST', payload);
         const result = await res.json();
-
         if (result.success) {
             currentSettingVersion = result.setting_updated_at;
             hideLoader();
@@ -2852,49 +2064,35 @@ async function saveSlot() {
             Swal.fire({ icon:'success', title:'Saved!', timer:1200, showConfirmButton:false });
             return;
         }
-
         if (result.has_version_conflict) {
             hideLoader();
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             return handleVersionConflict(result);
         }
-
         if (result.has_conflict) {
             hideLoader();
-
             const isRoomConflict = (result.conflict_type || '').startsWith('room');
             const icon           = isRoomConflict ? '🏫' : '⚠️';
             const title          = isRoomConflict ? 'Room Already In Use' : 'Teacher Conflict Detected';
-
             let altsHtml = '';
             if (result.alternatives?.length) {
                 altsHtml += `<div class="mt-3 text-start">
-                    <div class="fw-semibold mb-2" style="font-size:13px">
-                        <i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:
-                    </div>
+                    <div class="fw-semibold mb-2" style="font-size:13px"><i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:</div>
                     <div class="d-flex flex-wrap gap-1">
                         ${result.alternatives.slice(0, 5).map(a =>
-                            `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px">
-                                📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
-                            </span>`
+                            `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px">📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})</span>`
                         ).join('')}
                     </div></div>`;
             }
             if (result.alternative_rooms?.length) {
                 altsHtml += `<div class="mt-2 text-start">
-                    <div class="fw-semibold mb-2" style="font-size:13px">
-                        <i class="ri-door-line text-info me-1"></i>Available alternative rooms:
-                    </div>
+                    <div class="fw-semibold mb-2" style="font-size:13px"><i class="ri-door-line text-info me-1"></i>Available alternative rooms:</div>
                     <div class="d-flex flex-wrap gap-1">
                         ${result.alternative_rooms.slice(0, 4).map(r =>
-                            `<span class="badge p-2" style="background:#EFF6FF;color:#1565C0;font-size:11px;cursor:pointer"
-                                onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">
-                                🏫 ${escapeHtml(r.label)}
-                            </span>`
+                            `<span class="badge p-2" style="background:#EFF6FF;color:#1565C0;font-size:11px;cursor:pointer" onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">🏫 ${escapeHtml(r.label)}</span>`
                         ).join('')}
                     </div></div>`;
             }
-
             const { isConfirmed } = await Swal.fire({
                 title: `${icon} ${title}`,
                 html: `<div style="font-size:14px;text-align:left">
@@ -2908,9 +2106,7 @@ async function saveSlot() {
                 confirmButtonText: '<i class="ri-save-line me-1"></i>Override & Save',
                 cancelButtonText:  'Cancel', width: 520,
             });
-
             if (!isConfirmed) return;
-
             showLoader();
             const res2    = await apiFetch(ROUTES.saveSlot, 'POST', { ...payload, force_save: true });
             const result2 = await res2.json();
@@ -2925,44 +2121,28 @@ async function saveSlot() {
                 hideLoader();
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 return handleVersionConflict(result2);
-            } else {
-                hideLoader();
-                Swal.fire('Error', result2.message || 'Save failed', 'error');
-            }
+            } else { hideLoader(); Swal.fire('Error', result2.message || 'Save failed', 'error'); }
             return;
         }
-
         hideLoader();
         Swal.fire('Error', result.message || 'Save failed', 'error');
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-// ============================================================================
-// CONFLICT CHECKER TAB
-// ============================================================================
+/* ── Conflict tab ── */
 async function checkConflicts() {
     if (!currentSettingId) return;
     showLoader();
     try {
         const res  = await apiFetch(url(ROUTES.checkConflicts, currentSettingId), 'GET');
         const data = await res.json();
-        if (!data.success) {
-            hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
-            return;
-        }
-
+        if (!data.success) { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); return; }
         const container = document.getElementById('conflictsList');
         const badge     = document.getElementById('conflictBadgeTab');
-
         if (data.checked_at) {
             document.getElementById('conflictCheckedAt').style.display = '';
             document.getElementById('conflictCheckedAtText').textContent = 'Last checked: ' + data.checked_at;
         }
-
         if (!data.conflict_count) {
             badge.style.display = 'none';
             container.innerHTML = `
@@ -2974,18 +2154,12 @@ async function checkConflicts() {
             hideLoader();
             return;
         }
-
         badge.style.display = '';
         badge.textContent   = data.conflict_count;
-
         document.getElementById('conflictsList').innerHTML = renderConflictsHtml(data);
         hideLoader();
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
-
 function openConflictScopeModal() {
     document.getElementById('conflictScopeResults').innerHTML = `
         <div class="text-center py-4 text-muted">
@@ -2994,15 +2168,12 @@ function openConflictScopeModal() {
         </div>`;
     new bootstrap.Modal(document.getElementById('conflictScopeModal')).show();
 }
-
 async function runScopeConflictCheck() {
     const sessionId = document.getElementById('ccSessionId').value;
     const termId    = document.getElementById('ccTermId').value;
     if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
-
     const container = document.getElementById('conflictScopeResults');
     container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger"></div><p class="mt-3 text-muted">Scanning all classes…</p></div>';
-
     try {
         const params = new URLSearchParams({ session_id: sessionId });
         if (termId) params.set('term_id', termId);
@@ -3014,26 +2185,22 @@ async function runScopeConflictCheck() {
         container.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
     }
 }
-
 function renderConflictsHtml(data) {
     if (!data.conflict_count) {
         return `<div class="text-center py-4">
             <i class="ri-check-double-line ri-3x d-block mb-3 text-success"></i>
             <h6 class="text-success">No Conflicts Found</h6>
-            <p class="text-muted mb-0">All teachers and rooms are properly scheduled with no overlaps.</p>
+            <p class="text-muted mb-0">All teachers and rooms are properly scheduled.</p>
         </div>`;
     }
-
     const teacherConflicts = data.conflicts.filter(c => c.conflict_category === 'teacher');
     const roomConflicts    = data.conflicts.filter(c => c.conflict_category === 'room');
-
     let html = `<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
         <i class="ri-alert-line ri-xl"></i>
         Found <strong class="mx-1">${data.conflict_count}</strong> conflict(s)
         ${teacherConflicts.length ? `<span class="badge bg-danger ms-1">${teacherConflicts.length} teacher</span>` : ''}
         ${roomConflicts.length    ? `<span class="badge bg-warning text-dark ms-1">${roomConflicts.length} room</span>` : ''}
     </div>`;
-
     data.conflicts.forEach(c => {
         const isRoomConflict = c.conflict_category === 'room';
         const avatarHtml     = isRoomConflict
@@ -3041,16 +2208,13 @@ function renderConflictsHtml(data) {
             : (c.teacher_picture
                 ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
                 : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`);
-
         const crossArmBadge = c.is_cross_arm
             ? `<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px"><i class="ri-git-branch-line"></i> Cross-Arm</span>` : '';
-
         const classesHtml = (c.all_classes && c.all_classes.length > 2)
             ? c.all_classes.map(cls => `<span class="badge bg-primary-subtle text-primary me-1">${escapeHtml(cls)}</span>`).join('')
             : `<span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_a || '')}</span>
                <span class="mx-1 text-muted">&amp;</span>
                <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_b || '')}</span>`;
-
         const altHtml = c.alternatives?.length
             ? `<div class="conflict-suggestion">
                    <div><i class="ri-lightbulb-line text-success me-1"></i><strong>Suggestion:</strong> ${escapeHtml(c.resolution_suggestion)}</div>
@@ -3061,7 +2225,6 @@ function renderConflictsHtml(data) {
                    </div>
                </div>`
             : `<div class="mt-2 text-muted" style="font-size:12px"><i class="ri-information-line me-1"></i>${escapeHtml(c.resolution_suggestion)}</div>`;
-
         html += `<div class="conflict-item ${isRoomConflict ? 'room-conflict' : ''}">
             ${avatarHtml}
             <div class="flex-grow-1">
@@ -3081,18 +2244,14 @@ function renderConflictsHtml(data) {
             </div>
         </div>`;
     });
-
     return html;
 }
-
 function switchToGridAndOpen(periodId, day) {
     showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
     loadTimetableGrid().then(() => openSlotModal(periodId, day));
 }
 
-// ============================================================================
-// NOTIFICATIONS / EXPORT / DELETE / CLONE
-// ============================================================================
+/* ── Notifications / Export / Delete / Clone ── */
 async function sendNotifications() {
     const result = await Swal.fire({
         title: 'Send Notifications', text: 'Send timetable notifications to all assigned teachers?',
@@ -3106,55 +2265,47 @@ async function sendNotifications() {
         hideLoader();
         if (data.success) Swal.fire({ icon:'success', title:'Sent!', text: data.message, timer:2000, showConfirmButton:false });
         else Swal.fire('Error', data.message || 'Failed', 'error');
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
-
 function exportTimetable(format) {
     if (!currentSettingId) return Swal.fire('Error', 'No timetable loaded.', 'error');
     const orientation = document.getElementById('exportOrientation')?.value || 'horizontal';
-    const exportUrl   = url(ROUTES.export, currentSettingId) + '?format=' + format + '&orientation=' + orientation;
+    const paper       = document.getElementById('exportPaper')?.value       || 'a3';
+    const exportUrl   = url(ROUTES.export, currentSettingId)
+                      + '?format=' + format
+                      + '&orientation=' + encodeURIComponent(orientation)
+                      + '&paper=' + encodeURIComponent(paper);
     if (format === 'pdf') window.open(exportUrl, '_blank');
     else window.location.href = exportUrl;
 }
-
-// ── Whole School Export (Per-Class or Merged Grid) ─────────────────────
 function openWholeSchoolExportModal() {
     selectWsMode(document.querySelector('.ws-mode-btn[data-mode="per_class"]'));
     new bootstrap.Modal(document.getElementById('wholeSchoolExportModal')).show();
 }
-
 function selectWsMode(btn) {
     document.querySelectorAll('.ws-mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const mode = btn.dataset.mode;
     document.getElementById('wholeSchoolMode').value = mode;
-    // Orientation now applies to BOTH per-class and merged — always show the dropdown.
     document.getElementById('wsOrientationWrap').style.display = '';
+    document.getElementById('wsPaperWrap').style.display = '';
 }
-
 function exportWholeSchoolTimetable(type = 'pdf') {
     const sessionId   = document.getElementById('wholeSchoolSessionId').value;
     const termId      = document.getElementById('wholeSchoolTermId').value;
     const orientation = document.getElementById('wholeSchoolOrientation').value;
+    const paper       = document.getElementById('wholeSchoolPaper').value;
     const mode        = document.getElementById('wholeSchoolMode').value;
-
     if (!sessionId) return Swal.fire('Error', 'Please select a session.', 'error');
-
     const base = mode === 'merged'
         ? (type === 'web' ? ROUTES.mergedGridWeb : ROUTES.exportMergedGrid)
         : (type === 'web' ? ROUTES.exportWholeSchoolWeb : ROUTES.exportWholeSchool);
-
-    // Always send orientation — all four backend paths now honour it.
     const qs = `?session_id=${encodeURIComponent(sessionId)}`
              + `&term_id=${encodeURIComponent(termId || '')}`
-             + `&orientation=${encodeURIComponent(orientation)}`;
-
+             + `&orientation=${encodeURIComponent(orientation)}`
+             + `&paper=${encodeURIComponent(paper)}`;
     window.open(base + qs, '_blank');
 }
-
 async function deleteSetting(settingId, updatedAt) {
     const result = await Swal.fire({
         title: 'Delete Timetable?', text: 'This will permanently delete this timetable and all its slots.',
@@ -3172,24 +2323,16 @@ async function deleteSetting(settingId, updatedAt) {
         } else if (data.has_version_conflict) {
             await Swal.fire({ title: 'Changed since you last saw it', text: data.message, icon: 'warning', confirmButtonText: 'Reload List' });
             location.reload();
-        } else {
-            Swal.fire('Error', data.message || 'Failed', 'error');
-        }
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+        } else Swal.fire('Error', data.message || 'Failed', 'error');
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
-
 function cloneSetting(settingId) {
     pendingCloneId = settingId;
     new bootstrap.Modal(document.getElementById('cloneModal')).show();
 }
-
 async function confirmClone(force = false) {
     if (!pendingCloneId) return;
     if (!force) bootstrap.Modal.getInstance(document.getElementById('cloneModal')).hide();
-
     const settingId = pendingCloneId;
     showLoader();
     try {
@@ -3201,14 +2344,12 @@ async function confirmClone(force = false) {
         });
         const data = await res.json();
         hideLoader();
-
         if (data.success) {
             pendingCloneId = null;
             Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false });
             setTimeout(() => location.reload(), 1400);
             return;
         }
-
         if (data.is_being_edited) {
             const confirmResult = await Swal.fire({
                 title: 'Being Edited', text: data.message, icon: 'warning',
@@ -3221,19 +2362,12 @@ async function confirmClone(force = false) {
             pendingCloneId = null;
             return;
         }
-
         pendingCloneId = null;
         Swal.fire('Error', data.message || 'Failed', 'error');
-    } catch (e) {
-        hideLoader();
-        pendingCloneId = null;
-        Swal.fire('Error', e.message, 'error');
-    }
+    } catch (e) { hideLoader(); pendingCloneId = null; Swal.fire('Error', e.message, 'error'); }
 }
 
-// ============================================================================
-// GENERATION WIZARD
-// ============================================================================
+/* ── Generation wizard ── */
 function openGenerationWizardModal() {
     document.getElementById('wizHalfDaysBody').innerHTML = '';
     const formEl     = document.getElementById('wizFormContent');
@@ -3242,17 +2376,14 @@ function openGenerationWizardModal() {
     if (progressEl) progressEl.style.display = 'none';
     new bootstrap.Modal(document.getElementById('generationWizardModal')).show();
 }
-
 function toggleWizardClassPicker() {
     document.getElementById('wizClassPickerWrap').style.display =
         document.getElementById('wizScope').value === 'selected' ? '' : 'none';
 }
-
 function toggleWizardAssemblyDay() {
     document.getElementById('wizAssemblyDayWrap').style.display =
         document.getElementById('wizAssemblyFirstPeriod').checked ? '' : 'none';
 }
-
 function addWizardHalfDayRow() {
     const wrap = document.getElementById('wizHalfDaysBody');
     const row  = document.createElement('div');
@@ -3273,7 +2404,6 @@ function addWizardHalfDayRow() {
         </div>`;
     wrap.appendChild(row);
 }
-
 function getWizardHalfDays() {
     return [...document.querySelectorAll('.wiz-half-day-row')].map(row => {
         const day     = row.querySelector('.half-day-select').value;
@@ -3281,21 +2411,17 @@ function getWizardHalfDays() {
         return (day && lessons) ? { day, lessons } : null;
     }).filter(Boolean);
 }
-
 function buildWizardResultsSummary(results) {
     if (!Array.isArray(results) || !results.length) return '';
     const skipped = results.filter(r => r.skipped);
     const applied = results.filter(r => !r.skipped);
-
     const classNameById = {};
     document.querySelectorAll('#wizClassIds option').forEach(opt => {
         classNameById[opt.value] = opt.textContent.trim();
     });
     const nameFor = (id) => classNameById[id] || `Class #${id}`;
-
     let html = `<div class="text-start mt-2" style="font-size:12px">
         <div class="text-success mb-1"><i class="ri-checkbox-circle-line"></i> Applied to ${applied.length} class(es)</div>`;
-
     if (skipped.length) {
         html += `<div class="text-warning mb-1"><i class="ri-alert-line"></i> Skipped ${skipped.length} class(es) — published/locked:</div>
             <ul class="mb-0 ps-4">
@@ -3305,14 +2431,12 @@ function buildWizardResultsSummary(results) {
     html += '</div>';
     return html;
 }
-
 function animateWizardResults(results) {
     return new Promise((resolve) => {
         const formEl     = document.getElementById('wizFormContent');
         const progressEl = document.getElementById('wizGenerationProgress');
         const listEl     = document.getElementById('wizProgressList');
         if (!formEl || !progressEl || !listEl || !results?.length) return resolve();
-
         formEl.style.display = 'none';
         progressEl.style.display = '';
         listEl.innerHTML = results.map((r, i) => `
@@ -3322,15 +2446,10 @@ function animateWizardResults(results) {
                 <span class="flex-grow-1">${escapeHtml(r.class_name)}</span>
                 <span class="text-muted" id="wizProgDetail${i}"></span>
             </div>`).join('');
-
         let i = 0;
         const stepDelay = results.length > 20 ? 90 : 180;
         const timer = setInterval(() => {
-            if (i >= results.length) {
-                clearInterval(timer);
-                setTimeout(resolve, 400);
-                return;
-            }
+            if (i >= results.length) { clearInterval(timer); setTimeout(resolve, 400); return; }
             const spinner = document.getElementById(`wizProgSpinner${i}`);
             const check   = document.getElementById(`wizProgCheck${i}`);
             const detail  = document.getElementById(`wizProgDetail${i}`);
@@ -3341,14 +2460,11 @@ function animateWizardResults(results) {
         }, stepDelay);
     });
 }
-
 async function submitGenerationWizard(alsoGenerate) {
     const sessionId = document.getElementById('wizSessionId').value;
     if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
-
     const activeDays = [...document.querySelectorAll('.wiz-active-day:checked')].map(cb => cb.value);
     if (!activeDays.length) return Swal.fire('Required', 'Select at least one active day.', 'warning');
-
     const scope    = document.getElementById('wizScope').value;
     const classIds = scope === 'selected'
         ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
@@ -3356,9 +2472,7 @@ async function submitGenerationWizard(alsoGenerate) {
     if (scope === 'selected' && !classIds.length) {
         return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
     }
-
     const includeRooms = document.getElementById('wizIncludeRooms')?.checked ?? true;
-
     const payload = {
         session_id:                  parseInt(sessionId),
         term_id:                     document.getElementById('wizTermId').value || null,
@@ -3381,15 +2495,12 @@ async function submitGenerationWizard(alsoGenerate) {
         deprioritize_break_adjacent: document.getElementById('wizDeprioritizeBreakAdjacent').checked,
         include_rooms:               includeRooms,
     };
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.applyGenerationTemplate, 'POST', payload);
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Failed to apply structure.');
-
         const summaryHtml = buildWizardResultsSummary(data.results);
-
         if (!alsoGenerate) {
             hideLoader();
             bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
@@ -3399,31 +2510,22 @@ async function submitGenerationWizard(alsoGenerate) {
             }).then(() => location.reload());
             return;
         }
-
         const genRes  = await apiFetch(ROUTES.autoGenerateWholeSchool, 'POST', {
             session_id: payload.session_id, term_id: payload.term_id, schoolclass_ids: payload.schoolclass_ids,
             include_rooms: includeRooms,
         });
         const genData = await genRes.json();
         hideLoader();
-
         if (genData.success) {
             await animateWizardResults(genData.classes);
             bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
-
             const conflictNote = genData.conflict_summary?.total
                 ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i>
-                    ${genData.conflict_summary.total} conflict(s) detected
-                    (${genData.conflict_summary.teacher_conflicts} teacher,
-                    ${genData.conflict_summary.room_conflicts} room).
-                    Open a class → Conflicts tab to resolve.</p>`
-                : `<p class="text-success mt-2" style="font-size:12px">
-                    <i class="ri-check-line"></i> No conflicts across the generated classes.</p>`;
-
+                    ${genData.conflict_summary.total} conflict(s) detected.</p>`
+                : `<p class="text-success mt-2" style="font-size:12px"><i class="ri-check-line"></i> No conflicts across the generated classes.</p>`;
             const shortfallNote = genData.had_shortfalls
-                ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
+                ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed.</p>'
                 : '';
-
             Swal.fire({
                 icon: 'success', title: 'Generated!',
                 html: `Generated timetables for <strong>${genData.classes.length}</strong> class(es).${summaryHtml}${conflictNote}${shortfallNote}`,
@@ -3445,45 +2547,21 @@ async function submitGenerationWizard(alsoGenerate) {
                 if (forceData.success) {
                     await animateWizardResults(forceData.classes);
                     bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
-
-                    const forceConflictNote = forceData.conflict_summary?.total
-                        ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-alert-line"></i>
-                            ${forceData.conflict_summary.total} conflict(s) detected
-                            (${forceData.conflict_summary.teacher_conflicts} teacher,
-                            ${forceData.conflict_summary.room_conflicts} room).
-                            Open a class → Conflicts tab to resolve.</p>`
-                        : `<p class="text-success mt-2" style="font-size:12px">
-                            <i class="ri-check-line"></i> No conflicts across the generated classes.</p>`;
-
-                    const forceShortfallNote = forceData.had_shortfalls
-                        ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed in one or more classes — check their Constraints/Conflicts tabs.</p>'
-                        : '';
-
                     Swal.fire({
                         icon: 'success', title: 'Generated!',
-                        html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}${forceConflictNote}${forceShortfallNote}`,
+                        html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}`,
                     }).then(() => location.reload());
-                } else {
-                    Swal.fire('Error', forceData.message || 'Failed', 'error');
-                }
+                } else Swal.fire('Error', forceData.message || 'Failed', 'error');
             }
-        } else {
-            throw new Error(genData.message || 'Generation failed.');
-        }
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+        } else throw new Error(genData.message || 'Generation failed.');
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-// ============================================================================
-// QUICK REBUILD
-// ============================================================================
+/* ── Quick rebuild ── */
 function openAnchorRebuildPanel() {
     if (!currentSettingId) return Swal.fire('No Class Loaded', 'Load or create a class timetable first.', 'warning');
     new bootstrap.Modal(document.getElementById('anchorRebuildModal')).show();
 }
-
 async function submitAnchorRebuild() {
     const assemblyChecked = document.getElementById('arAssemblyEnabled').checked;
     const payload = {
@@ -3497,7 +2575,6 @@ async function submitAnchorRebuild() {
         period_duration_minutes:        parseInt(document.getElementById('arPeriodDuration').value),
         school_day_start:               document.getElementById('arDayStart').value,
     };
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.rebuildPeriodsFromAnchors, 'POST', payload);
@@ -3511,15 +2588,10 @@ async function submitAnchorRebuild() {
         hideLoader();
         await loadSetting(currentSettingId);
         Swal.fire({ icon:'success', title:'Periods Rebuilt!', timer:1600, showConfirmButton:false });
-    } catch (e) {
-        hideLoader();
-        Swal.fire('Error', e.message, 'error');
-    }
+    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-// ============================================================================
-// VERSION CONFLICT HANDLER
-// ============================================================================
+/* ── Version conflict ── */
 async function handleVersionConflict(data) {
     const result = await Swal.fire({
         title: 'Timetable Changed',
@@ -3529,9 +2601,7 @@ async function handleVersionConflict(data) {
         showCancelButton: true,
         cancelButtonText: 'Stay',
     });
-    if (result.isConfirmed && currentSettingId) {
-        await loadSetting(currentSettingId);
-    }
+    if (result.isConfirmed && currentSettingId) await loadSetting(currentSettingId);
 }
 </script>
 @endsection

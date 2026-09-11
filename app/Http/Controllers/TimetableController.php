@@ -52,6 +52,54 @@ class TimetableController extends Controller
         '#DCFCE7','#FEE2E2','#EDE9FE','#F0F9FF','#FFF7ED',
     ];
 
+    // Dompdf's supported named page sizes. Anything outside this list is
+    // rejected and falls back to the default so a rogue query param cannot
+    // reach Dompdf and blow up the renderer.
+    const PAPER_SIZES = [
+        // A series
+        'a0','a1','a2','a3','a4','a5','a6','a7','a8','a9','a10',
+        // B series
+        'b0','b1','b2','b3','b4','b5','b6','b7','b8','b9','b10',
+        // C series (envelopes — rarely useful here but harmless)
+        'c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10',
+        // RA / SRA raw sizes
+        'ra0','ra1','ra2','ra3','ra4',
+        'sra0','sra1','sra2','sra3','sra4',
+        // US / Imperial
+        'letter','legal','ledger','tabloid','executive','folio',
+    ];
+
+    // Human-readable labels with mm dimensions, for the export modals.
+    const PAPER_LABELS = [
+        'a0' => ['A0', '841 × 1189 mm', 'Wall chart — entire school'],
+        'a1' => ['A1', '594 × 841 mm',  'Poster — whole-school master'],
+        'a2' => ['A2', '420 × 594 mm',  'Large — several classes at once'],
+        'a3' => ['A3', '297 × 420 mm',  'Standard — recommended'],
+        'a4' => ['A4', '210 × 297 mm',  'Small — single class only'],
+        'a5' => ['A5', '148 × 210 mm',  'Pocket'],
+        'b0' => ['B0', '1000 × 1414 mm','Oversized poster'],
+        'b1' => ['B1', '707 × 1000 mm', 'Large poster'],
+        'b2' => ['B2', '500 × 707 mm',  'Medium poster'],
+        'b3' => ['B3', '353 × 500 mm',  'Between A4 and A3'],
+        'b4' => ['B4', '250 × 353 mm',  'Slightly larger than A4'],
+        'letter'    => ['Letter',    '8.5 × 11 in',   'US standard'],
+        'legal'     => ['Legal',     '8.5 × 14 in',   'US legal'],
+        'ledger'    => ['Ledger',    '11 × 17 in',    'US tabloid landscape'],
+        'tabloid'   => ['Tabloid',   '11 × 17 in',    'US tabloid portrait'],
+        'executive' => ['Executive', '7.25 × 10.5 in','US executive'],
+        'folio'     => ['Folio',     '8.5 × 13 in',   'US folio'],
+    ];
+
+    const DEFAULT_PAPER = 'a3';
+
+    // Multiplier applied to a PDF blade's base font size at very large
+    // sheet sizes, so the timetable isn't a postage stamp in the corner of
+    // a 33-inch A1 sheet.
+    const PAPER_BODY_SCALE = [
+        'a0' => 2.0, 'a1' => 1.6, 'a2' => 1.3,
+        'b0' => 2.0, 'b1' => 1.6, 'b2' => 1.3,
+    ];
+
     const EDITING_LOCK_TTL_MINUTES = 3;
 
     public function __construct()
@@ -73,6 +121,22 @@ class TimetableController extends Controller
         $this->middleware('permission:Check timetable conflicts', ['only' => ['checkConflicts', 'checkConflictsScope']]);
         $this->middleware('permission:Send timetable notifications', ['only' => ['sendNotifications', 'publishAndNotify']]);
         $this->middleware('permission:Publish timetable', ['only' => ['publishSetting', 'unpublishSetting', 'publishAndNotify', 'publishAndSaveSnapshot']]);
+    }
+
+    // =========================================================================
+    // PAPER-SIZE HELPERS
+    // =========================================================================
+    private function resolvePaper(?string $size, string $orientation): array
+    {
+        $size      = strtolower($size ?? '');
+        $size      = in_array($size, self::PAPER_SIZES, true) ? $size : self::DEFAULT_PAPER;
+        $direction = $orientation === 'vertical' ? 'portrait' : 'landscape';
+        return [$size, $direction];
+    }
+
+    private function paperBodyScale(string $paperSize): float
+    {
+        return self::PAPER_BODY_SCALE[strtolower($paperSize)] ?? 1.0;
     }
 
     // =========================================================================
@@ -123,8 +187,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Canonical day+clock-time signature for matching slots ACROSS
-    // settings.
+    // HELPER: Canonical day+clock-time signature
     // =========================================================================
     private function periodTimeSignature(?TimetablePeriod $period): ?string
     {
@@ -133,8 +196,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Base query for slots in OTHER settings occupying the same
-    // day + clock-time as $period, within a session/term scope.
+    // HELPER: Base query for slots in OTHER settings at the same clock time
     // =========================================================================
     private function crossSettingSlotsAtTime(TimetablePeriod $period, string $day, int $sessionId, ?int $termId, ?int $excludeSettingId = null)
     {
@@ -255,7 +317,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Reject an edit attempt against a published (locked) timetable
+    // HELPER: Reject edits on a published (locked) timetable
     // =========================================================================
     private function publishedLockResponse(TimetableSetting $setting): ?JsonResponse
     {
@@ -270,9 +332,6 @@ class TimetableController extends Controller
         ], 423);
     }
 
-    // =========================================================================
-    // HELPER: Version conflict
-    // =========================================================================
     private function versionConflictResponse(TimetableSetting $setting, ?string $expectedUpdatedAt): ?JsonResponse
     {
         if (!$expectedUpdatedAt) return null;
@@ -287,9 +346,6 @@ class TimetableController extends Controller
         ], 409);
     }
 
-    // =========================================================================
-    // HELPER: Editing-recently warning (for clone)
-    // =========================================================================
     private function editingRecentlyResponse(TimetableSetting $setting, string $actionMessage): ?JsonResponse
     {
         if (!$setting->editing_by || $setting->editing_by == Auth::id()) return null;
@@ -303,9 +359,6 @@ class TimetableController extends Controller
         ], 409);
     }
 
-    // =========================================================================
-    // HELPER: Look up the holiday (if any) covering a specific calendar date
-    // =========================================================================
     private function getHolidayForDate(Carbon $date, ?int $sessionId, ?int $termId = null): ?Holiday
     {
         return Holiday::whereDate('date', $date->toDateString())
@@ -2874,7 +2927,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT HELPERS
+    // EXPORT HELPERS — CSV / PDF
     // =========================================================================
     private function exportCsv($setting, $periods, $days, $grid, $className, $sessionName, $dayMeta)
     {
@@ -2911,18 +2964,39 @@ class TimetableController extends Controller
             ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
     }
 
-    private function exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation, $dayMeta)
-    {
-        $pdf = Pdf::loadView('timetable.exports.pdf', compact(
-            'setting', 'periods', 'days', 'grid', 'subjectColors',
-            'className', 'sessionName', 'termName', 'orientation', 'dayMeta'
-        ))->setPaper($orientation === 'vertical' ? 'a4' : 'a3', $orientation === 'vertical' ? 'portrait' : 'landscape');
+    private function exportPdf(
+        $setting, $periods, $days, $grid, $subjectColors,
+        $className, $sessionName, $termName, $orientation, $dayMeta,
+        string $paperSize = self::DEFAULT_PAPER,
+        string $paperDir  = 'landscape'
+    ) {
+        $pdf = Pdf::loadView('timetable.exports.pdf', array_merge(
+            compact(
+                'setting', 'periods', 'days', 'grid', 'subjectColors',
+                'className', 'sessionName', 'termName', 'orientation', 'dayMeta'
+            ),
+            [
+                'paperSize' => $paperSize,
+                'bodyScale' => $this->paperBodyScale($paperSize),
+                'schoolInfo' => SchoolInformation::getActiveSchool(),
+                'dayColors' => self::DAY_COLORS,
+                'generatedAt' => now()->format('d M Y, H:i'),
+            ]
+        ))->setPaper($paperSize, $paperDir);
 
-        return $pdf->stream('timetable-' . str_replace(' ', '-', $className) . '.pdf');
+        return $pdf->stream('timetable-' . str_replace(' ', '-', $className) . '-' . $paperSize . '.pdf');
     }
 
-    private function exportWholeSchoolPdf(array $allTimetables, ?SchoolInformation $schoolInfo, ?Schoolsession $session, ?Schoolterm $term, string $orientation, array $overallStats = [])
-    {
+    private function exportWholeSchoolPdf(
+        array $allTimetables,
+        ?SchoolInformation $schoolInfo,
+        ?Schoolsession $session,
+        ?Schoolterm $term,
+        string $orientation,
+        array $overallStats = [],
+        string $paperSize = self::DEFAULT_PAPER,
+        string $paperDir  = 'landscape'
+    ) {
         $sessionName = $session->session ?? 'Session';
         $termName    = $term?->term ?? 'All Terms';
 
@@ -2935,12 +3009,20 @@ class TimetableController extends Controller
             'dayColors'     => self::DAY_COLORS,
             'generatedAt'   => now()->format('d M Y, H:i'),
             'overallStats'  => $overallStats,
-        ])->setPaper($orientation === 'vertical' ? 'a4' : 'a3', $orientation === 'vertical' ? 'portrait' : 'landscape');
+            'paperSize'     => $paperSize,
+            'paperDir'      => $paperDir,
+            'bodyScale'     => $this->paperBodyScale($paperSize),
+        ])->setPaper($paperSize, $paperDir);
 
-        $filename = 'whole-school-timetable-' . str_replace([' ', '/'], '-', $sessionName) . '.pdf';
+        $filename = 'whole-school-timetable-'
+                  . str_replace([' ', '/'], '-', $sessionName)
+                  . '-' . $paperSize . '.pdf';
         return $pdf->stream($filename);
     }
 
+    // =========================================================================
+    // STAFF ANALYTICS (feeds the whole-school / merged web + PDF views)
+    // =========================================================================
     private function buildStaffAnalytics(int $sessionId, ?int $termId): array
     {
         $slots = TimetableSlot::whereHas('setting', function ($q) use ($sessionId, $termId) {
@@ -3295,7 +3377,69 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT WHOLE SCHOOL TIMETABLE — PDF (per-class)
+    // SINGLE-CLASS EXPORT (CSV or PDF) — backs route 'timetable.export'
+    // =========================================================================
+    public function export(Request $request, int $settingId)
+    {
+        $validated = $request->validate([
+            'format'      => 'nullable|in:csv,pdf',
+            'orientation' => 'nullable|in:horizontal,vertical',
+            'paper'       => 'nullable|in:' . implode(',', self::PAPER_SIZES),
+        ]);
+
+        $format      = $validated['format'] ?? 'csv';
+        $orientation = $validated['orientation'] ?? 'horizontal';
+        [$paperSize, $paperDir] = $this->resolvePaper($validated['paper'] ?? null, $orientation);
+
+        $setting = TimetableSetting::with(['periods', 'session', 'term'])->findOrFail($settingId);
+
+        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+            ->where('schoolclass.id', $setting->schoolclass_id)->first();
+        $setting->setRelation('schoolclass', $schoolclass);
+
+        $className   = $this->getClassName($setting->schoolclass);
+        $sessionName = $setting->session->session ?? 'Session';
+        $termName    = $setting->term?->term ?? 'All Terms';
+        $days        = $setting->active_days ?? self::DAYS;
+        $dayMeta     = $this->computeDayPeriodMeta($setting);
+
+        $slots = TimetableSlot::where('setting_id', $settingId)
+            ->with(['subject', 'teacher', 'room'])->get();
+
+        $grid = [];
+        foreach ($slots as $slot) {
+            $grid[$slot->period_id][$slot->day] = [
+                'subject'    => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
+                'teacher'    => $slot->teacher?->name ?? '',
+                'teacher_id' => $slot->teacher_id,
+                'room'       => $slot->room?->room_name ?? '',
+                'is_free'    => $slot->is_free ?? !$slot->subject_id,
+            ];
+        }
+
+        if ($format === 'csv') {
+            return $this->exportCsv($setting, $setting->periods, $days, $grid, $className, $sessionName, $dayMeta);
+        }
+
+        $subjectColors = [];
+        $palette = self::SUBJECT_PALETTE;
+        $i = 0;
+        foreach ($slots as $slot) {
+            if ($slot->subject_id && !isset($subjectColors[$slot->subject_id])) {
+                $subjectColors[$slot->subject_id] = $palette[$i++ % count($palette)];
+            }
+        }
+
+        return $this->exportPdf(
+            $setting, $setting->periods, $days, $grid, $subjectColors,
+            $className, $sessionName, $termName, $orientation, $dayMeta,
+            $paperSize, $paperDir
+        );
+    }
+
+    // =========================================================================
+    // EXPORT WHOLE SCHOOL — PDF (per-class)
     // =========================================================================
     public function exportWholeSchool(Request $request)
     {
@@ -3303,9 +3447,11 @@ class TimetableController extends Controller
             'session_id'  => 'required|exists:schoolsession,id',
             'term_id'     => 'nullable|exists:schoolterm,id',
             'orientation' => 'nullable|in:horizontal,vertical',
+            'paper'       => 'nullable|in:' . implode(',', self::PAPER_SIZES),
         ]);
 
         $orientation = $validated['orientation'] ?? 'horizontal';
+        [$paperSize, $paperDir] = $this->resolvePaper($validated['paper'] ?? null, $orientation);
 
         [$allTimetables, $schoolInfo, $session, $term, $overallStats] =
             $this->buildWholeSchoolExportData($validated['session_id'], $validated['term_id'] ?? null);
@@ -3313,12 +3459,13 @@ class TimetableController extends Controller
         if (empty($allTimetables)) return response()->json(['error' => 'No timetables found'], 404);
 
         return $this->exportWholeSchoolPdf(
-            $allTimetables, $schoolInfo, $session, $term, $orientation, $overallStats
+            $allTimetables, $schoolInfo, $session, $term,
+            $orientation, $overallStats, $paperSize, $paperDir
         );
     }
 
     // =========================================================================
-    // EXPORT WHOLE SCHOOL TIMETABLE — WEB VIEW
+    // EXPORT WHOLE SCHOOL — WEB VIEW
     // =========================================================================
     public function exportWholeSchoolWeb(Request $request)
     {
@@ -3326,6 +3473,7 @@ class TimetableController extends Controller
             'session_id'  => 'required|exists:schoolsession,id',
             'term_id'     => 'nullable|exists:schoolterm,id',
             'orientation' => 'nullable|in:horizontal,vertical',
+            'paper'       => 'nullable|in:' . implode(',', self::PAPER_SIZES),
         ]);
 
         $orientation = $validated['orientation'] ?? 'horizontal';
@@ -3333,9 +3481,7 @@ class TimetableController extends Controller
         [$allTimetables, $schoolInfo, $session, $term, $overallStats, $staffAnalytics] =
             $this->buildWholeSchoolExportData($validated['session_id'], $validated['term_id'] ?? null);
 
-        if (empty($allTimetables)) {
-            abort(404, 'No timetables found for this session/term.');
-        }
+        if (empty($allTimetables)) abort(404, 'No timetables found for this session/term.');
 
         return view('timetable.exports.whole-school-web', array_merge(
             compact('allTimetables', 'schoolInfo', 'session', 'term', 'overallStats', 'staffAnalytics'),
@@ -3359,19 +3505,26 @@ class TimetableController extends Controller
             'session_id'  => 'required|exists:schoolsession,id',
             'term_id'     => 'nullable|exists:schoolterm,id',
             'orientation' => 'nullable|in:horizontal,vertical',
+            'paper'       => 'nullable|in:' . implode(',', self::PAPER_SIZES),
         ]);
 
         $orientation = $validated['orientation'] ?? 'horizontal';
-        $data        = $this->buildMergedGridData($validated['session_id'], $validated['term_id'] ?? null);
+        [$paperSize, $paperDir] = $this->resolvePaper($validated['paper'] ?? null, $orientation);
 
+        $data = $this->buildMergedGridData($validated['session_id'], $validated['term_id'] ?? null);
         if (empty($data['rows'])) return response()->json(['error' => 'No timetables found'], 404);
 
         $data['orientation'] = $orientation;
+        $data['paperSize']   = $paperSize;
+        $data['paperDir']    = $paperDir;
+        $data['bodyScale']   = $this->paperBodyScale($paperSize);
 
         $pdf = Pdf::loadView('timetable.exports.merged-grid', $data)
-            ->setPaper($orientation === 'vertical' ? 'a4' : 'a3', $orientation === 'vertical' ? 'portrait' : 'landscape');
+            ->setPaper($paperSize, $paperDir);
 
-        $filename = 'merged-timetable-' . str_replace([' ', '/'], '-', $data['sessionName']) . '.pdf';
+        $filename = 'merged-timetable-'
+                  . str_replace([' ', '/'], '-', $data['sessionName'])
+                  . '-' . $paperSize . '.pdf';
         return $pdf->stream($filename);
     }
 
@@ -3384,11 +3537,11 @@ class TimetableController extends Controller
             'session_id'  => 'required|exists:schoolsession,id',
             'term_id'     => 'nullable|exists:schoolterm,id',
             'orientation' => 'nullable|in:horizontal,vertical',
+            'paper'       => 'nullable|in:' . implode(',', self::PAPER_SIZES),
         ]);
 
         $orientation = $validated['orientation'] ?? 'horizontal';
-        $data        = $this->buildMergedGridData($validated['session_id'], $validated['term_id'] ?? null);
-
+        $data = $this->buildMergedGridData($validated['session_id'], $validated['term_id'] ?? null);
         if (empty($data['rows'])) abort(404, 'No timetables found for this session/term.');
 
         return view('timetable.exports.merged-grid-web', array_merge($data, [
