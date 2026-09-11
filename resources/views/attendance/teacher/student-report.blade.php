@@ -159,7 +159,6 @@
     <div class="page-content">
         <div class="container-fluid">
 
-            {{-- ── Hero ─────────────────────────────────────────────── --}}
             @php
                 $initials = strtoupper(substr($student?->fname ?? 'S', 0, 1) . substr($student?->lname ?? '', 0, 1));
                 $photoPath = $student?->picture
@@ -198,7 +197,7 @@
                 </div>
             </div>
 
-            {{-- ── School hours banner ─────────────────────────────── --}}
+            {{-- School hours banner --}}
             @if($setting)
             <div class="sr-hours-banner">
                 <i class="ri-time-line"></i>
@@ -228,7 +227,7 @@
             </div>
             @endif
 
-            {{-- ── Term summary stat cards ─────────────────────────── --}}
+            {{-- Term summary stat cards --}}
             <div class="row g-2 mb-3">
                 <div class="col-6 col-md-3 col-lg">
                     <div class="sr-stat-card">
@@ -268,7 +267,7 @@
                 </div>
             </div>
 
-            {{-- ── Attendance progress bar ─────────────────────────── --}}
+            {{-- Attendance progress bar --}}
             @php
                 $totalDays = $summary->total_school_days ?? ($setting?->totalSchoolDays() ?? 0);
             @endphp
@@ -292,7 +291,7 @@
                 </div>
             </div>
 
-            {{-- ── Daily log ───────────────────────────────────────── --}}
+            {{-- Daily log --}}
             <div class="sr-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span><i class="ri-calendar-line me-2 text-primary"></i>Daily Log</span>

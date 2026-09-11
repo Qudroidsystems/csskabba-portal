@@ -1,6 +1,4 @@
-{{-- resources/views/attendance/admin/staff-school-report.blade.php
-     This is the view StaffAttendanceController@index() actually renders
-     ('attendance.admin.staff-school-report') — NOT attendance/staff/staff-attendance-report.blade.php. --}}
+{{-- resources/views/attendance/admin/staff-school-report.blade.php --}}
 @extends('layouts.master')
 @section('content')
 <style>
@@ -155,7 +153,6 @@
     to { opacity:1; transform:translateY(0); }
 }
 
-/* ── Exclude-days panel ── */
 .sar-exclude-panel {
     display:none;
     background:#f8fafc;
@@ -183,10 +180,8 @@
 .sar-exclude-day input { accent-color:#dc2626; }
 .sar-exclude-day.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
 
-/* ── Chart panel ── */
 .sar-chart-panel { padding:16px 20px 20px; }
 
-/* ── Avatar ── */
 .sar-avatar {
     width: 36px; height: 36px;
     border-radius: 50%;
@@ -198,7 +193,6 @@
     object-fit: cover;
 }
 
-/* ── Weekday exclusion chips ── */
 .sar-weekday-row { display:flex; gap:6px; flex-wrap:wrap; }
 .sar-weekday-chip {
     display:inline-flex; align-items:center; gap:5px;
@@ -209,7 +203,6 @@
 .sar-weekday-chip input { accent-color:#dc2626; }
 .sar-weekday-chip.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
 
-/* ── School-hours banner ── */
 .sar-hours-banner {
     background: #eff6ff;
     color: #1e3a5f;

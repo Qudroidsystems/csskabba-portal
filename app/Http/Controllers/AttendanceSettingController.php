@@ -45,7 +45,6 @@ class AttendanceSettingController extends Controller
         return view('attendance.admin.settings', compact('settings', 'terms', 'sessions', 'holidays', 'pagetitle'));
     }
 
-    // Shared validation rules for store() and update().
     private function settingRules(): array
     {
         return [
@@ -77,7 +76,6 @@ class AttendanceSettingController extends Controller
                 $validated
             );
 
-            // Bust the processor's cached lookup so new times apply immediately.
             AttendanceTermSetting::forget();
 
             return response()->json([
@@ -214,7 +212,7 @@ class AttendanceSettingController extends Controller
         $sick     = (int) ($rows['sick_leave'] ?? 0);
         $excused  = (int) ($rows['excused']    ?? 0);
         $late     = (int) ($rows['late']       ?? 0);
-        $attended = $present + $late; // late counts as attended
+        $attended = $present + $late;
 
         AttendanceSummary::updateOrCreate(
             [

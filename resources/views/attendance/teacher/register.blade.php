@@ -38,35 +38,45 @@
             </div>
             @endif
 
-            {{-- ── NEW: School Hours Banner ──────────────────────────────────── --}}
-            @if(isset($setting))
+            {{-- School Hours Banner --}}
+            @php
+                $resumptionLabel = $setting->resumption_time
+                    ? \Illuminate\Support\Carbon::parse($setting->resumption_time)->format('g:i A')
+                    : '8:00 AM';
+                $closingLabel = $setting->closing_time
+                    ? \Illuminate\Support\Carbon::parse($setting->closing_time)->format('g:i A')
+                    : '2:00 PM';
+                $morningEndLabel = $setting->morning_end_time
+                    ? \Illuminate\Support\Carbon::parse($setting->morning_end_time)->format('g:i A')
+                    : '12:00 PM';
+                $graceMinutes = (int) ($setting->late_grace_minutes ?? 0);
+                $expectedBy = $setting->resumption_time
+                    ? \Illuminate\Support\Carbon::parse($setting->resumption_time)->addMinutes($graceMinutes)->format('g:i A')
+                    : '8:00 AM';
+            @endphp
             <div class="school-hours-banner mb-3">
                 <i class="ri-time-line"></i>
                 <div style="font-size:13px;">
                     <strong>School Hours:</strong>
-                    Resumption
-                    <span class="badge bg-primary">
-                        {{ $resumptionLabel ?? \Illuminate\Support\Carbon::parse($setting->resumption_time ?? '08:00:00')->format('g:i A') }}
-                    </span>
+                    Resumption <span class="badge bg-primary">{{ $resumptionLabel }}</span>
                     &nbsp;·&nbsp;
-                    Closing
-                    <span class="badge bg-secondary">
-                        {{ $closingLabel ?? \Illuminate\Support\Carbon::parse($setting->closing_time ?? '14:00:00')->format('g:i A') }}
-                    </span>
+                    Closing <span class="badge bg-secondary">{{ $closingLabel }}</span>
                     @if($setting->track_afternoon)
                         &nbsp;·&nbsp;
-                        Afternoon starts
-                        <span class="badge bg-info text-dark">
-                            {{ $morningEndLabel ?? \Illuminate\Support\Carbon::parse($setting->morning_end_time ?? '12:00:00')->format('g:i A') }}
-                        </span>
+                        Afternoon starts <span class="badge bg-info text-dark">{{ $morningEndLabel }}</span>
                     @endif
-                    @if(($setting->late_grace_minutes ?? 0) > 0)
+                    @if($graceMinutes > 0)
                         &nbsp;·&nbsp;
-                        <span class="text-muted">Grace: {{ $setting->late_grace_minutes }} min</span>
+                        <span class="text-muted">Grace: {{ $graceMinutes }} min</span>
+                    @endif
+                    @if($setting->track_morning)
+                        &nbsp;·&nbsp;
+                        <span class="text-muted" style="font-size:11.5px;">
+                            Morning punches after <strong>{{ $expectedBy }}</strong> are marked <em>late</em>.
+                        </span>
                     @endif
                 </div>
             </div>
-            @endif
 
             {{-- Header Info --}}
             <div class="row g-3 mb-3">
@@ -166,12 +176,9 @@
                                 <option value="morning"   {{ $period === 'morning'   ? 'selected' : '' }}>🌅 Morning</option>
                                 <option value="afternoon" {{ $period === 'afternoon' ? 'selected' : '' }}>🌇 Afternoon</option>
                             </select>
-                            {{-- NEW: hours hint under the switcher --}}
                             <div class="text-muted mt-1" style="font-size:10.5px;line-height:1.3;">
-                                Morning: {{ $resumptionLabel ?? '8:00 AM' }} – {{ $morningEndLabel ?? '12:00 PM' }}
-                                @if($setting->track_afternoon)
-                                    <br>Afternoon: {{ $morningEndLabel ?? '12:00 PM' }} – {{ $closingLabel ?? '2:00 PM' }}
-                                @endif
+                                Morning: {{ $resumptionLabel }} – {{ $morningEndLabel }}
+                                <br>Afternoon: {{ $morningEndLabel }} – {{ $closingLabel }}
                             </div>
                         </div>
                         @else
@@ -181,8 +188,8 @@
                                 {{ ucfirst($period) }} Session
                                 <span class="ms-1" style="opacity:.75;">
                                     ({{ $period === 'afternoon'
-                                        ? ($morningEndLabel ?? '12:00 PM') . ' – ' . ($closingLabel ?? '2:00 PM')
-                                        : ($resumptionLabel ?? '8:00 AM') . ' – ' . ($morningEndLabel ?? '12:00 PM') }})
+                                        ? $morningEndLabel . ' – ' . $closingLabel
+                                        : $resumptionLabel . ' – ' . $morningEndLabel }})
                                 </span>
                             </span>
                         </div>
@@ -231,7 +238,6 @@
                 </div>
                 <div class="card-body p-0">
 
-                    {{-- Save progress --}}
                     <div id="progressContainer" style="display:none;" class="px-3 pt-3">
                         <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-light">
                             <div class="spinner-border spinner-border-sm text-primary"></div>
@@ -329,7 +335,6 @@
                         </table>
                     </div>
 
-                    {{-- Bottom bar --}}
                     <div class="p-3 border-top bg-light">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div class="text-muted" style="font-size:13px;">
@@ -352,7 +357,6 @@
     </div>
 </div>
 
-{{-- Toast --}}
 <div id="att-toast" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;"></div>
 
 <script>
@@ -364,7 +368,6 @@ const STATE = {
     total    : {{ $students->count() }},
 };
 
-// Pre-load existing
 @foreach($existing as $sid => $st)
 STATE.records[{{ $sid }}] = { status: '{{ $st }}', notes: '' };
 @endforeach
@@ -512,12 +515,10 @@ function showToast(msg, type = 'success') {
 
 refreshStats();
 </script>
-
 <style>
 @keyframes fadeIn { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
 .att-status-btn { font-size: 12px; padding: 4px 8px; white-space: nowrap; }
 
-/* ── NEW: School hours banner ── */
 .school-hours-banner {
     background: #eff6ff;
     color: #1e3a5f;

@@ -93,7 +93,6 @@
                                                         <input type="date" name="vacation_date" id="vacationDate" class="form-control" required>
                                                     </div>
 
-                                                    {{-- ── NEW: admin-editable school hours ── --}}
                                                     <div class="col-md-3">
                                                         <label class="form-label fw-semibold">Resumption Time <span class="text-danger">*</span></label>
                                                         <input type="time" name="resumption_time" id="resumptionTime" class="form-control"
@@ -165,6 +164,7 @@
                                                             <th class="text-white">Vacation</th>
                                                             <th class="text-white">Resumption&nbsp;Time</th>
                                                             <th class="text-white">Closing&nbsp;Time</th>
+                                                            <th class="text-white text-center">Grace</th>
                                                             <th class="text-white text-center">Morning</th>
                                                             <th class="text-white text-center">Afternoon</th>
                                                             <th class="text-white text-center">School Days</th>
@@ -187,6 +187,15 @@
                                                             <span class="badge bg-secondary-subtle text-secondary">
                                                                 {{ \Illuminate\Support\Carbon::parse($s->closing_time ?? '14:00:00')->format('g:i A') }}
                                                             </span>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if(($s->late_grace_minutes ?? 0) > 0)
+                                                                <span class="badge bg-warning-subtle text-warning">
+                                                                    <i class="ri-timer-line me-1"></i>{{ $s->late_grace_minutes }}m
+                                                                </span>
+                                                            @else
+                                                                <span class="text-muted">—</span>
+                                                            @endif
                                                         </td>
                                                         <td class="text-center">
                                                             @if($s->track_morning)
@@ -236,7 +245,7 @@
                                                     </tr>
                                                     @empty
                                                     <tr>
-                                                        <td colspan="10" class="text-center py-4 text-muted">
+                                                        <td colspan="11" class="text-center py-4 text-muted">
                                                             <i class="ri-inbox-line ri-2x d-block mb-1"></i>No settings configured yet.
                                                         </td>
                                                     </tr>
@@ -402,7 +411,6 @@ function showToast(msg, type = 'success') {
     setTimeout(() => document.getElementById(id)?.remove(), 3500);
 }
 
-// ── Edit Setting ──────────────────────────────────────────────────────────────
 function editSetting(id, termId, sessionId, resumption, vacation,
                      resumptionTime, closingTime, morningEnd, grace,
                      morning, afternoon) {
@@ -426,7 +434,6 @@ function editSetting(id, termId, sessionId, resumption, vacation,
     document.getElementById('settingForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Reset / Cancel Edit ───────────────────────────────────────────────────────
 function resetSettingForm() {
     document.getElementById('settingForm').reset();
     document.getElementById('settingId').value             = '';

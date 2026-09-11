@@ -14,27 +14,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Staff attendance is purely device-driven — there is no manual register
- * UI. This controller is read-only reporting on top of rows written by
+ * UI. Read-only reporting on top of rows written by
  * DeviceAttendanceProcessor::processStaff(), plus admin management of
  * device-outage dates so outages don't get counted as mass absence.
- *
- * Exclusions come from three sources, all merged into one date set for
- * every query/count/export in this controller:
- *
- *   1. DeviceOutageDate  — persisted, admin-managed device downtime.
- *   2. Weekday pattern   — excluded_weekdays[] (0=Sun..6=Sat) on the
- *      request. Defaults to [0, 6] (Sat/Sun) when the filter form hasn't
- *      been submitted yet, matching the old hardcoded isWeekend() behavior.
- *      Once submitted (weekday_filter_submitted=1 is present), whatever
- *      the admin actually ticked is used verbatim — including an empty
- *      set, which means "don't exclude any weekday".
- *   3. Ad-hoc dates      — excluded_dates[] on the request, from the
- *      report's Exclude Days panel. Request-scoped, never persisted.
- *
- * Weekday-pattern dates are hidden from the daily calendar entirely (they
- * never had a row before either). Outage/ad-hoc dates still render as a
- * visible row labeled 'outage' or 'excluded' so it's clear why a specific
- * date has no attendance data.
  *
  * Lateness context (expected clock-in time, grace window, closing time)
  * comes from AttendanceTermSetting::current() and is passed into both
@@ -68,11 +50,6 @@ class StaffAttendanceController extends Controller
     // EXCEL EXPORT
     // =========================================================================
 
-    /**
-     * Renders through the exact same buildSchoolReportData() as index(), so
-     * the download can never show different numbers than what's on screen —
-     * same date range, same excluded weekdays, same excluded dates.
-     */
     public function exportExcel(Request $request)
     {
         $data = $this->buildSchoolReportData($request);
@@ -86,9 +63,7 @@ class StaffAttendanceController extends Controller
     }
 
     /**
-     * Shared by index() and exportExcel(). Returns everything the
-     * staff-school-report view (and the export) needs, keyed to match the
-     * view's expected variable names.
+     * Shared by index() and exportExcel().
      */
     private function buildSchoolReportData(Request $request): array
     {
@@ -97,8 +72,6 @@ class StaffAttendanceController extends Controller
         $excl        = $this->resolveExclusions($request, $dateFrom, $dateTo);
         $workingDays = $this->getWorkingDays($dateFrom, $dateTo, $excl['all']);
 
-        // Aggregate per staff from raw device-driven rows — no separate summary
-        // table needed at this volume (~200 staff).
         $records = StaffAttendance::whereBetween('attendance_date', [$dateFrom, $dateTo])
             ->whereNotIn('attendance_date', $excl['all'])
             ->select('staff_id')
@@ -117,7 +90,7 @@ class StaffAttendanceController extends Controller
             $late     = (int) ($r->days_late ?? 0);
             $excused  = (int) ($r->days_excused ?? 0);
             $attended = $present + $late + $excused;
-            $absent   = max($workingDays - $attended, 0); // inferred, never stored
+            $absent   = max($workingDays - $attended, 0);
 
             return (object) [
                 'staff_id'              => $staff->id,
@@ -135,9 +108,6 @@ class StaffAttendanceController extends Controller
 
         $avgPct = $rows->count() > 0 ? round($rows->avg('attendance_percentage'), 1) : 0;
 
-        // Only persisted device outages show in the outage-badge list —
-        // weekday-pattern and ad-hoc excludes are request-scoped and
-        // intentionally don't appear there.
         $outages = DeviceOutageDate::whereBetween('outage_date', [$dateFrom, $dateTo])
             ->orderByDesc('outage_date')
             ->get();
@@ -238,13 +208,6 @@ class StaffAttendanceController extends Controller
             ->map(fn($d) => $d->toDateString());
     }
 
-    /**
-     * Which weekdays (0=Sun..6=Sat, matching Carbon::dayOfWeek) are excluded
-     * for this request. Defaults to [0, 6] — Sunday & Saturday — UNLESS the
-     * filter form was actually submitted (weekday_filter_submitted=1),
-     * in which case excluded_weekdays[] is used exactly as given, even if
-     * that means an empty array (admin wants every day of the week counted).
-     */
     private function resolveExcludedWeekdays(Request $request): Collection
     {
         if (!$request->has('weekday_filter_submitted')) {
@@ -258,21 +221,6 @@ class StaffAttendanceController extends Controller
             ->values();
     }
 
-    /**
-     * Merges all three exclusion sources (device outages, weekday pattern,
-     * ad-hoc dates) into a single date set for query filtering / working-day
-     * counting, while also splitting out which of those dates should render
-     * as a visible calendar row ('outage' / 'excluded') versus be hidden
-     * from the calendar entirely (the weekday pattern — same as the old
-     * isWeekend() behavior, just configurable now).
-     *
-     * Returns:
-     *   'all'       — every excluded date string, for whereNotIn() / working-day counts
-     *   'visible'   — outages + ad-hoc dates, rendered as a labeled row
-     *   'hidden'    — weekday-pattern dates, never rendered as a row at all
-     *   'outages'   — persisted DeviceOutageDate rows only, to pick the row label
-     *   'weekdays'  — the resolved excluded-weekday ints, for checkbox pre-check in the view
-     */
     private function resolveExclusions(Request $request, string $dateFrom, string $dateTo): array
     {
         $deviceOutages    = $this->getOutageDates($dateFrom, $dateTo);
@@ -335,19 +283,16 @@ class StaffAttendanceController extends Controller
 
     /**
      * Builds the per-day calendar for the individual staff report.
+     * Each day carries pre-computed display values so the blade does
+     * zero date math:
      *
-     * Each day now carries:
-     *   - 'date'         — raw Y-m-d (used by blade to compute minutes late)
-     *   - 'label'        — human label, e.g. "Mon, 08 Sep"
-     *   - 'status'       — present | late | absent | excused | outage | excluded
-     *   - 'time_in'      — "g:i A" formatted (or null)
-     *   - 'time_out'     — "g:i A" formatted (or null)
-     *   - 'expected_by'  — "g:i A" cutoff instant for this weekday (null for
-     *                      outage/excluded rows)
-     *   - 'minutes_late' — int, non-null only when status === 'late'
-     *
-     * Passing these in from the controller keeps the blade free of any
-     * date arithmetic and keeps the grace window in exactly one place.
+     *   'date'         — raw Y-m-d
+     *   'label'        — "Mon, 08 Sep"
+     *   'status'       — present | late | absent | excused | outage | excluded
+     *   'time_in'      — "g:i A" (or null)
+     *   'time_out'     — "g:i A" (or null)
+     *   'expected_by'  — "g:i A" cutoff (null for outage/excluded)
+     *   'minutes_late' — int (only when status === 'late')
      */
     private function buildCalendarWithRecords(string $dateFrom, string $dateTo, $records, array $excl): array
     {
@@ -363,8 +308,6 @@ class StaffAttendanceController extends Controller
         while ($current->lte($end) && $current->lte(now())) {
             $key = $current->toDateString();
 
-            // Weekday-pattern exclusion (e.g. default Sat/Sun) — never shown as a row,
-            // same as the old hardcoded isWeekend() skip.
             if ($excl['hidden']->contains($key)) {
                 $current->addDay();
                 continue;
@@ -374,8 +317,6 @@ class StaffAttendanceController extends Controller
                 $days[] = [
                     'date'         => $key,
                     'label'        => $current->format('D, d M'),
-                    // 'outage' = flagged device downtime, 'excluded' = admin ticked it
-                    // in the report's Exclude Days panel for this view only.
                     'status'       => $excl['outages']->contains($key) ? 'outage' : 'excluded',
                     'time_in'      => null,
                     'time_out'     => null,
@@ -384,14 +325,13 @@ class StaffAttendanceController extends Controller
                 ];
             } else {
                 $rec    = $byDate->get($key);
-                $status = $rec->status ?? 'absent'; // inferred when no device record exists
+                $status = $rec->status ?? 'absent';
 
                 $timeIn  = $rec?->time_in  ? Carbon::parse($rec->time_in)->format('g:i A')  : null;
                 $timeOut = $rec?->time_out ? Carbon::parse($rec->time_out)->format('g:i A') : null;
 
-                // Expected cutoff for this specific day, when a term setting exists.
-                $expectedBy   = null;
-                $minutesLate  = null;
+                $expectedBy  = null;
+                $minutesLate = null;
 
                 if ($setting && $setting->resumption_time) {
                     $expected = $current->copy()
@@ -404,9 +344,6 @@ class StaffAttendanceController extends Controller
                         $actual      = $current->copy()->setTimeFromTimeString(
                             Carbon::parse($rec->time_in)->format('H:i:s')
                         );
-                        // diffInMinutes(false) keeps the sign; we clamp at 0
-                        // so a late punch that somehow precedes the cutoff
-                        // (shouldn't happen, but defensive) reads as 0m.
                         $minutesLate = max(0, $expected->diffInMinutes($actual, false));
                     }
                 }
@@ -429,21 +366,9 @@ class StaffAttendanceController extends Controller
     }
 
     /**
-     * One immutable snapshot of the lateness context for the current term,
-     * used by both staff blades to render the school-hours banner and
-     * "expected by" text without each blade re-querying.
-     *
-     * Returns null when there's no current session/term setting — the
-     * blades hide the banner in that case.
-     *
-     * Keys:
-     *   resumption_label  — "8:00 AM"
-     *   closing_label     — "2:00 PM"
-     *   morning_end_label — "12:00 PM"
-     *   grace_minutes     — int
-     *   expected_by       — "8:00 AM" (resumption + grace)
-     *   setting           — the AttendanceTermSetting model itself, in case
-     *                       a blade wants anything else off it
+     * One snapshot of the lateness context for the current term, used by
+     * both staff blades to render the school-hours banner and "expected by"
+     * text without each blade re-querying.
      */
     private function buildTimeContext(): ?array
     {

@@ -1,6 +1,4 @@
-{{-- resources/views/attendance/admin/staff-report.blade.php
-     This is the view StaffAttendanceController@report() actually renders
-     ('attendance.admin.staff-report') — NOT attendance/staff/staff-attendance-detail.blade.php. --}}
+{{-- resources/views/attendance/admin/staff-report.blade.php --}}
 @extends('layouts.master')
 @section('content')
 <style>
@@ -139,7 +137,6 @@
 .sad-weekday-chip input { accent-color:#dc2626; }
 .sad-weekday-chip.checked { background:#fef2f2; border-color:#fca5a5; color:#dc2626; }
 
-/* ── School-hours banner ── */
 .sad-hours-banner {
     background: #eff6ff;
     color: #1e3a5f;
@@ -164,7 +161,6 @@
     font-weight: 600;
 }
 
-/* ── Late cell ── */
 .sad-late-by {
     font-weight: 700;
     color: #b45309;

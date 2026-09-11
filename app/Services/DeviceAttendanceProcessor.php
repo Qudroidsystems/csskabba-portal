@@ -19,8 +19,14 @@ use Illuminate\Support\Carbon;
  * Turns a single raw device punch (DeviceAttendanceLog) into either a
  * StudentAttendance row or a StaffAttendance row, based on the PIN mapping.
  *
- * Student lateness / afternoon cutoffs now come from AttendanceTermSetting
+ * Student lateness / afternoon cutoffs come from AttendanceTermSetting
  * (admin-editable). Staff lateness comes from StaffAttendanceTimeSetting.
+ *
+ * NOTE ON STATUS COLUMNS:
+ *   Schoolterm.status    → cast to boolean → where('status', true)
+ *   Schoolsession.status → plain string    → where('status', 'Current')
+ *   If Schoolsession is ever changed to a boolean cast, update the three
+ *   session lookups below at the same time.
  */
 class DeviceAttendanceProcessor
 {
@@ -76,7 +82,8 @@ class DeviceAttendanceProcessor
         $time  = $punch->format('H:i:s');
 
         $session = Schoolsession::where('status', 'Current')->first();
-        $term    = Schoolterm::where('status', 'Current')->first();
+        $term    = Schoolterm::where('status', true)->first();
+
         if (!$session || !$term) {
             throw new \RuntimeException('No current session/term configured.');
         }
@@ -95,8 +102,7 @@ class DeviceAttendanceProcessor
             throw new \RuntimeException('Attendance not configured for the current term.');
         }
 
-        // ── Times now come from the admin-configurable term setting ──
-        // Fallbacks guard against legacy rows saved before the migration.
+        // ── Times come from the admin-configurable term setting ──
         $dayStart       = $punch->copy()->startOfDay();
         $morningCutoff  = $setting->resumption_time
             ? $setting->morningCutoffFor($dayStart)
@@ -108,8 +114,6 @@ class DeviceAttendanceProcessor
         $isAfternoon = $setting->track_afternoon && $punch->gte($afternoonStart);
         $period      = $isAfternoon ? 'afternoon' : 'morning';
 
-        // Status only evaluated for morning punches; afternoon punches are
-        // always 'present' (no separate afternoon lateness rule yet).
         $status = (!$isAfternoon && $punch->gt($morningCutoff)) ? 'late' : 'present';
 
         $keys = [
@@ -121,8 +125,6 @@ class DeviceAttendanceProcessor
             'period'          => $period,
         ];
 
-        // First punch of the period sets status + time_in and is never
-        // downgraded by a later duplicate punch; subsequent punches update time_out.
         $existing = StudentAttendance::where($keys)->first();
 
         $attendance = StudentAttendance::updateOrCreate($keys, [
@@ -132,9 +134,6 @@ class DeviceAttendanceProcessor
             'source'   => 'device',
         ]);
 
-        // Only rebuild when this punch could actually have changed the summary:
-        // a brand-new row, or a status change. Every later "time_out only"
-        // punch skips this entirely — keeps a morning rush of repeat punches cheap.
         if (!$existing || $existing->status !== $attendance->status) {
             AttendanceSettingController::rebuildSummary(
                 $studentId,
@@ -155,8 +154,6 @@ class DeviceAttendanceProcessor
             ->where('attendance_date', $date)
             ->first();
 
-        // Status is decided once, on the FIRST punch of the day — a later
-        // time_out-only punch never downgrades an already-recorded status.
         if ($existing) {
             $status = $existing->status;
         } else {

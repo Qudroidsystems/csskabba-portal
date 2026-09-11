@@ -51,7 +51,7 @@ class AttendanceTermSetting extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // ── Time helpers (used by DeviceAttendanceProcessor) ──────
+    // ── Time helpers ──────────────────────────────────────────
 
     /**
      * The instant after which a morning punch is considered late:
@@ -75,8 +75,6 @@ class AttendanceTermSetting extends Model
 
     /**
      * The instant after which the school day is considered closed.
-     * Currently informational (blades display it); kept here so a future
-     * rule ("punch after closing = ignore") has a single source of truth.
      */
     public function closingAtFor(Carbon $date): Carbon
     {
@@ -105,14 +103,21 @@ class AttendanceTermSetting extends Model
      * The active term setting — "current session + current term".
      * Cached briefly because DeviceAttendanceProcessor hits this on
      * every single punch. Call ::forget() whenever settings change.
+     *
+     * NOTE: Schoolterm.status is cast to boolean on the model, so we
+     * MUST query with where('status', true) — NOT where('status', 'Current').
+     * The string 'Current' coerces to 0 in MySQL against a boolean-cast
+     * column, which silently returns the *inactive* terms instead.
+     *
+     * Schoolsession.status is a plain string → where('status', 'Current').
      */
     public static function current(): ?self
     {
         return cache()->remember('attendance_term_settings.current', 120, function () {
+            $term    = Schoolterm::where('status', true)->first();
             $session = Schoolsession::where('status', 'Current')->first();
-            $term    = Schoolterm::where('status', 'Current')->first();
 
-            if (!$session || !$term) {
+            if (!$term || !$session) {
                 return null;
             }
 
@@ -127,7 +132,7 @@ class AttendanceTermSetting extends Model
         cache()->forget('attendance_term_settings.current');
     }
 
-    // ── Calendar helpers (unchanged behaviour) ────────────────
+    // ── Calendar helpers ──────────────────────────────────────
 
     /** Total weekdays in the term, minus holidays. */
     public function totalSchoolDays(): int
