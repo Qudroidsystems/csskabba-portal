@@ -364,6 +364,114 @@
     .tt-cell .cell-avatar-placeholder i { font-size: 13px; }
     .assignment-teacher-select { min-width: 160px; }
 }
+
+/* ── Save Run modal ──────────────────────────────────── */
+.save-run-preview {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 18px;
+}
+.save-run-preview-hdr {
+    background: #F1F5F9;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748B;
+    border-bottom: 1px solid #E2E8F0;
+}
+.save-run-preview-body {
+    padding: 12px 14px;
+}
+.save-run-preview-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    font-size: 12.5px;
+    color: #334155;
+    border-bottom: 1px solid #F1F5F9;
+}
+.save-run-preview-row:last-child { border-bottom: none; }
+.save-run-preview-row .k { color: #64748B; }
+.save-run-preview-row .v { font-weight: 600; color: #0F172A; text-align: right; }
+.save-run-preview-row .v.warn { color: #D97706; }
+
+/* Success view */
+.save-run-success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #E8F9EE;
+    color: #34C759;
+    font-size: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    animation: saveRunPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes saveRunPop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.save-run-success-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #0F172A;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+}
+.save-run-success-sub {
+    font-size: 13px;
+    color: #64748B;
+    margin: 0 0 20px;
+}
+.save-run-code-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 10px 14px 10px 20px;
+    margin-bottom: 6px;
+}
+.save-run-code {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: #0F172A;
+    user-select: all;
+}
+.save-run-copy-btn {
+    background: transparent;
+    border: none;
+    color: #64748B;
+    padding: 4px 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.save-run-copy-btn:hover { background: #E2E8F0; color: #0F172A; }
+.save-run-copy-btn.copied { color: #34C759; }
+
+.save-run-meta {
+    font-size: 12px;
+    color: #94A3B8;
+    margin-top: 12px;
+    line-height: 1.5;
+}
 </style>
 
 
@@ -1649,49 +1757,85 @@
 {{-- ============================================================ --}}
 {{-- SAVE GENERATION RUN MODAL                                    --}}
 {{-- ============================================================ --}}
+{{-- SAVE GENERATION RUN MODAL — single modal, inline code reveal --}}
 <div class="modal fade" id="saveRunModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header" style="background:linear-gradient(135deg,#1B5E20,#2E7D32)">
-                <h5 class="modal-title text-white">
-                    <i class="ri-bookmark-3-line me-2"></i>Save This Generation Run
-                </h5>
+                <div>
+                    <h5 class="modal-title text-white mb-0">
+                        <i class="ri-bookmark-3-line me-2"></i>Save This Generation Run
+                    </h5>
+                    <small class="text-white opacity-75">A frozen, retrievable copy of what you just generated.</small>
+                </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p class="text-muted mb-3" style="font-size:13px">
-                    Saves a named, retrievable record of this wizard run and its generated timetables.
-                    You'll get a 10-character code you can use to find it later.
-                </p>
 
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Run Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="saveRunName" maxlength="150"
-                           placeholder="e.g. First term draft — SSS1">
+            {{-- ─── Input view (shown first) ──────────────────────── --}}
+            <div id="saveRunInputView">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Run name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="saveRunName" maxlength="150"
+                               placeholder="e.g. First term draft — SSS1">
+                        <small class="text-muted">Give it something you'll recognise a month from now.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Description <span class="text-muted fw-normal">(optional)</span>
+                        </label>
+                        <textarea class="form-control" id="saveRunDescription" rows="3" maxlength="2000"
+                                  placeholder="What did you tweak? Why this run?"></textarea>
+                    </div>
+
+                    {{-- Preview of what's about to be saved --}}
+                    <div class="save-run-preview">
+                        <div class="save-run-preview-hdr">
+                            <i class="ri-information-line me-1"></i>Will save
+                        </div>
+                        <div class="save-run-preview-body" id="saveRunPreview">
+                            <span class="text-muted" style="font-size:12.5px">Computing…</span>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Description <span class="text-muted fw-normal">(optional)</span></label>
-                    <textarea class="form-control" id="saveRunDescription" rows="3" maxlength="2000"
-                              placeholder="Why did you generate this? What did you tweak?"></textarea>
-                </div>
-
-                <div class="alert alert-info mb-0" style="font-size:12.5px">
-                    <i class="ri-information-line me-1"></i>
-                    The live timetables stay editable. Editing them after saving won't change this run —
-                    it keeps a frozen copy of exactly what was generated.
+                <div class="modal-footer">
+                    <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-success" id="saveRunBtn" onclick="saveGenerationRun()">
+                        <i class="ri-save-line me-1"></i>Save run
+                    </button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-success" onclick="saveGenerationRun()">
-                    <i class="ri-save-line me-1"></i>Save Run
-                </button>
+
+            {{-- ─── Success view (revealed after save) ────────────── --}}
+            <div id="saveRunSuccessView" style="display:none">
+                <div class="modal-body text-center" style="padding:32px 24px 20px">
+                    <div class="save-run-success-icon">
+                        <i class="ri-checkbox-circle-fill"></i>
+                    </div>
+                    <h5 class="save-run-success-title">Run saved</h5>
+                    <p class="save-run-success-sub">Use this code to find it again</p>
+
+                    <div class="save-run-code-wrap">
+                        <div class="save-run-code" id="savedRunCode">—</div>
+                        <button class="save-run-copy-btn" id="savedRunCopyBtn"
+                                onclick="copySavedRunCode()" title="Copy code">
+                            <i class="ri-file-copy-line"></i>
+                        </button>
+                    </div>
+
+                    <div class="save-run-meta" id="savedRunMeta"></div>
+                </div>
+                <div class="modal-footer" style="border-top:none;padding-top:0">
+                    <button class="btn btn-light" onclick="closeSaveRunAndBrowse()">Close</button>
+                    <button class="btn btn-primary" onclick="closeSaveRunAndBrowse()">
+                        <i class="ri-bookmark-3-line me-1"></i>View in saved runs
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
 {{-- ============================================================ --}}
 {{-- RUN DETAIL MODAL                                             --}}
 {{-- ============================================================ --}}

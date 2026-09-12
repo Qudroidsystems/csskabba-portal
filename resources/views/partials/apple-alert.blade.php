@@ -1,9 +1,17 @@
 {{--
     Shared Apple-style alert theming for SweetAlert2.
     Include once per page:  @include('partials.apple-alert')
-    Then replace bare Swal.fire() calls with AppleAlert.* helpers.
 
     Requires SweetAlert2 to already be loaded on the page.
+
+    IMPORTANT — do not use Swal.mixin here. Mixin instances hold their own
+    internal state, and calling Swal.close() from outside a mixin does not
+    reliably close a dialog opened by that mixin. That produces the classic
+    "stuck dialog" bug: the alert stays on screen and blocks every future
+    Swal.fire() call until the page is reloaded.
+
+    This module always calls bare Swal.fire() with a customClass block
+    per call, so Swal.close() always closes the one visible dialog.
 --}}
 <style>
 /* ============================================================
@@ -16,6 +24,7 @@
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     background: rgba(15, 23, 42, 0.28);
     padding: 20px;
+    z-index: 20000;
 }
 .swal2-container.apple-alert-container.swal2-backdrop-show {
     background: rgba(15, 23, 42, 0.28);
@@ -173,50 +182,32 @@
 .swal2-popup.apple-alert .swal2-styled:focus { box-shadow: none; outline: none; }
 .swal2-popup.apple-alert .swal2-styled:active { transform: scale(0.97); }
 
-/* Primary (blue) — default confirm */
 .swal2-popup.apple-alert .swal2-confirm {
     background: #007AFF;
     color: #FFFFFF;
 }
 .swal2-popup.apple-alert .swal2-confirm:hover { background: #0066D6; }
 
-/* Destructive (red) — callers set via theme */
-.swal2-popup.apple-alert .swal2-confirm.apple-destructive {
-    background: #FF3B30;
-}
-.swal2-popup.apple-alert .swal2-confirm.apple-destructive:hover {
-    background: #E63329;
-}
+.swal2-popup.apple-alert .swal2-confirm.apple-destructive { background: #FF3B30; }
+.swal2-popup.apple-alert .swal2-confirm.apple-destructive:hover { background: #E63329; }
 
-/* Warning (orange) — for override prompts */
-.swal2-popup.apple-alert .swal2-confirm.apple-warning {
-    background: #FF9500;
-}
-.swal2-popup.apple-alert .swal2-confirm.apple-warning:hover {
-    background: #E68600;
-}
+.swal2-popup.apple-alert .swal2-confirm.apple-warning { background: #FF9500; }
+.swal2-popup.apple-alert .swal2-confirm.apple-warning:hover { background: #E68600; }
 
-/* Success (green) — for confirmations that "commit" a save */
-.swal2-popup.apple-alert .swal2-confirm.apple-success {
-    background: #34C759;
-}
-.swal2-popup.apple-alert .swal2-confirm.apple-success:hover {
-    background: #2DA84A;
-}
+.swal2-popup.apple-alert .swal2-confirm.apple-success { background: #34C759; }
+.swal2-popup.apple-alert .swal2-confirm.apple-success:hover { background: #2DA84A; }
 
-/* Cancel — iOS-style tinted gray */
 .swal2-popup.apple-alert .swal2-cancel {
     background: #F1F5F9;
     color: #0F172A;
 }
 .swal2-popup.apple-alert .swal2-cancel:hover { background: #E2E8F0; }
 
-/* When only one button, keep it full width */
 .swal2-popup.apple-alert .swal2-actions:not(:has(.swal2-cancel)) .swal2-confirm {
     flex: 1;
 }
 
-/* ── Loading state (spinner-only alerts) ────────────────── */
+/* ── Loading state ───────────────────────────────────────── */
 .swal2-popup.apple-alert.apple-loading {
     padding: 32px 24px;
     text-align: center;
@@ -237,7 +228,7 @@
 .swal2-popup.apple-alert.apple-loading .swal2-html-container { display: none; }
 .swal2-popup.apple-alert.apple-loading .swal2-actions { display: none; }
 
-/* ── Inputs (if a caller uses Swal's input mode) ────────── */
+/* ── Inputs ─────────────────────────────────────────────── */
 .swal2-popup.apple-alert .swal2-input,
 .swal2-popup.apple-alert .swal2-textarea,
 .swal2-popup.apple-alert .swal2-select {
@@ -250,6 +241,7 @@
     margin: 14px 0 0;
     width: 100%;
     transition: all 0.15s;
+    box-shadow: none;
 }
 .swal2-popup.apple-alert .swal2-input:focus,
 .swal2-popup.apple-alert .swal2-textarea:focus,
@@ -259,13 +251,14 @@
     outline: none;
 }
 
-/* ── Toast (top-center, Apple-notification-style) ───────── */
+/* ── Toast (top-center) ─────────────────────────────────── */
 .swal2-container.apple-toast-container {
     backdrop-filter: none;
     background: transparent;
     padding-top: 16px;
     align-items: flex-start;
     justify-content: center;
+    z-index: 21000;
 }
 .swal2-popup.apple-toast {
     background: rgba(15, 23, 42, 0.92);
@@ -389,68 +382,135 @@
 <script>
 /* ============================================================
    AppleAlert — wrapper around SweetAlert2 with an iOS-style theme.
-   Every helper returns the underlying Swal promise so callers can
-   chain .then() as before.
+
+   Design constraints (see comment at top of file):
+     1. Never use Swal.mixin. Always call bare Swal.fire() so
+        Swal.close() always closes the visible dialog.
+     2. Track a `busy` flag. Before opening a new dialog while one
+        is already open, force-close the current one and wait a
+        tick, so SweetAlert2 never queues dialogs (which was the
+        cause of the stuck-dialog bug).
+     3. Expose a guaranteed close() that force-dismisses the
+        current popup even if state got out of sync.
+
+   Every helper returns a Promise resolving to Swal's result
+   object, so call sites chain .then() exactly as before.
    ============================================================ */
 const AppleAlert = (function () {
 
-    // Shared Swal mixin — every dialog we open goes through this so the
-    // theme, container class, and animation stay consistent.
-    const Dialog = Swal.mixin({
-        customClass: {
-            container: 'apple-alert-container',
-            popup:     'apple-alert',
-        },
-        buttonsStyling: false,
-        reverseButtons: false,
-        showClass: { popup: '' },        // popup uses CSS keyframe, not Swal's anim
-        hideClass: { popup: '' },
-        heightAuto: false,
-    });
+    let busy = false;        // true while a dialog is open (not toasts)
+    let lastDialogPromise = null;
 
-    // Toasts are a separate mixin — top-center, no backdrop, small.
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top',
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-        customClass: {
-            container: 'apple-toast-container',
-            popup:     'apple-toast',
-        },
-        showClass: { popup: '' },
-        hideClass: { popup: '' },
-        didOpen: (el) => {
-            el.addEventListener('mouseenter', Swal.stopTimer);
-            el.addEventListener('mouseleave', Swal.resumeTimer);
-        },
-    });
+    // Base classes for a themed dialog. Toasts use different classes.
+    function baseDialogOptions() {
+        return {
+            customClass: {
+                container: 'apple-alert-container',
+                popup:     'apple-alert',
+            },
+            buttonsStyling: false,
+            reverseButtons: false,
+            heightAuto: false,
+        };
+    }
+
+    /* Force-close whatever dialog SweetAlert2 currently has open, and
+       wait for the DOM to settle. Used before opening a new dialog so
+       the new one is never queued behind a hidden-but-not-dismissed
+       dialog. */
+    function forceClose() {
+        try {
+            if (Swal.isVisible && Swal.isVisible()) {
+                Swal.close();
+            }
+        } catch (e) { /* swallow */ }
+
+        // If the popup element is still in the DOM after Swal.close(),
+        // remove it manually — this is what unsticks the page when
+        // SweetAlert2's internal state has desynced.
+        setTimeout(() => {
+            const containers = document.querySelectorAll('.swal2-container');
+            containers.forEach(el => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            });
+            document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+            document.body.style.removeProperty('padding-right');
+            document.body.style.removeProperty('overflow');
+        }, 0);
+
+        busy = false;
+        lastDialogPromise = null;
+    }
+
+    /* Every helper funnels through this. It handles the mutual exclusion
+       for dialogs (toasts bypass it). */
+    function openDialog(options) {
+        forceClose();
+
+        // Defer the actual fire to the next tick so forceClose's
+        // setTimeout DOM sweep runs first.
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                busy = true;
+
+                const promise = Swal.fire(Object.assign({}, baseDialogOptions(), options));
+
+                promise.then((result) => {
+                    busy = false;
+                    lastDialogPromise = null;
+                    resolve(result);
+                });
+
+                lastDialogPromise = promise;
+            }, 0);
+        });
+    }
+
+    /* Toasts can stack — no busy check, no forceClose. */
+    function fireToast(options) {
+        const toastOptions = Object.assign({
+            toast: true,
+            position: 'top',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+            heightAuto: false,
+            customClass: {
+                container: 'apple-toast-container',
+                popup:     'apple-toast',
+            },
+            didOpen: (el) => {
+                el.addEventListener('mouseenter', Swal.stopTimer);
+                el.addEventListener('mouseleave', Swal.resumeTimer);
+            },
+        }, options);
+        return Swal.fire(toastOptions);
+    }
 
     // ── Loading spinner ────────────────────────────────────────
-    // Cancel-proof spinner-only alert. Call AppleAlert.close() to dismiss.
-    function loading(title = 'Processing…') {
-        return Dialog.fire({
-            title: title,
+    function loading(title) {
+        return openDialog({
+            title: title || 'Processing…',
             allowOutsideClick: false,
             allowEscapeKey: false,
             showConfirmButton: false,
             didOpen: () => {
                 Swal.showLoading();
-                // Add the loading class so our CSS can size the spinner.
                 const popup = document.querySelector('.swal2-popup.apple-alert');
                 if (popup) popup.classList.add('apple-loading');
             },
         });
     }
 
+    /* Hard close — always closes the current dialog, even if the busy
+       flag was left in a bad state. */
     function close() {
-        Swal.close();
+        forceClose();
     }
 
     // ── Simple dialogs ─────────────────────────────────────────
-    function success(title, text = null) {
-        return Dialog.fire({
+    function success(title, text) {
+        return openDialog({
             icon: 'success',
             title: title,
             html: text ? text : undefined,
@@ -460,8 +520,8 @@ const AppleAlert = (function () {
         });
     }
 
-    function error(title, text = null) {
-        return Dialog.fire({
+    function error(title, text) {
+        return openDialog({
             icon: 'error',
             title: title,
             html: text ? text : undefined,
@@ -469,8 +529,8 @@ const AppleAlert = (function () {
         });
     }
 
-    function warning(title, text = null) {
-        return Dialog.fire({
+    function warning(title, text) {
+        return openDialog({
             icon: 'warning',
             title: title,
             html: text ? text : undefined,
@@ -478,8 +538,8 @@ const AppleAlert = (function () {
         });
     }
 
-    function info(title, text = null) {
-        return Dialog.fire({
+    function info(title, text) {
+        return openDialog({
             icon: 'info',
             title: title,
             html: text ? text : undefined,
@@ -487,9 +547,10 @@ const AppleAlert = (function () {
         });
     }
 
-    // ── Generic confirm (blue primary) ─────────────────────────
-    function confirm(title, text = null, opts = {}) {
-        return Dialog.fire({
+    // ── Confirms ───────────────────────────────────────────────
+    function confirm(title, text, opts) {
+        opts = opts || {};
+        return openDialog({
             title: title,
             html: text ? text : undefined,
             icon: opts.icon || undefined,
@@ -501,9 +562,9 @@ const AppleAlert = (function () {
         });
     }
 
-    // ── Destructive confirm (red primary) ─────────────────────
-    function destructive(title, text = null, opts = {}) {
-        return Dialog.fire({
+    function destructive(title, text, opts) {
+        opts = opts || {};
+        return openDialog({
             title: title,
             html: text ? text : undefined,
             icon: opts.icon || undefined,
@@ -515,18 +576,18 @@ const AppleAlert = (function () {
             didOpen: () => {
                 const btn = document.querySelector('.swal2-popup.apple-alert .swal2-confirm');
                 if (btn) btn.classList.add('apple-destructive');
+                if (typeof opts.didOpen === 'function') opts.didOpen();
             },
         });
     }
 
-    // ── Rich-HTML dialog (conflict override, save-run code, etc.) ─
-    // Accepts a full options object; caller controls everything except
-    // the theme. `theme` picks the confirm button colour.
-    //   theme: 'primary' | 'destructive' | 'warning' | 'success'
-    function rich(options = {}) {
+    /* Rich dialog. `theme` picks the confirm button colour:
+       'primary' | 'destructive' | 'warning' | 'success' */
+    function rich(options) {
+        options = options || {};
         const theme = options.theme || 'primary';
 
-        return Dialog.fire({
+        return openDialog({
             title: options.title || '',
             html: options.html || '',
             icon: options.icon || undefined,
@@ -548,9 +609,11 @@ const AppleAlert = (function () {
         });
     }
 
-    // ── Toast notification ────────────────────────────────────
-    // type: 'success' | 'error' | 'info' | 'warning'
-    function toast(message, type = 'success', durationMs = 2000) {
+    // ── Toast ──────────────────────────────────────────────────
+    function toast(message, type, durationMs) {
+        type = type || 'success';
+        durationMs = durationMs || 2000;
+
         const icons = {
             success: '✓',
             error:   '✕',
@@ -559,7 +622,7 @@ const AppleAlert = (function () {
         };
         const icon = icons[type] || icons.success;
 
-        return Toast.fire({
+        return fireToast({
             title: `<span class="apple-toast-icon">${icon}</span><span>${message}</span>`,
             timer: durationMs,
             customClass: {
@@ -569,33 +632,28 @@ const AppleAlert = (function () {
         });
     }
 
-    // ── Convenience wrappers used across the blades ───────────
-    // These collapse the most common call patterns into one-liners
-    // and keep the wording consistent.
-
-    // "Are you sure you want to delete X? Yes / Cancel" → returns bool.
+    // ── Convenience ────────────────────────────────────────────
     async function confirmDelete(title, text) {
         const r = await destructive(title, text, { confirmText: 'Delete' });
         return !!r.isConfirmed;
     }
 
-    // Fire-and-forget confirmation toast.
-    function saved(message = 'Saved') { return toast(message, 'success'); }
-    function deleted(message = 'Deleted') { return toast(message, 'success'); }
-    function copied(message = 'Copied to clipboard') { return toast(message, 'info'); }
-    function failed(message = 'Something went wrong') { return toast(message, 'error', 2600); }
+    function saved(message)    { return toast(message || 'Saved', 'success'); }
+    function deleted(message)  { return toast(message || 'Deleted', 'success'); }
+    function copied(message)   { return toast(message || 'Copied to clipboard', 'info'); }
+    function failed(message)   { return toast(message || 'Something went wrong', 'error', 2600); }
 
-    // ── Public surface ────────────────────────────────────────
+    // ── Public surface ─────────────────────────────────────────
     return {
-        // Core
         loading, close,
         success, error, warning, info,
         confirm, destructive, rich, toast,
-        // Convenience
         confirmDelete, saved, deleted, copied, failed,
-        // Escape hatch: expose the underlying mixins if a caller ever
-        // needs full control without losing the theme.
-        Dialog, Toast,
+
+        // Escape hatch: expose the same low-level entry points the
+        // module itself uses, in case a caller needs them.
+        _openDialog: openDialog,
+        _fireToast:  fireToast,
     };
 })();
 </script>
