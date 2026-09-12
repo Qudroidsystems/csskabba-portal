@@ -472,6 +472,177 @@
     margin-top: 12px;
     line-height: 1.5;
 }
+
+/* ── Run Detail modal ────────────────────────────────── */
+.run-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 20px 24px 4px;
+}
+.run-detail-stat {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.run-detail-stat .lbl {
+    font-size: 11px;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+}
+.run-detail-stat .val {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1.1;
+}
+.run-detail-stat .val.small { font-size: 15px; font-weight: 600; }
+.run-detail-stat.warn { background: #FFFBEB; border-color: #FDE68A; }
+.run-detail-stat.warn .val { color: #D97706; }
+.run-detail-stat.ok   { background: #F0FDF4; border-color: #BBF7D0; }
+.run-detail-stat.ok .val { color: #15803D; }
+.run-detail-stat.bad  { background: #FEF2F2; border-color: #FECACA; }
+.run-detail-stat.bad .val { color: #DC2626; }
+
+.run-detail-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 16px 24px 0;
+    border-bottom: 1px solid #E2E8F0;
+    margin-bottom: 0;
+}
+.run-detail-tab {
+    background: none;
+    border: none;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748B;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.15s;
+    border-radius: 8px 8px 0 0;
+}
+.run-detail-tab:hover { color: #1565C0; background: #F8FAFC; }
+.run-detail-tab.active { color: #1565C0; border-bottom-color: #1565C0; }
+.run-detail-tab-badge {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    background: #EFF6FF;
+    color: #1565C0;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+/* Overview pane */
+.run-overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+@media (max-width: 768px) { .run-overview-grid { grid-template-columns: 1fr; } }
+.run-overview-section h6 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748B;
+    font-weight: 700;
+    margin: 0 0 12px;
+}
+.run-kv {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 13px;
+}
+.run-kv:last-child { border-bottom: none; }
+.run-kv .k { color: #64748B; }
+.run-kv .v { color: #0F172A; font-weight: 600; text-align: right; }
+.run-kv .v.mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; letter-spacing: 1px; }
+
+/* Classes pane */
+.run-classes-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.run-classes-table thead th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748B;
+    font-weight: 700;
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.run-classes-table thead th.num { text-align: right; }
+.run-classes-table tbody td {
+    padding: 11px 12px;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+.run-classes-table tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.run-classes-table tbody tr:hover td { background: #F8FAFC; }
+.run-classes-table .class-name { font-weight: 600; color: #0F172A; }
+.run-classes-table .stat-zero { color: #CBD5E1; }
+
+.run-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.run-status-pill.full    { background: #DCFCE7; color: #15803D; }
+.run-status-pill.partial { background: #FEF3C7; color: #B45309; }
+.run-status-pill.empty   { background: #FEE2E2; color: #B91C1C; }
+
+.run-classes-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94A3B8;
+    font-size: 13px;
+}
+
+/* Metadata pane */
+.run-meta-pre {
+    background: #0F172A;
+    color: #E2E8F0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    max-height: 340px;
+}
+.run-meta-pre .key { color: #7DD3FC; }
+.run-meta-pre .str { color: #86EFAC; }
+.run-meta-pre .num { color: #FCD34D; }
+.run-meta-pre .bool-t { color: #A5B4FC; }
+.run-meta-pre .null { color: #94A3B8; font-style: italic; }
 </style>
 
 
@@ -1755,9 +1926,9 @@
 </div>
 
 {{-- ============================================================ --}}
-{{-- SAVE GENERATION RUN MODAL                                    --}}
-{{-- ============================================================ --}}
 {{-- SAVE GENERATION RUN MODAL — single modal, inline code reveal --}}
+{{-- ✏️ CHANGED: input view now wrapped, success view added     --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="saveRunModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1836,8 +2007,10 @@
         </div>
     </div>
 </div>
+
 {{-- ============================================================ --}}
-{{-- RUN DETAIL MODAL                                             --}}
+{{-- RUN DETAIL MODAL — tabbed                                    --}}
+{{-- ✏️ CHANGED: replaced flat body with stat strip + tabs        --}}
 {{-- ============================================================ --}}
 <div class="modal fade" id="runDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -1849,14 +2022,30 @@
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="max-height:75vh;overflow-y:auto">
-                <div id="runDetailBody">
-                    <div class="text-center py-5 text-muted">
-                        <div class="spinner-border text-primary"></div>
-                        <p class="mt-3">Loading…</p>
-                    </div>
-                </div>
+
+            {{-- Stat strip --}}
+            <div class="run-detail-stats" id="runDetailStats"></div>
+
+            {{-- Tab nav --}}
+            <div class="run-detail-tabs">
+                <button class="run-detail-tab active" data-tab="overview" onclick="runDetailTab('overview', this)">
+                    <i class="ri-dashboard-line me-1"></i>Overview
+                </button>
+                <button class="run-detail-tab" data-tab="classes" onclick="runDetailTab('classes', this)">
+                    <i class="ri-organization-chart me-1"></i>Classes
+                    <span class="run-detail-tab-badge" id="runDetailClassesBadge"></span>
+                </button>
+                <button class="run-detail-tab" data-tab="metadata" onclick="runDetailTab('metadata', this)">
+                    <i class="ri-information-line me-1"></i>Metadata
+                </button>
             </div>
+
+            <div class="modal-body" style="max-height:60vh;overflow-y:auto;padding-top:16px">
+                <div class="run-detail-pane" id="runDetailPane_overview"></div>
+                <div class="run-detail-pane" id="runDetailPane_classes" style="display:none"></div>
+                <div class="run-detail-pane" id="runDetailPane_metadata" style="display:none"></div>
+            </div>
+
             <div class="modal-footer">
                 <button class="btn btn-light" data-bs-dismiss="modal">Close</button>
                 <button class="btn btn-outline-info" onclick="compareRunWithAnother()">
@@ -1866,7 +2055,7 @@
                     <i class="ri-file-pdf-line me-1"></i>Export PDF
                 </button>
                 <button class="btn btn-warning" id="restoreRunBtn" onclick="openRestoreModal()">
-                    <i class="ri-restart-line me-1"></i>Restore to Live
+                    <i class="ri-restart-line me-1"></i>Restore to live
                 </button>
             </div>
         </div>
@@ -2094,6 +2283,7 @@ let taData = { teachers: [], unassigned: [] };
 let taRows = [];
 let previewState = null;
 let currentRun = null;
+let currentRunData = null;   // ✏️ CHANGED: added
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
 const subjectColorMap = {};
@@ -4667,12 +4857,22 @@ function lookupRunByCode() {
     showRunDetail(code);
 }
 
+// ============================================================================
+// ✏️ CHANGED: showRunDetail is now the tabbed version
+// ============================================================================
 async function showRunDetail(identifier) {
     const modal = new bootstrap.Modal(document.getElementById('runDetailModal'));
     document.getElementById('runDetailTitle').textContent = 'Loading…';
     document.getElementById('runDetailCode').textContent = '';
-    document.getElementById('runDetailBody').innerHTML =
+    document.getElementById('runDetailStats').innerHTML = '';
+    document.getElementById('runDetailPane_overview').innerHTML =
         '<div class="text-center py-5 text-muted"><div class="spinner-border text-primary"></div><p class="mt-3">Loading…</p></div>';
+    document.getElementById('runDetailPane_classes').innerHTML = '';
+    document.getElementById('runDetailPane_metadata').innerHTML = '';
+
+    // Reset to Overview tab.
+    runDetailTab('overview', document.querySelector('.run-detail-tab[data-tab="overview"]'));
+
     modal.show();
 
     try {
@@ -4680,61 +4880,174 @@ async function showRunDetail(identifier) {
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Failed.');
 
-        const r = data.run;
-        currentRun = r;
+        currentRunData = data;
+        currentRun = data.run;
 
-        document.getElementById('runDetailTitle').textContent = r.name;
-        document.getElementById('runDetailCode').textContent = `Run ${r.run_code} · ${r.session || '—'}${r.term ? ' · ' + r.term : ''} · ${r.created_at}`;
-
-        let html = `
-            <div class="row g-3 mb-3">
-                <div class="col-md-3">
-                    <div class="mini-strip"><div class="v">${r.class_count}</div><div class="l">Classes</div></div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mini-strip ok"><div class="v">${r.total_placed}</div><div class="l">Lessons placed</div></div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mini-strip"><div class="v">${escapeHtml(r.creator || '—')}</div><div class="l">Created by</div></div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mini-strip ${r.status === 'success' ? 'ok' : 'warn'}">
-                        <div class="v">${escapeHtml(r.status)}</div>
-                        <div class="l">Status</div>
-                    </div>
-                </div>
-            </div>`;
-
-        if (r.description) {
-            html += `<div class="alert alert-light mb-3" style="font-size:13px">
-                <strong>Description:</strong> ${escapeHtml(r.description)}
-            </div>`;
-        }
-
-        html += `<h6 class="mb-2 mt-4">Classes in this run (${data.classes.length})</h6>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead class="table-light">
-                        <tr><th>Class</th><th>Placed</th><th>Unplaced</th><th>Room Shortfall</th></tr>
-                    </thead>
-                    <tbody>
-                        ${data.classes.map(c => `
-                            <tr>
-                                <td>${escapeHtml(c.class_name)}</td>
-                                <td>${c.placed}</td>
-                                <td>${c.unplaced || '—'}</td>
-                                <td>${c.room_shortfall || '—'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>`;
-
-        document.getElementById('runDetailBody').innerHTML = html;
+        renderRunDetail(data);
     } catch (e) {
-        document.getElementById('runDetailBody').innerHTML =
+        document.getElementById('runDetailPane_overview').innerHTML =
             `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
     }
+}
+
+// ============================================================================
+// ✏️ CHANGED: new renderer functions for the tabbed Run Detail modal
+// ============================================================================
+function renderRunDetail(data) {
+    const r = data.run;
+
+    // Header
+    document.getElementById('runDetailTitle').textContent = r.name;
+    document.getElementById('runDetailCode').textContent =
+        `Run ${r.run_code} · ${r.session || '—'}${r.term ? ' · ' + r.term : ''} · ${r.created_at}`;
+
+    // Stat strip
+    const statusClass = r.status === 'success' ? 'ok' : r.status === 'reverted' ? 'bad' : 'warn';
+    const statusText  = r.status === 'success' ? 'Success' : r.status === 'reverted' ? 'Reverted' : 'Shortfalls';
+
+    document.getElementById('runDetailStats').innerHTML = `
+        <div class="run-detail-stat">
+            <div class="lbl">Classes</div>
+            <div class="val">${r.class_count}</div>
+        </div>
+        <div class="run-detail-stat ok">
+            <div class="lbl">Lessons placed</div>
+            <div class="val">${r.total_placed}</div>
+        </div>
+        <div class="run-detail-stat">
+            <div class="lbl">Created by</div>
+            <div class="val small">${escapeHtml(r.creator || '—')}</div>
+        </div>
+        <div class="run-detail-stat ${statusClass}">
+            <div class="lbl">Status</div>
+            <div class="val small">${statusText}</div>
+        </div>`;
+
+    // Overview pane
+    document.getElementById('runDetailPane_overview').innerHTML = `
+        <div class="run-overview-grid">
+            <div class="run-overview-section">
+                <h6>Run</h6>
+                <div class="run-kv"><span class="k">Name</span><span class="v">${escapeHtml(r.name)}</span></div>
+                <div class="run-kv"><span class="k">Code</span><span class="v mono">${escapeHtml(r.run_code)}</span></div>
+                <div class="run-kv"><span class="k">Session</span><span class="v">${escapeHtml(r.session || '—')}</span></div>
+                <div class="run-kv"><span class="k">Term</span><span class="v">${escapeHtml(r.term || 'All Terms')}</span></div>
+                <div class="run-kv"><span class="k">Seed</span><span class="v mono">${r.seed ?? '—'}</span></div>
+            </div>
+            <div class="run-overview-section">
+                <h6>Provenance</h6>
+                <div class="run-kv"><span class="k">Created by</span><span class="v">${escapeHtml(r.creator || '—')}</span></div>
+                <div class="run-kv"><span class="k">Created</span><span class="v">${escapeHtml(r.created_at)}</span></div>
+                <div class="run-kv"><span class="k">Status</span><span class="v">${statusText}</span></div>
+            </div>
+        </div>
+        ${r.description ? `
+        <div class="run-overview-section" style="margin-top:24px">
+            <h6>Description</h6>
+            <div style="font-size:13.5px;color:#334155;line-height:1.55">${escapeHtml(r.description)}</div>
+        </div>` : ''}`;
+
+    // Classes pane
+    renderRunClassesPane(data.classes);
+
+    // Metadata pane
+    renderRunMetadataPane(r);
+}
+
+function renderRunClassesPane(classes) {
+    const pane = document.getElementById('runDetailPane_classes');
+    const badge = document.getElementById('runDetailClassesBadge');
+    if (badge) badge.textContent = classes.length;
+
+    if (!classes.length) {
+        pane.innerHTML = '<div class="run-classes-empty"><i class="ri-inbox-line ri-3x d-block mb-2"></i>No classes in this run.</div>';
+        return;
+    }
+
+    // Sort by placed desc, so problem classes (0 placed) sink to the bottom
+    // and fully-populated classes rise to the top.
+    const sorted = [...classes].sort((a, b) => (b.placed || 0) - (a.placed || 0));
+
+    let html = `<table class="run-classes-table">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th class="num">Placed</th>
+                <th class="num">Empty</th>
+                <th class="num">Room issues</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    sorted.forEach(c => {
+        const placed = c.placed || 0;
+        const shortfall = c.room_shortfall || 0;
+
+        let statusLabel, statusClass;
+        if (placed === 0) {
+            statusLabel = 'Empty';
+            statusClass = 'empty';
+        } else if (shortfall > 0) {
+            statusLabel = 'Partial';
+            statusClass = 'partial';
+        } else {
+            statusLabel = 'Full';
+            statusClass = 'full';
+        }
+
+        const placedClass = placed === 0 ? 'stat-zero' : '';
+        const shortfallClass = shortfall === 0 ? 'stat-zero' : '';
+
+        html += `<tr>
+            <td class="class-name">${escapeHtml(c.class_name)}</td>
+            <td class="num ${placedClass}">${placed}</td>
+            <td class="num stat-zero">—</td>
+            <td class="num ${shortfallClass}">${shortfall || '—'}</td>
+            <td><span class="run-status-pill ${statusClass}">${statusLabel}</span></td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    pane.innerHTML = html;
+}
+
+function renderRunMetadataPane(r) {
+    const pane = document.getElementById('runDetailPane_metadata');
+
+    const metadata = {
+        wizard_input: r.wizard_input || null,
+        advanced_rules: r.advanced_rules || null,
+    };
+
+    pane.innerHTML = `
+        <div style="margin-bottom:12px;font-size:12.5px;color:#64748B">
+            <i class="ri-information-line me-1"></i>
+            The exact wizard inputs that produced this run. Useful when reproducing a specific layout.
+        </div>
+        <pre class="run-meta-pre">${syntaxHighlightJson(metadata)}</pre>`;
+}
+
+function syntaxHighlightJson(obj) {
+    const json = JSON.stringify(obj, null, 2);
+    return json
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"(\s*:)?/g, (match, content, colon) => {
+            if (colon) return `<span class="key">"${content}"</span>${colon}`;
+            return `<span class="str">"${content}"</span>`;
+        })
+        .replace(/\b(true|false)\b/g, '<span class="bool-t">$1</span>')
+        .replace(/\bnull\b/g, '<span class="null">null</span>')
+        .replace(/\b(-?\d+(?:\.\d+)?)\b/g, '<span class="num">$1</span>');
+}
+
+function runDetailTab(tabName, btn) {
+    document.querySelectorAll('.run-detail-tab').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    document.querySelectorAll('.run-detail-pane').forEach(p => p.style.display = 'none');
+    const pane = document.getElementById('runDetailPane_' + tabName);
+    if (pane) pane.style.display = '';
 }
 
 function copyRunCode(code) {
@@ -4774,14 +5087,75 @@ async function deleteSavedRun(runId, name) {
     }
 }
 
+// ============================================================================
+// ✏️ CHANGED: openSaveRunModal + saveGenerationRun (single-modal inline flow)
+// ============================================================================
 function openSaveRunModal() {
+    // Reset the modal to its input state every time it opens.
+    document.getElementById('saveRunInputView').style.display = '';
+    document.getElementById('saveRunSuccessView').style.display = 'none';
+
     const sessionOpt = document.querySelector('#wizSessionId option:checked');
     const defaultName = sessionOpt
         ? `Run — ${sessionOpt.textContent.trim()} (${new Date().toLocaleDateString()})`
         : `Run — ${new Date().toLocaleString()}`;
     document.getElementById('saveRunName').value = defaultName;
     document.getElementById('saveRunDescription').value = '';
+
+    // Populate the "will save" preview from the wizard's current state.
+    renderSaveRunPreview();
+
     new bootstrap.Modal(document.getElementById('saveRunModal')).show();
+}
+
+function renderSaveRunPreview() {
+    const preview = document.getElementById('saveRunPreview');
+    if (!preview) return;
+
+    // Count classes and lessons in scope from the loaded wizard state.
+    const scope    = document.getElementById('wizScope').value;
+    const classIds = scope === 'selected'
+        ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
+        : null;
+
+    const effectiveIds = classIds ?? [...document.getElementById('wizClassIds').options].map(o => parseInt(o.value));
+
+    let classCount = 0;
+    let lessonCount = 0;
+    let shortfallCount = 0;
+
+    if (Object.keys(wizardSubjectsState).length) {
+        Object.entries(wizardSubjectsState).forEach(([classId, info]) => {
+            if (scope === 'selected' && !classIds.includes(parseInt(classId))) return;
+            classCount++;
+        });
+    }
+
+    // Try to pull the actual generated counts from the last preview run.
+    const stats = previewState?.stats;
+    if (stats) {
+        lessonCount    = stats.placed ?? 0;
+        shortfallCount = stats.room_shortfall_count ?? 0;
+    }
+
+    // Class count falls back to the current scope count.
+    if (!classCount) classCount = effectiveIds.length;
+
+    const sessionText = document.querySelector('#wizSessionId option:checked')?.textContent.trim() || '—';
+    const termText    = document.querySelector('#wizTermId option:checked')?.textContent.trim()  || 'All Terms';
+
+    let html = '';
+    html += `<div class="save-run-preview-row"><span class="k">Session</span><span class="v">${escapeHtml(sessionText)}</span></div>`;
+    html += `<div class="save-run-preview-row"><span class="k">Term</span><span class="v">${escapeHtml(termText)}</span></div>`;
+    html += `<div class="save-run-preview-row"><span class="k">Classes</span><span class="v">${classCount}</span></div>`;
+    if (lessonCount) {
+        html += `<div class="save-run-preview-row"><span class="k">Lessons placed</span><span class="v">${lessonCount}</span></div>`;
+    }
+    if (shortfallCount) {
+        html += `<div class="save-run-preview-row"><span class="k">Room shortfalls</span><span class="v warn">${shortfallCount}</span></div>`;
+    }
+
+    preview.innerHTML = html;
 }
 
 async function saveGenerationRun() {
@@ -4803,47 +5177,114 @@ async function saveGenerationRun() {
         term_id:         document.getElementById('wizTermId').value || null,
         schoolclass_ids: classIds,
         wizard_input: {
-            scope:          scope,
-            class_ids:      classIds,
-            day_start:      document.getElementById('wizDayStart').value,
-            day_end:        document.getElementById('wizDayEnd').value,
+            scope:           scope,
+            class_ids:       classIds,
+            day_start:       document.getElementById('wizDayStart').value,
+            day_end:         document.getElementById('wizDayEnd').value,
             lessons_per_day: parseInt(document.getElementById('wizLessonsPerDay').value),
-            period_minutes: parseInt(document.getElementById('wizPeriodDuration').value),
-            active_days:    [...document.querySelectorAll('.wiz-active-day:checked')].map(cb => cb.value),
-            include_rooms:  document.getElementById('wizIncludeRooms').checked,
+            period_minutes:  parseInt(document.getElementById('wizPeriodDuration').value),
+            active_days:     [...document.querySelectorAll('.wiz-active-day:checked')].map(cb => cb.value),
+            include_rooms:   document.getElementById('wizIncludeRooms').checked,
         },
         advanced_rules:  collectWizardAdvancedRules(),
     };
 
-    showLoader();
+    // Disable the button so double-tap doesn't fire two saves.
+    const btn = document.getElementById('saveRunBtn');
+    const originalBtnHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
+
     try {
         const res  = await apiFetch(ROUTES.runsSave, 'POST', payload);
         const data = await res.json();
-        hideLoader();
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('saveRunModal')).hide();
 
-            AppleAlert.rich({
-                title: 'Run saved',
-                html: `<p>Use this 10-character code to find it later:</p>
-                       <div class="apple-alert-code-block">${escapeHtml(data.run_code)}</div>
-                       <p style="margin-top:14px;font-size:12px;color:#94A3B8">Write it down, or copy it from the button below.</p>`,
-                icon: 'success',
-                confirmText: 'Copy code',
-                showCancelButton: true,
-                cancelText: 'Done',
-                theme: 'success',
-                width: 420,
-            }).then(result => {
-                if (result.isConfirmed) copyRunCode(data.run_code);
-                loadSavedRuns();
-            });
+        if (data.success) {
+            showSaveRunSuccess(data);
         } else {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
             AppleAlert.error('Save failed', data.message || 'Please try again.');
         }
     } catch (e) {
-        hideLoader();
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
         AppleAlert.error('Save failed', e.message);
+    }
+}
+
+function showSaveRunSuccess(data) {
+    // Swap views inside the same modal.
+    document.getElementById('saveRunInputView').style.display = 'none';
+    document.getElementById('saveRunSuccessView').style.display = '';
+
+    document.getElementById('savedRunCode').textContent = data.run_code;
+
+    const sessionText = document.querySelector('#wizSessionId option:checked')?.textContent.trim() || '—';
+    const termText    = document.querySelector('#wizTermId option:checked')?.textContent.trim()  || 'All Terms';
+    const classNameCount = (function () {
+        const scope = document.getElementById('wizScope').value;
+        const classIds = scope === 'selected'
+            ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
+            : null;
+        return classIds ? classIds.length : document.getElementById('wizClassIds').options.length;
+    })();
+
+    document.getElementById('savedRunMeta').innerHTML =
+        `${classNameCount} class${classNameCount === 1 ? '' : 'es'} · ${escapeHtml(sessionText)}` +
+        `${termText !== 'All Terms' ? ' · ' + escapeHtml(termText) : ''} · saved just now`;
+
+    // Reset the copy button state.
+    const copyBtn = document.getElementById('savedRunCopyBtn');
+    copyBtn.classList.remove('copied');
+    copyBtn.innerHTML = '<i class="ri-file-copy-line"></i>';
+
+    // Re-enable the save button for the next time this modal opens.
+    const btn = document.getElementById('saveRunBtn');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-save-line me-1"></i>Save run';
+}
+
+function copySavedRunCode() {
+    const code = document.getElementById('savedRunCode').textContent.trim();
+    if (!code || code === '—') return;
+
+    const doDone = () => {
+        const copyBtn = document.getElementById('savedRunCopyBtn');
+        copyBtn.classList.add('copied');
+        copyBtn.innerHTML = '<i class="ri-check-line"></i>';
+        AppleAlert.copied('Run code copied');
+        setTimeout(() => {
+            copyBtn.classList.remove('copied');
+            copyBtn.innerHTML = '<i class="ri-file-copy-line"></i>';
+        }, 1600);
+    };
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(doDone).catch(() => fallbackCopy(code, doDone));
+    } else {
+        fallbackCopy(code, doDone);
+    }
+}
+
+function fallbackCopy(text, onDone) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); if (onDone) onDone(); } catch (e) {}
+    document.body.removeChild(ta);
+}
+
+function closeSaveRunAndBrowse() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('saveRunModal'));
+    if (modal) modal.hide();
+
+    // Jump to the Saved Runs tab and refresh the list so the new run shows.
+    const tabBtn = document.getElementById('tabSavedRunsBtn');
+    if (tabBtn) {
+        new bootstrap.Tab(tabBtn).show();
+        loadSavedRuns();
     }
 }
 
