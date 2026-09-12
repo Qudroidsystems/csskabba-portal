@@ -1171,7 +1171,6 @@
       </div>
       <div class="modal-body" style="max-height:70vh;overflow-y:auto">
 
-        {{-- Form pane --}}
         <div id="wizFormContent">
         <p class="text-muted" style="font-size:13px">Set up the day structure for many classes at once, then optionally auto-generate timetables for all of them.</p>
 
@@ -1524,13 +1523,11 @@
 
         </div><!-- /wizFormContent -->
 
-        {{-- Generation progress pane --}}
         <div id="wizGenerationProgress" style="display:none">
           <h6 class="mb-3"><i class="ri-magic-line me-2"></i>Generating Timetables…</h6>
           <div id="wizProgressList" style="max-height:320px;overflow-y:auto"></div>
         </div>
 
-        {{-- Preview pane --}}
         <div id="wizPreviewPane" style="display:none">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <h6 class="mb-0">
@@ -1880,7 +1877,7 @@
 </div>
 
 {{-- ============================================================ --}}
-{{-- QUICK MAP ROOM MODAL (used from wizard subject rows)         --}}
+{{-- QUICK MAP ROOM MODAL                                         --}}
 {{-- ============================================================ --}}
 <div class="modal fade" id="quickMapRoomModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1928,7 +1925,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-{{-- CONTINUES IN MESSAGE 4 --}}
+
+@include('partials.apple-alert')
+
 <script>
 // ============================================================================
 // GLOBALS
@@ -2032,10 +2031,8 @@ function apiFetch(endpoint, method = 'GET', body = null) {
     return fetch(endpoint, opts);
 }
 
-function showLoader() {
-    Swal.fire({ title: 'Processing…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
-}
-function hideLoader() { Swal.close(); }
+function showLoader() { AppleAlert.loading('Processing…'); }
+function hideLoader() { AppleAlert.close(); }
 
 function showTab(tabId, btn) {
     document.querySelectorAll('.tab-content-pane').forEach(p => p.style.display = 'none');
@@ -2210,13 +2207,12 @@ async function bulkDeleteSelectedSettings() {
     const ids = [...selectedSettingIds];
     if (!ids.length) return;
 
-    const result = await Swal.fire({
-        title: `Delete ${ids.length} Timetable${ids.length > 1 ? 's' : ''}?`,
-        text: 'This will permanently delete the selected timetables and all their slots.',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#DC2626', confirmButtonText: `Yes, delete ${ids.length}!`,
-    });
-    if (!result.isConfirmed) return;
+    const ok = await AppleAlert.destructive(
+        `Delete ${ids.length} timetable${ids.length > 1 ? 's' : ''}?`,
+        'Every slot in the selected timetables will be permanently removed. This can\'t be undone.',
+        { confirmText: 'Delete all' }
+    );
+    if (!ok.isConfirmed) return;
 
     showLoader();
     const outcomes = await Promise.all(ids.map(async (id) => {
@@ -2237,9 +2233,12 @@ async function bulkDeleteSelectedSettings() {
     const successCount = outcomes.length - failedCount;
 
     if (!failedCount) {
-        Swal.fire({ icon: 'success', title: 'Deleted!', text: `${successCount} timetable(s) removed.`, timer: 1800, showConfirmButton: false });
+        AppleAlert.deleted(`${successCount} timetable(s) removed`);
     } else {
-        Swal.fire('Partially Completed', `${successCount} deleted, ${failedCount} failed (possibly changed or already removed by someone else). Reloading list…`, 'warning');
+        AppleAlert.warning(
+            'Partially completed',
+            `${successCount} deleted, ${failedCount} failed (possibly changed or already removed by someone else). Reloading list…`
+        );
     }
     setTimeout(() => location.reload(), 1800);
 }
@@ -2251,7 +2250,7 @@ async function loadOrCreateSetting() {
     const classId   = document.getElementById('classSelect').value;
     const sessionId = document.getElementById('sessionSelect').value;
     const termId    = document.getElementById('termSelect').value || null;
-    if (!classId || !sessionId) return Swal.fire('Required', 'Please select Class and Session.', 'warning');
+    if (!classId || !sessionId) return AppleAlert.warning('Required', 'Please select a Class and a Session.');
 
     showLoader();
     try {
@@ -2261,11 +2260,11 @@ async function loadOrCreateSetting() {
             await loadSetting(data.setting_id);
         } else {
             hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
+            AppleAlert.error('Could not load timetable', data.message || 'Please try again.');
         }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not load timetable', e.message);
     }
 }
 
@@ -2276,7 +2275,7 @@ async function loadSetting(settingId) {
         const data = await res.json();
         if (!data.success) {
             hideLoader();
-            Swal.fire('Error', 'Failed to load timetable: ' + (data.message || 'Failed to load'), 'error');
+            AppleAlert.error('Could not load timetable', data.message || 'Please try again.');
             return;
         }
 
@@ -2327,7 +2326,7 @@ async function loadSetting(settingId) {
 
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', 'Failed to load timetable: ' + e.message, 'error');
+        AppleAlert.error('Could not load timetable', e.message);
     }
 }
 
@@ -2401,8 +2400,8 @@ function getPeriodsFromTable() {
 async function saveSettings() {
     const periods    = getPeriodsFromTable();
     const activeDays = [...document.querySelectorAll('.active-day-checkbox:checked')].map(cb => cb.value);
-    if (!periods.length)    return Swal.fire('Error', 'Add at least one period.', 'error');
-    if (!activeDays.length) return Swal.fire('Error', 'Select at least one active day.', 'error');
+    if (!periods.length)    return AppleAlert.warning('Missing periods', 'Add at least one period.');
+    if (!activeDays.length) return AppleAlert.warning('Missing days', 'Select at least one active day.');
 
     showLoader();
     try {
@@ -2420,18 +2419,18 @@ async function saveSettings() {
         if (data.success) {
             currentSettingVersion = data.setting.updated_at;
             hideLoader();
-            Swal.fire({ icon:'success', title:'Saved!', timer:1600, showConfirmButton:false });
+            AppleAlert.saved('Settings saved');
             await loadSetting(currentSettingId);
         } else if (data.has_version_conflict) {
             hideLoader();
             handleVersionConflict(data);
         } else {
             hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
+            AppleAlert.error('Save failed', data.message || 'Please try again.');
         }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Save failed', e.message);
     }
 }
 
@@ -2493,7 +2492,7 @@ function getConstraintsFromTable() {
 
 async function saveConstraints() {
     const constraints = getConstraintsFromTable();
-    if (!constraints.length) return Swal.fire('Error', 'No constraints to save.', 'error');
+    if (!constraints.length) return AppleAlert.warning('Nothing to save', 'No constraint rows to save.');
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.saveConstraints, 'POST', { setting_id: currentSettingId, expected_updated_at: currentSettingVersion, constraints });
@@ -2501,17 +2500,17 @@ async function saveConstraints() {
         if (data.success) {
             currentSettingVersion = data.updated_at;
             hideLoader();
-            Swal.fire({ icon:'success', title:'Saved!', timer:1400, showConfirmButton:false });
+            AppleAlert.saved('Constraints saved');
         } else if (data.has_version_conflict) {
             hideLoader();
             handleVersionConflict(data);
         } else {
             hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
+            AppleAlert.error('Save failed', data.message || 'Please try again.');
         }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Save failed', e.message);
     }
 }
 
@@ -2519,18 +2518,19 @@ async function saveConstraints() {
 // AUTO-GENERATE (single class)
 // ============================================================================
 async function generateTimetable() {
-    const result = await Swal.fire({
-        title: 'Auto-Generate Timetable?',
+    const result = await AppleAlert.rich({
+        title: 'Auto-generate this timetable?',
         html: `
-            <div style="text-align:left;font-size:14px">
-                <p>This will <strong>clear the existing timetable</strong> and generate a new one based on your constraints. The generator respects teacher assignments across all classes.</p>
-                <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer">
-                    <input type="checkbox" id="swalIncludeRooms" checked style="width:16px;height:16px">
-                    <span>Automatically assign available rooms (no double-bookings)</span>
-                </label>
-            </div>`,
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#1565C0', confirmButtonText: 'Yes, generate!',
+            <p>The existing timetable will be cleared and rebuilt from your constraints. Teacher assignments are respected across all classes.</p>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;justify-content:flex-start">
+                <input type="checkbox" id="swalIncludeRooms" checked style="width:16px;height:16px">
+                <span>Automatically assign available rooms</span>
+            </label>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmText: 'Generate',
+        theme: 'primary',
+        width: 480,
         preConfirm: () => ({ includeRooms: document.getElementById('swalIncludeRooms')?.checked ?? true }),
     });
     if (!result.isConfirmed) return;
@@ -2564,22 +2564,29 @@ async function generateTimetable() {
                 ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-close-circle-line"></i> ${data.stats.room_refused_count} candidate placement(s) skipped — no mapped room and strict mode is on refuse.</p>`
                 : '';
             const needsAttention = !!(shortfall || unplaced || noRoom || refused);
-            Swal.fire({
-                icon: 'success', title: 'Generated!',
-                html: `Timetable built successfully.${shortfall}${unplaced}${noRoom}${refused}`,
-                timer: needsAttention ? undefined : 1800,
-                showConfirmButton: needsAttention,
-            });
+
+            if (needsAttention) {
+                AppleAlert.rich({
+                    title: 'Timetable generated',
+                    html: `<p>Built successfully, but with some caveats:</p>${shortfall}${unplaced}${noRoom}${refused}`,
+                    icon: 'warning',
+                    confirmText: 'Got it',
+                    theme: 'warning',
+                    width: 480,
+                });
+            } else {
+                AppleAlert.toast('Timetable generated', 'success');
+            }
         } else if (data.has_version_conflict) {
             hideLoader();
             handleVersionConflict(data);
         } else {
             hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
+            AppleAlert.error('Generation failed', data.message || 'Please try again.');
         }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Generation failed', e.message);
     }
 }
 
@@ -2626,10 +2633,6 @@ async function loadTimetableGridAnimated() {
     }
 }
 
-/**
- * Parameterised grid renderer.
- * Callers with no explicit options fall back to module globals.
- */
 function renderGrid(options = {}) {
     const animate   = !!options.animate;
     const container = document.getElementById(options.containerId || 'timetableGridContainer');
@@ -3048,7 +3051,7 @@ async function saveSlot() {
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             await loadTimetableGrid();
             silentConflictCheck();
-            Swal.fire({ icon:'success', title:'Saved!', timer:1200, showConfirmButton:false });
+            AppleAlert.saved('Slot saved');
             return;
         }
 
@@ -3063,52 +3066,36 @@ async function saveSlot() {
 
             const isRoomConflict = (result.conflict_type || '').startsWith('room');
             const icon           = isRoomConflict ? '🏫' : '⚠️';
-            const title          = isRoomConflict ? 'Room Already In Use' : 'Teacher Conflict Detected';
+            const title          = isRoomConflict ? 'Room already in use' : 'Teacher conflict detected';
 
             let altsHtml = '';
             if (result.alternatives?.length) {
-                altsHtml += `<div class="mt-3 text-start">
-                    <div class="fw-semibold mb-2" style="font-size:13px">
-                        <i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:
-                    </div>
-                    <div class="d-flex flex-wrap gap-1">
-                        ${result.alternatives.slice(0, 5).map(a =>
-                            `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px">
-                                📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
-                            </span>`
-                        ).join('')}
-                    </div></div>`;
+                altsHtml += `<p style="margin:12px 0 6px;font-size:12px;font-weight:600;color:#0F172A;text-align:left">Available alternative slots</p>
+                    <div class="apple-alert-badge-row" style="justify-content:flex-start">`
+                    + result.alternatives.slice(0, 5).map(a =>
+                        `<span class="apple-alert-badge">📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)}</span>`
+                    ).join('') + '</div>';
             }
             if (result.alternative_rooms?.length) {
-                altsHtml += `<div class="mt-2 text-start">
-                    <div class="fw-semibold mb-2" style="font-size:13px">
-                        <i class="ri-door-line text-info me-1"></i>Available alternative rooms:
-                    </div>
-                    <div class="d-flex flex-wrap gap-1">
-                        ${result.alternative_rooms.slice(0, 4).map(r =>
-                            `<span class="badge p-2" style="background:#EFF6FF;color:#1565C0;font-size:11px;cursor:pointer"
-                                onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">
-                                🏫 ${escapeHtml(r.label)}
-                            </span>`
-                        ).join('')}
-                    </div></div>`;
+                altsHtml += `<p style="margin:12px 0 6px;font-size:12px;font-weight:600;color:#0F172A;text-align:left">Available alternative rooms</p>
+                    <div class="apple-alert-badge-row" style="justify-content:flex-start">`
+                    + result.alternative_rooms.slice(0, 4).map(r =>
+                        `<span class="apple-alert-badge interactive" onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">🏫 ${escapeHtml(r.label)}</span>`
+                    ).join('') + '</div>';
             }
 
-            const { isConfirmed } = await Swal.fire({
+            const confirmed = await AppleAlert.rich({
                 title: `${icon} ${title}`,
-                html: `<div style="font-size:14px;text-align:left">
-                    <p class="mb-2">${escapeHtml(result.message)}</p>
-                    ${altsHtml}
-                    <hr class="my-3">
-                    <p class="text-muted mb-0" style="font-size:12px">Override to save anyway, or cancel to choose differently.</p>
-                </div>`,
-                icon: 'warning', showCancelButton: true,
-                confirmButtonColor: '#DC2626', cancelButtonColor: '#6B7280',
-                confirmButtonText: '<i class="ri-save-line me-1"></i>Override & Save',
-                cancelButtonText:  'Cancel', width: 520,
+                html: `<p style="text-align:left">${escapeHtml(result.message)}</p>${altsHtml}
+                       <p style="margin-top:14px;font-size:12px;color:#94A3B8;text-align:left">Override to save anyway, or cancel to pick something else.</p>`,
+                showCancelButton: true,
+                confirmText: 'Override & Save',
+                cancelText: 'Cancel',
+                theme: 'destructive',
+                width: 520,
             });
 
-            if (!isConfirmed) return;
+            if (!confirmed.isConfirmed) return;
 
             showLoader();
             const res2    = await apiFetch(ROUTES.saveSlot, 'POST', { ...payload, force_save: true });
@@ -3119,23 +3106,23 @@ async function saveSlot() {
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 await loadTimetableGrid();
                 silentConflictCheck();
-                Swal.fire({ icon:'success', title:'Saved (Override)!', timer:1400, showConfirmButton:false });
+                AppleAlert.saved('Slot saved (override)');
             } else if (result2.has_version_conflict) {
                 hideLoader();
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 return handleVersionConflict(result2);
             } else {
                 hideLoader();
-                Swal.fire('Error', result2.message || 'Save failed', 'error');
+                AppleAlert.error('Save failed', result2.message || 'Please try again.');
             }
             return;
         }
 
         hideLoader();
-        Swal.fire('Error', result.message || 'Save failed', 'error');
+        AppleAlert.error('Save failed', result.message || 'Please try again.');
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Save failed', e.message);
     }
 }
 
@@ -3150,7 +3137,7 @@ async function checkConflicts() {
         const data = await res.json();
         if (!data.success) {
             hideLoader();
-            Swal.fire('Error', data.message || 'Failed', 'error');
+            AppleAlert.error('Check failed', data.message || 'Please try again.');
             return;
         }
 
@@ -3181,7 +3168,7 @@ async function checkConflicts() {
         hideLoader();
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Check failed', e.message);
     }
 }
 
@@ -3197,7 +3184,7 @@ function openConflictScopeModal() {
 async function runScopeConflictCheck() {
     const sessionId = document.getElementById('ccSessionId').value;
     const termId    = document.getElementById('ccTermId').value;
-    if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
+    if (!sessionId) return AppleAlert.warning('Required', 'Please select a session.');
 
     const container = document.getElementById('conflictScopeResults');
     container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger"></div><p class="mt-3 text-muted">Scanning all classes…</p></div>';
@@ -3293,26 +3280,30 @@ function switchToGridAndOpen(periodId, day) {
 // NOTIFICATIONS / EXPORT / DELETE / CLONE
 // ============================================================================
 async function sendNotifications() {
-    const result = await Swal.fire({
-        title: 'Send Notifications', text: 'Send timetable notifications to all assigned teachers?',
-        icon: 'question', showCancelButton: true, confirmButtonColor: '#1565C0', confirmButtonText: 'Yes, send!',
-    });
-    if (!result.isConfirmed) return;
+    const ok = await AppleAlert.confirm(
+        'Send notifications?',
+        'Every teacher assigned to this timetable will receive an email.'
+    );
+    if (!ok.isConfirmed) return;
+
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.sendNotifications, 'POST', { setting_id: currentSettingId, type: 'weekly_preview' });
         const data = await res.json();
         hideLoader();
-        if (data.success) Swal.fire({ icon:'success', title:'Sent!', text: data.message, timer:2000, showConfirmButton:false });
-        else Swal.fire('Error', data.message || 'Failed', 'error');
+        if (data.success) {
+            AppleAlert.saved(data.message || 'Notifications sent');
+        } else {
+            AppleAlert.error('Could not send', data.message || 'Please try again.');
+        }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not send', e.message);
     }
 }
 
 function exportTimetable(format) {
-    if (!currentSettingId) return Swal.fire('Error', 'No timetable loaded.', 'error');
+    if (!currentSettingId) return AppleAlert.error('No timetable loaded');
     const orientation = document.getElementById('exportOrientation')?.value || 'horizontal';
     const paper       = document.getElementById('exportPaper')?.value       || 'a3';
     const exportUrl   = url(ROUTES.export, currentSettingId)
@@ -3344,7 +3335,7 @@ function exportWholeSchoolTimetable(type = 'pdf') {
     const paper       = document.getElementById('wholeSchoolPaper').value;
     const mode        = document.getElementById('wholeSchoolMode').value;
 
-    if (!sessionId) return Swal.fire('Error', 'Please select a session.', 'error');
+    if (!sessionId) return AppleAlert.warning('Required', 'Please select a session.');
 
     const base = mode === 'merged'
         ? (type === 'web' ? ROUTES.mergedGridWeb : ROUTES.exportMergedGrid)
@@ -3359,28 +3350,33 @@ function exportWholeSchoolTimetable(type = 'pdf') {
 }
 
 async function deleteSetting(settingId, updatedAt) {
-    const result = await Swal.fire({
-        title: 'Delete Timetable?', text: 'This will permanently delete this timetable and all its slots.',
-        icon: 'warning', showCancelButton: true, confirmButtonColor: '#DC2626', confirmButtonText: 'Yes, delete!',
-    });
-    if (!result.isConfirmed) return;
+    const ok = await AppleAlert.confirmDelete(
+        'Delete this timetable?',
+        'Every slot in this timetable will be permanently removed.'
+    );
+    if (!ok) return;
+
     showLoader();
     try {
         const res  = await apiFetch(url(ROUTES.deleteSetting, settingId), 'DELETE', { expected_updated_at: updatedAt });
         const data = await res.json();
         hideLoader();
         if (data.success) {
-            Swal.fire({ icon:'success', title:'Deleted!', timer:1400, showConfirmButton:false });
-            setTimeout(() => location.reload(), 1400);
+            AppleAlert.deleted('Timetable deleted');
+            setTimeout(() => location.reload(), 900);
         } else if (data.has_version_conflict) {
-            await Swal.fire({ title: 'Changed since you last saw it', text: data.message, icon: 'warning', confirmButtonText: 'Reload List' });
-            location.reload();
+            const r = await AppleAlert.confirm(
+                'Changed since you last saw it',
+                data.message + '  Reload the list?',
+                { confirmText: 'Reload' }
+            );
+            if (r.isConfirmed) location.reload();
         } else {
-            Swal.fire('Error', data.message || 'Failed', 'error');
+            AppleAlert.error('Could not delete', data.message || 'Please try again.');
         }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not delete', e.message);
     }
 }
 
@@ -3407,16 +3403,17 @@ async function confirmClone(force = false) {
 
         if (data.success) {
             pendingCloneId = null;
-            Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false });
-            setTimeout(() => location.reload(), 1400);
+            AppleAlert.saved('Timetable cloned');
+            setTimeout(() => location.reload(), 900);
             return;
         }
 
         if (data.is_being_edited) {
-            const confirmResult = await Swal.fire({
-                title: 'Being Edited', text: data.message, icon: 'warning',
-                showCancelButton: true, confirmButtonText: 'Clone Anyway', confirmButtonColor: '#DC2626',
-            });
+            const confirmResult = await AppleAlert.confirm(
+                'Being edited',
+                data.message,
+                { confirmText: 'Clone anyway' }
+            );
             if (confirmResult.isConfirmed) {
                 pendingCloneId = settingId;
                 return confirmClone(true);
@@ -3426,11 +3423,11 @@ async function confirmClone(force = false) {
         }
 
         pendingCloneId = null;
-        Swal.fire('Error', data.message || 'Failed', 'error');
+        AppleAlert.error('Clone failed', data.message || 'Please try again.');
     } catch (e) {
         hideLoader();
         pendingCloneId = null;
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Clone failed', e.message);
     }
 }
 
@@ -3555,7 +3552,7 @@ let wizardSubjectsState = {};
 async function loadWizardSubjects() {
     const sessionId = document.getElementById('wizSessionId').value;
     const termId    = document.getElementById('wizTermId').value;
-    if (!sessionId) return Swal.fire('Required', 'Please select a session first.', 'warning');
+    if (!sessionId) return AppleAlert.warning('Required', 'Please select a session first.');
 
     const scope = document.getElementById('wizScope').value;
     const classIds = scope === 'selected'
@@ -3563,14 +3560,14 @@ async function loadWizardSubjects() {
         : null;
 
     if (scope === 'selected' && (!classIds || !classIds.length)) {
-        return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
+        return AppleAlert.warning('Required', 'Select at least one class, or switch scope to "All Classes".');
     }
 
     const effectiveClassIds = classIds ?? [...document.getElementById('wizClassIds').options]
         .map(o => parseInt(o.value));
 
     if (!effectiveClassIds.length) {
-        return Swal.fire('No Classes', 'No classes available in this scope.', 'warning');
+        return AppleAlert.warning('No classes', 'No classes available in this scope.');
     }
 
     const panel = document.getElementById('wizSubjectsPanel');
@@ -3816,9 +3813,9 @@ async function saveBulkRoomMapping(classId, subjectId) {
     const sessionId = document.getElementById('wizSessionId').value;
     const termId    = document.getElementById('wizTermId').value || null;
 
-    if (!sessionId) return Swal.fire('Required', 'Select a session first.', 'warning');
+    if (!sessionId) return AppleAlert.warning('Required', 'Select a session first.');
 
-    Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    AppleAlert.loading('Saving mappings…');
 
     let added = 0, skipped = 0, failed = 0;
     for (const roomId of selectedRoomIds) {
@@ -3847,19 +3844,17 @@ async function saveBulkRoomMapping(classId, subjectId) {
         }
     }
 
-    Swal.close();
+    AppleAlert.close();
 
     let msg = `${added} new mapping(s) added.`;
     if (skipped) msg += ` ${skipped} already existed.`;
     if (failed)  msg += ` ${failed} failed.`;
 
-    Swal.fire({
-        icon: failed ? 'warning' : 'success',
-        title: 'Mappings saved',
-        text: msg,
-        timer: failed ? undefined : 1600,
-        showConfirmButton: !!failed,
-    });
+    if (failed) {
+        AppleAlert.warning('Mappings saved with errors', msg);
+    } else {
+        AppleAlert.toast(msg, 'success', 2400);
+    }
 
     if (added > 0) loadWizardSubjects();
 }
@@ -3902,7 +3897,7 @@ async function openQuickMapRoom(classId, subjectId, subjectName, className) {
 
         new bootstrap.Modal(document.getElementById('quickMapRoomModal')).show();
     } catch (e) {
-        Swal.fire('Error', 'Failed to load rooms: ' + e.message, 'error');
+        AppleAlert.error('Could not load rooms', e.message);
     }
 }
 
@@ -3914,7 +3909,7 @@ async function submitQuickMapRoom() {
     const termId    = document.getElementById('quickMapTermId').value;
 
     if (!roomId || !sessionId) {
-        return Swal.fire('Required', 'Pick a room and a session.', 'warning');
+        return AppleAlert.warning('Missing fields', 'Pick a room and a session.');
     }
 
     try {
@@ -3936,13 +3931,13 @@ async function submitQuickMapRoom() {
         const data = await res.json();
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('quickMapRoomModal')).hide();
-            Swal.fire({ icon: 'success', title: 'Mapping added', timer: 1400, showConfirmButton: false });
+            AppleAlert.saved('Mapping added');
             loadWizardSubjects();
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Could not add mapping', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not add mapping', e.message);
     }
 }
 
@@ -4113,7 +4108,7 @@ function collectWizardPriorityPayload() {
 // ============================================================================
 async function previewGeneration() {
     const sessionId = document.getElementById('wizSessionId').value;
-    if (!sessionId) return Swal.fire('Required', 'Please select a session first.', 'warning');
+    if (!sessionId) return AppleAlert.warning('Required', 'Please select a session first.');
 
     const scope    = document.getElementById('wizScope').value;
     const classIds = scope === 'selected'
@@ -4121,13 +4116,13 @@ async function previewGeneration() {
         : null;
 
     if (scope === 'selected' && (!classIds || !classIds.length)) {
-        return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
+        return AppleAlert.warning('Required', 'Select at least one class, or switch scope to "All Classes".');
     }
 
     const effectiveClassIds = classIds ?? [...document.getElementById('wizClassIds').options]
         .map(o => parseInt(o.value));
     if (!effectiveClassIds.length) {
-        return Swal.fire('No Classes', 'No classes available in this scope.', 'warning');
+        return AppleAlert.warning('No classes', 'No classes available in this scope.');
     }
     const previewClassId = effectiveClassIds[0];
 
@@ -4146,7 +4141,7 @@ async function previewGeneration() {
     });
     const settingData = await settingRes.json();
     if (!settingData.success) {
-        return Swal.fire('Error', settingData.message || 'Failed to prepare preview.', 'error');
+        return AppleAlert.error('Could not prepare preview', settingData.message || 'Please try again.');
     }
 
     document.getElementById('wizFormContent').style.display = 'none';
@@ -4254,15 +4249,15 @@ async function acceptPreviewAndApply() {
 // ============================================================================
 async function submitGenerationWizard(alsoGenerate) {
     const sessionId = document.getElementById('wizSessionId').value;
-    if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
+    if (!sessionId) return AppleAlert.warning('Required', 'Please select a session.');
     const activeDays = [...document.querySelectorAll('.wiz-active-day:checked')].map(cb => cb.value);
-    if (!activeDays.length) return Swal.fire('Required', 'Select at least one active day.', 'warning');
+    if (!activeDays.length) return AppleAlert.warning('Required', 'Select at least one active day.');
     const scope    = document.getElementById('wizScope').value;
     const classIds = scope === 'selected'
         ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
         : null;
     if (scope === 'selected' && !classIds.length) {
-        return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
+        return AppleAlert.warning('Required', 'Select at least one class, or switch scope to "All Classes".');
     }
     const includeRooms = document.getElementById('wizIncludeRooms')?.checked ?? true;
 
@@ -4302,9 +4297,12 @@ async function submitGenerationWizard(alsoGenerate) {
         if (!alsoGenerate) {
             hideLoader();
             bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
-            Swal.fire({
-                icon: 'success', title: 'Structure Applied',
+            AppleAlert.rich({
+                title: 'Structure applied',
                 html: `Applied to <strong>${data.applied_to}</strong> class(es).${summaryHtml}`,
+                icon: 'success',
+                confirmText: 'OK',
+                theme: 'success',
             }).then(() => location.reload());
             return;
         }
@@ -4324,14 +4322,24 @@ async function submitGenerationWizard(alsoGenerate) {
             const shortfallNote = genData.had_shortfalls
                 ? '<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed.</p>'
                 : '';
-            Swal.fire({
-                icon: 'success', title: 'Generated!',
+            AppleAlert.rich({
+                title: 'Generated!',
                 html: `Generated timetables for <strong>${genData.classes.length}</strong> class(es).${summaryHtml}${conflictNote}${shortfallNote}`,
+                icon: 'success',
+                confirmText: 'OK',
+                theme: 'success',
+                width: 480,
             }).then(() => location.reload());
         } else if (genData.has_locked) {
-            const confirmResult = await Swal.fire({
-                title: 'Some Timetables Are Locked', text: genData.message + ' Unpublish and regenerate anyway?',
-                icon: 'warning', showCancelButton: true, confirmButtonColor: '#DC2626', confirmButtonText: 'Unpublish & Generate',
+            const confirmResult = await AppleAlert.rich({
+                title: 'Some timetables are locked',
+                html: `${escapeHtml(genData.message)}<p style="margin-top:10px">Unpublish and regenerate anyway?</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmText: 'Unpublish & generate',
+                cancelText: 'Cancel',
+                theme: 'destructive',
+                width: 480,
             });
             if (confirmResult.isConfirmed) {
                 showLoader();
@@ -4345,14 +4353,20 @@ async function submitGenerationWizard(alsoGenerate) {
                 if (forceData.success) {
                     await animateWizardResults(forceData.classes);
                     bootstrap.Modal.getInstance(document.getElementById('generationWizardModal')).hide();
-                    Swal.fire({
-                        icon: 'success', title: 'Generated!',
+                    AppleAlert.rich({
+                        title: 'Generated!',
                         html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}`,
+                        icon: 'success',
+                        confirmText: 'OK',
+                        theme: 'success',
                     }).then(() => location.reload());
-                } else Swal.fire('Error', forceData.message || 'Failed', 'error');
+                } else AppleAlert.error('Generation failed', forceData.message || 'Please try again.');
             }
         } else throw new Error(genData.message || 'Generation failed.');
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+    } catch (e) {
+        hideLoader();
+        AppleAlert.error('Generation failed', e.message);
+    }
 }
 
 // ============================================================================
@@ -4387,81 +4401,13 @@ async function loadSavedRuns() {
         const res  = await fetch(`${ROUTES.runsList}?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Failed.');
-
-        document.getElementById('savedRunsCountBadge').textContent = data.pagination.total;
-
-        if (!data.runs.length) {
-            listEl.innerHTML = `
-                <div class="text-center py-5 text-muted">
-                    <i class="ri-bookmark-line ri-3x d-block mb-3 opacity-30"></i>
-                    <p class="mb-0">No saved runs match your filters.</p>
-                </div>`;
-            document.getElementById('savedRunsPagination').innerHTML = '';
-            return;
-        }
-
-        listEl.innerHTML = data.runs.map(run => `
-            <div class="setting-card" style="cursor:pointer" onclick="showRunDetail('${escapeHtml(run.run_code)}')">
-                <div class="sc-icon" style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9)">
-                    <i class="ri-bookmark-3-line" style="color:#1B5E20"></i>
-                </div>
-                <div class="sc-body">
-                    <div class="sc-title">${escapeHtml(run.name)}</div>
-                    <div class="sc-meta">
-                        <span class="badge" style="background:#F1F5F9;color:#334155;font-family:monospace;font-size:11px">${escapeHtml(run.run_code)}</span>
-                        <span class="mx-1">·</span>
-                        <span>${escapeHtml(run.session || '—')}</span>
-                        ${run.term ? `<span class="mx-1">·</span><span>${escapeHtml(run.term)}</span>` : ''}
-                        <span class="mx-1">·</span>
-                        <span>${run.class_count} classes</span>
-                        <span class="mx-1">·</span>
-                        <span class="text-muted">by ${escapeHtml(run.creator || '—')}</span>
-                        <span class="mx-1">·</span>
-                        <span class="text-muted">${escapeHtml(run.created_at_h)}</span>
-                        ${run.status === 'shortfalls'
-                            ? '<span class="badge bg-warning-subtle text-warning ms-1">Shortfalls</span>'
-                            : run.status === 'reverted'
-                                ? '<span class="badge bg-danger-subtle text-danger ms-1">Reverted</span>'
-                                : '<span class="badge bg-success-subtle text-success ms-1">Success</span>'}
-                    </div>
-                </div>
-                <div class="sc-actions" onclick="event.stopPropagation()">
-                    <button class="btn btn-sm btn-outline-primary" onclick="showRunDetail('${escapeHtml(run.run_code)}')" title="View">
-                        <i class="ri-eye-line"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-info" onclick="copyRunCode('${escapeHtml(run.run_code)}')" title="Copy code">
-                        <i class="ri-file-copy-line"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSavedRun(${run.id}, '${escapeHtml(run.name)}')" title="Delete">
-                        <i class="ri-delete-bin-line"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-
-        if (data.pagination.last_page > 1) {
-            let pHTML = '<nav><ul class="pagination pagination-sm mb-0 justify-content-center">';
-            for (let p = 1; p <= data.pagination.last_page; p++) {
-                pHTML += `<li class="page-item ${p === data.pagination.current_page ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="event.preventDefault();jumpToRunPage(${p})">${p}</a>
-                </li>`;
-            }
-            pHTML += '</ul></nav>';
-            document.getElementById('savedRunsPagination').innerHTML = pHTML;
-        } else {
-            document.getElementById('savedRunsPagination').innerHTML = '';
-        }
+        renderSavedRunsList(data);
     } catch (e) {
         listEl.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
     }
 }
 
 function jumpToRunPage(page) {
-    // Simplest approach: append the page to the URL params of the current
-    // search and refetch. loadSavedRuns doesn't currently accept a page
-    // arg, so we temporarily stash it and re-call with a modified
-    // implementation that reads the stash.
-    window._runsPage = page;
     const params = new URLSearchParams();
     const q = document.getElementById('runSearchInput').value.trim();
     if (q) params.set('q', q);
@@ -4476,18 +4422,11 @@ function jumpToRunPage(page) {
     };
     Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
 
-    // Re-use loadSavedRuns by re-invoking fetch with the same render logic.
     const listEl = document.getElementById('savedRunsList');
     listEl.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading…</div>';
     fetch(`${ROUTES.runsList}?${params.toString()}`, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
-        .then(data => {
-            // Delegate rendering by stubbing the input values then calling
-            // the same renderer. Simpler: just call loadSavedRuns() after
-            // stashing. But loadSavedRuns doesn't read page from a global,
-            // so re-render inline using a shared helper.
-            renderSavedRunsList(data);
-        })
+        .then(data => renderSavedRunsList(data))
         .catch(e => {
             listEl.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
         });
@@ -4579,7 +4518,7 @@ function lookupRunByCode() {
     const code = document.getElementById('runCodeLookup').value.trim();
     if (!code) return;
     if (code.length !== 10) {
-        return Swal.fire('Invalid Code', 'Run codes are exactly 10 characters.', 'warning');
+        return AppleAlert.warning('Invalid code', 'Run codes are exactly 10 characters.');
     }
     showRunDetail(code);
 }
@@ -4655,20 +4594,25 @@ async function showRunDetail(identifier) {
 }
 
 function copyRunCode(code) {
-    navigator.clipboard.writeText(code).then(() => {
-        Swal.fire({ icon: 'success', title: 'Copied!', text: code, timer: 1400, showConfirmButton: false });
-    });
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(() => AppleAlert.copied(`Run code ${code} copied`));
+    } else {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        AppleAlert.copied(`Run code ${code} copied`);
+    }
 }
 
 async function deleteSavedRun(runId, name) {
-    const r = await Swal.fire({
-        title: 'Delete this saved run?',
-        html: `Permanently deletes <strong>${escapeHtml(name)}</strong> and its frozen snapshots.<br>
-               <span class="text-muted" style="font-size:12px">Live timetables are not affected.</span>`,
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#DC2626', confirmButtonText: 'Delete',
-    });
-    if (!r.isConfirmed) return;
+    const ok = await AppleAlert.confirmDelete(
+        'Delete this saved run?',
+        `Permanently removes <strong>${escapeHtml(name)}</strong> and its frozen snapshots. Live timetables are not affected.`
+    );
+    if (!ok) return;
     try {
         const res  = await fetch(`${ROUTES.runsDelete}/${runId}`, {
             method: 'DELETE',
@@ -4677,12 +4621,12 @@ async function deleteSavedRun(runId, name) {
         const data = await res.json();
         if (data.success) {
             loadSavedRuns();
-            Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
+            AppleAlert.deleted('Saved run deleted');
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Could not delete', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not delete', e.message);
     }
 }
 
@@ -4698,10 +4642,10 @@ function openSaveRunModal() {
 
 async function saveGenerationRun() {
     const name = document.getElementById('saveRunName').value.trim();
-    if (!name) return Swal.fire('Required', 'Please give this run a name.', 'warning');
+    if (!name) return AppleAlert.warning('Required', 'Please give this run a name.');
 
     const sessionId = document.getElementById('wizSessionId').value;
-    if (!sessionId) return Swal.fire('Required', 'Select a session in the wizard first.', 'warning');
+    if (!sessionId) return AppleAlert.warning('Required', 'Select a session in the wizard first.');
 
     const scope    = document.getElementById('wizScope').value;
     const classIds = scope === 'selected'
@@ -4734,22 +4678,28 @@ async function saveGenerationRun() {
         hideLoader();
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('saveRunModal')).hide();
-            Swal.fire({
+
+            AppleAlert.rich({
+                title: 'Run saved',
+                html: `<p>Use this 10-character code to find it later:</p>
+                       <div class="apple-alert-code-block">${escapeHtml(data.run_code)}</div>
+                       <p style="margin-top:14px;font-size:12px;color:#94A3B8">Write it down, or copy it from the button below.</p>`,
                 icon: 'success',
-                title: 'Run saved!',
-                html: `Your run code is <code style="font-size:16px;letter-spacing:2px">${escapeHtml(data.run_code)}</code><br>
-                       <span class="text-muted" style="font-size:12px">Write it down or use it to find this run later.</span>`,
-                confirmButtonText: 'Copy Code',
+                confirmText: 'Copy code',
+                showCancelButton: true,
+                cancelText: 'Done',
+                theme: 'success',
+                width: 420,
             }).then(result => {
                 if (result.isConfirmed) copyRunCode(data.run_code);
                 loadSavedRuns();
             });
         } else {
-            Swal.fire('Error', data.message || 'Failed to save.', 'error');
+            AppleAlert.error('Save failed', data.message || 'Please try again.');
         }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Save failed', e.message);
     }
 }
 
@@ -4757,7 +4707,7 @@ async function saveGenerationRun() {
 // RESTORE SAVED RUN TO LIVE
 // ============================================================================
 function openRestoreModal() {
-    if (!currentRun) return Swal.fire('Error', 'No run loaded.', 'error');
+    if (!currentRun) return AppleAlert.error('No run loaded');
     document.getElementById('restoreRunSummary').innerHTML =
         '<div class="spinner-border spinner-border-sm me-2"></div>Preparing…';
     document.getElementById('restoreForce').checked = false;
@@ -4800,7 +4750,7 @@ async function previewRestoreRun() {
 async function confirmRestoreRun() {
     if (!currentRun) return;
     const classIds = [...document.querySelectorAll('.restore-class-checkbox:checked')].map(cb => parseInt(cb.value));
-    if (!classIds.length) return Swal.fire('Required', 'Select at least one class to restore.', 'warning');
+    if (!classIds.length) return AppleAlert.warning('Required', 'Select at least one class to restore.');
 
     const force      = document.getElementById('restoreForce').checked;
     const unpublish  = document.getElementById('restoreUnpublish').checked;
@@ -4828,24 +4778,27 @@ async function confirmRestoreRun() {
         if (data.success) {
             let html = `<p>${escapeHtml(data.message)}</p>`;
             if (data.skipped?.length) {
-                html += '<div class="text-start mt-2"><strong>Skipped:</strong><ul class="mb-0">';
+                html += '<p style="margin-top:12px;font-size:13px;font-weight:600;color:#0F172A;text-align:left">Skipped:</p>';
+                html += '<ul class="apple-alert-list">';
                 html += data.skipped.map(s =>
-                    `<li>${escapeHtml(s.class_name)} — ${escapeHtml(s.reason.replace(/_/g, ' '))}</li>`
+                    `<li><strong>${escapeHtml(s.class_name)}</strong> — <em>${escapeHtml(s.reason.replace(/_/g, ' '))}</em></li>`
                 ).join('');
-                html += '</ul></div>';
+                html += '</ul>';
             }
-            Swal.fire({
-                icon: 'success',
+            AppleAlert.rich({
                 title: 'Restored',
                 html: html,
+                icon: 'success',
+                confirmText: 'OK',
+                theme: 'success',
                 width: 520,
             }).then(() => location.reload());
         } else {
-            Swal.fire('Error', data.message || 'Restore failed.', 'error');
+            AppleAlert.error('Restore failed', data.message || 'Please try again.');
         }
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Restore failed', e.message);
     }
 }
 
@@ -4853,7 +4806,7 @@ async function confirmRestoreRun() {
 // COMPARE RUNS
 // ============================================================================
 function compareRunWithAnother() {
-    if (!currentRun) return Swal.fire('Error', 'No run loaded.', 'error');
+    if (!currentRun) return AppleAlert.error('No run loaded');
 
     fetch(`${ROUTES.runsList}?per_page=100`, { headers: { 'Accept': 'application/json' } })
         .then(r => r.json())
@@ -4863,14 +4816,16 @@ function compareRunWithAnother() {
                 .map(r => `<option value="${r.id}">${escapeHtml(r.name)} — ${escapeHtml(r.run_code)}</option>`)
                 .join('');
 
-            Swal.fire({
+            AppleAlert.rich({
                 title: 'Compare with…',
-                html: `<select id="compareTarget" class="form-select">
+                html: `<select id="compareTarget" class="swal2-select" style="width:100%">
                     <option value="">— Pick another run —</option>
                     ${options}
                 </select>`,
                 showCancelButton: true,
-                confirmButtonText: 'Compare',
+                confirmText: 'Compare',
+                cancelText: 'Cancel',
+                theme: 'primary',
                 preConfirm: () => document.getElementById('compareTarget').value,
             }).then(result => {
                 if (!result.isConfirmed || !result.value) return;
@@ -5029,7 +4984,7 @@ function renderClassDiff(cd) {
 // EXPORT RUN TO PDF
 // ============================================================================
 function exportRunToPdf() {
-    if (!currentRun) return Swal.fire('Error', 'No run loaded.', 'error');
+    if (!currentRun) return AppleAlert.error('No run loaded');
     new bootstrap.Modal(document.getElementById('exportRunModal')).show();
 }
 
@@ -5053,7 +5008,7 @@ function submitExportRun() {
 // QUICK REBUILD
 // ============================================================================
 function openAnchorRebuildPanel() {
-    if (!currentSettingId) return Swal.fire('No Class Loaded', 'Load or create a class timetable first.', 'warning');
+    if (!currentSettingId) return AppleAlert.warning('No class loaded', 'Load or create a class timetable first.');
     new bootstrap.Modal(document.getElementById('anchorRebuildModal')).show();
 }
 
@@ -5077,16 +5032,16 @@ async function submitAnchorRebuild() {
         const data = await res.json();
         if (!data.success) {
             hideLoader();
-            Swal.fire('Error', data.message || 'Failed to rebuild periods.', 'error');
+            AppleAlert.error('Could not rebuild', data.message || 'Please try again.');
             return;
         }
         bootstrap.Modal.getInstance(document.getElementById('anchorRebuildModal')).hide();
         hideLoader();
         await loadSetting(currentSettingId);
-        Swal.fire({ icon:'success', title:'Periods Rebuilt!', timer:1600, showConfirmButton:false });
+        AppleAlert.saved('Periods rebuilt');
     } catch (e) {
         hideLoader();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not rebuild', e.message);
     }
 }
 
@@ -5094,14 +5049,11 @@ async function submitAnchorRebuild() {
 // VERSION CONFLICT HANDLER
 // ============================================================================
 async function handleVersionConflict(data) {
-    const result = await Swal.fire({
-        title: 'Timetable Changed',
-        text: data.message || 'This timetable was modified by someone else. Reload to get the latest version.',
-        icon: 'warning',
-        confirmButtonText: 'Reload Now',
-        showCancelButton: true,
-        cancelButtonText: 'Stay',
-    });
+    const result = await AppleAlert.confirm(
+        'Timetable changed',
+        data.message || 'This timetable was modified by someone else. Reload to get the latest version?',
+        { confirmText: 'Reload', cancelText: 'Stay' }
+    );
     if (result.isConfirmed && currentSettingId) {
         await loadSetting(currentSettingId);
     }
