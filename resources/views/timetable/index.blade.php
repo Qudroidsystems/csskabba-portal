@@ -1927,7 +1927,6 @@
 
 {{-- ============================================================ --}}
 {{-- SAVE GENERATION RUN MODAL — single modal, inline code reveal --}}
-{{-- ✏️ CHANGED: input view now wrapped, success view added     --}}
 {{-- ============================================================ --}}
 <div class="modal fade" id="saveRunModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -2010,7 +2009,6 @@
 
 {{-- ============================================================ --}}
 {{-- RUN DETAIL MODAL — tabbed                                    --}}
-{{-- ✏️ CHANGED: replaced flat body with stat strip + tabs        --}}
 {{-- ============================================================ --}}
 <div class="modal fade" id="runDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -2283,7 +2281,7 @@ let taData = { teachers: [], unassigned: [] };
 let taRows = [];
 let previewState = null;
 let currentRun = null;
-let currentRunData = null;   // ✏️ CHANGED: added
+let currentRunData = null;
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
 const subjectColorMap = {};
@@ -4858,7 +4856,7 @@ function lookupRunByCode() {
 }
 
 // ============================================================================
-// ✏️ CHANGED: showRunDetail is now the tabbed version
+// RUN DETAIL — tabbed
 // ============================================================================
 async function showRunDetail(identifier) {
     const modal = new bootstrap.Modal(document.getElementById('runDetailModal'));
@@ -4890,9 +4888,6 @@ async function showRunDetail(identifier) {
     }
 }
 
-// ============================================================================
-// ✏️ CHANGED: new renderer functions for the tabbed Run Detail modal
-// ============================================================================
 function renderRunDetail(data) {
     const r = data.run;
 
@@ -5088,7 +5083,7 @@ async function deleteSavedRun(runId, name) {
 }
 
 // ============================================================================
-// ✏️ CHANGED: openSaveRunModal + saveGenerationRun (single-modal inline flow)
+// SAVE RUN MODAL — inline success reveal
 // ============================================================================
 function openSaveRunModal() {
     // Reset the modal to its input state every time it opens.
@@ -5112,7 +5107,6 @@ function renderSaveRunPreview() {
     const preview = document.getElementById('saveRunPreview');
     if (!preview) return;
 
-    // Count classes and lessons in scope from the loaded wizard state.
     const scope    = document.getElementById('wizScope').value;
     const classIds = scope === 'selected'
         ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
@@ -5125,7 +5119,7 @@ function renderSaveRunPreview() {
     let shortfallCount = 0;
 
     if (Object.keys(wizardSubjectsState).length) {
-        Object.entries(wizardSubjectsState).forEach(([classId, info]) => {
+        Object.keys(wizardSubjectsState).forEach((classId) => {
             if (scope === 'selected' && !classIds.includes(parseInt(classId))) return;
             classCount++;
         });
