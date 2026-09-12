@@ -6,6 +6,7 @@
     @page { margin: 16px; }
     body { font-family: DejaVu Sans, sans-serif; font-size: {{ 10 * ($bodyScale ?? 1.0) }}px; color:#1E293B; }
 
+    /* ── School header ── */
     .school-header { border: 2px solid #0f2342; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
     .school-header table { width:100%; border-collapse:collapse; }
     .school-header .logo-cell { width:64px; text-align:center; vertical-align:middle; padding:6px; background:#0f2342; }
@@ -18,12 +19,68 @@
     .school-header-top .contact span { display:inline-block; margin:0 6px; }
     .school-header-bottom { background:#1565C0; color:#fff; text-align:center; padding:6px; font-size: {{ 12 * ($bodyScale ?? 1.0) }}px; font-weight:700; letter-spacing:1.5px; }
 
+    /* ── Run metadata block ── */
+    .run-meta-block {
+        border: 1px solid #CBD5E1;
+        border-left: 3px solid #1565C0;
+        border-radius: 4px;
+        padding: 6px 10px;
+        margin-bottom: 10px;
+        background: #F8FAFC;
+        font-size: {{ 10 * ($bodyScale ?? 1.0) }}px;
+    }
+    .run-meta-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .run-meta-name {
+        font-size: {{ 12 * ($bodyScale ?? 1.0) }}px;
+        color: #0f2342;
+    }
+    .run-meta-code {
+        color: #64748B;
+        margin-left: 8px;
+        font-family: monospace;
+        letter-spacing: 0.5px;
+    }
+    .run-meta-right {
+        color: #64748B;
+        font-size: {{ 9 * ($bodyScale ?? 1.0) }}px;
+    }
+    .run-meta-desc {
+        margin-top: 4px;
+        color: #475569;
+        line-height: 1.35;
+    }
+
+    /* ── Generation rules appendix ── */
+    .run-rules-block {
+        border: 1px solid #FDE68A;
+        border-radius: 4px;
+        padding: 6px 10px;
+        margin-bottom: 10px;
+        background: #FFFBEB;
+        font-size: {{ 9 * ($bodyScale ?? 1.0) }}px;
+        color: #92400E;
+    }
+    .run-rule-item {
+        display: inline-block;
+        margin-left: 8px;
+        margin-right: 2px;
+        white-space: nowrap;
+    }
+
+    /* ── Summary strip ── */
     .summary-strip { display:table; width:100%; border:1px solid #CBD5E1; border-radius:6px; background:#F8FAFC; margin-bottom:10px; }
     .summary-strip .s-cell { display:table-cell; text-align:center; padding:6px 10px; border-right:1px solid #CBD5E1; }
     .summary-strip .s-cell:last-child { border-right:none; }
     .summary-strip .s-lbl { font-size:8px; color:#64748B; text-transform:uppercase; }
     .summary-strip .s-val { font-size:13px; font-weight:700; color:#0f2342; }
 
+    /* ── Class page ── */
     .class-page { page-break-after: always; }
     .class-page:last-child { page-break-after: auto; }
     .class-title { background:#1565C0; color:#fff; padding:6px 10px; font-size:13px; font-weight:bold; border-radius:4px; margin-bottom:8px; display:table; width:100%; }
@@ -40,6 +97,7 @@
     .free { color:#CBD5E1; font-size:9px; }
     .break-cell { background:#FFFBEB; color:#D97706; font-weight:bold; font-size:9px; }
 
+    /* ── Per-class stats footer ── */
     .class-stats { display:table; width:100%; margin-top:8px; border:1px solid #E2E8F0; border-radius:6px; background:#F8FAFC; }
     .class-stats .cs-cell { display:table-cell; text-align:center; padding:5px 4px; border-right:1px solid #E2E8F0; }
     .class-stats .cs-cell:last-child { border-right:none; }
@@ -94,6 +152,38 @@
         @if(!empty($paperSize)) · {{ strtoupper($paperSize) }} @endif
     </div>
 </div>
+
+{{-- Run metadata block — only present when exporting a saved generation run. --}}
+@if(!empty($runMeta))
+<div class="run-meta-block">
+    <div class="run-meta-header">
+        <div>
+            <strong class="run-meta-name">{{ $runMeta['name'] }}</strong>
+            <span class="run-meta-code">Run {{ $runMeta['run_code'] }}</span>
+        </div>
+        <div class="run-meta-right">
+            {{ $runMeta['creator'] }} · {{ $runMeta['created_at'] }}
+            @if($runMeta['seed']) · seed {{ $runMeta['seed'] }} @endif
+        </div>
+    </div>
+    @if(!empty($runMeta['description']))
+        <div class="run-meta-desc">{{ $runMeta['description'] }}</div>
+    @endif
+</div>
+@endif
+
+{{-- Advanced-rules appendix — only when the caller requested it. --}}
+@if(!empty($runRules))
+<div class="run-rules-block">
+    <strong>Generation rules used:</strong>
+    @foreach($runRules as $key => $value)
+        <span class="run-rule-item">
+            {{ $key }} =
+            {{ is_array($value) ? json_encode($value) : (is_bool($value) ? ($value ? 'true' : 'false') : $value) }}
+        </span>
+    @endforeach
+</div>
+@endif
 
 @if(!empty($overallStats))
 <div class="summary-strip">

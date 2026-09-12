@@ -37,6 +37,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\TimetableGenerationRun;
+use App\Models\TimetableGenerationRunSetting;
 
 class TimetableController extends Controller
 {
@@ -4842,5 +4844,885 @@ class TimetableController extends Controller
                     : asset('storage/staff_avatars/default.png'),
             ]);
         return response()->json(['success' => true, 'data' => $subjectTeachers]);
+    }
+
+        // =========================================================================
+    // SAVED GENERATION RUNS — SAVE / LIST / SHOW / DELETE
+    // =========================================================================
+
+    /**
+     * Save a wizard run: captures the wizard input plus a full frozen
+     * snapshot of every setting in scope.
+     */
+    public function saveGenerationRun(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name'                => 'required|string|max:150',
+            'description'         => 'nullable|string|max:2000',
+            'session_id'          => 'required|exists:schoolsession,id',
+            'term_id'             => 'nullable|exists:schoolterm,id',
+            'schoolclass_ids'     => 'nullable|array',
+            'schoolclass_ids.*'   => 'exists:schoolclass,id',
+            'wizard_input'        => 'required|array',
+            'advanced_rules'      => 'nullable|array',
+            'seed'                => 'nullable|integer',
+        ]);
+
+        $sessionId = (int) $validated['session_id'];
+        $termId    = $validated['term_id'] ?? null;
+
+        $settings = TimetableSetting::with(['periods', 'constraints', 'subjectPriorities', 'slots'])
+            ->where('session_id', $sessionId)
+            ->when($termId, fn($q) => $q->where('term_id', $termId))
+            ->when(!$termId, fn($q) => $q->whereNull('term_id'))
+            ->when($validated['schoolclass_ids'] ?? null, fn($q) => $q->whereIn('schoolclass_id', $validated['schoolclass_ids']))
+            ->where('is_active', true)
+            ->where('is_preview', false)
+            ->get();
+
+        if ($settings->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No settings found for that scope. Generate a timetable first.',
+            ], 422);
+        }
+
+        $classIds = $settings->pluck('schoolclass_id')->unique();
+        $classes  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+            ->whereIn('schoolclass.id', $classIds)
+            ->get()
+            ->keyBy('id');
+
+        DB::beginTransaction();
+        try {
+            $totalPlaced = 0;
+            $hadShortfalls = false;
+
+            $run = TimetableGenerationRun::create([
+                'name'           => $validated['name'],
+                'description'    => $validated['description'] ?? null,
+                'session_id'     => $sessionId,
+                'term_id'        => $termId,
+                'wizard_input'   => $validated['wizard_input'],
+                'advanced_rules' => $validated['advanced_rules'] ?? null,
+                'seed'           => $validated['seed'] ?? null,
+                'status'         => 'success',
+                'created_by'     => Auth::id(),
+            ]);
+
+            foreach ($settings as $setting) {
+                $className = trim(($classes[$setting->schoolclass_id]->schoolclass ?? '')
+                                 . ' ' . ($classes[$setting->schoolclass_id]->arm_name ?? ''));
+                $className = $className ?: 'Class #' . $setting->schoolclass_id;
+
+                $placed = $setting->slots->where('is_free', false)->whereNotNull('subject_id')->count();
+                $noRoom = $setting->slots->where('is_free', false)->whereNotNull('subject_id')->whereNull('room_id')->count();
+
+                $totalPlaced += $placed;
+                if ($noRoom > 0) $hadShortfalls = true;
+
+                TimetableGenerationRunSetting::create([
+                    'run_id'                 => $run->id,
+                    'source_setting_id'      => $setting->id,
+                    'schoolclass_id'         => $setting->schoolclass_id,
+                    'class_name'             => $className,
+                    'setting_snapshot'       => $setting->toArray(),
+                    'periods_snapshot'       => $setting->periods->toArray(),
+                    'constraints_snapshot'   => $setting->constraints->toArray(),
+                    'priorities_snapshot'    => $setting->subjectPriorities->toArray(),
+                    'slots_snapshot'         => $setting->slots->toArray(),
+                    'placed'                 => $placed,
+                    'unplaced'               => 0,
+                    'room_shortfall'         => $noRoom,
+                ]);
+            }
+
+            $run->update([
+                'class_count'     => $settings->count(),
+                'total_placed'    => $totalPlaced,
+                'total_shortfall' => 0,
+                'total_conflicts' => 0,
+                'status'          => $hadShortfalls ? 'shortfalls' : 'success',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success'  => true,
+                'run_id'   => $run->id,
+                'run_code' => $run->run_code,
+                'message'  => 'Generation run saved.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('saveGenerationRun failed', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * List / search saved generation runs.
+     */
+    public function listGenerationRuns(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'q'          => 'nullable|string|max:150',
+            'session_id' => 'nullable|exists:schoolsession,id',
+            'term_id'    => 'nullable|exists:schoolterm,id',
+            'class_id'   => 'nullable|exists:schoolclass,id',
+            'creator_id' => 'nullable|exists:users,id',
+            'status'     => 'nullable|in:success,shortfalls,reverted',
+            'date_from'  => 'nullable|date',
+            'date_to'    => 'nullable|date|after_or_equal:date_from',
+            'per_page'   => 'nullable|integer|min:5|max:100',
+        ]);
+
+        $query = TimetableGenerationRun::with(['session', 'term', 'creator'])
+            ->search($validated['q'] ?? null)
+            ->status($validated['status'] ?? null)
+            ->betweenDates($validated['date_from'] ?? null, $validated['date_to'] ?? null)
+            ->when($validated['session_id'] ?? null, fn($q, $v) => $q->where('session_id', $v))
+            ->when($validated['term_id'] ?? null,    fn($q, $v) => $q->where('term_id', $v))
+            ->when($validated['creator_id'] ?? null, fn($q, $v) => $q->where('created_by', $v));
+
+        if (!empty($validated['class_id'])) {
+            $query->whereHas('snapshots', fn($q) =>
+                $q->where('schoolclass_id', $validated['class_id'])
+            );
+        }
+
+        $paginated = $query->orderByDesc('created_at')
+            ->paginate($validated['per_page'] ?? 20);
+
+        $items = $paginated->getCollection()->map(function ($run) {
+            return [
+                'id'              => $run->id,
+                'run_code'        => $run->run_code,
+                'name'            => $run->name,
+                'description'     => $run->description,
+                'session'         => $run->session?->session,
+                'term'            => $run->term?->term,
+                'creator'         => $run->creator?->name,
+                'class_count'     => $run->class_count,
+                'total_placed'    => $run->total_placed,
+                'total_shortfall' => $run->total_shortfall,
+                'status'          => $run->status,
+                'created_at'      => $run->created_at->format('d M Y, H:i'),
+                'created_at_h'    => $run->created_at->diffForHumans(),
+            ];
+        });
+
+        return response()->json([
+            'success'    => true,
+            'runs'       => $items,
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page'    => $paginated->lastPage(),
+                'per_page'     => $paginated->perPage(),
+                'total'        => $paginated->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Show one saved run — accepts either the numeric ID or the run_code.
+     */
+    public function showGenerationRun(Request $request, string $identifier): JsonResponse
+    {
+        $query = TimetableGenerationRun::with(['session', 'term', 'creator', 'snapshots.schoolclass']);
+        if (ctype_digit($identifier)) {
+            $query->where('id', (int) $identifier);
+        } else {
+            $query->where('run_code', $identifier);
+        }
+
+        $run = $query->first();
+        if (!$run) {
+            return response()->json(['success' => false, 'message' => 'Run not found.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'run'     => [
+                'id'              => $run->id,
+                'run_code'        => $run->run_code,
+                'name'            => $run->name,
+                'description'     => $run->description,
+                'session'         => $run->session?->session,
+                'term'            => $run->term?->term,
+                'creator'         => $run->creator?->name,
+                'class_count'     => $run->class_count,
+                'total_placed'    => $run->total_placed,
+                'total_shortfall' => $run->total_shortfall,
+                'status'          => $run->status,
+                'seed'            => $run->seed,
+                'wizard_input'    => $run->wizard_input,
+                'advanced_rules'  => $run->advanced_rules,
+                'created_at'      => $run->created_at->format('d M Y, H:i'),
+            ],
+            'classes' => $run->snapshots->map(function ($s) {
+                return [
+                    'id'              => $s->id,
+                    'schoolclass_id'  => $s->schoolclass_id,
+                    'class_name'      => $s->class_name,
+                    'placed'          => $s->placed,
+                    'unplaced'        => $s->unplaced,
+                    'room_shortfall'  => $s->room_shortfall,
+                    'setting'         => $s->setting_snapshot,
+                    'periods'         => $s->periods_snapshot,
+                    'slots'           => $s->slots_snapshot,
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Delete a saved run (cascades to snapshot rows via FK).
+     */
+    public function deleteGenerationRun(int $runId): JsonResponse
+    {
+        try {
+            $run = TimetableGenerationRun::findOrFail($runId);
+            $run->delete();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
+    // RESTORE A SAVED RUN INTO LIVE SETTINGS
+    // =========================================================================
+    public function restoreGenerationRun(Request $request, int $runId): JsonResponse
+    {
+        $validated = $request->validate([
+            'schoolclass_ids'   => 'nullable|array',
+            'schoolclass_ids.*' => 'exists:schoolclass,id',
+            'force_overwrite'   => 'boolean',
+            'unpublish_locked'  => 'boolean',
+        ]);
+
+        $run = TimetableGenerationRun::with(['snapshots'])->findOrFail($runId);
+
+        $snapshots = $run->snapshots;
+        if (!empty($validated['schoolclass_ids'])) {
+            $snapshots = $snapshots->whereIn('schoolclass_id', $validated['schoolclass_ids']);
+        }
+
+        if ($snapshots->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No matching classes in this run.'], 422);
+        }
+
+        $forceOverwrite  = !empty($validated['force_overwrite']);
+        $unpublishLocked = !empty($validated['unpublish_locked']);
+
+        $restored = [];
+        $skipped  = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($snapshots as $snapshot) {
+                $live = TimetableSetting::where('schoolclass_id', $snapshot->schoolclass_id)
+                    ->where('session_id', $run->session_id)
+                    ->when($run->term_id, fn($q) => $q->where('term_id', $run->term_id))
+                    ->when(!$run->term_id, fn($q) => $q->whereNull('term_id'))
+                    ->where('is_preview', false)
+                    ->first();
+
+                // Detect edits since the run was saved.
+                if ($live && !$forceOverwrite) {
+                    $runSavedAt = $run->created_at;
+                    if ($live->updated_at && $live->updated_at->gt($runSavedAt)) {
+                        $skipped[] = [
+                            'schoolclass_id' => $snapshot->schoolclass_id,
+                            'class_name'     => $snapshot->class_name,
+                            'reason'         => 'edited_since_run',
+                            'last_updated'   => $live->updated_at->format('d M Y, H:i'),
+                            'updated_by'     => $live->updater?->name,
+                        ];
+                        continue;
+                    }
+                }
+
+                // Published lock check.
+                if ($live && $live->is_published) {
+                    if (!$unpublishLocked && !$forceOverwrite) {
+                        $skipped[] = [
+                            'schoolclass_id' => $snapshot->schoolclass_id,
+                            'class_name'     => $snapshot->class_name,
+                            'reason'         => 'published_locked',
+                            'published_at'   => optional($live->published_at)->format('d M Y, H:i'),
+                        ];
+                        continue;
+                    }
+                    $live->update([
+                        'is_published' => false,
+                        'published_at' => null,
+                        'published_by' => null,
+                    ]);
+                }
+
+                // Create the live setting if it doesn't exist.
+                if (!$live) {
+                    $settingData = $snapshot->setting_snapshot;
+                    unset($settingData['id'], $settingData['created_at'], $settingData['updated_at']);
+                    $settingData['is_published'] = false;
+                    $settingData['published_at'] = null;
+                    $settingData['published_by'] = null;
+                    $settingData['is_active']    = true;
+                    $settingData['is_preview']   = false;
+                    $settingData['created_by']   = Auth::id();
+                    $settingData['updated_by']   = Auth::id();
+                    $live = TimetableSetting::create($settingData);
+                }
+
+                // Wipe live children.
+                TimetablePeriod::where('setting_id', $live->id)->delete();
+                TimetableConstraint::where('setting_id', $live->id)->delete();
+                TimetableSubjectPriority::where('setting_id', $live->id)->delete();
+                TimetableSlot::where('setting_id', $live->id)->delete();
+
+                // Rebuild periods with an old→new ID map.
+                $periodMap = [];
+                foreach ($snapshot->periods_snapshot as $periodData) {
+                    $oldId = $periodData['id'];
+                    unset($periodData['id'], $periodData['setting_id'], $periodData['created_at'], $periodData['updated_at']);
+                    $periodData['setting_id'] = $live->id;
+                    $newPeriod = TimetablePeriod::create($periodData);
+                    $periodMap[$oldId] = $newPeriod->id;
+                }
+
+                foreach ($snapshot->constraints_snapshot as $cData) {
+                    unset($cData['id'], $cData['setting_id'], $cData['created_at'], $cData['updated_at']);
+                    $cData['setting_id'] = $live->id;
+                    TimetableConstraint::create($cData);
+                }
+
+                foreach ($snapshot->priorities_snapshot as $pData) {
+                    unset($pData['id'], $pData['setting_id'], $pData['created_at'], $pData['updated_at']);
+                    $pData['setting_id'] = $live->id;
+                    TimetableSubjectPriority::create($pData);
+                }
+
+                foreach ($snapshot->slots_snapshot as $sData) {
+                    if (!isset($periodMap[$sData['period_id']])) continue;
+                    $sData['period_id']  = $periodMap[$sData['period_id']];
+                    unset($sData['id'], $sData['setting_id'], $sData['created_at'], $sData['updated_at']);
+                    $sData['setting_id'] = $live->id;
+                    TimetableSlot::create($sData);
+                }
+
+                $settingMeta = $snapshot->setting_snapshot;
+                $live->update([
+                    'school_day_start'             => $settingMeta['school_day_start']             ?? $live->school_day_start,
+                    'school_day_end'               => $settingMeta['school_day_end']               ?? $live->school_day_end,
+                    'period_duration_minutes'      => $settingMeta['period_duration_minutes']      ?? $live->period_duration_minutes,
+                    'short_break_duration_minutes' => $settingMeta['short_break_duration_minutes'] ?? $live->short_break_duration_minutes,
+                    'long_break_duration_minutes'  => $settingMeta['long_break_duration_minutes']  ?? $live->long_break_duration_minutes,
+                    'active_days'                  => $settingMeta['active_days']                  ?? $live->active_days,
+                    'half_days'                    => $settingMeta['half_days']                    ?? null,
+                    'advanced_rules'               => $settingMeta['advanced_rules']               ?? null,
+                    'updated_by'                   => Auth::id(),
+                ]);
+
+                $restored[] = [
+                    'schoolclass_id' => $snapshot->schoolclass_id,
+                    'class_name'     => $snapshot->class_name,
+                ];
+            }
+
+            $run->update([
+                'last_restored_at' => now(),
+                'last_restored_by' => Auth::id(),
+                'restore_count'    => ($run->restore_count ?? 0) + 1,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success'  => true,
+                'restored' => $restored,
+                'skipped'  => $skipped,
+                'message'  => sprintf(
+                    'Restored %d class(es).%s',
+                    count($restored),
+                    count($skipped) ? ' ' . count($skipped) . ' class(es) skipped — see details.' : ''
+                ),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('restoreGenerationRun failed', ['run_id' => $runId, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
+    // COMPARE TWO RUNS
+    // =========================================================================
+    public function compareGenerationRuns(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'run_a_id' => 'required|exists:timetable_generation_runs,id',
+            'run_b_id' => 'required|exists:timetable_generation_runs,id|different:run_a_id',
+        ]);
+
+        $runA = TimetableGenerationRun::with('snapshots')->findOrFail($validated['run_a_id']);
+        $runB = TimetableGenerationRun::with('snapshots')->findOrFail($validated['run_b_id']);
+
+        $inputDiff = $this->diffRunArrays(
+            $this->flattenRunInputForDiff($runA),
+            $this->flattenRunInputForDiff($runB)
+        );
+
+        $classIdsA = $runA->snapshots->pluck('schoolclass_id')->unique();
+        $classIdsB = $runB->snapshots->pluck('schoolclass_id')->unique();
+        $shared    = $classIdsA->intersect($classIdsB)->values();
+        $onlyInA   = $classIdsA->diff($classIdsB)->values();
+        $onlyInB   = $classIdsB->diff($classIdsA)->values();
+
+        $classNames = [];
+        foreach (Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+            ->whereIn('schoolclass.id', $classIdsA->merge($classIdsB))
+            ->get() as $c) {
+            $classNames[$c->id] = trim($c->schoolclass . ' ' . ($c->arm_name ?? ''));
+        }
+
+        $classDiffs = [];
+        foreach ($shared as $classId) {
+            $snapA = $runA->snapshots->firstWhere('schoolclass_id', $classId);
+            $snapB = $runB->snapshots->firstWhere('schoolclass_id', $classId);
+
+            $classDiffs[] = $this->diffRunClassGrids(
+                $classId,
+                $classNames[$classId] ?? "Class #$classId",
+                $snapA,
+                $snapB
+            );
+        }
+
+        $summary = [
+            'identical_cells' => 0,
+            'differing_cells' => 0,
+            'only_in_a_cells' => 0,
+            'only_in_b_cells' => 0,
+        ];
+        foreach ($classDiffs as $cd) {
+            foreach ($cd['cells'] as $cell) {
+                $summary[$cell['state'] . '_cells'] = ($summary[$cell['state'] . '_cells'] ?? 0) + 1;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'run_a'   => [
+                'id'         => $runA->id,
+                'run_code'   => $runA->run_code,
+                'name'       => $runA->name,
+                'created_at' => $runA->created_at->format('d M Y, H:i'),
+                'creator'    => $runA->creator?->name,
+                'classes'    => $classIdsA->count(),
+                'placed'     => $runA->total_placed,
+            ],
+            'run_b'   => [
+                'id'         => $runB->id,
+                'run_code'   => $runB->run_code,
+                'name'       => $runB->name,
+                'created_at' => $runB->created_at->format('d M Y, H:i'),
+                'creator'    => $runB->creator?->name,
+                'classes'    => $classIdsB->count(),
+                'placed'     => $runB->total_placed,
+            ],
+            'input_diff'     => $inputDiff,
+            'only_in_a'      => $onlyInA->map(fn($id) => ['id' => $id, 'name' => $classNames[$id] ?? "Class #$id"])->values(),
+            'only_in_b'      => $onlyInB->map(fn($id) => ['id' => $id, 'name' => $classNames[$id] ?? "Class #$id"])->values(),
+            'shared_classes' => $classDiffs,
+            'summary'        => $summary,
+        ]);
+    }
+
+    private function flattenRunInputForDiff(TimetableGenerationRun $run): array
+    {
+        $flat = [];
+        foreach (($run->wizard_input ?? []) as $key => $value) {
+            $flat["wizard.$key"] = is_array($value) ? json_encode($value) : (string) $value;
+        }
+        foreach (($run->advanced_rules ?? []) as $key => $value) {
+            $flat["advanced.$key"] = is_array($value) ? json_encode($value) : (string) $value;
+        }
+        return $flat;
+    }
+
+    private function diffRunArrays(array $a, array $b): array
+    {
+        $keys = array_unique(array_merge(array_keys($a), array_keys($b)));
+        $diffs = [];
+        foreach ($keys as $key) {
+            $va = $a[$key] ?? null;
+            $vb = $b[$key] ?? null;
+            if ($va !== $vb) {
+                $diffs[] = ['key' => $key, 'a' => $va, 'b' => $vb];
+            }
+        }
+        return $diffs;
+    }
+
+    private function diffRunClassGrids(int $classId, string $className, $snapA, $snapB): array
+    {
+        $periodsA = collect($snapA?->periods_snapshot ?? [])->keyBy('id');
+        $periodsB = collect($snapB?->periods_snapshot ?? [])->keyBy('id');
+
+        $slotsByKey = function ($snapshot) {
+            $map = [];
+            foreach (($snapshot?->slots_snapshot ?? []) as $slot) {
+                $map[$slot['period_id'] . '|' . $slot['day']] = $slot;
+            }
+            return $map;
+        };
+        $slotsA = $slotsByKey($snapA);
+        $slotsB = $slotsByKey($snapB);
+
+        $cells = [];
+        $allKeys = array_unique(array_merge(array_keys($slotsA), array_keys($slotsB)));
+
+        foreach ($allKeys as $key) {
+            $sa = $slotsA[$key] ?? null;
+            $sb = $slotsB[$key] ?? null;
+
+            $sig = function ($s) {
+                if (!$s) return null;
+                return [
+                    'subject_id' => $s['subject_id'] ?? null,
+                    'teacher_id' => $s['teacher_id'] ?? null,
+                    'room_id'    => $s['room_id']    ?? null,
+                    'is_free'    => (bool) ($s['is_free'] ?? false),
+                    'is_double'  => (bool) ($s['is_double'] ?? false),
+                ];
+            };
+
+            $saSig = $sig($sa);
+            $sbSig = $sig($sb);
+
+            if ($saSig === $sbSig) {
+                $state = 'identical';
+            } elseif ($saSig && !$sbSig) {
+                $state = 'only_in_a';
+            } elseif ($sbSig && !$saSig) {
+                $state = 'only_in_b';
+            } else {
+                $state = 'differing';
+            }
+
+            [$periodId, $day] = explode('|', $key);
+
+            $cells[] = [
+                'period_id' => (int) $periodId,
+                'day'       => $day,
+                'state'     => $state,
+                'a'         => $saSig,
+                'b'         => $sbSig,
+            ];
+        }
+
+        return [
+            'schoolclass_id' => $classId,
+            'class_name'     => $className,
+            'cells'          => $cells,
+            'periods_a'      => $periodsA->values(),
+            'periods_b'      => $periodsB->values(),
+        ];
+    }
+
+    // =========================================================================
+    // EXPORT A SAVED RUN TO PDF OR WEB VIEW
+    // =========================================================================
+    public function exportGenerationRun(Request $request, int $runId)
+    {
+        $validated = $request->validate([
+            'format'        => 'nullable|in:pdf,web',
+            'mode'          => 'nullable|in:per_class,merged',
+            'orientation'   => 'nullable|in:horizontal,vertical',
+            'paper'         => 'nullable|in:' . implode(',', self::PAPER_SIZES),
+            'include_meta'  => 'boolean',
+            'include_rules' => 'boolean',
+        ]);
+
+        $run = TimetableGenerationRun::with(['session', 'term', 'creator', 'snapshots.schoolclass'])->findOrFail($runId);
+
+        $format      = $validated['format'] ?? 'pdf';
+        $mode        = $validated['mode'] ?? 'per_class';
+        $orientation = $validated['orientation'] ?? 'horizontal';
+        [$paperSize, $paperDir] = $this->resolvePaper($validated['paper'] ?? null, $orientation);
+
+        $includeMeta  = $validated['include_meta']  ?? true;
+        $includeRules = $validated['include_rules'] ?? false;
+
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($mode === 'merged') {
+            $data = $this->buildMergedGridDataFromRun($run, $schoolInfo);
+            $data['orientation'] = $orientation;
+            $data['paperSize']   = $paperSize;
+            $data['bodyScale']   = $this->paperBodyScale($paperSize);
+            $data['runMeta']     = $includeMeta  ? $this->buildRunMetaBlock($run) : null;
+            $data['runRules']    = $includeRules ? ($run->advanced_rules ?? null)  : null;
+
+            if ($format === 'web') {
+                return view('timetable.exports.merged-grid-web', array_merge($data, [
+                    'pagetitle'   => 'Merged Timetable — ' . $run->name,
+                    'orientation' => $orientation,
+                ]));
+            }
+
+            $pdf = Pdf::loadView('timetable.exports.merged-grid', $data)
+                ->setPaper($paperSize, $paperDir);
+            $filename = 'run-' . $run->run_code . '-merged-' . $paperSize . '.pdf';
+            return $pdf->stream($filename);
+        }
+
+        $allTimetables = $this->buildTimetablesFromRun($run);
+        $overallStats  = [
+            'total_classes'   => $run->class_count,
+            'total_teachers'  => collect($allTimetables)->pluck('stats.teacher_names')->flatten()->filter()->unique()->count(),
+            'avg_fill_rate'   => (int) round(collect($allTimetables)->avg(fn($t) => $t['stats']['fill_rate'])),
+            'total_conflicts' => 0,
+        ];
+
+        $viewData = [
+            'allTimetables' => $allTimetables,
+            'schoolInfo'    => $schoolInfo,
+            'sessionName'   => $run->session?->session ?? '',
+            'termName'      => $run->term?->term ?? 'All Terms',
+            'orientation'   => $orientation,
+            'dayColors'     => self::DAY_COLORS,
+            'generatedAt'   => now()->format('d M Y, H:i'),
+            'overallStats'  => $overallStats,
+            'paperSize'     => $paperSize,
+            'paperDir'      => $paperDir,
+            'bodyScale'     => $this->paperBodyScale($paperSize),
+            'runMeta'       => $includeMeta  ? $this->buildRunMetaBlock($run) : null,
+            'runRules'      => $includeRules ? ($run->advanced_rules ?? null)  : null,
+        ];
+
+        if ($format === 'web') {
+            $pagetitle = 'Whole School Timetable — ' . $run->name;
+            return view('timetable.exports.whole-school-web', array_merge($viewData, [
+                'pagetitle'      => $pagetitle,
+                'staffAnalytics' => ['staff' => [], 'summary' => []],
+            ]));
+        }
+
+        $pdf = Pdf::loadView('timetable.exports.whole-school', $viewData)
+            ->setPaper($paperSize, $paperDir);
+        $filename = 'run-' . $run->run_code . '-' . $paperSize . '.pdf';
+        return $pdf->stream($filename);
+    }
+
+    private function buildTimetablesFromRun(TimetableGenerationRun $run): array
+    {
+        $result = [];
+        foreach ($run->snapshots as $snapshot) {
+            $periods = collect($snapshot->periods_snapshot)->map(fn($p) => (object) $p);
+            $slots   = collect($snapshot->slots_snapshot);
+
+            $grid = [];
+            foreach ($slots as $slot) {
+                $subject = !empty($slot['subject_id']) ? Subject::find($slot['subject_id']) : null;
+                $teacher = !empty($slot['teacher_id']) ? User::find($slot['teacher_id'])    : null;
+                $room    = !empty($slot['room_id'])    ? Room::find($slot['room_id'])       : null;
+
+                $grid[$slot['period_id']][$slot['day']] = [
+                    'subject'    => $subject?->subject ?? ($slot['is_free'] ? 'FREE' : '—'),
+                    'teacher'    => $teacher?->name ?? '',
+                    'teacher_id' => $slot['teacher_id'],
+                    'room'       => $room?->room_name ?? '',
+                    'is_free'    => $slot['is_free'] ?? false,
+                ];
+            }
+
+            $days    = $snapshot->setting_snapshot['active_days'] ?? self::DAYS;
+            $dayMeta = $this->computeDayPeriodMetaFromSnapshot($snapshot);
+
+            $result[] = [
+                'setting_id' => $snapshot->source_setting_id,
+                'class_name' => $snapshot->class_name,
+                'periods'    => $periods,
+                'grid'       => $grid,
+                'days'       => $days,
+                'day_meta'   => $dayMeta,
+                'stats'      => [
+                    'total_slots'   => $snapshot->placed + $snapshot->unplaced + $snapshot->room_shortfall,
+                    'filled_slots'  => $snapshot->placed,
+                    'free_slots'    => max(0, $snapshot->placed + $snapshot->room_shortfall),
+                    'fill_rate'     => $snapshot->placed > 0
+                        ? (int) round(($snapshot->placed / max(1, $snapshot->placed + $snapshot->unplaced)) * 100)
+                        : 0,
+                    'subject_count' => collect($slots)->pluck('subject_id')->filter()->unique()->count(),
+                    'teacher_count' => collect($slots)->pluck('teacher_id')->filter()->unique()->count(),
+                    'room_count'    => collect($slots)->pluck('room_id')->filter()->unique()->count(),
+                    'teacher_names' => [],
+                ],
+            ];
+        }
+        return $result;
+    }
+
+    private function computeDayPeriodMetaFromSnapshot(TimetableGenerationRunSetting $snapshot): array
+    {
+        $periods     = collect($snapshot->periods_snapshot);
+        $activeDays  = $snapshot->setting_snapshot['active_days'] ?? self::DAYS;
+        $halfDays    = $snapshot->setting_snapshot['half_days'] ?? [];
+        $assemblyDay = $snapshot->setting_snapshot['assembly_day'] ?? null;
+
+        $meta = [];
+        foreach ($activeDays as $day) {
+            $teachingIndex = 0;
+            $cutoff        = $halfDays[$day] ?? null;
+
+            foreach ($periods as $p) {
+                $type = $p['type'] ?? 'lesson';
+                $effectiveType = $type;
+                if ($type === 'assembly') {
+                    $effectiveType = ($day === $assemblyDay) ? 'assembly' : 'lesson';
+                }
+
+                $applicable = true;
+                if ($effectiveType === 'lesson') {
+                    $teachingIndex++;
+                    if ($cutoff && $teachingIndex > $cutoff) $applicable = false;
+                }
+
+                $meta[$day][$p['id']] = ['applicable' => $applicable, 'effective_type' => $effectiveType];
+            }
+        }
+        return $meta;
+    }
+
+    private function buildMergedGridDataFromRun(TimetableGenerationRun $run, $schoolInfo): array
+    {
+        $classColorPalette = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16','#6366F1','#D946EF'];
+
+        $classData    = [];
+        $classColors  = [];
+        $colorIdx     = 0;
+        $allDaysUnion = [];
+        $timeSlotMap  = [];
+
+        foreach ($run->snapshots as $snapshot) {
+            $classColors[$snapshot->class_name] = $classColorPalette[$colorIdx++ % count($classColorPalette)];
+
+            $periods = collect($snapshot->periods_snapshot);
+            $slots   = collect($snapshot->slots_snapshot);
+
+            $grid = [];
+            foreach ($slots as $slot) {
+                $grid[$slot['period_id']][$slot['day']] = [
+                    'subject'    => $slot['subject_id'] ? (Subject::find($slot['subject_id'])?->subject) : null,
+                    'teacher'    => $slot['teacher_id'] ? (User::find($slot['teacher_id'])?->name)    : null,
+                    'teacher_id' => $slot['teacher_id'],
+                    'room'       => $slot['room_id']    ? (Room::find($slot['room_id'])?->room_name)   : null,
+                    'is_free'    => $slot['is_free'] ?? false,
+                ];
+            }
+
+            $days = $snapshot->setting_snapshot['active_days'] ?? self::DAYS;
+            $allDaysUnion = array_unique(array_merge($allDaysUnion, $days));
+            $dayMeta = $this->computeDayPeriodMetaFromSnapshot($snapshot);
+
+            foreach ($periods as $p) {
+                $key = substr($p['start_time'], 0, 5) . '-' . substr($p['end_time'], 0, 5);
+                if (!isset($timeSlotMap[$key])) {
+                    $timeSlotMap[$key] = [
+                        'start' => substr($p['start_time'], 0, 5),
+                        'end'   => substr($p['end_time'], 0, 5),
+                        'names' => [],
+                    ];
+                }
+                $timeSlotMap[$key]['names'][] = $p['name'];
+            }
+
+            $classData[$snapshot->class_name] = [
+                'grid'    => $grid,
+                'days'    => $days,
+                'dayMeta' => $dayMeta,
+                'periods' => $periods,
+            ];
+        }
+
+        $dayOrder = self::DAYS;
+        usort($allDaysUnion, fn($a, $b) => array_search($a, $dayOrder) <=> array_search($b, $dayOrder));
+        uasort($timeSlotMap, fn($a, $b) => strcmp($a['start'], $b['start']));
+
+        $mergedRows = [];
+        foreach ($timeSlotMap as $info) {
+            $label = collect($info['names'])->countBy()->sortDesc()->keys()->first() ?? 'Period';
+            $rowEntries = [];
+            foreach ($allDaysUnion as $day) {
+                $entries = []; $anyBreak = false; $applicable = false;
+
+                foreach ($classData as $className => $cd) {
+                    if (!in_array($day, $cd['days'])) continue;
+                    $matchedPeriod = $cd['periods']->first(fn($p) =>
+                        substr($p['start_time'], 0, 5) === $info['start'] && substr($p['end_time'], 0, 5) === $info['end']
+                    );
+                    if (!$matchedPeriod) continue;
+
+                    $meta = $cd['dayMeta'][$day][$matchedPeriod['id']] ?? null;
+                    if (!$meta || !$meta['applicable']) continue;
+                    $applicable = true;
+
+                    if ($meta['effective_type'] !== 'lesson') { $anyBreak = true; continue; }
+
+                    $slotInfo = $cd['grid'][$matchedPeriod['id']][$day] ?? null;
+                    if (!$slotInfo || $slotInfo['is_free']) continue;
+
+                    $entries[] = [
+                        'class'       => $className,
+                        'subject'     => $slotInfo['subject'] ?? '—',
+                        'teacher'     => $slotInfo['teacher'] ?? '',
+                        'teacher_id'  => $slotInfo['teacher_id'] ?? null,
+                        'room'        => $slotInfo['room'] ?? '',
+                        'color'       => $classColors[$className],
+                        'is_conflict' => false,
+                    ];
+                }
+
+                $rowEntries[$day] = [
+                    'entries'     => $entries,
+                    'is_break'    => $anyBreak && empty($entries),
+                    'applicable'  => $applicable,
+                ];
+            }
+
+            $mergedRows[] = ['label' => $label, 'time' => $info['start'] . ' – ' . $info['end'], 'days' => $rowEntries];
+        }
+
+        return [
+            'rows'           => $mergedRows,
+            'days'           => $allDaysUnion,
+            'classColors'    => $classColors,
+            'classList'      => array_keys($classColors),
+            'schoolInfo'     => $schoolInfo,
+            'sessionName'    => $run->session?->session ?? '',
+            'termName'       => $run->term?->term ?? 'All Terms',
+            'generatedAt'    => now()->format('d M Y, H:i'),
+            'dayColors'      => self::DAY_COLORS,
+            'staffAnalytics' => ['staff' => [], 'summary' => []],
+        ];
+    }
+
+    private function buildRunMetaBlock(TimetableGenerationRun $run): array
+    {
+        return [
+            'name'        => $run->name,
+            'run_code'    => $run->run_code,
+            'description' => $run->description,
+            'creator'     => $run->creator?->name,
+            'created_at'  => $run->created_at->format('d M Y, H:i'),
+            'seed'        => $run->seed,
+            'status'      => $run->status,
+        ];
     }
 }

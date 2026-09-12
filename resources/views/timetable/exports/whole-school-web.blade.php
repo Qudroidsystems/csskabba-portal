@@ -19,6 +19,59 @@
 .ttw-print-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; }
 .ttw-print-btn:hover { background:rgba(255,255,255,.28); }
 
+/* ── Run metadata block (web) ── */
+.run-meta-block {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-left: 4px solid #1565C0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+.run-meta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.run-meta-name {
+    font-size: 14px;
+    color: #0f2342;
+}
+.run-meta-code {
+    color: #64748B;
+    margin-left: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+.run-meta-right {
+    color: #64748B;
+    font-size: 12px;
+}
+.run-meta-desc {
+    margin-top: 6px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.4;
+}
+.run-rules-block {
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+    color: #92400E;
+}
+.run-rule-item {
+    display: inline-block;
+    margin-left: 10px;
+    margin-right: 2px;
+    white-space: nowrap;
+}
+
 .ttw-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
 .ttw-stat { background:#fff; border:1px solid var(--tt-border); border-radius:var(--tt-radius); box-shadow:var(--tt-shadow); padding:16px 18px; }
 .ttw-stat .v { font-size:26px; font-weight:700; color:var(--tt-navy); }
@@ -103,6 +156,38 @@ td.ttw-dimmed { opacity:.25; }
     </div>
     <button class="ttw-print-btn no-print" onclick="window.print()"><i class="ri-printer-line me-1"></i>Print / Save PDF</button>
 </div>
+
+{{-- Run metadata block — only present when exporting a saved generation run. --}}
+@if(!empty($runMeta))
+<div class="run-meta-block">
+    <div class="run-meta-header">
+        <div>
+            <strong class="run-meta-name">{{ $runMeta['name'] }}</strong>
+            <span class="run-meta-code">Run {{ $runMeta['run_code'] }}</span>
+        </div>
+        <div class="run-meta-right">
+            {{ $runMeta['creator'] }} · {{ $runMeta['created_at'] }}
+            @if($runMeta['seed']) · seed {{ $runMeta['seed'] }} @endif
+        </div>
+    </div>
+    @if(!empty($runMeta['description']))
+        <div class="run-meta-desc">{{ $runMeta['description'] }}</div>
+    @endif
+</div>
+@endif
+
+{{-- Advanced-rules appendix — only when the caller requested it. --}}
+@if(!empty($runRules))
+<div class="run-rules-block">
+    <strong>Generation rules used:</strong>
+    @foreach($runRules as $key => $value)
+        <span class="run-rule-item">
+            {{ $key }} =
+            {{ is_array($value) ? json_encode($value) : (is_bool($value) ? ($value ? 'true' : 'false') : $value) }}
+        </span>
+    @endforeach
+</div>
+@endif
 
 <div class="ttw-stats">
     <div class="ttw-stat"><div class="v">{{ $overallStats['total_classes'] ?? 0 }}</div><div class="l">Classes</div></div>
@@ -310,21 +395,26 @@ document.getElementById('ttwSearch').addEventListener('input', function() {
 
 function ttwStaffSelect(staffId) {
     document.getElementById('ttwStaffFilter').value = staffId || '';
+
     document.querySelectorAll('td[data-teacher-id]').forEach(cell => {
         const matches = !!staffId && cell.dataset.teacherId === String(staffId);
         cell.classList.toggle('ttw-staff-highlight', matches);
         cell.classList.toggle('ttw-dimmed', !!staffId && !matches);
     });
+
     document.querySelectorAll('.ttw-board-row').forEach(row => {
         row.classList.toggle('ttw-board-selected', String(row.dataset.staffId) === String(staffId));
     });
+
     const detail = document.getElementById('ttwStaffDetail');
     if (!staffId || !window.STAFF_ANALYTICS[staffId]) {
         detail.classList.remove('active');
         return;
     }
+
     const s = window.STAFF_ANALYTICS[staffId];
     detail.classList.add('active');
+
     const renderFreq = (obj, max) => Object.entries(obj || {}).map(([name, count]) => `
         <div class="ttw-freq-row">
             <span class="name">${name}</span>
@@ -332,10 +422,12 @@ function ttwStaffSelect(staffId) {
             <span class="ttw-freq-count">${count}</span>
         </div>
     `).join('') || '<div class="text-muted small">None</div>';
+
     const classMax = Math.max(0, ...Object.values(s.classes || {}));
     const subjectMax = Math.max(0, ...Object.values(s.subjects || {}));
     document.getElementById('ttwStaffClasses').innerHTML = renderFreq(s.classes, classMax);
     document.getElementById('ttwStaffSubjects').innerHTML = renderFreq(s.subjects, subjectMax);
+
     const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
     document.getElementById('ttwStaffDailyLoad').innerHTML = days.map(d => `
         <div class="ttw-daily-chip ${d === s.busiest_day ? 'busiest' : ''}">
@@ -343,6 +435,7 @@ function ttwStaffSelect(staffId) {
             <div class="n">${(s.daily_load && s.daily_load[d]) || 0}</div>
         </div>
     `).join('');
+
     document.getElementById('ttwStaffConflictBanner').innerHTML = s.conflict_count > 0
         ? `<div class="ttw-conflict-banner"><i class="ri-alert-line me-1"></i>${s.name} has ${s.conflict_count} period(s) with a genuine double-booking across classes — check the highlighted cells above.</div>`
         : '';

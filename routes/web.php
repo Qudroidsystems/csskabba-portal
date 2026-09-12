@@ -1056,6 +1056,20 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('/timetable/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('timetable.workload-dashboard');
 
+
+
+    // Saved generation runs
+    Route::post('/timetable/runs/save',           [TimetableController::class, 'saveGenerationRun'])->name('timetable.runs.save');
+    Route::get('/timetable/runs',                 [TimetableController::class, 'listGenerationRuns'])->name('timetable.runs.list');
+    Route::post('/timetable/runs/compare',        [TimetableController::class, 'compareGenerationRuns'])->name('timetable.runs.compare');
+    Route::get('/timetable/runs/{identifier}',    [TimetableController::class, 'showGenerationRun'])->name('timetable.runs.show');
+    Route::post('/timetable/runs/{runId}/restore',[TimetableController::class, 'restoreGenerationRun'])->name('timetable.runs.restore');
+    Route::get('/timetable/runs/{runId}/export',  [TimetableController::class, 'exportGenerationRun'])->name('timetable.runs.export');
+    Route::delete('/timetable/runs/{runId}',      [TimetableController::class, 'deleteGenerationRun'])->name('timetable.runs.delete');
+
+
+
+    
     // ===================================================================
     // TIMETABLE REPORTS
     // ===================================================================

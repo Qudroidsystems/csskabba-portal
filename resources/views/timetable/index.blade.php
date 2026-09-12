@@ -243,6 +243,10 @@
 .text-warning { color: #D97706; }
 .bg-primary-subtle { background: #EFF6FF; }
 .text-primary { color: #1565C0; }
+.bg-info-subtle { background: #E0F2FE; }
+.text-info { color: #0369a1; }
+.bg-danger-subtle { background: #FEE2E2; }
+.text-danger { color: #DC2626; }
 
 /* ── Wizard: Subjects & Priority ──────────────────── */
 .wiz-class-card { border: 1px solid var(--tt-border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
@@ -281,6 +285,9 @@
 }
 .wiz-mapped-rooms { font-size: 10.5px; color: #64748B; margin-top: 2px; }
 .wiz-mapped-rooms.none { color: #DC2626; }
+.wiz-mapped-rooms a { color: #0d9488; font-weight: 600; text-decoration: none; }
+.wiz-mapped-rooms a:hover { text-decoration: underline; }
+.wiz-mapped-rooms.none a { color: #DC2626; }
 
 /* ── Wizard: Period Limits ────────────────────────── */
 .wiz-limit-row {
@@ -293,6 +300,11 @@
 .wiz-limit-row:last-child { border-bottom: none; }
 .wiz-limit-row select,
 .wiz-limit-row input { font-size: 12px; }
+
+/* ── Wizard: Room Mappings panel ──────────────────── */
+.wiz-bulk-room-select { font-size: 11.5px; padding: 2px 6px; }
+.wiz-bulk-room-select option { padding: 2px 6px; }
+#wizRoomMappingsPanel .table td { vertical-align: middle; }
 
 /* ── Wizard: Advanced rules panel ─────────────────── */
 .wizard-advanced summary { padding: 6px 0; list-style: none; }
@@ -452,63 +464,177 @@
 
         <div class="col-lg-7">
             <div class="tt-card h-100">
-                <div class="tt-card-header">
-                    <h6><i class="ri-history-line me-2 text-success"></i>Existing Timetables
-                        <span class="badge bg-success-subtle text-success ms-2">{{ $settings->count() }}</span>
-                    </h6>
-                    <div class="d-flex align-items-center gap-3 flex-wrap">
-                        <label class="d-flex align-items-center gap-1 cursor-pointer" style="font-size:12px">
-                            <input type="checkbox" id="selectAllSettings" class="form-check-input mt-0"
-                                   onchange="toggleSelectAllSettings(this.checked)">
-                            Select All
-                        </label>
-                        <button class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn" onclick="bulkDeleteSelectedSettings()" disabled>
-                            <i class="ri-delete-bin-line me-1"></i>Delete Selected
-                        </button>
-                    </div>
+                <div class="tt-card-header" style="padding-bottom:0">
+                    <ul class="nav nav-tabs border-0" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tabExistingBtn" data-bs-toggle="tab"
+                                    data-bs-target="#tabExisting" type="button" role="tab"
+                                    style="font-size:13px;font-weight:600;padding:8px 16px">
+                                <i class="ri-history-line me-1"></i>Existing
+                                <span class="badge bg-success-subtle text-success ms-1">{{ $settings->count() }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tabSavedRunsBtn" data-bs-toggle="tab"
+                                    data-bs-target="#tabSavedRuns" type="button" role="tab"
+                                    onclick="loadSavedRuns()"
+                                    style="font-size:13px;font-weight:600;padding:8px 16px">
+                                <i class="ri-bookmark-3-line me-1"></i>Saved Runs
+                                <span class="badge bg-info-subtle text-info ms-1" id="savedRunsCountBadge"></span>
+                            </button>
+                        </li>
+                    </ul>
                 </div>
-                <div class="tt-card-body" style="max-height:280px;overflow-y:auto">
-                    @forelse ($settings as $setting)
-                    <div class="setting-card" data-id="{{ $setting->id }}" onclick="loadSetting({{ $setting->id }})" data-updated-at="{{ $setting->updated_at->toISOString() }}">
-                        <div class="sc-select" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="form-check-input setting-select-checkbox"
-                                   value="{{ $setting->id }}"
-                                   onchange="toggleSettingSelection({{ $setting->id }}, this.checked)">
-                        </div>
-                        <div class="sc-icon"><i class="ri-school-line"></i></div>
-                        <div class="sc-body">
-                            <div class="sc-title">{{ $setting->resolved_class_name ?: 'Unknown Class' }}</div>
-                            <div class="sc-meta">
-                                <span>{{ $setting->session->session ?? '—' }}</span>
-                                @if($setting->term)
-                                    <span class="mx-1">·</span><span>{{ $setting->term->term }}</span>
-                                @endif
-                                <span class="mx-1">·</span>
-                                <span class="text-muted">Updated {{ $setting->updated_at->diffForHumans() }}</span>
-                                @if($setting->creator)
-                                    <span class="mx-1">·</span>
-                                    <span class="text-muted">by {{ $setting->creator->name }}</span>
-                                @endif
+
+                <div class="tab-content" style="max-height:380px;overflow-y:auto">
+                    {{-- Tab 1: Existing timetables --}}
+                    <div class="tab-pane fade show active" id="tabExisting" role="tabpanel">
+                        <div class="tt-card-body pt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="d-flex align-items-center gap-1 cursor-pointer" style="font-size:12px">
+                                    <input type="checkbox" id="selectAllSettings" class="form-check-input mt-0"
+                                           onchange="toggleSelectAllSettings(this.checked)">
+                                    Select All
+                                </label>
+                                <button class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn"
+                                        onclick="bulkDeleteSelectedSettings()" disabled>
+                                    <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                                </button>
                             </div>
-                        </div>
-                        <div class="sc-actions" onclick="event.stopPropagation()">
-                            <button class="btn btn-sm btn-outline-primary" onclick="loadSetting({{ $setting->id }})" title="Edit">
-                                <i class="ri-edit-line"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-info" onclick="cloneSetting({{ $setting->id }})" title="Clone">
-                                <i class="ri-file-copy-line"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $setting->id }}, '{{ $setting->updated_at->toISOString() }}')" title="Delete">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>
+
+                            @forelse ($settings as $setting)
+                            <div class="setting-card" data-id="{{ $setting->id }}" onclick="loadSetting({{ $setting->id }})" data-updated-at="{{ $setting->updated_at->toISOString() }}">
+                                <div class="sc-select" onclick="event.stopPropagation()">
+                                    <input type="checkbox" class="form-check-input setting-select-checkbox"
+                                           value="{{ $setting->id }}"
+                                           onchange="toggleSettingSelection({{ $setting->id }}, this.checked)">
+                                </div>
+                                <div class="sc-icon"><i class="ri-school-line"></i></div>
+                                <div class="sc-body">
+                                    <div class="sc-title">{{ $setting->resolved_class_name ?: 'Unknown Class' }}</div>
+                                    <div class="sc-meta">
+                                        <span>{{ $setting->session->session ?? '—' }}</span>
+                                        @if($setting->term)
+                                            <span class="mx-1">·</span><span>{{ $setting->term->term }}</span>
+                                        @endif
+                                        <span class="mx-1">·</span>
+                                        <span class="text-muted">Updated {{ $setting->updated_at->diffForHumans() }}</span>
+                                        @if($setting->creator)
+                                            <span class="mx-1">·</span>
+                                            <span class="text-muted">by {{ $setting->creator->name }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="sc-actions" onclick="event.stopPropagation()">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="loadSetting({{ $setting->id }})" title="Edit">
+                                        <i class="ri-edit-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="cloneSetting({{ $setting->id }})" title="Clone">
+                                        <i class="ri-file-copy-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $setting->id }}, '{{ $setting->updated_at->toISOString() }}')" title="Delete">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="text-center py-5 text-muted">
+                                <i class="ri-calendar-line ri-3x d-block mb-3 opacity-30"></i>
+                                <p>No timetables yet. Create your first one.</p>
+                            </div>
+                            @endforelse
                         </div>
                     </div>
-                    @empty
-                    <div class="text-center py-5 text-muted">
-                        <i class="ri-calendar-line ri-3x d-block mb-3 opacity-30"></i>
-                        <p>No timetables yet. Create your first one.</p>
+
+                    {{-- Tab 2: Saved runs --}}
+                    <div class="tab-pane fade" id="tabSavedRuns" role="tabpanel">
+                        <div class="tt-card-body pt-3">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold" style="font-size:12px">
+                                        Find by ID
+                                        <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:12px"
+                                           data-bs-toggle="popover"
+                                           data-bs-title="Find by ID"
+                                           data-bs-content="Paste a 10-character run code to jump straight to that saved run."></i>
+                                    </label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" id="runCodeLookup"
+                                               placeholder="e.g. A7k9mP2xQw" maxlength="10"
+                                               onkeydown="if(event.key==='Enter')lookupRunByCode()">
+                                        <button class="btn btn-primary" onclick="lookupRunByCode()">
+                                            <i class="ri-search-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold" style="font-size:12px">Search</label>
+                                    <input type="text" class="form-control form-control-sm" id="runSearchInput"
+                                           placeholder="Name, description, or code…"
+                                           oninput="debouncedLoadSavedRuns()">
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="runFilterSession" onchange="loadSavedRuns()">
+                                        <option value="">All Sessions</option>
+                                        @foreach($schoolsessions as $session)
+                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="runFilterTerm" onchange="loadSavedRuns()">
+                                        <option value="">All Terms</option>
+                                        @foreach($schoolterms as $term)
+                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="runFilterStatus" onchange="loadSavedRuns()">
+                                        <option value="">All Statuses</option>
+                                        <option value="success">Success</option>
+                                        <option value="shortfalls">Had Shortfalls</option>
+                                        <option value="reverted">Reverted</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="runFilterClass" onchange="loadSavedRuns()">
+                                        <option value="">All Classes</option>
+                                        @foreach($schoolclasses as $class)
+                                            <option value="{{ $class->id }}">
+                                                {{ $class->schoolclass }}{{ $class->arm_name ? ' '.$class->arm_name : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control form-control-sm" id="runFilterDateFrom"
+                                           placeholder="From" onchange="loadSavedRuns()">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control form-control-sm" id="runFilterDateTo"
+                                           placeholder="To" onchange="loadSavedRuns()">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="clearRunFilters()">
+                                        <i class="ri-close-line me-1"></i>Clear Filters
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="savedRunsList">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="ri-bookmark-3-line ri-3x d-block mb-3 opacity-30"></i>
+                                    <p class="mb-0">Load a saved run by its ID above, or browse the list below.</p>
+                                </div>
+                            </div>
+
+                            <div id="savedRunsPagination" class="mt-3"></div>
+                        </div>
                     </div>
-                    @endforelse
                 </div>
             </div>
         </div>
@@ -741,7 +867,9 @@
 </div>
 </div>
 
-{{-- TEACHER ASSIGNMENT MODAL --}}
+{{-- ============================================================ --}}
+{{-- TEACHER ASSIGNMENT MODAL (READ-ONLY)                         --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="teacherAssignModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content">
@@ -799,7 +927,9 @@
   </div>
 </div>
 
-{{-- EDIT SLOT MODAL --}}
+{{-- ============================================================ --}}
+{{-- EDIT SLOT MODAL                                              --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="editSlotModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -874,7 +1004,9 @@
     </div>
 </div>
 
-{{-- WHOLE SCHOOL EXPORT MODAL --}}
+{{-- ============================================================ --}}
+{{-- WHOLE SCHOOL EXPORT MODAL                                     --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="wholeSchoolExportModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -940,7 +1072,9 @@
     </div>
 </div>
 
-{{-- CONFLICT SCOPE MODAL --}}
+{{-- ============================================================ --}}
+{{-- CONFLICT SCOPE MODAL                                          --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="conflictScopeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -986,7 +1120,9 @@
   </div>
 </div>
 
-{{-- CLONE MODAL --}}
+{{-- ============================================================ --}}
+{{-- CLONE MODAL                                                   --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="cloneModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1023,7 +1159,9 @@
     </div>
 </div>
 
-{{-- GENERATION WIZARD MODAL --}}
+{{-- ============================================================ --}}
+{{-- GENERATION WIZARD MODAL                                       --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="generationWizardModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content">
@@ -1225,6 +1363,23 @@
             </button>
         </div>
 
+        {{-- Room Mappings panel --}}
+        <hr>
+        <h6 class="mb-3">
+            <i class="ri-links-line me-2"></i>Room Mappings
+            <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+               data-bs-toggle="popover"
+               data-bs-title="Room Mappings"
+               data-bs-content="Assign rooms to each (class, subject) pair in scope. Only rooms listed here will be used when Strict Room Mapping is on."></i>
+        </h6>
+
+        <div id="wizRoomMappingsPanel">
+            <div class="text-center py-4 text-muted">
+                <i class="ri-links-line ri-2x d-block mb-2 opacity-30"></i>
+                <p class="mb-0">Click <strong>Load Subjects</strong> above to see room mappings.</p>
+            </div>
+        </div>
+
         {{-- Period Limits panel --}}
         <hr>
         <h6 class="mb-3">
@@ -1262,7 +1417,6 @@
 
             <div class="mt-3">
 
-                {{-- Morning cutoff --}}
                 <div class="mb-4">
                     <label class="form-label fw-semibold">
                         Morning cutoff
@@ -1292,7 +1446,6 @@
                     </div>
                 </div>
 
-                {{-- Protected semantics --}}
                 <div class="mb-4">
                     <label class="form-label fw-semibold">
                         Protected subject handling
@@ -1336,7 +1489,6 @@
                     </div>
                 </div>
 
-                {{-- Strict room mapping behaviour --}}
                 <div class="mb-4">
                     <label class="form-label fw-semibold">
                         Strict room mapping behaviour
@@ -1412,7 +1564,7 @@
         </div>
 
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer flex-wrap gap-2">
         <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
         <button class="btn btn-outline-info" onclick="previewGeneration()">
             <i class="ri-eye-line me-1"></i>Preview
@@ -1423,12 +1575,17 @@
         <button class="btn btn-primary" onclick="submitGenerationWizard(true)">
             <i class="ri-magic-line me-1"></i>Apply &amp; Generate
         </button>
+        <button class="btn btn-success ms-auto" onclick="openSaveRunModal()">
+            <i class="ri-bookmark-line me-1"></i>Save Run
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-{{-- ANCHOR REBUILD MODAL --}}
+{{-- ============================================================ --}}
+{{-- ANCHOR REBUILD MODAL                                         --}}
+{{-- ============================================================ --}}
 <div class="modal fade" id="anchorRebuildModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -1492,10 +1649,290 @@
   </div>
 </div>
 
+{{-- ============================================================ --}}
+{{-- SAVE GENERATION RUN MODAL                                    --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="saveRunModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1B5E20,#2E7D32)">
+                <h5 class="modal-title text-white">
+                    <i class="ri-bookmark-3-line me-2"></i>Save This Generation Run
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3" style="font-size:13px">
+                    Saves a named, retrievable record of this wizard run and its generated timetables.
+                    You'll get a 10-character code you can use to find it later.
+                </p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Run Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="saveRunName" maxlength="150"
+                           placeholder="e.g. First term draft — SSS1">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Description <span class="text-muted fw-normal">(optional)</span></label>
+                    <textarea class="form-control" id="saveRunDescription" rows="3" maxlength="2000"
+                              placeholder="Why did you generate this? What did you tweak?"></textarea>
+                </div>
+
+                <div class="alert alert-info mb-0" style="font-size:12.5px">
+                    <i class="ri-information-line me-1"></i>
+                    The live timetables stay editable. Editing them after saving won't change this run —
+                    it keeps a frozen copy of exactly what was generated.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-success" onclick="saveGenerationRun()">
+                    <i class="ri-save-line me-1"></i>Save Run
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- RUN DETAIL MODAL                                             --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="runDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#0d9488)">
+                <div>
+                    <h5 class="modal-title text-white mb-0" id="runDetailTitle">Run</h5>
+                    <small class="text-white opacity-75" id="runDetailCode"></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+                <div id="runDetailBody">
+                    <div class="text-center py-5 text-muted">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-3">Loading…</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-outline-info" onclick="compareRunWithAnother()">
+                    <i class="ri-git-compare-line me-1"></i>Compare
+                </button>
+                <button class="btn btn-outline-primary" onclick="exportRunToPdf()">
+                    <i class="ri-file-pdf-line me-1"></i>Export PDF
+                </button>
+                <button class="btn btn-warning" id="restoreRunBtn" onclick="openRestoreModal()">
+                    <i class="ri-restart-line me-1"></i>Restore to Live
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- RESTORE RUN MODAL                                            --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="restoreRunModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#E65100,#EA580C)">
+                <h5 class="modal-title text-white">
+                    <i class="ri-restart-line me-2"></i>Restore Run to Live Settings
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="ri-alert-line me-1"></i>
+                    <strong>This replaces the live timetables.</strong> Any edits made to them since
+                    this run was saved will be reported before overwriting — you can cancel here.
+                </div>
+
+                <div id="restoreRunSummary" class="mb-3">
+                    <div class="spinner-border spinner-border-sm me-2"></div>Preparing…
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="restoreForce">
+                    <label class="form-check-label" for="restoreForce">
+                        Force overwrite
+                        <small class="text-muted d-block ms-4">
+                            Overwrite even settings that have been edited since this run was saved.
+                        </small>
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="restoreUnpublish">
+                    <label class="form-check-label" for="restoreUnpublish">
+                        Unpublish locked settings
+                        <small class="text-muted d-block ms-4">
+                            Restoring into a published timetable requires unpublishing it first.
+                            Teachers will need to be re-notified afterward.
+                        </small>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-warning" id="confirmRestoreBtn" onclick="confirmRestoreRun()">
+                    <i class="ri-restart-line me-1"></i>Restore
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- COMPARE RUNS MODAL                                           --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="compareRunsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#0d9488)">
+                <h5 class="modal-title text-white">
+                    <i class="ri-git-compare-line me-2"></i>Compare Runs
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+                <div id="compareRunsBody">
+                    <div class="text-center py-5 text-muted">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-3">Loading…</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- EXPORT RUN MODAL                                             --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="exportRunModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ri-file-pdf-line me-2"></i>Export Run</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Format</label>
+                    <select class="form-select" id="exportRunFormat">
+                        <option value="pdf" selected>PDF</option>
+                        <option value="web">Web View</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Layout</label>
+                    <select class="form-select" id="exportRunMode">
+                        <option value="per_class" selected>Per-Class (one page per class)</option>
+                        <option value="merged">Merged Grid (all classes in one table)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Orientation</label>
+                    <select class="form-select" id="exportRunOrientation">
+                        <option value="horizontal" selected>Horizontal (days as columns)</option>
+                        <option value="vertical">Vertical (days as rows)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    @include('timetable.partials.paper-select', [
+                        'selectId' => 'exportRunPaper',
+                        'selected' => 'a3',
+                    ])
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="exportRunIncludeMeta" checked>
+                    <label class="form-check-label" for="exportRunIncludeMeta">
+                        Include run metadata block
+                        <small class="text-muted d-block ms-4">
+                            Name, code, description, creator, and date in the header.
+                        </small>
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="exportRunIncludeRules">
+                    <label class="form-check-label" for="exportRunIncludeRules">
+                        Append generation rules
+                        <small class="text-muted d-block ms-4">
+                            The advanced rules snapshot that produced this run.
+                        </small>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="submitExportRun()">
+                    <i class="ri-download-line me-1"></i>Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- QUICK MAP ROOM MODAL (used from wizard subject rows)         --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="quickMapRoomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#0d9488,#0ea5e9)">
+                <h5 class="modal-title text-white">
+                    <i class="ri-links-line me-2"></i>Map a Room
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="quickMapClassId">
+                <input type="hidden" id="quickMapSubjectId">
+
+                <div class="alert alert-info mb-3" style="font-size:12.5px">
+                    Mapping <strong id="quickMapSubjectName">—</strong> for <strong id="quickMapClassName">—</strong>.
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Room <span class="text-danger">*</span></label>
+                    <select class="form-select" id="quickMapRoomSelect"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                    <select class="form-select" id="quickMapSessionId"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Term <span class="text-muted fw-normal">(optional)</span></label>
+                    <select class="form-select" id="quickMapTermId">
+                        <option value="">All terms</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-info text-white" onclick="submitQuickMapRoom()">
+                    <i class="ri-add-line me-1"></i>Add Mapping
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{{-- CONTINUES IN MESSAGE 4 --}}
 <script>
+// ============================================================================
+// GLOBALS
+// ============================================================================
 let currentSettingId  = null;
 let currentSetting    = null;
 let currentSettingVersion = null;
@@ -1512,6 +1949,8 @@ let conflictCheckTimer = null;
 let selectedSettingIds = new Set();
 let taData = { teachers: [], unassigned: [] };
 let taRows = [];
+let previewState = null;
+let currentRun = null;
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
 const subjectColorMap = {};
@@ -1523,6 +1962,9 @@ function getSubjectColor(subjectId) {
     return subjectColorMap[subjectId];
 }
 
+// ============================================================================
+// ROUTES
+// ============================================================================
 const ROUTES = {
     setup:                      '{{ route("timetable.setup") }}',
     saveSettings:               '{{ route("timetable.save-settings") }}',
@@ -1551,21 +1993,48 @@ const ROUTES = {
     deleteSetting:              '{{ route("timetable.delete-setting", ["settingId" => ":id"]) }}',
     heartbeat:                  '{{ route("timetable.heartbeat", ["id" => ":id"]) }}',
     releaseEditing:             '{{ route("timetable.release-editing", ["id" => ":id"]) }}',
+
+    // Saved generation runs
+    runsSave:                   '{{ route("timetable.runs.save") }}',
+    runsList:                   '{{ route("timetable.runs.list") }}',
+    runsCompare:                '{{ route("timetable.runs.compare") }}',
+    runsShow:                   '{{ route("timetable.runs.show", ["identifier" => "__ID__"]) }}'.replace('/__ID__', ''),
+    runsDelete:                 '{{ route("timetable.runs.delete", ["runId" => "__ID__"]) }}'.replace('/__ID__', ''),
+    runsRestore:                '{{ route("timetable.runs.restore", ["runId" => "__ID__"]) }}'.replace('/__ID__', ''),
+    runsExport:                 '{{ route("timetable.runs.export", ["runId" => "__ID__"]) }}'.replace('/__ID__', ''),
+
+    // Rooms
+    roomsListJson:              '{{ route("rooms.list-json") }}',
+    roomMappings:               '{{ route("rooms.mappings", ["roomId" => "__ID__"]) }}',
+    roomMappingsStore:          '{{ route("rooms.mappings.store", ["roomId" => "__ID__"]) }}',
+    roomMappingsDestroy:        '{{ route("rooms.mappings.destroy", ["mappingId" => "__ID__"]) }}',
+    sessionsList:               '{{ route("api.sessions-list") }}',
+    termsList:                  '{{ route("api.terms-list") }}',
 };
 
 const CSRF = '{{ csrf_token() }}';
-function url(base, id) { return base.replace(/:id\b/, id); }
 
+function url(base, id) {
+    return base.replace(/:id\b/, id);
+}
+
+// ============================================================================
+// UTILITIES
+// ============================================================================
 function escapeHtml(str) {
     if (str == null) return '';
     return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
+
 function apiFetch(endpoint, method = 'GET', body = null) {
     const opts = { method, headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } };
     if (body && method !== 'GET') { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     return fetch(endpoint, opts);
 }
-function showLoader() { Swal.fire({ title: 'Processing…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() }); }
+
+function showLoader() {
+    Swal.fire({ title: 'Processing…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
+}
 function hideLoader() { Swal.close(); }
 
 function showTab(tabId, btn) {
@@ -1574,6 +2043,7 @@ function showTab(tabId, btn) {
     document.getElementById(tabId).style.display = '';
     if (btn) btn.classList.add('active');
 }
+
 function closeEditor() {
     stopEditingHeartbeat();
     document.getElementById('timetableEditor').style.display = 'none';
@@ -1581,7 +2051,9 @@ function closeEditor() {
     currentSettingVersion = null;
 }
 
-/* ── Teacher assignment modal ── */
+// ============================================================================
+// TEACHER ASSIGNMENT MODAL — READ-ONLY
+// ============================================================================
 function openTeacherAssignModal() {
     document.getElementById('teacherAssignmentContainer').innerHTML = `
         <div class="text-center py-5 text-muted">
@@ -1592,23 +2064,28 @@ function openTeacherAssignModal() {
     document.getElementById('taSearchInput').value = '';
     new bootstrap.Modal(document.getElementById('teacherAssignModal')).show();
 }
+
 async function loadTeacherAssignments() {
     const sessionId = document.getElementById('taSessionId').value;
     const termId    = document.getElementById('taTermId').value;
     const container = document.getElementById('teacherAssignmentContainer');
+
     if (!sessionId) {
         container.innerHTML = `<div class="text-center py-5 text-muted"><p>Select a session to view subject/teacher assignments.</p></div>`;
         document.getElementById('taSummaryBar').style.display = 'none';
         taRows = [];
         return;
     }
+
     container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Loading assignments…</p></div>';
+
     try {
         const params = new URLSearchParams({ session_id: sessionId });
         if (termId) params.set('term_id', termId);
         const res  = await apiFetch(`${ROUTES.getTeacherAssignments}?${params.toString()}`, 'GET');
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Failed to load.');
+
         taData = data;
         taRows = buildAssignmentRows(data);
         renderTeacherAssignmentTable();
@@ -1616,6 +2093,7 @@ async function loadTeacherAssignments() {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load: ${escapeHtml(e.message)}</div>`;
     }
 }
+
 function buildAssignmentRows(data) {
     const rows = [];
     (data.unassigned || []).forEach(u => rows.push({ ...u, teacher_id: null, teacher_name: null }));
@@ -1628,35 +2106,44 @@ function buildAssignmentRows(data) {
     );
     return rows;
 }
+
 function renderTeacherAssignmentTable() {
     const container = document.getElementById('teacherAssignmentContainer');
     const search    = (document.getElementById('taSearchInput').value || '').toLowerCase().trim();
+
     if (!taRows.length) {
         document.getElementById('taSummaryBar').style.display = 'none';
         container.innerHTML = `<div class="text-center py-5 text-muted">
             <i class="ri-information-line ri-2x d-block mb-2"></i>
-            <p>No subjects assigned to any class for this session/term yet.</p>
+            <p>No subjects assigned to any class for this session/term yet.
+            Assign subjects and teachers in the main <strong>Subject / Class management</strong> screens first.
+            The timetable module only reads those assignments for generation.</p>
         </div>`;
         return;
     }
+
     const filtered = !search ? taRows : taRows.filter(r =>
         (r.class_name || '').toLowerCase().includes(search) ||
         (r.subject_name || '').toLowerCase().includes(search) ||
         (r.teacher_name || '').toLowerCase().includes(search)
     );
+
     const assignedCount   = taRows.filter(r => r.teacher_id).length;
     const unassignedCount = taRows.length - assignedCount;
     document.getElementById('taSummaryBar').style.display = '';
     document.getElementById('taAssignedCount').textContent   = `${assignedCount} assigned`;
     document.getElementById('taUnassignedCount').textContent = `${unassignedCount} unassigned`;
+
     if (!filtered.length) {
         container.innerHTML = `<div class="text-center py-4 text-muted"><p>No matches for "${escapeHtml(search)}".</p></div>`;
         return;
     }
+
     let html = `<div class="table-responsive"><table class="table table-hover align-middle mb-0">
         <thead class="table-light"><tr>
             <th>Class</th><th>Subject</th><th>Teacher</th><th style="width:90px">Status</th>
         </tr></thead><tbody>`;
+
     filtered.forEach(row => {
         const hasTeacher = !!row.teacher_id;
         const teacherCell = hasTeacher
@@ -1665,6 +2152,7 @@ function renderTeacherAssignmentTable() {
         const statusBadge = hasTeacher
             ? `<span class="badge bg-success-subtle text-success">Ready</span>`
             : `<span class="badge bg-warning-subtle text-warning">Missing</span>`;
+
         html += `<tr>
             <td>${escapeHtml(row.class_name || '—')}</td>
             <td>${escapeHtml(row.subject_name || '—')}</td>
@@ -1672,18 +2160,24 @@ function renderTeacherAssignmentTable() {
             <td>${statusBadge}</td>
         </tr>`;
     });
+
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
-/* ── Multi-select delete ── */
+// ============================================================================
+// MULTI-SELECT DELETE
+// ============================================================================
 function toggleSettingSelection(id, checked) {
     if (checked) selectedSettingIds.add(id);
     else selectedSettingIds.delete(id);
+
     const card = document.querySelector(`.setting-card[data-id="${id}"]`);
     if (card) card.classList.toggle('is-selected', checked);
+
     updateBulkDeleteUI();
 }
+
 function toggleSelectAllSettings(checked) {
     document.querySelectorAll('.setting-select-checkbox').forEach(cb => {
         cb.checked = checked;
@@ -1695,6 +2189,7 @@ function toggleSelectAllSettings(checked) {
     });
     updateBulkDeleteUI();
 }
+
 function updateBulkDeleteUI() {
     const btn   = document.getElementById('bulkDeleteBtn');
     const count = selectedSettingIds.size;
@@ -1702,6 +2197,7 @@ function updateBulkDeleteUI() {
         btn.disabled  = count === 0;
         btn.innerHTML = `<i class="ri-delete-bin-line me-1"></i>Delete Selected${count ? ' (' + count + ')' : ''}`;
     }
+
     const allCbs      = document.querySelectorAll('.setting-select-checkbox');
     const selectAllCb = document.getElementById('selectAllSettings');
     if (selectAllCb) {
@@ -1709,9 +2205,11 @@ function updateBulkDeleteUI() {
         selectAllCb.indeterminate = count > 0 && count < allCbs.length;
     }
 }
+
 async function bulkDeleteSelectedSettings() {
     const ids = [...selectedSettingIds];
     if (!ids.length) return;
+
     const result = await Swal.fire({
         title: `Delete ${ids.length} Timetable${ids.length > 1 ? 's' : ''}?`,
         text: 'This will permanently delete the selected timetables and all their slots.',
@@ -1719,6 +2217,7 @@ async function bulkDeleteSelectedSettings() {
         confirmButtonColor: '#DC2626', confirmButtonText: `Yes, delete ${ids.length}!`,
     });
     if (!result.isConfirmed) return;
+
     showLoader();
     const outcomes = await Promise.all(ids.map(async (id) => {
         const card      = document.querySelector(`.setting-card[data-id="${id}"]`);
@@ -1727,34 +2226,49 @@ async function bulkDeleteSelectedSettings() {
             const res  = await apiFetch(url(ROUTES.deleteSetting, id), 'DELETE', { expected_updated_at: updatedAt });
             const data = await res.json();
             return { id, success: !!data.success };
-        } catch (e) { return { id, success: false }; }
+        } catch (e) {
+            return { id, success: false };
+        }
     }));
     hideLoader();
+
     selectedSettingIds.clear();
     const failedCount  = outcomes.filter(o => !o.success).length;
     const successCount = outcomes.length - failedCount;
+
     if (!failedCount) {
         Swal.fire({ icon: 'success', title: 'Deleted!', text: `${successCount} timetable(s) removed.`, timer: 1800, showConfirmButton: false });
     } else {
-        Swal.fire('Partially Completed', `${successCount} deleted, ${failedCount} failed. Reloading list…`, 'warning');
+        Swal.fire('Partially Completed', `${successCount} deleted, ${failedCount} failed (possibly changed or already removed by someone else). Reloading list…`, 'warning');
     }
     setTimeout(() => location.reload(), 1800);
 }
 
-/* ── Load / create ── */
+// ============================================================================
+// LOAD / CREATE
+// ============================================================================
 async function loadOrCreateSetting() {
     const classId   = document.getElementById('classSelect').value;
     const sessionId = document.getElementById('sessionSelect').value;
     const termId    = document.getElementById('termSelect').value || null;
     if (!classId || !sessionId) return Swal.fire('Required', 'Please select Class and Session.', 'warning');
+
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.setup, 'POST', { schoolclass_id: classId, session_id: sessionId, term_id: termId });
         const data = await res.json();
-        if (data.success) await loadSetting(data.setting_id);
-        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+        if (data.success) {
+            await loadSetting(data.setting_id);
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
+
 async function loadSetting(settingId) {
     showLoader();
     try {
@@ -1765,6 +2279,7 @@ async function loadSetting(settingId) {
             Swal.fire('Error', 'Failed to load timetable: ' + (data.message || 'Failed to load'), 'error');
             return;
         }
+
         currentSettingId      = settingId;
         currentSetting        = data.setting;
         currentSettingVersion = data.setting.updated_at;
@@ -1802,36 +2317,50 @@ async function loadSetting(settingId) {
             {name:'Period 4',type:'lesson'},{name:'Long Break',type:'long_break'},
             {name:'Period 5',type:'lesson'},{name:'Period 6',type:'lesson'},
         ]);
+
         loadConstraintsIntoTable(data.setting.constraints || []);
 
         hideLoader();
         document.getElementById('timetableEditor').style.display = '';
         document.getElementById('timetableEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
         showTab('periodsTab', document.querySelector('.tt-tab'));
+
     } catch (e) {
         hideLoader();
         Swal.fire('Error', 'Failed to load timetable: ' + e.message, 'error');
     }
 }
 
-/* ── Editing heartbeat ── */
+// ============================================================================
+// EDITING HEARTBEAT
+// ============================================================================
 function startEditingHeartbeat(settingId) {
     stopEditingHeartbeat();
     editingHeartbeatTimer = setInterval(() => {
         apiFetch(url(ROUTES.heartbeat, settingId), 'POST').catch(() => {});
     }, 60000);
 }
+
 function stopEditingHeartbeat() {
-    if (editingHeartbeatTimer) { clearInterval(editingHeartbeatTimer); editingHeartbeatTimer = null; }
-    if (currentSettingId) apiFetch(url(ROUTES.releaseEditing, currentSettingId), 'POST').catch(() => {});
+    if (editingHeartbeatTimer) {
+        clearInterval(editingHeartbeatTimer);
+        editingHeartbeatTimer = null;
+    }
+    if (currentSettingId) {
+        apiFetch(url(ROUTES.releaseEditing, currentSettingId), 'POST').catch(() => {});
+    }
 }
+
 window.addEventListener('beforeunload', stopEditingHeartbeat);
 
-/* ── Periods ── */
+// ============================================================================
+// PERIODS
+// ============================================================================
 function loadPeriodsIntoTable(periods) {
     document.getElementById('periodsBody').innerHTML = '';
     periods.forEach((p, i) => addPeriodRow(p.name, p.type, i + 1));
 }
+
 function addPeriodRow(name = '', type = 'lesson', order = null) {
     const tbody  = document.getElementById('periodsBody');
     const rowNum = order ?? (tbody.querySelectorAll('tr').length + 1);
@@ -1854,23 +2383,27 @@ function addPeriodRow(name = '', type = 'lesson', order = null) {
     tbody.appendChild(tr);
     reorderPeriods();
 }
+
 function reorderPeriods() {
     document.querySelectorAll('#periodsBody tr').forEach((tr, i) => {
         const cell = tr.querySelector('.period-order');
         if (cell) cell.textContent = i + 1;
     });
 }
+
 function getPeriodsFromTable() {
     return [...document.querySelectorAll('#periodsBody tr')].map(tr => ({
         name: tr.querySelector('.period-name')?.value?.trim(),
         type: tr.querySelector('.period-type')?.value,
     })).filter(p => p.name);
 }
+
 async function saveSettings() {
     const periods    = getPeriodsFromTable();
     const activeDays = [...document.querySelectorAll('.active-day-checkbox:checked')].map(cb => cb.value);
     if (!periods.length)    return Swal.fire('Error', 'Add at least one period.', 'error');
     if (!activeDays.length) return Swal.fire('Error', 'Select at least one active day.', 'error');
+
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.saveSettings, 'POST', {
@@ -1889,12 +2422,22 @@ async function saveSettings() {
             hideLoader();
             Swal.fire({ icon:'success', title:'Saved!', timer:1600, showConfirmButton:false });
             await loadSetting(currentSettingId);
-        } else if (data.has_version_conflict) { hideLoader(); handleVersionConflict(data); }
-        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+        } else if (data.has_version_conflict) {
+            hideLoader();
+            handleVersionConflict(data);
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
-/* ── Constraints ── */
+// ============================================================================
+// CONSTRAINTS
+// ============================================================================
 function loadConstraintsIntoTable(constraints) {
     const tbody = document.getElementById('constraintsBody');
     tbody.innerHTML = '';
@@ -1926,10 +2469,12 @@ function loadConstraintsIntoTable(constraints) {
         tbody.appendChild(tr);
     });
 }
+
 function genDayOptions(selected) {
     return ['Monday','Tuesday','Wednesday','Thursday','Friday']
         .map(d => `<option value="${d}" ${selected.includes(d)?'selected':''}>${d}</option>`).join('');
 }
+
 function getConstraintsFromTable() {
     return [...document.querySelectorAll('#constraintsBody tr')].map(tr => {
         const sid = tr.querySelector('.constraint-subject-id')?.value;
@@ -1945,6 +2490,7 @@ function getConstraintsFromTable() {
         };
     }).filter(Boolean);
 }
+
 async function saveConstraints() {
     const constraints = getConstraintsFromTable();
     if (!constraints.length) return Swal.fire('Error', 'No constraints to save.', 'error');
@@ -1956,12 +2502,22 @@ async function saveConstraints() {
             currentSettingVersion = data.updated_at;
             hideLoader();
             Swal.fire({ icon:'success', title:'Saved!', timer:1400, showConfirmButton:false });
-        } else if (data.has_version_conflict) { hideLoader(); handleVersionConflict(data); }
-        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+        } else if (data.has_version_conflict) {
+            hideLoader();
+            handleVersionConflict(data);
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
-/* ── Auto-generate (single class) ── */
+// ============================================================================
+// AUTO-GENERATE (single class)
+// ============================================================================
 async function generateTimetable() {
     const result = await Swal.fire({
         title: 'Auto-Generate Timetable?',
@@ -1979,6 +2535,7 @@ async function generateTimetable() {
     });
     if (!result.isConfirmed) return;
     const includeRooms = result.value?.includeRooms ?? true;
+
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.autoGenerate, 'POST', {
@@ -1993,6 +2550,7 @@ async function generateTimetable() {
             showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
             await loadTimetableGridAnimated();
             silentConflictCheck();
+
             const shortfall = data.stats?.room_shortfall_count
                 ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> ${data.stats.room_shortfall_count} lesson(s) couldn't get a room.</p>`
                 : '';
@@ -2012,12 +2570,22 @@ async function generateTimetable() {
                 timer: needsAttention ? undefined : 1800,
                 showConfirmButton: needsAttention,
             });
-        } else if (data.has_version_conflict) { hideLoader(); handleVersionConflict(data); }
-        else { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); }
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+        } else if (data.has_version_conflict) {
+            hideLoader();
+            handleVersionConflict(data);
+        } else {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
-/* ── Grid ── */
+// ============================================================================
+// TIMETABLE GRID
+// ============================================================================
 async function loadTimetableGrid() {
     if (!currentSettingId) return;
     const container = document.getElementById('timetableGridContainer');
@@ -2037,6 +2605,7 @@ async function loadTimetableGrid() {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load grid: ${escapeHtml(e.message)}</div>`;
     }
 }
+
 async function loadTimetableGridAnimated() {
     if (!currentSettingId) return;
     const container = document.getElementById('timetableGridContainer');
@@ -2058,10 +2627,8 @@ async function loadTimetableGridAnimated() {
 }
 
 /**
- * Parameterised grid renderer. Callers with no explicit options fall back
- * to the module-level globals (currentPeriods / currentGrid / currentDays),
- * which is what the editor-tab loader relies on. The preview pane passes
- * explicit options targeting a different container.
+ * Parameterised grid renderer.
+ * Callers with no explicit options fall back to module globals.
  */
 function renderGrid(options = {}) {
     const animate   = !!options.animate;
@@ -2140,8 +2707,6 @@ function renderGrid(options = {}) {
     container.innerHTML = html;
 
     if (options.containerId === undefined) {
-        // Only apply the staff-picture toggling to the live editor grid,
-        // not to preview panes.
         applyStaffPictureVisibility();
     }
 
@@ -2165,7 +2730,11 @@ function playGridBuildAnimation(container, cellIds) {
     const stepDelay = total > 60 ? 12 : total > 30 ? 20 : 35;
 
     window._ttBuildTimer = setInterval(() => {
-        if (i >= total) { clearInterval(window._ttBuildTimer); finishGridBuildAnimation(); return; }
+        if (i >= total) {
+            clearInterval(window._ttBuildTimer);
+            finishGridBuildAnimation();
+            return;
+        }
         const el = container.querySelector(`[data-cell-id="${cellIds[i]}"]`);
         if (el) el.classList.remove('cell-building');
         i++;
@@ -2173,32 +2742,42 @@ function playGridBuildAnimation(container, cellIds) {
         if (textEl) textEl.textContent = `Placing lessons… ${i} / ${total}`;
     }, stepDelay);
 }
+
 function skipGridBuildAnimation() {
     if (window._ttBuildTimer) clearInterval(window._ttBuildTimer);
     document.querySelectorAll('#timetableGridContainer .cell-building').forEach(el => el.classList.remove('cell-building'));
     finishGridBuildAnimation();
 }
+
 function finishGridBuildAnimation() {
     const banner = document.getElementById('ttGeneratingBanner');
     if (banner) banner.remove();
 }
+
 function applyStaffPictureVisibility() {
     const show = localStorage.getItem('tt_show_staff_pictures') !== '0';
     const cb = document.getElementById('toggleStaffPictures');
     if (cb) cb.checked = show;
     document.getElementById('timetableGridContainer')?.classList.toggle('hide-avatars', !show);
 }
+
 function toggleStaffPictureVisibility() {
     const show = document.getElementById('toggleStaffPictures').checked;
     localStorage.setItem('tt_show_staff_pictures', show ? '1' : '0');
     document.getElementById('timetableGridContainer')?.classList.toggle('hide-avatars', !show);
 }
 
-/* ── Room dropdown ── */
+// ============================================================================
+// ROOM DROPDOWN (Tom Select)
+// ============================================================================
 function updateRoomDropdown(rooms) {
-    if (roomTomSelect) { roomTomSelect.destroy(); roomTomSelect = null; }
+    if (roomTomSelect) {
+        roomTomSelect.destroy();
+        roomTomSelect = null;
+    }
     const el = document.getElementById('editSlotRoom');
     if (!el) return;
+
     roomTomSelect = new TomSelect(el, {
         valueField: 'id',
         labelField: 'label',
@@ -2210,14 +2789,18 @@ function updateRoomDropdown(rooms) {
     });
 }
 
-/* ── Edit slot modal ── */
+// ============================================================================
+// EDIT SLOT MODAL
+// ============================================================================
 function openSlotModal(periodId, day) {
     const period = currentPeriods.find(p => p.id == periodId);
     if (!period) return;
     const slot = currentGrid[periodId]?.[day] || {};
+
     document.getElementById('editSlotSettingId').value = currentSettingId;
     document.getElementById('editSlotPeriodId').value  = periodId;
     document.getElementById('editSlotDay').value       = day;
+
     const startFmt = (period.start_time || '').slice(0, 5);
     const endFmt   = (period.end_time   || '').slice(0, 5);
     document.getElementById('editSlotPeriodName').textContent = period.name + ' · ' + startFmt + ' – ' + endFmt;
@@ -2225,14 +2808,20 @@ function openSlotModal(periodId, day) {
     document.getElementById('editSlotContext').textContent    = period.name + ' · ' + day;
     document.getElementById('editSlotNotes').value            = slot.notes || '';
     document.getElementById('editSlotIsDouble').checked       = slot.is_double || false;
+
     resetConflictPanel();
-    if (roomTomSelect) roomTomSelect.setValue(slot.room_id ? slot.room_id.toString() : '', true);
+
+    if (roomTomSelect) {
+        roomTomSelect.setValue(slot.room_id ? slot.room_id.toString() : '', true);
+    }
+
     const avatarDiv = document.getElementById('editTeacherAvatar');
     if (slot.teacher_picture) {
         avatarDiv.innerHTML = `<img src="${slot.teacher_picture}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`;
     } else {
         avatarDiv.innerHTML = `<i class="ri-user-line text-white ri-xl"></i>`;
     }
+
     const subjectSel = document.getElementById('editSlotSubject');
     subjectSel.innerHTML = '<option value="">— Free Period —</option>';
     availableSubjects.forEach(s => {
@@ -2242,6 +2831,7 @@ function openSlotModal(periodId, day) {
         opt.selected = (slot.subject_id == s.subject_id);
         subjectSel.appendChild(opt);
     });
+
     const teacherSel = document.getElementById('editSlotTeacher');
     teacherSel.innerHTML = '<option value="">— No Teacher —</option>';
     const uniqueTeachers = new Map();
@@ -2253,9 +2843,14 @@ function openSlotModal(periodId, day) {
         opt.selected = (slot.teacher_id == id);
         teacherSel.appendChild(opt);
     });
+
     new bootstrap.Modal(document.getElementById('editSlotModal')).show();
-    if (slot.teacher_id || slot.room_id) setTimeout(runRealtimeConflictCheck, 300);
+
+    if (slot.teacher_id || slot.room_id) {
+        setTimeout(runRealtimeConflictCheck, 300);
+    }
 }
+
 function onSubjectChange() {
     const sel = document.getElementById('editSlotSubject');
     const opt = sel.options[sel.selectedIndex];
@@ -2264,6 +2859,7 @@ function onSubjectChange() {
     onTeacherChange();
     debounceConflictCheck();
 }
+
 function onTeacherChange() {
     const tid = document.getElementById('editSlotTeacher').value;
     if (!tid) { debounceConflictCheck(); return; }
@@ -2275,27 +2871,36 @@ function onTeacherChange() {
     debounceConflictCheck();
 }
 
-/* ── Realtime conflict ── */
+// ============================================================================
+// REAL-TIME CONFLICT CHECK
+// ============================================================================
 function debounceConflictCheck() {
     clearTimeout(conflictCheckTimer);
     const panel = document.getElementById('slotConflictPanel');
     const inner = document.getElementById('slotConflictInner');
     const teacherId = document.getElementById('editSlotTeacher').value;
     const roomId    = roomTomSelect ? roomTomSelect.getValue() : '';
-    if (!teacherId && !roomId) { resetConflictPanel(); return; }
+    if (!teacherId && !roomId) {
+        resetConflictPanel();
+        return;
+    }
     panel.style.display = '';
     inner.innerHTML = `<div class="rtc-spinner"><div class="spinner-border text-primary"></div><span>Checking for conflicts…</span></div>`;
     conflictCheckTimer = setTimeout(runRealtimeConflictCheck, 400);
 }
+
 async function runRealtimeConflictCheck() {
     const teacherId = document.getElementById('editSlotTeacher').value;
     const roomId    = roomTomSelect ? roomTomSelect.getValue() : '';
     const periodId  = document.getElementById('editSlotPeriodId').value;
     const day       = document.getElementById('editSlotDay').value;
     const settingId = document.getElementById('editSlotSettingId').value;
+
     const panel = document.getElementById('slotConflictPanel');
     const inner = document.getElementById('slotConflictInner');
+
     if (!teacherId && !roomId) { resetConflictPanel(); return; }
+
     try {
         const res  = await apiFetch(ROUTES.checkSlotConflict, 'POST', {
             setting_id: parseInt(settingId),
@@ -2308,11 +2913,14 @@ async function runRealtimeConflictCheck() {
         });
         const data = await res.json();
         if (!data.success) return;
+
         inner.innerHTML = '';
         panel.style.display = '';
+
         data.conflicts.forEach(c => {
             const div = document.createElement('div');
             div.className = 'rtc-panel ' + (c.severity === 'error' ? 'rtc-error' : 'rtc-warning');
+
             let altsHtml = '';
             if (c.alternatives?.length) {
                 altsHtml += '<div class="rtc-alts">'
@@ -2330,6 +2938,7 @@ async function runRealtimeConflictCheck() {
                         </span>`
                     ).join('') + '</div>';
             }
+
             div.innerHTML = `
                 <div class="rtc-icon">${c.icon}</div>
                 <div class="rtc-body">
@@ -2339,6 +2948,7 @@ async function runRealtimeConflictCheck() {
                 </div>`;
             inner.appendChild(div);
         });
+
         data.warnings.forEach(w => {
             const div = document.createElement('div');
             const isCombined = w.type === 'combined_session';
@@ -2347,12 +2957,14 @@ async function runRealtimeConflictCheck() {
                 <div class="rtc-body"><div class="rtc-msg${isCombined ? ' green' : ''}">${escapeHtml(w.message)}</div></div>`;
             inner.appendChild(div);
         });
+
         if (!data.conflicts.length && !data.warnings.length) {
             inner.innerHTML = `<div class="rtc-panel rtc-clear">
                 <div class="rtc-icon">✅</div>
                 <div class="rtc-body"><div class="rtc-msg green">No conflicts detected for this slot.</div></div>
             </div>`;
         }
+
         const saveBtn = document.getElementById('saveSlotBtn');
         if (data.has_error) {
             saveBtn.innerHTML = '<i class="ri-alert-line me-2"></i>Save Anyway (Override)';
@@ -2361,8 +2973,12 @@ async function runRealtimeConflictCheck() {
             saveBtn.innerHTML = '<i class="ri-save-line me-2"></i>Save Slot';
             saveBtn.className = 'btn btn-primary px-4';
         }
-    } catch (e) { inner.innerHTML = ''; }
+
+    } catch (e) {
+        inner.innerHTML = '';
+    }
 }
+
 function resetConflictPanel() {
     document.getElementById('slotConflictPanel').style.display = 'none';
     document.getElementById('slotConflictInner').innerHTML = '';
@@ -2372,17 +2988,22 @@ function resetConflictPanel() {
         saveBtn.className = 'btn btn-primary px-4';
     }
 }
+
 function closeModalAndOpenSlot(periodId, day) {
     const modal = bootstrap.Modal.getInstance(document.getElementById('editSlotModal'));
     if (modal) modal.hide();
     loadTimetableGrid().then(() => openSlotModal(periodId, day));
 }
+
 function switchToRoom(roomId, label) {
     if (!roomTomSelect) return;
     const idStr = roomId.toString();
-    if (!roomTomSelect.getOption(idStr)) roomTomSelect.addOption({ value: idStr, label: label });
+    if (!roomTomSelect.getOption(idStr)) {
+        roomTomSelect.addOption({ value: idStr, label: label });
+    }
     roomTomSelect.setValue(idStr);
 }
+
 async function silentConflictCheck() {
     if (!currentSettingId) return;
     try {
@@ -2390,12 +3011,18 @@ async function silentConflictCheck() {
         const data = await res.json();
         if (!data.success) return;
         const badge = document.getElementById('conflictBadgeTab');
-        if (data.conflict_count > 0) { badge.style.display = ''; badge.textContent = data.conflict_count; }
-        else badge.style.display = 'none';
-    } catch (e) {}
+        if (data.conflict_count > 0) {
+            badge.style.display = '';
+            badge.textContent   = data.conflict_count;
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) { /* silent */ }
 }
 
-/* ── Save slot ── */
+// ============================================================================
+// SAVE SLOT
+// ============================================================================
 async function saveSlot() {
     const roomId = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
     const payload = {
@@ -2409,10 +3036,12 @@ async function saveSlot() {
         notes:      document.getElementById('editSlotNotes').value || null,
         is_double:  document.getElementById('editSlotIsDouble').checked,
     };
+
     showLoader();
     try {
         const res    = await apiFetch(ROUTES.saveSlot, 'POST', payload);
         const result = await res.json();
+
         if (result.success) {
             currentSettingVersion = result.setting_updated_at;
             hideLoader();
@@ -2422,35 +3051,49 @@ async function saveSlot() {
             Swal.fire({ icon:'success', title:'Saved!', timer:1200, showConfirmButton:false });
             return;
         }
+
         if (result.has_version_conflict) {
             hideLoader();
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             return handleVersionConflict(result);
         }
+
         if (result.has_conflict) {
             hideLoader();
+
             const isRoomConflict = (result.conflict_type || '').startsWith('room');
             const icon           = isRoomConflict ? '🏫' : '⚠️';
             const title          = isRoomConflict ? 'Room Already In Use' : 'Teacher Conflict Detected';
+
             let altsHtml = '';
             if (result.alternatives?.length) {
                 altsHtml += `<div class="mt-3 text-start">
-                    <div class="fw-semibold mb-2" style="font-size:13px"><i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:</div>
+                    <div class="fw-semibold mb-2" style="font-size:13px">
+                        <i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:
+                    </div>
                     <div class="d-flex flex-wrap gap-1">
                         ${result.alternatives.slice(0, 5).map(a =>
-                            `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px">📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})</span>`
+                            `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px">
+                                📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
+                            </span>`
                         ).join('')}
                     </div></div>`;
             }
             if (result.alternative_rooms?.length) {
                 altsHtml += `<div class="mt-2 text-start">
-                    <div class="fw-semibold mb-2" style="font-size:13px"><i class="ri-door-line text-info me-1"></i>Available alternative rooms:</div>
+                    <div class="fw-semibold mb-2" style="font-size:13px">
+                        <i class="ri-door-line text-info me-1"></i>Available alternative rooms:
+                    </div>
                     <div class="d-flex flex-wrap gap-1">
                         ${result.alternative_rooms.slice(0, 4).map(r =>
-                            `<span class="badge p-2" style="background:#EFF6FF;color:#1565C0;font-size:11px;cursor:pointer" onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">🏫 ${escapeHtml(r.label)}</span>`
+                            `<span class="badge p-2" style="background:#EFF6FF;color:#1565C0;font-size:11px;cursor:pointer"
+                                onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">
+                                🏫 ${escapeHtml(r.label)}
+                            </span>`
                         ).join('')}
                     </div></div>`;
             }
+
             const { isConfirmed } = await Swal.fire({
                 title: `${icon} ${title}`,
                 html: `<div style="font-size:14px;text-align:left">
@@ -2464,7 +3107,9 @@ async function saveSlot() {
                 confirmButtonText: '<i class="ri-save-line me-1"></i>Override & Save',
                 cancelButtonText:  'Cancel', width: 520,
             });
+
             if (!isConfirmed) return;
+
             showLoader();
             const res2    = await apiFetch(ROUTES.saveSlot, 'POST', { ...payload, force_save: true });
             const result2 = await res2.json();
@@ -2479,28 +3124,44 @@ async function saveSlot() {
                 hideLoader();
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 return handleVersionConflict(result2);
-            } else { hideLoader(); Swal.fire('Error', result2.message || 'Save failed', 'error'); }
+            } else {
+                hideLoader();
+                Swal.fire('Error', result2.message || 'Save failed', 'error');
+            }
             return;
         }
+
         hideLoader();
         Swal.fire('Error', result.message || 'Save failed', 'error');
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
-/* ── Conflict tab ── */
+// ============================================================================
+// CONFLICT CHECKER TAB
+// ============================================================================
 async function checkConflicts() {
     if (!currentSettingId) return;
     showLoader();
     try {
         const res  = await apiFetch(url(ROUTES.checkConflicts, currentSettingId), 'GET');
         const data = await res.json();
-        if (!data.success) { hideLoader(); Swal.fire('Error', data.message || 'Failed', 'error'); return; }
+        if (!data.success) {
+            hideLoader();
+            Swal.fire('Error', data.message || 'Failed', 'error');
+            return;
+        }
+
         const container = document.getElementById('conflictsList');
         const badge     = document.getElementById('conflictBadgeTab');
+
         if (data.checked_at) {
             document.getElementById('conflictCheckedAt').style.display = '';
             document.getElementById('conflictCheckedAtText').textContent = 'Last checked: ' + data.checked_at;
         }
+
         if (!data.conflict_count) {
             badge.style.display = 'none';
             container.innerHTML = `
@@ -2512,12 +3173,18 @@ async function checkConflicts() {
             hideLoader();
             return;
         }
+
         badge.style.display = '';
         badge.textContent   = data.conflict_count;
+
         document.getElementById('conflictsList').innerHTML = renderConflictsHtml(data);
         hideLoader();
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
+
 function openConflictScopeModal() {
     document.getElementById('conflictScopeResults').innerHTML = `
         <div class="text-center py-4 text-muted">
@@ -2526,12 +3193,15 @@ function openConflictScopeModal() {
         </div>`;
     new bootstrap.Modal(document.getElementById('conflictScopeModal')).show();
 }
+
 async function runScopeConflictCheck() {
     const sessionId = document.getElementById('ccSessionId').value;
     const termId    = document.getElementById('ccTermId').value;
     if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
+
     const container = document.getElementById('conflictScopeResults');
     container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger"></div><p class="mt-3 text-muted">Scanning all classes…</p></div>';
+
     try {
         const params = new URLSearchParams({ session_id: sessionId });
         if (termId) params.set('term_id', termId);
@@ -2543,22 +3213,26 @@ async function runScopeConflictCheck() {
         container.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
     }
 }
+
 function renderConflictsHtml(data) {
     if (!data.conflict_count) {
         return `<div class="text-center py-4">
             <i class="ri-check-double-line ri-3x d-block mb-3 text-success"></i>
             <h6 class="text-success">No Conflicts Found</h6>
-            <p class="text-muted mb-0">All teachers and rooms are properly scheduled.</p>
+            <p class="text-muted mb-0">All teachers and rooms are properly scheduled with no overlaps.</p>
         </div>`;
     }
+
     const teacherConflicts = data.conflicts.filter(c => c.conflict_category === 'teacher');
     const roomConflicts    = data.conflicts.filter(c => c.conflict_category === 'room');
+
     let html = `<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
         <i class="ri-alert-line ri-xl"></i>
         Found <strong class="mx-1">${data.conflict_count}</strong> conflict(s)
         ${teacherConflicts.length ? `<span class="badge bg-danger ms-1">${teacherConflicts.length} teacher</span>` : ''}
         ${roomConflicts.length    ? `<span class="badge bg-warning text-dark ms-1">${roomConflicts.length} room</span>` : ''}
     </div>`;
+
     data.conflicts.forEach(c => {
         const isRoomConflict = c.conflict_category === 'room';
         const avatarHtml     = isRoomConflict
@@ -2566,13 +3240,16 @@ function renderConflictsHtml(data) {
             : (c.teacher_picture
                 ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
                 : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`);
+
         const crossArmBadge = c.is_cross_arm
             ? `<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px"><i class="ri-git-branch-line"></i> Cross-Arm</span>` : '';
+
         const classesHtml = (c.all_classes && c.all_classes.length > 2)
             ? c.all_classes.map(cls => `<span class="badge bg-primary-subtle text-primary me-1">${escapeHtml(cls)}</span>`).join('')
             : `<span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_a || '')}</span>
                <span class="mx-1 text-muted">&amp;</span>
                <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_b || '')}</span>`;
+
         const altHtml = c.alternatives?.length
             ? `<div class="conflict-suggestion">
                    <div><i class="ri-lightbulb-line text-success me-1"></i><strong>Suggestion:</strong> ${escapeHtml(c.resolution_suggestion)}</div>
@@ -2583,6 +3260,7 @@ function renderConflictsHtml(data) {
                    </div>
                </div>`
             : `<div class="mt-2 text-muted" style="font-size:12px"><i class="ri-information-line me-1"></i>${escapeHtml(c.resolution_suggestion)}</div>`;
+
         html += `<div class="conflict-item ${isRoomConflict ? 'room-conflict' : ''}">
             ${avatarHtml}
             <div class="flex-grow-1">
@@ -2602,14 +3280,18 @@ function renderConflictsHtml(data) {
             </div>
         </div>`;
     });
+
     return html;
 }
+
 function switchToGridAndOpen(periodId, day) {
     showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
     loadTimetableGrid().then(() => openSlotModal(periodId, day));
 }
 
-/* ── Notifications / Export / Delete / Clone ── */
+// ============================================================================
+// NOTIFICATIONS / EXPORT / DELETE / CLONE
+// ============================================================================
 async function sendNotifications() {
     const result = await Swal.fire({
         title: 'Send Notifications', text: 'Send timetable notifications to all assigned teachers?',
@@ -2623,8 +3305,12 @@ async function sendNotifications() {
         hideLoader();
         if (data.success) Swal.fire({ icon:'success', title:'Sent!', text: data.message, timer:2000, showConfirmButton:false });
         else Swal.fire('Error', data.message || 'Failed', 'error');
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
+
 function exportTimetable(format) {
     if (!currentSettingId) return Swal.fire('Error', 'No timetable loaded.', 'error');
     const orientation = document.getElementById('exportOrientation')?.value || 'horizontal';
@@ -2636,10 +3322,12 @@ function exportTimetable(format) {
     if (format === 'pdf') window.open(exportUrl, '_blank');
     else window.location.href = exportUrl;
 }
+
 function openWholeSchoolExportModal() {
     selectWsMode(document.querySelector('.ws-mode-btn[data-mode="per_class"]'));
     new bootstrap.Modal(document.getElementById('wholeSchoolExportModal')).show();
 }
+
 function selectWsMode(btn) {
     document.querySelectorAll('.ws-mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -2648,22 +3336,28 @@ function selectWsMode(btn) {
     document.getElementById('wsOrientationWrap').style.display = '';
     document.getElementById('wsPaperWrap').style.display = '';
 }
+
 function exportWholeSchoolTimetable(type = 'pdf') {
     const sessionId   = document.getElementById('wholeSchoolSessionId').value;
     const termId      = document.getElementById('wholeSchoolTermId').value;
     const orientation = document.getElementById('wholeSchoolOrientation').value;
     const paper       = document.getElementById('wholeSchoolPaper').value;
     const mode        = document.getElementById('wholeSchoolMode').value;
+
     if (!sessionId) return Swal.fire('Error', 'Please select a session.', 'error');
+
     const base = mode === 'merged'
         ? (type === 'web' ? ROUTES.mergedGridWeb : ROUTES.exportMergedGrid)
         : (type === 'web' ? ROUTES.exportWholeSchoolWeb : ROUTES.exportWholeSchool);
+
     const qs = `?session_id=${encodeURIComponent(sessionId)}`
              + `&term_id=${encodeURIComponent(termId || '')}`
              + `&orientation=${encodeURIComponent(orientation)}`
              + `&paper=${encodeURIComponent(paper)}`;
+
     window.open(base + qs, '_blank');
 }
+
 async function deleteSetting(settingId, updatedAt) {
     const result = await Swal.fire({
         title: 'Delete Timetable?', text: 'This will permanently delete this timetable and all its slots.',
@@ -2681,16 +3375,24 @@ async function deleteSetting(settingId, updatedAt) {
         } else if (data.has_version_conflict) {
             await Swal.fire({ title: 'Changed since you last saw it', text: data.message, icon: 'warning', confirmButtonText: 'Reload List' });
             location.reload();
-        } else Swal.fire('Error', data.message || 'Failed', 'error');
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+        } else {
+            Swal.fire('Error', data.message || 'Failed', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
+
 function cloneSetting(settingId) {
     pendingCloneId = settingId;
     new bootstrap.Modal(document.getElementById('cloneModal')).show();
 }
+
 async function confirmClone(force = false) {
     if (!pendingCloneId) return;
     if (!force) bootstrap.Modal.getInstance(document.getElementById('cloneModal')).hide();
+
     const settingId = pendingCloneId;
     showLoader();
     try {
@@ -2702,12 +3404,14 @@ async function confirmClone(force = false) {
         });
         const data = await res.json();
         hideLoader();
+
         if (data.success) {
             pendingCloneId = null;
             Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false });
             setTimeout(() => location.reload(), 1400);
             return;
         }
+
         if (data.is_being_edited) {
             const confirmResult = await Swal.fire({
                 title: 'Being Edited', text: data.message, icon: 'warning',
@@ -2720,12 +3424,19 @@ async function confirmClone(force = false) {
             pendingCloneId = null;
             return;
         }
+
         pendingCloneId = null;
         Swal.fire('Error', data.message || 'Failed', 'error');
-    } catch (e) { hideLoader(); pendingCloneId = null; Swal.fire('Error', e.message, 'error'); }
+    } catch (e) {
+        hideLoader();
+        pendingCloneId = null;
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
-/* ── Generation wizard ── */
+// ============================================================================
+// GENERATION WIZARD
+// ============================================================================
 function openGenerationWizardModal() {
     document.getElementById('wizHalfDaysBody').innerHTML = '';
     const formEl     = document.getElementById('wizFormContent');
@@ -2736,14 +3447,17 @@ function openGenerationWizardModal() {
     if (previewEl)  previewEl.style.display = 'none';
     new bootstrap.Modal(document.getElementById('generationWizardModal')).show();
 }
+
 function toggleWizardClassPicker() {
     document.getElementById('wizClassPickerWrap').style.display =
         document.getElementById('wizScope').value === 'selected' ? '' : 'none';
 }
+
 function toggleWizardAssemblyDay() {
     document.getElementById('wizAssemblyDayWrap').style.display =
         document.getElementById('wizAssemblyFirstPeriod').checked ? '' : 'none';
 }
+
 function addWizardHalfDayRow() {
     const wrap = document.getElementById('wizHalfDaysBody');
     const row  = document.createElement('div');
@@ -2764,6 +3478,7 @@ function addWizardHalfDayRow() {
         </div>`;
     wrap.appendChild(row);
 }
+
 function getWizardHalfDays() {
     return [...document.querySelectorAll('.wiz-half-day-row')].map(row => {
         const day     = row.querySelector('.half-day-select').value;
@@ -2771,17 +3486,21 @@ function getWizardHalfDays() {
         return (day && lessons) ? { day, lessons } : null;
     }).filter(Boolean);
 }
+
 function buildWizardResultsSummary(results) {
     if (!Array.isArray(results) || !results.length) return '';
     const skipped = results.filter(r => r.skipped);
     const applied = results.filter(r => !r.skipped);
+
     const classNameById = {};
     document.querySelectorAll('#wizClassIds option').forEach(opt => {
         classNameById[opt.value] = opt.textContent.trim();
     });
     const nameFor = (id) => classNameById[id] || `Class #${id}`;
+
     let html = `<div class="text-start mt-2" style="font-size:12px">
         <div class="text-success mb-1"><i class="ri-checkbox-circle-line"></i> Applied to ${applied.length} class(es)</div>`;
+
     if (skipped.length) {
         html += `<div class="text-warning mb-1"><i class="ri-alert-line"></i> Skipped ${skipped.length} class(es) — published/locked:</div>
             <ul class="mb-0 ps-4">
@@ -2791,12 +3510,14 @@ function buildWizardResultsSummary(results) {
     html += '</div>';
     return html;
 }
+
 function animateWizardResults(results) {
     return new Promise((resolve) => {
         const formEl     = document.getElementById('wizFormContent');
         const progressEl = document.getElementById('wizGenerationProgress');
         const listEl     = document.getElementById('wizProgressList');
         if (!formEl || !progressEl || !listEl || !results?.length) return resolve();
+
         formEl.style.display = 'none';
         progressEl.style.display = '';
         listEl.innerHTML = results.map((r, i) => `
@@ -2806,10 +3527,15 @@ function animateWizardResults(results) {
                 <span class="flex-grow-1">${escapeHtml(r.class_name)}</span>
                 <span class="text-muted" id="wizProgDetail${i}"></span>
             </div>`).join('');
+
         let i = 0;
         const stepDelay = results.length > 20 ? 90 : 180;
         const timer = setInterval(() => {
-            if (i >= results.length) { clearInterval(timer); setTimeout(resolve, 400); return; }
+            if (i >= results.length) {
+                clearInterval(timer);
+                setTimeout(resolve, 400);
+                return;
+            }
             const spinner = document.getElementById(`wizProgSpinner${i}`);
             const check   = document.getElementById(`wizProgCheck${i}`);
             const detail  = document.getElementById(`wizProgDetail${i}`);
@@ -2821,7 +3547,9 @@ function animateWizardResults(results) {
     });
 }
 
-/* ── Wizard: Subjects & Priority panel ── */
+// ============================================================================
+// WIZARD: SUBJECTS & PRIORITY PANEL
+// ============================================================================
 let wizardSubjectsState = {};
 
 async function loadWizardSubjects() {
@@ -2902,11 +3630,14 @@ function renderWizardSubjectsPanel(classes, levels) {
 
         cls.subjects.forEach(s => {
             const sid = s.subject_id;
+            const subjectNameEsc = escapeHtml(s.subject_name).replace(/'/g, "\\'");
+            const classNameEsc = escapeHtml(cls.class_name).replace(/'/g, "\\'");
+
             const roomHint = s.mapped_rooms_subject.length
-                ? `<div class="wiz-mapped-rooms"><i class="ri-door-line me-1"></i>${s.mapped_rooms_subject.map(r => escapeHtml(r.name)).join(', ')}</div>`
+                ? `<div class="wiz-mapped-rooms"><i class="ri-door-line me-1"></i>${s.mapped_rooms_subject.map(r => escapeHtml(r.name)).join(', ')} <a href="#" onclick="event.preventDefault();openQuickMapRoom(${classId}, ${sid}, '${subjectNameEsc}', '${classNameEsc}')" style="font-size:10px;margin-left:4px">＋ map</a></div>`
                 : (s.mapped_rooms_generic.length
-                    ? `<div class="wiz-mapped-rooms"><i class="ri-door-line me-1"></i>${s.mapped_rooms_generic.map(r => escapeHtml(r.name)).join(', ')} <em>(any subject)</em></div>`
-                    : '<div class="wiz-mapped-rooms none"><i class="ri-alert-line me-1"></i>No mapped rooms</div>');
+                    ? `<div class="wiz-mapped-rooms"><i class="ri-door-line me-1"></i>${s.mapped_rooms_generic.map(r => escapeHtml(r.name)).join(', ')} <em>(any subject)</em> <a href="#" onclick="event.preventDefault();openQuickMapRoom(${classId}, ${sid}, '${subjectNameEsc}', '${classNameEsc}')" style="font-size:10px;margin-left:4px">＋ map</a></div>`
+                    : `<div class="wiz-mapped-rooms none"><i class="ri-alert-line me-1"></i>No mapped rooms <a href="#" onclick="event.preventDefault();openQuickMapRoom(${classId}, ${sid}, '${subjectNameEsc}', '${classNameEsc}')" style="font-size:10px;margin-left:4px">＋ map</a></div>`);
 
             const priorityOptions = Object.entries(levels).map(([level, label]) => {
                 const selected = s.use_priority && s.priority_level == level;
@@ -2971,15 +3702,19 @@ function renderWizardSubjectsPanel(classes, levels) {
     });
 
     panel.innerHTML = html;
+
+    renderRoomMappingsPanel();
 }
 
-function toggleWizClassCard(classId) {
-    const body  = document.getElementById('wizClassBody_' + classId);
-    const caret = document.getElementById('wizCaret_' + classId);
+function toggleWizClassCard(key) {
+    const body  = document.getElementById('wizClassBody_' + key);
+    const caret = document.getElementById('wizCaret_' + key);
     if (!body) return;
     const open = body.style.display === 'none';
     body.style.display = open ? '' : 'none';
-    caret.className = `ri-${open ? 'arrow-down-s' : 'arrow-right-s'}-line me-1 wiz-caret`;
+    if (caret) {
+        caret.className = `ri-${open ? 'arrow-down-s' : 'arrow-right-s'}-line me-1 wiz-caret`;
+    }
 }
 
 function toggleWizDouble(classId, subjectId, checked) {
@@ -2992,7 +3727,228 @@ function onWizPriorityChange(classId, subjectId, value) {
     if (flags) flags.style.display = value ? 'flex' : 'none';
 }
 
-/* ── Wizard: Period Limits ── */
+// ============================================================================
+// WIZARD: ROOM MAPPINGS PANEL
+// ============================================================================
+async function renderRoomMappingsPanel() {
+    const panel = document.getElementById('wizRoomMappingsPanel');
+    if (!panel) return;
+
+    if (!Object.keys(wizardSubjectsState).length) {
+        panel.innerHTML = '<div class="text-center py-4 text-muted"><i class="ri-links-line ri-2x d-block mb-2 opacity-30"></i><p class="mb-0">Click <strong>Load Subjects</strong> above to see room mappings.</p></div>';
+        return;
+    }
+
+    let rooms = [];
+    try {
+        const r = await fetch(ROUTES.roomsListJson, { headers: { 'Accept': 'application/json' } });
+        const d = await r.json();
+        rooms = d.data ?? [];
+    } catch (e) {
+        panel.innerHTML = '<div class="alert alert-danger m-0">Failed to load rooms: ' + escapeHtml(e.message) + '</div>';
+        return;
+    }
+
+    let html = `<div class="text-muted mb-2" style="font-size:11.5px">
+        <i class="ri-information-line me-1"></i>
+        Rooms selected here are the only ones the generator will use when
+        <strong>Strict Room Mapping</strong> is enabled.
+    </div>`;
+
+    Object.entries(wizardSubjectsState).forEach(([classId, info]) => {
+        const classOpt = document.querySelector(`#wizClassIds option[value="${classId}"]`);
+        const className = classOpt?.textContent.trim() ?? `Class #${classId}`;
+
+        html += `<div class="wiz-class-card mb-2">
+            <div class="wiz-class-hdr" onclick="toggleWizClassCard('rm_${classId}')">
+                <h6><i class="ri-arrow-down-s-line me-1 wiz-caret" id="wizCaret_rm_${classId}"></i>${escapeHtml(className)}</h6>
+                <span class="badge bg-light text-dark">${info.subjects.length} subjects</span>
+            </div>
+            <div class="wiz-class-body" id="wizClassBody_rm_${classId}" style="display:none">
+                <table class="table table-sm mb-0" style="font-size:12px">
+                    <thead class="table-light">
+                        <tr><th>Subject</th><th style="width:45%">Mapped rooms</th><th style="width:80px"></th></tr>
+                    </thead>
+                    <tbody>`;
+
+        info.subjects.forEach(s => {
+            const currentlyMapped = (s.mapped_rooms_subject ?? []).map(r => r.id);
+            const optionsHtml = rooms.map(r =>
+                `<option value="${r.id}" ${currentlyMapped.includes(r.id) ? 'selected' : ''}>${escapeHtml(r.label)}</option>`
+            ).join('');
+
+            html += `<tr>
+                <td>
+                    <div class="fw-semibold">${escapeHtml(s.subject_name)}</div>
+                    <div class="text-muted" style="font-size:10.5px">${escapeHtml(s.teacher_name)}</div>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm wiz-bulk-room-select"
+                            data-class-id="${classId}"
+                            data-subject-id="${s.subject_id}"
+                            multiple size="3">
+                        ${optionsHtml || '<option disabled>No rooms available</option>'}
+                    </select>
+                </td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary"
+                            onclick="saveBulkRoomMapping(${classId}, ${s.subject_id})"
+                            title="Save mapping">
+                        <i class="ri-save-line"></i>
+                    </button>
+                </td>
+            </tr>`;
+        });
+
+        html += `</tbody></table></div></div>`;
+    });
+
+    panel.innerHTML = html;
+}
+
+async function saveBulkRoomMapping(classId, subjectId) {
+    const select = document.querySelector(
+        `.wiz-bulk-room-select[data-class-id="${classId}"][data-subject-id="${subjectId}"]`
+    );
+    if (!select) return;
+    const selectedRoomIds = [...select.selectedOptions].map(o => parseInt(o.value));
+
+    const sessionId = document.getElementById('wizSessionId').value;
+    const termId    = document.getElementById('wizTermId').value || null;
+
+    if (!sessionId) return Swal.fire('Required', 'Select a session first.', 'warning');
+
+    Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    let added = 0, skipped = 0, failed = 0;
+    for (const roomId of selectedRoomIds) {
+        try {
+            const res = await fetch(ROUTES.roomMappingsStore.replace('__ID__', roomId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept':       'application/json',
+                },
+                body: JSON.stringify({
+                    schoolclass_id: parseInt(classId),
+                    subject_id:     parseInt(subjectId),
+                    session_id:     parseInt(sessionId),
+                    term_id:        termId ? parseInt(termId) : null,
+                    note:           'Bulk-mapped from wizard',
+                }),
+            });
+            const data = await res.json();
+            if (data.success) added++;
+            else if (res.status === 422) skipped++;
+            else failed++;
+        } catch (e) {
+            failed++;
+        }
+    }
+
+    Swal.close();
+
+    let msg = `${added} new mapping(s) added.`;
+    if (skipped) msg += ` ${skipped} already existed.`;
+    if (failed)  msg += ` ${failed} failed.`;
+
+    Swal.fire({
+        icon: failed ? 'warning' : 'success',
+        title: 'Mappings saved',
+        text: msg,
+        timer: failed ? undefined : 1600,
+        showConfirmButton: !!failed,
+    });
+
+    if (added > 0) loadWizardSubjects();
+}
+
+// ============================================================================
+// WIZARD: ROOM QUICK-MAP MODAL
+// ============================================================================
+async function openQuickMapRoom(classId, subjectId, subjectName, className) {
+    document.getElementById('quickMapClassId').value = classId;
+    document.getElementById('quickMapSubjectId').value = subjectId;
+    document.getElementById('quickMapSubjectName').textContent = subjectName;
+    document.getElementById('quickMapClassName').textContent = className;
+
+    try {
+        const [roomsRes, sessionsRes, termsRes] = await Promise.all([
+            fetch(ROUTES.roomsListJson, { headers: { 'Accept': 'application/json' } }),
+            fetch(ROUTES.sessionsList,  { headers: { 'Accept': 'application/json' } }),
+            fetch(ROUTES.termsList,     { headers: { 'Accept': 'application/json' } }),
+        ]);
+        const rooms    = await roomsRes.json();
+        const sessions = await sessionsRes.json();
+        const terms    = await termsRes.json();
+
+        const roomSel = document.getElementById('quickMapRoomSelect');
+        roomSel.innerHTML = '<option value="">— Pick a room —</option>'
+            + (rooms.data ?? []).map(r => `<option value="${r.id}">${escapeHtml(r.label)}</option>`).join('');
+
+        const sessSel = document.getElementById('quickMapSessionId');
+        sessSel.innerHTML = '<option value="">— Select session —</option>'
+            + (sessions.data ?? []).map(s => `<option value="${s.id}">${escapeHtml(s.session)}</option>`).join('');
+
+        const termSel = document.getElementById('quickMapTermId');
+        termSel.innerHTML = '<option value="">All terms</option>'
+            + (terms.data ?? []).map(t => `<option value="${t.id}">${escapeHtml(t.term)}</option>`).join('');
+
+        const wizSession = document.getElementById('wizSessionId').value;
+        if (wizSession) sessSel.value = wizSession;
+        const wizTerm = document.getElementById('wizTermId').value;
+        if (wizTerm) termSel.value = wizTerm;
+
+        new bootstrap.Modal(document.getElementById('quickMapRoomModal')).show();
+    } catch (e) {
+        Swal.fire('Error', 'Failed to load rooms: ' + e.message, 'error');
+    }
+}
+
+async function submitQuickMapRoom() {
+    const classId   = document.getElementById('quickMapClassId').value;
+    const subjectId = document.getElementById('quickMapSubjectId').value;
+    const roomId    = document.getElementById('quickMapRoomSelect').value;
+    const sessionId = document.getElementById('quickMapSessionId').value;
+    const termId    = document.getElementById('quickMapTermId').value;
+
+    if (!roomId || !sessionId) {
+        return Swal.fire('Required', 'Pick a room and a session.', 'warning');
+    }
+
+    try {
+        const res = await fetch(ROUTES.roomMappingsStore.replace('__ID__', roomId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept':       'application/json',
+            },
+            body: JSON.stringify({
+                schoolclass_id: parseInt(classId),
+                subject_id:     parseInt(subjectId),
+                session_id:     parseInt(sessionId),
+                term_id:        termId ? parseInt(termId) : null,
+                note:           'Mapped from wizard',
+            }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('quickMapRoomModal')).hide();
+            Swal.fire({ icon: 'success', title: 'Mapping added', timer: 1400, showConfirmButton: false });
+            loadWizardSubjects();
+        } else {
+            Swal.fire('Error', data.message || 'Failed.', 'error');
+        }
+    } catch (e) {
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+// ============================================================================
+// WIZARD: PERIOD LIMITS
+// ============================================================================
 let wizLimitRowSeq = 0;
 
 function addWizardPeriodLimit() {
@@ -3111,7 +4067,9 @@ function collectWizardPeriodLimits() {
     return out;
 }
 
-/* ── Wizard: Advanced rules collector ── */
+// ============================================================================
+// WIZARD: ADVANCED RULES COLLECTOR
+// ============================================================================
 function collectWizardAdvancedRules() {
     const morningMode = document.querySelector('input[name="wizMorningCutoffMode"]:checked')?.value || 'half';
     const morningFixed = parseInt(document.getElementById('wizMorningCutoffFixedCount').value) || 3;
@@ -3126,7 +4084,9 @@ function collectWizardAdvancedRules() {
     };
 }
 
-/* ── Wizard: Priority payload collector ── */
+// ============================================================================
+// WIZARD: PRIORITY PAYLOAD COLLECTOR
+// ============================================================================
 function collectWizardPriorityPayload() {
     return Object.entries(wizardSubjectsState).flatMap(([classId, info]) =>
         (info.subjects || []).map(s => {
@@ -3148,9 +4108,9 @@ function collectWizardPriorityPayload() {
     );
 }
 
-/* ── Wizard: Preview ── */
-let previewState = null;
-
+// ============================================================================
+// WIZARD: PREVIEW
+// ============================================================================
 async function previewGeneration() {
     const sessionId = document.getElementById('wizSessionId').value;
     if (!sessionId) return Swal.fire('Required', 'Please select a session first.', 'warning');
@@ -3171,7 +4131,6 @@ async function previewGeneration() {
     }
     const previewClassId = effectiveClassIds[0];
 
-    // Ensure a setting exists for the preview class.
     const settingRes = await fetch(ROUTES.setup, {
         method: 'POST',
         headers: {
@@ -3190,7 +4149,6 @@ async function previewGeneration() {
         return Swal.fire('Error', settingData.message || 'Failed to prepare preview.', 'error');
     }
 
-    // Show preview pane.
     document.getElementById('wizFormContent').style.display = 'none';
     document.getElementById('wizGenerationProgress').style.display = 'none';
     document.getElementById('wizPreviewPane').style.display = '';
@@ -3291,7 +4249,9 @@ async function acceptPreviewAndApply() {
     await submitGenerationWizard(true);
 }
 
-/* ── Wizard: submit ── */
+// ============================================================================
+// WIZARD: SUBMIT
+// ============================================================================
 async function submitGenerationWizard(alsoGenerate) {
     const sessionId = document.getElementById('wizSessionId').value;
     if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
@@ -3395,11 +4355,708 @@ async function submitGenerationWizard(alsoGenerate) {
     } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-/* ── Quick rebuild ── */
+// ============================================================================
+// SAVED GENERATION RUNS
+// ============================================================================
+let savedRunsSearchTimer = null;
+
+function debouncedLoadSavedRuns() {
+    clearTimeout(savedRunsSearchTimer);
+    savedRunsSearchTimer = setTimeout(loadSavedRuns, 350);
+}
+
+async function loadSavedRuns() {
+    const listEl = document.getElementById('savedRunsList');
+    listEl.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading…</div>';
+
+    const params = new URLSearchParams();
+    const q = document.getElementById('runSearchInput').value.trim();
+    if (q) params.set('q', q);
+
+    const filters = {
+        session_id: document.getElementById('runFilterSession').value,
+        term_id:    document.getElementById('runFilterTerm').value,
+        class_id:   document.getElementById('runFilterClass').value,
+        status:     document.getElementById('runFilterStatus').value,
+        date_from:  document.getElementById('runFilterDateFrom').value,
+        date_to:    document.getElementById('runFilterDateTo').value,
+    };
+    Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
+
+    try {
+        const res  = await fetch(`${ROUTES.runsList}?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed.');
+
+        document.getElementById('savedRunsCountBadge').textContent = data.pagination.total;
+
+        if (!data.runs.length) {
+            listEl.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="ri-bookmark-line ri-3x d-block mb-3 opacity-30"></i>
+                    <p class="mb-0">No saved runs match your filters.</p>
+                </div>`;
+            document.getElementById('savedRunsPagination').innerHTML = '';
+            return;
+        }
+
+        listEl.innerHTML = data.runs.map(run => `
+            <div class="setting-card" style="cursor:pointer" onclick="showRunDetail('${escapeHtml(run.run_code)}')">
+                <div class="sc-icon" style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9)">
+                    <i class="ri-bookmark-3-line" style="color:#1B5E20"></i>
+                </div>
+                <div class="sc-body">
+                    <div class="sc-title">${escapeHtml(run.name)}</div>
+                    <div class="sc-meta">
+                        <span class="badge" style="background:#F1F5F9;color:#334155;font-family:monospace;font-size:11px">${escapeHtml(run.run_code)}</span>
+                        <span class="mx-1">·</span>
+                        <span>${escapeHtml(run.session || '—')}</span>
+                        ${run.term ? `<span class="mx-1">·</span><span>${escapeHtml(run.term)}</span>` : ''}
+                        <span class="mx-1">·</span>
+                        <span>${run.class_count} classes</span>
+                        <span class="mx-1">·</span>
+                        <span class="text-muted">by ${escapeHtml(run.creator || '—')}</span>
+                        <span class="mx-1">·</span>
+                        <span class="text-muted">${escapeHtml(run.created_at_h)}</span>
+                        ${run.status === 'shortfalls'
+                            ? '<span class="badge bg-warning-subtle text-warning ms-1">Shortfalls</span>'
+                            : run.status === 'reverted'
+                                ? '<span class="badge bg-danger-subtle text-danger ms-1">Reverted</span>'
+                                : '<span class="badge bg-success-subtle text-success ms-1">Success</span>'}
+                    </div>
+                </div>
+                <div class="sc-actions" onclick="event.stopPropagation()">
+                    <button class="btn btn-sm btn-outline-primary" onclick="showRunDetail('${escapeHtml(run.run_code)}')" title="View">
+                        <i class="ri-eye-line"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="copyRunCode('${escapeHtml(run.run_code)}')" title="Copy code">
+                        <i class="ri-file-copy-line"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSavedRun(${run.id}, '${escapeHtml(run.name)}')" title="Delete">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        if (data.pagination.last_page > 1) {
+            let pHTML = '<nav><ul class="pagination pagination-sm mb-0 justify-content-center">';
+            for (let p = 1; p <= data.pagination.last_page; p++) {
+                pHTML += `<li class="page-item ${p === data.pagination.current_page ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="event.preventDefault();jumpToRunPage(${p})">${p}</a>
+                </li>`;
+            }
+            pHTML += '</ul></nav>';
+            document.getElementById('savedRunsPagination').innerHTML = pHTML;
+        } else {
+            document.getElementById('savedRunsPagination').innerHTML = '';
+        }
+    } catch (e) {
+        listEl.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function jumpToRunPage(page) {
+    // Simplest approach: append the page to the URL params of the current
+    // search and refetch. loadSavedRuns doesn't currently accept a page
+    // arg, so we temporarily stash it and re-call with a modified
+    // implementation that reads the stash.
+    window._runsPage = page;
+    const params = new URLSearchParams();
+    const q = document.getElementById('runSearchInput').value.trim();
+    if (q) params.set('q', q);
+    const filters = {
+        session_id: document.getElementById('runFilterSession').value,
+        term_id:    document.getElementById('runFilterTerm').value,
+        class_id:   document.getElementById('runFilterClass').value,
+        status:     document.getElementById('runFilterStatus').value,
+        date_from:  document.getElementById('runFilterDateFrom').value,
+        date_to:    document.getElementById('runFilterDateTo').value,
+        page:       page,
+    };
+    Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
+
+    // Re-use loadSavedRuns by re-invoking fetch with the same render logic.
+    const listEl = document.getElementById('savedRunsList');
+    listEl.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading…</div>';
+    fetch(`${ROUTES.runsList}?${params.toString()}`, { headers: { 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+            // Delegate rendering by stubbing the input values then calling
+            // the same renderer. Simpler: just call loadSavedRuns() after
+            // stashing. But loadSavedRuns doesn't read page from a global,
+            // so re-render inline using a shared helper.
+            renderSavedRunsList(data);
+        })
+        .catch(e => {
+            listEl.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
+        });
+}
+
+function renderSavedRunsList(data) {
+    const listEl = document.getElementById('savedRunsList');
+    if (!data.success) {
+        listEl.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(data.message || 'Error')}</div>`;
+        return;
+    }
+    document.getElementById('savedRunsCountBadge').textContent = data.pagination.total;
+
+    if (!data.runs.length) {
+        listEl.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="ri-bookmark-line ri-3x d-block mb-3 opacity-30"></i>
+                <p class="mb-0">No saved runs match your filters.</p>
+            </div>`;
+        document.getElementById('savedRunsPagination').innerHTML = '';
+        return;
+    }
+
+    listEl.innerHTML = data.runs.map(run => `
+        <div class="setting-card" style="cursor:pointer" onclick="showRunDetail('${escapeHtml(run.run_code)}')">
+            <div class="sc-icon" style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9)">
+                <i class="ri-bookmark-3-line" style="color:#1B5E20"></i>
+            </div>
+            <div class="sc-body">
+                <div class="sc-title">${escapeHtml(run.name)}</div>
+                <div class="sc-meta">
+                    <span class="badge" style="background:#F1F5F9;color:#334155;font-family:monospace;font-size:11px">${escapeHtml(run.run_code)}</span>
+                    <span class="mx-1">·</span>
+                    <span>${escapeHtml(run.session || '—')}</span>
+                    ${run.term ? `<span class="mx-1">·</span><span>${escapeHtml(run.term)}</span>` : ''}
+                    <span class="mx-1">·</span>
+                    <span>${run.class_count} classes</span>
+                    <span class="mx-1">·</span>
+                    <span class="text-muted">by ${escapeHtml(run.creator || '—')}</span>
+                    <span class="mx-1">·</span>
+                    <span class="text-muted">${escapeHtml(run.created_at_h)}</span>
+                    ${run.status === 'shortfalls'
+                        ? '<span class="badge bg-warning-subtle text-warning ms-1">Shortfalls</span>'
+                        : run.status === 'reverted'
+                            ? '<span class="badge bg-danger-subtle text-danger ms-1">Reverted</span>'
+                            : '<span class="badge bg-success-subtle text-success ms-1">Success</span>'}
+                </div>
+            </div>
+            <div class="sc-actions" onclick="event.stopPropagation()">
+                <button class="btn btn-sm btn-outline-primary" onclick="showRunDetail('${escapeHtml(run.run_code)}')" title="View">
+                    <i class="ri-eye-line"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="copyRunCode('${escapeHtml(run.run_code)}')" title="Copy code">
+                    <i class="ri-file-copy-line"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteSavedRun(${run.id}, '${escapeHtml(run.name)}')" title="Delete">
+                    <i class="ri-delete-bin-line"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    if (data.pagination.last_page > 1) {
+        let pHTML = '<nav><ul class="pagination pagination-sm mb-0 justify-content-center">';
+        for (let p = 1; p <= data.pagination.last_page; p++) {
+            pHTML += `<li class="page-item ${p === data.pagination.current_page ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="event.preventDefault();jumpToRunPage(${p})">${p}</a>
+            </li>`;
+        }
+        pHTML += '</ul></nav>';
+        document.getElementById('savedRunsPagination').innerHTML = pHTML;
+    } else {
+        document.getElementById('savedRunsPagination').innerHTML = '';
+    }
+}
+
+function clearRunFilters() {
+    document.getElementById('runSearchInput').value = '';
+    document.getElementById('runFilterSession').value = '';
+    document.getElementById('runFilterTerm').value = '';
+    document.getElementById('runFilterClass').value = '';
+    document.getElementById('runFilterStatus').value = '';
+    document.getElementById('runFilterDateFrom').value = '';
+    document.getElementById('runFilterDateTo').value = '';
+    loadSavedRuns();
+}
+
+function lookupRunByCode() {
+    const code = document.getElementById('runCodeLookup').value.trim();
+    if (!code) return;
+    if (code.length !== 10) {
+        return Swal.fire('Invalid Code', 'Run codes are exactly 10 characters.', 'warning');
+    }
+    showRunDetail(code);
+}
+
+async function showRunDetail(identifier) {
+    const modal = new bootstrap.Modal(document.getElementById('runDetailModal'));
+    document.getElementById('runDetailTitle').textContent = 'Loading…';
+    document.getElementById('runDetailCode').textContent = '';
+    document.getElementById('runDetailBody').innerHTML =
+        '<div class="text-center py-5 text-muted"><div class="spinner-border text-primary"></div><p class="mt-3">Loading…</p></div>';
+    modal.show();
+
+    try {
+        const res  = await fetch(`${ROUTES.runsShow}/${encodeURIComponent(identifier)}`, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed.');
+
+        const r = data.run;
+        currentRun = r;
+
+        document.getElementById('runDetailTitle').textContent = r.name;
+        document.getElementById('runDetailCode').textContent = `Run ${r.run_code} · ${r.session || '—'}${r.term ? ' · ' + r.term : ''} · ${r.created_at}`;
+
+        let html = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="mini-strip"><div class="v">${r.class_count}</div><div class="l">Classes</div></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mini-strip ok"><div class="v">${r.total_placed}</div><div class="l">Lessons placed</div></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mini-strip"><div class="v">${escapeHtml(r.creator || '—')}</div><div class="l">Created by</div></div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mini-strip ${r.status === 'success' ? 'ok' : 'warn'}">
+                        <div class="v">${escapeHtml(r.status)}</div>
+                        <div class="l">Status</div>
+                    </div>
+                </div>
+            </div>`;
+
+        if (r.description) {
+            html += `<div class="alert alert-light mb-3" style="font-size:13px">
+                <strong>Description:</strong> ${escapeHtml(r.description)}
+            </div>`;
+        }
+
+        html += `<h6 class="mb-2 mt-4">Classes in this run (${data.classes.length})</h6>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead class="table-light">
+                        <tr><th>Class</th><th>Placed</th><th>Unplaced</th><th>Room Shortfall</th></tr>
+                    </thead>
+                    <tbody>
+                        ${data.classes.map(c => `
+                            <tr>
+                                <td>${escapeHtml(c.class_name)}</td>
+                                <td>${c.placed}</td>
+                                <td>${c.unplaced || '—'}</td>
+                                <td>${c.room_shortfall || '—'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+
+        document.getElementById('runDetailBody').innerHTML = html;
+    } catch (e) {
+        document.getElementById('runDetailBody').innerHTML =
+            `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function copyRunCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        Swal.fire({ icon: 'success', title: 'Copied!', text: code, timer: 1400, showConfirmButton: false });
+    });
+}
+
+async function deleteSavedRun(runId, name) {
+    const r = await Swal.fire({
+        title: 'Delete this saved run?',
+        html: `Permanently deletes <strong>${escapeHtml(name)}</strong> and its frozen snapshots.<br>
+               <span class="text-muted" style="font-size:12px">Live timetables are not affected.</span>`,
+        icon: 'warning', showCancelButton: true,
+        confirmButtonColor: '#DC2626', confirmButtonText: 'Delete',
+    });
+    if (!r.isConfirmed) return;
+    try {
+        const res  = await fetch(`${ROUTES.runsDelete}/${runId}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.success) {
+            loadSavedRuns();
+            Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
+        } else {
+            Swal.fire('Error', data.message || 'Failed.', 'error');
+        }
+    } catch (e) {
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+function openSaveRunModal() {
+    const sessionOpt = document.querySelector('#wizSessionId option:checked');
+    const defaultName = sessionOpt
+        ? `Run — ${sessionOpt.textContent.trim()} (${new Date().toLocaleDateString()})`
+        : `Run — ${new Date().toLocaleString()}`;
+    document.getElementById('saveRunName').value = defaultName;
+    document.getElementById('saveRunDescription').value = '';
+    new bootstrap.Modal(document.getElementById('saveRunModal')).show();
+}
+
+async function saveGenerationRun() {
+    const name = document.getElementById('saveRunName').value.trim();
+    if (!name) return Swal.fire('Required', 'Please give this run a name.', 'warning');
+
+    const sessionId = document.getElementById('wizSessionId').value;
+    if (!sessionId) return Swal.fire('Required', 'Select a session in the wizard first.', 'warning');
+
+    const scope    = document.getElementById('wizScope').value;
+    const classIds = scope === 'selected'
+        ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
+        : null;
+
+    const payload = {
+        name:            name,
+        description:     document.getElementById('saveRunDescription').value.trim() || null,
+        session_id:      parseInt(sessionId),
+        term_id:         document.getElementById('wizTermId').value || null,
+        schoolclass_ids: classIds,
+        wizard_input: {
+            scope:          scope,
+            class_ids:      classIds,
+            day_start:      document.getElementById('wizDayStart').value,
+            day_end:        document.getElementById('wizDayEnd').value,
+            lessons_per_day: parseInt(document.getElementById('wizLessonsPerDay').value),
+            period_minutes: parseInt(document.getElementById('wizPeriodDuration').value),
+            active_days:    [...document.querySelectorAll('.wiz-active-day:checked')].map(cb => cb.value),
+            include_rooms:  document.getElementById('wizIncludeRooms').checked,
+        },
+        advanced_rules:  collectWizardAdvancedRules(),
+    };
+
+    showLoader();
+    try {
+        const res  = await apiFetch(ROUTES.runsSave, 'POST', payload);
+        const data = await res.json();
+        hideLoader();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('saveRunModal')).hide();
+            Swal.fire({
+                icon: 'success',
+                title: 'Run saved!',
+                html: `Your run code is <code style="font-size:16px;letter-spacing:2px">${escapeHtml(data.run_code)}</code><br>
+                       <span class="text-muted" style="font-size:12px">Write it down or use it to find this run later.</span>`,
+                confirmButtonText: 'Copy Code',
+            }).then(result => {
+                if (result.isConfirmed) copyRunCode(data.run_code);
+                loadSavedRuns();
+            });
+        } else {
+            Swal.fire('Error', data.message || 'Failed to save.', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+// ============================================================================
+// RESTORE SAVED RUN TO LIVE
+// ============================================================================
+function openRestoreModal() {
+    if (!currentRun) return Swal.fire('Error', 'No run loaded.', 'error');
+    document.getElementById('restoreRunSummary').innerHTML =
+        '<div class="spinner-border spinner-border-sm me-2"></div>Preparing…';
+    document.getElementById('restoreForce').checked = false;
+    document.getElementById('restoreUnpublish').checked = false;
+    new bootstrap.Modal(document.getElementById('restoreRunModal')).show();
+    previewRestoreRun();
+}
+
+async function previewRestoreRun() {
+    try {
+        const res  = await fetch(`${ROUTES.runsShow}/${currentRun.run_code}`, { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const classes = data.classes;
+        let html = `
+            <div class="mb-3">
+                <strong>Run:</strong> ${escapeHtml(data.run.name)} · <code>${escapeHtml(data.run.run_code)}</code><br>
+                <strong>Saved:</strong> ${escapeHtml(data.run.created_at)} by ${escapeHtml(data.run.creator || '—')}
+            </div>
+            <div class="mb-2"><strong>Will restore these ${classes.length} classes:</strong></div>
+            <div style="max-height:200px;overflow-y:auto;border:1px solid #E2E8F0;border-radius:8px;padding:8px">
+                ${classes.map(c => `
+                    <div class="d-flex justify-content-between align-items-center py-1" style="font-size:13px;border-bottom:1px solid #F1F5F9">
+                        <label class="mb-0">
+                            <input type="checkbox" class="form-check-input me-2 restore-class-checkbox" value="${c.schoolclass_id}" checked>
+                            ${escapeHtml(c.class_name)}
+                        </label>
+                        <span class="text-muted">${c.placed} lessons · ${c.room_shortfall} room-short</span>
+                    </div>
+                `).join('')}
+            </div>`;
+        document.getElementById('restoreRunSummary').innerHTML = html;
+    } catch (e) {
+        document.getElementById('restoreRunSummary').innerHTML =
+            `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+async function confirmRestoreRun() {
+    if (!currentRun) return;
+    const classIds = [...document.querySelectorAll('.restore-class-checkbox:checked')].map(cb => parseInt(cb.value));
+    if (!classIds.length) return Swal.fire('Required', 'Select at least one class to restore.', 'warning');
+
+    const force      = document.getElementById('restoreForce').checked;
+    const unpublish  = document.getElementById('restoreUnpublish').checked;
+
+    showLoader();
+    try {
+        const res = await fetch(`${ROUTES.runsRestore}/${currentRun.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                schoolclass_ids:   classIds,
+                force_overwrite:   force,
+                unpublish_locked:  unpublish,
+            }),
+        });
+        const data = await res.json();
+        hideLoader();
+
+        bootstrap.Modal.getInstance(document.getElementById('restoreRunModal')).hide();
+
+        if (data.success) {
+            let html = `<p>${escapeHtml(data.message)}</p>`;
+            if (data.skipped?.length) {
+                html += '<div class="text-start mt-2"><strong>Skipped:</strong><ul class="mb-0">';
+                html += data.skipped.map(s =>
+                    `<li>${escapeHtml(s.class_name)} — ${escapeHtml(s.reason.replace(/_/g, ' '))}</li>`
+                ).join('');
+                html += '</ul></div>';
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Restored',
+                html: html,
+                width: 520,
+            }).then(() => location.reload());
+        } else {
+            Swal.fire('Error', data.message || 'Restore failed.', 'error');
+        }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+// ============================================================================
+// COMPARE RUNS
+// ============================================================================
+function compareRunWithAnother() {
+    if (!currentRun) return Swal.fire('Error', 'No run loaded.', 'error');
+
+    fetch(`${ROUTES.runsList}?per_page=100`, { headers: { 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+            const options = data.runs
+                .filter(r => r.id !== currentRun.id)
+                .map(r => `<option value="${r.id}">${escapeHtml(r.name)} — ${escapeHtml(r.run_code)}</option>`)
+                .join('');
+
+            Swal.fire({
+                title: 'Compare with…',
+                html: `<select id="compareTarget" class="form-select">
+                    <option value="">— Pick another run —</option>
+                    ${options}
+                </select>`,
+                showCancelButton: true,
+                confirmButtonText: 'Compare',
+                preConfirm: () => document.getElementById('compareTarget').value,
+            }).then(result => {
+                if (!result.isConfirmed || !result.value) return;
+                runComparison(currentRun.id, parseInt(result.value));
+            });
+        });
+}
+
+async function runComparison(idA, idB) {
+    const modal = new bootstrap.Modal(document.getElementById('compareRunsModal'));
+    document.getElementById('compareRunsBody').innerHTML =
+        '<div class="text-center py-5 text-muted"><div class="spinner-border text-primary"></div><p class="mt-3">Comparing…</p></div>';
+    modal.show();
+
+    try {
+        const res  = await fetch(ROUTES.runsCompare, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ run_a_id: idA, run_b_id: idB }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        renderComparison(data);
+    } catch (e) {
+        document.getElementById('compareRunsBody').innerHTML =
+            `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function renderComparison(data) {
+    const wrap = document.getElementById('compareRunsBody');
+    const s = data.summary;
+
+    let html = `
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cmpSummary">Summary</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cmpInputs">Input Diff (${data.input_diff.length})</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cmpClasses">Per-Class Diff</button></li>
+        </ul>
+        <div class="tab-content">
+
+            <div class="tab-pane fade show active" id="cmpSummary">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <div class="mini-strip">
+                            <div class="v" style="font-size:14px">${escapeHtml(data.run_a.name)}</div>
+                            <div class="l">${escapeHtml(data.run_a.run_code)} · ${data.run_a.classes} classes · ${data.run_a.placed} placed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mini-strip">
+                            <div class="v" style="font-size:14px">${escapeHtml(data.run_b.name)}</div>
+                            <div class="l">${escapeHtml(data.run_b.run_code)} · ${data.run_b.classes} classes · ${data.run_b.placed} placed</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-3"><div class="mini-strip ok"><div class="v">${s.identical_cells}</div><div class="l">Identical cells</div></div></div>
+                    <div class="col-md-3"><div class="mini-strip warn"><div class="v">${s.differing_cells}</div><div class="l">Differing cells</div></div></div>
+                    <div class="col-md-3"><div class="mini-strip"><div class="v">${s.only_in_a_cells}</div><div class="l">Only in A</div></div></div>
+                    <div class="col-md-3"><div class="mini-strip"><div class="v">${s.only_in_b_cells}</div><div class="l">Only in B</div></div></div>
+                </div>
+
+                ${data.only_in_a.length || data.only_in_b.length ? `
+                    <hr class="my-4">
+                    <h6 class="mb-2">Class scope difference</h6>
+                    ${data.only_in_a.length ? `<div class="mb-2"><strong>Only in A:</strong> ${data.only_in_a.map(c => escapeHtml(c.name)).join(', ')}</div>` : ''}
+                    ${data.only_in_b.length ? `<div class="mb-2"><strong>Only in B:</strong> ${data.only_in_b.map(c => escapeHtml(c.name)).join(', ')}</div>` : ''}
+                ` : ''}
+            </div>
+
+            <div class="tab-pane fade" id="cmpInputs">
+                ${data.input_diff.length ? `
+                    <table class="table table-sm">
+                        <thead class="table-light"><tr><th>Parameter</th><th>Run A</th><th>Run B</th></tr></thead>
+                        <tbody>
+                            ${data.input_diff.map(d => `
+                                <tr>
+                                    <td><code>${escapeHtml(d.key)}</code></td>
+                                    <td>${escapeHtml(String(d.a ?? '—'))}</td>
+                                    <td>${escapeHtml(String(d.b ?? '—'))}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                ` : '<p class="text-muted">All wizard inputs and advanced rules are identical.</p>'}
+            </div>
+
+            <div class="tab-pane fade" id="cmpClasses">
+                ${data.shared_classes.map(cd => renderClassDiff(cd)).join('')}
+            </div>
+        </div>`;
+
+    wrap.innerHTML = html;
+}
+
+function renderClassDiff(cd) {
+    const diffCells = cd.cells.filter(c => c.state !== 'identical');
+    if (!diffCells.length) {
+        return `<div class="alert alert-success mb-2" style="font-size:13px">
+            <strong>${escapeHtml(cd.class_name)}</strong> — identical in both runs.
+        </div>`;
+    }
+
+    const cellMap = {};
+    cd.cells.forEach(c => cellMap[`${c.period_id}|${c.day}`] = c);
+
+    let html = `<h6 class="mb-2 mt-3">${escapeHtml(cd.class_name)} <span class="text-muted" style="font-size:12px">(${diffCells.length} differing cells)</span></h6>
+        <table class="table table-sm table-bordered" style="font-size:12px">
+            <thead><tr><th style="width:140px">Period</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr></thead>
+            <tbody>`;
+
+    const periods = cd.periods_a;
+    periods.forEach(p => {
+        html += `<tr><td>${escapeHtml(p.name)}</td>`;
+        ['Monday','Tuesday','Wednesday','Thursday','Friday'].forEach(day => {
+            const cell = cellMap[`${p.id}|${day}`];
+            if (!cell) { html += '<td></td>'; return; }
+
+            const label = (sig) => {
+                if (!sig) return '—';
+                if (sig.is_free) return 'Free';
+                const parts = [];
+                parts.push(sig.subject_id ? `subj ${sig.subject_id}` : '');
+                parts.push(sig.teacher_id ? `t ${sig.teacher_id}` : '');
+                return parts.filter(Boolean).join(' / ') || '—';
+            };
+
+            const bg = {
+                'identical': '#F0FDF4',
+                'differing': '#FFFBEB',
+                'only_in_a': '#EFF6FF',
+                'only_in_b': '#FEF2F2',
+            }[cell.state] || '';
+
+            html += `<td style="background:${bg};font-size:11px">
+                ${cell.state === 'identical'
+                    ? ''
+                    : `<div><strong>A:</strong> ${escapeHtml(label(cell.a))}</div>
+                       <div><strong>B:</strong> ${escapeHtml(label(cell.b))}</div>`}
+            </td>`;
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    return html;
+}
+
+// ============================================================================
+// EXPORT RUN TO PDF
+// ============================================================================
+function exportRunToPdf() {
+    if (!currentRun) return Swal.fire('Error', 'No run loaded.', 'error');
+    new bootstrap.Modal(document.getElementById('exportRunModal')).show();
+}
+
+function submitExportRun() {
+    if (!currentRun) return;
+    const params = new URLSearchParams({
+        format:        document.getElementById('exportRunFormat').value,
+        mode:          document.getElementById('exportRunMode').value,
+        orientation:   document.getElementById('exportRunOrientation').value,
+        paper:         document.getElementById('exportRunPaper').value,
+        include_meta:  document.getElementById('exportRunIncludeMeta').checked ? 1 : 0,
+        include_rules: document.getElementById('exportRunIncludeRules').checked ? 1 : 0,
+    });
+
+    const url = `${ROUTES.runsExport}/${currentRun.id}/export?${params.toString()}`;
+    window.open(url, '_blank');
+    bootstrap.Modal.getInstance(document.getElementById('exportRunModal')).hide();
+}
+
+// ============================================================================
+// QUICK REBUILD
+// ============================================================================
 function openAnchorRebuildPanel() {
     if (!currentSettingId) return Swal.fire('No Class Loaded', 'Load or create a class timetable first.', 'warning');
     new bootstrap.Modal(document.getElementById('anchorRebuildModal')).show();
 }
+
 async function submitAnchorRebuild() {
     const assemblyChecked = document.getElementById('arAssemblyEnabled').checked;
     const payload = {
@@ -3413,6 +5070,7 @@ async function submitAnchorRebuild() {
         period_duration_minutes:        parseInt(document.getElementById('arPeriodDuration').value),
         school_day_start:               document.getElementById('arDayStart').value,
     };
+
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.rebuildPeriodsFromAnchors, 'POST', payload);
@@ -3426,10 +5084,15 @@ async function submitAnchorRebuild() {
         hideLoader();
         await loadSetting(currentSettingId);
         Swal.fire({ icon:'success', title:'Periods Rebuilt!', timer:1600, showConfirmButton:false });
-    } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
+    } catch (e) {
+        hideLoader();
+        Swal.fire('Error', e.message, 'error');
+    }
 }
 
-/* ── Version conflict ── */
+// ============================================================================
+// VERSION CONFLICT HANDLER
+// ============================================================================
 async function handleVersionConflict(data) {
     const result = await Swal.fire({
         title: 'Timetable Changed',
@@ -3439,12 +5102,16 @@ async function handleVersionConflict(data) {
         showCancelButton: true,
         cancelButtonText: 'Stay',
     });
-    if (result.isConfirmed && currentSettingId) await loadSetting(currentSettingId);
+    if (result.isConfirmed && currentSettingId) {
+        await loadSetting(currentSettingId);
+    }
 }
 
-/* ── DOM init: popovers + advanced panel persistence + cutoff toggle ── */
+// ============================================================================
+// DOM INIT
+// ============================================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Bootstrap popovers for every help icon.
+    // Bootstrap popovers for help icons.
     document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => new bootstrap.Popover(el));
 
     // Advanced panel remembers open/closed state across wizard opens.
