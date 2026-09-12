@@ -1087,22 +1087,27 @@ Route::group(['middleware' => ['auth']], function () {
     // ===================================================================
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 
-    // Room-to-class-subject mappings — static routes FIRST so
-    // /rooms/mapping-counts isn't captured as an {id}.
-    Route::get('/rooms/mapping-counts', [RoomController::class, 'mappingCounts'])->name('rooms.mapping-counts');
-    Route::get('/rooms/mappings/{roomId}', [RoomController::class, 'mappings'])->name('rooms.mappings');
-    Route::post('/rooms/mappings/{roomId}', [RoomController::class, 'storeMapping'])->name('rooms.mappings.store');
-    Route::delete('/rooms/mappings/destroy/{mappingId}', [RoomController::class, 'destroyMapping'])->name('rooms.mappings.destroy');
+        Route::get('/rooms/mapping-counts', [RoomController::class, 'mappingCounts'])->name('rooms.mapping-counts');
+        Route::get('/rooms/stats',          [RoomController::class, 'roomStats'])->name('rooms.stats');
+        Route::get('/rooms/list-json',      [RoomController::class, 'listJson'])->name('rooms.list-json');  // ← must be above show/{id}
+        Route::get('/rooms/mappings/{roomId}', [RoomController::class, 'mappings'])->name('rooms.mappings');
+        Route::post('/rooms/mappings/{roomId}', [RoomController::class, 'storeMapping'])->name('rooms.mappings.store');
+        Route::delete('/rooms/mappings/destroy/{mappingId}', [RoomController::class, 'destroyMapping'])->name('rooms.mappings.destroy');
 
-    Route::post('/rooms/store', [RoomController::class, 'store'])->name('rooms.store');
-    Route::get('/rooms/show/{id}', [RoomController::class, 'show'])->name('rooms.show');
-    Route::post('/rooms/update/{id}', [RoomController::class, 'update'])->name('rooms.update');
-    Route::delete('/rooms/destroy/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
-    Route::post('/rooms/book', [RoomController::class, 'book'])->name('rooms.book');
-    Route::post('/rooms/book/{roomId}', [RoomController::class, 'book'])->name('rooms.book.room');
-    Route::delete('/rooms/cancel-booking/{bookingId}', [RoomController::class, 'cancelBooking'])->name('rooms.cancel-booking');
-    Route::post('/rooms/check-availability', [RoomController::class, 'checkAvailability'])->name('rooms.check-availability');
+        Route::post('/rooms/bulk/activate', [RoomController::class, 'bulkActivate'])->name('rooms.bulk.activate');
+        Route::post('/rooms/bulk/destroy',  [RoomController::class, 'bulkDestroy'])->name('rooms.bulk.destroy');
+        Route::post('/rooms/bulk/map',      [RoomController::class, 'bulkMap'])->name('rooms.bulk.map');
 
+        Route::post('/rooms/store',       [RoomController::class, 'store'])->name('rooms.store');
+        Route::get('/rooms/show/{id}',    [RoomController::class, 'show'])->name('rooms.show');
+        Route::post('/rooms/update/{id}', [RoomController::class, 'update'])->name('rooms.update');
+        Route::delete('/rooms/destroy/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+        Route::post('/rooms/book',              [RoomController::class, 'book'])->name('rooms.book');
+        Route::post('/rooms/book/{roomId}',     [RoomController::class, 'book'])->name('rooms.book.room');
+        Route::delete('/rooms/cancel-booking/{bookingId}', [RoomController::class, 'cancelBooking'])->name('rooms.cancel-booking');
+        Route::post('/rooms/check-availability',[RoomController::class, 'checkAvailability'])->name('rooms.check-availability');
+
+        
     // ===================================================================
     // LOOKUP ENDPOINTS (used by mapping modal + wizard panels)
     // ===================================================================
