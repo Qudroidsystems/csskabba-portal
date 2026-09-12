@@ -1089,6 +1089,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('/rooms/mapping-counts', [RoomController::class, 'mappingCounts'])->name('rooms.mapping-counts');
         Route::get('/rooms/stats',          [RoomController::class, 'roomStats'])->name('rooms.stats');
+        Route::get('/rooms/stats-detail/{roomId}', [RoomController::class, 'statsDetail'])->name('rooms.stats-detail');
         Route::get('/rooms/list-json',      [RoomController::class, 'listJson'])->name('rooms.list-json');  // ← must be above show/{id}
         Route::get('/rooms/mappings/{roomId}', [RoomController::class, 'mappings'])->name('rooms.mappings');
         Route::post('/rooms/mappings/{roomId}', [RoomController::class, 'storeMapping'])->name('rooms.mappings.store');
@@ -1107,7 +1108,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('/rooms/cancel-booking/{bookingId}', [RoomController::class, 'cancelBooking'])->name('rooms.cancel-booking');
         Route::post('/rooms/check-availability',[RoomController::class, 'checkAvailability'])->name('rooms.check-availability');
 
-        
+
     // ===================================================================
     // LOOKUP ENDPOINTS (used by mapping modal + wizard panels)
     // ===================================================================

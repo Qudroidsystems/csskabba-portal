@@ -426,4 +426,122 @@ class RoomController extends Controller
 
         return response()->json(['success' => true, 'counts' => $counts]);
     }
+
+        // =========================================================================
+    // PER-ROOM STATS DETAIL
+    //
+    // Returns the full lists behind the three counters shown on the rooms
+    // page: upcoming bookings, mapped classes/subjects, and timetable uses.
+    // The frontend caps each list at 10 for display; we cap at 50 here so
+    // the "Show all N" link can reveal more without a second fetch.
+    // =========================================================================
+    public function statsDetail(int $roomId): JsonResponse
+    {
+        try {
+            $room = Room::findOrFail($roomId);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Room not found.'], 404);
+        }
+
+        // ── Upcoming bookings ──────────────────────────────────────────
+        $bookings = RoomBooking::where('room_id', $roomId)
+            ->where('date', '>=', now()->toDateString())
+            ->where('status', 'confirmed')
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->limit(50)
+            ->get()
+            ->map(fn($b) => [
+                'id'         => $b->id,
+                'date'       => \Carbon\Carbon::parse($b->date)->format('d M Y'),
+                'date_h'     => \Carbon\Carbon::parse($b->date)->diffForHumans(),
+                'start_time' => $this->formatTimeOnly($b->start_time),
+                'end_time'   => $this->formatTimeOnly($b->end_time),
+                'purpose'    => $b->purpose,
+                'recurring'  => $b->recurring_type ?? 'none',
+            ]);
+
+        // ── Mapped classes / subjects ──────────────────────────────────
+        $mappings = RoomClassSubject::with(['schoolclass', 'subject', 'session', 'term'])
+            ->where('room_id', $roomId)
+            ->orderBy('schoolclass_id')
+            ->orderBy('subject_id')
+            ->limit(50)
+            ->get()
+            ->map(function ($m) {
+                $className = trim(
+                    ($m->schoolclass?->schoolclass ?? '') . ' ' .
+                    ($m->schoolclass?->arm ?? '')
+                );
+                return [
+                    'id'           => $m->id,
+                    'class_name'   => $className ?: 'Unknown Class',
+                    'subject_name' => $m->subject?->subject,   // null = generic
+                    'session_name' => $m->session?->session,
+                    'term_name'    => $m->term?->term,
+                    'note'         => $m->note,
+                ];
+            });
+
+        // ── Timetable uses ─────────────────────────────────────────────
+        // Slot → setting → class. Group by setting so the payload is
+        // compact, then flatten for the client.
+        $slots = TimetableSlot::where('room_id', $roomId)
+            ->with(['subject', 'teacher', 'period', 'setting.schoolclass', 'setting.session', 'setting.term'])
+            ->orderBy('day')
+            ->orderBy('period_id')
+            ->limit(50)
+            ->get()
+            ->map(function ($s) {
+                $className = trim(
+                    ($s->setting?->schoolclass?->schoolclass ?? '') . ' ' .
+                    ($s->setting?->schoolclass?->arm ?? '')
+                );
+                return [
+                    'id'           => $s->id,
+                    'day'          => $s->day,
+                    'period_name'  => $s->period?->name,
+                    'period_time'  => $this->formatTimeOnly($s->period?->start_time)
+                                    . ' – '
+                                    . $this->formatTimeOnly($s->period?->end_time),
+                    'subject_name' => $s->subject?->subject,
+                    'teacher_name' => $s->teacher?->name,
+                    'class_name'   => $className ?: 'Unknown Class',
+                    'session_name' => $s->setting?->session?->session,
+                    'term_name'    => $s->setting?->term?->term,
+                ];
+            });
+
+        return response()->json([
+            'success'  => true,
+            'room'     => [
+                'id'        => $room->id,
+                'room_name' => $room->room_name,
+                'room_code' => $room->room_code,
+            ],
+            'bookings' => $bookings,
+            'mappings' => $mappings,
+            'uses'     => $slots,
+            'totals'   => [
+                'bookings' => RoomBooking::where('room_id', $roomId)
+                    ->where('date', '>=', now()->toDateString())
+                    ->where('status', 'confirmed')
+                    ->count(),
+                'mappings' => RoomClassSubject::where('room_id', $roomId)->count(),
+                'uses'     => TimetableSlot::where('room_id', $roomId)->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Small helper: normalise a time value ("10:00:00" or Carbon) to "HH:MM".
+     * Used by statsDetail only, so it lives here rather than the trait
+     * helpers we keep elsewhere.
+     */
+    private function formatTimeOnly($time): string
+    {
+        if (!$time) return '';
+        if ($time instanceof \Carbon\Carbon) return $time->format('H:i');
+        return substr((string) $time, 0, 5);
+    }
 }

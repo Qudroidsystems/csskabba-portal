@@ -95,7 +95,8 @@
     display: flex; gap: 12px; padding-top: 10px; border-top: 1px dashed #E2E8F0;
     font-size: 11.5px; color: var(--rm-muted);
 }
-.rm-card-stats > div { display: flex; align-items: center; gap: 4px; }
+.rm-card-stats > div { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 4px; border-radius: 6px; transition: all .15s; }
+.rm-card-stats > div:hover { background: #F1F5F9; }
 .rm-card-stats i { font-size: 13px; }
 .rm-card-stats .has-value { color: var(--rm-navy); font-weight: 600; }
 
@@ -124,12 +125,82 @@
 table.rm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.rm-table th { background: #F8FAFC; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--rm-muted); border-bottom: 1px solid var(--rm-border); font-weight: 700; }
 table.rm-table td { padding: 10px 12px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
-table.rm-table tr:hover td { background: #F8FAFC; }
+table.rm-table tr.rm-row:hover td { background: #F8FAFC; }
 table.rm-table tr.is-selected td { background: #F0F9FF; }
 table.rm-table .rm-actions-cell { text-align: right; white-space: nowrap; }
 table.rm-table .rm-actions-cell button { background: none; border: none; padding: 2px 6px; cursor: pointer; color: var(--rm-muted); font-size: 15px; }
 table.rm-table .rm-actions-cell button:hover { color: var(--rm-navy); }
 table.rm-table .rm-actions-cell button.danger:hover { color: #DC2626; }
+
+/* Expand chevron cell */
+.rm-expand-cell { width: 32px; padding-right: 0 !important; text-align: center; }
+.rm-expand-btn {
+    background: none; border: none; color: var(--rm-muted); cursor: pointer;
+    padding: 4px; border-radius: 6px; transition: all .15s; line-height: 1;
+    width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+}
+.rm-expand-btn:hover { background: #F1F5F9; color: var(--rm-navy); }
+.rm-expand-btn i { transition: transform .2s ease; font-size: 16px; }
+.rm-expand-btn.is-open i { transform: rotate(90deg); }
+
+/* Stat pills in table cells */
+.rm-stat-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; padding: 3px 9px; border-radius: 8px;
+    background: #F1F5F9; color: #64748B; font-weight: 600;
+    min-width: 34px; justify-content: center;
+}
+.rm-stat-pill.has-value { background: #EFF6FF; color: #1565C0; }
+.rm-stat-pill.is-zero { background: #F8FAFC; color: #CBD5E1; }
+
+/* Expanded detail sub-row */
+tr.rm-detail-row td {
+    background: #FAFBFC;
+    padding: 0 !important;
+    border-bottom: 1px solid var(--rm-border);
+}
+.rm-detail-wrap {
+    padding: 16px 20px 20px 52px;
+    animation: rmDetailSlide 0.2s ease;
+}
+@keyframes rmDetailSlide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.rm-detail-cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+@media (max-width: 900px) { .rm-detail-cols { grid-template-columns: 1fr; } }
+.rm-detail-col h6 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+    color: var(--rm-muted); font-weight: 700; margin: 0 0 10px;
+    display: flex; align-items: center; gap: 6px;
+}
+.rm-detail-col h6 i { font-size: 14px; }
+.rm-detail-list {
+    list-style: none; margin: 0; padding: 0;
+    background: #FFF; border: 1px solid var(--rm-border); border-radius: 8px;
+    overflow: hidden;
+}
+.rm-detail-list li {
+    padding: 8px 12px; font-size: 12.5px; color: #334155;
+    border-bottom: 1px solid #F1F5F9; line-height: 1.4;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+}
+.rm-detail-list li:last-child { border-bottom: none; }
+.rm-detail-list li .main { flex: 1; min-width: 0; }
+.rm-detail-list li .main strong { color: #0F172A; display: block; }
+.rm-detail-list li .main em { font-style: normal; color: #64748B; font-size: 11.5px; }
+.rm-detail-list li .meta { color: #94A3B8; font-size: 11px; white-space: nowrap; }
+.rm-detail-empty { padding: 16px 12px; text-align: center; color: #94A3B8; font-size: 12.5px; }
+.rm-detail-more {
+    padding: 8px 12px; background: #F8FAFC; border-top: 1px solid var(--rm-border);
+    font-size: 11.5px; color: #1565C0; font-weight: 600; cursor: pointer; text-align: center;
+    transition: all .15s;
+}
+.rm-detail-more:hover { background: #EFF6FF; }
 
 /* ── Empty state ──────────────────────────────────── */
 .rm-empty {
@@ -172,6 +243,19 @@ table.rm-table .rm-actions-cell button.danger:hover { color: #DC2626; }
 .rm-drawer-row .val { font-weight: 600; color: var(--rm-navy); text-align: right; }
 
 .rm-drawer-footer { padding: 16px 24px; border-top: 1px solid var(--rm-border); display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+
+/* Drawer mini stat strip (clickable) */
+.rm-drawer-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 20px;
+}
+.rm-drawer-stat {
+    background: #F8FAFC; border: 1px solid var(--rm-border); border-radius: 10px;
+    padding: 12px 8px; text-align: center; cursor: pointer; transition: all .15s;
+}
+.rm-drawer-stat:hover { border-color: var(--rm-sky); background: #F0F9FF; transform: translateY(-1px); }
+.rm-drawer-stat .v { font-size: 20px; font-weight: 700; color: var(--rm-navy); }
+.rm-drawer-stat .l { font-size: 10px; color: var(--rm-muted); text-transform: uppercase; margin-top: 3px; letter-spacing: 0.3px; }
 
 /* ── Popover ──────────────────────────────────────── */
 .popover { max-width: 340px; font-size: 12.5px; }
@@ -377,10 +461,16 @@ table.rm-table .rm-actions-cell button.danger:hover { color: #DC2626; }
                     </div>
                 @endif
 
-                <div class="rm-card-stats" id="rmStats_{{ $room->id }}">
-                    <div title="Upcoming bookings"><i class="ri-calendar-event-line"></i><span class="stat-bookings">…</span></div>
-                    <div title="Mapped classes"><i class="ri-links-line"></i><span class="stat-mapped">…</span></div>
-                    <div title="Timetable uses"><i class="ri-table-line"></i><span class="stat-uses">…</span></div>
+                <div class="rm-card-stats" id="rmStats_{{ $room->id }}" onclick="event.stopPropagation()">
+                    <div title="Upcoming bookings — click to view" onclick="rmOpenDrawerSection({{ $room->id }}, 'bookings')">
+                        <i class="ri-calendar-event-line"></i><span class="stat-bookings">…</span>
+                    </div>
+                    <div title="Mapped classes — click to view" onclick="rmOpenDrawerSection({{ $room->id }}, 'mappings')">
+                        <i class="ri-links-line"></i><span class="stat-mapped">…</span>
+                    </div>
+                    <div title="Timetable uses — click to view" onclick="rmOpenDrawerSection({{ $room->id }}, 'uses')">
+                        <i class="ri-table-line"></i><span class="stat-uses">…</span>
+                    </div>
                 </div>
             </div>
         @empty
@@ -403,31 +493,49 @@ table.rm-table .rm-actions-cell button.danger:hover { color: #DC2626; }
             <table class="rm-table">
                 <thead>
                     <tr>
+                        <th class="rm-expand-cell"></th>
                         <th style="width:32px"><input type="checkbox" id="rmSelectAllTable" onchange="rmToggleSelectAll(this.checked)"></th>
                         <th>Code</th>
                         <th>Name</th>
                         <th>Type</th>
                         <th>Capacity</th>
                         <th>Building</th>
+                        <th style="text-align:center">Bookings</th>
+                        <th style="text-align:center">Mapped</th>
+                        <th style="text-align:center">Uses</th>
                         <th>Status</th>
                         <th style="width:180px;text-align:right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($rooms as $room)
-                        <tr data-room-id="{{ $room->id }}"
+                        <tr class="rm-row" data-room-id="{{ $room->id }}"
                             data-type="{{ $room->type }}"
                             data-building="{{ strtolower($room->building ?? '') }}"
                             data-capacity="{{ $room->capacity }}"
                             data-active="{{ $room->is_active ? '1' : '0' }}"
                             data-name="{{ strtolower($room->room_name) }}"
                             data-code="{{ strtolower($room->room_code) }}">
+                            <td class="rm-expand-cell">
+                                <button class="rm-expand-btn" onclick="rmToggleDetailRow({{ $room->id }}, this)">
+                                    <i class="ri-arrow-right-s-line"></i>
+                                </button>
+                            </td>
                             <td><input type="checkbox" class="rm-row-checkbox" onclick="rmToggleSelect({{ $room->id }}, this.checked)"></td>
                             <td><span class="badge bg-primary">{{ $room->room_code }}</span></td>
                             <td class="fw-semibold">{{ $room->room_name }}</td>
                             <td>{{ ucfirst($room->type) }}</td>
                             <td>{{ $room->capacity }}</td>
                             <td>{{ $room->building ?: '—' }}</td>
+                            <td style="text-align:center">
+                                <span class="rm-stat-pill is-zero" data-stat-type="bookings" data-room-id="{{ $room->id }}">…</span>
+                            </td>
+                            <td style="text-align:center">
+                                <span class="rm-stat-pill is-zero" data-stat-type="mappings" data-room-id="{{ $room->id }}">…</span>
+                            </td>
+                            <td style="text-align:center">
+                                <span class="rm-stat-pill is-zero" data-stat-type="uses" data-room-id="{{ $room->id }}">…</span>
+                            </td>
                             <td>
                                 @if($room->is_active)
                                     <span class="badge bg-success-subtle text-success">Active</span>
@@ -447,6 +555,15 @@ table.rm-table .rm-actions-cell button.danger:hover { color: #DC2626; }
                                 @can('Delete rooms')
                                 <button class="danger" onclick="rmDeleteRoom({{ $room->id }})" title="Delete"><i class="ri-delete-bin-line"></i></button>
                                 @endcan
+                            </td>
+                        </tr>
+                        <tr class="rm-detail-row" id="rmDetailRow_{{ $room->id }}" style="display:none">
+                            <td colspan="12">
+                                <div class="rm-detail-wrap" id="rmDetailWrap_{{ $room->id }}">
+                                    <div class="text-center py-4 text-muted">
+                                        <div class="spinner-border spinner-border-sm me-2"></div>Loading details…
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -477,6 +594,10 @@ table.rm-table .rm-actions-cell button.danger:hover { color: #DC2626; }
     </div>
     <div class="rm-drawer-footer" id="rmDrawerFooter"></div>
 </div>
+
+{{-- ─────────────────────────────────────────────────────── --}}
+{{-- MODALS                                                   --}}
+{{-- ─────────────────────────────────────────────────────── --}}
 
 {{-- Add/Edit Room Modal --}}
 <div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
@@ -763,6 +884,9 @@ table.rm-table .rm-actions-cell button.danger:hover { color: #DC2626; }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+@include('partials.apple-alert')
+
 <script>
 const RM_CSRF = '{{ csrf_token() }}';
 
@@ -773,6 +897,7 @@ const RM_ROUTES = {
     update:          '{{ route("rooms.update", ["id" => "__ID__"]) }}',
     destroy:         '{{ route("rooms.destroy", ["id" => "__ID__"]) }}',
     stats:           '{{ route("rooms.stats") }}',
+    statsDetail:     '{{ route("rooms.stats-detail", ["roomId" => "__ID__"]) }}',
     mappingCounts:   '{{ route("rooms.mapping-counts") }}',
     mappings:        '{{ route("rooms.mappings", ["roomId" => "__ID__"]) }}',
     storeMapping:    '{{ route("rooms.mappings.store", ["roomId" => "__ID__"]) }}',
@@ -844,7 +969,7 @@ function rmSyncSelectionUI() {
     document.querySelectorAll('.rm-card').forEach(card => {
         card.classList.toggle('is-selected', rmSelected.has(parseInt(card.dataset.roomId)));
     });
-    document.querySelectorAll('table.rm-table tbody tr').forEach(row => {
+    document.querySelectorAll('table.rm-table tbody tr.rm-row').forEach(row => {
         row.classList.toggle('is-selected', rmSelected.has(parseInt(row.dataset.roomId)));
     });
 }
@@ -899,8 +1024,12 @@ function rmApplyFilters() {
     document.querySelectorAll('.rm-card').forEach(card => {
         card.style.display = rowMatches(card) ? '' : 'none';
     });
-    document.querySelectorAll('table.rm-table tbody tr').forEach(row => {
-        row.style.display = rowMatches(row) ? '' : 'none';
+    document.querySelectorAll('table.rm-table tbody tr.rm-row').forEach(row => {
+        const visible = rowMatches(row);
+        row.style.display = visible ? '' : 'none';
+        // Also hide the paired detail row if its parent is hidden.
+        const detailRow = document.getElementById('rmDetailRow_' + row.dataset.roomId);
+        if (detailRow && !visible) detailRow.style.display = 'none';
     });
 }
 
@@ -929,29 +1058,206 @@ function rmPopulateBuildingFilter() {
     });
 }
 
-/* ── Stats strip ─────────────────────────────────────── */
+/* ── Stats strip (batch) ─────────────────────────────── */
+// Cache so we can render the same totals in both card and table views
+// without a second request.
+let rmStatsCache = {};
+
 async function refreshRoomStats() {
     try {
         const res  = await fetch(RM_ROUTES.stats, { headers: { 'Accept': 'application/json' } });
         const data = await res.json();
         if (!data.success) return;
 
+        rmStatsCache = data.stats;
+
         Object.entries(data.stats).forEach(([roomId, s]) => {
+            // Grid card stats
             const wrap = document.getElementById('rmStats_' + roomId);
-            if (!wrap) return;
-            wrap.querySelector('.stat-bookings').textContent = s.upcoming_bookings;
-            wrap.querySelector('.stat-mapped').textContent   = s.mapped_classes;
-            wrap.querySelector('.stat-uses').textContent     = s.timetable_uses;
-            wrap.querySelector('.stat-bookings').classList.toggle('has-value', s.upcoming_bookings > 0);
-            wrap.querySelector('.stat-mapped').classList.toggle('has-value', s.mapped_classes > 0);
-            wrap.querySelector('.stat-uses').classList.toggle('has-value', s.timetable_uses > 0);
+            if (wrap) {
+                const b = wrap.querySelector('.stat-bookings');
+                const m = wrap.querySelector('.stat-mapped');
+                const u = wrap.querySelector('.stat-uses');
+                if (b) { b.textContent = s.upcoming_bookings; b.classList.toggle('has-value', s.upcoming_bookings > 0); }
+                if (m) { m.textContent = s.mapped_classes;    m.classList.toggle('has-value', s.mapped_classes > 0); }
+                if (u) { u.textContent = s.timetable_uses;    u.classList.toggle('has-value', s.timetable_uses > 0); }
+            }
+
+            // Table stat pills
+            const pillB = document.querySelector(`.rm-stat-pill[data-stat-type="bookings"][data-room-id="${roomId}"]`);
+            const pillM = document.querySelector(`.rm-stat-pill[data-stat-type="mappings"][data-room-id="${roomId}"]`);
+            const pillU = document.querySelector(`.rm-stat-pill[data-stat-type="uses"][data-room-id="${roomId}"]`);
+            if (pillB) { pillB.textContent = s.upcoming_bookings; pillB.classList.toggle('has-value', s.upcoming_bookings > 0); pillB.classList.toggle('is-zero', s.upcoming_bookings === 0); }
+            if (pillM) { pillM.textContent = s.mapped_classes;    pillM.classList.toggle('has-value', s.mapped_classes > 0);    pillM.classList.toggle('is-zero', s.mapped_classes === 0); }
+            if (pillU) { pillU.textContent = s.timetable_uses;    pillU.classList.toggle('has-value', s.timetable_uses > 0);    pillU.classList.toggle('is-zero', s.timetable_uses === 0); }
         });
     } catch (e) { /* silent */ }
+}
+
+/* ── Detail row expansion (table view) ───────────────── */
+const rmDetailState = {};   // roomId -> { loaded: bool, open: bool, data: {} }
+
+async function rmToggleDetailRow(roomId, btn) {
+    const row    = document.getElementById('rmDetailRow_' + roomId);
+    const wrap   = document.getElementById('rmDetailWrap_' + roomId);
+    if (!row || !wrap) return;
+
+    const isOpen = row.style.display !== 'none';
+
+    if (isOpen) {
+        row.style.display = 'none';
+        btn.classList.remove('is-open');
+        return;
+    }
+
+    row.style.display = '';
+    btn.classList.add('is-open');
+
+    if (rmDetailState[roomId]?.loaded) {
+        rmRenderDetailInto(wrap, rmDetailState[roomId].data, roomId);
+        return;
+    }
+
+    wrap.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading details…</div>';
+
+    try {
+        const res  = await fetch(rmUrl(RM_ROUTES.statsDetail, roomId), { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed.');
+
+        rmDetailState[roomId] = { loaded: true, open: true, data };
+        rmRenderDetailInto(wrap, data, roomId);
+    } catch (e) {
+        wrap.innerHTML = `<div class="alert alert-danger m-0">Failed: ${rmEsc(e.message)}</div>`;
+    }
+}
+
+/* Cap each list at 10 initially; "Show all N" expands in place. */
+const RM_DETAIL_CAP = 10;
+const rmDetailExpanded = {};   // "roomId:section" -> bool
+
+function rmRenderDetailInto(wrap, data, roomId) {
+    const bookingSection  = rmRenderBookingList(data.bookings, data.totals.bookings, roomId, 'bookings');
+    const mappingSection  = rmRenderMappingList(data.mappings, data.totals.mappings, roomId, 'mappings');
+    const useSection      = rmRenderUseList(data.uses, data.totals.uses, roomId, 'uses');
+
+    wrap.innerHTML = `
+        <div class="rm-detail-cols">
+            <div class="rm-detail-col">
+                <h6><i class="ri-calendar-event-line"></i>Upcoming bookings</h6>
+                ${bookingSection}
+            </div>
+            <div class="rm-detail-col">
+                <h6><i class="ri-links-line"></i>Mapped to classes</h6>
+                ${mappingSection}
+            </div>
+            <div class="rm-detail-col">
+                <h6><i class="ri-table-line"></i>Used in timetables</h6>
+                ${useSection}
+            </div>
+        </div>`;
+}
+
+function rmRenderBookingList(bookings, total, roomId, section) {
+    if (!bookings.length) {
+        return '<div class="rm-detail-list"><div class="rm-detail-empty">No upcoming bookings.</div></div>';
+    }
+    const key = roomId + ':' + section;
+    const expanded = !!rmDetailExpanded[key];
+    const list = expanded ? bookings : bookings.slice(0, RM_DETAIL_CAP);
+
+    let html = '<ul class="rm-detail-list">';
+    list.forEach(b => {
+        html += `<li>
+            <div class="main">
+                <strong>${rmEsc(b.date)}</strong>
+                <em>${rmEsc(b.start_time)} – ${rmEsc(b.end_time)}</em>
+            </div>
+            <div class="meta">${rmEsc(b.purpose || '—')}</div>
+        </li>`;
+    });
+    html += '</ul>';
+
+    if (total > RM_DETAIL_CAP) {
+        const label = expanded ? 'Show less' : `Show all ${total}`;
+        html += `<div class="rm-detail-more" onclick="rmToggleDetailExpand(${roomId}, '${section}', this)">${label}</div>`;
+    }
+    return html;
+}
+
+function rmRenderMappingList(mappings, total, roomId, section) {
+    if (!mappings.length) {
+        return '<div class="rm-detail-list"><div class="rm-detail-empty">Not mapped to any class yet.</div></div>';
+    }
+    const key = roomId + ':' + section;
+    const expanded = !!rmDetailExpanded[key];
+    const list = expanded ? mappings : mappings.slice(0, RM_DETAIL_CAP);
+
+    let html = '<ul class="rm-detail-list">';
+    list.forEach(m => {
+        const subj = m.subject_name ? rmEsc(m.subject_name) : '<em style="color:#94A3B8">Any subject</em>';
+        const meta = [m.session_name, m.term_name].filter(Boolean).join(' · ');
+        html += `<li>
+            <div class="main">
+                <strong>${rmEsc(m.class_name)}</strong>
+                <em>${subj}</em>
+            </div>
+            ${meta ? `<div class="meta">${rmEsc(meta)}</div>` : ''}
+        </li>`;
+    });
+    html += '</ul>';
+
+    if (total > RM_DETAIL_CAP) {
+        const label = expanded ? 'Show less' : `Show all ${total}`;
+        html += `<div class="rm-detail-more" onclick="rmToggleDetailExpand(${roomId}, '${section}', this)">${label}</div>`;
+    }
+    return html;
+}
+
+function rmRenderUseList(uses, total, roomId, section) {
+    if (!uses.length) {
+        return '<div class="rm-detail-list"><div class="rm-detail-empty">Not used in any timetable.</div></div>';
+    }
+    const key = roomId + ':' + section;
+    const expanded = !!rmDetailExpanded[key];
+    const list = expanded ? uses : uses.slice(0, RM_DETAIL_CAP);
+
+    let html = '<ul class="rm-detail-list">';
+    list.forEach(u => {
+        const subject = u.subject_name ? rmEsc(u.subject_name) : '—';
+        const teacher = u.teacher_name ? ' · ' + rmEsc(u.teacher_name) : '';
+        html += `<li>
+            <div class="main">
+                <strong>${rmEsc(u.day)} · ${rmEsc(u.period_name || '')}</strong>
+                <em>${subject}${teacher} — ${rmEsc(u.class_name)}</em>
+            </div>
+            <div class="meta">${rmEsc(u.period_time || '')}</div>
+        </li>`;
+    });
+    html += '</ul>';
+
+    if (total > RM_DETAIL_CAP) {
+        const label = expanded ? 'Show less' : `Show all ${total}`;
+        html += `<div class="rm-detail-more" onclick="rmToggleDetailExpand(${roomId}, '${section}', this)">${label}</div>`;
+    }
+    return html;
+}
+
+function rmToggleDetailExpand(roomId, section, el) {
+    const key = roomId + ':' + section;
+    rmDetailExpanded[key] = !rmDetailExpanded[key];
+
+    const state = rmDetailState[roomId];
+    if (state?.data) {
+        const wrap = document.getElementById('rmDetailWrap_' + roomId);
+        if (wrap) rmRenderDetailInto(wrap, state.data, roomId);
+    }
 }
 
 /* ── Card click / drawer ─────────────────────────────── */
 function rmCardClick(event, roomId) {
     if (event.target.closest('.rm-card-actions') || event.target.closest('.rm-card-checkbox')) return;
+    if (event.target.closest('.rm-card-stats')) return;   // stat clicks handled separately
     rmViewRoom(roomId);
 }
 
@@ -969,6 +1275,59 @@ function rmCloseDrawer() {
     document.getElementById('rmDrawerBackdrop').classList.remove('is-open');
 }
 
+/* Open the drawer directly on the stats detail (bookings/mappings/uses). */
+async function rmOpenDrawerSection(roomId, section) {
+    rmOpenDrawer('Loading…', '', '<div class="text-center py-5 text-muted"><div class="spinner-border text-primary"></div></div>');
+    try {
+        const res  = await fetch(rmUrl(RM_ROUTES.statsDetail, roomId), { headers: { 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data.success) throw new Error('Not found.');
+
+        rmDetailState[roomId] = { loaded: true, open: true, data };
+
+        const body = `
+            <div class="rm-drawer-section">
+                <h6>Overview</h6>
+                <div class="rm-drawer-row"><span class="lbl">Code</span><span class="val">${rmEsc(data.room.room_code)}</span></div>
+                <div class="rm-drawer-row"><span class="lbl">Name</span><span class="val">${rmEsc(data.room.room_name)}</span></div>
+            </div>
+            <div class="rm-drawer-stats">
+                <div class="rm-drawer-stat" onclick="rmDrawerScrollTo('rmDrawerSection_bookings')">
+                    <div class="v">${data.totals.bookings}</div><div class="l">Bookings</div>
+                </div>
+                <div class="rm-drawer-stat" onclick="rmDrawerScrollTo('rmDrawerSection_mappings')">
+                    <div class="v">${data.totals.mappings}</div><div class="l">Mapped</div>
+                </div>
+                <div class="rm-drawer-stat" onclick="rmDrawerScrollTo('rmDrawerSection_uses')">
+                    <div class="v">${data.totals.uses}</div><div class="l">Uses</div>
+                </div>
+            </div>
+            <div class="rm-drawer-section" id="rmDrawerSection_bookings">
+                <h6><i class="ri-calendar-event-line me-1"></i>Upcoming bookings</h6>
+                ${rmRenderBookingList(data.bookings, data.totals.bookings, roomId, 'bookings')}
+            </div>
+            <div class="rm-drawer-section" id="rmDrawerSection_mappings">
+                <h6><i class="ri-links-line me-1"></i>Mapped to classes</h6>
+                ${rmRenderMappingList(data.mappings, data.totals.mappings, roomId, 'mappings')}
+            </div>
+            <div class="rm-drawer-section" id="rmDrawerSection_uses">
+                <h6><i class="ri-table-line me-1"></i>Used in timetables</h6>
+                ${rmRenderUseList(data.uses, data.totals.uses, roomId, 'uses')}
+            </div>`;
+
+        rmOpenDrawer(data.room.room_name, data.room.room_code, body, '');
+        // Auto-focus the requested section
+        setTimeout(() => rmDrawerScrollTo('rmDrawerSection_' + section), 50);
+    } catch (e) {
+        rmOpenDrawer('Error', '', `<div class="alert alert-danger">${rmEsc(e.message)}</div>`);
+    }
+}
+
+function rmDrawerScrollTo(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function rmViewRoom(roomId) {
     rmOpenDrawer('Loading…', '', '<div class="text-center py-5 text-muted"><div class="spinner-border text-primary"></div></div>');
     try {
@@ -976,6 +1335,9 @@ async function rmViewRoom(roomId) {
         const data = await res.json();
         if (!data.success) throw new Error('Not found');
         const room = data.room;
+
+        // Pull the cached totals if available.
+        const stats = rmStatsCache[roomId] || { upcoming_bookings: 0, mapped_classes: 0, timetable_uses: 0 };
 
         const facilitiesHtml = (room.facilities && room.facilities.length)
             ? room.facilities.map(f => `<span class="rm-chip">${rmEsc(f)}</span>`).join(' ')
@@ -990,6 +1352,17 @@ async function rmViewRoom(roomId) {
                 <div class="rm-drawer-row"><span class="lbl">Building</span><span class="val">${rmEsc(room.building || '—')}</span></div>
                 <div class="rm-drawer-row"><span class="lbl">Floor</span><span class="val">${rmEsc(room.floor || '—')}</span></div>
                 <div class="rm-drawer-row"><span class="lbl">Status</span><span class="val">${room.is_active ? 'Active' : 'Inactive'}</span></div>
+            </div>
+            <div class="rm-drawer-stats">
+                <div class="rm-drawer-stat" onclick="rmCloseDrawer();rmOpenDrawerSection(${roomId}, 'bookings')">
+                    <div class="v">${stats.upcoming_bookings}</div><div class="l">Bookings</div>
+                </div>
+                <div class="rm-drawer-stat" onclick="rmCloseDrawer();rmOpenDrawerSection(${roomId}, 'mappings')">
+                    <div class="v">${stats.mapped_classes}</div><div class="l">Mapped</div>
+                </div>
+                <div class="rm-drawer-stat" onclick="rmCloseDrawer();rmOpenDrawerSection(${roomId}, 'uses')">
+                    <div class="v">${stats.timetable_uses}</div><div class="l">Uses</div>
+                </div>
             </div>
             <div class="rm-drawer-section">
                 <h6>Facilities</h6>
@@ -1068,7 +1441,7 @@ async function rmEditRoom(roomId) {
         document.getElementById('roomModalTitle').innerText = 'Edit Room';
         new bootstrap.Modal(document.getElementById('roomModal')).show();
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not load room', e.message);
     }
 }
 
@@ -1089,12 +1462,12 @@ async function rmSaveRoom() {
     };
 
     if (!data.room_code || !data.room_name) {
-        return Swal.fire('Error', 'Please fill in required fields.', 'error');
+        return AppleAlert.warning('Missing fields', 'Room code and name are required.');
     }
 
     const url = id ? rmUrl(RM_ROUTES.update, id) : RM_ROUTES.store;
 
-    Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    AppleAlert.loading('Saving room…');
     try {
         const res  = await fetch(url, {
             method: 'POST',
@@ -1106,48 +1479,46 @@ async function rmSaveRoom() {
             body: JSON.stringify(data),
         });
         const result = await res.json();
-        Swal.close();
+        AppleAlert.close();
 
         if (result.success) {
-            Swal.fire('Success', result.message || 'Saved.', 'success');
             bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
-            setTimeout(() => location.reload(), 800);
+            AppleAlert.saved(id ? 'Room updated' : 'Room created');
+            setTimeout(() => location.reload(), 900);
         } else {
-            Swal.fire('Error', result.message || 'Failed.', 'error');
+            AppleAlert.error('Save failed', result.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.close();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.close();
+        AppleAlert.error('Save failed', e.message);
     }
 }
 
 /* ── Delete ──────────────────────────────────────────── */
 async function rmDeleteRoom(roomId) {
-    const r = await Swal.fire({
-        title: 'Delete this room?',
-        text: 'Cannot be undone. Room must not be in use.',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#DC2626', confirmButtonText: 'Delete',
-    });
-    if (!r.isConfirmed) return;
+    const ok = await AppleAlert.confirmDelete(
+        'Delete this room?',
+        'This action can\'t be undone. The room must not be in use.'
+    );
+    if (!ok) return;
 
-    Swal.fire({ title: 'Deleting…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    AppleAlert.loading('Deleting…');
     try {
         const res  = await fetch(rmUrl(RM_ROUTES.destroy, roomId), {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': RM_CSRF, 'Accept': 'application/json' },
         });
         const data = await res.json();
-        Swal.close();
+        AppleAlert.close();
         if (data.success) {
-            Swal.fire('Deleted', '', 'success');
-            setTimeout(() => location.reload(), 800);
+            AppleAlert.deleted('Room deleted');
+            setTimeout(() => location.reload(), 900);
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Could not delete', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.close();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.close();
+        AppleAlert.error('Could not delete', e.message);
     }
 }
 
@@ -1168,7 +1539,7 @@ async function rmBookRoom(roomId) {
 
         new bootstrap.Modal(document.getElementById('bookingModal')).show();
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not open booking form', e.message);
     }
 }
 
@@ -1183,10 +1554,10 @@ async function rmSubmitBooking() {
     };
 
     if (!payload.date || !payload.start_time || !payload.end_time || !payload.purpose) {
-        return Swal.fire('Error', 'Please fill all fields.', 'error');
+        return AppleAlert.warning('Missing fields', 'Please fill in date, times, and purpose.');
     }
 
-    Swal.fire({ title: 'Checking availability…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    AppleAlert.loading('Checking availability…');
     try {
         const params = new URLSearchParams({
             room_id:    roomId,
@@ -1199,8 +1570,8 @@ async function rmSubmitBooking() {
         const availData = await availRes.json();
 
         if (!availData.available) {
-            Swal.close();
-            return Swal.fire('Not Available', 'This room is already booked for that slot.', 'warning');
+            AppleAlert.close();
+            return AppleAlert.warning('Not available', 'This room is already booked for that time slot.');
         }
 
         const res = await fetch(rmUrl(RM_ROUTES.book, roomId), {
@@ -1213,18 +1584,22 @@ async function rmSubmitBooking() {
             body: JSON.stringify(payload),
         });
         const data = await res.json();
-        Swal.close();
+        AppleAlert.close();
 
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
-            Swal.fire('Booked!', '', 'success');
+            AppleAlert.saved('Room booked');
             refreshRoomStats();
+            // If the drawer for this room is currently open, refresh it.
+            if (document.getElementById('rmDrawer').classList.contains('is-open')) {
+                rmOpenDrawerSection(parseInt(roomId), 'bookings');
+            }
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Booking failed', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.close();
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.close();
+        AppleAlert.error('Booking failed', e.message);
     }
 }
 
@@ -1268,7 +1643,7 @@ async function rmViewSchedule(roomId) {
 
         new bootstrap.Modal(document.getElementById('scheduleModal')).show();
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not load schedule', e.message);
     }
 }
 
@@ -1356,7 +1731,7 @@ async function rmSaveMapping() {
     };
 
     if (!payload.schoolclass_id || !payload.session_id) {
-        return Swal.fire('Required', 'Select a class and a session.', 'warning');
+        return AppleAlert.warning('Missing fields', 'Please select a class and a session.');
     }
 
     try {
@@ -1374,40 +1749,44 @@ async function rmSaveMapping() {
             document.getElementById('mapNote').value = '';
             rmLoadMappings(rmMappingRoomId);
             refreshRoomStats();
+            AppleAlert.saved('Mapping added');
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Could not add mapping', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Could not add mapping', e.message);
     }
 }
 
-function rmDeleteMapping(mappingId) {
-    Swal.fire({
-        title: 'Remove mapping?',
-        text: 'This room will no longer be available for that class/subject.',
-        icon: 'warning', showCancelButton: true, confirmButtonText: 'Remove', confirmButtonColor: '#DC2626',
-    }).then(r => {
-        if (!r.isConfirmed) return;
-        fetch(rmUrl(RM_ROUTES.destroyMapping, mappingId), {
+async function rmDeleteMapping(mappingId) {
+    const ok = await AppleAlert.confirmDelete(
+        'Remove mapping?',
+        'This room will no longer be available for that class/subject.'
+    );
+    if (!ok) return;
+
+    try {
+        const res = await fetch(rmUrl(RM_ROUTES.destroyMapping, mappingId), {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': RM_CSRF, 'Accept': 'application/json' },
-        })
-        .then(res => res.json())
-        .then(d => {
-            if (d.success) {
-                rmLoadMappings(rmMappingRoomId);
-                refreshRoomStats();
-            } else {
-                Swal.fire('Error', d.message || 'Failed.', 'error');
-            }
         });
-    });
+        const d = await res.json();
+        if (d.success) {
+            rmLoadMappings(rmMappingRoomId);
+            refreshRoomStats();
+            AppleAlert.deleted('Mapping removed');
+        } else {
+            AppleAlert.error('Could not remove mapping', d.message || 'Please try again.');
+        }
+    } catch (e) {
+        AppleAlert.error('Could not remove mapping', e.message);
+    }
 }
 
 /* ── Bulk actions ────────────────────────────────────── */
 async function rmBulkActivate(active) {
     if (!rmSelected.size) return;
+
     try {
         const res = await fetch(RM_ROUTES.bulkActivate, {
             method: 'POST',
@@ -1423,25 +1802,25 @@ async function rmBulkActivate(active) {
         });
         const data = await res.json();
         if (data.success) {
-            Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
-            setTimeout(() => location.reload(), 1500);
+            AppleAlert.saved(active ? 'Rooms activated' : 'Rooms deactivated');
+            setTimeout(() => location.reload(), 900);
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Bulk update failed', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Bulk update failed', e.message);
     }
 }
 
 async function rmBulkDestroy() {
     if (!rmSelected.size) return;
-    const r = await Swal.fire({
-        title: `Delete ${rmSelected.size} room(s)?`,
-        text: 'Cannot be undone. Rooms in use will block the whole batch.',
-        icon: 'warning', showCancelButton: true,
-        confirmButtonColor: '#DC2626', confirmButtonText: 'Delete All',
-    });
-    if (!r.isConfirmed) return;
+
+    const ok = await AppleAlert.destructive(
+        `Delete ${rmSelected.size} room(s)?`,
+        'This can\'t be undone. Rooms that are still in use will block the whole batch.',
+        { confirmText: 'Delete all' }
+    );
+    if (!ok.isConfirmed) return;
 
     try {
         const res = await fetch(RM_ROUTES.bulkDestroy, {
@@ -1456,20 +1835,24 @@ async function rmBulkDestroy() {
         const data = await res.json();
 
         if (data.success) {
-            Swal.fire({ icon: 'success', title: data.message, timer: 1500, showConfirmButton: false });
-            setTimeout(() => location.reload(), 1500);
+            AppleAlert.deleted(data.message || 'Rooms deleted');
+            setTimeout(() => location.reload(), 900);
         } else if (data.blocked) {
-            const list = data.blocked.map(b => `<li>${rmEsc(b.name)} — ${rmEsc(b.reason.replace(/_/g, ' '))}</li>`).join('');
-            Swal.fire({
-                icon: 'warning',
+            const list = data.blocked.map(b =>
+                `<li><strong>${rmEsc(b.name)}</strong> — <em>${rmEsc(b.reason.replace(/_/g, ' '))}</em></li>`
+            ).join('');
+            AppleAlert.rich({
                 title: 'Some rooms cannot be deleted',
-                html: `<ul class="text-start mb-0">${list}</ul>`,
+                html: `<p>These rooms are still in use or have upcoming bookings:</p><ul class="apple-alert-list">${list}</ul>`,
+                icon: 'warning',
+                confirmText: 'Got it',
+                theme: 'warning',
             });
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Bulk delete failed', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Bulk delete failed', e.message);
     }
 }
 
@@ -1501,7 +1884,7 @@ async function rmSubmitBulkMap() {
     };
 
     if (!payload.schoolclass_id || !payload.session_id) {
-        return Swal.fire('Required', 'Select a class and a session.', 'warning');
+        return AppleAlert.warning('Missing fields', 'Please select a class and a session.');
     }
 
     try {
@@ -1517,14 +1900,14 @@ async function rmSubmitBulkMap() {
         const data = await res.json();
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('bulkMapModal')).hide();
-            Swal.fire({ icon: 'success', title: data.message, timer: 1800, showConfirmButton: false });
+            AppleAlert.saved(data.message || 'Mappings applied');
             refreshRoomStats();
             rmClearSelection();
         } else {
-            Swal.fire('Error', data.message || 'Failed.', 'error');
+            AppleAlert.error('Bulk mapping failed', data.message || 'Please try again.');
         }
     } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        AppleAlert.error('Bulk mapping failed', e.message);
     }
 }
 
