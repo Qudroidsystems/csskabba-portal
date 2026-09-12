@@ -1,5 +1,4 @@
 <?php
-// app/Models/Room.php
 
 namespace App\Models;
 
@@ -10,7 +9,6 @@ class Room extends Model
 {
     use HasFactory;
 
-    // Add this - specify which fields can be mass assigned
     protected $fillable = [
         'room_code',
         'room_name',
@@ -20,19 +18,17 @@ class Room extends Model
         'building',
         'floor',
         'is_active',
-        'notes'
+        'notes',
     ];
 
-    // Add casts for proper data type handling
     protected $casts = [
-        'facilities' => 'array',  // Automatically handle JSON conversion
-        'is_active' => 'boolean',
-        'capacity' => 'integer',
+        'facilities' => 'array',
+        'is_active'  => 'boolean',
+        'capacity'   => 'integer',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
     ];
 
-    // Optional: Add any relationships if needed
     public function timetableSlots()
     {
         return $this->hasMany(TimetableSlot::class);
@@ -43,21 +39,36 @@ class Room extends Model
         return $this->hasMany(RoomBooking::class);
     }
 
-    // Optional: Accessor to always return facilities as array
+    /**
+     * Room-to-class(-to-subject) mappings. A row with subject_id = NULL
+     * means the room is generically available to that class.
+     */
+    public function classSubjectMappings()
+    {
+        return $this->hasMany(RoomClassSubject::class);
+    }
+
+    /**
+     * Every distinct class this room is mapped to, regardless of subject
+     * or session.
+     */
+    public function mappedClasses()
+    {
+        return $this->belongsToMany(
+            Schoolclass::class,
+            'room_class_subject',
+            'room_id',
+            'schoolclass_id'
+        )->distinct();
+    }
+
     public function getFacilitiesAttribute($value)
     {
-        if (is_null($value)) {
-            return [];
-        }
-
-        if (is_array($value)) {
-            return $value;
-        }
-
+        if (is_null($value)) return [];
+        if (is_array($value)) return $value;
         return json_decode($value, true) ?? [];
     }
 
-    // Optional: Mutator to always store facilities as JSON
     public function setFacilitiesAttribute($value)
     {
         if (is_array($value)) {

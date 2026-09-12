@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\RoomBooking;
+use App\Models\RoomClassSubject;
 use App\Models\TimetableSlot;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
@@ -152,6 +154,11 @@ class RoomController extends Controller
                     'message' => 'Cannot delete room with upcoming bookings'
                 ], 422);
             }
+
+            // Clean up any mappings — cascading FKs on the pivot would
+            // handle this automatically, but explicit is safer if the
+            // schema changes.
+            RoomClassSubject::where('room_id', $id)->delete();
 
             $room->delete();
 
@@ -320,5 +327,103 @@ class RoomController extends Controller
             ->exists();
 
         return !$bookingConflict;
+    }
+
+    // =========================================================================
+    // ROOM-CLASS-SUBJECT MAPPINGS
+    // =========================================================================
+
+    public function mappings(int $roomId): JsonResponse
+    {
+        try {
+            Room::findOrFail($roomId);
+
+            $rows = RoomClassSubject::with(['schoolclass', 'subject', 'session', 'term'])
+                ->where('room_id', $roomId)
+                ->orderBy('schoolclass_id')
+                ->orderBy('subject_id')
+                ->get()
+                ->map(fn($m) => [
+                    'id'              => $m->id,
+                    'schoolclass_id'  => $m->schoolclass_id,
+                    'class_name'      => trim(($m->schoolclass?->schoolclass ?? '')
+                                       . ' ' . ($m->schoolclass?->arm ?? '')),
+                    'subject_id'      => $m->subject_id,
+                    'subject_name'    => $m->subject?->subject,
+                    'session_id'      => $m->session_id,
+                    'session_name'    => $m->session?->session,
+                    'term_id'         => $m->term_id,
+                    'term_name'       => $m->term?->term,
+                    'note'            => $m->note,
+                ]);
+
+            return response()->json(['success' => true, 'mappings' => $rows]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function storeMapping(Request $request, int $roomId): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'schoolclass_id' => 'required|exists:schoolclass,id',
+                'subject_id'     => 'nullable|exists:subject,id',
+                'session_id'     => 'required|exists:schoolsession,id',
+                'term_id'        => 'nullable|exists:schoolterm,id',
+                'note'           => 'nullable|string|max:190',
+            ]);
+
+            $validated['room_id'] = $roomId;
+
+            $exists = RoomClassSubject::where('room_id', $roomId)
+                ->where('schoolclass_id', $validated['schoolclass_id'])
+                ->where('subject_id', $validated['subject_id'] ?? null)
+                ->where('session_id', $validated['session_id'])
+                ->where('term_id', $validated['term_id'] ?? null)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'That room is already mapped to this class/subject for the same session and term.',
+                ], 422);
+            }
+
+            $row = RoomClassSubject::create($validated);
+
+            return response()->json(['success' => true, 'mapping' => $row]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . json_encode($e->errors()),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function destroyMapping(int $mappingId): JsonResponse
+    {
+        try {
+            RoomClassSubject::findOrFail($mappingId)->delete();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function mappingCounts(Request $request): JsonResponse
+    {
+        $sessionId = $request->input('session_id');
+
+        $q = RoomClassSubject::query();
+        if ($sessionId) $q->where('session_id', $sessionId);
+
+        $counts = $q->select('room_id', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('room_id')
+            ->pluck('cnt', 'room_id');
+
+        return response()->json(['success' => true, 'counts' => $counts]);
     }
 }

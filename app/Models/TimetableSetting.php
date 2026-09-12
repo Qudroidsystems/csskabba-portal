@@ -3,9 +3,10 @@
 
 namespace App\Models;
 
+use App\Models\TimetableSubjectPriority;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TimetableSetting extends Model
 {
@@ -19,7 +20,9 @@ class TimetableSetting extends Model
         'is_published', 'published_at', 'published_by',
         'free_periods_per_week', 'max_lessons_per_day',
         'lessons_per_day', 'short_break_after_period', 'long_break_after_period',
-        'assembly_day', 'half_days', 'deprioritize_break_adjacent',
+        'assembly_day', 'half_days', 'deprioritize_break_adjacent','advanced_rules',
+        'is_preview',
+        'preview_expires_at',
     ];
 
     protected $casts = [
@@ -29,6 +32,9 @@ class TimetableSetting extends Model
         'published_at'                => 'datetime',
         'half_days'                   => 'array',
         'deprioritize_break_adjacent' => 'boolean',
+        'advanced_rules'     => 'array',
+        'is_preview'         => 'boolean',
+        'preview_expires_at' => 'datetime',
     ];
 
     public function schoolclass(): BelongsTo { return $this->belongsTo(Schoolclass::class, 'schoolclass_id'); }
@@ -41,4 +47,19 @@ class TimetableSetting extends Model
     public function updater()   { return $this->belongsTo(User::class, 'updated_by'); }
     public function publisher() { return $this->belongsTo(User::class, 'published_by'); }
     public function editor()    { return $this->belongsTo(User::class, 'editing_by'); }
+        public function subjectPriorities()
+    {
+        return $this->hasMany(TimetableSubjectPriority::class, 'setting_id', 'id');
+    }
+
+    public function scopeReal($query)
+    {
+        return $query->where('is_preview', false);
+    }
+
+    public function scopeExpiredPreviews($query)
+    {
+        return $query->where('is_preview', true)
+            ->where('preview_expires_at', '<', now());
+    }
 }

@@ -244,6 +244,81 @@
 .bg-primary-subtle { background: #EFF6FF; }
 .text-primary { color: #1565C0; }
 
+/* ── Wizard: Subjects & Priority ──────────────────── */
+.wiz-class-card { border: 1px solid var(--tt-border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+.wiz-class-card .wiz-class-hdr {
+    background: linear-gradient(135deg, #1565C0, #0d9488);
+    color: #fff; padding: 10px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+}
+.wiz-class-card .wiz-class-hdr h6 { margin: 0; font-size: 13px; font-weight: 700; }
+.wiz-class-card .wiz-class-body { padding: 10px 14px; }
+
+.wiz-subj-row {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1.4fr) 80px 60px 60px minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 8px; align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 12.5px;
+}
+.wiz-subj-row:last-child { border-bottom: none; }
+.wiz-subj-row.is-compulsory { border-left: 3px solid #F59E0B; padding-left: 10px; background: #FFFBEB; }
+.wiz-subj-name { font-weight: 600; color: #1E293B; }
+.wiz-subj-teacher { color: #64748B; font-size: 11.5px; }
+.wiz-subj-num { width: 100%; }
+
+.wiz-priority-select { font-size: 12px; padding: 3px 6px; }
+.wiz-priority-flags { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; }
+.wiz-priority-flags label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.wiz-priority-flags input { margin: 0; }
+
+.wiz-compulsory-badge {
+    background: #F59E0B; color: #fff;
+    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+.wiz-mapped-rooms { font-size: 10.5px; color: #64748B; margin-top: 2px; }
+.wiz-mapped-rooms.none { color: #DC2626; }
+
+/* ── Wizard: Period Limits ────────────────────────── */
+.wiz-limit-row {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr) 140px 80px 32px;
+    gap: 8px; align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px dashed #F1F5F9;
+}
+.wiz-limit-row:last-child { border-bottom: none; }
+.wiz-limit-row select,
+.wiz-limit-row input { font-size: 12px; }
+
+/* ── Wizard: Advanced rules panel ─────────────────── */
+.wizard-advanced summary { padding: 6px 0; list-style: none; }
+.wizard-advanced summary::marker { display: none; }
+.wizard-advanced summary::after {
+    content: '▸'; float: right; transition: transform .15s; color: #94A3B8;
+}
+.wizard-advanced[open] summary::after { transform: rotate(90deg); }
+
+/* ── Preview summary mini-strips ──────────────────── */
+.mini-strip {
+    border: 1px solid var(--tt-border); border-radius: 8px;
+    padding: 10px 12px; text-align: center; background: #fff;
+}
+.mini-strip .v { font-size: 22px; font-weight: 700; color: #0f2342; }
+.mini-strip .l { font-size: 10.5px; color: #94a3b8; text-transform: uppercase; margin-top: 2px; }
+.mini-strip.ok   { border-color: #BBF7D0; background: #F0FDF4; }
+.mini-strip.ok .v { color: #16a34a; }
+.mini-strip.warn { border-color: #FDE68A; background: #FFFBEB; }
+.mini-strip.warn .v { color: #D97706; }
+.mini-strip.bad  { border-color: #FECACA; background: #FEF2F2; }
+.mini-strip.bad .v { color: #DC2626; }
+
+/* ── Popover tweak ───────────────────────────────── */
+.popover { max-width: 340px; font-size: 12.5px; }
+
 @media (max-width: 768px) {
     .tt-page-header { flex-direction: column; align-items: stretch; text-align: center; }
     .tt-page-header .d-flex { justify-content: center; }
@@ -261,6 +336,8 @@
     .conflict-item { flex-direction: column; align-items: stretch; }
     .conflict-avatar, .conflict-avatar-ph { align-self: center; }
     .ws-mode-toggle { flex-direction: column; }
+    .wiz-subj-row { grid-template-columns: 22px minmax(0,1fr) 60px 60px 1fr; }
+    .wiz-limit-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 576px) {
     .tt-page-header { padding: 16px 18px; border-radius: 12px; }
@@ -955,6 +1032,8 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+
+        {{-- Form pane --}}
         <div id="wizFormContent">
         <p class="text-muted" style="font-size:13px">Set up the day structure for many classes at once, then optionally auto-generate timetables for all of them.</p>
 
@@ -1052,6 +1131,7 @@
             <label class="form-label fw-semibold">Max Lessons / Day <span class="text-muted fw-normal">(optional)</span></label>
             <input type="number" class="form-control" id="wizMaxLessonsPerDay" min="1" placeholder="No cap">
           </div>
+
           <div class="col-12">
             <label class="form-label fw-semibold">Active Days</label>
             <div class="d-flex flex-wrap gap-3 mt-1">
@@ -1063,11 +1143,16 @@
               @endforeach
             </div>
           </div>
+
           <div class="col-12">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="wizDeprioritizeBreakAdjacent" checked>
               <label class="form-check-label" for="wizDeprioritizeBreakAdjacent">
                 Deprioritize periods next to a break when auto-generating
+                <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+                   data-bs-toggle="popover"
+                   data-bs-title="Deprioritize break-adjacent periods"
+                   data-bs-content="When on, lesson slots immediately before or after a break or assembly are scored down, so academic periods tend to cluster away from the interruption. Turn off if you want the generator to treat all lesson periods equally."></i>
               </label>
             </div>
           </div>
@@ -1076,6 +1161,33 @@
               <input class="form-check-input" type="checkbox" id="wizIncludeRooms" checked>
               <label class="form-check-label" for="wizIncludeRooms">
                 Automatically assign available rooms (no double-bookings)
+              </label>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="wizStrictRoomMapping">
+              <label class="form-check-label" for="wizStrictRoomMapping">
+                Strict room mapping
+                <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+                   data-bs-toggle="popover"
+                   data-bs-title="Strict room mapping"
+                   data-bs-content="On: a lesson can only use a room that is mapped to its class (and subject) in Room Management. Off: the generator falls back to any free room, as before."></i>
+                <small class="text-muted d-block ms-4">
+                  Requires rooms to be mapped to classes in Room Management first.
+                </small>
+              </label>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="wizPrioritiesActive" checked>
+              <label class="form-check-label" for="wizPrioritiesActive">
+                Apply subject priorities
+                <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+                   data-bs-toggle="popover"
+                   data-bs-title="Apply subject priorities"
+                   data-bs-content="Off: ignore every priority row, even if set. Useful for comparing two generations — one with priorities, one without."></i>
               </label>
             </div>
           </div>
@@ -1089,15 +1201,222 @@
             <button class="btn btn-sm btn-outline-primary" onclick="addWizardHalfDayRow()"><i class="ri-add-line"></i> Add</button>
         </div>
         <div id="wizHalfDaysBody"></div>
+
+        {{-- Subjects & Priority panel --}}
+        <hr>
+        <h6 class="mb-3">
+            <i class="ri-bookmark-3-line me-2"></i>Subjects &amp; Priority
+            <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+               data-bs-toggle="popover"
+               data-bs-title="Subjects &amp; Priority"
+               data-bs-content="For each class in scope, tune the weekly period count, allow double periods, and — optionally — set a priority that influences how the generator places this subject."></i>
+        </h6>
+
+        <div id="wizSubjectsPanel">
+            <div class="text-center py-4 text-muted">
+                <i class="ri-bookmark-3-line ri-2x d-block mb-2 opacity-30"></i>
+                <p class="mb-0">Select a session and click <strong>Load Subjects</strong> to see per-class subject settings.</p>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadWizardSubjects()">
+                <i class="ri-refresh-line me-1"></i>Load Subjects
+            </button>
+        </div>
+
+        {{-- Period Limits panel --}}
+        <hr>
+        <h6 class="mb-3">
+            <i class="ri-speed-up-line me-2"></i>Period Limits
+            <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+               data-bs-toggle="popover"
+               data-bs-title="Period Limits"
+               data-bs-content="Hard ceilings on how many periods the generator will place. Applied on top of the per-subject periods/week values in the panel above."></i>
+        </h6>
+
+        <div id="wizPeriodLimitsBody"></div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="wizCapModeSoft">
+                <label class="form-check-label" for="wizCapModeSoft">
+                    Soft penalty mode
+                    <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+                       data-bs-toggle="popover"
+                       data-bs-title="Soft penalty mode"
+                       data-bs-content="Off (default): a candidate slot is skipped if placing it would exceed any cap — caps are honoured literally. On: the slot is scored down heavily but still usable — the generator prefers to stay under caps but will exceed them rather than leave a lesson unplaced."></i>
+                </label>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addWizardPeriodLimit()">
+                <i class="ri-add-line me-1"></i>Add Limit
+            </button>
+        </div>
+
+        {{-- Advanced rules panel --}}
+        <hr>
+        <details id="wizAdvancedPanel" class="wizard-advanced">
+            <summary class="h6 mb-0" style="cursor:pointer;">
+                <i class="ri-settings-5-line me-2"></i>Advanced Generation Rules
+                <span class="text-muted fw-normal" style="font-size:12px">(optional)</span>
+            </summary>
+
+            <div class="mt-3">
+
+                {{-- Morning cutoff --}}
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Morning cutoff
+                        <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+                           data-bs-toggle="popover"
+                           data-bs-title="Morning cutoff"
+                           data-bs-content="Only used when a subject's priority says to affect slot quality. High-priority subjects get a scoring bonus for morning slots; low-priority subjects get a small bonus for afternoon."></i>
+                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="wizMorningCutoffMode" id="wizMorningCutoffHalf" value="half" checked>
+                        <label class="form-check-label" for="wizMorningCutoffHalf">
+                            Half of the day's lesson periods
+                            <small class="text-muted d-block ms-4">
+                                With 8 lessons/day, the first 4 count as "morning".
+                            </small>
+                        </label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="wizMorningCutoffMode" id="wizMorningCutoffFixed" value="fixed">
+                        <label class="form-check-label" for="wizMorningCutoffFixed">
+                            Fixed number of lesson periods
+                        </label>
+                    </div>
+                    <div class="ms-4 mt-1" style="max-width:160px">
+                        <input type="number" class="form-control form-control-sm" id="wizMorningCutoffFixedCount"
+                               min="1" max="12" value="3" disabled>
+                    </div>
+                </div>
+
+                {{-- Protected semantics --}}
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Protected subject handling
+                        <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+                           data-bs-toggle="popover"
+                           data-bs-title="Protected subject handling"
+                           data-bs-content="Applies only to subjects with Is Protected switched on in the panel above."></i>
+                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="wizProtectedMode" id="wizProtectedDrop" value="drop_unprotected" checked>
+                        <label class="form-check-label" for="wizProtectedDrop">
+                            Prefer to drop unprotected subjects
+                            <small class="text-muted d-block ms-4">
+                                If a protected subject can't fit, the generator keeps it
+                                and lets whichever unprotected subject was left over go
+                                unplaced instead.
+                            </small>
+                        </label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="wizProtectedMode" id="wizProtectedEvict" value="evict">
+                        <label class="form-check-label" for="wizProtectedEvict">
+                            Evict lower-priority slots to make room
+                            <small class="text-muted d-block ms-4">
+                                Actively removes a lower-priority lesson from a slot to
+                                place the protected subject. The evicted subject may
+                                itself become partially unplaced.
+                            </small>
+                        </label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="wizProtectedMode" id="wizProtectedBoth" value="both">
+                        <label class="form-check-label" for="wizProtectedBoth">
+                            Try eviction first, then fall back to dropping
+                            <small class="text-muted d-block ms-4">
+                                Best of both: attempt eviction; if that still leaves the
+                                protected subject unplaced, keep it and drop an
+                                unprotected one instead.
+                            </small>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- Strict room mapping behaviour --}}
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Strict room mapping behaviour
+                        <i class="ri-question-line text-muted ms-1" style="cursor:pointer;font-size:14px"
+                           data-bs-toggle="popover"
+                           data-bs-title="Strict room mapping behaviour"
+                           data-bs-content="Applies only when Strict room mapping is switched on (Day Structure panel above)."></i>
+                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="wizStrictRoomMode" id="wizStrictTeacherOnly" value="teacher_only" checked>
+                        <label class="form-check-label" for="wizStrictTeacherOnly">
+                            Place teacher-only and flag
+                            <small class="text-muted d-block ms-4">
+                                The lesson is still scheduled — it just has no room.
+                                Flagged in the generation summary as a warning.
+                            </small>
+                        </label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="wizStrictRoomMode" id="wizStrictRefuse" value="refuse">
+                        <label class="form-check-label" for="wizStrictRefuse">
+                            Refuse to place the subject
+                            <small class="text-muted d-block ms-4">
+                                The subject doesn't get scheduled at all; it appears
+                                under "unplaced subjects" in the summary.
+                            </small>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </details>
+
         </div><!-- /wizFormContent -->
 
+        {{-- Generation progress pane --}}
         <div id="wizGenerationProgress" style="display:none">
           <h6 class="mb-3"><i class="ri-magic-line me-2"></i>Generating Timetables…</h6>
           <div id="wizProgressList" style="max-height:320px;overflow-y:auto"></div>
         </div>
+
+        {{-- Preview pane --}}
+        <div id="wizPreviewPane" style="display:none">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h6 class="mb-0">
+                    <i class="ri-eye-line me-2"></i>Preview — not saved
+                    <span class="badge bg-info-subtle text-info ms-2" id="wizPreviewClass"></span>
+                </h6>
+                <div class="small text-muted">
+                    This is a scratch run. Nothing has been committed yet.
+                </div>
+            </div>
+
+            <div id="wizPreviewSummary" class="mb-3"></div>
+
+            <div class="tt-card border">
+                <div class="tt-grid-wrapper" id="wizPreviewGridContainer">
+                    <div class="text-center py-5 text-muted">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-3">Running preview…</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button class="btn btn-outline-secondary" onclick="exitPreviewMode()">
+                    <i class="ri-arrow-go-back-line me-1"></i>Back to Wizard
+                </button>
+                <button class="btn btn-primary" onclick="acceptPreviewAndApply()">
+                    <i class="ri-save-line me-1"></i>Accept &amp; Save for Real
+                </button>
+            </div>
+        </div>
+
       </div>
       <div class="modal-footer">
         <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-outline-info" onclick="previewGeneration()">
+            <i class="ri-eye-line me-1"></i>Preview
+        </button>
         <button class="btn btn-outline-primary" onclick="submitGenerationWizard(false)">
             <i class="ri-save-line me-1"></i>Apply Structure Only
         </button>
@@ -1223,6 +1542,8 @@ const ROUTES = {
     checkSlotConflict:          '{{ route("timetable.check-slot-conflict") }}',
     getTeacherAssignments:      '{{ route("timetable.teacher-assignments") }}',
     checkConflictsScope:        '{{ route("timetable.check-conflicts-scope") }}',
+    wizardData:                 '{{ route("timetable.wizard-data") }}',
+    previewGeneration:          '{{ route("timetable.preview-generation") }}',
     getSetting:                 '{{ route("timetable.get-setting", ["settingId" => ":id"]) }}',
     getGrid:                    '{{ route("timetable.get-grid", ["settingId" => ":id"]) }}',
     checkConflicts:             '{{ route("timetable.check-conflicts", ["settingId" => ":id"]) }}',
@@ -1640,7 +1961,7 @@ async function saveConstraints() {
     } catch (e) { hideLoader(); Swal.fire('Error', e.message, 'error'); }
 }
 
-/* ── Auto-generate ── */
+/* ── Auto-generate (single class) ── */
 async function generateTimetable() {
     const result = await Swal.fire({
         title: 'Auto-Generate Timetable?',
@@ -1678,10 +1999,16 @@ async function generateTimetable() {
             const unplaced = data.stats?.unplaced_subjects?.length
                 ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> Some subjects could not be fully placed.</p>`
                 : '';
-            const needsAttention = !!(shortfall || unplaced);
+            const noRoom = data.stats?.no_room_placement_count
+                ? `<p class="text-warning mt-2" style="font-size:12px"><i class="ri-alert-line"></i> ${data.stats.no_room_placement_count} lesson(s) placed without a room.</p>`
+                : '';
+            const refused = data.stats?.room_refused_count
+                ? `<p class="text-danger mt-2" style="font-size:12px"><i class="ri-close-circle-line"></i> ${data.stats.room_refused_count} candidate placement(s) skipped — no mapped room and strict mode is on refuse.</p>`
+                : '';
+            const needsAttention = !!(shortfall || unplaced || noRoom || refused);
             Swal.fire({
                 icon: 'success', title: 'Generated!',
-                html: `Timetable built successfully.${shortfall}${unplaced}`,
+                html: `Timetable built successfully.${shortfall}${unplaced}${noRoom}${refused}`,
                 timer: needsAttention ? undefined : 1800,
                 showConfirmButton: needsAttention,
             });
@@ -1729,33 +2056,51 @@ async function loadTimetableGridAnimated() {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load grid: ${escapeHtml(e.message)}</div>`;
     }
 }
+
+/**
+ * Parameterised grid renderer. Callers with no explicit options fall back
+ * to the module-level globals (currentPeriods / currentGrid / currentDays),
+ * which is what the editor-tab loader relies on. The preview pane passes
+ * explicit options targeting a different container.
+ */
 function renderGrid(options = {}) {
     const animate   = !!options.animate;
-    const container = document.getElementById('timetableGridContainer');
-    if (!currentPeriods.length) {
+    const container = document.getElementById(options.containerId || 'timetableGridContainer');
+    const periods   = options.periods ?? currentPeriods;
+    const grid      = options.grid    ?? currentGrid;
+    const days      = options.days    ?? currentDays;
+
+    if (!container) return;
+    if (!periods.length) {
         container.innerHTML = '<div class="alert alert-warning m-3">No periods configured. Save settings first.</div>';
         return;
     }
     const dayThClasses = {Monday:'monday-th',Tuesday:'tuesday-th',Wednesday:'wednesday-th',Thursday:'thursday-th',Friday:'friday-th'};
+
     let html = `<table class="tt-grid"><thead><tr>
         <th class="period-th">Period</th>
-        ${currentDays.map(d => `<th class="${dayThClasses[d]||''}">${escapeHtml(d)}</th>`).join('')}
+        ${days.map(d => `<th class="${dayThClasses[d]||''}">${escapeHtml(d)}</th>`).join('')}
     </tr></thead><tbody>`;
+
     let cellSeq = 0;
     const buildingCells = [];
-    currentPeriods.forEach(period => {
+
+    periods.forEach(period => {
         const isBreak   = period.is_break || ['short_break','long_break'].includes(period.type);
         const startTime = (period.start_time || '').slice(0, 5);
         const endTime   = (period.end_time   || '').slice(0, 5);
+
         html += `<tr><td class="period-td">
             <div class="pname">${escapeHtml(period.name)}</div>
             <div class="ptime">${startTime} – ${endTime}</div>
         </td>`;
-        currentDays.forEach(day => {
-            const slot   = currentGrid[period.id]?.[day] || null;
+
+        days.forEach(day => {
+            const slot   = grid[period.id]?.[day] || null;
             const isFree = !slot || slot.is_free || (!slot.subject_id && !slot.teacher_id);
             cellSeq++;
             const cellId = `c${cellSeq}`;
+
             if (isBreak) {
                 html += `<td><div class="tt-cell is-break"><span class="cell-break">☕ Break</span></div></td>`;
             } else if (isFree) {
@@ -1777,8 +2122,10 @@ function renderGrid(options = {}) {
                 const teacherHtml = slot.teacher
                     ? `<span class="cell-teacher">${escapeHtml(slot.teacher.split(' ')[0])}</span>`
                     : '';
+
                 const animClass = animate ? ' cell-building' : '';
                 if (animate) buildingCells.push(cellId);
+
                 html += `<td onclick="openSlotModal(${period.id},'${day}')" ${borderStyle}>
                     <div class="tt-cell has-subject${slot.is_double?' is-double':''}${animClass}" data-cell-id="${cellId}">
                         ${avatarHtml}
@@ -1791,9 +2138,18 @@ function renderGrid(options = {}) {
     });
     html += '</tbody></table>';
     container.innerHTML = html;
-    applyStaffPictureVisibility();
-    if (animate && buildingCells.length) playGridBuildAnimation(container, buildingCells);
+
+    if (options.containerId === undefined) {
+        // Only apply the staff-picture toggling to the live editor grid,
+        // not to preview panes.
+        applyStaffPictureVisibility();
+    }
+
+    if (animate && buildingCells.length) {
+        playGridBuildAnimation(container, buildingCells);
+    }
 }
+
 function playGridBuildAnimation(container, cellIds) {
     const banner = document.createElement('div');
     banner.className = 'tt-generating-banner';
@@ -1803,9 +2159,11 @@ function playGridBuildAnimation(container, cellIds) {
         <span id="ttGeneratingText">Placing lessons… 0 / ${cellIds.length}</span>
         <span class="tt-generating-skip" onclick="skipGridBuildAnimation()">Skip animation</span>`;
     container.prepend(banner);
+
     let i = 0;
     const total     = cellIds.length;
     const stepDelay = total > 60 ? 12 : total > 30 ? 20 : 35;
+
     window._ttBuildTimer = setInterval(() => {
         if (i >= total) { clearInterval(window._ttBuildTimer); finishGridBuildAnimation(); return; }
         const el = container.querySelector(`[data-cell-id="${cellIds[i]}"]`);
@@ -2372,8 +2730,10 @@ function openGenerationWizardModal() {
     document.getElementById('wizHalfDaysBody').innerHTML = '';
     const formEl     = document.getElementById('wizFormContent');
     const progressEl = document.getElementById('wizGenerationProgress');
+    const previewEl  = document.getElementById('wizPreviewPane');
     if (formEl)     formEl.style.display = '';
     if (progressEl) progressEl.style.display = 'none';
+    if (previewEl)  previewEl.style.display = 'none';
     new bootstrap.Modal(document.getElementById('generationWizardModal')).show();
 }
 function toggleWizardClassPicker() {
@@ -2460,6 +2820,478 @@ function animateWizardResults(results) {
         }, stepDelay);
     });
 }
+
+/* ── Wizard: Subjects & Priority panel ── */
+let wizardSubjectsState = {};
+
+async function loadWizardSubjects() {
+    const sessionId = document.getElementById('wizSessionId').value;
+    const termId    = document.getElementById('wizTermId').value;
+    if (!sessionId) return Swal.fire('Required', 'Please select a session first.', 'warning');
+
+    const scope = document.getElementById('wizScope').value;
+    const classIds = scope === 'selected'
+        ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
+        : null;
+
+    if (scope === 'selected' && (!classIds || !classIds.length)) {
+        return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
+    }
+
+    const effectiveClassIds = classIds ?? [...document.getElementById('wizClassIds').options]
+        .map(o => parseInt(o.value));
+
+    if (!effectiveClassIds.length) {
+        return Swal.fire('No Classes', 'No classes available in this scope.', 'warning');
+    }
+
+    const panel = document.getElementById('wizSubjectsPanel');
+    panel.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading subjects…</div>';
+
+    try {
+        const params = new URLSearchParams();
+        params.set('session_id', sessionId);
+        if (termId) params.set('term_id', termId);
+        effectiveClassIds.forEach(id => params.append('schoolclass_ids[]', id));
+
+        const res = await fetch(`${ROUTES.wizardData}?${params.toString()}`, {
+            headers: { 'Accept': 'application/json' },
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Failed to load subjects.');
+
+        wizardSubjectsState = {};
+        data.classes.forEach(c => {
+            wizardSubjectsState[c.schoolclass_id] = {
+                setting_id: c.setting_id,
+                setting_exists: c.setting_exists,
+                subjects: c.subjects,
+            };
+        });
+
+        renderWizardSubjectsPanel(data.classes, data.priority_levels);
+    } catch (e) {
+        panel.innerHTML = `<div class="alert alert-danger m-0">Failed: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function renderWizardSubjectsPanel(classes, levels) {
+    const panel = document.getElementById('wizSubjectsPanel');
+    if (!classes.length) {
+        panel.innerHTML = '<div class="text-center py-4 text-muted"><i class="ri-information-line ri-2x d-block mb-2 opacity-30"></i>No subjects assigned to any class in this scope.</div>';
+        return;
+    }
+
+    let html = '';
+    classes.forEach(cls => {
+        const classId = cls.schoolclass_id;
+        const compulsoryCount = cls.subjects.filter(s => s.is_compulsory).length;
+        html += `<div class="wiz-class-card">
+            <div class="wiz-class-hdr" onclick="toggleWizClassCard(${classId})">
+                <h6><i class="ri-arrow-down-s-line me-1 wiz-caret" id="wizCaret_${classId}"></i>${escapeHtml(cls.class_name)}</h6>
+                <div>
+                    <span class="badge bg-light text-dark">${cls.subjects.length} subjects</span>
+                    ${compulsoryCount ? `<span class="badge bg-warning text-dark ms-1">${compulsoryCount} compulsory</span>` : ''}
+                </div>
+            </div>
+            <div class="wiz-class-body" id="wizClassBody_${classId}" style="display:none">
+                <div class="text-muted mb-2" style="font-size:11.5px;">
+                    <i class="ri-information-line me-1"></i>
+                    Compulsory subjects are highlighted. Priority rows only apply if <em>Use Priority</em> is on.
+                </div>`;
+
+        cls.subjects.forEach(s => {
+            const sid = s.subject_id;
+            const roomHint = s.mapped_rooms_subject.length
+                ? `<div class="wiz-mapped-rooms"><i class="ri-door-line me-1"></i>${s.mapped_rooms_subject.map(r => escapeHtml(r.name)).join(', ')}</div>`
+                : (s.mapped_rooms_generic.length
+                    ? `<div class="wiz-mapped-rooms"><i class="ri-door-line me-1"></i>${s.mapped_rooms_generic.map(r => escapeHtml(r.name)).join(', ')} <em>(any subject)</em></div>`
+                    : '<div class="wiz-mapped-rooms none"><i class="ri-alert-line me-1"></i>No mapped rooms</div>');
+
+            const priorityOptions = Object.entries(levels).map(([level, label]) => {
+                const selected = s.use_priority && s.priority_level == level;
+                return `<option value="${level}" ${selected ? 'selected' : ''}>Level ${level} — ${label}</option>`;
+            }).join('');
+
+            html += `<div class="wiz-subj-row ${s.is_compulsory ? 'is-compulsory' : ''}" data-class-id="${classId}" data-subject-id="${sid}">
+                <div>${s.is_compulsory ? '<span class="wiz-compulsory-badge">COMP</span>' : ''}</div>
+                <div>
+                    <div class="wiz-subj-name">${escapeHtml(s.subject_name)}</div>
+                    <div class="wiz-subj-teacher">${escapeHtml(s.teacher_name)}</div>
+                    ${roomHint}
+                </div>
+                <div>
+                    <input type="number" class="form-control form-control-sm wiz-subj-num"
+                           min="1" max="20"
+                           id="wizPpw_${classId}_${sid}"
+                           value="${s.periods_per_week}">
+                    <small class="text-muted">periods/week</small>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox"
+                           id="wizDouble_${classId}_${sid}"
+                           ${s.allow_double_period ? 'checked' : ''}
+                           onchange="toggleWizDouble(${classId}, ${sid}, this.checked)">
+                    <label class="form-check-label" for="wizDouble_${classId}_${sid}" style="font-size:11px;">Doubles</label>
+                </div>
+                <div>
+                    <input type="number" class="form-control form-control-sm wiz-subj-num"
+                           min="0" max="5"
+                           id="wizMaxDouble_${classId}_${sid}"
+                           value="${s.max_double_periods_per_week}"
+                           ${s.allow_double_period ? '' : 'disabled'}>
+                    <small class="text-muted">max</small>
+                </div>
+                <div>
+                    <select class="form-select form-select-sm wiz-priority-select"
+                            id="wizPrio_${classId}_${sid}"
+                            onchange="onWizPriorityChange(${classId}, ${sid}, this.value)">
+                        <option value="">Use Priority: Off</option>
+                        ${priorityOptions}
+                    </select>
+                </div>
+                <div class="wiz-priority-flags" id="wizFlags_${classId}_${sid}" style="display:${s.use_priority ? 'flex' : 'none'}">
+                    <label title="Reorders placement — higher-priority subjects get placed before lower ones.">
+                        <input type="checkbox" class="form-check-input"
+                               id="wizOrder_${classId}_${sid}" ${s.affects_ordering ? 'checked' : ''}> Order
+                    </label>
+                    <label title="Prefers morning slots for high-priority subjects.">
+                        <input type="checkbox" class="form-check-input"
+                               id="wizQuality_${classId}_${sid}" ${s.affects_slot_quality ? 'checked' : ''}> Quality
+                    </label>
+                    <label title="Won't be dropped if the timetable is tight.">
+                        <input type="checkbox" class="form-check-input"
+                               id="wizProtect_${classId}_${sid}" ${s.is_protected ? 'checked' : ''}> Protect
+                    </label>
+                </div>
+            </div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
+    panel.innerHTML = html;
+}
+
+function toggleWizClassCard(classId) {
+    const body  = document.getElementById('wizClassBody_' + classId);
+    const caret = document.getElementById('wizCaret_' + classId);
+    if (!body) return;
+    const open = body.style.display === 'none';
+    body.style.display = open ? '' : 'none';
+    caret.className = `ri-${open ? 'arrow-down-s' : 'arrow-right-s'}-line me-1 wiz-caret`;
+}
+
+function toggleWizDouble(classId, subjectId, checked) {
+    const el = document.getElementById(`wizMaxDouble_${classId}_${subjectId}`);
+    if (el) el.disabled = !checked;
+}
+
+function onWizPriorityChange(classId, subjectId, value) {
+    const flags = document.getElementById(`wizFlags_${classId}_${subjectId}`);
+    if (flags) flags.style.display = value ? 'flex' : 'none';
+}
+
+/* ── Wizard: Period Limits ── */
+let wizLimitRowSeq = 0;
+
+function addWizardPeriodLimit() {
+    wizLimitRowSeq++;
+    const rowId = `wizLimit_${wizLimitRowSeq}`;
+    const wrap  = document.getElementById('wizPeriodLimitsBody');
+    const row   = document.createElement('div');
+    row.className = 'wiz-limit-row';
+    row.id = rowId;
+    row.innerHTML = `
+        <select class="form-select form-select-sm" onchange="updateWizLimitRow('${rowId}')" data-field="scope">
+            <option value="teacher_total">Teacher — weekly total</option>
+            <option value="teacher_class">Teacher — weekly for one class</option>
+            <option value="teacher_day">Teacher — one day</option>
+            <option value="class_total">Class — weekly total</option>
+        </select>
+        <div class="d-flex gap-2" data-field="targetWrap"></div>
+        <div data-field="dayWrap" style="display:none">
+            <select class="form-select form-select-sm" data-field="day">
+                <option value="">— Day —</option>
+                <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+                <option>Thursday</option><option>Friday</option>
+            </select>
+        </div>
+        <input type="number" class="form-control form-control-sm" min="1" max="60"
+               placeholder="Max" data-field="max">
+        <button type="button" class="btn btn-sm btn-link text-danger p-0"
+                onclick="document.getElementById('${rowId}').remove()">
+            <i class="ri-delete-bin-line"></i>
+        </button>`;
+    wrap.appendChild(row);
+    updateWizLimitRow(rowId);
+}
+
+function updateWizLimitRow(rowId) {
+    const row   = document.getElementById(rowId);
+    if (!row) return;
+    const scope = row.querySelector('[data-field="scope"]').value;
+    const dayWrap = row.querySelector('[data-field="dayWrap"]');
+    const targetWrap = row.querySelector('[data-field="targetWrap"]');
+    targetWrap.innerHTML = '';
+    dayWrap.style.display = (scope === 'teacher_day') ? '' : 'none';
+
+    if (scope === 'teacher_total' || scope === 'teacher_day') {
+        const sel = document.createElement('select');
+        sel.className = 'form-select form-select-sm';
+        sel.setAttribute('data-field', 'teacher');
+        sel.innerHTML = '<option value="">— Teacher —</option>' + wizardTeacherOptions();
+        targetWrap.appendChild(sel);
+    } else if (scope === 'teacher_class') {
+        const t = document.createElement('select');
+        t.className = 'form-select form-select-sm';
+        t.setAttribute('data-field', 'teacher');
+        t.innerHTML = '<option value="">— Teacher —</option>' + wizardTeacherOptions();
+        targetWrap.appendChild(t);
+
+        const c = document.createElement('select');
+        c.className = 'form-select form-select-sm';
+        c.setAttribute('data-field', 'schoolclass');
+        c.innerHTML = '<option value="">— Class —</option>' + wizardClassOptions();
+        targetWrap.appendChild(c);
+    } else if (scope === 'class_total') {
+        const c = document.createElement('select');
+        c.className = 'form-select form-select-sm';
+        c.setAttribute('data-field', 'schoolclass');
+        c.innerHTML = '<option value="">— Class —</option>' + wizardClassOptions();
+        targetWrap.appendChild(c);
+    }
+}
+
+function wizardTeacherOptions() {
+    const seen = new Map();
+    Object.values(wizardSubjectsState).forEach(c => {
+        (c.subjects || []).forEach(s => {
+            if (s.teacher_id && !seen.has(s.teacher_id)) {
+                seen.set(s.teacher_id, s.teacher_name || `Teacher #${s.teacher_id}`);
+            }
+        });
+    });
+    return [...seen.entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .map(([id, name]) => `<option value="${id}">${escapeHtml(name)}</option>`)
+        .join('');
+}
+
+function wizardClassOptions() {
+    return [...document.getElementById('wizClassIds').options]
+        .map(o => `<option value="${o.value}">${escapeHtml(o.textContent.trim())}</option>`)
+        .join('');
+}
+
+function collectWizardPeriodLimits() {
+    const rows = document.querySelectorAll('#wizPeriodLimitsBody .wiz-limit-row');
+    const out = [];
+    rows.forEach(row => {
+        const scope   = row.querySelector('[data-field="scope"]').value;
+        const teacher = row.querySelector('[data-field="teacher"]')?.value ?? null;
+        const cls     = row.querySelector('[data-field="schoolclass"]')?.value ?? null;
+        const day     = row.querySelector('[data-field="day"]')?.value ?? null;
+        const max     = parseInt(row.querySelector('[data-field="max"]').value);
+
+        if (!max || max < 1) return;
+        if (scope === 'teacher_total' && !teacher) return;
+        if (scope === 'teacher_class' && (!teacher || !cls)) return;
+        if (scope === 'teacher_day' && (!teacher || !day)) return;
+        if (scope === 'class_total' && !cls) return;
+
+        out.push({
+            scope,
+            teacher_id:     teacher ? parseInt(teacher) : null,
+            schoolclass_id: cls     ? parseInt(cls)     : null,
+            day:            day || null,
+            max_periods:    max,
+        });
+    });
+    return out;
+}
+
+/* ── Wizard: Advanced rules collector ── */
+function collectWizardAdvancedRules() {
+    const morningMode = document.querySelector('input[name="wizMorningCutoffMode"]:checked')?.value || 'half';
+    const morningFixed = parseInt(document.getElementById('wizMorningCutoffFixedCount').value) || 3;
+    return {
+        cap_mode:            document.getElementById('wizCapModeSoft').checked ? 'soft' : 'hard',
+        morning_cutoff:      morningMode,
+        morning_cutoff_n:    morningMode === 'fixed' ? morningFixed : null,
+        protected_mode:      document.querySelector('input[name="wizProtectedMode"]:checked')?.value || 'drop_unprotected',
+        strict_room_mode:    document.querySelector('input[name="wizStrictRoomMode"]:checked')?.value || 'teacher_only',
+        strict_room_mapping: document.getElementById('wizStrictRoomMapping').checked,
+        priorities_active:   document.getElementById('wizPrioritiesActive').checked,
+    };
+}
+
+/* ── Wizard: Priority payload collector ── */
+function collectWizardPriorityPayload() {
+    return Object.entries(wizardSubjectsState).flatMap(([classId, info]) =>
+        (info.subjects || []).map(s => {
+            const prioEl  = document.getElementById(`wizPrio_${classId}_${s.subject_id}`);
+            const usePrio = prioEl && prioEl.value !== '';
+            return {
+                schoolclass_id:              parseInt(classId),
+                subject_id:                  s.subject_id,
+                periods_per_week:            parseInt(document.getElementById(`wizPpw_${classId}_${s.subject_id}`)?.value) || 2,
+                allow_double_period:         document.getElementById(`wizDouble_${classId}_${s.subject_id}`)?.checked || false,
+                max_double_periods_per_week: parseInt(document.getElementById(`wizMaxDouble_${classId}_${s.subject_id}`)?.value) || 0,
+                use_priority:                usePrio,
+                priority_level:              usePrio ? parseInt(prioEl.value) : 3,
+                affects_ordering:            usePrio && document.getElementById(`wizOrder_${classId}_${s.subject_id}`)?.checked,
+                affects_slot_quality:        usePrio && document.getElementById(`wizQuality_${classId}_${s.subject_id}`)?.checked,
+                is_protected:                usePrio && document.getElementById(`wizProtect_${classId}_${s.subject_id}`)?.checked,
+            };
+        })
+    );
+}
+
+/* ── Wizard: Preview ── */
+let previewState = null;
+
+async function previewGeneration() {
+    const sessionId = document.getElementById('wizSessionId').value;
+    if (!sessionId) return Swal.fire('Required', 'Please select a session first.', 'warning');
+
+    const scope    = document.getElementById('wizScope').value;
+    const classIds = scope === 'selected'
+        ? [...document.getElementById('wizClassIds').selectedOptions].map(o => parseInt(o.value))
+        : null;
+
+    if (scope === 'selected' && (!classIds || !classIds.length)) {
+        return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
+    }
+
+    const effectiveClassIds = classIds ?? [...document.getElementById('wizClassIds').options]
+        .map(o => parseInt(o.value));
+    if (!effectiveClassIds.length) {
+        return Swal.fire('No Classes', 'No classes available in this scope.', 'warning');
+    }
+    const previewClassId = effectiveClassIds[0];
+
+    // Ensure a setting exists for the preview class.
+    const settingRes = await fetch(ROUTES.setup, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            schoolclass_id: previewClassId,
+            session_id:     parseInt(sessionId),
+            term_id:        document.getElementById('wizTermId').value || null,
+        }),
+    });
+    const settingData = await settingRes.json();
+    if (!settingData.success) {
+        return Swal.fire('Error', settingData.message || 'Failed to prepare preview.', 'error');
+    }
+
+    // Show preview pane.
+    document.getElementById('wizFormContent').style.display = 'none';
+    document.getElementById('wizGenerationProgress').style.display = 'none';
+    document.getElementById('wizPreviewPane').style.display = '';
+
+    const classOpt = document.querySelector(`#wizClassIds option[value="${previewClassId}"]`);
+    document.getElementById('wizPreviewClass').textContent = classOpt?.textContent.trim() ?? `Class #${previewClassId}`;
+
+    document.getElementById('wizPreviewGridContainer').innerHTML =
+        '<div class="text-center py-5 text-muted"><div class="spinner-border text-primary"></div><p class="mt-3">Running preview…</p></div>';
+    document.getElementById('wizPreviewSummary').innerHTML = '';
+
+    const subjectPriorityPayload = collectWizardPriorityPayload();
+    const periodLimitsPayload    = collectWizardPeriodLimits();
+    const advancedRules          = collectWizardAdvancedRules();
+
+    try {
+        const res = await fetch(ROUTES.previewGeneration, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                setting_id:                settingData.setting_id,
+                include_rooms:             document.getElementById('wizIncludeRooms').checked,
+                subject_priority_payload:  subjectPriorityPayload,
+                period_limits_payload:     periodLimitsPayload,
+                advanced_rules:            advancedRules,
+            }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Preview failed.');
+
+        previewState = {
+            settingId:   settingData.setting_id,
+            classId:     previewClassId,
+            gridPayload: data.grid,
+            stats:       data.stats,
+        };
+
+        renderGrid({
+            containerId: 'wizPreviewGridContainer',
+            periods:     data.grid.periods,
+            grid:        data.grid.grid,
+            days:        data.grid.days,
+            animate:     false,
+        });
+
+        renderPreviewSummary(data.stats, data.grid);
+    } catch (e) {
+        document.getElementById('wizPreviewGridContainer').innerHTML =
+            `<div class="alert alert-danger m-3">Preview failed: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function renderPreviewSummary(stats, gridPayload) {
+    const wrap = document.getElementById('wizPreviewSummary');
+    const placed = stats.placed ?? 0;
+    const unplaced = stats.unplaced_subjects?.length ?? 0;
+    const shortfall = stats.room_shortfall_count ?? 0;
+    const noRoom = stats.no_room_placement_count ?? 0;
+    const refused = stats.room_refused_count ?? 0;
+
+    let html = `<div class="row g-2">
+        <div class="col-md-3"><div class="mini-strip"><div class="v">${placed}</div><div class="l">Lessons placed</div></div></div>
+        <div class="col-md-3"><div class="mini-strip ${unplaced ? 'warn' : 'ok'}"><div class="v">${unplaced}</div><div class="l">Subjects short</div></div></div>
+        <div class="col-md-3"><div class="mini-strip ${shortfall ? 'warn' : 'ok'}"><div class="v">${shortfall}</div><div class="l">Room shortfalls</div></div></div>
+        <div class="col-md-3"><div class="mini-strip ${refused ? 'bad' : 'ok'}"><div class="v">${refused}</div><div class="l">Refused (strict)</div></div></div>
+    </div>`;
+
+    if (unplaced) {
+        html += `<div class="alert alert-warning mt-3 mb-0" style="font-size:12.5px">
+            <strong>Subjects that couldn't be fully placed:</strong>
+            <ul class="mb-0 mt-1">
+                ${stats.unplaced_subjects.map(u => `<li>${escapeHtml(u.subject)} — ${u.placed}/${u.needed}</li>`).join('')}
+            </ul>
+        </div>`;
+    }
+    if (noRoom) {
+        html += `<div class="alert alert-info mt-2 mb-0" style="font-size:12.5px">
+            <i class="ri-door-line me-1"></i>${noRoom} lesson(s) placed without a room.
+        </div>`;
+    }
+
+    wrap.innerHTML = html;
+}
+
+function exitPreviewMode() {
+    previewState = null;
+    document.getElementById('wizPreviewPane').style.display = 'none';
+    document.getElementById('wizFormContent').style.display = '';
+}
+
+async function acceptPreviewAndApply() {
+    if (!previewState) return;
+    exitPreviewMode();
+    await submitGenerationWizard(true);
+}
+
+/* ── Wizard: submit ── */
 async function submitGenerationWizard(alsoGenerate) {
     const sessionId = document.getElementById('wizSessionId').value;
     if (!sessionId) return Swal.fire('Required', 'Please select a session.', 'warning');
@@ -2473,6 +3305,7 @@ async function submitGenerationWizard(alsoGenerate) {
         return Swal.fire('Required', 'Select at least one class, or switch scope to "All Classes".', 'warning');
     }
     const includeRooms = document.getElementById('wizIncludeRooms')?.checked ?? true;
+
     const payload = {
         session_id:                  parseInt(sessionId),
         term_id:                     document.getElementById('wizTermId').value || null,
@@ -2494,7 +3327,12 @@ async function submitGenerationWizard(alsoGenerate) {
         half_days:                   getWizardHalfDays(),
         deprioritize_break_adjacent: document.getElementById('wizDeprioritizeBreakAdjacent').checked,
         include_rooms:               includeRooms,
+
+        subject_priority_payload:    collectWizardPriorityPayload(),
+        period_limits_payload:       collectWizardPeriodLimits(),
+        advanced_rules:              collectWizardAdvancedRules(),
     };
+
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.applyGenerationTemplate, 'POST', payload);
@@ -2603,5 +3441,31 @@ async function handleVersionConflict(data) {
     });
     if (result.isConfirmed && currentSettingId) await loadSetting(currentSettingId);
 }
+
+/* ── DOM init: popovers + advanced panel persistence + cutoff toggle ── */
+document.addEventListener('DOMContentLoaded', function() {
+    // Bootstrap popovers for every help icon.
+    document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => new bootstrap.Popover(el));
+
+    // Advanced panel remembers open/closed state across wizard opens.
+    const details = document.getElementById('wizAdvancedPanel');
+    if (details) {
+        const wasOpen = localStorage.getItem('wiz_advanced_open') === '1';
+        details.open = wasOpen;
+        details.addEventListener('toggle', () => {
+            localStorage.setItem('wiz_advanced_open', details.open ? '1' : '0');
+        });
+    }
+
+    // Enable/disable the fixed morning-cutoff input based on radio state.
+    document.querySelectorAll('input[name="wizMorningCutoffMode"]').forEach(r => {
+        r.addEventListener('change', () => {
+            const fixedEl = document.getElementById('wizMorningCutoffFixedCount');
+            if (fixedEl) {
+                fixedEl.disabled = document.querySelector('input[name="wizMorningCutoffMode"]:checked')?.value !== 'fixed';
+            }
+        });
+    });
+});
 </script>
 @endsection
