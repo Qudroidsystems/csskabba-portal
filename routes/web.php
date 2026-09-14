@@ -897,24 +897,28 @@ Route::group(['middleware' => ['auth']], function () {
     // SUBJECT / MOCK VETTING
     // ===================================================================
  
+    // Subject Vetting (Terminal)
     Route::get('subjectvetting/data',  [SubjectVettingController::class, 'data'])->name('subjectvetting.data');
     Route::get('subjectvetting/stats', [SubjectVettingController::class, 'stats'])->name('subjectvetting.stats');
     Route::post('subjectvetting/bulk-delete', [SubjectVettingController::class, 'bulkDelete'])->name('subjectvetting.bulkDelete');
 
-    // AJAX search endpoints
+    // AJAX search endpoints used by the terminal subject vetting page
     Route::get('api/subject-classes/search', [SubjectVettingController::class, 'searchSubjectClasses'])->name('api.subject-classes.search');
     Route::get('api/subject-classes/selected', [SubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.subject-classes.selected');
 
-    // Existing resource
-    Route::resource('subjectvetting', App\Http\Controllers\SubjectVettingController::class);
-    Route::get('/api/mock-subject-classes/search', [MockSubjectVettingController::class, 'searchSubjectClasses'])->name('api.mock-subject-classes.search');
-    Route::post('/api/mock-subject-classes/details', [MockSubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.mock-subject-classes.details');
-
     Route::resource('subjectvetting', SubjectVettingController::class);
+  
+    Route::get('mocksubjectvetting/data',  [MockSubjectVettingController::class, 'data'])->name('mocksubjectvetting.data');
+    Route::get('mocksubjectvetting/stats', [MockSubjectVettingController::class, 'stats'])->name('mocksubjectvetting.stats');
+    Route::post('mocksubjectvetting/bulk-delete', [MockSubjectVettingController::class, 'bulkDelete'])->name('mocksubjectvetting.bulkDelete');
+
+    // AJAX search endpoints for mock subject-classes
+    Route::get('api/mock-subject-classes/search', [MockSubjectVettingController::class, 'searchSubjectClasses'])->name('api.mock-subject-classes.search');
+    Route::get('api/mock-subject-classes/selected', [MockSubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.mock-subject-classes.selected');
+
+    // Existing resource
     Route::resource('mocksubjectvetting', MockSubjectVettingController::class);
 
-    Route::post('/subjectvetting/bulk-delete', [SubjectVettingController::class, 'bulkDelete'])->name('subjectvetting.bulkDelete');
-    Route::post('/mocksubjectvetting/bulk-delete', [MockSubjectVettingController::class, 'bulkDelete'])->name('mocksubjectvetting.bulkDelete');
 
     // My Subject Vettings
     Route::get('/mysubjectvettings', [MySubjectVettingsController::class, 'index'])->name('mysubjectvettings.index');
