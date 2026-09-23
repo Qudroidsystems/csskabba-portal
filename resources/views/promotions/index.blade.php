@@ -383,6 +383,7 @@
     .stat-flash, .badge-pop { animation: none !important; }
     .toast-notification, .modal-content { animation: none !important; }
 }
+.promotion-badge-advanced { background:#6366f1; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
 </style>
 
 <div class="main-content">
@@ -485,7 +486,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">Select Session</label>
                             <select class="form-select" id="idsession" name="sessionid">
                                 <option value="ALL">-- Select Session --</option>
@@ -494,7 +495,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">Select Term</label>
                             <select class="form-select" id="idterm" name="termid">
                                 <option value="3">Third Term (Promotional)</option>
@@ -502,6 +503,14 @@
                                     <option value="{{ $term->id }}">{{ $term->term }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Average Basis</label>
+                            <select class="form-select" id="average_basis" name="average_basis">
+                                <option value="total">Term Total</option>
+                                <option value="cum">Cumulative (Cum Avg)</option>
+                            </select>
+                            <small class="text-muted mt-1 d-block">Used for Overall Avg &amp; Position</small>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Search Student</label>
@@ -525,13 +534,20 @@
                         <i class="ri-group-line me-2"></i>Students
                         <span class="badge bg-primary ms-2" id="studentcount">{{ $allstudents->total() }}</span>
                     </h5>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 align-items-center">
                         <small class="text-muted"><i class="ri-keyboard-line me-1"></i><kbd>Ctrl+A</kbd> Select all</small>
+                        <button type="button" class="btn btn-dark btn-sm" onclick="openPrintListDialog()">
+                            <i class="ri-printer-line me-1"></i>Print Student List
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="bulk-action-bar" id="bulkActionBar">
                         <span class="bulk-count" id="bulkCount">0 selected</span>
+                        <button type="button" class="btn btn-info btn-sm text-white" id="advanceTermActionBtn" onclick="submitAdvanceTerm()"
+                                title="Move selected students to the next term, same class and session">
+                            <i class="ri-skip-forward-line me-1"></i>Advance to Next Term
+                        </button>
                         <button type="button" class="btn btn-primary btn-sm" id="bulkPromoteActionBtn">
                             <i class="ri-group-line me-1"></i>Bulk Promote Selected
                         </button>
@@ -551,6 +567,7 @@
                                     <th>Arm</th>
                                     <th>Session</th>
                                     <th>Overall Avg</th>
+                                    <th>Position</th>
                                     <th>Recommendation</th>
                                     <th>Promotion Status</th>
                                     <th width="90">Actions</th>
@@ -645,6 +662,32 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {{-- Student Info (bio + parent contact) --}}
+                    <div class="card border-0 shadow-sm mb-4" id="studentInfoCard" style="display:none;">
+                        <div class="card-header bg-white fw-semibold"><i class="ri-user-line me-1"></i>Student Info</div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-sm-3"><small class="text-muted d-block">Date of Birth</small><strong id="modalDob">—</strong></div>
+                                <div class="col-sm-3"><small class="text-muted d-block">Admission Date</small><strong id="modalAdmissionDate">—</strong></div>
+                                <div class="col-sm-3"><small class="text-muted d-block">Phone</small><strong id="modalPhone">—</strong></div>
+                                <div class="col-sm-3"><small class="text-muted d-block">Class Position</small><strong id="modalPosition">—</strong></div>
+                                <div class="col-sm-12"><small class="text-muted d-block">Home Address</small><strong id="modalAddress">—</strong></div>
+                            </div>
+                            <hr class="my-3">
+                            <div class="row g-3">
+                                <div class="col-sm-4"><small class="text-muted d-block">Father</small><strong id="modalFather">—</strong></div>
+                                <div class="col-sm-4"><small class="text-muted d-block">Mother</small><strong id="modalMother">—</strong></div>
+                                <div class="col-sm-4"><small class="text-muted d-block">Parent Email</small><strong id="modalParentEmail">—</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Class History --}}
+                    <div class="card border-0 shadow-sm mb-4" id="classHistoryCard" style="display:none;">
+                        <div class="card-header bg-white fw-semibold"><i class="ri-history-line me-1"></i>Class History</div>
+                        <div class="card-body" id="classHistoryContent"></div>
                     </div>
 
                     {{-- System Recommendation --}}
@@ -1017,10 +1060,8 @@ function updateStats() {
     const rows = document.querySelectorAll('#studentTableBody tr[data-student-id]');
     let total = 0, promoted = 0, trial = 0, repeat = 0;
     rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length < 8) return;
         total++;
-        const s = (cells[7].getAttribute('data-rec-status') || '').toLowerCase();
+        const s = (row.querySelector('[data-rec-status]')?.getAttribute('data-rec-status') || '').toLowerCase();
         if (s === 'promoted') promoted++;
         else if (s === 'trial') trial++;
         else if (s === 'repeated' || s === 'repeat') repeat++;
@@ -1060,7 +1101,7 @@ function filterData() {
 
     if (cls === 'ALL' || sess === 'ALL') {
         document.getElementById('studentTableBody').innerHTML =
-            '<tr><td colspan="10" class="text-center py-4 text-muted">Select class and session to view students.</td></tr>';
+            '<tr><td colspan="11" class="text-center py-4 text-muted">Select class and session to view students.</td></tr>';
         document.getElementById('pagination-container').innerHTML = '';
         document.getElementById('studentcount').innerText = '0';
         updateStats();
@@ -1068,11 +1109,11 @@ function filterData() {
     }
 
     const tb = document.getElementById('studentTableBody');
-    tb.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height:300px;"></div></td></tr>';
+    tb.innerHTML = '<tr class="skeleton-row"><td colspan="11"><div style="height:300px;"></div></td></tr>';
     showLoading('Loading students...');
 
     axios.get('{{ route("promotions.index") }}', {
-        params: { search: srch, schoolclassid: cls, sessionid: sess, termid: term },
+        params: { search: srch, schoolclassid: cls, sessionid: sess, termid: term, average_basis: getAverageBasis() },
         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'X-Requested-With': 'XMLHttpRequest' }
     }).then(res => {
         hideLoading();
@@ -1084,7 +1125,7 @@ function filterData() {
         showToast(`${res.data.studentCount || 0} students loaded`, 'success');
     }).catch(err => {
         hideLoading();
-        tb.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">Error loading data. Please try again.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="11" class="text-center text-danger py-4">Error loading data. Please try again.</td></tr>';
         showToast('Failed to fetch student data', 'danger');
     });
 }
@@ -1097,6 +1138,7 @@ function setupPaginationLinks() {
             url.searchParams.set('schoolclassid', document.getElementById('idclass').value);
             url.searchParams.set('sessionid',     document.getElementById('idsession').value);
             url.searchParams.set('termid',        document.getElementById('idterm').value);
+            url.searchParams.set('average_basis', getAverageBasis());
             loadPage(url.toString());
         });
     });
@@ -1104,7 +1146,7 @@ function setupPaginationLinks() {
 
 function loadPage(url) {
     const tb = document.getElementById('studentTableBody');
-    tb.innerHTML = '<tr class="skeleton-row"><td colspan="10"><div style="height:300px;"></div></td></tr>';
+    tb.innerHTML = '<tr class="skeleton-row"><td colspan="11"><div style="height:300px;"></div></td></tr>';
     showLoading('Loading page...');
     axios.get(url, {
         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'X-Requested-With': 'XMLHttpRequest' }
@@ -1117,7 +1159,7 @@ function loadPage(url) {
         triggerRowEntrance(); popPromotionBadges(); setupRowSelection();
     }).catch(() => {
         hideLoading();
-        tb.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">Error loading data.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="11" class="text-center text-danger py-4">Error loading data.</td></tr>';
     });
 }
 
@@ -1489,7 +1531,8 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     currentStudentId     = studentId;
     currentSchoolclassId = document.getElementById('idclass').value;
     currentSessionId     = document.getElementById('idsession').value;
-    currentTermId        = termid || document.getElementById('idterm').value;
+    // Always the selected filter term, so the modal evaluates exactly what the table shows.
+    currentTermId        = document.getElementById('idterm').value || termid;
 
     document.getElementById('modalStudentName').innerHTML =
         `<i class="ri-id-card-line me-2"></i>${admissionNo} — ${firstName} ${lastName}${otherName ? ' ' + otherName : ''}`;
@@ -1518,12 +1561,18 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     document.getElementById('compulsoryContent').innerHTML       = '';
     document.getElementById('recommendationContent').innerHTML   = '';
     document.getElementById('modalOverallAverage').innerHTML     = '<span class="text-muted">Loading…</span>';
+    document.getElementById('studentInfoCard').style.display     = 'none';
+    document.getElementById('classHistoryCard').style.display    = 'none';
+    document.getElementById('classHistoryContent').innerHTML     = '';
+    ['modalDob','modalAdmissionDate','modalPhone','modalAddress','modalFather','modalMother','modalParentEmail','modalPosition']
+        .forEach(id => { document.getElementById(id).innerText = '—'; });
 
     showLoading('Loading student data...');
 
     try {
         const response = await axios.get(
-            `/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`
+            `/promotions/student-details/${studentId}/${currentSchoolclassId}/${currentSessionId}/${currentTermId}`,
+            { params: { average_basis: getAverageBasis() } }
         );
         hideLoading();
 
@@ -1549,7 +1598,27 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
         const avgCls   = avg !== null
             ? (avg >= 50 ? 'text-success' : avg >= 40 ? 'text-warning' : 'text-danger')
             : 'text-muted';
-        avgEl.innerHTML = `<span class="${avgCls} fs-5 fw-bold">${avgValue}</span>`;
+        const basisLbl = (response.data.average_basis === 'cum') ? 'Cum Avg' : 'Term Total';
+        avgEl.innerHTML = `<span class="${avgCls} fs-5 fw-bold">${avgValue}</span> <small class="text-muted">(${basisLbl})</small>`;
+
+        // ── Student info + class history
+        const bio = response.data.student_bio || {};
+        const par = response.data.parent_info || {};
+        document.getElementById('modalDob').innerText           = bio.dateofbirth || '—';
+        document.getElementById('modalAdmissionDate').innerText = bio.admission_date || '—';
+        document.getElementById('modalPhone').innerText         = bio.phone_number || '—';
+        document.getElementById('modalAddress').innerText       = bio.home_address || '—';
+        document.getElementById('modalPosition').innerText      = response.data.position || '—';
+        document.getElementById('modalFather').innerText        = [par.father, par.father_phone].filter(Boolean).join(' — ') || '—';
+        document.getElementById('modalMother').innerText        = [par.mother, par.mother_phone].filter(Boolean).join(' — ') || '—';
+        document.getElementById('modalParentEmail').innerText   = par.parent_email || '—';
+        document.getElementById('studentInfoCard').style.display = 'block';
+
+        const history = response.data.class_history || [];
+        if (history.length) {
+            document.getElementById('classHistoryContent').innerHTML = buildClassHistoryTable(history);
+            document.getElementById('classHistoryCard').style.display = 'block';
+        }
 
         // ── Recommendation card
         if (result && result.status !== 'awaiting') {
@@ -1666,6 +1735,109 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     }
 
     new bootstrap.Modal(document.getElementById('promotionModal')).show();
+}
+
+/* ── Average basis / class history / advance term / print list ─────────────── */
+function getAverageBasis() {
+    return document.getElementById('average_basis')?.value || 'total';
+}
+
+function buildClassHistoryTable(history) {
+    const colors = {
+        PROMOTED: '#10b981', TRIAL: '#f59e0b', SEE_PRINCIPAL: '#3b82f6',
+        REPEAT: '#ef4444', ADVANCED: '#6366f1', PARENTS_TO_SEE_PRINCIPAL: '#6b7280',
+    };
+    const badge = (st) => {
+        if (!st) return '<span class="badge bg-secondary">—</span>';
+        const label = st.charAt(0) + st.slice(1).toLowerCase().replace(/_/g, ' ');
+        return `<span class="badge" style="background:${colors[st] || '#6b7280'};color:#fff;">${escapeHtml(label)}</span>`;
+    };
+    let html = `<div class="table-responsive"><table class="table table-sm mb-0">
+        <thead><tr><th>Session</th><th>Term</th><th>Class</th><th>Arm</th><th>Decision</th></tr></thead><tbody>`;
+    history.forEach(h => {
+        html += `<tr>
+            <td>${escapeHtml(h.session || '—')}</td>
+            <td>${escapeHtml(h.term || '—')}</td>
+            <td>${escapeHtml(h.class || '—')}</td>
+            <td>${escapeHtml(h.arm || '—')}</td>
+            <td>${badge(h.promotion_status)}</td>
+        </tr>`;
+    });
+    return html + '</tbody></table></div>';
+}
+
+function isLastTermSelected() {
+    const sel = document.getElementById('idterm');
+    if (!sel || !sel.value) return false;
+    const ids = [...sel.options].map(o => parseInt(o.value, 10)).filter(n => !isNaN(n));
+    return parseInt(sel.value, 10) >= Math.max(...ids);
+}
+function updateAdvanceTermButtonVisibility() {
+    const btn = document.getElementById('advanceTermActionBtn');
+    if (btn) btn.style.display = isLastTermSelected() ? 'none' : '';
+}
+
+function submitAdvanceTerm() {
+    const ids  = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+    const cls  = document.getElementById('idclass').value;
+    const sess = document.getElementById('idsession').value;
+    const term = document.getElementById('idterm').value;
+    if (!ids.length) { showToast('No students selected', 'warning'); return; }
+    if (cls === 'ALL' || sess === 'ALL' || !term) { showToast('Select class, session and term first', 'warning'); return; }
+
+    Swal.fire({
+        title: 'Advance to Next Term',
+        text: `Move ${ids.length} student(s) to the next term in the same class and session?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Advance',
+    }).then(async result => {
+        if (!result.isConfirmed) return;
+        showLoading('Advancing term…');
+        try {
+            const res = await axios.post('{{ route("promotions.advance-term") }}', {
+                student_ids: ids, schoolclassid: cls, sessionid: sess, current_termid: term,
+                _token: document.querySelector('meta[name="csrf-token"]').content,
+            });
+            hideLoading();
+            showToast(res.data.message, res.data.success ? 'success' : 'danger');
+            if (res.data.success) { clearSelection(); filterData(); }
+        } catch (err) {
+            hideLoading();
+            showToast(err.response?.data?.message || 'Advance term failed', 'danger');
+        }
+    });
+}
+
+function openPrintListDialog() {
+    const cls  = document.getElementById('idclass').value;
+    const sess = document.getElementById('idsession').value;
+    const term = document.getElementById('idterm').value;
+    if (sess === 'ALL' || !term) { showToast('Select a session and term first', 'warning'); return; }
+    const hasClass = cls && cls !== 'ALL';
+
+    Swal.fire({
+        title: 'Print Student List',
+        html: `<div style="text-align:left">
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Scope</label>
+            <select id="printScopeSelect" class="form-select form-select-sm">
+                <option value="class"${hasClass ? '' : ' disabled'}>This class / arm only</option>
+                <option value="class_wide"${hasClass ? '' : ' disabled'}>All arms of this class</option>
+                <option value="school"${hasClass ? '' : ' selected'}>Whole school</option>
+            </select>
+            <small class="text-muted d-block mt-2">Grouped by System Recommendation. Paper size and orientation are set on the print page.</small>
+        </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Open Print View',
+        preConfirm: () => document.getElementById('printScopeSelect').value,
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        const params = new URLSearchParams({
+            scope: result.value, sessionid: sess, termid: term, average_basis: getAverageBasis(),
+        });
+        if (result.value !== 'school') params.set('schoolclassid', cls);
+        window.open(`{{ route("promotions.student-list") }}?${params.toString()}`, '_blank');
+    });
 }
 
 /* ── Remove student ─────────────────────────────────────────────────────────── */
@@ -1786,7 +1958,12 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('idclass').addEventListener('change', filterData);
     document.getElementById('idsession').addEventListener('change', filterData);
-    document.getElementById('idterm').addEventListener('change', filterData);
+    document.getElementById('idterm').addEventListener('change', function () {
+        filterData();
+        updateAdvanceTermButtonVisibility();
+    });
+    document.getElementById('average_basis').addEventListener('change', filterData);
+    updateAdvanceTermButtonVisibility();
 
     let searchTimeout;
     document.getElementById('searchInput').addEventListener('input', function () {

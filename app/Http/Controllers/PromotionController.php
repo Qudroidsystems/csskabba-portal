@@ -14,6 +14,11 @@ use App\Models\PromotionSetting;
 use App\Models\CompulsorySubjectClass;
 use App\Models\Broadsheets;
 use App\Models\Student;
+use App\Models\Schoolterm;
+use App\Models\SchoolInformation;
+use App\Models\ParentRegistration;
+use App\Models\StudentCurrentTerm;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -27,8 +32,8 @@ class PromotionController extends Controller
 
     public function __construct(PromotionEvaluator $promotionEvaluator)
     {
-        $this->middleware('permission:View promotion',   ['only' => ['index']]);
-        $this->middleware('permission:Update promotion', ['only' => ['update', 'destroy']]);
+        $this->middleware('permission:View promotion',   ['only' => ['index', 'getStudentDetails', 'studentList']]);
+        $this->middleware('permission:Update promotion', ['only' => ['update', 'destroy', 'bulkPromote', 'advanceTerm']]);
         $this->promotionEvaluator = $promotionEvaluator;
     }
 
@@ -65,79 +70,105 @@ class PromotionController extends Controller
             //
             // We do NOT short-circuit when settings DO match — the evaluator
             // must run so it can apply rules and produce a real verdict.
-            $shouldSkipEvaluator = $this->classHasNoApplicableSetting(
-                $schoolclassId, $sessionId, $termId
-            );
-
-            $query = Studentclass::query()
-                ->where('studentclass.schoolclassid', $schoolclassId)
-                ->where('studentclass.sessionid', $sessionId)
-                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-                ->leftJoin('studentpicture',       'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('schoolclass',          'schoolclass.id',           '=', 'studentclass.schoolclassid')
-                ->leftJoin('schoolarm',            'schoolarm.id',             '=', 'schoolclass.arm')
-                ->leftJoin('schoolsession',        'schoolsession.id',         '=', 'studentclass.sessionid');
-
-            if ($search = $request->input('search')) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('studentRegistration.admissionNo', 'like', "%{$search}%")
-                      ->orWhere('studentRegistration.firstname',  'like', "%{$search}%")
-                      ->orWhere('studentRegistration.lastname',   'like', "%{$search}%")
-                      ->orWhere('studentRegistration.othername',  'like', "%{$search}%");
-                });
-            }
+            $averageBasis  = $this->resolveAverageBasis($request->input('average_basis'));
 
             try {
+                $shouldSkipEvaluator = $this->classHasNoApplicableSetting(
+                    $schoolclassId, $sessionId, $termId
+                );
+
+                // Class position, computed once for the whole class from the
+                // same registered-subject scores the averages use.
+                $classPositions = $this->buildClassPositions(
+                    $schoolclassId, $sessionId, $termId, $averageBasis
+                );
+
+                // Cohort = students currently placed in this class/session
+                // (studentclass) PLUS anyone with results recorded for it
+                // (broadsheet_records). studentclass only keeps the current
+                // placement, so on its own a past session showed nobody.
+                // One row per student -- no duplicates.
+                $cohortIds = $this->cohortStudentIds($schoolclassId, $sessionId);
+                $classMeta = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                    ->where('schoolclass.id', $schoolclassId)
+                    ->first(['schoolclass.schoolclass', 'schoolarm.arm']);
+                $sessionName = Schoolsession::where('id', $sessionId)->value('session');
+
+                $query = DB::table('studentRegistration')
+                    ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                    ->whereIn('studentRegistration.id', $cohortIds);
+
+                if ($search = $request->input('search')) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('studentRegistration.admissionNo', 'like', "%{$search}%")
+                          ->orWhere('studentRegistration.firstname',  'like', "%{$search}%")
+                          ->orWhere('studentRegistration.lastname',   'like', "%{$search}%")
+                          ->orWhere('studentRegistration.othername',  'like', "%{$search}%");
+                    });
+                }
+
                 $allstudents = $query->select([
                     'studentRegistration.id          as stid',
-                    'studentRegistration.admissionNo  as admissionno',
-                    'studentRegistration.firstname    as firstname',
-                    'studentRegistration.lastname     as lastname',
-                    'studentRegistration.othername    as othername',
-                    'studentRegistration.gender       as gender',
-                    'studentpicture.picture           as picture',
-                    'studentclass.schoolclassid       as schoolclassID',
-                    'studentclass.sessionid           as sessionid',
-                    'studentclass.termid              as termid',
-                    'schoolclass.schoolclass          as schoolclass',
-                    'schoolarm.arm                    as schoolarm',
-                    'schoolsession.session            as session',
-                ])->latest('studentclass.created_at')->paginate(100);
+                    'studentRegistration.admissionNo as admissionno',
+                    'studentRegistration.firstname   as firstname',
+                    'studentRegistration.lastname    as lastname',
+                    'studentRegistration.othername   as othername',
+                    'studentRegistration.gender      as gender',
+                    DB::raw('MAX(studentpicture.picture) as picture'),
+                ])
+                    ->groupBy(
+                        'studentRegistration.id', 'studentRegistration.admissionNo',
+                        'studentRegistration.firstname', 'studentRegistration.lastname',
+                        'studentRegistration.othername', 'studentRegistration.gender'
+                    )
+                    ->orderBy('studentRegistration.lastname')
+                    ->orderBy('studentRegistration.firstname')
+                    ->paginate(100)
+                    ->withQueryString();
+
+                $pageIds = $allstudents->getCollection()->pluck('stid')->all();
+                $savedStatuses = PromotionStatus::whereIn('studentId', $pageIds)
+                    ->where('schoolclassid', $schoolclassId)
+                    ->where('sessionid',     $sessionId)
+                    ->where('termid',        $termId)
+                    ->get()
+                    ->keyBy(fn ($p) => (int) $p->studentId);
 
                 $allstudents->getCollection()->transform(
                     function ($student) use (
-                        $schoolclassId, $sessionId, $termId, $shouldSkipEvaluator
+                        $schoolclassId, $sessionId, $termId, $shouldSkipEvaluator,
+                        $averageBasis, $classPositions, $savedStatuses, $classMeta, $sessionName
                     ) {
+                        $student->schoolclassID = $schoolclassId;
+                        $student->sessionid     = $sessionId;
+                        $student->termid        = $termId;
+                        $student->schoolclass   = $classMeta?->schoolclass;
+                        $student->schoolarm     = $classMeta?->arm;
+                        $student->session       = $sessionName;
+
                         $scores         = $this->getStudentScores(
                             $student->stid, $schoolclassId, $sessionId, $termId
                         );
-                        $overallAverage = $this->calculateOverallAverage($scores);
+                        $overallAverage = $this->calculateOverallAverage($scores, $averageBasis);
 
-                        if ($shouldSkipEvaluator) {
-                            // No applicable setting for this class+session+term —
-                            // skip evaluation entirely, return awaiting directly.
-                            $student->promotion_recommendation =
-                                $this->promotionEvaluator->awaitingResult($overallAverage);
-                        } else {
-                            $student->promotion_recommendation =
-                                $this->promotionEvaluator->evaluate(
-                                    studentId:     $student->stid,
-                                    schoolclassid: $schoolclassId,
-                                    termid:        $termId,
-                                    sessionid:     $sessionId,
-                                    scores:        $scores,
-                                    overallAverage: $overallAverage
-                                );
-                        }
+                        $student->promotion_recommendation = $shouldSkipEvaluator
+                            ? $this->promotionEvaluator->awaitingResult($overallAverage)
+                            : $this->promotionEvaluator->evaluate(
+                                studentId:      $student->stid,
+                                schoolclassid:  $schoolclassId,
+                                termid:         $termId,
+                                sessionid:      $sessionId,
+                                scores:         $scores,
+                                overallAverage: $overallAverage
+                            );
 
                         $student->overall_average = $overallAverage;
+                        $student->average_basis   = $averageBasis;
+                        $student->position        = $this->formatOrdinal(
+                            $classPositions[(int) $student->stid] ?? null
+                        );
 
-                        $existingStatus = PromotionStatus::where('studentId',     $student->stid)
-                            ->where('schoolclassid', $schoolclassId)
-                            ->where('sessionid',     $sessionId)
-                            ->where('termid',        $termId)
-                            ->first();
-
+                        $existingStatus = $savedStatuses->get((int) $student->stid);
                         $student->promotion_status = $existingStatus?->promotionStatus;
                         $student->promotion_id     = $existingStatus?->id;
 
@@ -149,6 +180,7 @@ class PromotionController extends Controller
                 Log::error('Promotion query failed', [
                     'request' => $request->all(),
                     'error'   => $e->getMessage(),
+                    'line'    => $e->getLine(),
                 ]);
                 $allstudents = new LengthAwarePaginator([], 0, 10);
             }
@@ -196,8 +228,9 @@ class PromotionController extends Controller
                 return response()->json(['success' => false, 'message' => 'Student not found'], 404);
             }
 
+            $averageBasis   = $this->resolveAverageBasis(request()->input('average_basis'));
             $scores         = $this->getStudentScores($studentId, $schoolclassId, $sessionId, $termId);
-            $overallAverage = $this->calculateOverallAverage($scores);
+            $overallAverage = $this->calculateOverallAverage($scores, $averageBasis);
 
             // Same term-aware short-circuit as index()
             $shouldSkipEvaluator = $this->classHasNoApplicableSetting(
@@ -264,6 +297,7 @@ class PromotionController extends Controller
                     'subject_name'       => $score->subject_name,
                     'subject_code'       => $score->subject_code ?? '',
                     'total'              => $score->total,
+                    'cum_ave'            => $score->cum_ave ?? null,
                     'grade'              => $score->grade,
                     'is_compulsory'      => $isCompulsory,
                     'required_min_grade' => $requiredMinGrade,
@@ -343,9 +377,24 @@ class PromotionController extends Controller
             $creditGrades = $this->getCreditGrades($schoolclassId);
             $creditCount  = $scores->filter(fn($s) => in_array($s->grade, $creditGrades))->count();
 
+            // Bio-data + parent contact for the modal's Student Info card.
+            $studentBio = Student::where('id', $studentId)
+                ->select(['gender', 'dateofbirth', 'admission_date', 'phone_number', 'home_address2 as home_address'])
+                ->first();
+            $parentInfo = ParentRegistration::where('studentId', $studentId)
+                ->select(['father', 'father_phone', 'mother', 'mother_phone', 'parent_email'])
+                ->first();
+
             return response()->json([
                 'success'             => true,
                 'student'             => $student,
+                'student_bio'         => $studentBio,
+                'parent_info'         => $parentInfo,
+                'class_history'       => $this->buildClassHistory((int) $studentId),
+                'average_basis'       => $averageBasis,
+                'position'            => $this->formatOrdinal(
+                    $this->buildClassPositions((int) $schoolclassId, (int) $sessionId, (int) $termId, $averageBasis)[(int) $studentId] ?? null
+                ),
                 'promotion_result'    => $promotionResult,
                 'overall_average'     => $overallAverage,
                 'all_subjects'        => $allSubjects,
@@ -587,6 +636,264 @@ class PromotionController extends Controller
     }
 
     // =========================================================================
+    // ADVANCE TERM -- same class & session, move selected students to the
+    // next term. A term rollover, not a promotion decision.
+    // =========================================================================
+
+    public function advanceTerm(Request $request): JsonResponse
+    {
+        $request->validate([
+            'student_ids'    => 'required|array|min:1',
+            'student_ids.*'  => 'exists:studentRegistration,id',
+            'schoolclassid'  => 'required|exists:schoolclass,id',
+            'sessionid'      => 'required|exists:schoolsession,id',
+            'current_termid' => 'required|exists:schoolterm,id',
+        ]);
+
+        $schoolclassId = (int) $request->schoolclassid;
+        $sessionId     = (int) $request->sessionid;
+        $newTermId     = $this->nextTermId((int) $request->current_termid);
+
+        if (!$newTermId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This is the last term of the session -- use Bulk Promote to move students into a new class/session instead.',
+            ], 422);
+        }
+
+        $newTermName  = Schoolterm::where('id', $newTermId)->value('term') ?? "Term {$newTermId}";
+        $successCount = 0;
+        $failCount    = 0;
+
+        foreach ($request->student_ids as $studentId) {
+            try {
+                DB::transaction(function () use ($studentId, $schoolclassId, $sessionId, $newTermId) {
+                    // Keep ONE studentclass row per student for this
+                    // class/session: move its term forward rather than
+                    // adding a second row (score entry, broadsheets and
+                    // this screen all list students by class + session).
+                    $row = Studentclass::where('studentId', $studentId)
+                        ->where('schoolclassid', $schoolclassId)
+                        ->where('sessionid',     $sessionId)
+                        ->orderByDesc('termid')
+                        ->first();
+
+                    if ($row) {
+                        $row->update(['termid' => $newTermId]);
+                    } else {
+                        Studentclass::create([
+                            'studentId'     => $studentId,
+                            'schoolclassid' => $schoolclassId,
+                            'sessionid'     => $sessionId,
+                            'termid'        => $newTermId,
+                        ]);
+                    }
+
+                    PromotionStatus::updateOrCreate(
+                        [
+                            'studentId'     => $studentId,
+                            'schoolclassid' => $schoolclassId,
+                            'sessionid'     => $sessionId,
+                            'termid'        => $newTermId,
+                        ],
+                        [
+                            'promotionStatus' => 'ADVANCED',
+                            'classstatus'     => 'CURRENT',
+                        ]
+                    );
+
+                    DB::table('student_current_term')
+                        ->where('studentId', $studentId)
+                        ->update(['is_current' => false]);
+
+                    StudentCurrentTerm::updateOrCreate(
+                        [
+                            'studentId'     => $studentId,
+                            'schoolclassId' => $schoolclassId,
+                            'termId'        => $newTermId,
+                            'sessionId'     => $sessionId,
+                        ],
+                        ['is_current' => true]
+                    );
+                });
+                $successCount++;
+            } catch (Exception $e) {
+                $failCount++;
+                Log::error('Advance term failed for student', [
+                    'studentId' => $studentId,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success'       => $successCount > 0,
+            'message'       => "{$successCount} student(s) advanced to {$newTermName}." . ($failCount ? " {$failCount} failed." : ''),
+            'success_count' => $successCount,
+            'fail_count'    => $failCount,
+            'new_termid'    => $newTermId,
+        ]);
+    }
+
+    // =========================================================================
+    // STUDENT LIST -- printable, grouped by the live System Recommendation.
+    // Scope: 'class' (one arm), 'class_wide' (all arms of a class level) or
+    // 'school' (every class).
+    // =========================================================================
+
+    public function studentList(Request $request): View|RedirectResponse
+    {
+        try {
+            $validated = $request->validate([
+                'scope'         => 'required|in:class,class_wide,school',
+                'schoolclassid' => 'required_if:scope,class,class_wide|nullable|integer|exists:schoolclass,id',
+                'sessionid'     => 'required|integer|exists:schoolsession,id',
+                'termid'        => 'required|integer|exists:schoolterm,id',
+                'average_basis' => 'nullable|in:total,cum',
+            ]);
+
+            $scope        = $validated['scope'];
+            $sessionId    = (int) $validated['sessionid'];
+            $termId       = (int) $validated['termid'];
+            $averageBasis = $this->resolveAverageBasis($validated['average_basis'] ?? null);
+
+            if ($scope === 'school') {
+                ini_set('max_execution_time', 600);
+                ini_set('memory_limit', '1024M');
+                $classesInScope = Schoolclass::with('armRelation')->orderBy('schoolclass')->orderBy('arm')->get();
+                $scopeLabel = 'Whole School';
+            } else {
+                $anchor = Schoolclass::with('armRelation')->findOrFail((int) $validated['schoolclassid']);
+                if ($scope === 'class_wide') {
+                    $classesInScope = Schoolclass::with('armRelation')
+                        ->where('schoolclass', $anchor->schoolclass)->orderBy('arm')->get();
+                    $scopeLabel = $anchor->schoolclass . ' — All Arms';
+                } else {
+                    $classesInScope = collect([$anchor]);
+                    $scopeLabel = trim($anchor->schoolclass . ' ' . ($anchor->armRelation->arm ?? ''));
+                }
+            }
+
+            $order = ['promoted', 'trial', 'see_principal', 'repeated', 'awaiting'];
+            $labels = [
+                'promoted' => 'Promoted', 'trial' => 'On Trial', 'see_principal' => 'See Principal',
+                'repeated' => 'Advised to Repeat', 'awaiting' => 'Awaiting Decision', '__other' => 'Other',
+            ];
+
+            $classGroups = [];
+            $overall     = array_fill_keys(array_merge($order, ['__other']), 0);
+            $grandTotal  = 0;
+
+            foreach ($classesInScope as $schoolclass) {
+                $classId  = (int) $schoolclass->id;
+                $cohort   = $this->cohortStudentIds($classId, $sessionId);
+                if (empty($cohort)) continue;
+
+                $skip      = $this->classHasNoApplicableSetting($classId, $sessionId, $termId);
+                $positions = $this->buildClassPositions($classId, $sessionId, $termId, $averageBasis);
+                $armLabel  = $schoolclass->armRelation->arm ?? null;
+
+                $students = DB::table('studentRegistration')
+                    ->whereIn('id', $cohort)
+                    ->orderBy('lastname')->orderBy('firstname')
+                    ->get(['id', 'admissionNo', 'firstname', 'lastname', 'othername', 'gender']);
+
+                $grouped = array_fill_keys(array_merge($order, ['__other']), []);
+
+                foreach ($students as $stu) {
+                    $scores = $this->getStudentScores($stu->id, $classId, $sessionId, $termId);
+                    $avg    = $this->calculateOverallAverage($scores, $averageBasis);
+                    $rec    = $skip
+                        ? $this->promotionEvaluator->awaitingResult($avg)
+                        : $this->promotionEvaluator->evaluate(
+                            studentId: (int) $stu->id, schoolclassid: $classId, termid: $termId,
+                            sessionid: $sessionId, scores: $scores, overallAverage: $avg
+                        );
+
+                    $status = $rec['status'] ?? 'awaiting';
+                    if ($status === 'repeat') $status = 'repeated';
+                    $bucket = array_key_exists($status, $grouped) ? $status : '__other';
+
+                    $grouped[$bucket][] = [
+                        'admissionno'     => $stu->admissionNo,
+                        'name'            => trim($stu->lastname . ', ' . $stu->firstname . ' ' . ($stu->othername ?? '')),
+                        'gender'          => $stu->gender,
+                        'arm'             => $armLabel,
+                        'overall_average' => $avg,
+                        'position'        => $this->formatOrdinal($positions[(int) $stu->id] ?? null),
+                        'label'           => $rec['status_label'] ?? $labels[$bucket],
+                        'rule'            => $rec['applied_rule']['name'] ?? null,
+                    ];
+                    $overall[$bucket]++;
+                    $grandTotal++;
+                }
+
+                $grouped = array_filter($grouped, fn ($g) => count($g) > 0);
+                if (empty($grouped)) continue;
+
+                $classGroups[] = [
+                    'label'         => trim($schoolclass->schoolclass . ' ' . $armLabel),
+                    'grouped'       => $grouped,
+                    'totalStudents' => array_sum(array_map('count', $grouped)),
+                ];
+            }
+
+            $schoolInfo = SchoolInformation::getActiveSchool() ?? new \stdClass();
+
+            return view('promotions.student_list', [
+                'scope'        => $scope,
+                'scopeLabel'   => $scopeLabel,
+                'classGroups'  => $classGroups,
+                'overall'      => array_filter($overall, fn ($c) => $c > 0),
+                'labels'       => $labels,
+                'grandTotal'   => $grandTotal,
+                'schoolInfo'   => $schoolInfo,
+                'logo'         => $this->getLogoBase64($schoolInfo),
+                'sessionName'  => Schoolsession::where('id', $sessionId)->value('session'),
+                'termName'     => Schoolterm::where('id', $termId)->value('term'),
+                'averageBasis' => $averageBasis,
+                'generatedAt'  => now()->format('d M Y, H:i'),
+                'pagetitle'    => 'Student Promotion List',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
+        } catch (\Throwable $e) {
+            Log::error('Promotion student list error', ['error' => $e->getMessage(), 'line' => $e->getLine()]);
+            return redirect()->back()->with('error', 'Failed to generate student list: ' . $e->getMessage());
+        }
+    }
+
+    private function nextTermId(int $currentTermId): ?int
+    {
+        return Schoolterm::where('id', '>', $currentTermId)->orderBy('id')->value('id');
+    }
+
+    private function getLogoBase64($schoolInfo): string
+    {
+        $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">'
+            . '<rect width="80" height="80" rx="40" fill="#1e3a5f"/>'
+            . '<text x="40" y="45" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text>'
+            . '</svg>'
+        );
+
+        if (!$schoolInfo || empty($schoolInfo->school_logo)) return $placeholder;
+
+        foreach ([
+            storage_path('app/public/' . $schoolInfo->school_logo),
+            public_path('storage/' . $schoolInfo->school_logo),
+            public_path($schoolInfo->school_logo),
+        ] as $path) {
+            if (file_exists($path) && filesize($path) > 100) {
+                return 'data:' . (mime_content_type($path) ?: 'image/jpeg')
+                    . ';base64,' . base64_encode(file_get_contents($path));
+            }
+        }
+
+        return $placeholder;
+    }
+
+    // =========================================================================
     // PRIVATE HELPERS
     // =========================================================================
 
@@ -643,22 +950,37 @@ class PromotionController extends Controller
     }
 
     /**
-     * Fetch all broadsheet scores for a student in a given class/session/term.
+     * Broadsheet scores for one student in a class/session/term.
+     *
+     * total / cum / cum_ave are the values score entry maintains from the
+     * class's DYNAMIC assessments (sum of broadsheet_assessment_scores;
+     * cum = bf + total; cum_ave = cum / term) -- used as stored, never
+     * re-derived from a fixed CA/exam formula.
+     *
+     * Only subjects the student is registered for count (same rule as the
+     * broadsheet/position service). A student with no registrations at all
+     * for the term falls back to every subject, like score entry does.
      */
     private function getStudentScores($studentId, $schoolclassId, $sessionId, $termId)
     {
         try {
-            return Broadsheets::where('broadsheet_records.student_id', $studentId)
-                ->where('broadsheets.term_id',              $termId)
-                ->where('broadsheet_records.session_id',    $sessionId)
+            $q = Broadsheets::where('broadsheet_records.student_id', $studentId)
+                ->where('broadsheets.term_id',               $termId)
+                ->where('broadsheet_records.session_id',     $sessionId)
                 ->where('broadsheet_records.schoolclass_id', $schoolclassId)
-                ->join('broadsheet_records', 'broadsheet_records.id',  '=', 'broadsheets.broadsheet_record_id')
-                ->join('subject',            'subject.id',             '=', 'broadsheet_records.subject_id')
-                ->select([
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->join('subject',            'subject.id',             '=', 'broadsheet_records.subject_id');
+
+            $this->scopeToRegisteredSubjects($q, (int) $sessionId, (int) $termId);
+
+            return $q->select([
                     'subject.id            as subject_id',
                     'subject.subject       as subject_name',
                     'subject.subject_code  as subject_code',
                     'broadsheets.total     as total',
+                    'broadsheets.bf        as bf',
+                    'broadsheets.cum       as cum',
+                    'broadsheets.cum_ave   as cum_ave',
                     'broadsheets.grade     as grade',
                 ])
                 ->get();
@@ -673,26 +995,204 @@ class PromotionController extends Controller
     }
 
     /**
-     * Calculate the percentage average. Each subject is out of 100;
-     * missing totals are skipped (not counted as 0).
+     * Keep a broadsheet row only if the student is registered for that
+     * subject this term -- or has no registrations at all this term.
+     * Expects broadsheet_records to be joined.
      */
-    private function calculateOverallAverage($scores): ?float
+    private function scopeToRegisteredSubjects($query, int $sessionId, int $termId): void
+    {
+        $query->where(function ($w) use ($sessionId, $termId) {
+            $w->whereExists(function ($r) use ($sessionId, $termId) {
+                $r->select(DB::raw(1))
+                    ->from('subjectRegistrationStatus')
+                    ->join('subjectclass as sjc_reg',   'sjc_reg.id', '=', 'subjectRegistrationStatus.subjectclassid')
+                    ->join('subjectteacher as st_reg', 'st_reg.id',  '=', 'sjc_reg.subjectteacherid')
+                    ->whereColumn('st_reg.subjectid', 'broadsheet_records.subject_id')
+                    ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
+                    ->where('subjectRegistrationStatus.termid',    $termId)
+                    ->where('subjectRegistrationStatus.sessionid', $sessionId);
+            })->orWhereNotExists(function ($r) use ($sessionId, $termId) {
+                $r->select(DB::raw(1))
+                    ->from('subjectRegistrationStatus')
+                    ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
+                    ->where('subjectRegistrationStatus.termid',    $termId)
+                    ->where('subjectRegistrationStatus.sessionid', $sessionId);
+            });
+        });
+    }
+
+    /**
+     * Mean of the chosen per-subject figure, as a percentage (each subject
+     * is out of 100). 'total' = this term's total, 'cum' = cum_ave (the
+     * averaged cumulative score grading uses -- never the raw running sum).
+     * Missing values are skipped, not counted as 0.
+     */
+    private function calculateOverallAverage($scores, string $basis = 'total'): ?float
     {
         if ($scores->isEmpty()) return null;
 
-        $totalObtained   = 0;
-        $totalObtainable = 0;
+        $field  = $basis === 'cum' ? 'cum_ave' : 'total';
+        $values = $scores->pluck($field)->filter(fn ($v) => $v !== null && is_numeric($v));
 
-        foreach ($scores as $score) {
-            if ($score->total !== null && is_numeric($score->total)) {
-                $totalObtained   += (float) $score->total;
-                $totalObtainable += 100;
-            }
+        return $values->isNotEmpty() ? round($values->avg(), 1) : 0;
+    }
+
+    private function resolveAverageBasis($basis): string
+    {
+        return in_array($basis, ['total', 'cum'], true) ? $basis : 'total';
+    }
+
+    /**
+     * Students placed in this class/session now (studentclass) or with
+     * results recorded for it (broadsheet_records).
+     */
+    private function cohortStudentIds(int $schoolclassId, int $sessionId): array
+    {
+        $current = Studentclass::where('schoolclassid', $schoolclassId)
+            ->where('sessionid', $sessionId)
+            ->pluck('studentId');
+
+        $scored = DB::table('broadsheet_records')
+            ->where('schoolclass_id', $schoolclassId)
+            ->where('session_id',     $sessionId)
+            ->distinct()
+            ->pluck('student_id');
+
+        return $current->merge($scored)->map(fn ($v) => (int) $v)->filter()->unique()->values()->all();
+    }
+
+    /**
+     * [studentId => rank] for a class/session/term, ranked on each
+     * student's average (same basis and registered-subject scoping as the
+     * Overall Avg column). Competition ranking: 90, 90, 80 -> 1, 1, 3.
+     */
+    private function buildClassPositions(int $schoolclassId, int $sessionId, int $termId, string $basis): array
+    {
+        $field = $basis === 'cum' ? 'cum_ave' : 'total';
+
+        $q = DB::table('broadsheets')
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->where('broadsheet_records.schoolclass_id', $schoolclassId)
+            ->where('broadsheet_records.session_id',     $sessionId)
+            ->where('broadsheets.term_id',               $termId)
+            ->whereNotNull("broadsheets.{$field}");
+
+        $this->scopeToRegisteredSubjects($q, $sessionId, $termId);
+
+        $averages = $q->groupBy('broadsheet_records.student_id')
+            ->select([
+                'broadsheet_records.student_id as student_id',
+                DB::raw("AVG(broadsheets.{$field}) as avg_value"),
+            ])
+            ->pluck('avg_value', 'student_id')
+            ->map(fn ($v) => round((float) $v, 2))
+            ->all();
+
+        return $this->competitionRank($averages);
+    }
+
+    private function competitionRank(array $valuesById): array
+    {
+        if (empty($valuesById)) return [];
+
+        arsort($valuesById);
+
+        $ranks = [];
+        $position = 0;
+        $prevValue = null;
+        $prevRank  = null;
+
+        foreach ($valuesById as $studentId => $value) {
+            $position++;
+            $rank = ($prevValue !== null && $value == $prevValue) ? $prevRank : $position;
+            $ranks[(int) $studentId] = $rank;
+            $prevValue = $value;
+            $prevRank  = $rank;
         }
 
-        return $totalObtainable > 0
-            ? round(($totalObtained / $totalObtainable) * 100, 1)
-            : 0;
+        return $ranks;
+    }
+
+    private function formatOrdinal(?int $position): ?string
+    {
+        if ($position === null) return null;
+        if ($position % 100 >= 11 && $position % 100 <= 13) return "{$position}th";
+
+        return match ($position % 10) {
+            1       => "{$position}st",
+            2       => "{$position}nd",
+            3       => "{$position}rd",
+            default => "{$position}th",
+        };
+    }
+
+    /**
+     * Every session/term the student has been in, newest first, with the
+     * class for that term and the decision saved for it. Built from results
+     * (broadsheet_records), promotionStatus and studentclass together --
+     * studentclass alone only holds the current placement.
+     */
+    private function buildClassHistory(int $studentId): array
+    {
+        $periods = []; // "session_term" => [classId => weight]
+        $add = function ($sess, $term, $class, int $weight) use (&$periods) {
+            if (!$sess || !$term) return;
+            $key = (int) $sess . '_' . (int) $term;
+            $periods[$key] = $periods[$key] ?? [];
+            if ($class) $periods[$key][(int) $class] = ($periods[$key][(int) $class] ?? 0) + $weight;
+        };
+
+        DB::table('broadsheets')
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->where('broadsheet_records.student_id', $studentId)
+            ->groupBy('broadsheet_records.session_id', 'broadsheets.term_id', 'broadsheet_records.schoolclass_id')
+            ->select([
+                'broadsheet_records.session_id', 'broadsheets.term_id',
+                'broadsheet_records.schoolclass_id', DB::raw('COUNT(*) as n'),
+            ])
+            ->get()
+            ->each(fn ($r) => $add($r->session_id, $r->term_id, $r->schoolclass_id, 1000 + (int) $r->n));
+
+        $statuses = PromotionStatus::where('studentId', $studentId)->get();
+        $statuses->each(fn ($r) => $add($r->sessionid, $r->termid, $r->schoolclassid, 10));
+
+        Studentclass::where('studentId', $studentId)->get(['sessionid', 'termid', 'schoolclassid'])
+            ->each(fn ($r) => $add($r->sessionid, $r->termid, $r->schoolclassid, 1));
+
+        if (empty($periods)) return [];
+
+        $sessionNames = Schoolsession::pluck('session', 'id');
+        $termNames    = Schoolterm::pluck('term', 'id');
+        $classIds     = collect($periods)->flatMap(fn ($c) => array_keys($c))->unique()->values();
+        $classInfo    = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->whereIn('schoolclass.id', $classIds)
+            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
+            ->keyBy('id');
+
+        return collect($periods)
+            ->map(function ($classes, $key) use ($sessionNames, $termNames, $classInfo, $statuses) {
+                [$sess, $term] = array_map('intval', explode('_', $key));
+                arsort($classes);
+                $classId = array_key_first($classes);
+                $cls     = $classId ? $classInfo->get($classId) : null;
+                $status  = $statuses->first(fn ($p) =>
+                    (int) $p->sessionid === $sess && (int) $p->termid === $term
+                    && (!$classId || (int) $p->schoolclassid === (int) $classId)
+                );
+
+                return [
+                    'session_id'       => $sess,
+                    'term_id'          => $term,
+                    'session'          => $sessionNames[$sess] ?? null,
+                    'term'             => $termNames[$term] ?? null,
+                    'class'            => $cls?->schoolclass,
+                    'arm'              => $cls?->arm,
+                    'promotion_status' => $status?->promotionStatus,
+                ];
+            })
+            ->sortByDesc(fn ($h) => sprintf('%08d-%08d', $h['session_id'], $h['term_id']))
+            ->values()
+            ->all();
     }
 
     /**

@@ -65,6 +65,15 @@
             @endif
         </td>
 
+        {{-- Col 7b: Position — competition-ranked on the same average basis --}}
+        <td>
+            @if(!empty($student->position))
+                <span class="fw-semibold">{{ $student->position }}</span>
+            @else
+                <span class="text-muted">—</span>
+            @endif
+        </td>
+
         {{-- Col 8: System Recommendation --}}
         <td data-rec-status="{{ $recStatus }}">
             @if($recStatus === 'awaiting')
@@ -139,6 +148,8 @@
                 <span class="promotion-badge-repeated">
                     <i class="ri-repeat-line"></i> Repeat
                 </span>
+            @elseif($savedStatus === 'advanced')
+                <span class="promotion-badge-advanced"><i class="ri-skip-forward-line"></i> Advanced</span>
             @else
                 <span class="promotion-badge-pending">
                     <i class="ri-minus-circle-line"></i> Pending
@@ -186,7 +197,7 @@
     </tr>
 @empty
     <tr>
-        <td colspan="10" class="text-center py-5">
+        <td colspan="11" class="text-center py-5">
             <div class="empty-state">
                 <i class="ri-inbox-line"></i>
                 <p class="mb-0">No students found. Select a class and session to load students.</p>

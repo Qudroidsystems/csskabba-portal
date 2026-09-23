@@ -1211,6 +1211,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('/{studentId}', [PromotionController::class, 'update'])->name('update');
         Route::delete('/{studentId}', [PromotionController::class, 'destroy'])->name('destroy');
         Route::post('/bulk/promote', [PromotionController::class, 'bulkPromote'])->name('bulk.promote');
+        Route::post('/advance-term', [PromotionController::class, 'advanceTerm'])->name('advance-term');
+        Route::get('/student-list', [PromotionController::class, 'studentList'])->name('student-list');
     });
 
     Route::prefix('promotion-settings')->group(function () {
