@@ -79,6 +79,7 @@ public function index(Request $request): View
     $myclasshistory = ClassTeacher::where('staffid', $user->id)
         ->leftJoin('users', 'users.id', '=', 'classteacher.staffid')
         ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
         ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
         ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
         ->select([
@@ -88,7 +89,7 @@ public function index(Request $request): View
             'schoolclass.schoolclass as schoolclass',
             'classteacher.termid as termid',
             'classteacher.sessionid as sessionid',
-            'schoolclass.arm as schoolarm',
+            'schoolarm.arm as schoolarm',
             'schoolclass.description as classcategory',
             'schoolterm.term as term',
             'schoolsession.session as session',
