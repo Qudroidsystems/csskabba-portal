@@ -15,7 +15,7 @@
 
 
 <!-- User list init js (load after list.js and dependencies) -->
-<script src="{{ asset('theme/layouts/assets/js/pages/mysubject-list.init.js') }}"></script>
+{{-- mysubject-list.init.js retired: it drove add/edit/delete modals for endpoints that never existed. The page's own script now lives in mysubject/index.blade.php. --}}
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 

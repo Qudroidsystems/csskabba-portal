@@ -469,7 +469,8 @@ Route::group(['middleware' => ['auth']], function () {
     // ===================================================================
     Route::resource('studentImageUpload', StudentImageUploadController::class);
     Route::resource('myclass', MyClassController::class);
-    Route::resource('mysubject', MySubjectController::class);
+    // Read-only for teachers -- assignments are managed on the Subject Teacher / Subject Class screens.
+    Route::resource('mysubject', MySubjectController::class)->only(['index']);
 
     Route::get('/myresultroom', [MyresultroomController::class, 'index'])->name('myresultroom.index');
     Route::post('/myresultroom', [MyresultroomController::class, 'index']);
