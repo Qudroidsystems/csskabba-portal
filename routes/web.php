@@ -1213,6 +1213,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/bulk/promote', [PromotionController::class, 'bulkPromote'])->name('bulk.promote');
         Route::post('/advance-term', [PromotionController::class, 'advanceTerm'])->name('advance-term');
         Route::get('/student-list', [PromotionController::class, 'studentList'])->name('student-list');
+        Route::get('/history', [PromotionController::class, 'history'])->name('history');
+        Route::post('/history/{batchId}/revert', [PromotionController::class, 'revertBatch'])->name('history.revert');
+        Route::post('/{studentId}/clear-decision', [PromotionController::class, 'clearDecision'])->name('clear-decision');
     });
 
     Route::prefix('promotion-settings')->group(function () {

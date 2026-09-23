@@ -386,6 +386,8 @@
 .promotion-badge-advanced { background:#6366f1; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
 .quick-select-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; margin-bottom:12px; }
 .quick-select-bar .qs-label { font-size:13px; font-weight:600; color:#1e3a5f; }
+.btn-subtle-warning { background:#fffbeb; color:#b45309; border:1px solid #fde68a; }
+.btn-subtle-warning:hover { background:#fef3c7; color:#92400e; }
 </style>
 
 <div class="main-content">
@@ -538,6 +540,9 @@
                     </h5>
                     <div class="d-flex gap-2 align-items-center">
                         <small class="text-muted"><i class="ri-keyboard-line me-1"></i><kbd>Ctrl+A</kbd> Select all</small>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openHistoryModal()">
+                            <i class="ri-history-line me-1"></i>History &amp; Undo
+                        </button>
                         <button type="button" class="btn btn-dark btn-sm" onclick="openPrintListDialog()">
                             <i class="ri-printer-line me-1"></i>Print Student List
                         </button>
@@ -595,7 +600,7 @@
                                     <th>Position</th>
                                     <th>Recommendation</th>
                                     <th>Promotion Status</th>
-                                    <th width="90">Actions</th>
+                                    <th width="120">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="studentTableBody">
@@ -883,6 +888,31 @@
 {{-- ================================================================
      Bulk Promotion Modal
      ================================================================ --}}
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white"><i class="ri-history-line me-2"></i>Promotion History &amp; Undo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                    <small class="text-muted flex-grow-1">
+                        Every promotion, bulk promotion, term advance, cleared decision and removal is recorded here.
+                        <strong>Revert</strong> puts the students' class placement and saved decision back exactly as they were.
+                        Undo the newest action first.
+                    </small>
+                    <label class="form-check-label small d-inline-flex align-items-center gap-1">
+                        <input type="checkbox" class="form-check-input m-0" id="historyThisSessionOnly" checked onchange="loadHistory()">
+                        Selected session only
+                    </label>
+                </div>
+                <div id="historyList"><div class="text-center text-muted py-4">Loading…</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="bulkPromotionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1266,7 +1296,7 @@ document.getElementById('confirmBulkPromoteBtn')?.addEventListener('click', asyn
         });
         hideLoading();
         showToast(res.data.message, res.data.success ? 'success' : 'danger');
-        if (res.data.success) setTimeout(() => location.reload(), 1500);
+        if (res.data.success) { clearSelection(); filterData(); offerUndo(res.data.batch_id, res.data.message); }
     } catch (err) {
         hideLoading();
         showToast(err.response?.data?.message || 'Bulk promotion failed', 'danger');
@@ -1906,7 +1936,7 @@ function submitAdvanceTerm() {
             });
             hideLoading();
             showToast(res.data.message, res.data.success ? 'success' : 'danger');
-            if (res.data.success) { clearSelection(); filterData(); }
+            if (res.data.success) { clearSelection(); filterData(); offerUndo(res.data.batch_id, res.data.message); }
         } catch (err) {
             hideLoading();
             showToast(err.response?.data?.message || 'Advance term failed', 'danger');
@@ -1961,6 +1991,147 @@ function openPrintListDialog() {
     });
 }
 
+/* ── Undo / history / clear decision ───────────────────────────────────────── */
+const CSRF_TOKEN = () => document.querySelector('meta[name="csrf-token"]').content;
+
+/* Short "Undo" prompt right after an action, so a wrong click is one tap away. */
+function offerUndo(batchId, message) {
+    if (!batchId || typeof Swal === 'undefined') return;
+    Swal.fire({
+        toast: true,
+        position: 'bottom-end',
+        icon: 'success',
+        title: message || 'Done',
+        showConfirmButton: true,
+        confirmButtonText: 'Undo',
+        showCloseButton: true,
+        timer: 10000,
+        timerProgressBar: true,
+    }).then(r => { if (r.isConfirmed) revertAction(batchId, null, false); });
+}
+
+async function revertAction(batchId, studentId, force) {
+    showLoading('Reverting…');
+    try {
+        const res = await axios.post(`/promotions/history/${encodeURIComponent(batchId)}/revert`, {
+            student_id: studentId || null, force: !!force, _token: CSRF_TOKEN(),
+        });
+        hideLoading();
+        const d = res.data || {};
+        if (d.blocked?.length) {
+            const list = d.blocked.map(b => `<li>${escapeHtml(b)}</li>`).join('');
+            const r = await Swal.fire({
+                icon: d.reverted ? 'warning' : 'error',
+                title: d.message,
+                html: `<ul style="text-align:left;font-size:13px;margin:0;padding-left:18px">${list}</ul>`
+                    + (d.can_force ? '<p class="small text-muted mt-2 mb-0">Revert anyway overwrites those later changes with the state from before this action.</p>' : ''),
+                showCancelButton: !!d.can_force,
+                confirmButtonText: d.can_force ? 'Revert anyway' : 'OK',
+                confirmButtonColor: d.can_force ? '#dc2626' : undefined,
+            });
+            if (d.can_force && r.isConfirmed) return revertAction(batchId, studentId, true);
+        } else {
+            showToast(d.message || 'Reverted', d.success ? 'success' : 'danger');
+        }
+        filterData();
+        if (document.getElementById('historyModal')?.classList.contains('show')) loadHistory();
+    } catch (err) {
+        hideLoading();
+        showToast(err.response?.data?.message || 'Revert failed', 'danger');
+    }
+}
+
+function confirmRevert(batchId, studentId, label) {
+    Swal.fire({
+        title: studentId ? 'Revert for this student?' : 'Revert this whole action?',
+        html: `<div style="font-size:13px">${escapeHtml(label)}</div>
+               <div class="small text-muted mt-2">Class placement, saved decision and current term go back to how they were before.</div>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, revert',
+        confirmButtonColor: '#dc2626',
+    }).then(r => { if (r.isConfirmed) revertAction(batchId, studentId, false); });
+}
+
+function openHistoryModal() {
+    new bootstrap.Modal(document.getElementById('historyModal')).show();
+    loadHistory();
+}
+
+async function loadHistory() {
+    const box  = document.getElementById('historyList');
+    const sess = document.getElementById('idsession').value;
+    const onlySess = document.getElementById('historyThisSessionOnly').checked && sess && sess !== 'ALL';
+    box.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading…</div>';
+    try {
+        const res = await axios.get('{{ route("promotions.history") }}', { params: onlySess ? { sessionid: sess } : {} });
+        const batches = res.data.batches || [];
+        if (!batches.length) {
+            box.innerHTML = '<div class="text-center text-muted py-4"><i class="ri-inbox-line d-block fs-3 mb-2"></i>No promotion actions recorded yet.</div>';
+            return;
+        }
+        box.innerHTML = batches.map((b, i) => {
+            const state = b.fully_reverted
+                ? '<span class="badge bg-secondary">Reverted</span>'
+                : (b.active < b.total ? `<span class="badge bg-warning text-dark">${b.total - b.active} of ${b.total} reverted</span>` : '');
+            const students = b.students.map(st => `
+                <div class="d-flex align-items-center justify-content-between py-1 border-bottom" style="font-size:12.5px">
+                    <span class="${st.reverted ? 'text-muted text-decoration-line-through' : ''}">
+                        ${escapeHtml(st.admissionno)} — ${escapeHtml(st.name)}
+                        ${st.reverted ? `<small class="ms-1">(reverted ${escapeHtml(st.reverted_at || '')})</small>` : ''}
+                    </span>
+                    ${st.reverted ? '' : `<button type="button" class="btn btn-link btn-sm text-danger p-0"
+                        onclick="confirmRevert('${b.batch_id}', ${st.student_id}, ${JSON.stringify(st.name).replace(/"/g, '&quot;')})">Revert</button>`}
+                </div>`).join('');
+            return `
+            <div class="border rounded-3 p-3 mb-2 ${b.fully_reverted ? 'bg-light' : ''}">
+                <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+                    <div>
+                        <div class="fw-semibold">${escapeHtml(b.action_label)} ${state}</div>
+                        <div class="small">${escapeHtml(b.description || '')}</div>
+                        <div class="small text-muted">${escapeHtml(b.performed_at || '')} · by ${escapeHtml(b.performed_by)} · ${b.total} student(s)</div>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#histStudents${i}">
+                            <i class="ri-group-line me-1"></i>Students
+                        </button>
+                        ${b.fully_reverted ? '' : `<button type="button" class="btn btn-outline-danger btn-sm"
+                            onclick="confirmRevert('${b.batch_id}', null, ${JSON.stringify(b.description || b.action_label).replace(/"/g, '&quot;')})">
+                            <i class="ri-arrow-go-back-line me-1"></i>Revert${b.active < b.total ? ' rest' : ''}</button>`}
+                    </div>
+                </div>
+                <div class="collapse mt-2" id="histStudents${i}">${students}</div>
+            </div>`;
+        }).join('');
+    } catch (err) {
+        box.innerHTML = `<div class="alert alert-danger mb-0">Failed to load history: ${escapeHtml(err.response?.data?.message || err.message)}</div>`;
+    }
+}
+
+function clearDecision(studentId, schoolclassId, sessionId, termId, name) {
+    Swal.fire({
+        title: 'Clear saved decision?',
+        text: `Remove the saved promotion decision for ${name} for this term? Their class placement is not changed. You can undo this.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, clear it',
+    }).then(async r => {
+        if (!r.isConfirmed) return;
+        showLoading('Clearing decision…');
+        try {
+            const res = await axios.post(`/promotions/${studentId}/clear-decision`, {
+                schoolclassid: schoolclassId, sessionid: sessionId, termid: termId, _token: CSRF_TOKEN(),
+            });
+            hideLoading();
+            showToast(res.data.message, res.data.success ? 'success' : 'danger');
+            if (res.data.success) { filterData(); offerUndo(res.data.batch_id, res.data.message); }
+        } catch (err) {
+            hideLoading();
+            showToast(err.response?.data?.message || 'Failed to clear decision', 'danger');
+        }
+    });
+}
+
 /* ── Remove student ─────────────────────────────────────────────────────────── */
 function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo, firstName, lastName) {
     Swal.fire({
@@ -1984,7 +2155,7 @@ function removeStudent(studentId, schoolclassId, sessionId, termId, admissionNo,
         }).then(response => {
             hideLoading();
             showToast(response.data.success ? response.data.message : (response.data.message || 'Failed to remove'), response.data.success ? 'success' : 'danger');
-            if (response.data.success) filterData();
+            if (response.data.success) { filterData(); offerUndo(response.data.batch_id, response.data.message); }
         }).catch(error => {
             hideLoading();
             showToast(error.response?.data?.message || 'Failed to remove student', 'danger');
@@ -2035,7 +2206,7 @@ function submitPromotion() {
         }).then(response => {
             hideLoading();
             showToast(response.data.success ? response.data.message : (response.data.message || 'Failed to update'), response.data.success ? 'success' : 'danger');
-            if (response.data.success) filterData();
+            if (response.data.success) { filterData(); offerUndo(response.data.batch_id, response.data.message); }
         }).catch(error => {
             hideLoading();
             showToast(error.response?.data?.message || 'Failed to update promotion', 'danger');

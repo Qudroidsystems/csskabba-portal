@@ -18,6 +18,8 @@ use App\Models\Schoolterm;
 use App\Models\SchoolInformation;
 use App\Models\ParentRegistration;
 use App\Models\StudentCurrentTerm;
+use App\Models\PromotionActionLog;
+use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -32,8 +34,8 @@ class PromotionController extends Controller
 
     public function __construct(PromotionEvaluator $promotionEvaluator)
     {
-        $this->middleware('permission:View promotion',   ['only' => ['index', 'getStudentDetails', 'studentList']]);
-        $this->middleware('permission:Update promotion', ['only' => ['update', 'destroy', 'bulkPromote', 'advanceTerm']]);
+        $this->middleware('permission:View promotion',   ['only' => ['index', 'getStudentDetails', 'studentList', 'history']]);
+        $this->middleware('permission:Update promotion', ['only' => ['update', 'destroy', 'bulkPromote', 'advanceTerm', 'clearDecision', 'revertBatch']]);
         $this->promotionEvaluator = $promotionEvaluator;
     }
 
@@ -453,8 +455,11 @@ class PromotionController extends Controller
             default                            => 'PARENTS_TO_SEE_PRINCIPAL',
         };
 
+        $batchId = (string) Str::uuid();
+
         try {
-            DB::transaction(function () use ($studentId, $request, $promotionStatus) {
+            DB::transaction(function () use ($studentId, $request, $promotionStatus, $batchId) {
+                $before       = $this->snapshotStudentState((int) $studentId);
                 $newClassId   = $request->new_schoolclassid;
                 $newSessionId = $request->new_sessionid;
                 $newTermId    = $request->new_termid;
@@ -502,9 +507,19 @@ class PromotionController extends Controller
                     ],
                     ['is_current' => true]
                 );
+
+                $this->logPromotionAction(
+                    $batchId, 'promote', (int) $studentId, $before,
+                    (int) $newClassId, (int) $newSessionId, (int) $newTermId,
+                    $this->describeTarget('Set ' . $promotionStatus, $newClassId, $newSessionId, $newTermId)
+                );
             });
 
-            return response()->json(['success' => true, 'message' => 'Promotion updated successfully.']);
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Promotion updated successfully.',
+                'batch_id' => $batchId,
+            ]);
 
         } catch (Exception $e) {
             Log::error('Promotion update failed', [
@@ -525,11 +540,15 @@ class PromotionController extends Controller
         $request->validate([
             'schoolclassid' => 'required|exists:schoolclass,id',
             'sessionid'     => 'required|exists:schoolsession,id',
-            'termid'        => 'required|integer|min:1|max:3',
+            'termid'        => 'required|exists:schoolterm,id',
         ]);
 
+        $batchId = (string) Str::uuid();
+
         try {
-            DB::transaction(function () use ($studentId, $request) {
+            DB::transaction(function () use ($studentId, $request, $batchId) {
+                $before = $this->snapshotStudentState((int) $studentId);
+
                 Studentclass::where('studentId',     $studentId)
                     ->where('schoolclassid', $request->input('schoolclassid'))
                     ->where('sessionid',     $request->input('sessionid'))
@@ -541,9 +560,19 @@ class PromotionController extends Controller
                     ->where('sessionid',     $request->input('sessionid'))
                     ->where('termid',        $request->input('termid'))
                     ->delete();
+
+                $this->logPromotionAction(
+                    $batchId, 'remove', (int) $studentId, $before,
+                    (int) $request->input('schoolclassid'), (int) $request->input('sessionid'), (int) $request->input('termid'),
+                    $this->describeTarget('Removed from', $request->input('schoolclassid'), $request->input('sessionid'), $request->input('termid'))
+                );
             });
 
-            return response()->json(['success' => true, 'message' => 'Student removed successfully from class.']);
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Student removed from class. You can undo this from History.',
+                'batch_id' => $batchId,
+            ]);
 
         } catch (Exception $e) {
             Log::error('Student removal failed', [
@@ -580,9 +609,15 @@ class PromotionController extends Controller
             default         => 'PARENTS_TO_SEE_PRINCIPAL',
         };
 
+        $batchId     = (string) Str::uuid();
+        $description = $this->describeTarget(
+            'Bulk ' . $promotionStatus, $request->new_schoolclassid, $request->new_sessionid, $request->new_termid
+        );
+
         foreach ($request->student_ids as $studentId) {
             try {
-                DB::transaction(function () use ($studentId, $request, $promotionStatus) {
+                DB::transaction(function () use ($studentId, $request, $promotionStatus, $batchId, $description) {
+                    $before       = $this->snapshotStudentState((int) $studentId);
                     $newClassId   = $request->new_schoolclassid;
                     $newSessionId = $request->new_sessionid;
                     $newTermId    = $request->new_termid;
@@ -616,6 +651,11 @@ class PromotionController extends Controller
                             'position'        => null,
                         ]
                     );
+
+                    $this->logPromotionAction(
+                        $batchId, 'bulk_promote', (int) $studentId, $before,
+                        (int) $newClassId, (int) $newSessionId, (int) $newTermId, $description
+                    );
                 });
                 $successCount++;
             } catch (Exception $e) {
@@ -632,6 +672,7 @@ class PromotionController extends Controller
             'message'       => "{$successCount} students promoted successfully. {$failCount} failed.",
             'success_count' => $successCount,
             'fail_count'    => $failCount,
+            'batch_id'      => $successCount > 0 ? $batchId : null,
         ]);
     }
 
@@ -665,9 +706,14 @@ class PromotionController extends Controller
         $successCount = 0;
         $failCount    = 0;
 
+        $batchId     = (string) Str::uuid();
+        $description = $this->describeTarget('Advanced to', $schoolclassId, $sessionId, $newTermId);
+
         foreach ($request->student_ids as $studentId) {
             try {
-                DB::transaction(function () use ($studentId, $schoolclassId, $sessionId, $newTermId) {
+                DB::transaction(function () use ($studentId, $schoolclassId, $sessionId, $newTermId, $batchId, $description) {
+                    $before = $this->snapshotStudentState((int) $studentId);
+
                     // Keep ONE studentclass row per student for this
                     // class/session: move its term forward rather than
                     // adding a second row (score entry, broadsheets and
@@ -715,6 +761,11 @@ class PromotionController extends Controller
                         ],
                         ['is_current' => true]
                     );
+
+                    $this->logPromotionAction(
+                        $batchId, 'advance_term', (int) $studentId, $before,
+                        $schoolclassId, $sessionId, $newTermId, $description
+                    );
                 });
                 $successCount++;
             } catch (Exception $e) {
@@ -732,6 +783,7 @@ class PromotionController extends Controller
             'success_count' => $successCount,
             'fail_count'    => $failCount,
             'new_termid'    => $newTermId,
+            'batch_id'      => $successCount > 0 ? $batchId : null,
         ]);
     }
 
@@ -935,6 +987,299 @@ class PromotionController extends Controller
         }
 
         return $placeholder;
+    }
+
+    // =========================================================================
+    // CLEAR DECISION -- delete the saved decision for one student/term,
+    // leaving their class placement alone. Undoable like everything else.
+    // =========================================================================
+
+    public function clearDecision(Request $request, $studentId): JsonResponse
+    {
+        $request->validate([
+            'schoolclassid' => 'required|exists:schoolclass,id',
+            'sessionid'     => 'required|exists:schoolsession,id',
+            'termid'        => 'required|exists:schoolterm,id',
+        ]);
+
+        $batchId = (string) Str::uuid();
+
+        try {
+            $deleted = DB::transaction(function () use ($studentId, $request, $batchId) {
+                $before = $this->snapshotStudentState((int) $studentId);
+
+                $n = PromotionStatus::where('studentId',     $studentId)
+                    ->where('schoolclassid', $request->schoolclassid)
+                    ->where('sessionid',     $request->sessionid)
+                    ->where('termid',        $request->termid)
+                    ->delete();
+
+                if ($n > 0) {
+                    $this->logPromotionAction(
+                        $batchId, 'clear_decision', (int) $studentId, $before,
+                        (int) $request->schoolclassid, (int) $request->sessionid, (int) $request->termid,
+                        $this->describeTarget('Cleared decision for', $request->schoolclassid, $request->sessionid, $request->termid)
+                    );
+                }
+                return $n;
+            });
+
+            if (!$deleted) {
+                return response()->json(['success' => false, 'message' => 'No saved decision to clear for this term.'], 404);
+            }
+
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Decision cleared. You can undo this from History.',
+                'batch_id' => $batchId,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Clear promotion decision failed', ['studentId' => $studentId, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Failed to clear decision.'], 500);
+        }
+    }
+
+    // =========================================================================
+    // HISTORY -- recent promotion actions (one row per click / batch), each
+    // with its students, for the History & Undo panel.
+    // =========================================================================
+
+    public function history(Request $request): JsonResponse
+    {
+        $limit = min(max((int) $request->input('limit', 30), 1), 100);
+
+        $batchIds = PromotionActionLog::select('batch_id', DB::raw('MAX(id) as last_id'))
+            ->when($request->filled('sessionid') && $request->input('sessionid') !== 'ALL',
+                fn ($q) => $q->where('session_id', $request->input('sessionid')))
+            ->groupBy('batch_id')
+            ->orderByDesc('last_id')
+            ->limit($limit)
+            ->pluck('batch_id');
+
+        $logs = PromotionActionLog::whereIn('batch_id', $batchIds)->orderBy('id')->get();
+
+        $studentNames = DB::table('studentRegistration')
+            ->whereIn('id', $logs->pluck('student_id')->unique())
+            ->get(['id', 'admissionNo', 'firstname', 'lastname'])
+            ->keyBy('id');
+        $userNames = DB::table('users')
+            ->whereIn('id', $logs->pluck('performed_by')->merge($logs->pluck('reverted_by'))->filter()->unique())
+            ->pluck('name', 'id');
+
+        $actionLabels = [
+            'promote' => 'Promotion', 'bulk_promote' => 'Bulk promotion', 'advance_term' => 'Advance term',
+            'clear_decision' => 'Decision cleared', 'remove' => 'Removed from class',
+        ];
+
+        $batches = $logs->groupBy('batch_id')
+            ->map(function ($items, $batchId) use ($studentNames, $userNames, $actionLabels) {
+                $first  = $items->first();
+                $active = $items->whereNull('reverted_at');
+
+                return [
+                    'batch_id'       => $batchId,
+                    'action'         => $first->action,
+                    'action_label'   => $actionLabels[$first->action] ?? $first->action,
+                    'description'    => $first->description,
+                    'performed_by'   => $userNames[$first->performed_by] ?? 'System',
+                    'performed_at'   => $first->created_at?->format('d M Y, H:i'),
+                    'total'          => $items->count(),
+                    'active'         => $active->count(),
+                    'fully_reverted' => $active->isEmpty(),
+                    'students'       => $items->map(function ($l) use ($studentNames, $userNames) {
+                        $st = $studentNames->get($l->student_id);
+                        return [
+                            'student_id'  => (int) $l->student_id,
+                            'name'        => $st ? trim($st->lastname . ', ' . $st->firstname) : 'Student #' . $l->student_id,
+                            'admissionno' => $st->admissionNo ?? '',
+                            'reverted'    => $l->reverted_at !== null,
+                            'reverted_at' => $l->reverted_at?->format('d M Y, H:i'),
+                            'reverted_by' => $l->reverted_by ? ($userNames[$l->reverted_by] ?? null) : null,
+                        ];
+                    })->values(),
+                ];
+            })
+            ->sortByDesc(fn ($b) => $b['performed_at'])
+            ->values();
+
+        // keep newest-first order from $batchIds
+        $order   = $batchIds->flip();
+        $batches = $batches->sortBy(fn ($b) => $order[$b['batch_id']] ?? PHP_INT_MAX)->values();
+
+        return response()->json(['success' => true, 'batches' => $batches]);
+    }
+
+    // =========================================================================
+    // REVERT -- restore each student's studentclass / promotionStatus /
+    // student_current_term rows to exactly what they were before the
+    // action. Whole batch, or one student in it.
+    //
+    // Safety checks, per student:
+    //  * a LATER, still-active promotion action for the same student must
+    //    be reverted first (undo newest-first), and
+    //  * if the rows were changed some other way since the action (another
+    //    screen, a manual edit), it stops and asks -- `force` overrides.
+    // =========================================================================
+
+    public function revertBatch(Request $request, string $batchId): JsonResponse
+    {
+        $request->validate([
+            'student_id' => 'nullable|integer',
+            'force'      => 'boolean',
+        ]);
+        $force = $request->boolean('force');
+
+        $logs = PromotionActionLog::where('batch_id', $batchId)
+            ->whereNull('reverted_at')
+            ->when($request->filled('student_id'), fn ($q) => $q->where('student_id', $request->student_id))
+            ->orderByDesc('id')
+            ->get();
+
+        if ($logs->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Nothing left to revert in this action.'], 404);
+        }
+
+        $names = DB::table('studentRegistration')->whereIn('id', $logs->pluck('student_id'))
+            ->get(['id', 'firstname', 'lastname'])->keyBy('id');
+        $nameOf = fn ($id) => ($n = $names->get($id)) ? trim($n->lastname . ', ' . $n->firstname) : "Student #{$id}";
+
+        $reverted = 0;
+        $blocked  = [];
+        $drifted  = false;
+
+        foreach ($logs as $log) {
+            $later = PromotionActionLog::where('student_id', $log->student_id)
+                ->where('id', '>', $log->id)
+                ->whereNull('reverted_at')
+                ->exists();
+            if ($later) {
+                $blocked[] = $nameOf($log->student_id) . ' — has a newer promotion action; undo that first.';
+                continue;
+            }
+
+            try {
+                $done = DB::transaction(function () use ($log, $force, &$drifted, &$blocked, $nameOf) {
+                    $current = $this->snapshotStudentState((int) $log->student_id);
+                    if (!$force && !$this->statesMatch($current, $log->after_state ?? [])) {
+                        $drifted   = true;
+                        $blocked[] = $nameOf($log->student_id) . ' — records changed since this action (outside this screen).';
+                        return false;
+                    }
+
+                    $this->restoreStudentState((int) $log->student_id, $log->before_state ?? []);
+                    $log->update(['reverted_at' => now(), 'reverted_by' => auth()->id()]);
+                    return true;
+                });
+                if ($done) $reverted++;
+            } catch (Exception $e) {
+                Log::error('Promotion revert failed', ['log_id' => $log->id, 'error' => $e->getMessage()]);
+                $blocked[] = $nameOf($log->student_id) . ' — failed: ' . $e->getMessage();
+            }
+        }
+
+        $msg = $reverted
+            ? "Reverted {$reverted} student(s)."
+            : 'Nothing was reverted.';
+        if ($blocked) $msg .= ' ' . count($blocked) . ' could not be reverted.';
+
+        return response()->json([
+            'success'     => $reverted > 0,
+            'message'     => $msg,
+            'reverted'    => $reverted,
+            'blocked'     => $blocked,
+            'can_force'   => $drifted,
+        ], $reverted > 0 || $blocked ? 200 : 422);
+    }
+
+    // ── Undo-log helpers ────────────────────────────────────────────────────
+
+    private const UNDO_TABLES = [
+        'studentclass'         => 'studentId',
+        'promotionStatus'      => 'studentId',
+        'student_current_term' => 'studentId',
+    ];
+
+    /** Every row this screen can change for one student, as plain arrays. */
+    private function snapshotStudentState(int $studentId): array
+    {
+        $snap = [];
+        foreach (self::UNDO_TABLES as $table => $col) {
+            $snap[$table] = DB::table($table)->where($col, $studentId)->orderBy('id')->get()
+                ->map(fn ($r) => (array) $r)->values()->all();
+        }
+        return $snap;
+    }
+
+    /** Make the student's rows in each table exactly match $snapshot. */
+    private function restoreStudentState(int $studentId, array $snapshot): void
+    {
+        foreach (self::UNDO_TABLES as $table => $col) {
+            $rows    = $snapshot[$table] ?? [];
+            $keepIds = array_values(array_filter(array_map(fn ($r) => $r['id'] ?? null, $rows)));
+
+            DB::table($table)->where($col, $studentId)
+                ->when(!empty($keepIds), fn ($q) => $q->whereNotIn('id', $keepIds))
+                ->delete();
+
+            foreach ($rows as $row) {
+                $id = $row['id'] ?? null;
+                if ($id && DB::table($table)->where('id', $id)->exists()) {
+                    DB::table($table)->where('id', $id)->update(array_diff_key($row, ['id' => true]));
+                } else {
+                    DB::table($table)->insert($row);
+                }
+            }
+        }
+    }
+
+    /** Compare two snapshots, ignoring timestamps and int/string differences. */
+    private function statesMatch(array $a, array $b): bool
+    {
+        $norm = function (array $snap) {
+            $out = [];
+            foreach (self::UNDO_TABLES as $table => $col) {
+                $rows = [];
+                foreach ($snap[$table] ?? [] as $r) {
+                    unset($r['created_at'], $r['updated_at']);
+                    ksort($r);
+                    $rows[(string) ($r['id'] ?? '')] = array_map(fn ($v) => $v === null ? null : (string) $v, $r);
+                }
+                ksort($rows);
+                $out[$table] = $rows;
+            }
+            return $out;
+        };
+        return $norm($a) == $norm($b);
+    }
+
+    private function logPromotionAction(
+        string $batchId, string $action, int $studentId, array $before,
+        $classId, $sessionId, $termId, ?string $description
+    ): void {
+        PromotionActionLog::create([
+            'batch_id'       => $batchId,
+            'action'         => $action,
+            'student_id'     => $studentId,
+            'schoolclass_id' => $classId ?: null,
+            'session_id'     => $sessionId ?: null,
+            'term_id'        => $termId ?: null,
+            'description'    => $description ? Str::limit($description, 250, '') : null,
+            'before_state'   => $before,
+            'after_state'    => $this->snapshotStudentState($studentId),
+            'performed_by'   => auth()->id(),
+        ]);
+    }
+
+    private function describeTarget(string $verb, $classId, $sessionId, $termId): string
+    {
+        $cls = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->where('schoolclass.id', $classId)->first(['schoolclass.schoolclass', 'schoolarm.arm']);
+        $parts = array_filter([
+            $cls ? trim($cls->schoolclass . ' ' . ($cls->arm ?? '')) : null,
+            Schoolsession::where('id', $sessionId)->value('session'),
+            Schoolterm::where('id', $termId)->value('term'),
+        ]);
+        return trim($verb . ' ' . implode(' · ', $parts));
     }
 
     // =========================================================================

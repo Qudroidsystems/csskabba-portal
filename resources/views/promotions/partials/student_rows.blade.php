@@ -158,7 +158,7 @@
         </td>
 
         {{-- Col 10: Actions --}}
-        <td style="width:90px;">
+        <td style="width:120px;">
             <div class="d-flex gap-1">
                 <button type="button"
                         class="btn btn-icon btn-subtle-primary"
@@ -178,6 +178,20 @@
                         )">
                     <i class="ri-edit-line"></i>
                 </button>
+                @if($savedStatus !== '')
+                <button type="button"
+                        class="btn btn-icon btn-subtle-warning"
+                        title="Clear saved decision (undoable)"
+                        onclick="clearDecision(
+                            '{{ $student->stid }}',
+                            {{ $student->schoolclassID }},
+                            {{ $student->sessionid }},
+                            {{ $student->termid }},
+                            '{{ addslashes($student->lastname . ', ' . $student->firstname) }}'
+                        )">
+                    <i class="ri-eraser-line"></i>
+                </button>
+                @endif
                 <button type="button"
                         class="btn btn-icon btn-subtle-danger"
                         title="Remove from Class"
