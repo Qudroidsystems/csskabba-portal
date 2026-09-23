@@ -77,8 +77,22 @@ class TranscriptController extends Controller
                       ->orWhere('sr.admissionNo','like', "%{$q}%");
             });
 
-        if ($sessionId) $query->where('sc.sessionid', $sessionId);
-        if ($classId)   $query->where('sc.schoolclassid', $classId);
+        // studentclass only holds the CURRENT class, so also match students
+        // who were in this session/class in the past (from their results).
+        if ($sessionId || $classId) {
+            $query->where(function ($w) use ($sessionId, $classId) {
+                $w->where(function ($cur) use ($sessionId, $classId) {
+                    if ($sessionId) $cur->where('sc.sessionid', $sessionId);
+                    if ($classId)   $cur->where('sc.schoolclassid', $classId);
+                })->orWhereExists(function ($ex) use ($sessionId, $classId) {
+                    $ex->select(DB::raw(1))
+                       ->from('broadsheet_records as br')
+                       ->whereColumn('br.student_id', 'sr.id');
+                    if ($sessionId) $ex->where('br.session_id', $sessionId);
+                    if ($classId)   $ex->where('br.schoolclass_id', $classId);
+                });
+            });
+        }
 
         $students = $query->distinct()->orderBy('sr.lastname')->limit(30)->get();
 
@@ -206,49 +220,109 @@ class TranscriptController extends Controller
             throw new \Exception('Student not found.');
         }
 
-        // ── Enrolments ────────────────────────────────────────────────────────
-        $enrolmentQuery = Studentclass::where('studentId', $studentId)
-            ->join('schoolclass',   'schoolclass.id',   '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id',     '=', 'schoolclass.arm')
-            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->join('schoolterm',    'schoolterm.id',    '=', 'studentclass.termid')
-            ->select([
-                'studentclass.schoolclassid',
-                'studentclass.termid',
-                'studentclass.sessionid',
-                'schoolclass.schoolclass',
-                'schoolarm.arm',
-                'schoolsession.session',
-                'schoolterm.term',
-                'schoolsession.id as session_id_val',
-                'schoolterm.id as term_id_val',
-            ]);
-
-        if ($type === 'session' && $sessionId) {
-            $enrolmentQuery->where('studentclass.sessionid', $sessionId);
-        } elseif ($type === 'term' && $sessionId && $termId) {
-            $enrolmentQuery->where('studentclass.sessionid', $sessionId)
-                           ->where('studentclass.termid', $termId);
-        }
-
-        $enrolments = $enrolmentQuery
-            ->orderBy('schoolsession.id')
-            ->orderBy('schoolterm.id')
-            ->get();
-
-        // ── Assessments – get from the first class the student was enrolled in ─
-        $firstClassId = $enrolments->first()?->schoolclassid;
-        $assessments  = collect();
-
-        if ($firstClassId) {
-            $schoolclass = Schoolclass::with('classcategories')->find($firstClassId);
-            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-                $categoryIds = $schoolclass->classcategories->pluck('id');
-                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                    ->orderBy('id')
-                    ->get();
+        // ── Academic periods (session × term) ────────────────────────────────
+        // `studentclass` only holds the student's CURRENT class/term (it is
+        // overwritten on promotion), so it can't be the source of the
+        // transcript's history -- building from it alone produced a single
+        // term. Every session/term the student has results for is recorded
+        // in broadsheet_records/broadsheets (with the class they were in at
+        // the time); promotionStatus and studentclass fill in any term that
+        // has no scores yet.
+        $applyScope = function ($q, string $sessionCol, string $termCol) use ($type, $sessionId, $termId) {
+            if (in_array($type, ['session', 'term'], true) && $sessionId) {
+                $q->where($sessionCol, $sessionId);
             }
-        }
+            if ($type === 'term' && $termId) {
+                $q->where($termCol, $termId);
+            }
+            return $q;
+        };
+
+        $periodClass = [];   // "sessionId_termId" => [classId => weight]
+        $addPeriod = function ($sess, $term, $class, int $weight) use (&$periodClass) {
+            if (!$sess || !$term) return;
+            $key = (int) $sess . '_' . (int) $term;
+            if ($class) {
+                $periodClass[$key][(int) $class] = ($periodClass[$key][(int) $class] ?? 0) + $weight;
+            } else {
+                $periodClass[$key] = $periodClass[$key] ?? [];
+            }
+        };
+
+        $applyScope(
+            DB::table('broadsheets')
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->where('broadsheet_records.student_id', $studentId),
+            'broadsheet_records.session_id', 'broadsheets.term_id'
+        )
+            ->select([
+                'broadsheet_records.session_id',
+                'broadsheets.term_id',
+                'broadsheet_records.schoolclass_id',
+                DB::raw('COUNT(*) as n'),
+            ])
+            ->groupBy('broadsheet_records.session_id', 'broadsheets.term_id', 'broadsheet_records.schoolclass_id')
+            ->get()
+            ->each(fn ($r) => $addPeriod($r->session_id, $r->term_id, $r->schoolclass_id, 1000 + (int) $r->n));
+
+        $applyScope(
+            DB::table('promotionStatus')->where('studentId', $studentId),
+            'sessionid', 'termid'
+        )
+            ->get(['sessionid', 'termid', 'schoolclassid'])
+            ->each(fn ($r) => $addPeriod($r->sessionid, $r->termid, $r->schoolclassid, 10));
+
+        $applyScope(
+            DB::table('studentclass')->where('studentId', $studentId),
+            'sessionid', 'termid'
+        )
+            ->get(['sessionid', 'termid', 'schoolclassid'])
+            ->each(fn ($r) => $addPeriod($r->sessionid, $r->termid, $r->schoolclassid, 1));
+
+        $sessionNames = Schoolsession::pluck('session', 'id');
+        $termNames    = Schoolterm::pluck('term', 'id');
+        $classIdsUsed = collect($periodClass)->flatMap(fn ($c) => array_keys($c))->unique()->values();
+        $classInfo    = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->whereIn('schoolclass.id', $classIdsUsed)
+            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
+            ->keyBy('id');
+
+        $enrolments = collect($periodClass)
+            ->map(function ($classes, $key) use ($sessionNames, $termNames, $classInfo) {
+                [$sess, $term] = array_map('intval', explode('_', $key));
+                if (!isset($sessionNames[$sess]) || !isset($termNames[$term])) return null;
+                arsort($classes);
+                $classId = array_key_first($classes);
+                $cls     = $classId ? $classInfo->get($classId) : null;
+                return (object) [
+                    'schoolclassid'  => $classId,
+                    'sessionid'      => $sess,
+                    'termid'         => $term,
+                    'schoolclass'    => $cls?->schoolclass ?? '',
+                    'arm'            => $cls?->arm,
+                    'session'        => $sessionNames[$sess],
+                    'term'           => $termNames[$term],
+                    'session_id_val' => $sess,
+                    'term_id_val'    => $term,
+                ];
+            })
+            ->filter()
+            ->sortBy(fn ($e) => sprintf('%08d-%08d', $e->sessionid, $e->termid))
+            ->values();
+
+        // ── Assessments – per class, since categories differ (e.g. JSS/SSS) ──
+        $assessmentsByClass = [];
+        $assessmentsFor = function (?int $classId) use (&$assessmentsByClass) {
+            if (!$classId) return collect();
+            if (!array_key_exists($classId, $assessmentsByClass)) {
+                $schoolclass = Schoolclass::with('classcategories')->find($classId);
+                $assessmentsByClass[$classId] = ($schoolclass && $schoolclass->classcategories->isNotEmpty())
+                    ? Assessment::whereIn('classcategory_id', $schoolclass->classcategories->pluck('id'))->orderBy('id')->get()
+                    : collect();
+            }
+            return $assessmentsByClass[$classId];
+        };
+        $assessments = $assessmentsFor($enrolments->first()?->schoolclassid);
 
         // ── Broadsheet records ────────────────────────────────────────────────
         $bsQuery = DB::table('broadsheets')
@@ -352,8 +426,10 @@ class TranscriptController extends Controller
             }
 
             $termRecords = $allRecords->filter(
-                fn ($r) => $r->session === $sessionKey && $r->term === $termKey
+                fn ($r) => (int) $r->session_id === (int) $enrol->sessionid
+                        && (int) $r->term_id    === (int) $enrol->termid
             );
+            $termAssessments = $assessmentsFor($enrol->schoolclassid ? (int) $enrol->schoolclassid : null);
 
             $subjects     = [];
             $totalScore   = 0;
@@ -364,7 +440,7 @@ class TranscriptController extends Controller
                 // Build assessment scores for this subject row
                 $assessmentScoreRow = $assessmentScoresAll->get($rec->broadsheet_id, collect());
                 $assessmentData     = [];
-                foreach ($assessments as $a) {
+                foreach ($termAssessments as $a) {
                     $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
                     $assessmentData[$a->id] = $score ? (float) $score->score : null;
                 }
@@ -395,7 +471,8 @@ class TranscriptController extends Controller
             $transcriptData[$sessionKey]['terms'][$termKey] = [
                 'term'           => $termKey,
                 'term_id'        => $enrol->term_id_val,
-                'class'          => $enrol->schoolclass . ' ' . ($enrol->arm ?? ''),
+                'class'          => trim($enrol->schoolclass . ' ' . ($enrol->arm ?? '')),
+                'assessments'    => $termAssessments,
                 'subjects'       => $subjects,
                 'subject_count'  => $subjectCount,
                 'total_score'    => round($totalScore, 1),

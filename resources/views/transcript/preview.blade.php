@@ -233,6 +233,7 @@
                             </div>
 
                             @foreach($sessionData['terms'] as $termName => $termData)
+                                @php $assessments = $termData['assessments'] ?? $assessments; @endphp
                                 <div class="mb-3 ms-2" style="border-left:3px solid #bfdbfe;padding-left:16px;">
 
                                     {{-- Term Header --}}

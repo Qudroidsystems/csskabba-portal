@@ -534,6 +534,7 @@ $gradeClassMap = [
         </div>
 
         @foreach($sessionData['terms'] as $termName => $termData)
+            @php $assessments = $termData['assessments'] ?? $assessments; @endphp
             <div class="term-block">
 
                 {{-- Term header --}}
