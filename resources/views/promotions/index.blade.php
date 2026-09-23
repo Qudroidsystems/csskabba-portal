@@ -1825,17 +1825,33 @@ function openPrintListDialog() {
                 <option value="class_wide"${hasClass ? '' : ' disabled'}>All arms of this class</option>
                 <option value="school"${hasClass ? '' : ' selected'}>Whole school</option>
             </select>
+            <label style="font-size:13px;font-weight:600;display:block;margin:12px 0 6px">Format</label>
+            <select id="printFormatSelect" class="form-select form-select-sm">
+                <option value="compact">Compact — plain print sheet</option>
+                <option value="detailed">Detailed — school header, photos, summary</option>
+            </select>
             <small class="text-muted d-block mt-2">Grouped by System Recommendation. Paper size and orientation are set on the print page.</small>
         </div>`,
         showCancelButton: true,
         confirmButtonText: 'Open Print View',
-        preConfirm: () => document.getElementById('printScopeSelect').value,
+        didOpen: () => {
+            try {
+                const f = localStorage.getItem('promoListFormat');
+                if (f) document.getElementById('printFormatSelect').value = f;
+            } catch (e) { /* ignore */ }
+        },
+        preConfirm: () => ({
+            scope:  document.getElementById('printScopeSelect').value,
+            format: document.getElementById('printFormatSelect').value,
+        }),
     }).then(result => {
         if (!result.isConfirmed) return;
+        const { scope, format } = result.value;
+        try { localStorage.setItem('promoListFormat', format); } catch (e) { /* ignore */ }
         const params = new URLSearchParams({
-            scope: result.value, sessionid: sess, termid: term, average_basis: getAverageBasis(),
+            scope, format, sessionid: sess, termid: term, average_basis: getAverageBasis(),
         });
-        if (result.value !== 'school') params.set('schoolclassid', cls);
+        if (scope !== 'school') params.set('schoolclassid', cls);
         window.open(`{{ route("promotions.student-list") }}?${params.toString()}`, '_blank');
     });
 }

@@ -750,8 +750,10 @@ class PromotionController extends Controller
                 'sessionid'     => 'required|integer|exists:schoolsession,id',
                 'termid'        => 'required|integer|exists:schoolterm,id',
                 'average_basis' => 'nullable|in:total,cum',
+                'format'        => 'nullable|in:compact,detailed',
             ]);
 
+            $format       = $validated['format'] ?? 'compact';
             $scope        = $validated['scope'];
             $sessionId    = (int) $validated['sessionid'];
             $termId       = (int) $validated['termid'];
@@ -793,10 +795,15 @@ class PromotionController extends Controller
                 $positions = $this->buildClassPositions($classId, $sessionId, $termId, $averageBasis);
                 $armLabel  = $schoolclass->armRelation->arm ?? null;
 
-                $students = DB::table('studentRegistration')
-                    ->whereIn('id', $cohort)
-                    ->orderBy('lastname')->orderBy('firstname')
-                    ->get(['id', 'admissionNo', 'firstname', 'lastname', 'othername', 'gender']);
+                $students = DB::table('studentRegistration as sr')
+                    ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 'sr.id')
+                    ->whereIn('sr.id', $cohort)
+                    ->groupBy('sr.id', 'sr.admissionNo', 'sr.firstname', 'sr.lastname', 'sr.othername', 'sr.gender', 'sr.dateofbirth')
+                    ->orderBy('sr.lastname')->orderBy('sr.firstname')
+                    ->get([
+                        'sr.id', 'sr.admissionNo', 'sr.firstname', 'sr.lastname', 'sr.othername',
+                        'sr.gender', 'sr.dateofbirth', DB::raw('MAX(sp.picture) as picture'),
+                    ]);
 
                 $grouped = array_fill_keys(array_merge($order, ['__other']), []);
 
@@ -823,6 +830,14 @@ class PromotionController extends Controller
                         'position'        => $this->formatOrdinal($positions[(int) $stu->id] ?? null),
                         'label'           => $rec['status_label'] ?? $labels[$bucket],
                         'rule'            => $rec['applied_rule']['name'] ?? null,
+                        // extra keys used by the detailed (topclass-style) format
+                        'id'              => (int) $stu->id,
+                        'firstname'       => $stu->firstname,
+                        'lastname'        => $stu->lastname,
+                        'dateofbirth'     => $stu->dateofbirth,
+                        'picture'         => $stu->picture,
+                        'promotion_status'=> $bucket,
+                        'promotion_label' => $rec['status_label'] ?? $labels[$bucket],
                     ];
                     $overall[$bucket]++;
                     $grandTotal++;
@@ -832,6 +847,9 @@ class PromotionController extends Controller
                 if (empty($grouped)) continue;
 
                 $classGroups[] = [
+                    'schoolclassid' => $classId,
+                    'schoolclass'   => $schoolclass->schoolclass,
+                    'arm'           => $armLabel,
                     'label'         => trim($schoolclass->schoolclass . ' ' . $armLabel),
                     'grouped'       => $grouped,
                     'totalStudents' => array_sum(array_map('count', $grouped)),
@@ -839,16 +857,42 @@ class PromotionController extends Controller
             }
 
             $schoolInfo = SchoolInformation::getActiveSchool() ?? new \stdClass();
+            $logo       = $this->getLogoBase64($schoolInfo);
+            $overallNonZero = array_filter($overall, fn ($c) => $c > 0);
+
+            if ($format === 'detailed') {
+                $listFields = ['admissionno', 'gender', 'overall_average', 'position'];
+                if ($scope !== 'class') $listFields[] = 'arm';
+
+                return view('promotions.student_list_detailed', [
+                    'scope'               => $scope,
+                    'scopeLabel'          => $scopeLabel,
+                    'classGroups'         => $classGroups,
+                    'overallGrouped'      => $overallNonZero,
+                    'recommendationOrder' => $order,
+                    'grandTotal'          => $grandTotal,
+                    'listFields'          => $listFields,
+                    'showPhotos'          => false,
+                    'showSn'              => true,
+                    'schoolInfo'          => $schoolInfo,
+                    'schoolLogoBase64'    => $logo,
+                    'schoolsession'       => Schoolsession::find($sessionId),
+                    'schoolterm'          => Schoolterm::find($termId),
+                    'averageBasis'        => $averageBasis,
+                    'generatedAt'         => now()->format('d M Y, H:i'),
+                    'pagetitle'           => 'Student Promotion List',
+                ]);
+            }
 
             return view('promotions.student_list', [
                 'scope'        => $scope,
                 'scopeLabel'   => $scopeLabel,
                 'classGroups'  => $classGroups,
-                'overall'      => array_filter($overall, fn ($c) => $c > 0),
+                'overall'      => $overallNonZero,
                 'labels'       => $labels,
                 'grandTotal'   => $grandTotal,
                 'schoolInfo'   => $schoolInfo,
-                'logo'         => $this->getLogoBase64($schoolInfo),
+                'logo'         => $logo,
                 'sessionName'  => Schoolsession::where('id', $sessionId)->value('session'),
                 'termName'     => Schoolterm::where('id', $termId)->value('term'),
                 'averageBasis' => $averageBasis,
