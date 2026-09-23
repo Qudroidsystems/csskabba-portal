@@ -142,3 +142,5 @@ use Spatie\Permission\Models\Role;
                 });
             });
         });
+    </script>
+@endsection

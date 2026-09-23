@@ -36,6 +36,10 @@ use App\Models\Sport;
 use App\Models\StudentClub;
 use App\Models\StudentSport;
 use App\Models\SubjectRegistrationStatus;
+use App\Models\ScholarshipAssignment;
+use App\Models\DiscountAssignment;
+use App\Models\ScholarshipApplication;
+use App\Models\PaymentBatch;
 use App\Traits\ImageManager as TraitsImageManager;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -553,7 +557,7 @@ class StudentController extends Controller
 
             $studenthouses            = new Studenthouse();
             $studenthouses->studentid = $studentId;
-            $studenthouses->schoolhouse = $request->studenthouseid;
+            $studenthouses->schoolhouse = $request->schoolhouseid;
             $studenthouses->termid    = $request->termid;
             $studenthouses->sessionid = $request->sessionid;
             $studenthouses->save();
@@ -967,9 +971,14 @@ public function update(Request $request, $id): JsonResponse
         // 1. Core student record
         $student = Student::findOrFail($id);
 
-        $student->admissionNo        = $request->admissionMode === 'auto'
-            ? $this->generateAdmissionNumber()
-            : $request->admissionNo;
+        if ($request->admissionMode === 'auto') {
+            $admissionResponse = $this->getLastAdmissionNumber(new Request(['year' => $request->admissionYear]));
+            $admissionData     = json_decode($admissionResponse->getContent(), true);
+            if (!$admissionData['success']) throw new \Exception('Failed to generate admission number: '.$admissionData['message']);
+            $student->admissionNo = $admissionData['admissionNo'];
+        } else {
+            $student->admissionNo = $request->admissionNo;
+        }
         $student->admission_date     = $request->admissionDate;
         $student->title              = $request->title;
         $student->admissionYear      = $request->admissionYear;
@@ -1267,6 +1276,13 @@ public function update(Request $request, $id): JsonResponse
             Studentpersonalityprofile::where('studentid', $id)->delete();
             StudentCurrentTerm::where('studentId', $id)->delete();
 
+            // Scholarship/discount assignments soft-delete by default, which leaves the row
+            // physically present and still blocking the FK RESTRICT below -- force-delete them.
+            ScholarshipAssignment::where('student_id', $id)->forceDelete();
+            DiscountAssignment::where('student_id', $id)->forceDelete();
+            ScholarshipApplication::where('student_id', $id)->delete();
+            PaymentBatch::where('student_id', $id)->delete();
+
             $student->delete();
 
             DB::commit();
@@ -1308,6 +1324,11 @@ public function update(Request $request, $id): JsonResponse
                 StudentSport::where('studentid', $id)->delete();
                 Studentpersonalityprofile::where('studentid', $id)->delete();
                 StudentCurrentTerm::where('studentId', $id)->delete();
+
+                ScholarshipAssignment::where('student_id', $id)->forceDelete();
+                DiscountAssignment::where('student_id', $id)->forceDelete();
+                ScholarshipApplication::where('student_id', $id)->delete();
+                PaymentBatch::where('student_id', $id)->delete();
             }
 
             Student::whereIn('id', $ids)->delete();
@@ -1367,6 +1388,11 @@ public function update(Request $request, $id): JsonResponse
                 StudentSport::where('studentid', $studentId)->delete();
                 Studentpersonalityprofile::where('studentid', $studentId)->delete();
                 StudentCurrentTerm::where('studentId', $studentId)->delete();
+
+                ScholarshipAssignment::where('student_id', $studentId)->forceDelete();
+                DiscountAssignment::where('student_id', $studentId)->forceDelete();
+                ScholarshipApplication::where('student_id', $studentId)->delete();
+                PaymentBatch::where('student_id', $studentId)->delete();
             }
 
             Student::where('batchid', $batch->id)->delete();

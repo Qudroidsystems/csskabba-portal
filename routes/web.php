@@ -271,25 +271,26 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('/{id}', [SubjectController::class, 'destroy'])->name('subject.destroy');
     });
 
-    Route::prefix('subjectclass')->group(function () {
-        Route::get('/data', [SubjectClassController::class, 'data'])->name('subjectclass.data');
-        Route::get('/stats', [SubjectClassController::class, 'stats'])->name('subjectclass.stats');
-        Route::post('/bulk-destroy', [SubjectClassController::class, 'deleteMultiple'])->name('subjectclass.bulk-destroy');
-        Route::post('/delete-subjectclass', [SubjectClassController::class, 'deletesubjectclass'])->name('subjectclass.deletesubjectclass');
-        Route::get('/assignments/{subjectClassId}', [SubjectClassController::class, 'assignments'])->name('subjectclass.assignments');
-    });
-    Route::resource('subjectclass', SubjectClassController::class);
-    Route::resource('staff', StaffController::class);
+     Route::prefix('subjectclass')->group(function () {
+            Route::get('/data', [SubjectClassController::class, 'data'])->name('subjectclass.data');
+            Route::get('/stats', [SubjectClassController::class, 'stats'])->name('subjectclass.stats');
+            Route::post('/bulk-destroy', [SubjectClassController::class, 'deleteMultiple'])->name('subjectclass.bulk-destroy');
+            Route::post('/delete-subjectclass', [SubjectClassController::class, 'deletesubjectclass'])->name('subjectclass.deletesubjectclass');
+            Route::get('/assignments/{subjectClassId}', [SubjectClassController::class, 'assignments'])->name('subjectclass.assignments');
+        });
+        Route::resource('subjectclass', SubjectClassController::class);
+        Route::resource('staff', StaffController::class);
 
-    Route::prefix('subjectteacher')->group(function () {
-        Route::get('/data', [SubjectTeacherController::class, 'data'])->name('subjectteacher.data');
-        Route::get('/stats', [SubjectTeacherController::class, 'stats'])->name('subjectteacher.stats');
-        Route::post('/bulk-destroy', [SubjectTeacherController::class, 'deleteMultiple'])->name('subjectteacher.bulk-destroy');
-        Route::post('/delete-subjectteacher', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
-        Route::get('/get-subjects/{id}', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.get-subjects');
-    });
-    Route::resource('subjectteacher', SubjectTeacherController::class);
+        Route::prefix('subjectteacher')->group(function () {
+            Route::get('/data', [SubjectTeacherController::class, 'data'])->name('subjectteacher.data');
+            Route::get('/stats', [SubjectTeacherController::class, 'stats'])->name('subjectteacher.stats');
+            Route::post('/bulk-destroy', [SubjectTeacherController::class, 'deleteMultiple'])->name('subjectteacher.bulk-destroy');
+            Route::post('/delete-subjectteacher', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
+            Route::get('/get-subjects/{id}', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.get-subjects');
+        });
+        Route::resource('subjectteacher', SubjectTeacherController::class);
 
+        
     // ===================================================================
     // CLASS TEACHER
     // ===================================================================
@@ -1007,7 +1008,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/broadsheet/all-classes/pdf', [BroadsheetController::class, 'allClassesExportPdf'])->name('broadsheet.all-classes.pdf');
     Route::get('/broadsheet/class-groups', [BroadsheetController::class, 'getClassGroups'])->name('broadsheet.class-groups');
 
-    // ===================================================================
+ 
+
+
+     // ===================================================================
     // TIMETABLE
     // ===================================================================
     Route::get('/timetable', [TimetableController::class, 'index'])->name('timetable.index');
@@ -1030,6 +1034,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('/timetable/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('timetable.check-conflicts');
     Route::get('/timetable/check-conflicts-scope', [TimetableController::class, 'checkConflictsScope'])->name('timetable.check-conflicts-scope');
+    Route::post('/timetable/resolve-subject-spread', [TimetableController::class, 'resolveSubjectSpread'])->name('timetable.resolve-subject-spread');
     Route::post('/timetable/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('timetable.check-slot-conflict');
     Route::post('/timetable/resolve-conflict', [TimetableController::class, 'resolveConflict'])->name('timetable.resolve-conflict');
     Route::post('/timetable/save-free-periods', [TimetableController::class, 'saveFreePeriods'])->name('timetable.save-free-periods');
@@ -1084,9 +1089,16 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/timetable/runs/{runId}/export',  [TimetableController::class, 'exportGenerationRun'])->name('timetable.runs.export');
     Route::delete('/timetable/runs/{runId}',      [TimetableController::class, 'deleteGenerationRun'])->name('timetable.runs.delete');
 
+    // Period Allocation (reusable class x subject x periods/week presets)
+    Route::get('/timetable/period-allocation/grid', [TimetableController::class, 'getPeriodAllocationGrid'])->name('timetable.periodAllocation.grid');
+    Route::get('/timetable/period-allocation/sets', [TimetableController::class, 'listPeriodAllocationSets'])->name('timetable.periodAllocation.sets');
+    Route::get('/timetable/period-allocation/sets/{setId}', [TimetableController::class, 'getPeriodAllocationSetDetail'])->name('timetable.periodAllocation.sets.show');
+    Route::post('/timetable/period-allocation/sets', [TimetableController::class, 'savePeriodAllocationSet'])->name('timetable.periodAllocation.sets.save');
+    Route::delete('/timetable/period-allocation/sets/{setId}', [TimetableController::class, 'deletePeriodAllocationSet'])->name('timetable.periodAllocation.sets.delete');
 
 
-    
+
+
     // ===================================================================
     // TIMETABLE REPORTS
     // ===================================================================
@@ -1124,6 +1136,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/rooms/book/{roomId}',     [RoomController::class, 'book'])->name('rooms.book.room');
         Route::delete('/rooms/cancel-booking/{bookingId}', [RoomController::class, 'cancelBooking'])->name('rooms.cancel-booking');
         Route::post('/rooms/check-availability',[RoomController::class, 'checkAvailability'])->name('rooms.check-availability');
+
+
+
 
 
     // ===================================================================

@@ -11,8 +11,8 @@ use App\Models\Subjectclass;
 use App\Models\SubjectRegistrationStatus;
 use App\Models\SubjectTeacher;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -66,10 +66,29 @@ class SubjectClassController extends Controller
 
             $allStaff = User::orderBy('name')->get(['id', 'name']);
 
+            // ── Filter lists for the Add modal ─────────────────────────
+            // Only include sessions/terms that are actually used by at least
+            // one SubjectTeacher, so the chips don't show empty values.
+            $filterSessions = Schoolsession::whereIn(
+                    'id',
+                    SubjectTeacher::query()->select('sessionid')->distinct()
+                )
+                ->orderBy('session', 'asc')
+                ->get(['id', 'session']);
+
+            $filterTerms = Schoolterm::whereIn(
+                    'id',
+                    SubjectTeacher::query()->select('termid')->distinct()
+                )
+                ->orderBy('term', 'asc')
+                ->get(['id', 'term']);
+
             return view('subjectclass.index')
                 ->with('schoolclasses', $schoolclasses)
                 ->with('subjectteacher', $subjectteacher)
                 ->with('allStaff', $allStaff)
+                ->with('filterSessions', $filterSessions)
+                ->with('filterTerms', $filterTerms)
                 ->with('pagetitle', $pagetitle);
 
         } catch (\Exception $e) {
@@ -79,13 +98,13 @@ class SubjectClassController extends Controller
     }
 
     // =========================================================================
-    // DATATABLE — AJAX
+    // DATATABLE — AJAX (with server-side search)
     // =========================================================================
 
     public function data(Request $request)
     {
         try {
-            $subjectclasses = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
+            $query = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
                 ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
@@ -112,33 +131,77 @@ class SubjectClassController extends Controller
                     'subjectclass.updated_at'
                 ]);
 
-            return DataTables::of($subjectclasses)
+            // ── Global search ───────────────────────────────────────────
+            $search = $request->input('search.value');
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('users.name', 'like', "%{$search}%")
+                      ->orWhere('subject.subject', 'like', "%{$search}%")
+                      ->orWhere('subject.subject_code', 'like', "%{$search}%")
+                      ->orWhere('schoolclass.schoolclass', 'like', "%{$search}%")
+                      ->orWhere('schoolarm.arm', 'like', "%{$search}%")
+                      ->orWhere('schoolterm.term', 'like', "%{$search}%")
+                      ->orWhere('schoolsession.session', 'like', "%{$search}%");
+                });
+            }
+
+            // ── Per-column search ──────────────────────────────────────
+            $columns = $request->input('columns', []);
+            foreach ($columns as $col) {
+                if (isset($col['searchable']) && $col['searchable'] === 'true'
+                    && !empty($col['search']['value'])) {
+                    $val = $col['search']['value'];
+                    switch ($col['data']) {
+                        case 'teacher_info':
+                            $query->where('users.name', 'like', "%{$val}%");
+                            break;
+                        case 'subject_info':
+                            $query->where(function ($q) use ($val) {
+                                $q->where('subject.subject', 'like', "%{$val}%")
+                                  ->orWhere('subject.subject_code', 'like', "%{$val}%");
+                            });
+                            break;
+                        case 'class_info':
+                            $query->where(function ($q) use ($val) {
+                                $q->where('schoolclass.schoolclass', 'like', "%{$val}%")
+                                  ->orWhere('schoolarm.arm', 'like', "%{$val}%");
+                            });
+                            break;
+                        case 'term_info':
+                            $query->where('schoolterm.term', 'like', "%{$val}%");
+                            break;
+                        case 'session_info':
+                            $query->where('schoolsession.session', 'like', "%{$val}%");
+                            break;
+                    }
+                }
+            }
+
+            return DataTables::of($query)
                 ->addIndexColumn()
 
-                // ── Checkbox ──────────────────────────────────────────────────
                 ->addColumn('checkbox', function ($row) {
                     return '<input type="checkbox" class="form-check-input row-checkbox" value="' . $row->id . '">';
                 })
 
-                // ── Teacher Info with Avatar ───────────────────────────────
                 ->addColumn('teacher_info', function ($row) {
-                    $staffname = $this->cleanUtf8String($row->teachername ?? 'Unknown');
+                    $staffname  = $this->cleanUtf8String($row->teachername ?? 'Unknown');
                     $defaultUrl = asset('storage/staff_avatars/unnamed.jpg');
-                    $avatarUrl = $defaultUrl;
-                    $hasImage = false;
+                    $avatarUrl  = $defaultUrl;
+                    $hasImage   = false;
 
-                    $avatar = trim($row->picture ?? '');
+                    $avatar    = trim($row->picture ?? '');
                     $isDefault = in_array($avatar, ['unnamed.jpg', 'unnamed.png', ''], true);
 
                     if (!$isDefault && $avatar !== '') {
                         if (Storage::exists('public/staff_avatars/' . $avatar)) {
                             $avatarUrl = asset('storage/staff_avatars/' . $avatar);
-                            $hasImage = true;
+                            $hasImage  = true;
                         } else {
                             $diskPath = public_path('storage/staff_avatars/' . $avatar);
                             if (file_exists($diskPath)) {
                                 $avatarUrl = asset('storage/staff_avatars/' . $avatar);
-                                $hasImage = true;
+                                $hasImage  = true;
                             }
                         }
                     }
@@ -146,7 +209,7 @@ class SubjectClassController extends Controller
                     if ($hasImage) {
                         $avatarHtml = '<img src="' . e($avatarUrl) . '" alt="' . e($staffname) . '" class="teacher-avatar" onerror="this.onerror=null;this.src=\'' . e($defaultUrl) . '\'">';
                     } else {
-                        $words = preg_split('/\s+/', trim($staffname));
+                        $words    = preg_split('/\s+/', trim($staffname));
                         $initials = implode('', array_map(
                             fn($w) => mb_strtoupper(mb_substr($w, 0, 1, 'UTF-8'), 'UTF-8'),
                             array_slice($words, 0, 2)
@@ -154,45 +217,42 @@ class SubjectClassController extends Controller
                         $avatarHtml = '<div class="avatar-initials">' . e($initials) . '</div>';
                     }
 
-                    return '<div class="d-flex align-items-center gap-2">
-                        ' . $avatarHtml . '
-                        <span class="fw-semibold text-dark">' . e($staffname) . '</span>
-                    </div>';
+                    return '<div class="d-flex align-items-center gap-2">'
+                        . $avatarHtml
+                        . '<span class="fw-semibold text-dark">' . e($staffname) . '</span>'
+                        . '</div>';
                 })
 
-                // ── Subject Info ─────────────────────────────────────────────
                 ->addColumn('subject_info', function ($row) {
-                    return '<div>
-                        <span class="fw-semibold">' . e($this->cleanUtf8String($row->subjectname ?? '')) . '</span>
-                        <br><small class="text-muted">' . e($row->subjectcode ?? 'N/A') . '</small>
-                    </div>';
+                    return '<div>'
+                        . '<span class="fw-semibold">' . e($this->cleanUtf8String($row->subjectname ?? '')) . '</span>'
+                        . '<br><small class="text-muted">' . e($this->cleanUtf8String($row->subjectcode ?? 'N/A')) . '</small>'
+                        . '</div>';
                 })
 
-                // ── Class Info ──────────────────────────────────────────────
                 ->addColumn('class_info', function ($row) {
                     $class = $this->cleanUtf8String($row->schoolclass ?? '');
-                    $arm = $this->cleanUtf8String($row->schoolarm ?? '');
+                    $arm   = $this->cleanUtf8String($row->schoolarm ?? '');
                     return '<span class="sc-badge sc-badge-class">' . e($class) . ' (' . e($arm) . ')</span>';
                 })
 
-                // ── Term Badge ──────────────────────────────────────────────
                 ->addColumn('term_info', function ($row) {
-                    $term = $this->cleanUtf8String($row->termname ?? 'N/A');
+                    $term      = $this->cleanUtf8String($row->termname ?? 'N/A');
                     $termClass = match(true) {
                         str_contains($term, 'First')  => 'sc-badge-term-first',
                         str_contains($term, 'Second') => 'sc-badge-term-second',
                         str_contains($term, 'Third')  => 'sc-badge-term-third',
-                        default => 'sc-badge-term-other'
+                        default                       => 'sc-badge-term-other'
                     };
                     return '<span class="sc-badge ' . $termClass . '">' . e($term) . '</span>';
                 })
 
-                // ── Session Badge ────────────────────────────────────────────
                 ->addColumn('session_info', function ($row) {
-                    return '<span class="sc-badge sc-badge-session">' . e($this->cleanUtf8String($row->sessionname ?? 'N/A')) . '</span>';
+                    return '<span class="sc-badge sc-badge-session">'
+                        . e($this->cleanUtf8String($row->sessionname ?? 'N/A'))
+                        . '</span>';
                 })
 
-                // ── Registration Count ──────────────────────────────────────
                 ->addColumn('registration_count', function ($row) {
                     $count = SubjectRegistrationStatus::where('subjectclassid', $row->id)->count();
                     if ($count > 0) {
@@ -201,7 +261,6 @@ class SubjectClassController extends Controller
                     return '<span class="text-muted">—</span>';
                 })
 
-                // ── Date ──────────────────────────────────────────────────────
                 ->addColumn('formatted_date', function ($row) {
                     if (!$row->updated_at) {
                         return '<span class="text-muted small">—</span>';
@@ -211,7 +270,6 @@ class SubjectClassController extends Controller
                         . '</small>';
                 })
 
-                // ── Actions ──────────────────────────────────────────────────
                 ->addColumn('action', function ($row) {
                     $buttons = '<div class="d-flex gap-1">';
 
@@ -227,7 +285,7 @@ class SubjectClassController extends Controller
                             $row->staffid,
                             e($this->cleanUtf8String($row->teachername ?? '')),
                             e($this->cleanUtf8String($row->subjectname ?? '')),
-                            e($row->subjectcode ?? ''),
+                            e($this->cleanUtf8String($row->subjectcode ?? '')),
                             e($this->cleanUtf8String($row->termname ?? '')),
                             e($this->cleanUtf8String($row->sessionname ?? '')),
                             e($this->cleanUtf8String($row->schoolclass ?? '')),
@@ -249,7 +307,11 @@ class SubjectClassController extends Controller
                     return $buttons . '</div>';
                 })
 
-                ->rawColumns(['checkbox', 'teacher_info', 'subject_info', 'class_info', 'term_info', 'session_info', 'registration_count', 'formatted_date', 'action'])
+                ->rawColumns([
+                    'checkbox', 'teacher_info', 'subject_info', 'class_info',
+                    'term_info', 'session_info', 'registration_count',
+                    'formatted_date', 'action'
+                ])
                 ->make(true);
 
         } catch (\Exception $e) {
@@ -257,7 +319,7 @@ class SubjectClassController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'error' => $e->getMessage()
             ], 500);
@@ -274,15 +336,24 @@ class SubjectClassController extends Controller
             return response()->json([
                 'stats' => [
                     'total' => Subjectclass::count(),
-                    'unique_teachers' => Subjectclass::distinct('staffid')->count('staffid'),
+                    'unique_teachers' => Subjectclass::join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                        ->distinct('subjectteacher.staffid')
+                        ->count('subjectteacher.staffid'),
                     'unique_classes' => Subjectclass::distinct('schoolclassid')->count('schoolclassid'),
-                    'unique_subjects' => Subjectclass::distinct('subjectid')->count('subjectid'),
+                    'unique_subjects' => Subjectclass::join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                        ->distinct('subjectteacher.subjectid')
+                        ->count('subjectteacher.subjectid'),
                 ],
             ]);
         } catch (\Exception $e) {
             Log::error('SubjectClass stats error: ' . $e->getMessage());
             return response()->json([
-                'stats' => ['total' => 0, 'unique_teachers' => 0, 'unique_classes' => 0, 'unique_subjects' => 0],
+                'stats' => [
+                    'total' => 0,
+                    'unique_teachers' => 0,
+                    'unique_classes' => 0,
+                    'unique_subjects' => 0
+                ],
             ]);
         }
     }
@@ -407,7 +478,6 @@ class SubjectClassController extends Controller
 
         $newStaffId = (int) $request->input('new_staffid');
 
-        // ── 1. Load the subject class ─────────────────────────────────
         $subjectclass = Subjectclass::find($id);
         if (!$subjectclass) {
             return response()->json([
@@ -416,7 +486,6 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        // ── 2. Load the current subjectteacher to extract fixed fields ─
         $currentSubjectTeacher = SubjectTeacher::find($subjectclass->subjectteacherid);
         if (!$currentSubjectTeacher) {
             return response()->json([
@@ -430,7 +499,6 @@ class SubjectClassController extends Controller
         $termId     = $currentSubjectTeacher->termid;
         $sessionId  = $currentSubjectTeacher->sessionid;
 
-        // No-op: same teacher
         if ($oldStaffId === $newStaffId) {
             return response()->json([
                 'success' => true,
@@ -438,7 +506,6 @@ class SubjectClassController extends Controller
             ], 200);
         }
 
-        // ── 3. Find or create subjectteacher for (newStaff + same subject/term/session) ─
         $newSubjectTeacher = SubjectTeacher::firstOrCreate(
             [
                 'staffid'   => $newStaffId,
@@ -448,7 +515,6 @@ class SubjectClassController extends Controller
             ]
         );
 
-        // ── 4. Check the new combo isn't already on this class ────────
         $duplicate = Subjectclass::where('schoolclassid', $subjectclass->schoolclassid)
             ->where('subjectteacherid', $newSubjectTeacher->id)
             ->where('id', '!=', $id)
@@ -464,12 +530,10 @@ class SubjectClassController extends Controller
         try {
             DB::beginTransaction();
 
-            // ── 5. Update the subjectclass row ────────────────────────
             $subjectclass->update([
                 'subjectteacherid' => $newSubjectTeacher->id,
             ]);
 
-            // ── 6. Cascade staff_id to all related records ────────────
             Broadsheets::where('subjectclass_id', $id)
                 ->update(['staff_id' => $newStaffId]);
 
@@ -641,7 +705,7 @@ class SubjectClassController extends Controller
     {
         try {
             $ids = $request->input('ids', []);
-            
+
             if (empty($ids)) {
                 return response()->json([
                     'success' => false,
@@ -650,8 +714,8 @@ class SubjectClassController extends Controller
             }
 
             $existingIds = Subjectclass::whereIn('id', $ids)->pluck('id')->toArray();
-            $invalidIds = array_diff($ids, $existingIds);
-            
+            $invalidIds  = array_diff($ids, $existingIds);
+
             if (!empty($invalidIds)) {
                 return response()->json([
                     'success' => false,
@@ -659,13 +723,12 @@ class SubjectClassController extends Controller
                 ], 400);
             }
 
-            // Check which ones have records
             $blockedIds = [];
             foreach ($ids as $id) {
                 $hasBroadsheets   = Broadsheets::where('subjectclass_id', $id)->exists();
                 $hasRegistrations = SubjectRegistrationStatus::where('subjectclassid', $id)->exists();
                 $hasMockRecords   = BroadsheetsMock::where('subjectclass_id', $id)->exists();
-                
+
                 if ($hasBroadsheets || $hasRegistrations || $hasMockRecords) {
                     $blockedIds[] = $id;
                 }
@@ -684,13 +747,13 @@ class SubjectClassController extends Controller
             DB::commit();
 
             Log::info('Bulk delete completed', [
-                'total' => count($ids),
+                'total'   => count($ids),
                 'deleted' => $deleted
             ]);
 
             return response()->json([
-                'success' => true,
-                'message' => $deleted . ' subject class(es) deleted successfully.',
+                'success'       => true,
+                'message'       => $deleted . ' subject class(es) deleted successfully.',
                 'deleted_count' => $deleted
             ], 200);
 
@@ -705,7 +768,7 @@ class SubjectClassController extends Controller
     }
 
     // =========================================================================
-    // ASSIGNMENTS — fetch class + teacher for a given subject class ID
+    // ASSIGNMENTS
     // =========================================================================
 
     public function assignments($subjectClassId): JsonResponse
@@ -748,8 +811,13 @@ class SubjectClassController extends Controller
         if (empty($string)) {
             return '';
         }
-        $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
-        $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $string);
-        return $string;
+        $string = (string) $string;
+        if (function_exists('mb_scrub')) {
+            $string = mb_scrub($string, 'UTF-8');
+        } else {
+            $string = iconv('UTF-8', 'UTF-8//IGNORE', $string);
+        }
+        $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $string);
+        return $string ?? '';
     }
 }
