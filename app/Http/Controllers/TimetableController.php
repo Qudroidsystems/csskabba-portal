@@ -1179,12 +1179,21 @@ class TimetableController extends Controller
             ->get()
             ->keyBy('id');
 
-        $subjectTeachers = SubjectTeacher::where('sessionid', $sessionId)
-            ->when($termId, fn($q) => $q->where('termid', $termId))
-            ->whereHas('subjectclass', fn($q) => $q->whereIn('schoolclassid', $classIds))
-            ->with(['subject', 'staff', 'subjectclass'])
+        // Driven from `subjectclass` rows, NOT SubjectTeacher->subjectclass:
+        // that relation is a hasOne, but one subjectteacher row is commonly
+        // linked to several classes (same teacher/subject for JSS1A, 1B,
+        // 1C...). Grouping by the hasOne put the pairing under just ONE of
+        // those classes, so the others showed no/too few subjects here, got
+        // no constraints from the wizard, and came out of generation empty.
+        $subjectTeachers = Subjectclass::with(['subjectTeacher.subject', 'subjectTeacher.staff'])
+            ->whereIn('schoolclassid', $classIds)
+            ->whereHas('subjectTeacher', function ($q) use ($sessionId, $termId) {
+                $q->where('sessionid', $sessionId);
+                if ($termId) $q->where('termid', $termId);
+            })
             ->get()
-            ->groupBy(fn($st) => $st->subjectclass->schoolclassid);
+            ->groupBy(fn($sc) => (int) $sc->schoolclassid)
+            ->map(fn($rows) => $rows->pluck('subjectTeacher')->filter()->unique('subjectid')->values());
 
         // Every subject-teacher pairing for this session/term, regardless
         // of which class(es) it may already be linked to via `subjectclass`
@@ -1508,6 +1517,19 @@ class TimetableController extends Controller
                                 'is_protected'         => !empty($row['is_protected']),
                             ]
                         );
+                    }
+
+                    // The wizard's subject list is the source of truth for
+                    // this class: drop constraints left over from earlier
+                    // runs for subjects no longer listed (unassigned, or a
+                    // pending subject the admin didn't tick), otherwise they
+                    // keep eating this class's periods.
+                    if ($rowsForThisClass->isNotEmpty()) {
+                        $keepSubjectIds = $rowsForThisClass->pluck('subject_id')->all();
+                        TimetableConstraint::where('setting_id', $setting->id)
+                            ->whereNotIn('subject_id', $keepSubjectIds)->delete();
+                        TimetableSubjectPriority::where('setting_id', $setting->id)
+                            ->whereNotIn('subject_id', $keepSubjectIds)->delete();
                     }
                 }
 
@@ -3039,6 +3061,7 @@ class TimetableController extends Controller
             ->where('is_active', true)
             ->where('is_preview', false)
             ->when($validated['term_id'] ?? null, fn($q) => $q->where('term_id', $validated['term_id']))
+            ->when(empty($validated['term_id']), fn($q) => $q->whereNull('term_id'))
             ->when($validated['schoolclass_ids'] ?? null, fn($q) => $q->whereIn('schoolclass_id', $validated['schoolclass_ids']))
             ->get();
 
@@ -3078,6 +3101,24 @@ class TimetableController extends Controller
 
             $crossOccupied = [];
             $roomOccupied  = [];
+            $teacherLoad   = [];
+
+            // Teachers already booked in classes OUTSIDE this run (e.g. a
+            // "selected classes" run) must stay blocked, exactly like the
+            // single-class autoGenerate() does.
+            TimetableSlot::whereHas('setting', function ($q) use ($validated, $settings) {
+                    $q->where('session_id', $validated['session_id'])->where('is_active', true)->where('is_preview', false)
+                      ->whereNotIn('id', $settings->pluck('id'));
+                    if (!empty($validated['term_id'])) $q->where('term_id', $validated['term_id']);
+                    else                                $q->whereNull('term_id');
+                })
+                ->whereNotNull('teacher_id')->where('is_free', false)
+                ->with('period:id,start_time,end_time')
+                ->get(['teacher_id', 'period_id', 'day'])
+                ->each(function ($occ) use (&$crossOccupied) {
+                    if (!$occ->period) return;
+                    $crossOccupied[$occ->teacher_id][$occ->day][] = $this->periodTimeSignature($occ->period);
+                });
 
             if ($includeRooms) {
                 TimetableSlot::whereHas('setting', function ($q) use ($validated, $settings) {
@@ -3095,8 +3136,21 @@ class TimetableController extends Controller
                     });
             }
 
+            // PHASE 1: every class places its REQUIRED periods_per_week first.
+            // Previously each class also ran its overflow fill (handing its
+            // teachers extra periods beyond the configured minimum) before
+            // the next class had placed anything -- so classes processed
+            // later found shared teachers already booked and ended up with
+            // missing subjects / Free cells.
+            $finalizers = [];
             foreach ($ordered as $setting) {
-                $stats = $this->runAutoGenerateCore($setting, $crossOccupied, $includeRooms, $roomOccupied);
+                $phase1 = $this->runAutoGenerateCore($setting, $crossOccupied, $includeRooms, $roomOccupied, $teacherLoad, true);
+                $finalizers[$setting->id] = $phase1['finalize'];
+            }
+
+            // PHASE 2: overflow fill + free marking + protected eviction.
+            foreach ($ordered as $setting) {
+                $stats = ($finalizers[$setting->id])();
                 $setting->update([
                     'generation_seed'  => $usedSeed,
                     'generation_name'  => $validated['generation_name']  ?? $setting->generation_name,
@@ -3106,10 +3160,16 @@ class TimetableController extends Controller
                 ]);
                 $results[] = [
                     'setting_id'     => $setting->id,
+                    'schoolclass_id' => $setting->schoolclass_id,
                     'class_name'     => $this->getClassName($setting->schoolclass),
                     'placed'         => $stats['placed'],
                     'unplaced'       => $stats['unplaced_subjects'],
                     'room_shortfall' => $stats['room_shortfall_count'] ?? 0,
+                    'lesson_slots'   => $stats['lesson_slots'] ?? 0,
+                    'free_slots'     => $stats['free_slots'] ?? 0,
+                    'subjects'       => $stats['subjects_configured'] ?? 0,
+                    'no_teacher'     => $stats['subjects_without_teacher'] ?? [],
+                    'issue'          => $this->describeGenerationIssue($setting, $stats),
                 ];
             }
 
@@ -3350,11 +3410,38 @@ class TimetableController extends Controller
     // =========================================================================
     // CORE GENERATOR
     // =========================================================================
+    /**
+     * Plain-language reason a class came out empty / thin, so the wizard
+     * can say WHY instead of just "0 placed".
+     */
+    private function describeGenerationIssue(TimetableSetting $setting, array $stats): ?string
+    {
+        if (($stats['lesson_slots'] ?? 0) === 0) {
+            return 'No lesson periods on this timetable -- re-apply the period structure.';
+        }
+        if (($stats['subjects_configured'] ?? 0) === 0) {
+            $anyTerm = SubjectTeacher::where('sessionid', $setting->session_id)
+                ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $setting->schoolclass_id))
+                ->exists();
+            return $anyTerm && $setting->term_id
+                ? 'No subjects assigned to this class for the selected term (assignments exist for another term).'
+                : 'No subjects assigned to this class for this session -- add them under Subject Class.';
+        }
+        $free = $stats['free_slots'] ?? 0;
+        $budgetFree = max(0, ($stats['lesson_slots'] ?? 0) - ($stats['placement_budget'] ?? 0));
+        if ($free > $budgetFree) {
+            return ($free - $budgetFree) . ' slot(s) left Free because no teacher was available (clashes, availability or period limits).';
+        }
+        return null;
+    }
+
     private function runAutoGenerateCore(
         TimetableSetting $setting,
         array &$crossOccupied,
         bool $includeRooms = false,
-        array &$roomOccupied = []
+        array &$roomOccupied = [],
+        array &$teacherLoad = [],
+        bool $deferFinalize = false
     ): array {
         $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
         $days          = $setting->active_days ?? self::DAYS;
@@ -3440,9 +3527,15 @@ class TimetableController extends Controller
         $lessonsPlacedByDay = [];
         $maxPerDay = $setting->max_lessons_per_day ?? null;
 
-        $teacherWeekTotal  = [];
-        $teacherClassTotal = [];
-        $teacherDayTotal   = [];
+        // Teacher totals are shared across classes when the caller passes
+        // $teacherLoad (whole-school runs), so teacher_total / teacher_day
+        // period limits apply school-wide instead of resetting per class.
+        $teacherLoad['week']  = $teacherLoad['week']  ?? [];
+        $teacherLoad['class'] = $teacherLoad['class'] ?? [];
+        $teacherLoad['day']   = $teacherLoad['day']   ?? [];
+        $teacherWeekTotal  = &$teacherLoad['week'];
+        $teacherClassTotal = &$teacherLoad['class'];
+        $teacherDayTotal   = &$teacherLoad['day'];
         $classWeekTotal    = 0;
         $subjectDayPeriods = [];
 
@@ -3760,6 +3853,16 @@ class TimetableController extends Controller
             }
         }
 
+        // Subjects with a constraint but no teacher at all -- they still get
+        // placed (teacher-less), but the admin needs to know why.
+        $subjectsWithoutTeacher = $requirements
+            ->filter(fn($c) => !$subjectTeachers->get($c->subject_id)?->first()?->staffid)
+            ->map(fn($c) => $c->subject?->subject ?? ('Subject #' . $c->subject_id))
+            ->values()->all();
+
+        $finalize = function () use (
+            &$placed, &$placementBudget, &$requirements, &$subjectTeachers, &$slotPool, &$forcedFreeKeys, &$subjectDayPeriods, &$rules, &$lessonPeriods, &$teacherDaySlot, &$crossOccupied, &$setting, &$availabilityMap, &$limits, &$classId, &$teacherWeekTotal, &$teacherClassTotal, &$teacherDayTotal, &$classWeekTotal, &$maxPerDay, &$lessonsPlacedByDay, &$includeRooms, &$strictRoomMap, &$availableRoomIds, &$roomOccupied, &$roomShortfallCount, &$noRoomPlacementCount, &$unplacedSubjects, &$priorities, &$constraints, &$roomRefusedSubjects, &$totalSlots, $subjectsWithoutTeacher
+        ) {
         // =====================================================================
         // OVERFLOW FILL: $placementBudget already reserves exactly
         // max($freeTarget, count($forcedFreeKeys)) slots as intentionally
@@ -3960,8 +4063,24 @@ class TimetableController extends Controller
             'room_shortfall_count' => $roomShortfallCount,
             'no_room_placement_count' => $noRoomPlacementCount,
             'room_refused_count' => $roomRefusedSubjects,
+            'lesson_slots' => $totalSlots,
+            'free_slots' => max(0, $totalSlots - count($placed)),
+            'placement_budget' => $placementBudget,
+            'required_total' => (int) $requirements->sum('periods_per_week'),
+            'subjects_configured' => $requirements->count(),
+            'subjects_without_teacher' => $subjectsWithoutTeacher,
             'strict_room_mapping' => $rules['strict_room_mapping'],
         ];
+        };
+
+        // Whole-school runs place every class's REQUIRED periods first and
+        // only then run the overflow fill / free marking for each class --
+        // see autoGenerateWholeSchool(). Returning the finalizer lets the
+        // caller defer it without duplicating all of this state.
+        if ($deferFinalize) {
+            return ['deferred' => true, 'finalize' => $finalize, 'placed_required' => count($placed)];
+        }
+        return $finalize();
     }
 
     /**

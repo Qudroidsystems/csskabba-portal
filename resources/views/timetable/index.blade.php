@@ -4369,6 +4369,23 @@ function buildWizardResultsSummary(results) {
     return html;
 }
 
+function buildGenerationIssuesHtml(classes) {
+    const flagged = (classes || []).filter(c => c.issue || !c.placed || (c.no_teacher || []).length);
+    if (!flagged.length) return '';
+    return `<div class="text-start mt-2" style="font-size:12px">
+        <div class="text-warning mb-1"><i class="ri-alert-line"></i> ${flagged.length} class(es) need attention:</div>
+        <ul class="mb-0 ps-4" style="max-height:180px;overflow:auto">
+            ${flagged.map(c => {
+                const bits = [];
+                if (c.issue) bits.push(escapeHtml(c.issue));
+                else if (!c.placed) bits.push('Nothing was placed.');
+                if ((c.no_teacher || []).length) bits.push('No teacher for: ' + c.no_teacher.map(escapeHtml).join(', '));
+                return `<li><strong>${escapeHtml(c.class_name)}</strong> — ${bits.join(' ')}</li>`;
+            }).join('')}
+        </ul>
+    </div>`;
+}
+
 function animateWizardResults(results) {
     return new Promise((resolve) => {
         const formEl     = document.getElementById('wizFormContent');
@@ -4397,9 +4414,18 @@ function animateWizardResults(results) {
             const spinner = document.getElementById(`wizProgSpinner${i}`);
             const check   = document.getElementById(`wizProgCheck${i}`);
             const detail  = document.getElementById(`wizProgDetail${i}`);
+            const r = results[i];
             if (spinner) spinner.style.display = 'none';
-            if (check)   check.style.display = '';
-            if (detail)  detail.textContent = `${results[i].placed} placed${results[i].unplaced?.length ? `, ${results[i].unplaced.length} short` : ''}`;
+            if (check) {
+                check.style.display = '';
+                if (r.issue || !r.placed) {
+                    check.className = 'ri-error-warning-fill text-warning';
+                    check.title = r.issue || 'Nothing was placed for this class.';
+                }
+            }
+            if (detail)  detail.textContent = r.lesson_slots
+                ? `${r.placed}/${r.lesson_slots} filled${r.unplaced?.length ? `, ${r.unplaced.length} short` : ''}`
+                : `${r.placed} placed${r.unplaced?.length ? `, ${r.unplaced.length} short` : ''}`;
             i++;
         }, stepDelay);
     });
@@ -5810,7 +5836,7 @@ async function submitGenerationWizard(alsoGenerate) {
                 : '';
             AppleAlert.rich({
                 title: 'Generated!',
-                html: `Generated timetables for <strong>${genData.classes.length}</strong> class(es).${summaryHtml}${conflictNote}${shortfallNote}`,
+                html: `Generated timetables for <strong>${genData.classes.length}</strong> class(es).${summaryHtml}${buildGenerationIssuesHtml(genData.classes)}${conflictNote}${shortfallNote}`,
                 icon: 'success',
                 confirmText: 'OK',
                 theme: 'success',
@@ -5841,7 +5867,7 @@ async function submitGenerationWizard(alsoGenerate) {
                     bootstrap.Modal.getInstance(document.getElementById('generationWizardModal'))?.hide();
                     AppleAlert.rich({
                         title: 'Generated!',
-                        html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}`,
+                        html: `Generated timetables for <strong>${forceData.classes.length}</strong> class(es).${summaryHtml}${buildGenerationIssuesHtml(forceData.classes)}`,
                         icon: 'success',
                         confirmText: 'OK',
                         theme: 'success',
