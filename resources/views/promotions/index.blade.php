@@ -384,6 +384,8 @@
     .toast-notification, .modal-content { animation: none !important; }
 }
 .promotion-badge-advanced { background:#6366f1; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
+.quick-select-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; margin-bottom:12px; }
+.quick-select-bar .qs-label { font-size:13px; font-weight:600; color:#1e3a5f; }
 </style>
 
 <div class="main-content">
@@ -542,6 +544,29 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    {{-- Quick select by System Recommendation --}}
+                    <div class="quick-select-bar" id="quickSelectBar">
+                        <span class="qs-label"><i class="ri-checkbox-multiple-line me-1"></i>Quick select:</span>
+                        <select class="form-select form-select-sm" id="quickSelectRecommendation" style="width:auto;min-width:230px;">
+                            <option value="">— by System Recommendation —</option>
+                            <option value="promoted">Promoted</option>
+                            <option value="trial">Promoted on Trial</option>
+                            <option value="see_principal">See Principal</option>
+                            <option value="repeated">Advice to Repeat</option>
+                            <option value="awaiting">Awaiting / Not Configured</option>
+                        </select>
+                        <label class="form-check-label small d-inline-flex align-items-center gap-1" title="Leave out students who already have a saved decision for this term">
+                            <input type="checkbox" class="form-check-input m-0" id="quickSelectUndecidedOnly">
+                            Only undecided
+                        </label>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectByRecommendation(false)">
+                            <i class="ri-check-double-line me-1"></i>Select matching
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectByRecommendation(true)" title="Add matching students to the current selection">
+                            <i class="ri-add-line me-1"></i>Add to selection
+                        </button>
+                    </div>
+
                     <div class="bulk-action-bar" id="bulkActionBar">
                         <span class="bulk-count" id="bulkCount">0 selected</span>
                         <button type="button" class="btn btn-info btn-sm text-white" id="advanceTermActionBtn" onclick="submitAdvanceTerm()"
@@ -1057,6 +1082,7 @@ function animateCounter(el, start, end, dur = 500) {
 
 /* ── Stats ─────────────────────────────────────────────────────────────────── */
 function updateStats() {
+    if (typeof refreshQuickSelectCounts === 'function') refreshQuickSelectCounts();
     const rows = document.querySelectorAll('#studentTableBody tr[data-student-id]');
     let total = 0, promoted = 0, trial = 0, repeat = 0;
     rows.forEach(row => {
@@ -1215,6 +1241,7 @@ document.getElementById('bulkPromoteActionBtn')?.addEventListener('click', () =>
     const selected = document.querySelectorAll('.row-checkbox:checked');
     if (!selected.length) { showToast('No students selected', 'warning'); return; }
     document.getElementById('bulkSelectedCount').innerText = selected.length;
+    presetBulkDecisionFromSelection();
     new bootstrap.Modal(document.getElementById('bulkPromotionModal')).show();
 });
 
@@ -1735,6 +1762,84 @@ async function openPromotionModal(studentId, admissionNo, firstName, lastName, o
     }
 
     new bootstrap.Modal(document.getElementById('promotionModal')).show();
+}
+
+/* ── Quick select by System Recommendation ──────────────────────────────────── */
+const REC_LABELS = {
+    promoted: 'Promoted', trial: 'Promoted on Trial', see_principal: 'See Principal',
+    repeated: 'Advice to Repeat', awaiting: 'Awaiting / Not Configured',
+};
+function normalizeRec(st) {
+    st = (st || '').toLowerCase();
+    return st === 'repeat' ? 'repeated' : (st || 'awaiting');
+}
+function rowRec(tr) {
+    return normalizeRec(tr.querySelector('[data-rec-status]')?.getAttribute('data-rec-status'));
+}
+function rowIsDecided(tr) {
+    const saved = (tr.querySelector('[data-saved-status]')?.getAttribute('data-saved-status') || '').toLowerCase();
+    return saved !== '' && saved !== 'pending';
+}
+
+/* Show how many students on this page fall under each recommendation. */
+function refreshQuickSelectCounts() {
+    const sel = document.getElementById('quickSelectRecommendation');
+    if (!sel) return;
+    const counts = {};
+    document.querySelectorAll('#studentTableBody tr[data-student-id]').forEach(tr => {
+        const r = rowRec(tr);
+        counts[r] = (counts[r] || 0) + 1;
+    });
+    [...sel.options].forEach(opt => {
+        if (!opt.value) return;
+        const n = counts[opt.value] || 0;
+        opt.textContent = `${REC_LABELS[opt.value]} (${n})`;
+        opt.disabled = n === 0;
+    });
+}
+
+function selectByRecommendation(additive) {
+    const status = document.getElementById('quickSelectRecommendation').value;
+    if (!status) { showToast('Choose a recommendation first', 'warning'); return; }
+    const undecidedOnly = document.getElementById('quickSelectUndecidedOnly').checked;
+
+    let matched = 0, skippedDecided = 0;
+    document.querySelectorAll('#studentTableBody tr[data-student-id]').forEach(tr => {
+        const cb = tr.querySelector('.row-checkbox');
+        if (!cb) return;
+        let isMatch = rowRec(tr) === status;
+        if (isMatch && undecidedOnly && rowIsDecided(tr)) { isMatch = false; skippedDecided++; }
+
+        if (isMatch) {
+            cb.checked = true;
+            matched++;
+        } else if (!additive) {
+            cb.checked = false;
+        }
+        tr.classList.toggle('selected', cb.checked);
+    });
+
+    const sa = document.getElementById('selectAll');
+    if (sa) sa.checked = false;
+    updateBulkBar();
+
+    const extra = skippedDecided ? ` (${skippedDecided} already decided, skipped)` : '';
+    showToast(matched
+        ? `${matched} ${REC_LABELS[status]} student(s) ${additive ? 'added' : 'selected'}${extra}`
+        : `No undecided students match that recommendation${extra}`,
+        matched ? 'success' : 'info');
+}
+
+/* If every selected student shares one recommendation, pre-pick the matching
+   decision in the Bulk Promote modal (admin can still change it). */
+function presetBulkDecisionFromSelection() {
+    const recs = new Set();
+    document.querySelectorAll('.row-checkbox:checked').forEach(cb => recs.add(rowRec(cb.closest('tr'))));
+    if (recs.size !== 1) return;
+    const map = { promoted: 'promoted', trial: 'trial', see_principal: 'see_principal', repeated: 'repeat' };
+    const val = map[[...recs][0]];
+    const sel = document.getElementById('bulkPromotionType');
+    if (val && sel) sel.value = val;
 }
 
 /* ── Average basis / class history / advance term / print list ─────────────── */
