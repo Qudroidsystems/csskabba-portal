@@ -58,6 +58,9 @@ class PaystackGateway
      */
     public function initialize(string $email, int $amountKobo, string $reference, string $callbackUrl, array $metadata = []): array
     {
+        if (!$this->secretKey) {
+            return ['ok' => false, 'message' => 'Online payment is not configured.'];
+        }
         try {
             $res = Http::withToken($this->secretKey)->acceptJson()->timeout(30)
                 ->post(self::BASE_URL . '/transaction/initialize', [
@@ -90,6 +93,9 @@ class PaystackGateway
      */
     public function verify(string $reference): array
     {
+        if (!$this->secretKey) {
+            return ['ok' => false, 'message' => 'Online payment is not configured.'];
+        }
         try {
             $res = Http::withToken($this->secretKey)->acceptJson()->timeout(30)
                 ->get(self::BASE_URL . '/transaction/verify/' . rawurlencode($reference));
