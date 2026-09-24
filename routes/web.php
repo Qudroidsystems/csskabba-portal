@@ -76,6 +76,8 @@ use App\Http\Controllers\StudentIdCardController;
 use App\Http\Controllers\StudentImageUploadController;
 use App\Http\Controllers\StudentPaymentController;
 use App\Http\Controllers\ResultAccessController;
+use App\Http\Controllers\SchoolNoticeController;
+use App\Http\Controllers\MessagingSettingsController;
 use App\Http\Controllers\StudentpersonalityprofileController;
 use App\Http\Controllers\StudentResultsController;
 use App\Http\Controllers\SubjectClassController;
@@ -534,6 +536,26 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/my-payments', [StudentPaymentController::class, 'index'])->name('student.payments');
     Route::get('/my-payments/receipt', [StudentPaymentController::class, 'printReceipt'])->name('student.payments.receipt');
     Route::get('/my-payments/pay', [OnlineFeeController::class, 'myFees'])->name('student.fees.pay');
+
+    // School notices to parents/staff (SMS, WhatsApp, email)
+    Route::prefix('notices')->name('notices.')->group(function () {
+        Route::get('/', [SchoolNoticeController::class, 'index'])->name('index');
+        Route::get('/create', [SchoolNoticeController::class, 'create'])->name('create');
+        Route::post('/', [SchoolNoticeController::class, 'store'])->name('store');
+        Route::post('/preview', [SchoolNoticeController::class, 'preview'])->name('preview');
+        Route::post('/test', [SchoolNoticeController::class, 'test'])->name('test');
+        Route::get('/students', [SchoolNoticeController::class, 'searchStudents'])->name('students');
+        Route::get('/settings', [MessagingSettingsController::class, 'index'])->name('settings');
+        Route::put('/settings/{channel}', [MessagingSettingsController::class, 'update'])->whereIn('channel', ['sms', 'whatsapp', 'email'])->name('settings.update');
+        Route::post('/settings/{channel}/test', [MessagingSettingsController::class, 'test'])->whereIn('channel', ['sms', 'whatsapp', 'email'])->name('settings.test');
+        Route::get('/{notice}', [SchoolNoticeController::class, 'show'])->whereNumber('notice')->name('show');
+        Route::get('/{notice}/edit', [SchoolNoticeController::class, 'edit'])->whereNumber('notice')->name('edit');
+        Route::put('/{notice}', [SchoolNoticeController::class, 'update'])->whereNumber('notice')->name('update');
+        Route::delete('/{notice}', [SchoolNoticeController::class, 'destroy'])->whereNumber('notice')->name('destroy');
+        Route::post('/{notice}/cancel', [SchoolNoticeController::class, 'cancel'])->whereNumber('notice')->name('cancel');
+        Route::post('/{notice}/resend', [SchoolNoticeController::class, 'resendFailed'])->whereNumber('notice')->name('resend');
+        Route::post('/{notice}/duplicate', [SchoolNoticeController::class, 'duplicate'])->whereNumber('notice')->name('duplicate');
+    });
 
     // Online school-fee payments (Paystack)
     Route::prefix('online-fees')->name('online-fees.')->group(function () {

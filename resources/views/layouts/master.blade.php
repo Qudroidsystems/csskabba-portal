@@ -1001,6 +1001,24 @@
                         </li>
                     @endcan
 
+                    {{-- COMMUNICATION --}}
+                        @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices'))
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>COMMUNICATION</span></li>
+                        <li class="nav-item">
+                            <a href="#sidebarNotices" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarNotices">
+                                <i class="ri-megaphone-line"></i> <span>School Notices</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarNotices">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('notices.index') }}" class="nav-link">All Notices</a></li>
+                                    @can('Create notices')<li class="nav-item"><a href="{{ route('notices.create') }}" class="nav-link">New Notice</a></li>@endcan
+                                    @can('Manage notification settings')<li class="nav-item"><a href="{{ route('notices.settings') }}" class="nav-link">Notification Settings</a></li>@endcan
+                                </ul>
+                            </div>
+                        </li>
+                        @endif
+
+
                     {{-- SCHOOL BASIC SETTINGS --}}
                     @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>SCHOOL BASIC SETTINGS</span></li>
@@ -1809,6 +1827,12 @@
         {title:'Income Statement',                      url:'{{ route("reports.financial.income-statement") }}',             icon:'mdi-chart-line',              category:'Accounting',          keywords:['income','profit','loss','statement','p&l']},
         {title:'Trial Balance',                         url:'{{ route("reports.financial.trial-balance") }}',                icon:'mdi-calculator',              category:'Accounting',          keywords:['trial','balance','ledger','accounts']},
         {title:'Cash Flow',                             url:'{{ route("reports.financial.cash-flow") }}',                    icon:'mdi-cash-sync',               category:'Accounting',          keywords:['cash','flow','liquidity','report']},
+        @can('View notices')
+        {title:'School Notices',                        url:'{{ route("notices.index") }}',                                  icon:'mdi-bullhorn',                category:'Communication',       keywords:['notice','sms','whatsapp','email','parents','announcement','exam','holiday','midterm','ca test']},
+        @endcan
+        @can('Create notices')
+        {title:'New Notice',                            url:'{{ route("notices.create") }}',                                 icon:'mdi-bullhorn-outline',        category:'Communication',       keywords:['send','sms','broadcast','parents','notify']},
+        @endcan
         {title:'Student Debtors List',                  url:'{{ route("reports.financial.debtors") }}',                      icon:'mdi-account-alert',           category:'Accounting',          keywords:['debtor','outstanding','arrears','owe','unpaid']},
         @can('View result-access')
         {title:'Result Access Control',                 url:'{{ route("result-access.index") }}',                            icon:'mdi-lock-open-check',         category:'Accounting',          keywords:['result','access','owing','debt','block','withhold','exception']},
