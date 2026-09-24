@@ -10,6 +10,7 @@ use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * A student's fee statement for one term: bills, payable amounts after
@@ -27,6 +28,30 @@ class StudentFeeStatementService
         protected BillAdjustmentService $billAdjustment,
         protected ArrearsService $arrears
     ) {}
+
+    /** Column lists per table, so optional columns (added by later migrations
+     *  that may not have run on every server) never break a query. */
+    protected static array $columnCache = [];
+
+    protected function hasColumn(string $table, string $column): bool
+    {
+        if (!isset(self::$columnCache[$table])) {
+            try {
+                self::$columnCache[$table] = array_map('strtolower', Schema::getColumnListing($table));
+            } catch (\Throwable $e) {
+                self::$columnCache[$table] = [];
+            }
+        }
+        return in_array(strtolower($column), self::$columnCache[$table], true);
+    }
+
+    /** whereNull(alias.deleted_at) only when the table has soft deletes. */
+    protected function notDeleted($query, string $table, ?string $alias = null)
+    {
+        return $this->hasColumn($table, 'deleted_at')
+            ? $query->whereNull(($alias ? $alias . '.' : '') . 'deleted_at')
+            : $query;
+    }
 
     public function buildStatement(Student $student, ?int $termId, ?int $sessionId): array
     {
@@ -69,7 +94,7 @@ class StudentFeeStatementService
             ->where('bcts.class_id', $classId)
             ->where('bcts.termid_id', $termId)
             ->where('bcts.session_id', $sessionId)
-            ->whereNull('bcts.deleted_at')
+            ->tap(fn ($q) => $this->notDeleted($q, 'school_bill_class_term_session', 'bcts'))
             ->where(function ($q) use ($student) {
                 $q->whereNull('sb.statusId')
                   ->orWhere('sb.statusId', '')
@@ -103,8 +128,8 @@ class StudentFeeStatementService
             ->where('p.class_id', $classId)
             ->where('p.termid_id', $termId)
             ->where('p.session_id', $sessionId)
-            ->whereNull('p.deleted_at')
-            ->whereNull('r.deleted_at')
+            ->tap(fn ($q) => $this->notDeleted($q, 'student_bill_payment', 'p'))
+            ->tap(fn ($q) => $this->notDeleted($q, 'student_bill_payment_record', 'r'))
             ->groupBy('p.school_bill_id')
             ->select('p.school_bill_id', DB::raw('SUM(r.amount_paid) as total_paid'))
             ->pluck('total_paid', 'school_bill_id');
@@ -187,7 +212,7 @@ class StudentFeeStatementService
             ?: DB::table('student_bill_payment_book')->where('student_id', $studentId)
                 ->where('term_id', $termId)->where('session_id', $sessionId)->value('class_id')
             ?: DB::table('student_bill_payment')->where('student_id', $studentId)
-                ->where('termid_id', $termId)->where('session_id', $sessionId)->whereNull('deleted_at')->value('class_id')
+                ->where('termid_id', $termId)->where('session_id', $sessionId)->tap(fn ($q) => $this->notDeleted($q, 'student_bill_payment'))->value('class_id')
             ?: DB::table('broadsheet_records')->where('student_id', $studentId)
                 ->where('session_id', $sessionId)->orderByDesc('id')->value('schoolclass_id');
 
@@ -203,31 +228,48 @@ class StudentFeeStatementService
             ->where('p.student_id', $studentId)
             ->where('p.termid_id', $termId)
             ->where('p.session_id', $sessionId)
-            ->whereNull('p.deleted_at')
-            ->whereNull('r.deleted_at')
+            ->tap(fn ($q) => $this->notDeleted($q, 'student_bill_payment', 'p'))
+            ->tap(fn ($q) => $this->notDeleted($q, 'student_bill_payment_record', 'r'))
             ->orderByDesc('r.created_at')
             ->orderByDesc('r.id')
-            ->get([
-                'r.id',
-                'r.created_at as paid_at',
-                'r.amount_paid',
-                'r.amount_owed as balance_after',
-                'r.complete_payment',
-                'r.is_reversal',
-                'r.invoiceNo as invoice_no',
-                'r.transaction_reference as reference',
-                'r.payment_channel',
-                'p.payment_method',
-                'sb.title as bill_title',
-                'u.name as received_by',
-            ])
+            ->get($this->historyColumns())
             ->map(function ($r) {
                 $r->paid_at = $r->paid_at ? Carbon::parse($r->paid_at) : null;
-                $r->method  = $r->payment_channel ?: $r->payment_method ?: '—';
-                $r->status  = $r->is_reversal ? 'reversal' : ((int) $r->complete_payment === 1 ? 'completed' : 'part');
+                foreach (['is_reversal' => 0, 'invoice_no' => null, 'reference' => null, 'payment_channel' => null, 'payment_method' => null] as $k => $v) {
+                    if (!property_exists($r, $k)) $r->$k = $v;
+                }
+                $r->method  = ($r->payment_channel ?? null) ?: ($r->payment_method ?? null) ?: '—';
+                $r->status  = !empty($r->is_reversal) ? 'reversal' : ((int) ($r->complete_payment ?? 0) === 1 ? 'completed' : 'part');
                 return $r;
             });
     }
+    /** Select list for paymentHistory(); optional columns only if they exist. */
+    protected function historyColumns(): array
+    {
+        $cols = [
+            'r.id',
+            'r.created_at as paid_at',
+            'r.amount_paid',
+            'r.amount_owed as balance_after',
+            'r.complete_payment',
+            'sb.title as bill_title',
+            'u.name as received_by',
+        ];
+        $optional = [
+            ['student_bill_payment_record', 'is_reversal',           'r.is_reversal'],
+            ['student_bill_payment_record', 'invoiceNo',             'r.invoiceNo as invoice_no'],
+            ['student_bill_payment_record', 'transaction_reference', 'r.transaction_reference as reference'],
+            ['student_bill_payment_record', 'payment_channel',       'r.payment_channel'],
+            ['student_bill_payment',        'payment_method',        'p.payment_method'],
+        ];
+        foreach ($optional as [$table, $column, $select]) {
+            if ($this->hasColumn($table, $column)) {
+                $cols[] = $select;
+            }
+        }
+        return $cols;
+    }
+
     /** Amount paid per term for the session, from the ledger. */
     public function buildPaymentTrend(int $studentId, ?int $sessionId): array
     {
@@ -237,8 +279,8 @@ class StudentFeeStatementService
             ->join('student_bill_payment as p', 'p.id', '=', 'r.student_bill_payment_id')
             ->where('p.student_id', $studentId)
             ->where('p.session_id', $sessionId)
-            ->whereNull('p.deleted_at')
-            ->whereNull('r.deleted_at')
+            ->tap(fn ($q) => $this->notDeleted($q, 'student_bill_payment', 'p'))
+            ->tap(fn ($q) => $this->notDeleted($q, 'student_bill_payment_record', 'r'))
             ->groupBy('p.termid_id')
             ->select('p.termid_id', DB::raw('SUM(r.amount_paid) as total_paid'))
             ->pluck('total_paid', 'termid_id');
