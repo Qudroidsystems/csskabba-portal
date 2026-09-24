@@ -74,6 +74,7 @@ use App\Http\Controllers\StudentHouseController;
 use App\Http\Controllers\StudentIdCardController;
 use App\Http\Controllers\StudentImageUploadController;
 use App\Http\Controllers\StudentPaymentController;
+use App\Http\Controllers\ResultAccessController;
 use App\Http\Controllers\StudentpersonalityprofileController;
 use App\Http\Controllers\StudentResultsController;
 use App\Http\Controllers\SubjectClassController;
@@ -528,6 +529,15 @@ Route::group(['middleware' => ['auth']], function () {
     // Student payments (student-facing)
     Route::get('/my-payments', [StudentPaymentController::class, 'index'])->name('student.payments');
     Route::get('/my-payments/receipt', [StudentPaymentController::class, 'printReceipt'])->name('student.payments.receipt');
+
+    // Result access control (who can see results while owing fees)
+    Route::get('/result-access', [ResultAccessController::class, 'index'])->name('result-access.index');
+    Route::post('/result-access/settings', [ResultAccessController::class, 'saveSettings'])->name('result-access.settings');
+    Route::get('/result-access/students', [ResultAccessController::class, 'students'])->name('result-access.students');
+    Route::post('/result-access/grant', [ResultAccessController::class, 'grant'])->name('result-access.grant');
+    Route::post('/result-access/revoke', [ResultAccessController::class, 'revoke'])->name('result-access.revoke');
+    Route::post('/result-access/manual', [ResultAccessController::class, 'toggleManual'])->name('result-access.manual');
+    Route::get('/result-access/history', [ResultAccessController::class, 'history'])->name('result-access.history');
 
     // ===================================================================
     // SCHOOL INFORMATION

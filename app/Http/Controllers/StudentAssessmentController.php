@@ -22,15 +22,19 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\SchoolInformation;
 use App\Services\PromotionEvaluator;
 use App\Services\ClassPositionService;
+use App\Services\ResultAccessService;
 use App\Models\BroadsheetsMock;
 
 class StudentAssessmentController extends Controller
 {
     protected ClassPositionService $positionService;
 
-    public function __construct(ClassPositionService $positionService)
+    protected ResultAccessService $resultAccess;
+
+    public function __construct(ClassPositionService $positionService, ResultAccessService $resultAccess)
     {
         $this->positionService = $positionService;
+        $this->resultAccess    = $resultAccess;
 
         $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult', 'printMockResult']]);
     }
@@ -471,8 +475,8 @@ class StudentAssessmentController extends Controller
             ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
             ->first();
 
-        if (!$student || !$student->can_view_assessments) {
-            return redirect()->route('dashboard')->with('error', 'You do not have permission to view assessments.');
+        if (!$student) {
+            return redirect()->route('dashboard')->with('error', 'Student profile not found.');
         }
 
         $terms    = Schoolterm::orderBy('id', 'desc')->get(['id', 'term']);
@@ -511,6 +515,19 @@ class StudentAssessmentController extends Controller
 
         $term    = (object) ['id' => $studentClassData->term_id,    'term'    => $studentClassData->term_name];
         $session = (object) ['id' => $studentClassData->session_id, 'session' => $studentClassData->session_name];
+
+        // Result access gate: manual block, or fees owed per the admin's rules.
+        $access = $this->resultAccess->check(
+            $studentId,
+            (int) ($selectedTermId ?: $studentClassData->term_id),
+            (int) ($selectedSessionId ?: $studentClassData->session_id)
+        );
+        if (!$access['allowed']) {
+            return view('student.assessments.blocked', compact(
+                'pagetitle', 'student', 'class', 'term', 'session', 'terms', 'sessions',
+                'userSelectedTermId', 'selectedSessionId', 'access'
+            ));
+        }
 
         // FIX: Get the selected term/session names for display
         $selectedTermModel = $userSelectedTermId ? Schoolterm::find($userSelectedTermId) : null;
@@ -736,8 +753,8 @@ class StudentAssessmentController extends Controller
         ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
         ->first();
 
-    if (!$student || !$student->can_view_assessments) {
-        return back()->with('error', 'You do not have permission to print assessments.');
+    if (!$student) {
+        return back()->with('error', 'Student profile not found.');
     }
 
     $studentClassData = $this->resolveStudentClass($studentId, $selectedSessionId ? (int) $selectedSessionId : null, $selectedTermId ? (int) $selectedTermId : null);
@@ -748,6 +765,12 @@ class StudentAssessmentController extends Controller
 
     if (!$selectedTermId) {
         $selectedTermId = $studentClassData->term_id;
+    }
+
+    $access = $this->resultAccess->check($studentId, (int) $selectedTermId, (int) ($selectedSessionId ?: $studentClassData->session_id));
+    if (!$access['allowed']) {
+        return redirect()->route('assessments', ['session_id' => $selectedSessionId, 'term_id' => $selectedTermId])
+            ->with('error', $access['message']);
     }
 
     $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;
@@ -1004,8 +1027,8 @@ class StudentAssessmentController extends Controller
             ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
             ->first();
 
-        if (!$student || !$student->can_view_assessments) {
-            return back()->with('error', 'You do not have permission to print assessments.');
+        if (!$student) {
+            return back()->with('error', 'Student profile not found.');
         }
 
         $studentClassData = $this->resolveStudentClass($studentId, $selectedSessionId ? (int) $selectedSessionId : null, $selectedTermId ? (int) $selectedTermId : null);
@@ -1016,6 +1039,12 @@ class StudentAssessmentController extends Controller
 
         if (!$selectedTermId) {
             $selectedTermId = $studentClassData->term_id;
+        }
+
+        $access = $this->resultAccess->check($studentId, (int) $selectedTermId, (int) ($selectedSessionId ?: $studentClassData->session_id), true);
+        if (!$access['allowed']) {
+            return redirect()->route('assessments', ['session_id' => $selectedSessionId, 'term_id' => $selectedTermId])
+                ->with('error', $access['message']);
         }
 
         $sessionIdForQuery = $selectedSessionId ?? $studentClassData->session_id;

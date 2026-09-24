@@ -959,6 +959,9 @@
                                     <li class="nav-item"><a href="{{ route('reports.financial.trial-balance') }}" class="nav-link">Trial Balance</a></li>
                                     <li class="nav-item"><a href="{{ route('reports.financial.cash-flow') }}" class="nav-link">Cash Flow</a></li>
                                     <li class="nav-item"><a href="{{ route('reports.financial.debtors') }}" class="nav-link">Student Debtors List</a></li>
+                                    @can('View result-access')
+                                    <li class="nav-item"><a href="{{ route('result-access.index') }}" class="nav-link">Result Access Control</a></li>
+                                    @endcan
                                     <li class="nav-item"><a href="{{ route('reports.financial.collection-summary') }}" class="nav-link">Collection Summary</a></li>
                                     <li class="nav-item"><a href="{{ route('reports.analysis.index') }}" class="nav-link">Class Analysis</a></li>
                                     <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link">School-Wide Analysis</a></li>
@@ -1805,6 +1808,9 @@
         {title:'Trial Balance',                         url:'{{ route("reports.financial.trial-balance") }}',                icon:'mdi-calculator',              category:'Accounting',          keywords:['trial','balance','ledger','accounts']},
         {title:'Cash Flow',                             url:'{{ route("reports.financial.cash-flow") }}',                    icon:'mdi-cash-sync',               category:'Accounting',          keywords:['cash','flow','liquidity','report']},
         {title:'Student Debtors List',                  url:'{{ route("reports.financial.debtors") }}',                      icon:'mdi-account-alert',           category:'Accounting',          keywords:['debtor','outstanding','arrears','owe','unpaid']},
+        @can('View result-access')
+        {title:'Result Access Control',                 url:'{{ route("result-access.index") }}',                            icon:'mdi-lock-open-check',         category:'Accounting',          keywords:['result','access','owing','debt','block','withhold','exception']},
+        @endcan
         {title:'Collection Summary',                    url:'{{ route("reports.financial.collection-summary") }}',           icon:'mdi-cash-register',           category:'Accounting',          keywords:['collection','summary','receipts','income']},
         {title:'Class Payment Analysis',                url:'{{ route("reports.analysis.index") }}',                         icon:'mdi-chart-bar',               category:'Accounting',          keywords:['analysis','class','payment','report']},
         {title:'School-Wide Payment Analysis',          url:'{{ route("reports.analysis.school-wide") }}',                   icon:'mdi-chart-donut',             category:'Accounting',          keywords:['analysis','school','wide','payment','report']},
