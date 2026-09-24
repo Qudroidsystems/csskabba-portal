@@ -210,10 +210,38 @@ body { font-family:'DejaVu Sans', sans-serif; font-size:12px; color:#1a1a2e; bac
     <div style="text-align:center; margin-bottom:16px;">
         @if($totals['outstanding'] <= 0)
             <span class="status-pill status-paid">✓ FULLY PAID</span>
-        @else
+        @elseif($totals['paid'] > 0)
             <span class="status-pill status-partial">⬤ PARTIALLY PAID</span>
+        @else
+            <span class="status-pill status-partial" style="background:#fee2e2;color:#b91c1c;">○ NOT YET PAID</span>
         @endif
     </div>
+
+    {{-- TRANSACTIONS (from the payment ledger) --}}
+    @if(isset($paymentHistory) && $paymentHistory->isNotEmpty())
+    <table class="bill-table">
+        <thead>
+            <tr>
+                <th style="width:14%;">Date</th>
+                <th>Bill</th>
+                <th>Method</th>
+                <th>Reference</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($paymentHistory as $p)
+            <tr>
+                <td>{{ $p->paid_at?->format('d M Y') ?? '—' }}</td>
+                <td>{{ $p->bill_title ?? '—' }}@if($p->status === 'reversal') <span style="color:#6d28d9;font-size:9px;">(reversal)</span>@endif</td>
+                <td>{{ ucfirst($p->method) }}</td>
+                <td style="font-size:9px;">{{ $p->reference ?: ($p->invoice_no ?: '—') }}</td>
+                <td class="text-right {{ $p->amount_paid < 0 ? 'text-danger' : 'text-success' }}">₦{{ number_format($p->amount_paid, 2) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
 
     {{-- SIGNATURES --}}
     <div class="sig-row">

@@ -160,32 +160,26 @@ class StudentAssessmentController extends Controller
                     'broadsheetmock.cmin',
                     'broadsheetmock.cmax',
                     'broadsheet_records_mock.id as record_id',
+                    'broadsheet_records_mock.subject_id',
                 ])
                 ->get();
 
-            // If positions are not stored, calculate them dynamically
-            if ($rows->isNotEmpty() && $rows->every(fn($row) => empty($row->position) || $row->position == 0)) {
-                Log::info('Calculating mock positions dynamically for student ' . $studentId);
-
-                $allMockRecords = BroadsheetsMock::where('term_id', $termId)
-                    ->whereHas('broadsheetRecord', function($q) use ($schoolclassId, $sessionId) {
-                        $q->where('schoolclass_id', $schoolclassId)
-                          ->where('session_id', $sessionId);
-                    })
-                    ->get();
-
-                $subjectGroups = $allMockRecords->groupBy('broadsheet_record_id');
+            // Positions not stored yet: rank each subject within the class
+            // (same class/session/term), ties sharing a place. The old
+            // fallback used a relation that doesn't exist on BroadsheetsMock,
+            // threw, and the catch below then hid the whole mock section.
+            if ($rows->isNotEmpty() && $rows->every(fn ($row) => empty($row->position) || $row->position == 0)) {
+                $classTotals = DB::table('broadsheetmock as bm')
+                    ->join('broadsheet_records_mock as brm', 'brm.id', '=', 'bm.broadsheet_records_mock_id')
+                    ->where('brm.schoolclass_id', $schoolclassId)
+                    ->where('brm.session_id', $sessionId)
+                    ->where('bm.term_id', $termId)
+                    ->get(['brm.subject_id', 'bm.total'])
+                    ->groupBy('subject_id');
 
                 foreach ($rows as $row) {
-                    $subjectRecords = $subjectGroups->get($row->record_id, collect());
-
-                    if ($subjectRecords->isNotEmpty()) {
-                        $sorted = $subjectRecords->sortByDesc('total')->values();
-                        $position = $sorted->search(function($record) use ($row) {
-                            return $record->total == $row->total && $record->id == $row->id;
-                        });
-                        $row->position = $position !== false ? $position + 1 : null;
-                    }
+                    $totals = $classTotals->get($row->subject_id, collect())->pluck('total')->map(fn ($t) => (float) $t);
+                    $row->position = $totals->isEmpty() ? null : $totals->filter(fn ($t) => $t > (float) $row->total)->count() + 1;
                 }
             }
 
@@ -200,6 +194,102 @@ class StudentAssessmentController extends Controller
             ]);
             return collect();
         }
+    }
+
+    // =========================================================================
+    // STUDENT PERIOD / CLASS RESOLUTION
+    // studentclass only holds a student's CURRENT placement, so on its own it
+    // made every past session show "No class registration". The class for a
+    // session is taken from the student's results (broadsheet_records) first,
+    // then studentclass.
+    // =========================================================================
+
+    private function resolveStudentClass(int $studentId, ?int $sessionId, ?int $termId): ?object
+    {
+        if (!$sessionId) {
+            $sessionId = (int) (Schoolsession::where('status', 'Current')->value('id')
+                ?: DB::table('studentclass')->where('studentId', $studentId)->orderByDesc('sessionid')->value('sessionid'));
+        }
+        if (!$sessionId) return null;
+
+        $classId = DB::table('broadsheet_records as br')
+            ->join('broadsheets as b', 'b.broadsheet_record_id', '=', 'br.id')
+            ->where('br.student_id', $studentId)
+            ->where('br.session_id', $sessionId)
+            ->when($termId, fn ($q) => $q->where('b.term_id', $termId))
+            ->groupBy('br.schoolclass_id')
+            ->orderByRaw('COUNT(*) DESC')
+            ->value('br.schoolclass_id')
+            ?: DB::table('studentclass')->where('studentId', $studentId)->where('sessionid', $sessionId)
+                ->orderByDesc('id')->value('schoolclassid');
+
+        if (!$classId) return null;
+
+        $termId = $termId ?: $this->latestTermWithResults($studentId, $sessionId)
+            ?: (int) DB::table('studentclass')->where('studentId', $studentId)->where('sessionid', $sessionId)->value('termid');
+
+        $cls = DB::table('schoolclass')->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->where('schoolclass.id', $classId)->first(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
+
+        return (object) [
+            'class_id'     => (int) $classId,
+            'class_name'   => $cls->schoolclass ?? '',
+            'arm_name'     => $cls->arm ?? '',
+            'term_id'      => $termId ? (int) $termId : null,
+            'term_name'    => $termId ? Schoolterm::where('id', $termId)->value('term') : null,
+            'session_id'   => (int) $sessionId,
+            'session_name' => Schoolsession::where('id', $sessionId)->value('session'),
+        ];
+    }
+
+    private function latestTermWithResults(int $studentId, int $sessionId): ?int
+    {
+        $id = DB::table('broadsheets as b')
+            ->join('broadsheet_records as br', 'br.id', '=', 'b.broadsheet_record_id')
+            ->where('br.student_id', $studentId)
+            ->where('br.session_id', $sessionId)
+            ->max('b.term_id');
+        return $id ? (int) $id : null;
+    }
+
+    /** Sessions the student has results or enrolment in, plus the current one (archived sessions hidden). */
+    private function studentSessions(int $studentId)
+    {
+        $ids = collect()
+            ->merge(DB::table('broadsheet_records')->where('student_id', $studentId)->pluck('session_id'))
+            ->merge(DB::table('studentclass')->where('studentId', $studentId)->pluck('sessionid'))
+            ->merge(Schoolsession::where('status', 'Current')->pluck('id'))
+            ->map(fn ($v) => (int) $v)->filter()->unique();
+
+        return Schoolsession::whereIn('id', $ids)
+            ->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'Archived'))
+            ->orderByDesc('id')
+            ->get(['id', 'session', 'status']);
+    }
+
+    /** Students with results in this class for the term (not the current-only studentclass table). */
+    private function classSize(int $schoolclassId, int $sessionId, int $termId): int
+    {
+        return (int) DB::table('broadsheet_records as br')
+            ->join('broadsheets as b', 'b.broadsheet_record_id', '=', 'br.id')
+            ->where('br.schoolclass_id', $schoolclassId)
+            ->where('br.session_id', $sessionId)
+            ->where('b.term_id', $termId)
+            ->distinct()
+            ->count('br.student_id');
+    }
+
+    private function gpaFromGradePoints($points): array
+    {
+        $points = collect($points)->map(fn ($p) => (float) $p);
+        $gpa    = $points->isNotEmpty() ? $points->avg() : 0.0;
+        return [
+            'gpa'                => $gpa,
+            'cgpa'               => 0.0,
+            'gpa_grade'          => $this->getGpaGrade($gpa),
+            'num_subjects'       => $points->count(),
+            'total_grade_points' => $points->sum(),
+        ];
     }
 
     // =========================================================================
@@ -386,45 +476,26 @@ class StudentAssessmentController extends Controller
         }
 
         $terms    = Schoolterm::orderBy('id', 'desc')->get(['id', 'term']);
-        $sessions = Schoolsession::whereIn('status', ['Current', 'Previous'])
-            ->orderBy('id', 'desc')
-            ->get(['id', 'session']);
+        $sessions = $this->studentSessions($studentId);
 
         $userSelectedTermId = $request->get('term_id');
-        $selectedSessionId  = $request->get('session_id', $sessions->first()?->id ?? null);
+        $selectedSessionId  = $request->get('session_id');
+        if (!$selectedSessionId || !$sessions->contains('id', (int) $selectedSessionId)) {
+            $selectedSessionId = $sessions->firstWhere('status', 'Current')->id ?? $sessions->first()?->id;
+        }
         $selectedTermId     = $userSelectedTermId ?: null;
         $isAllTerms         = empty($userSelectedTermId);
 
         if ($isAllTerms && $selectedSessionId) {
-            $latestTermId = DB::table('studentclass')
-                ->where('studentId', $studentId)
-                ->where('sessionid', $selectedSessionId)
-                ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-                ->orderBy('schoolterm.id', 'desc')
-                ->value('schoolterm.id');
-
+            // Latest term the student actually has results for in this session
+            // (studentclass only keeps the current placement).
+            $latestTermId = $this->latestTermWithResults($studentId, (int) $selectedSessionId);
             if ($latestTermId) {
                 $selectedTermId = $latestTermId;
             }
         }
 
-        $studentClassData = DB::table('studentclass')
-            ->where('studentclass.studentId', $studentId)
-            ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-            ->select(
-                'schoolclass.id as class_id',
-                'schoolclass.schoolclass as class_name',
-                'schoolarm.arm as arm_name',
-                'schoolterm.id as term_id',
-                'schoolterm.term as term_name',
-                'schoolsession.id as session_id',
-                'schoolsession.session as session_name'
-            )
-            ->first();
+        $studentClassData = $this->resolveStudentClass($studentId, $selectedSessionId ? (int) $selectedSessionId : null, $selectedTermId ? (int) $selectedTermId : null);
 
         if (!$studentClassData) {
             return view('student.assessments.index', compact(
@@ -566,6 +637,7 @@ class StudentAssessmentController extends Controller
             $isCompulsory = in_array($regSubject->subject_id, $compulsorySubjectIds);
 
             $subjectsWithAssessments->push([
+                'grade_point'      => $subjectGPA,
                 'subject_id'       => $regSubject->subject_id,
                 'subject_name'     => $regSubject->subject_name,
                 'subject_code'     => $regSubject->subject_code,
@@ -598,10 +670,9 @@ class StudentAssessmentController extends Controller
         }
 
         if ($subjectsWithAssessments->isNotEmpty() && $schoolclass) {
-            $gpaCgpaData = $this->computeOverallForStudent(
-                $studentId, $schoolclass, $selectedTermId,
-                $selectedSessionId ?? $studentClassData->session_id, $isSenior
-            );
+            // GPA from exactly the subjects listed on this page (registered
+            // subjects with a broadsheet), not every broadsheet row.
+            $gpaCgpaData = $this->gpaFromGradePoints($subjectsWithAssessments->pluck('grade_point'));
             $overallProgress['gpa']                = round($gpaCgpaData['gpa'], 2);
             $overallProgress['cgpa']               = round($gpaCgpaData['cgpa'], 2);
             $overallProgress['gpa_grade']          = $gpaCgpaData['gpa_grade'] ?? 'F';
@@ -669,23 +740,7 @@ class StudentAssessmentController extends Controller
         return back()->with('error', 'You do not have permission to print assessments.');
     }
 
-    $studentClassData = DB::table('studentclass')
-        ->where('studentclass.studentId', $studentId)
-        ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-        ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-        ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-        ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-        ->select(
-            'schoolclass.id as class_id',
-            'schoolclass.schoolclass as class_name',
-            'schoolarm.arm as arm_name',
-            'schoolterm.id as term_id',
-            'schoolterm.term as term_name',
-            'schoolsession.id as session_id',
-            'schoolsession.session as session_name'
-        )
-        ->first();
+    $studentClassData = $this->resolveStudentClass($studentId, $selectedSessionId ? (int) $selectedSessionId : null, $selectedTermId ? (int) $selectedTermId : null);
 
     if (!$studentClassData) {
         return back()->with('error', 'No class data found.');
@@ -716,11 +771,6 @@ class StudentAssessmentController extends Controller
         ->pluck('subjectId')
         ->toArray();
 
-    // Log for debugging
-    \Log::info('Compulsory subjects for PDF', [
-        'schoolclassid' => $schoolclassId,
-        'subject_ids' => $compulsorySubjectIds
-    ]);
 
     $registeredSubjects = DB::table('student_subject_register_record as ssrr')
         ->where('ssrr.studentId', $studentId)
@@ -797,13 +847,6 @@ class StudentAssessmentController extends Controller
         // Check if compulsory - FIX: Use in_array with proper subject_id
         $scoreData->is_compulsory = in_array($regSubject->subject_id, $compulsorySubjectIds);
 
-        // Log individual subject compulsory status
-        \Log::info('Subject compulsory status', [
-            'subject_id' => $regSubject->subject_id,
-            'subject_name' => $regSubject->subject_name,
-            'is_compulsory' => $scoreData->is_compulsory,
-            'compulsory_list' => $compulsorySubjectIds
-        ]);
 
         $scoreData->assessment_scores = collect();
         foreach ($allAssessments as $assessment) {
@@ -823,9 +866,8 @@ class StudentAssessmentController extends Controller
 
     $percentage = $totalObtainable > 0 ? round(($totalObtained / $totalObtainable) * 100, 1) : 0;
 
-    $gpaData = $this->computeOverallForStudent(
-        $studentId, $schoolclass, $selectedTermId,
-        $sessionIdForQuery, $isSenior
+    $gpaData = $this->gpaFromGradePoints(
+        $scores->map(fn ($sc) => $this->getGradePoint(round((float) $sc->cum_ave), $isSenior))
     );
 
     // Promotion Evaluation
@@ -846,11 +888,7 @@ class StudentAssessmentController extends Controller
     );
     $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
 
-    $numberOfStudents = DB::table('studentclass')
-        ->where('schoolclassid', $schoolclassId)
-        ->where('sessionid', $sessionIdForQuery)
-        ->where('termid', $selectedTermId)
-        ->count();
+    $numberOfStudents = $this->classSize((int) $schoolclassId, (int) $sessionIdForQuery, (int) $selectedTermId);
 
     $studentProfileData = $this->getStudentProfileData($studentId, $selectedTermId, $sessionIdForQuery, $schoolclassId);
 
@@ -970,23 +1008,7 @@ class StudentAssessmentController extends Controller
             return back()->with('error', 'You do not have permission to print assessments.');
         }
 
-        $studentClassData = DB::table('studentclass')
-            ->where('studentclass.studentId', $studentId)
-            ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
-            ->select(
-                'schoolclass.id as class_id',
-                'schoolclass.schoolclass as class_name',
-                'schoolarm.arm as arm_name',
-                'schoolterm.id as term_id',
-                'schoolterm.term as term_name',
-                'schoolsession.id as session_id',
-                'schoolsession.session as session_name'
-            )
-            ->first();
+        $studentClassData = $this->resolveStudentClass($studentId, $selectedSessionId ? (int) $selectedSessionId : null, $selectedTermId ? (int) $selectedTermId : null);
 
         if (!$studentClassData) {
             return back()->with('error', 'No class data found.');
@@ -1017,11 +1039,7 @@ class StudentAssessmentController extends Controller
         );
         $stampBase64 = $this->getSchoolStampBase64($schoolInfo);
 
-        $numberOfStudents = DB::table('studentclass')
-            ->where('schoolclassid', $schoolclassId)
-            ->where('sessionid', $sessionIdForQuery)
-            ->where('termid', $selectedTermId)
-            ->count();
+        $numberOfStudents = $this->classSize((int) $schoolclassId, (int) $sessionIdForQuery, (int) $selectedTermId);
 
         $schoolclassWithArms              = new \stdClass();
         $schoolclassWithArms->schoolclass = $studentClassData->class_name ?? '';

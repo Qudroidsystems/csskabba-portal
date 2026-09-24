@@ -7,18 +7,22 @@
         <div class="container-fluid">
 
             <style>
-                :root {
-                    --navy:     #0f1c35;
-                    --navy-mid: #1a2f55;
-                    --gold:     #c9a84c;
-                    --cream:    #f9f7f2;
-                    --paper:    #ffffff;
-                    --border:   #e3e7f0;
-                    --radius:   12px;
-                    --radius-sm:8px;
+                /* Mapped onto the shared CB UI tokens (public/css/cb-ui.css) so this
+                   page matches the rest of the portal, incl. dark mode. */
+                .assessment-portal {
+                    --navy:     var(--cb-navy);
+                    --navy-mid: var(--cb-navy-2);
+                    --gold:     var(--cb-teal);
+                    --cream:    var(--cb-page);
+                    --paper:    var(--cb-surface);
+                    --border:   var(--cb-border);
+                    --radius:   var(--cb-radius);
+                    --radius-sm:var(--cb-radius-sm);
                 }
 
-                .assessment-portal { font-family:'Segoe UI',Roboto,sans-serif; background:var(--cream); border-radius:var(--radius); overflow:hidden; }
+                .assessment-portal { font-family:var(--cb-font); background:transparent; }
+                .ap-body { padding:0 !important; }
+                .ap-attendance-card, .ap-trend-card, .mock-section-card { box-shadow: var(--cb-shadow); }
 
                 /* Hero */
                 .ap-hero { background:var(--navy); padding:36px 32px 28px; position:relative; }
@@ -213,141 +217,89 @@
 
             <div class="assessment-portal">
 
+                @php
+                    $displayTerm    = $selectedTermName ?? ($term->term ?? '');
+                    $displaySession = $selectedSessionName ?? ($session->session ?? '');
+                    $hasResults     = isset($subjectsWithAssessments) && $subjectsWithAssessments->isNotEmpty();
+                @endphp
+
                 {{-- HERO --}}
-                <div class="ap-hero">
-                    <h1 class="ap-hero-title">My Assessment Report</h1>
-                    <p class="ap-hero-sub">View your subject scores, assessment breakdowns, positions and attendance</p>
-                    @php
-                        // Use the selected term/session from the controller
-                        $displayTerm = $selectedTermName ?? ($term->term ?? '');
-                        $displaySession = $selectedSessionName ?? ($session->session ?? '');
-                    @endphp
-                    @if($displayTerm && $displaySession)
-                        <span style="color:var(--gold);font-size:12px;margin-top:6px;display:inline-block;">
-                            {{ $displayTerm }} &middot; {{ $displaySession }}
-                        </span>
-                    @endif
-                </div>
-
-                {{-- FILTER BAR --}}
-                <form method="GET" action="{{ route('assessments') }}">
-                    <div class="ap-filter-bar">
-                        <select name="term_id" class="ap-filter-select" id="termSelect">
-                            <option value="">All Terms</option>
-                            @foreach($terms as $t)
-                                <option value="{{ $t->id }}" {{ ($userSelectedTermId ?? null) == $t->id ? 'selected' : '' }}>
-                                    {{ $t->term }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <select name="session_id" class="ap-filter-select" id="sessionSelect">
-                            <option value="">All Sessions</option>
-                            @foreach($sessions as $s)
-                                <option value="{{ $s->id }}" {{ ($selectedSessionId ?? null) == $s->id ? 'selected' : '' }}>
-                                    {{ $s->session }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <button type="submit" class="ap-filter-btn">Apply Filter</button>
-
-                        @if(isset($subjectsWithAssessments) && $subjectsWithAssessments->isNotEmpty())
-                        <div class="ap-print-btn-group">
-                            <button type="button" class="ap-print-btn" id="showPrintModalBtn">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="6 9 6 2 18 2 18 9"/>
-                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                                    <rect x="6" y="14" width="12" height="8"/>
-                                </svg>
-                                Print Terminal Report
+                <x-cb.hero title="My Assessment Report" icon="ri-file-chart-line"
+                           subtitle="Your subject scores, assessment breakdowns, positions and attendance.">
+                    <x-slot:actions>
+                        @if($hasResults)
+                            <button type="button" class="cb-hero-btn" id="showPrintModalBtn">
+                                <i class="ri-printer-line"></i>Print terminal report
                             </button>
-
                             @if(isset($mockResults) && $mockResults->isNotEmpty())
-                            <button type="button" class="ap-print-btn ap-print-btn-mock" id="printMockBtn">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M9 11l3 3L22 4"/>
-                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                                </svg>
-                                Print Mock Report
-                            </button>
+                                <button type="button" class="cb-hero-btn" id="printMockBtn">
+                                    <i class="ri-file-list-3-line"></i>Print mock report
+                                </button>
                             @endif
-                        </div>
                         @endif
-                    </div>
-                </form>
+                    </x-slot:actions>
+                    <x-slot:pills>
+                        <span class="cb-meta-pill">
+                            <i class="ri-user-line"></i>{{ trim(($student->lastname ?? '') . ', ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? ''), ', ') }}
+                        </span>
+                        <span class="cb-meta-pill"><i class="ri-hashtag"></i>{{ $student->admissionNo ?? '—' }}</span>
+                        @isset($class)<span class="cb-meta-pill"><i class="ri-building-line"></i>{{ trim($class->schoolclass . ' ' . ($class->arm_name ?? '')) }}</span>@endisset
+                        @if($displayTerm && $displaySession)<span class="cb-meta-pill"><i class="ri-calendar-line"></i>{{ $displayTerm }} · {{ $displaySession }}</span>@endif
+                    </x-slot:pills>
+                </x-cb.hero>
+
+                {{-- PERIOD PICKER --}}
+                <div class="cb-card">
+                    <form method="GET" action="{{ route('assessments') }}" class="cb-toolbar" style="border-bottom:none">
+                        <select name="session_id" class="cb-select" id="sessionSelect" aria-label="Session" onchange="this.form.submit()">
+                            @foreach($sessions as $s)
+                                <option value="{{ $s->id }}" @selected(($selectedSessionId ?? null) == $s->id)>{{ $s->session }}{{ ($s->status ?? '') === 'Current' ? ' (current)' : '' }}</option>
+                            @endforeach
+                        </select>
+                        <div class="term-chips" role="group" aria-label="Term">
+                            <a class="term-chip {{ empty($userSelectedTermId) ? 'active' : '' }}"
+                               href="{{ route('assessments', ['session_id' => $selectedSessionId]) }}" title="Your most recent term with results">Latest</a>
+                            @foreach($terms->sortBy('id') as $t)
+                                <a class="term-chip {{ ($userSelectedTermId ?? null) == $t->id ? 'active' : '' }}"
+                                   href="{{ route('assessments', ['session_id' => $selectedSessionId, 'term_id' => $t->id]) }}">{{ $t->term }}</a>
+                            @endforeach
+                        </div>
+                        <select name="term_id" id="termSelect" class="d-none" aria-hidden="true" tabindex="-1">
+                            <option value=""></option>
+                            @foreach($terms as $t)<option value="{{ $t->id }}" @selected(($userSelectedTermId ?? null) == $t->id)>{{ $t->term }}</option>@endforeach
+                        </select>
+                    </form>
+                </div>
 
                 <div class="ap-body">
 
-                    @if(session('error'))
-                        <div class="alert alert-warning">{{ session('error') }}</div>
+                    @if(session('error') || !empty($error))
+                        <div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ session('error') ?? $error }}</div></div>
                     @endif
 
                     @if(!isset($subjectsWithAssessments) || $subjectsWithAssessments->isEmpty())
-                        <div class="ap-empty" style="text-align:center;padding:52px 24px;color:#7b85a3;">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 16px;display:block;">
-                                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-                                <rect x="9" y="3" width="6" height="4" rx="2"/>
-                            </svg>
-                            <h3>No Assessments Found</h3>
-                            <p>No assessments available for the selected term and session.</p>
+                        <div class="cb-card">
+                            <div class="empty-state">
+                                <i class="ri-file-search-line"></i>
+                                <h6>No results for this term yet</h6>
+                                <p>Your scores will appear here once your teachers have entered them for {{ $displayTerm ?: 'the selected term' }}{{ $displaySession ? ', ' . $displaySession : '' }}.</p>
+                            </div>
                         </div>
                     @else
 
-                    {{-- IDENTITY CARD --}}
-                    <div class="ap-identity-card">
-                        <div class="ap-avatar">
-                            @if(!empty($studentPicture))
-                                <img src="{{ asset('storage/student_avatars/' . $studentPicture) }}" alt="Student Photo">
-                            @else
-                                {{ strtoupper(substr($student->lastname ?? 'S', 0, 1)) }}{{ strtoupper(substr($student->firstname ?? 'T', 0, 1)) }}
-                            @endif
-                        </div>
-                        <div>
-                            <p class="ap-identity-name">
-                                {{ $student->lastname ?? '' }},
-                                {{ $student->firstname ?? '' }}
-                                {{ $student->othername ?? '' }}
-                            </p>
-                            <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#6b7280;">
-                                <span>Adm No: {{ $student->admissionNo ?? '—' }}</span>
-                                @isset($class)<span>Class: {{ $class->schoolclass }} {{ $class->arm_name ?? '' }}</span>@endisset
-                                @isset($term)<span>Term: {{ $term->term }}</span>@endisset
-                                @isset($session)<span>Session: {{ $session->session }}</span>@endisset
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- STATS STRIP --}}
-                    <div class="ap-stats-strip">
-                        <div class="ap-stat-card">
-                            <div class="ap-stat-value">{{ $overallProgress['total_subjects'] ?? 0 }}</div>
-                            <div class="ap-stat-label">Subjects</div>
-                        </div>
-                        <div class="ap-stat-card">
-                            <div class="ap-stat-value">{{ number_format($overallProgress['average_cum'] ?? 0, 1) }}</div>
-                            <div class="ap-stat-label">Avg Score</div>
-                        </div>
-                        <div class="ap-stat-card">
-                            <div class="ap-stat-value">{{ number_format($overallProgress['gpa'] ?? 0, 2) }}</div>
-                            <div class="ap-stat-label">GPA</div>
-                        </div>
-                        <div class="ap-stat-card">
-                            <div class="ap-stat-value">{{ number_format($overallProgress['cgpa'] ?? 0, 2) }}</div>
-                            <div class="ap-stat-label">CGPA</div>
-                        </div>
-                        <div class="ap-stat-card">
-                            <div class="ap-stat-value">
-                                <span class="ap-grade-pill {{ $overallProgress['gpa_grade'] == 'A1' ? 'grade-A1' : ($overallProgress['gpa_grade'] == 'B2' ? 'grade-B2' : ($overallProgress['gpa_grade'] == 'B3' ? 'grade-B3' : ($overallProgress['gpa_grade'] == 'C4' ? 'grade-C4' : ($overallProgress['gpa_grade'] == 'C5' ? 'grade-C5' : ($overallProgress['gpa_grade'] == 'C6' ? 'grade-C6' : ($overallProgress['gpa_grade'] == 'D7' ? 'grade-D7' : ($overallProgress['gpa_grade'] == 'E8' ? 'grade-E8' : 'grade-F9'))))))) }}">
-                                    {{ $overallProgress['gpa_grade'] ?? '-' }}
-                                </span>
-                            </div>
-                            <div class="ap-stat-label">Grade</div>
-                        </div>
-                        <div class="ap-stat-card">
-                            <div class="ap-stat-value">{{ number_format($overallProgress['total_grade_points'] ?? 0, 1) }}</div>
-                            <div class="ap-stat-label">Total GP</div>
-                        </div>
+                    {{-- STATS --}}
+                    @php
+                        $gpaGrade = $overallProgress['gpa_grade'] ?? '-';
+                        $avg      = (float) ($overallProgress['average_cum'] ?? 0);
+                    @endphp
+                    <div class="row g-3 mb-4">
+                        <div class="col-lg col-md-4 col-6"><x-cb.stat label="Subjects" :value="$overallProgress['total_subjects'] ?? 0" icon="ri-book-2-line" accent="teal"
+                            :hint="($overallProgress['completed_subjects'] ?? 0) . ' with scores'" /></div>
+                        <div class="col-lg col-md-4 col-6"><x-cb.stat label="Average (cum. avg)" :value="number_format($avg, 1)" icon="ri-percent-line"
+                            :accent="$avg >= 70 ? 'green' : ($avg >= 50 ? 'sky' : ($avg >= 40 ? 'amber' : 'rose'))" /></div>
+                        <div class="col-lg col-md-4 col-6"><x-cb.stat label="GPA" :value="number_format((float) ($overallProgress['gpa'] ?? 0), 2)" icon="ri-line-chart-line" accent="violet" /></div>
+                        <div class="col-lg col-md-6 col-6"><x-cb.stat label="Overall grade" :value="$gpaGrade" icon="ri-award-line" accent="amber" /></div>
+                        <div class="col-lg col-md-6 col-12"><x-cb.stat label="Total grade points" :value="number_format((float) ($overallProgress['total_grade_points'] ?? 0), 1)" icon="ri-medal-line" accent="sky" /></div>
                     </div>
 
                     {{-- ATTENDANCE CARD --}}

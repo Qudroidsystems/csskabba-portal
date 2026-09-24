@@ -419,9 +419,17 @@
         Route::is('payroll.*') || Route::is('staff.payments.*'))
         @include('layouts.pages-assets.css.finance-list-css')
     @endif
+
+    {{-- CB UI design system (hero / stat / card look used across the portal).
+         Loaded LAST so page-specific CSS partials above can't override it.
+         Remove class="cb-ui" from <body> to switch the global skin off. --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="{{ asset('css/cb-ui.css') }}?v={{ @filemtime(public_path('css/cb-ui.css')) }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="cb-ui">
 <div id="layout-wrapper">
 
     <!-- ========== SIDEBAR ========== -->

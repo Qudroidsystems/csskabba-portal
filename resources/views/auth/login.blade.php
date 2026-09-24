@@ -538,7 +538,7 @@
                                             <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center" style="animation: pulse 2s infinite;">
                                                 <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                     <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
-                                                        <span class="text-primary ms-1" style="font-weight: 600;">Vite-eSchool 1.1</span>
+                                                        <span class="text-primary ms-1" style="font-weight: 600;">ViteSchool 2.0</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -582,7 +582,7 @@
 
                                         <div class="text-center">
                                             <p class="text-white opacity-75 mb-0 mt-3">
-                                                © <script>document.write(new Date().getFullYear())</script> {{ $schoolInfo?->school_name ?? 'Vite-ESchool' }}. Created with <i class="mdi mdi-heart text-danger"></i> by Qudroid Systems
+                                                © <script>document.write(new Date().getFullYear())</script> {{ $schoolInfo?->school_name ?? 'Viteschools.ng' }}.  with <i class="mdi mdi-heart text-danger"></i> by Qudroid Systems
                                             </p>
                                         </div>
                                     </div>
