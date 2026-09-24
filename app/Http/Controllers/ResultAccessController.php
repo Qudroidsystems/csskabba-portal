@@ -27,9 +27,9 @@ class ResultAccessController extends Controller
 {
     public function __construct(protected ResultAccessService $access)
     {
-        // $this->middleware('permission:View result-access');
-        // $this->middleware('permission:Update result-access')
-        //     ->only(['saveSettings', 'grant', 'revoke', 'toggleManual']);
+        $this->middleware('permission:View result-access');
+        $this->middleware('permission:Update result-access')
+            ->only(['saveSettings', 'grant', 'revoke', 'toggleManual']);
     }
 
     // =========================================================================

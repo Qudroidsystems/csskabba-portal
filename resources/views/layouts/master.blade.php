@@ -2235,7 +2235,9 @@
 @if (Route::is('schoolclass.*'))           @include('layouts.pages-assets.js.schoolclass-list-js') @endif
 @if (Route::is('classteacher.*'))          @include('layouts.pages-assets.js.classteacher-list-js') @endif
 @if (Route::is('subject.*'))               @include('layouts.pages-assets.js.subject-list-js') @endif
-@if (Route::is('subjects.*'))              @include('layouts.pages-assets.js.subject-list-js') @endif
+{{-- subjects.index is Subject Registration: it has its own scripts, and subject-list.init.js
+     (Subjects page) overrides its filterData(), hijacks pagination and loads Bootstrap twice. --}}
+@if (Route::is('subjects.*') && !Route::is('subjects.index')) @include('layouts.pages-assets.js.subject-list-js') @endif
 @if (Route::is('subjectteacher.*'))        @include('layouts.pages-assets.js.subjectteacher-list-js') @endif
 @if (Route::is('subjectclass.*'))          @include('layouts.pages-assets.js.subjectclass-list-js') @endif
 @if (Route::is('schoolbill.*'))            @include('layouts.pages-assets.js.schoolbill-list-js') @endif

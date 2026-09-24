@@ -299,23 +299,32 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     {{-- Filter Bar --}}
     <div class="p-filter-card mb-3">
         <div class="row g-3 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="p-form-label">Search</label>
                 <div class="p-input-icon-wrap">
                     <i class="bi bi-search p-input-icon"></i>
                     <input type="text" id="liveSearch" class="p-input" placeholder="Name, admission no…">
                 </div>
             </div>
-            <div class="col-md-3">
-                <label class="p-form-label">Class</label>
-                <select id="classFilter" class="p-input">
-                    <option value="">All Classes</option>
-                    @foreach ($classOptions as $className)
-                    <option value="{{ $className }}">{{ $className }}</option>
+            <div class="col-md-2">
+                <label class="p-form-label">Session</label>
+                <select id="sessionFilter" class="p-input">
+                    <option value="all">All Sessions</option>
+                    @foreach ($schoolsessions as $s)
+                    <option value="{{ $s->id }}" @selected($defaultSessionId == $s->id)>{{ $s->session }}{{ $s->status === 'Current' ? ' (Current)' : '' }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3">
+                <label class="p-form-label">Class</label>
+                <select id="classFilter" class="p-input">
+                    <option value="">All Classes</option>
+                    @foreach ($classOptions as $c)
+                    <option value="{{ $c->id }}">{{ $c->label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label class="p-form-label">Status</label>
                 <select id="statusFilter" class="p-input">
                     <option value="">All Statuses</option>
@@ -420,6 +429,7 @@ $(document).ready(function () {
         ajax: {
             url: '{{ route("schoolpayment.data") }}',
             data: function (d) {
+                d.session_filter = $('#sessionFilter').val();
                 d.class_filter  = $('#classFilter').val();
                 d.status_filter = $('#statusFilter').val();
             },
@@ -442,7 +452,7 @@ $(document).ready(function () {
         dom: 'rtip',
         language: {
             processing: '<span class="spinner-border spinner-border-sm text-primary"></span>',
-            emptyTable: '<div class="p-empty"><i class="ri-user-line"></i>No students found for the current session</div>',
+            emptyTable: '<div class="p-empty"><i class="ri-user-line"></i>No students found for the selected session</div>',
             zeroRecords: '<div class="p-empty"><i class="ri-search-line"></i>No students match your filters</div>',
         },
         drawCallback: function () {
@@ -461,18 +471,28 @@ $(document).ready(function () {
 
     $('#classFilter, #statusFilter').on('change', function () {
         table.draw();
+        loadStats();
+    });
+    $('#sessionFilter').on('change', function () {
+        table.draw();
+        loadStats();
     });
 
     $('#clearFilters').on('click', function () {
         $('#liveSearch').val('');
         $('#classFilter').val('');
         $('#statusFilter').val('');
+        $('#sessionFilter').val(@json((string) ($defaultSessionId ?? 'all')));
         table.search('').draw();
+        loadStats();
     });
 
     // Stat cards (AJAX, independent of table draws)
     function loadStats() {
-        $.get('{{ route("schoolpayment.stats") }}', function (res) {
+        $.get('{{ route("schoolpayment.stats") }}', {
+            session_filter: $('#sessionFilter').val(),
+            class_filter:   $('#classFilter').val(),
+        }, function (res) {
             const vals = $('.p-stat-card .stat-value');
             vals.eq(0).text(res.stats.total);
             vals.eq(1).text(res.stats.active);
@@ -487,7 +507,8 @@ $(document).ready(function () {
         $('#tsModalStudentId').val($(this).data('student-id'));
         $('#tsModalStudentName').html('<i class="ri-calendar-2-line me-2"></i>' + $(this).data('student-name') + ' — Select Term & Session');
         $('#tsModalTerm').val('');
-        $('#tsModalSession').val('');
+        const listSession = $('#sessionFilter').val();
+        $('#tsModalSession').val(listSession && listSession !== 'all' ? listSession : '');
         new bootstrap.Modal(document.getElementById('termSessionModal')).show();
     });
 

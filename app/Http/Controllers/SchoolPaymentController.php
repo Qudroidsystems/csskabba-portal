@@ -54,15 +54,22 @@ class SchoolPaymentController extends Controller
     {
         $pagetitle      = 'Student Payments';
         $schoolterms    = Schoolterm::all();
-        $schoolsessions = Schoolsession::all();
+        $schoolsessions = Schoolsession::orderByDesc('id')->get();
 
+        // One option per class + arm (e.g. "JSS 1 A"), keyed by schoolclass.id
         $classOptions = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['schoolclass.schoolclass as schoolclass'])
-            ->distinct()
-            ->orderBy('schoolclass')
-            ->pluck('schoolclass')
-            ->filter()
+            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm as arm_name'])
+            ->orderBy('schoolclass.schoolclass')
+            ->orderBy('schoolarm.arm')
+            ->get()
+            ->map(fn ($c) => (object) [
+                'id'    => $c->id,
+                'label' => trim($c->schoolclass . ' ' . ($c->arm_name ?? '')),
+            ])
+            ->filter(fn ($c) => $c->label !== '')
             ->values();
+
+        $defaultSessionId = $this->defaultListSessionId();
 
         $statusOptions = Student::whereNotNull('student_status')
             ->where('student_status', '!=', '')
@@ -71,25 +78,55 @@ class SchoolPaymentController extends Controller
             ->pluck('student_status');
 
         return view('schoolpayment.index', compact(
-            'pagetitle', 'schoolterms', 'schoolsessions', 'classOptions', 'statusOptions'
+            'pagetitle', 'schoolterms', 'schoolsessions', 'classOptions', 'statusOptions', 'defaultSessionId'
         ));
+    }
+
+    /**
+     * Session the student list opens on: the Current session, or — when no
+     * student has been placed in it yet (e.g. a new session was just set
+     * Current) — the latest session that has class placements.
+     */
+    protected function defaultListSessionId(): ?int
+    {
+        $current = Schoolsession::where('status', 'Current')->value('id');
+
+        if ($current && DB::table('studentclass')->where('sessionid', $current)->exists()) {
+            return (int) $current;
+        }
+
+        $latest = DB::table('studentclass')->max('sessionid');
+
+        return $latest ? (int) $latest : ($current ? (int) $current : null);
+    }
+
+    /** session_filter from the request: '' / 'all' = every session, missing = default. */
+    protected function requestedListSession(Request $request): ?int
+    {
+        if (!$request->has('session_filter')) {
+            return $this->defaultListSessionId();
+        }
+        $v = $request->input('session_filter');
+
+        return ($v === null || $v === '' || $v === 'all') ? null : (int) $v;
     }
 
     /**
      * Stat card counts for the student payments index (AJAX).
      */
-    public function stats()
+    public function stats(Request $request)
     {
-        $now = now();
+        $now       = now();
+        $sessionId = $this->requestedListSession($request);
 
-        $base = Student::leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->where('schoolsession.status', 'Current');
+        $base = Student::join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->when($sessionId, fn ($q) => $q->where('studentclass.sessionid', $sessionId))
+            ->when($request->filled('class_filter'), fn ($q) => $q->where('studentclass.schoolclassid', (int) $request->input('class_filter')));
 
-        $total  = (clone $base)->count('studentRegistration.id');
-        $active = (clone $base)->where('studentRegistration.student_status', 'Active')->count('studentRegistration.id');
+        $total  = (clone $base)->distinct()->count('studentRegistration.id');
+        $active = (clone $base)->where('studentRegistration.student_status', 'Active')->distinct()->count('studentRegistration.id');
 
-        $studentIds = (clone $base)->pluck('studentRegistration.id');
+        $studentIds = (clone $base)->distinct()->pluck('studentRegistration.id');
 
         $scholarshipCount = ScholarshipAssignment::whereIn('student_id', $studentIds)
             ->where('status', 'active')
@@ -132,7 +169,8 @@ class SchoolPaymentController extends Controller
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->where('schoolsession.status', 'Current')
+            ->whereNotNull('studentclass.id')
+            ->when($this->requestedListSession($request), fn ($q, $sid) => $q->where('studentclass.sessionid', $sid))
             ->select([
                 'studentRegistration.id as id',
                 'studentRegistration.admissionNo as admissionNo',
@@ -171,11 +209,16 @@ class SchoolPaymentController extends Controller
                         $qq->where('studentRegistration.firstname', 'like', "%{$search}%")
                             ->orWhere('studentRegistration.lastname', 'like', "%{$search}%")
                             ->orWhere('studentRegistration.admissionNo', 'like', "%{$search}%")
-                            ->orWhere('schoolclass.schoolclass', 'like', "%{$search}%");
+                            ->orWhere('studentRegistration.othername', 'like', "%{$search}%")
+                            ->orWhere('schoolclass.schoolclass', 'like', "%{$search}%")
+                            ->orWhere(DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, ''))"), 'like', "%{$search}%");
                     });
                 }
                 if ($class = $request->input('class_filter')) {
-                    $q->where('schoolclass.schoolclass', $class);
+                    // class id (class + arm); fall back to a class name for old links
+                    ctype_digit((string) $class)
+                        ? $q->where('schoolclass.id', (int) $class)
+                        : $q->where('schoolclass.schoolclass', $class);
                 }
                 if ($status = $request->input('status_filter')) {
                     $q->where('studentRegistration.student_status', $status);
