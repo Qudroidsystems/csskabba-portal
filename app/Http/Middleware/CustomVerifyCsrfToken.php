@@ -65,7 +65,7 @@ class CustomVerifyCsrfToken extends BaseVerifier
      */
     protected function shouldSkipCsrf($request)
     {
-        foreach ($this->except as $uri) {
+        foreach ($this->getExcludedPaths() as $uri) {
             if ($request->is($uri) || $request->is($uri . '/*')) {
                 return true;
             }

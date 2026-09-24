@@ -43,6 +43,7 @@ use App\Http\Controllers\ParentController;
 use App\Http\Controllers\Payment\EnhancedSchoolPaymentController;
 use App\Http\Controllers\Payment\FlexibleOnlinePaymentController;
 use App\Http\Controllers\Payment\OnlinePaymentController;
+use App\Http\Controllers\Payment\OnlineFeeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PrincipalsCommentController;
 use App\Http\Controllers\PromotionController;
@@ -168,7 +169,10 @@ Route::get('/timetable/ics/{teacherId}', [TimetableController::class, 'exportIcs
 
 // Payment gateway webhooks — no CSRF, no auth
 Route::prefix('webhook')->group(function () {
-    Route::post('/paystack',    [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.paystack');
+    // School-fee payments (online-fees). Signature-checked; CSRF is skipped for webhook/*.
+    Route::post('/paystack',    [OnlineFeeController::class, 'webhook'])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, \App\Http\Middleware\CustomVerifyCsrfToken::class])
+        ->name('webhook.paystack');
     Route::post('/remita',      [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
     Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');
 });
@@ -529,6 +533,19 @@ Route::group(['middleware' => ['auth']], function () {
     // Student payments (student-facing)
     Route::get('/my-payments', [StudentPaymentController::class, 'index'])->name('student.payments');
     Route::get('/my-payments/receipt', [StudentPaymentController::class, 'printReceipt'])->name('student.payments.receipt');
+    Route::get('/my-payments/pay', [OnlineFeeController::class, 'myFees'])->name('student.fees.pay');
+
+    // Online school-fee payments (Paystack)
+    Route::prefix('online-fees')->name('online-fees.')->group(function () {
+        Route::get('/', [OnlineFeeController::class, 'index'])->name('index');
+        Route::get('/students', [OnlineFeeController::class, 'searchStudents'])->name('students');
+        Route::get('/pay/{student}', [OnlineFeeController::class, 'payFor'])->whereNumber('student')->name('pay-for');
+        Route::post('/checkout', [OnlineFeeController::class, 'initialize'])->name('checkout');
+        Route::get('/callback', [OnlineFeeController::class, 'callback'])->name('callback');
+        Route::get('/transaction/{reference}', [OnlineFeeController::class, 'show'])->name('show');
+        Route::get('/transaction/{reference}/status', [OnlineFeeController::class, 'status'])->name('status');
+        Route::post('/transaction/{reference}/verify', [OnlineFeeController::class, 'verify'])->name('verify');
+    });
 
     // Result access control (who can see results while owing fees)
     Route::get('/result-access', [ResultAccessController::class, 'index'])->name('result-access.index');
@@ -692,7 +709,8 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::prefix('payment/online')->name('payment.online.')->group(function () {
-        Route::get('/', [OnlinePaymentController::class, 'index'])->name('index');
+        // Old online-payment screen depended on a model that no longer exists; point it at the new page.
+        Route::get('/', [OnlineFeeController::class, 'index'])->name('index');
         Route::get('/success/{reference}', [OnlinePaymentController::class, 'success'])->name('success');
         Route::get('/bills', [OnlinePaymentController::class, 'getStudentBillsAjax'])->name('bills');
         Route::post('/initialize', [OnlinePaymentController::class, 'initialize'])->name('initialize');

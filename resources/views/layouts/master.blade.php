@@ -641,6 +641,7 @@
                         <div class="collapse menu-dropdown" id="sidebarPayment">
                             <ul class="nav nav-sm flex-column">
                                 <li class="nav-item"><a href="{{ route('student.payments') }}" class="nav-link">My Payments</a></li>
+                                <li class="nav-item"><a href="{{ route('student.fees.pay') }}" class="nav-link">Pay School Fees</a></li>
                             </ul>
                         </div>
                     </li>
@@ -871,7 +872,7 @@
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link">Student Bill</a></li>
                                     <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link">Payment Portal</a></li>
-                                    <li class="nav-item"><a href="{{ route('payment.online.index') }}" class="nav-link">Online Payments</a></li>
+                                    @can('View online-fee-payments')<li class="nav-item"><a href="{{ route('online-fees.index') }}" class="nav-link">Online Payments</a></li>@endcan
                                 </ul>
                             </div>
                         </li>
@@ -1735,6 +1736,7 @@
 
         /* ── Student Portal ── */
         {title:'My Assessments',                        url:'{{ route("assessments") }}',                                    icon:'mdi-clipboard-list',          category:'Student Portal',      keywords:['test','quiz','cbt','assessment']},
+        {title:'Pay School Fees',                       url:'{{ route("student.fees.pay") }}',                           icon:'mdi-credit-card-outline',     category:'Student Portal',      keywords:['pay','fees','paystack','online','card','transfer']},
         {title:'My Payments',                           url:'{{ route("student.payments") }}',                               icon:'mdi-cash-multiple',           category:'Student Portal',      keywords:['fees','invoice','payment','student']},
 
         /* ── Subject Registration ── */
@@ -1790,7 +1792,7 @@
         /* ── Finance ── */
         {title:'Student Bill',                          url:'{{ route("schoolpayment.index") }}',                            icon:'mdi-receipt',                 category:'Finance',             keywords:['bill','fees','invoice','payment','student']},
         {title:'Payment Portal',                        url:'{{ route("payment.index") }}',                                  icon:'mdi-wallet',                  category:'Finance',             keywords:['pay','portal','fees','transaction']},
-        {title:'Online Payments',                       url:'{{ route("payment.online.index") }}',                           icon:'mdi-web',                     category:'Finance',             keywords:['online','pay','paystack','flutterwave','internet']},
+        {title:'Online Payments',                       url:'{{ route("online-fees.index") }}',                           icon:'mdi-web',                     category:'Finance',             keywords:['online','pay','paystack','flutterwave','internet']},
         {title:'All Scholarships',                      url:'{{ route("admin.scholarship.index") }}',                        icon:'mdi-medal',                   category:'Finance',             keywords:['scholarship','award','bursary','fund']},
         {title:'Create Scholarship',                    url:'{{ route("admin.scholarship.create") }}',                       icon:'mdi-medal-outline',           category:'Finance',             keywords:['scholarship','create','new','add']},
         {title:'Scholarship Assignments',               url:'{{ route("admin.scholarship.assignments") }}',                  icon:'mdi-account-star',            category:'Finance',             keywords:['scholarship','assign','student']},

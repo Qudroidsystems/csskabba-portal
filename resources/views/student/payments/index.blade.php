@@ -50,6 +50,11 @@
     <x-cb.hero title="My Payments" icon="ri-wallet-3-line"
                subtitle="Your school fee bills, what you've paid, and what's left — the same figures the bursary sees.">
         <x-slot:actions>
+            @if(Route::has('student.fees.pay'))
+                <a class="cb-hero-btn" href="{{ route('student.fees.pay', ['term_id' => $selectedTermId, 'session_id' => $selectedSessionId]) }}">
+                    <i class="ri-secure-payment-line"></i>Pay online
+                </a>
+            @endif
             @if($bills->isNotEmpty())
                 <a class="cb-hero-btn" href="{{ route('student.payments.receipt', ['term_id' => $selectedTermId, 'session_id' => $selectedSessionId]) }}">
                     <i class="ri-download-2-line"></i>Download statement
