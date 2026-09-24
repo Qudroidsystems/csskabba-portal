@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaymentGateway;
+use App\Support\PaymentGatewayCatalog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * Finance › Payment Gateways: admins enter each gateway's test and live
+ * credentials here (no .env editing needed). Secrets are encrypted at rest
+ * and never sent back to the browser.
+ */
 class PaymentGatewayController extends Controller
 {
     public function __construct()
@@ -17,199 +22,180 @@ class PaymentGatewayController extends Controller
         $this->middleware('permission:Manage payment gateways');
     }
 
-    /**
-     * List payment gateways with DataTable.
-     */
-    public function index(Request $request)
+    public function index()
     {
-        $pagetitle = 'Payment Gateway Configuration';
-
-        if ($request->ajax()) {
-            $gateways = PaymentGateway::select('*');
-
-            return DataTables::of($gateways)
-                ->addIndexColumn()
-                ->addColumn('status_badge', function($gateway) {
-                    if ($gateway->is_active) {
-                        return '<span class="badge bg-success"><i class="ri-check-line"></i> Active</span>';
-                    }
-                    return '<span class="badge bg-danger"><i class="ri-close-line"></i> Inactive</span>';
-                })
-                ->addColumn('mode_badge', function($gateway) {
-                    if ($gateway->mode === 'live') {
-                        return '<span class="badge bg-primary">Live</span>';
-                    }
-                    return '<span class="badge bg-warning">Sandbox/Test</span>';
-                })
-                ->addColumn('action', function($gateway) {
-                    $buttons = '<button class="btn btn-sm btn-primary edit-gateway me-1" data-id="'.$gateway->id.'"><i class="ri-settings-line"></i></button>';
-                    $buttons .= '<button class="btn btn-sm btn-info test-gateway me-1" data-id="'.$gateway->id.'"><i class="ri-flask-line"></i> Test</button>';
-                    $buttons .= '<button class="btn btn-sm btn-warning toggle-gateway" data-id="'.$gateway->id.'" data-active="'.$gateway->is_active.'">';
-                    $buttons .= $gateway->is_active ? '<i class="ri-pause-line"></i> Disable' : '<i class="ri-play-line"></i> Enable';
-                    $buttons .= '</button>';
-                    return $buttons;
-                })
-                ->rawColumns(['status_badge', 'mode_badge', 'action'])
-                ->make(true);
+        // Make sure every known gateway has a row (switched off by default).
+        foreach (PaymentGatewayCatalog::PROVIDERS as $key => $def) {
+            PaymentGateway::firstOrCreate(
+                ['provider_key' => $key],
+                ['name' => $def['name'], 'mode' => 'sandbox', 'is_active' => false, 'config' => []]
+            );
         }
 
-        return view('admin.payment-gateways.index', compact('pagetitle'));
+        $order    = array_keys(PaymentGatewayCatalog::PROVIDERS);
+        $gateways = PaymentGateway::whereIn('provider_key', $order)->get()
+            ->sortBy(fn ($g) => array_search($g->provider_key, $order))->values();
+
+        return view('admin.payment-gateways.index', [
+            'pagetitle' => 'Payment Gateways',
+            'gateways'  => $gateways,
+            'urls'      => [
+                'paystack_webhook'  => route('webhook.paystack'),
+                'paystack_callback' => route('online-fees.callback'),
+            ],
+        ]);
     }
 
-    /**
-     * Toggle gateway status (AJAX).
-     */
+    /** Save mode, on/off and credentials. Blank credential inputs keep the saved value. */
+    public function updateConfig(Request $request, $gatewayId)
+    {
+        $gateway = PaymentGateway::findOrFail($gatewayId);
+        $fields  = PaymentGatewayCatalog::fields($gateway->provider_key);
+
+        $data = $request->validate([
+            'mode'            => 'required|in:sandbox,live',
+            'is_active'       => 'nullable|boolean',
+            'credentials'     => 'nullable|array',
+            'credentials.*'   => 'nullable|array',
+            'credentials.*.*' => 'nullable|string|max:1000',
+            'clear'           => 'nullable|array',
+            'clear.*'         => 'nullable|array',
+        ]);
+
+        $errors = [];
+        foreach (['test', 'live'] as $set) {
+            foreach ($fields as $field => $def) {
+                $value = trim((string) ($data['credentials'][$set][$field] ?? ''));
+
+                if (!empty($data['clear'][$set][$field])) {
+                    $gateway->putCredential($field, $set, null);
+                    continue;
+                }
+                if ($value === '') {
+                    continue; // keep what is saved
+                }
+                $prefix = $def['prefix'][$set] ?? null;
+                if ($prefix && !str_starts_with($value, $prefix)) {
+                    $errors[] = ($set === 'live' ? 'Live' : 'Test') . " {$def['label']} should start with \"{$prefix}\".";
+                    continue;
+                }
+                if (str_contains(strtolower($value), 'xxxx')) {
+                    $errors[] = ($set === 'live' ? 'Live' : 'Test') . " {$def['label']} looks like a placeholder.";
+                    continue;
+                }
+                $gateway->putCredential($field, $set, $value);
+            }
+        }
+
+        $gateway->mode      = $data['mode'];
+        $gateway->is_active = (bool) ($data['is_active'] ?? false);
+
+        if ($gateway->is_active && !$gateway->isConfigured()) {
+            $errors[] = 'Add the ' . ($gateway->mode === 'live' ? 'live' : 'test') . ' keys before switching '
+                . $gateway->name . ' on in ' . ($gateway->mode === 'live' ? 'Live' : 'Sandbox') . ' mode.';
+        }
+
+        if ($errors) {
+            return $this->reply($request, false, implode(' ', $errors), 422);
+        }
+
+        // Old copies of keys in plain columns are no longer needed.
+        $gateway->secret_key = null;
+        $gateway->public_key = $gateway->credential('public_key', PaymentGatewayCatalog::set($gateway->mode)); // public, safe
+        $gateway->save();
+
+        return $this->reply($request, true, $gateway->name . ' settings saved.', 200, $this->summary($gateway));
+    }
+
     public function toggleGateway(Request $request, $gatewayId)
     {
         $gateway = PaymentGateway::findOrFail($gatewayId);
 
-        $gateway->update([
-            'is_active' => !$gateway->is_active
-        ]);
+        if (!$gateway->is_active && !$gateway->isConfigured()) {
+            return $this->reply($request, false, 'Add the ' . ($gateway->mode === 'live' ? 'live' : 'test') . ' keys first.', 422);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => $gateway->name . ' is now ' . ($gateway->is_active ? 'active' : 'inactive'),
-            'is_active' => $gateway->is_active
-        ]);
+        $gateway->update(['is_active' => !$gateway->is_active]);
+
+        return $this->reply($request, true, $gateway->name . ' is now ' . ($gateway->is_active ? 'on' : 'off') . '.', 200, $this->summary($gateway));
     }
 
-    /**
-     * Update gateway configuration (AJAX).
-     */
-    public function updateConfig(Request $request, $gatewayId)
-    {
-        $gateway = PaymentGateway::findOrFail($gatewayId);
-
-        $validator = Validator::make($request->all(), [
-            'mode' => 'required|in:sandbox,live',
-            'secret_key' => 'nullable|string',
-            'public_key' => 'nullable|string',
-            'config' => 'nullable|array',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $updateData = [
-            'mode' => $request->mode,
-        ];
-
-        if ($request->secret_key) {
-            $updateData['secret_key'] = $request->secret_key;
-        }
-        if ($request->public_key) {
-            $updateData['public_key'] = $request->public_key;
-        }
-        if ($request->config) {
-            $existingConfig = $gateway->config ?? [];
-            $updateData['config'] = array_merge($existingConfig, $request->config);
-        }
-
-        $gateway->update($updateData);
-
-        return response()->json([
-            'success' => true,
-            'message' => $gateway->name . ' configuration updated successfully!'
-        ]);
-    }
-
-    /**
-     * Test gateway connection (AJAX).
-     */
+    /** Check the saved keys against the provider. ?set=test|live (default: current mode). */
     public function testGateway(Request $request, $gatewayId)
     {
         $gateway = PaymentGateway::findOrFail($gatewayId);
+        $set     = in_array($request->input('set'), ['test', 'live'], true) ? $request->input('set') : PaymentGatewayCatalog::set($gateway->mode);
+        $label   = $set === 'live' ? 'live' : 'test';
+
+        if (!$gateway->isConfigured($set)) {
+            return response()->json(['success' => false, 'message' => "No complete {$label} keys saved for {$gateway->name}."]);
+        }
 
         try {
-            switch ($gateway->provider_key) {
-                case 'paystack':
-                    $result = $this->testPaystack($gateway);
-                    break;
-                case 'remita':
-                    $result = $this->testRemita($gateway);
-                    break;
-                case 'flutterwave':
-                    $result = $this->testFlutterwave($gateway);
-                    break;
-                default:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'No test available for this gateway'
-                    ]);
+            $result = match ($gateway->provider_key) {
+                'paystack'    => $this->testBearer('https://api.paystack.co/bank?perPage=1', $gateway->credential('secret_key', $set)),
+                'flutterwave' => $this->testBearer('https://api.flutterwave.com/v3/banks/NG', $gateway->credential('secret_key', $set)),
+                'stripe'      => $this->testBearer('https://api.stripe.com/v1/balance', $gateway->credential('secret_key', $set)),
+                'monnify'     => $this->testMonnify($gateway, $set),
+                default       => ['success' => true, 'message' => "{$label} details are saved. {$gateway->name} has no automatic connection test; verify with a small payment."],
+            };
+        } catch (\Throwable $e) {
+            Log::warning('Gateway test failed', ['gateway' => $gateway->provider_key, 'error' => $e->getMessage()]);
+            $result = ['success' => false, 'message' => 'Could not reach ' . $gateway->name . '. Check the server\'s internet connection.'];
+        }
+
+        if ($result['success'] && empty($result['plain'])) {
+            $result['message'] = "{$gateway->name} accepted the {$label} keys.";
+        }
+        return response()->json($result);
+    }
+
+    // ── helpers ─────────────────────────────────────────────────────────
+
+    protected function testBearer(string $url, string $secret): array
+    {
+        $res = Http::withToken($secret)->acceptJson()->timeout(20)->get($url);
+        if ($res->successful()) {
+            return ['success' => true];
+        }
+        $msg = $res->json('message') ?: $res->json('error.message') ?: ('HTTP ' . $res->status());
+        return ['success' => false, 'message' => 'Rejected: ' . $msg, 'plain' => true];
+    }
+
+    protected function testMonnify(PaymentGateway $g, string $set): array
+    {
+        $base = $set === 'live' ? 'https://api.monnify.com' : 'https://sandbox.monnify.com';
+        $res  = Http::withBasicAuth($g->credential('api_key', $set), $g->credential('secret_key', $set))
+            ->acceptJson()->timeout(20)->post($base . '/api/v1/auth/login');
+
+        return $res->successful() && $res->json('requestSuccessful')
+            ? ['success' => true]
+            : ['success' => false, 'message' => 'Rejected: ' . ($res->json('responseMessage') ?: 'HTTP ' . $res->status()), 'plain' => true];
+    }
+
+    protected function summary(PaymentGateway $g): array
+    {
+        $masked = [];
+        foreach (['test', 'live'] as $set) {
+            foreach (PaymentGatewayCatalog::fields($g->provider_key) as $field => $def) {
+                $masked[$set][$field] = $g->maskedCredential($field, $set);
             }
-
-            return response()->json($result);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Test failed: ' . $e->getMessage()
-            ]);
         }
+        return [
+            'id'              => $g->id,
+            'is_active'       => (bool) $g->is_active,
+            'mode'            => $g->mode,
+            'test_configured' => $g->isConfigured('test'),
+            'live_configured' => $g->isConfigured('live'),
+            'masked'          => $masked,
+        ];
     }
 
-    /**
-     * Test Paystack connection.
-     */
-    private function testPaystack($gateway)
+    protected function reply(Request $request, bool $ok, string $message, int $status = 200, array $extra = [])
     {
-        $secretKey = $gateway->mode === 'live' ? $gateway->secret_key : ($gateway->config['test_secret_key'] ?? '');
-
-        if (!$secretKey) {
-            return ['success' => false, 'message' => 'Secret key not configured'];
+        if ($request->expectsJson()) {
+            return response()->json(['success' => $ok, 'message' => $message, 'gateway' => $extra ?: null], $status);
         }
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $secretKey,
-        ])->get('https://api.paystack.co/transaction/initialize');
-
-        if ($response->successful()) {
-            return ['success' => true, 'message' => 'Paystack connection successful!'];
-        }
-
-        return ['success' => false, 'message' => 'Paystack connection failed: ' . $response->body()];
-    }
-
-    /**
-     * Test Remita connection.
-     */
-    private function testRemita($gateway)
-    {
-        $merchantId = $gateway->mode === 'live'
-            ? ($gateway->config['live_merchant_id'] ?? '')
-            : ($gateway->config['test_merchant_id'] ?? '2547916');
-
-        if (!$merchantId) {
-            return ['success' => false, 'message' => 'Merchant ID not configured'];
-        }
-
-        return ['success' => true, 'message' => 'Remita configuration looks valid (manual test required for full verification)'];
-    }
-
-    /**
-     * Test Flutterwave connection.
-     */
-    private function testFlutterwave($gateway)
-    {
-        $secretKey = $gateway->mode === 'live' ? $gateway->secret_key : ($gateway->config['test_secret_key'] ?? '');
-
-        if (!$secretKey) {
-            return ['success' => false, 'message' => 'Secret key not configured'];
-        }
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $secretKey,
-        ])->get('https://api.flutterwave.com/v3/banks/NG');
-
-        if ($response->successful() && $response->json('status') === 'success') {
-            return ['success' => true, 'message' => 'Flutterwave connection successful!'];
-        }
-
-        return ['success' => false, 'message' => 'Flutterwave connection failed'];
+        return back()->with($ok ? 'success' : 'error', $message);
     }
 }

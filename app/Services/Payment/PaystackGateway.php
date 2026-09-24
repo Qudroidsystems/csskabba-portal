@@ -27,22 +27,25 @@ class PaystackGateway
     {
         $gw     = PaymentGateway::where('provider_key', 'paystack')->first();
         $env    = (array) config('services.paystack', []);
-        $config = (array) ($gw->config ?? []);
 
         $this->mode = ($gw->mode ?? ($env['mode'] ?? 'sandbox')) === 'live' ? 'live' : 'sandbox';
 
-        // First key that is real (not a seeder placeholder like "sk_test_xxxx…")
-        // and matches the mode. Admin settings win over .env.
-        if ($this->mode === 'live') {
-            $secrets = [$gw->secret_key ?? null, $config['live_secret_key'] ?? null, $env['live_secret_key'] ?? null, $env['secret_key'] ?? null];
-            $publics = [$gw->public_key ?? null, $config['live_public_key'] ?? null, $env['live_public_key'] ?? null, $env['public_key'] ?? null];
-        } else {
-            $secrets = [$config['test_secret_key'] ?? null, $gw->secret_key ?? null, $env['test_secret_key'] ?? null, $env['secret_key'] ?? null];
-            $publics = [$config['test_public_key'] ?? null, $gw->public_key ?? null, $env['test_public_key'] ?? null, $env['public_key'] ?? null];
+        // Keys entered by the admin (Finance › Payment Gateways) come first;
+        // .env is only a fallback for servers that have no saved keys yet.
+        $set = $this->mode === 'live' ? 'live' : 'test';
+        $this->secretKey = $gw ? $gw->credential('secret_key', $set) : null;
+        $this->publicKey = $gw ? $gw->credential('public_key', $set) : null;
+
+        if (!$this->secretKey) {
+            $secrets = $set === 'live'
+                ? [$env['live_secret_key'] ?? null, $env['secret_key'] ?? null]
+                : [$env['test_secret_key'] ?? null, $env['secret_key'] ?? null];
+            $publics = $set === 'live'
+                ? [$env['live_public_key'] ?? null, $env['public_key'] ?? null]
+                : [$env['test_public_key'] ?? null, $env['public_key'] ?? null];
+            $this->secretKey = $this->firstRealKey($secrets, 'sk_' . $set . '_');
+            $this->publicKey = $this->firstRealKey($publics, 'pk_' . $set . '_');
         }
-        $prefix = $this->mode === 'live' ? 'live' : 'test';
-        $this->secretKey = $this->firstRealKey($secrets, 'sk_' . $prefix . '_');
-        $this->publicKey = $this->firstRealKey($publics, 'pk_' . $prefix . '_');
 
         // Active when the admin switched it on, or (no gateway row) when .env says so.
         $this->active = $gw ? (bool) $gw->is_active : filter_var($env['active'] ?? true, FILTER_VALIDATE_BOOLEAN);
@@ -63,7 +66,7 @@ class PaystackGateway
     public function problem(): ?string
     {
         if (!$this->active) return 'Paystack is switched off in Payment Gateways.';
-        if (!$this->secretKey) return 'No valid Paystack ' . ($this->mode === 'live' ? 'live (sk_live_…)' : 'test (sk_test_…)') . ' secret key is set.';
+        if (!$this->secretKey) return 'No valid Paystack ' . ($this->mode === 'live' ? 'live (sk_live_…)' : 'test (sk_test_…)') . ' secret key has been saved in Payment Gateways.';
         return null;
     }
 
