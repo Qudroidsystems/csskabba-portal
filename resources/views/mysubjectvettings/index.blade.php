@@ -1,222 +1,317 @@
 @extends('layouts.master')
 
 @section('content')
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+@include('mysubjectvettings.partials.styles')
+
+@php
+    $statusMeta = [
+        'pending'   => ['Pending',       'ri-time-line'],
+        'completed' => ['Completed',     'ri-checkbox-circle-line'],
+        'rejected'  => ['Sent back',     'ri-arrow-go-back-line'],
+    ];
+    $termClass = fn ($id) => in_array((int) $id, [1, 2, 3]) ? 'term-' . (int) $id : '';
+    $barColor  = fn ($p) => $p >= 100 ? 'var(--cb-green)' : ($p >= 50 ? 'var(--cb-amber)' : ($p > 0 ? '#fb923c' : '#cbd5e1'));
+    $defaultSession = isset($sessionOptions[$currentSessionId]) ? $currentSessionId : '';
+@endphp
+
 <div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <!-- Start page title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">My Subject Vetting Assignments</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="{{ route('mysubjectvettings.index') }}">Subject Vetting</a></li>
-                                <li class="breadcrumb-item active">My Assignments</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- End page title -->
+<div class="page-content">
+<div class="container-fluid">
 
-            <!-- Vetting Status Chart -->
-            {{-- <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">Vetting Status Distribution</h5>
-                            <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-                                <canvas id="vettingStatusChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
+    {{-- Hero --}}
+    <div class="cb-hero">
+        <h1><i class="ri-shield-check-line me-2"></i>My Subject Vetting</h1>
+        <p>Broadsheets assigned to you for checking. Open one, confirm each student's scores, and sign it off.</p>
+        <div class="meta-pills">
+            <span class="cb-meta-pill"><i class="ri-user-line"></i>{{ Auth::user()->name }}</span>
+            <span class="cb-meta-pill"><i class="ri-calendar-line"></i>{{ now()->format('F j, Y') }}</span>
+        </div>
+    </div>
 
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-            @if (session('danger'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            <div id="subjectVettingList">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-xxl-3">
-                                        <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search vetting assignments">
-                                            <i class="ri-search-line search-icon"></i>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-3 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idTerm" data-choices data-choices-search-false data-choices-removeItem>
-                                                <option value="all">Select Term</option>
-                                                @foreach ($terms as $term)
-                                                    <option value="{{ $term->term }}">{{ $term->term }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-3 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idSession" data-choices data-choices-search-false data-choices-removeItem>
-                                                <option value="all">Select Session</option>
-                                                @foreach ($sessions as $session)
-                                                    <option value="{{ $session->session }}">{{ $session->session }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-1 col-sm-6">
-                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();"><i class="bi bi-funnel align-baseline me-1"></i> Filters</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">My Vetting Assignments <span class="badge bg-dark-subtle text-dark ms-1" id="total-records">{{ $subjectvettings->count() }}</span></h5>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_subject_vetting_table">
-                                        <thead>
-                                            <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="subjectname">Subject</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="teachername">Teacher</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sclass">Class</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolarm">Arm</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="termname">Term</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sessionname">Session</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="status">Status</th>
-                                                <th class="min-w-100px">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="fw-semibold text-gray-600 list">
-                                            @forelse ($subjectvettings as $sv)
-                                                <tr data-id="{{ $sv->svid }}">
-                                                    <td class="subjectname" data-subjectid="{{ $sv->subjectid }}">{{ $sv->subjectname }} ({{ $sv->subjectcode }})</td>
-                                                    <td class="teachername" data-subtid="{{ $sv->subtid }}">{{ $sv->teachername }}</td>
-                                                    <td class="sclass" data-schoolclassid="{{ $sv->schoolclassid }}">{{ $sv->sclass }}</td>
-                                                    <td class="schoolarm">{{ $sv->schoolarm }}</td>
-                                                    <td class="termname" data-termid="{{ $sv->termid }}">{{ $sv->termname }}</td>
-                                                    <td class="sessionname" data-sessionid="{{ $sv->sessionid }}">{{ $sv->sessionname }}</td>
-                                                    <td class="status">{{ $sv->status }}</td>
-                                                    <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('View my-subject-vettings')
-                                                                <li>
-                                                                    <a href="{{ route('mysubjectvettings.classbroadsheet', [$sv->schoolclassid,$sv->subjectclassid,$sv->staffid,$sv->termid, $sv->sessionid]) }}" title="Broadsheet for {{ $sv->sclass }} {{ $sv->schoolarm }}" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i></a>
-                                                                </li>
-                                                                {{-- <li>
-                                                                    <a href="{{ route('classbroadsheetmock', [$sv->schoolclassid, $sv->termid, $sv->sessionid]) }}" title="Mock Broadsheet for {{ $sv->sclass }} {{ $sv->schoolarm }}" class="btn btn-subtle-info btn-icon"><i class="ph-eye"></i></a>
-                                                                </li> --}}
-                                                            @endcan
-                                                            @can('Update my-subject-vettings')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                        </ul>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr class="noresult">
-                                                    <td colspan="8" class="text-center">No results found</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <!-- Client-side pagination controls -->
-                                <div class="row mt-3 align-items-center" id="pagination-element">
-                                    <div class="col-sm">
-                                        <div class="text-muted text-center text-sm-start">
-                                            Showing <span id="showing-records">0</span> of <span id="total-records-footer">{{ $subjectvettings->count() }}</span> Results
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-auto mt-3 mt-sm-0">
-                                        <div class="pagination-wrap">
-                                            <nav aria-label="Page navigation">
-                                                <ul class="pagination listjs-pagination"></ul>
-                                            </nav>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit Subject Vetting Modal -->
-                <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="editModalLabel" class="modal-title">Update Vetting Status</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form class="tablelist-form" autocomplete="off" id="edit-subjectvetting-form">
-                                <div class="modal-body">
-                                    <input type="hidden" id="edit-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label for="edit-status" class="form-label">Status</label>
-                                        <select name="status" id="edit-status" class="form-control" required>
-                                            <option value="pending">Pending</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="rejected">Rejected</option>
-                                        </select>
-                                    </div>
-                                    <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+    {{-- Stats --}}
+    <div class="row g-3 mb-4">
+        <div class="col-lg col-md-4 col-6">
+            <div class="cb-stat">
+                <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-navy),var(--cb-teal));"></div>
+                <div class="stat-ico"><i class="ri-stack-line"></i></div>
+                <div class="stat-value">{{ $stats['total'] }}</div>
+                <div class="stat-label">Assignments</div>
             </div>
         </div>
-        <!-- End Page-content -->
+        <div class="col-lg col-md-4 col-6">
+            <div class="cb-stat">
+                <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-amber),#fcd34d);"></div>
+                <div class="stat-ico"><i class="ri-time-line"></i></div>
+                <div class="stat-value text-warning" id="statPending">{{ $stats['pending'] }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="col-lg col-md-4 col-6">
+            <div class="cb-stat">
+                <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-green),#86efac);"></div>
+                <div class="stat-ico"><i class="ri-checkbox-circle-line"></i></div>
+                <div class="stat-value text-success" id="statCompleted">{{ $stats['completed'] }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 col-6">
+            <div class="cb-stat">
+                <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-rose),#fda4af);"></div>
+                <div class="stat-ico"><i class="ri-arrow-go-back-line"></i></div>
+                <div class="stat-value text-danger" id="statRejected">{{ $stats['rejected'] }}</div>
+                <div class="stat-label">Sent back to teacher</div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 col-12">
+            <div class="cb-stat">
+                <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-violet),#a78bfa);"></div>
+                <div class="stat-ico"><i class="ri-shield-check-line"></i></div>
+                <div class="stat-value" style="color:var(--cb-violet)">{{ $stats['percent'] }}%</div>
+                <div class="stat-label">{{ number_format($stats['vetted']) }} of {{ number_format($stats['rows']) }} student scores vetted</div>
+            </div>
+        </div>
     </div>
+
+    <div class="cb-card mb-4">
+        <div class="cb-card-header">
+            <h5><i class="ri-list-check-2" style="color:var(--cb-teal)"></i>Vetting Assignments
+                <span class="cb-count" id="visibleCount">{{ $assignments->count() }}</span>
+            </h5>
+            <small class="text-muted">Status updates automatically when every student is vetted.</small>
+        </div>
+
+        @if($assignments->isNotEmpty())
+            <div class="cb-toolbar">
+                <div class="cb-search">
+                    <i class="ri-search-line"></i>
+                    <input type="search" id="vetSearch" placeholder="Search subject, teacher or class…" aria-label="Search assignments">
+                </div>
+                @if(count($sessionOptions) > 1)
+                    <select class="cb-select" id="sessionFilter" aria-label="Filter by session">
+                        <option value="">All sessions</option>
+                        @foreach($sessionOptions as $sid => $sname)
+                            <option value="{{ $sid }}" @selected((string) $sid === (string) $defaultSession)>{{ $sname }}</option>
+                        @endforeach
+                    </select>
+                @endif
+                @if(count($termOptions) > 1)
+                    <div class="term-chips" id="termChips" role="group" aria-label="Filter by term">
+                        <button type="button" class="term-chip active" data-term="">All terms</button>
+                        @foreach($termOptions as $tid => $tname)
+                            <button type="button" class="term-chip" data-term="{{ $tid }}">{{ $tname }}</button>
+                        @endforeach
+                    </div>
+                @endif
+                <select class="cb-select" id="statusFilter" aria-label="Filter by status">
+                    <option value="">Any status</option>
+                    @foreach($statusMeta as $key => $meta)
+                        <option value="{{ $key }}">{{ $meta[0] }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="table-responsive">
+                <table class="cb-table stack" id="vetTable">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                            <th>Class</th>
+                            <th>Term / Session</th>
+                            <th>Vetted</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($assignments as $a)
+                            <tr data-id="{{ $a->svid }}"
+                                data-term="{{ $a->termid }}"
+                                data-session="{{ $a->sessionid }}"
+                                data-status="{{ $a->status }}"
+                                data-search="{{ strtolower($a->subjectname . ' ' . $a->subjectcode . ' ' . $a->teachername . ' ' . $a->sclass . ' ' . $a->schoolarm) }}">
+                                <td data-label="Subject">
+                                    <span class="subject-name">{{ $a->subjectname ?? '—' }}</span>
+                                    @if($a->subjectcode)<span class="subject-code">{{ $a->subjectcode }}</span>@endif
+                                </td>
+                                <td data-label="Teacher">{{ $a->teachername ?? '—' }}</td>
+                                <td data-label="Class">
+                                    @if($a->schoolclassid)
+                                        <span class="class-badge"><i class="ri-building-line"></i>{{ $a->sclass }}</span>
+                                        @if($a->schoolarm)<span class="arm-badge">{{ $a->schoolarm }}</span>@endif
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td data-label="Term / Session">
+                                    <span class="term-badge {{ $termClass($a->termid) }}">{{ $a->termname ?? '—' }}</span>
+                                    <span class="session-badge ms-1">{{ $a->sessionname ?? '—' }}</span>
+                                </td>
+                                <td data-label="Vetted" class="progress-cell">
+                                    @if($a->students > 0)
+                                        <div>
+                                            <div class="progress-track" role="progressbar" aria-valuenow="{{ $a->percent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Vetted">
+                                                <div class="progress-fill" style="width:0%;background:{{ $barColor($a->percent) }}" data-width="{{ $a->percent }}"></div>
+                                            </div>
+                                            <div class="progress-meta"><span>{{ $a->vetted }}/{{ $a->students }} · {{ $a->percent }}%</span>
+                                                @if($a->entered < $a->students)<span title="Students with no score yet" class="text-warning"><i class="ri-error-warning-line"></i> {{ $a->students - $a->entered }} blank</span>@endif
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-muted small">No scores entered yet</span>
+                                    @endif
+                                </td>
+                                <td data-label="Status">
+                                    <span class="status-pill st-{{ $a->status }}" data-status-pill>
+                                        <i class="{{ $statusMeta[$a->status][1] }}"></i>{{ $statusMeta[$a->status][0] }}
+                                    </span>
+                                </td>
+                                <td data-label="Actions" class="text-end">
+                                    <div class="d-inline-flex gap-2 align-items-center">
+                                        @if($a->subjectclassid && $a->schoolclassid)
+                                            <a class="action-btn btn-open"
+                                               href="{{ route('mysubjectvettings.classbroadsheet', [$a->schoolclassid, $a->subjectclassid, $a->staffid ?? 0, $a->termid, $a->sessionid]) }}">
+                                                <i class="ri-eye-line"></i>{{ $a->status === 'completed' ? 'Review' : 'Vet now' }}
+                                            </a>
+                                        @else
+                                            <span class="action-btn btn-disabled" title="The subject-class for this assignment no longer exists"><i class="ri-link-unlink"></i>Unavailable</span>
+                                        @endif
+                                        @can('Update my-subject-vettings')
+                                            <div class="dropdown">
+                                                <button class="action-btn btn-more" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Change status">
+                                                    <i class="ri-more-2-fill"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><h6 class="dropdown-header">Set status</h6></li>
+                                                    <li><a class="dropdown-item" href="#" onclick="setStatus({{ $a->svid }}, 'completed'); return false;"><i class="ri-checkbox-circle-line text-success me-2"></i>Mark completed</a></li>
+                                                    <li><a class="dropdown-item" href="#" onclick="setStatus({{ $a->svid }}, 'pending'); return false;"><i class="ri-time-line text-warning me-2"></i>Reopen (pending)</a></li>
+                                                    <li><a class="dropdown-item" href="#" onclick="setStatus({{ $a->svid }}, 'rejected'); return false;"><i class="ri-arrow-go-back-line text-danger me-2"></i>Send back to teacher</a></li>
+                                                </ul>
+                                            </div>
+                                        @endcan
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                        <tr class="no-match" id="vetNoMatch">
+                            <td colspan="7">
+                                <div class="empty-state" style="padding:32px">
+                                    <i class="ri-search-eye-line" style="font-size:40px"></i>
+                                    <h6>No assignments match these filters</h6>
+                                    <p><a href="#" onclick="resetFilters(); return false;">Clear filters</a></p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div class="empty-state">
+                <i class="ri-shield-check-line"></i>
+                <h6>No vetting assignments yet</h6>
+                <p>When an administrator assigns you a subject to vet, it will appear here.</p>
+            </div>
+        @endif
+    </div>
+
+</div>
+</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+@include('mysubjectvettings.partials.toast')
+
 <script>
-    window.vettingStatusCounts = @json($statusCounts);
-    console.log('Initial vettingStatusCounts:', window.vettingStatusCounts);
+(function () {
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const STATUS_META = @json($statusMeta);
+
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.progress-fill[data-width]').forEach(el => { el.style.width = el.dataset.width + '%'; });
+    });
+
+    const table = document.getElementById('vetTable');
+    if (!table) return;
+
+    const rows      = [...table.querySelectorAll('tbody tr[data-id]')];
+    const search    = document.getElementById('vetSearch');
+    const sessSel   = document.getElementById('sessionFilter');
+    const statSel   = document.getElementById('statusFilter');
+    const chips     = document.getElementById('termChips');
+    let term = '';
+
+    function apply() {
+        const q  = (search?.value || '').trim().toLowerCase();
+        const ss = sessSel?.value || '';
+        const st = statSel?.value || '';
+        let shown = 0;
+        rows.forEach(tr => {
+            const ok = (!q || tr.dataset.search.includes(q))
+                && (!ss || tr.dataset.session === ss)
+                && (!term || tr.dataset.term === term)
+                && (!st || tr.dataset.status === st);
+            tr.style.display = ok ? '' : 'none';
+            if (ok) shown++;
+        });
+        document.getElementById('visibleCount').textContent = shown;
+        document.getElementById('vetNoMatch').style.display = shown ? 'none' : 'table-row';
+    }
+
+    search?.addEventListener('input', apply);
+    sessSel?.addEventListener('change', apply);
+    statSel?.addEventListener('change', apply);
+    chips?.addEventListener('click', e => {
+        const chip = e.target.closest('.term-chip');
+        if (!chip) return;
+        term = chip.dataset.term;
+        chips.querySelectorAll('.term-chip').forEach(c => c.classList.toggle('active', c === chip));
+        apply();
+    });
+    window.resetFilters = function () {
+        if (search) search.value = '';
+        if (sessSel) sessSel.value = '';
+        if (statSel) statSel.value = '';
+        term = '';
+        chips?.querySelectorAll('.term-chip').forEach(c => c.classList.toggle('active', c.dataset.term === ''));
+        apply();
+    };
+    apply();
+
+    function recount() {
+        const count = s => rows.filter(r => r.dataset.status === s).length;
+        document.getElementById('statPending').textContent   = count('pending');
+        document.getElementById('statCompleted').textContent = count('completed');
+        document.getElementById('statRejected').textContent  = count('rejected');
+    }
+
+    window.setStatus = async function (id, status) {
+        if (status === 'rejected' && !confirm('Send this broadsheet back to the subject teacher for corrections?')) return;
+        try {
+            const res = await fetch(`{{ url('mysubjectvettings') }}/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({ status }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) throw new Error(data.message || 'Could not update the status.');
+
+            const tr = rows.find(r => r.dataset.id === String(id));
+            if (tr) {
+                tr.dataset.status = data.status;
+                const pill = tr.querySelector('[data-status-pill]');
+                const meta = STATUS_META[data.status];
+                pill.className = `status-pill st-${data.status}`;
+                pill.innerHTML = `<i class="${meta[1]}"></i>${meta[0]}`;
+            }
+            recount();
+            apply();
+            vetToast(data.message, 'success');
+        } catch (err) {
+            vetToast(err.message, 'danger');
+        }
+    };
+})();
 </script>
-<script src="{{ asset('js/mysubjectvetting.init.js') }}"></script>
 @endsection

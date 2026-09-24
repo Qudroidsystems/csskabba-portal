@@ -15,7 +15,7 @@
 
 
 <!-- User list init js (load after list.js and dependencies) -->
-<script src="{{ asset('theme/layouts/assets/js/pages/subjectvettings-list.init.js') }}"></script>
+{{-- subjectvettings-list.init.js removed: the file no longer exists (404). The page scripts now live in the mysubjectvettings views. --}}
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 

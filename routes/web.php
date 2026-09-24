@@ -925,9 +925,8 @@ Route::group(['middleware' => ['auth']], function () {
     // My Subject Vettings
     Route::get('/mysubjectvettings', [MySubjectVettingsController::class, 'index'])->name('mysubjectvettings.index');
     Route::get('/mysubjectvettings/classbroadsheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MySubjectVettingsController::class, 'classBroadsheet'])->name('mysubjectvettings.classbroadsheet');
-    Route::get('/mysubjectvettings/classbroadsheetmock/{schoolclassid}/{sessionid}/{termid}', [MySubjectVettingsController::class, 'classBroadsheetMock'])->name('mysubjectvettings.classbroadsheetmock');
-    Route::put('/mysubjectvettings/{id}', [MySubjectVettingsController::class, 'update'])->name('mysubjectvettings.update');
-    Route::put('/mysubjectvettings/{id}', [MySubjectVettingsController::class, 'updateMock'])->name('mysubjectvettings.updatemock');
+    Route::post('/mysubjectvettings/bulk-vet', [MySubjectVettingsController::class, 'bulkVet'])->name('mysubjectvettings.bulk-vet');
+    Route::put('/mysubjectvettings/{id}/status', [MySubjectVettingsController::class, 'updateStatus'])->whereNumber('id')->name('mysubjectvettings.status');
 
     Route::get('/mymocksubjectvettings', [MyMockSubjectVettingsController::class, 'index'])->name('mymocksubjectvettings.index');
     Route::get('/mymocksubjectvettings/classbroadsheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyMockSubjectVettingsController::class, 'classBroadsheet'])->name('mymocksubjectvettings.classbroadsheet');
