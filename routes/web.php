@@ -931,8 +931,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/mymocksubjectvettings', [MyMockSubjectVettingsController::class, 'index'])->name('mymocksubjectvettings.index');
     Route::get('/mymocksubjectvettings/classbroadsheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyMockSubjectVettingsController::class, 'classBroadsheet'])->name('mymocksubjectvettings.classbroadsheet');
     Route::post('/mymocksubjectvettings/update-vetted-status', [MyMockSubjectVettingsController::class, 'updateVettedStatus'])->name('mymocksubjectvettings.update-vetted-status');
-    Route::get('/mymocksubjectvettings/results', [MyMockSubjectVettingsController::class, 'results'])->name('mymocksubjectvettings.results');
-    Route::put('/mymocksubjectvettings/{id}', [MyMockSubjectVettingsController::class, 'update'])->name('mymocksubjectvettings.update');
+    Route::post('/mymocksubjectvettings/bulk-vet', [MyMockSubjectVettingsController::class, 'bulkVet'])->name('mymocksubjectvettings.bulk-vet');
+    Route::put('/mymocksubjectvettings/{id}/status', [MyMockSubjectVettingsController::class, 'updateStatus'])->whereNumber('id')->name('mymocksubjectvettings.status');
 
     Route::post('/broadsheets/update-vetted-status', [MySubjectVettingsController::class, 'updateVettedStatus'])->name('broadsheets.update-vetted-status');
 

@@ -42,6 +42,8 @@
         'completed' => ['Completed', 'ri-checkbox-circle-line'],
         'rejected'  => ['Sent back', 'ri-arrow-go-back-line'],
     ];
+    $isMock   = ($cfg['mode'] ?? 'terminal') === 'mock';
+    $colCount = 5 + ($canUpdate ? 1 : 0) + ($isMock ? 2 : 4 + $assessments->count());
     $status  = $assignment->status ?? 'pending';
     $status  = isset($statusMeta[$status]) ? $status : 'pending';
     $percent = $summary['students'] ? (int) round($summary['vetted'] / $summary['students'] * 100) : 0;
@@ -63,7 +65,7 @@
 
     {{-- Hero --}}
     <div class="cb-hero">
-        <a href="{{ route('mysubjectvettings.index') }}" class="cb-back"><i class="ri-arrow-left-line"></i>Back to my vetting assignments</a>
+        <a href="{{ route($cfg['routes']['index']) }}" class="cb-back"><i class="ri-arrow-left-line"></i>Back to my vetting assignments</a>
         <h1><i class="ri-shield-check-line me-2"></i>{{ $subjectName }}@if($subjectCode) <small style="font-family:'DM Sans';font-size:15px;opacity:.75">({{ $subjectCode }})</small>@endif</h1>
         <p>Check each student's scores, switch on <strong>Vetted</strong> when they're correct, then sign the broadsheet off.</p>
         <div class="meta-pills">
@@ -158,13 +160,18 @@
                             @if($canUpdate)<th style="width:36px"><input type="checkbox" class="row-check" id="checkAll" aria-label="Select all shown"></th>@endif
                             <th class="num" style="width:44px">#</th>
                             <th>Student</th>
-                            @foreach($assessments as $assessment)
-                                <th class="num">{{ $assessment->name }}<span class="th-sub">/ {{ $fmt($assessment->max_score) }}</span></th>
-                            @endforeach
-                            <th class="num">Total</th>
-                            <th class="num">BF</th>
-                            <th class="num">Cum</th>
-                            <th class="num">Cum Avg</th>
+                            @if($isMock)
+                                <th class="num">Exam</th>
+                                <th class="num">Total</th>
+                            @else
+                                @foreach($assessments as $assessment)
+                                    <th class="num">{{ $assessment->name }}<span class="th-sub">/ {{ $fmt($assessment->max_score) }}</span></th>
+                                @endforeach
+                                <th class="num">Total</th>
+                                <th class="num">BF</th>
+                                <th class="num">Cum</th>
+                                <th class="num">Cum Avg</th>
+                            @endif
                             <th class="num">Grade</th>
                             <th class="num">Pos.</th>
                             <th class="num">Vetted</th>
@@ -176,7 +183,7 @@
                                 $vetted  = (int) $b->vettedstatus === 1;
                                 $noScore = (float) $b->total <= 0;
                                 $name    = trim(($b->lname ?? '') . ', ' . ($b->fname ?? '') . ' ' . ($b->mname ?? ''), ', ');
-                                $scores  = $b->assessmentScores->keyBy('assessment_id');
+                                $scores  = $b->scores ?? [];
                             @endphp
                             <tr data-id="{{ $b->id }}"
                                 data-vetted="{{ $vetted ? 1 : 0 }}"
@@ -196,13 +203,18 @@
                                         </div>
                                     </div>
                                 </td>
-                                @foreach($assessments as $assessment)
-                                    <td class="num">{{ $fmt(optional($scores->get($assessment->id))->score ?? 0) }}</td>
-                                @endforeach
-                                <td class="num col-total">{{ $fmt($b->total) }}</td>
-                                <td class="num">{{ $fmt($b->bf) }}</td>
-                                <td class="num">{{ $fmt($b->cum) }}</td>
-                                <td class="num">{{ $fmt($b->cum_ave) }}</td>
+                                @if($isMock)
+                                    <td class="num">{{ $fmt($b->exam ?? null) }}</td>
+                                    <td class="num col-total">{{ $fmt($b->total) }}</td>
+                                @else
+                                    @foreach($assessments as $assessment)
+                                        <td class="num">{{ $fmt($scores[$assessment->id] ?? 0) }}</td>
+                                    @endforeach
+                                    <td class="num col-total">{{ $fmt($b->total) }}</td>
+                                    <td class="num">{{ $fmt($b->bf ?? null) }}</td>
+                                    <td class="num">{{ $fmt($b->cum ?? null) }}</td>
+                                    <td class="num">{{ $fmt($b->cum_ave ?? null) }}</td>
+                                @endif
                                 <td class="num col-grade {{ $gradeClass($b->grade) }}">{{ $b->grade ?: '—' }}</td>
                                 <td class="num">{{ $b->position ?: '—' }}</td>
                                 <td class="num">
@@ -215,7 +227,7 @@
                             </tr>
                         @endforeach
                         <tr class="no-match" id="bsNoMatch">
-                            <td colspan="{{ 9 + $assessments->count() + ($canUpdate ? 1 : 0) }}">
+                            <td colspan="{{ $colCount }}">
                                 <div class="empty-state" style="padding:28px"><h6>No students match</h6></div>
                             </td>
                         </tr>
@@ -276,6 +288,7 @@
     const ctx    = { subjectclass_id: {{ $subjectclassid }}, term_id: {{ $termid }}, session_id: {{ $sessionid }} };
     const svid   = {{ $assignment->id ?? 'null' }};
     const META   = @json($statusMeta);
+    const STATUS_URL = @json(route($cfg['routes']['status'], ['id' => 0]));
     const table  = document.getElementById('bsTable');
     if (!table) return;
 
@@ -370,7 +383,7 @@
         paintRow(tr, vetted);
         t.disabled = true;
         try {
-            const data = await post('{{ route("broadsheets.update-vetted-status") }}', { broadsheet_id: t.dataset.id, vettedstatus: vetted ? 1 : 0 });
+            const data = await post(@json(route($cfg['routes']['toggle'])), { broadsheet_id: t.dataset.id, vettedstatus: vetted ? 1 : 0 });
             paintProgress(data);
             if (data.status === 'completed' && data.percent === 100) vetToast('Every student is vetted — broadsheet marked completed.', 'success');
         } catch (err) {
@@ -389,7 +402,7 @@
         const verb = value ? 'Vet' : 'Un-vet';
         if (!confirm(`${verb} ${target.length} student(s)?`)) return;
         try {
-            const data = await post('{{ route("mysubjectvettings.bulk-vet") }}', {
+            const data = await post(@json(route($cfg['routes']['bulk'])), {
                 ...ctx, vettedstatus: value, broadsheet_ids: target.map(r => Number(r.dataset.id)),
             });
             const done = new Set((data.ids || []).map(String));
@@ -409,7 +422,7 @@
         if (!svid) return;
         if (status === 'rejected' && !confirm('Send this broadsheet back to the subject teacher for corrections?')) return;
         try {
-            const data = await post(`{{ url('mysubjectvettings') }}/${svid}/status`, { status }, 'PUT');
+            const data = await post(STATUS_URL.replace(/\/0\/status$/, `/${svid}/status`), { status }, 'PUT');
             paintStatus(data.status);
             vetToast(data.message, 'success');
         } catch (err) {

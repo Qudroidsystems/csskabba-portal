@@ -23,7 +23,7 @@
 
     {{-- Hero --}}
     <div class="cb-hero">
-        <h1><i class="ri-shield-check-line me-2"></i>My Subject Vetting</h1>
+        <h1><i class="ri-shield-check-line me-2"></i>{{ $cfg['labels']['hero'] }}</h1>
         <p>Broadsheets assigned to you for checking. Open one, confirm each student's scores, and sign it off.</p>
         <div class="meta-pills">
             <span class="cb-meta-pill"><i class="ri-user-line"></i>{{ Auth::user()->name }}</span>
@@ -173,13 +173,13 @@
                                     <div class="d-inline-flex gap-2 align-items-center">
                                         @if($a->subjectclassid && $a->schoolclassid)
                                             <a class="action-btn btn-open"
-                                               href="{{ route('mysubjectvettings.classbroadsheet', [$a->schoolclassid, $a->subjectclassid, $a->staffid ?? 0, $a->termid, $a->sessionid]) }}">
+                                               href="{{ route($cfg['routes']['broadsheet'], [$a->schoolclassid, $a->subjectclassid, $a->staffid ?? 0, $a->termid, $a->sessionid]) }}">
                                                 <i class="ri-eye-line"></i>{{ $a->status === 'completed' ? 'Review' : 'Vet now' }}
                                             </a>
                                         @else
                                             <span class="action-btn btn-disabled" title="The subject-class for this assignment no longer exists"><i class="ri-link-unlink"></i>Unavailable</span>
                                         @endif
-                                        @can('Update my-subject-vettings')
+                                        @if($a->subjectclassid)
                                             <div class="dropdown">
                                                 <button class="action-btn btn-more" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Change status">
                                                     <i class="ri-more-2-fill"></i>
@@ -191,7 +191,7 @@
                                                     <li><a class="dropdown-item" href="#" onclick="setStatus({{ $a->svid }}, 'rejected'); return false;"><i class="ri-arrow-go-back-line text-danger me-2"></i>Send back to teacher</a></li>
                                                 </ul>
                                             </div>
-                                        @endcan
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -227,6 +227,7 @@
 (function () {
     const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
     const STATUS_META = @json($statusMeta);
+    const STATUS_URL  = @json(route($cfg['routes']['status'], ['id' => 0]));
 
     requestAnimationFrame(() => {
         document.querySelectorAll('.progress-fill[data-width]').forEach(el => { el.style.width = el.dataset.width + '%'; });
@@ -289,7 +290,7 @@
     window.setStatus = async function (id, status) {
         if (status === 'rejected' && !confirm('Send this broadsheet back to the subject teacher for corrections?')) return;
         try {
-            const res = await fetch(`{{ url('mysubjectvettings') }}/${id}/status`, {
+            const res = await fetch(STATUS_URL.replace(/\/0\/status$/, `/${id}/status`), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
                 body: JSON.stringify({ status }),
