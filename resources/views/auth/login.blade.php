@@ -619,7 +619,7 @@
                                                 {{-- ===================================================== --}}
                                                 {{-- SESSION EXPIRED ALERT - This displays the warning box --}}
                                                 {{-- ===================================================== --}}
-                                                @if(session('session_expired') || session('error'))
+                                                @if(session('session_expired') || session('error') || request()->boolean('expired'))
                                                     <div id="sessionExpiredAlert" class="alert alert-warning alert-dismissible fade show mb-4" role="alert" style="border-left: 4px solid #f59e0b; background: #fffbeb;">
                                                         <div class="d-flex align-items-center">
                                                             <i class="ri-alert-line me-2" style="font-size: 18px; color: #d97706;"></i>
@@ -853,7 +853,7 @@
             // =====================================================
             // SESSION EXPIRED HANDLING - MAIN FEATURE
             // =====================================================
-            @if(session('session_expired'))
+            @if(session('session_expired') || request()->boolean('expired'))
                 // Show beautiful toast notification
                 showToast(
                     'Session Expired',

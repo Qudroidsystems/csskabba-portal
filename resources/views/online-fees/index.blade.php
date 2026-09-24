@@ -29,7 +29,7 @@
         @if(session($f))<div class="cb-banner {{ $cls }}"><i class="ri-information-line"></i><div>{{ session($f) }}</div></div>@endif
     @endforeach
     @if(!$gatewayReady)
-        <div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>Paystack is not active. Add your keys and switch it on in Gateway settings before students can pay online.</div></div>
+        <div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ $gatewayProblem ?? 'Paystack is not active.' }} Fix this in Gateway settings (or .env) before students can pay online.</div></div>
     @endif
 
     <div class="row g-3 mb-4">

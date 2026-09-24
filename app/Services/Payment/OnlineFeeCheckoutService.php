@@ -63,6 +63,11 @@ class OnlineFeeCheckoutService
         return $this->paystack->isReady();
     }
 
+    public function gatewayProblem(): ?string
+    {
+        return $this->paystack->problem();
+    }
+
     // ─────────────────────────────────────────────────────────────────────
     // QUOTE
     // ─────────────────────────────────────────────────────────────────────

@@ -2288,5 +2288,36 @@
     @include('layouts.pages-assets.js.scholarship-list-js')
 @endif
 
+<script>
+/* Expired session on an AJAX / fetch call (HTTP 419) → go to the login page
+   instead of leaving the page half-working. Full-page posts are redirected
+   by the server already. */
+(function () {
+    var loginUrl = @json(route('login'));
+    var sent = false;
+    function toLogin() {
+        if (sent) return; sent = true;
+        window.location.href = loginUrl + (loginUrl.indexOf('?') === -1 ? '?' : '&') + 'expired=1';
+    }
+    if (window.jQuery) {
+        jQuery(document).ajaxError(function (_e, xhr) { if (xhr && xhr.status === 419) toLogin(); });
+    }
+    if (window.fetch) {
+        var _fetch = window.fetch;
+        window.fetch = function () {
+            return _fetch.apply(this, arguments).then(function (res) {
+                if (res && res.status === 419) toLogin();
+                return res;
+            });
+        };
+    }
+    if (window.axios && window.axios.interceptors) {
+        window.axios.interceptors.response.use(null, function (err) {
+            if (err && err.response && err.response.status === 419) toLogin();
+            return Promise.reject(err);
+        });
+    }
+})();
+</script>
 </body>
 </html>

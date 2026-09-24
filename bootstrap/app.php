@@ -31,14 +31,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // ============================================
         // REPLACE THE DEFAULT CSRF MIDDLEWARE WITH CUSTOM ONE
         // ============================================
+        // Laravel 11+ puts ValidateCsrfToken (not VerifyCsrfToken) in the web
+        // group, so that is the class that has to be swapped out.
         $middleware->replace(
-            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
             \App\Http\Middleware\CustomVerifyCsrfToken::class
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Fallback handler for any other TokenMismatchException
-        $exceptions->render(function (TokenMismatchException $e, $request) {
+        // Fallback for an expired session / CSRF token anywhere else.
+        // Laravel turns TokenMismatchException into an HttpException(419)
+        // before render callbacks run, so match the 419 status here.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, $request) {
+            if ($e->getStatusCode() !== 419) {
+                return null; // let Laravel handle every other HTTP error
+            }
             $intendedUrl = $request->fullUrl();
 
             if ($request->expectsJson()) {

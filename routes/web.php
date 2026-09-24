@@ -171,7 +171,7 @@ Route::get('/timetable/ics/{teacherId}', [TimetableController::class, 'exportIcs
 Route::prefix('webhook')->group(function () {
     // School-fee payments (online-fees). Signature-checked; CSRF is skipped for webhook/*.
     Route::post('/paystack',    [OnlineFeeController::class, 'webhook'])
-        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, \App\Http\Middleware\CustomVerifyCsrfToken::class])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, \App\Http\Middleware\CustomVerifyCsrfToken::class])
         ->name('webhook.paystack');
     Route::post('/remita',      [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
     Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');

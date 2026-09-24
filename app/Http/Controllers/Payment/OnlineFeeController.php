@@ -261,6 +261,7 @@ class OnlineFeeController extends Controller
             'payments'     => $payments,
             'stats'        => $stats,
             'gatewayReady' => $this->checkout->gatewayReady(),
+            'gatewayProblem' => $this->checkout->gatewayProblem(),
         ]);
     }
 
