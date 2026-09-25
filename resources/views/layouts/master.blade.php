@@ -1002,8 +1002,11 @@
                     @endcan
 
                     {{-- COMMUNICATION --}}
-                        @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices'))
+                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>COMMUNICATION</span></li>
+                    @endif
+
+                    @can('View notices')
                         <li class="nav-item">
                             <a href="#sidebarNotices" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarNotices">
                                 <i class="ri-megaphone-line"></i> <span>School Notices</span>
@@ -1011,13 +1014,21 @@
                             <div class="collapse menu-dropdown" id="sidebarNotices">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('notices.index') }}" class="nav-link">All Notices</a></li>
-                                    @can('Create notices')<li class="nav-item"><a href="{{ route('notices.create') }}" class="nav-link">New Notice</a></li>@endcan
-                                    @can('Manage notification settings')<li class="nav-item"><a href="{{ route('notices.settings') }}" class="nav-link">Notification Settings</a></li>@endcan
+                                    @can('Create notices')
+                                        <li class="nav-item"><a href="{{ route('notices.create') }}" class="nav-link">New Notice</a></li>
+                                    @endcan
                                 </ul>
                             </div>
                         </li>
-                        @endif
+                    @endcan
 
+                    @can('Manage notification settings')
+                        <li class="nav-item">
+                            <a href="{{ route('notices.settings') }}" class="nav-link">
+                                <i class="ri-settings-3-line"></i> <span>Notification Settings</span>
+                            </a>
+                        </li>
+                    @endcan
 
                     {{-- SCHOOL BASIC SETTINGS --}}
                     @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
