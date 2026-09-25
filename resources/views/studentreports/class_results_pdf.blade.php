@@ -465,7 +465,11 @@
             // used to decide whether to print the "* Compulsory Subject" footnote.
             $hasAnyCompulsory = collect($scores)->contains(fn($s) => $s->is_compulsory ?? false);
             
-            $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$className}\nTerm: {$termName}\nSession: {$sessionName}\nSchool: " . ($schoolInfo->school_name ?? 'School');
+            // QR opens the verification page with the result as recorded in the portal
+            // (a signed link, so it can't be edited to point at another student).
+            $qrData = ($student && $schoolclass && $schoolsession && !empty($studentData['termid']) && class_exists(\App\Support\ResultVerification::class))
+                ? \App\Support\ResultVerification::url((int) $student->id, (int) $schoolclass->id, (int) $schoolsession->id, (int) $studentData['termid'])
+                : "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$className}\nTerm: {$termName}\nSession: {$sessionName}\nSchool: " . ($schoolInfo->school_name ?? 'School');
             $qrCodeBase64 = base64_encode(
                 \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
                     ->size(280)

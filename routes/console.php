@@ -15,6 +15,9 @@ Artisan::command('inspire', function () {
 // School notices: scheduled sends and automatic reminders.
 Schedule::command('notices:dispatch')->everyMinute()->withoutOverlapping(15);
 
+// Absence alerts, fee reminders, birthday wishes (each checks its own time).
+Schedule::command('messages:auto')->everyFiveMinutes()->withoutOverlapping(30);
+
 // Report cards to parents: generate + send in batches.
 Schedule::command('results:send --max=40')->everyMinute()->withoutOverlapping(20);
 

@@ -27,6 +27,7 @@ class MessagingSetting extends Model
                 'sender_id' => ['label' => 'Sender ID (approved by Termii)', 'secret' => false, 'required' => true, 'max' => 11],
                 'route'     => ['label' => 'Route', 'secret' => false, 'required' => true, 'options' => ['generic' => 'Generic', 'dnd' => 'DND (delivers to DND numbers; sender ID must be approved for DND)']],
                 'base_url'  => ['label' => 'API base URL', 'secret' => false, 'required' => false, 'default' => 'https://api.ng.termii.com'],
+                'unit_cost' => ['label' => 'Your cost per SMS page in ₦ (for estimates)', 'secret' => false, 'required' => false],
             ]],
         ],
         'whatsapp' => [

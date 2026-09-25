@@ -891,45 +891,24 @@ class ViewStudentReportController extends Controller
     {
         try {
             ini_set('max_execution_time', 600);
-            ini_set('memory_limit', '1024M');
 
-            $metricsCalculated = $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
-            if (!$metricsCalculated) {
-                return back()->with('error', 'Failed to calculate class metrics. Please try again.');
+            // Uses the class export layout (the old studentresult_pdf view never existed).
+            $pdf = $this->renderReportCardPdf((int) $id, (int) $schoolclassid, (int) $sessionid, (int) $termid);
+            if (!$pdf) {
+                return back()->with('error', 'No result data found for this student.');
             }
 
-            $data = $this->getStudentResultData($id, $schoolclassid, $sessionid, $termid);
+            $student  = Student::find($id);
+            $name     = $student ? preg_replace('/[^A-Za-z0-9_-]+/', '_', $student->firstname . '_' . $student->lastname) : 'Student';
+            $session  = preg_replace('/[^A-Za-z0-9_-]+/', '_', (string) Schoolsession::where('id', $sessionid)->value('session'));
+            $filename = 'Terminal_Report_' . $name . '_' . $session . '_Term_' . $termid . '.pdf';
 
-            if (empty($data) || empty($data['students']) || $data['students']->isEmpty()) {
-                return back()->with('error', 'No student data found.');
-            }
-
-            $this->fixImagePaths([$data]);
-
-            $student     = $data['students']->first();
-            $studentName = $student ? $student->fname . '_' . $student->lastname : 'Student';
-            $filename    = 'Terminal_Report_' . $studentName . '_' . ($data['schoolsession']->session ?? '') . '_Term_' . $data['termid'] . '.pdf';
-
-            $pdf = Pdf::loadView('studentreports.studentresult_pdf', ['data' => $data])
-                ->setPaper('A4', 'portrait')
-                ->setOptions([
-                    'dpi'                     => 150,
-                    'defaultFont'             => 'DejaVu Sans',
-                    'isRemoteEnabled'         => true,
-                    'isHtml5ParserEnabled'    => true,
-                    'isFontSubsettingEnabled' => true,
-                    'isPhpEnabled'            => false,
-                    'chroot'                  => [public_path(), storage_path()],
-                    'fontCache'               => storage_path('fonts/'),
-                    'logOutputFile'           => storage_path('logs/dompdf.log'),
-                ]);
-
-            return $pdf->download($filename);
-
-        } catch (Exception $e) {
-            Log::channel('pdf')->error('ERROR SINGLE STUDENT PDF', [
-                'student_id' => $id, 'error_message' => $e->getMessage(),
+            return response($pdf, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ]);
+        } catch (Exception $e) {
+            Log::channel('pdf')->error('ERROR SINGLE STUDENT PDF', ['student_id' => $id, 'error_message' => $e->getMessage()]);
             return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
     }

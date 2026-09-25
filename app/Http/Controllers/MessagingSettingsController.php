@@ -31,6 +31,7 @@ class MessagingSettingsController extends Controller
             'mailFrom'  => config('mail.from.address'),
             'mailer'    => config('mail.default'),
             'receipts'  => PaymentReceiptNotifier::settings(),
+            'smsBalance' => app(MessagingService::class)->smsBalance(request()->boolean('refresh_balance')),
             'receiptPlaceholders' => PaymentReceiptNotifier::PLACEHOLDERS,
             'recentReceipts' => Schema::hasTable('payment_receipt_messages')
                 ? DB::table('payment_receipt_messages')->orderByDesc('id')->limit(10)->get()

@@ -1002,7 +1002,7 @@
                     @endcan
 
                     {{-- COMMUNICATION --}}
-                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings') || auth()->user()->can('View result-sends'))
+                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings') || auth()->user()->can('View result-sends') || auth()->user()->can('Manage parent contacts'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>COMMUNICATION</span></li>
                     @endif
 
@@ -1038,7 +1038,20 @@
                         </li>
                     @endcan
 
+                    @can('Manage parent contacts')
+                        <li class="nav-item">
+                            <a href="{{ route('parent-contacts.index') }}" class="nav-link">
+                                <i class="ri-contacts-book-2-line"></i> <span>Parent Contacts</span>
+                            </a>
+                        </li>
+                    @endcan
+
                     @can('Manage notification settings')
+                        <li class="nav-item">
+                            <a href="{{ route('notices.automations') }}" class="nav-link">
+                                <i class="ri-robot-2-line"></i> <span>Automatic Messages</span>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a href="{{ route('notices.settings') }}" class="nav-link">
                                 <i class="ri-settings-3-line"></i> <span>Notification Settings</span>
@@ -1856,6 +1869,12 @@
         {title:'Cash Flow',                             url:'{{ route("reports.financial.cash-flow") }}',                    icon:'mdi-cash-sync',               category:'Accounting',          keywords:['cash','flow','liquidity','report']},
         @can('View notices')
         {title:'School Notices',                        url:'{{ route("notices.index") }}',                                  icon:'mdi-bullhorn',                category:'Communication',       keywords:['notice','sms','whatsapp','email','parents','announcement','exam','holiday','midterm','ca test']},
+        @endcan
+        @can('Manage parent contacts')
+        {title:'Parent Contacts',                       url:'{{ route("parent-contacts.index") }}',                          icon:'mdi-card-account-phone',      category:'Communication',       keywords:['parent','phone','email','contact','whatsapp','csv','import']},
+        @endcan
+        @can('Manage notification settings')
+        {title:'Automatic Messages',                    url:'{{ route("notices.automations") }}',                            icon:'mdi-robot',                   category:'Communication',       keywords:['absence','absent','alert','fee reminder','birthday','automatic']},
         @endcan
         @can('Create result-sends')
         {title:'Send Results to Parents',               url:'{{ route("result-sends.create") }}',                            icon:'mdi-email-send',              category:'Communication',       keywords:['result','report card','send','parents','whatsapp','email','sms']},

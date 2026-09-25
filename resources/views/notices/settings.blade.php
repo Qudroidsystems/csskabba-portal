@@ -29,6 +29,13 @@
             </div>
             <div class="cb-card-body">
                 <p class="small text-muted">{{ $help }}</p>
+                @if($channel === 'sms' && $s->driver === 'termii')
+                    <div class="cb-banner {{ $smsBalance ? 'info' : 'warning' }}"><i class="ri-wallet-3-line"></i>
+                        <div>@if($smsBalance) Termii balance: <strong>{{ $smsBalance['currency'] }} {{ number_format($smsBalance['balance'], 2) }}</strong>
+                            @if($s->value('unit_cost')) (about {{ number_format(floor($smsBalance['balance'] / max(0.01, (float) $s->value('unit_cost')))) }} SMS pages)@endif
+                            @else Could not read the Termii balance — check the API key. @endif
+                            <a href="{{ route('notices.settings', ['refresh_balance' => 1]) }}#sms" class="ms-2">Refresh</a></div></div>
+                @endif
 
                 <form method="POST" action="{{ route('notices.settings.update', $channel) }}" autocomplete="off" class="st-form">
                     @csrf @method('PUT')

@@ -360,6 +360,11 @@
                 if (!x.enabled) html += '<div class="small text-danger">Switched off in settings — nothing will be sent.</div>';
                 else if (!x.live) html += '<div class="small text-warning">Log only — messages are recorded, not delivered.</div>';
                 if (x.sms) html += '<div class="small text-muted">' + x.sms.pages + ' page(s) each · about ' + x.sms_total + ' SMS units in total</div>';
+                if (x.estimate) {
+                    const e = x.estimate, fmt = v => '₦' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+                    if (e.cost !== null) html += '<div class="small ' + (e.enough === false ? 'text-danger fw-semibold' : 'text-muted') + '">Estimated cost ' + fmt(e.cost) + (e.balance !== null ? ' · balance ' + fmt(e.balance) : '') + (e.enough === false ? ' — not enough SMS credit' : '') + '</div>';
+                    else if (e.balance !== null) html += '<div class="small text-muted">SMS balance ' + fmt(e.balance) + '</div>';
+                }
                 if (x.missing) {
                     html += '<details class="small mt-1"><summary class="text-danger">' + x.missing + ' student(s) have no ' + (c === 'email' ? 'parent email' : 'parent phone') + '</summary><ul class="mb-0 ps-3">' +
                         x.missing_list.map(m => '<li>' + esc(m.name) + ' (' + esc(m.adm) + ')' + (m.class ? ' — ' + esc(m.class) : '') + '</li>').join('') +

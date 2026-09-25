@@ -80,6 +80,9 @@ use App\Http\Controllers\SchoolNoticeController;
 use App\Http\Controllers\MessagingSettingsController;
 use App\Http\Controllers\ResultSendController;
 use App\Http\Controllers\ResultLinkController;
+use App\Http\Controllers\ResultVerifyController;
+use App\Http\Controllers\ParentContactController;
+use App\Http\Controllers\AutoMessageController;
 use App\Http\Controllers\StudentpersonalityprofileController;
 use App\Http\Controllers\StudentResultsController;
 use App\Http\Controllers\SubjectClassController;
@@ -175,14 +178,16 @@ Route::get('/timetable/ics/{teacherId}', [TimetableController::class, 'exportIcs
 Route::get('/r/{token}', [ResultLinkController::class, 'show'])
     ->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('results.link');
 
+// Report card verification (QR code on the printed card; signed code, no login)
+Route::get('/verify/{code}', [ResultVerifyController::class, 'show'])
+    ->where('code', '[0-9a-f\-]{10,80}')->middleware('throttle:60,1')->name('results.verify');
+
 // Payment gateway webhooks — no CSRF, no auth
 Route::prefix('webhook')->group(function () {
     // School-fee payments (online-fees). Signature-checked; CSRF is skipped for webhook/*.
     Route::post('/paystack',    [OnlineFeeController::class, 'webhook'])
         ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, \App\Http\Middleware\CustomVerifyCsrfToken::class])
         ->name('webhook.paystack');
-    Route::post('/remita',      [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
-    Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');
 });
 
 /*
@@ -555,6 +560,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('/settings/{channel}', [MessagingSettingsController::class, 'update'])->whereIn('channel', ['sms', 'whatsapp', 'email'])->name('settings.update');
         Route::put('/settings/receipts', [MessagingSettingsController::class, 'receipts'])->name('settings.receipts');
         Route::post('/settings/{channel}/test', [MessagingSettingsController::class, 'test'])->whereIn('channel', ['sms', 'whatsapp', 'email'])->name('settings.test');
+        Route::get('/automations', [AutoMessageController::class, 'index'])->name('automations');
+        Route::put('/automations/{type}', [AutoMessageController::class, 'update'])->whereIn('type', ['absence', 'fees', 'birthday'])->name('automations.update');
+        Route::post('/automations/{type}/preview', [AutoMessageController::class, 'preview'])->whereIn('type', ['absence', 'fees', 'birthday'])->name('automations.preview');
+        Route::match(['post', 'put'], '/automations/{type}/run', [AutoMessageController::class, 'run'])->whereIn('type', ['absence', 'fees', 'birthday'])->name('automations.run');
         Route::get('/{notice}', [SchoolNoticeController::class, 'show'])->whereNumber('notice')->name('show');
         Route::get('/{notice}/edit', [SchoolNoticeController::class, 'edit'])->whereNumber('notice')->name('edit');
         Route::put('/{notice}', [SchoolNoticeController::class, 'update'])->whereNumber('notice')->name('update');
@@ -562,6 +571,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/{notice}/cancel', [SchoolNoticeController::class, 'cancel'])->whereNumber('notice')->name('cancel');
         Route::post('/{notice}/resend', [SchoolNoticeController::class, 'resendFailed'])->whereNumber('notice')->name('resend');
         Route::post('/{notice}/duplicate', [SchoolNoticeController::class, 'duplicate'])->whereNumber('notice')->name('duplicate');
+    });
+
+    // Parent contact clean-up (+ CSV import / export)
+    Route::prefix('parent-contacts')->name('parent-contacts.')->group(function () {
+        Route::get('/', [ParentContactController::class, 'index'])->name('index');
+        Route::get('/export', [ParentContactController::class, 'export'])->name('export');
+        Route::post('/import', [ParentContactController::class, 'import'])->name('import');
+        Route::put('/{student}', [ParentContactController::class, 'update'])->whereNumber('student')->name('update');
     });
 
     // Send report cards to parents (email / WhatsApp / SMS link)
@@ -749,24 +766,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/details/ajax', [EnhancedSchoolPaymentController::class, 'getPaymentStatusAjax'])->name('details.ajax');
     });
 
+    // The old online-payment screens (OnlinePaymentController) depended on a model
+    // that no longer exists. Only the index is kept, pointing at the new page.
     Route::prefix('payment/online')->name('payment.online.')->group(function () {
-        // Old online-payment screen depended on a model that no longer exists; point it at the new page.
         Route::get('/', [OnlineFeeController::class, 'index'])->name('index');
-        Route::get('/success/{reference}', [OnlinePaymentController::class, 'success'])->name('success');
-        Route::get('/bills', [OnlinePaymentController::class, 'getStudentBillsAjax'])->name('bills');
-        Route::post('/initialize', [OnlinePaymentController::class, 'initialize'])->name('initialize');
-        Route::get('/status/{reference}', [OnlinePaymentController::class, 'getPaymentStatus'])->name('status');
-        Route::post('/retry/{onlinePaymentId}', [OnlinePaymentController::class, 'retryPayment'])->name('retry');
-        Route::post('/cancel/{onlinePaymentId}', [OnlinePaymentController::class, 'cancelPayment'])->name('cancel');
-        Route::get('/verify/{reference}', [OnlinePaymentController::class, 'verifyPayment'])->name('verify');
-        Route::get('/analytics', [OnlinePaymentController::class, 'getPaymentAnalytics'])->name('analytics');
-        Route::post('/bank-transfer/initiate', [OnlinePaymentController::class, 'initiateBankTransfer'])->name('bank-transfer.initiate');
-        Route::get('/bank-transfer/status/{reference}', [OnlinePaymentController::class, 'checkBankTransferStatus'])->name('bank-transfer.status');
-        Route::get('/banks', [OnlinePaymentController::class, 'getSupportedBanks'])->name('banks');
-        Route::get('/receipt/{batchId}', [OnlinePaymentController::class, 'downloadReceipt'])->name('receipt');
-        Route::get('/transaction/{reference}', [OnlinePaymentController::class, 'getTransactionDetails'])->name('transaction');
-        Route::get('/callback', [OnlinePaymentController::class, 'callback'])->name('callback');
-        Route::post('/webhook/{gateway}', [OnlinePaymentController::class, 'webhook'])->name('webhook');
     });
 
     Route::prefix('bulk-payment')->name('bulk-payment.')->group(function () {

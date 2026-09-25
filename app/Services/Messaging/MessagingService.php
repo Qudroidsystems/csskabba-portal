@@ -186,6 +186,49 @@ class MessagingService
         return $this->result('sent');
     }
 
+    // ── SMS credit ──────────────────────────────────────────────────────
+
+    /** Termii wallet balance, cached for 5 minutes. null when unknown. */
+    public function smsBalance(bool $fresh = false): ?array
+    {
+        $s = $this->setting('sms');
+        if ($s->driver !== 'termii' || !$s->value('api_key')) return null;
+
+        $key = 'termii_balance_' . md5((string) $s->value('api_key'));
+        if ($fresh) \Illuminate\Support\Facades\Cache::forget($key);
+
+        return \Illuminate\Support\Facades\Cache::remember($key, 300, function () use ($s) {
+            try {
+                $res = Http::acceptJson()->timeout(15)->get(rtrim($s->value('base_url') ?: 'https://api.ng.termii.com', '/') . '/api/get-balance', [
+                    'api_key' => $s->value('api_key'),
+                ]);
+                if ($res->successful() && $res->json('balance') !== null) {
+                    return ['balance' => (float) $res->json('balance'), 'currency' => (string) ($res->json('currency') ?: 'NGN')];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Termii balance check failed', ['error' => $e->getMessage()]);
+            }
+            return null;
+        });
+    }
+
+    /** Estimated cost of $pages SMS pages, and whether the balance covers it. */
+    public function smsEstimate(int $pages): array
+    {
+        $unit = (float) ($this->setting('sms')->value('unit_cost') ?: 0);
+        $bal  = $this->smsBalance();
+        $cost = $unit > 0 ? round($unit * $pages, 2) : null;
+
+        return [
+            'pages'     => $pages,
+            'unit_cost' => $unit ?: null,
+            'cost'      => $cost,
+            'balance'   => $bal['balance'] ?? null,
+            'currency'  => $bal['currency'] ?? 'NGN',
+            'enough'    => ($cost === null || $bal === null) ? null : $bal['balance'] >= $cost,
+        ];
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────
 
     /** Nigeria-friendly: 0803… / 803… / +234803… → 234803…; null when not a phone. */

@@ -136,6 +136,7 @@ class NoticeService
                 'sample'     => $sample,
                 'sms'        => $pages,
                 'sms_total'  => $pages ? $pages['pages'] * count($list) : null,
+                'estimate'   => $pages ? $this->messaging->smsEstimate($pages['pages'] * count($list)) : null,
                 'missing'    => count($r['missing'][$ch] ?? []),
                 'missing_list' => array_slice($r['missing'][$ch] ?? [], 0, 50),
             ];
