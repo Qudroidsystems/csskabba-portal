@@ -510,6 +510,14 @@
                         </li>
                     @endrole
 
+                    {{-- MY PAY (staff self-service) --}}
+                    @php $myStaffId = \Illuminate\Support\Facades\DB::table('staffbioinfo')->where('userid', auth()->id())->value('id'); @endphp
+                    @if($myStaffId)
+                        <li class="nav-item">
+                            <a href="{{ route('my-pay.index') }}" class="nav-link menu-link {{ request()->routeIs('my-pay.*') ? 'active' : '' }}"><i class="ri-wallet-3-line"></i> <span>My Pay</span></a>
+                        </li>
+                    @endif
+
                     {{-- Dashboard --}}
                     @unless(auth()->user()->hasRole('Parent') && !auth()->user()->can('dashboard'))
                     <li class="nav-item">
@@ -1026,6 +1034,7 @@
                                     <li class="nav-item"><a href="{{ route('payroll.items') }}" class="nav-link">Allowances &amp; Deductions</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.reviews') }}" class="nav-link">Salary Reviews</a></li>
                                     @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.rates') }}" class="nav-link">Rates &amp; Tax Bands</a></li>@endcan
+                                    @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.employer') }}" class="nav-link">Employer Details</a></li>@endcan
                                     <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>

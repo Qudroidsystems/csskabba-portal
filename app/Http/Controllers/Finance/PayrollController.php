@@ -89,7 +89,7 @@ class PayrollController extends Controller
                         $buttons .= '<button class="btn btn-sm btn-secondary lock-period me-1" data-id="'.$period->id.'"><i class="ri-lock-line"></i> Lock</button>';
                     }
 
-                    $buttons .= '<a href="' . route('payroll.runs', $period->id) . '" class="btn btn-sm btn-info"><i class="ri-eye-line"></i> View</a>';
+                    $buttons .= '<a href="' . route('payroll.month.show', $period->id) . '" class="btn btn-sm btn-info"><i class="ri-eye-line"></i> Open month</a>';
 
                     return $buttons;
                 })

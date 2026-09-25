@@ -872,6 +872,18 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/profiles/verify-account', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'verifyAccount'])->middleware('throttle:20,1')->name('profiles.verify');
         Route::get('/profiles/{staff}', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'editProfile'])->whereNumber('staff')->name('profiles.edit');
         Route::put('/profiles/{staff}', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'saveProfile'])->whereNumber('staff')->name('profiles.save');
+        // Payroll month screen
+        Route::get('/month/{period}', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'show'])->whereNumber('period')->name('month.show');
+        Route::post('/month/{period}/calculate', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'calculate'])->whereNumber('period')->name('month.calculate');
+        Route::post('/month/{period}/approve', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'approve'])->whereNumber('period')->name('month.approve');
+        Route::post('/month/{period}/lock', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'lock'])->whereNumber('period')->name('month.lock');
+        Route::get('/month/{period}/register', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'register'])->whereNumber('period')->name('month.register');
+        Route::get('/month/{period}/bank-schedule', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'bankSchedule'])->whereNumber('period')->name('month.bank');
+        Route::post('/month/{period}/send', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'send'])->whereNumber('period')->name('month.send');
+        Route::get('/payslip-v2/{run}', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'payslip'])->whereNumber('run')->name('month.payslip');
+        Route::get('/payslip-v2/{run}/pdf', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'payslipPdf'])->whereNumber('run')->name('month.payslip.pdf');
+        Route::get('/employer', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'employer'])->name('employer');
+        Route::post('/employer', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'saveEmployer'])->name('employer.save');
         Route::get('/profiles/{staff}/preview', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'preview'])->whereNumber('staff')->name('profiles.preview');
         Route::post('/profiles/{staff}/placement', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'savePlacement'])->whereNumber('staff')->name('profiles.placement');
 
@@ -1572,4 +1584,22 @@ Route::middleware('auth')->group(function () {
         Route::post('/{house}/assign', [\App\Http\Controllers\HouseController::class, 'assign'])->whereNumber('house')->name('assign');
         Route::put('/{house}/details', [\App\Http\Controllers\HouseController::class, 'details'])->whereNumber('house')->name('details');
     });
+});
+
+// ===================================================================
+// STAFF SELF-SERVICE PAY + PUBLIC DOCUMENT CHECKS
+// ===================================================================
+Route::middleware('auth')->prefix('my-pay')->name('my-pay.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Finance\MyPayController::class, 'index'])->name('index');
+    Route::get('/payslip/{run}', [\App\Http\Controllers\Finance\MyPayController::class, 'payslip'])->whereNumber('run')->name('payslip');
+    Route::get('/payslip/{run}/pdf', [\App\Http\Controllers\Finance\MyPayController::class, 'payslipPdf'])->whereNumber('run')->name('payslip.pdf');
+    Route::get('/tax', [\App\Http\Controllers\Finance\MyPayController::class, 'tax'])->name('tax');
+    Route::get('/tax-certificate', [\App\Http\Controllers\Finance\MyPayController::class, 'certificate'])->name('certificate');
+    Route::get('/pension', [\App\Http\Controllers\Finance\MyPayController::class, 'pension'])->name('pension');
+    Route::get('/deductions', [\App\Http\Controllers\Finance\MyPayController::class, 'deductions'])->name('deductions');
+    Route::get('/statement', [\App\Http\Controllers\Finance\MyPayController::class, 'statement'])->name('statement');
+});
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/verify/payslip/{code}', [\App\Http\Controllers\PayslipVerifyController::class, 'payslip'])->name('verify.payslip');
+    Route::get('/verify/tax-certificate/{staff}/{year}/{code}', [\App\Http\Controllers\PayslipVerifyController::class, 'certificate'])->whereNumber(['staff', 'year'])->name('verify.tax-certificate');
 });
