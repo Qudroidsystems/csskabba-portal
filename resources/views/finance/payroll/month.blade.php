@@ -25,6 +25,7 @@
             @if($runs->isNotEmpty())<a href="{{ route('payroll.month.register', $period) }}" class="cb-hero-btn"><i class="ri-file-excel-2-line"></i>Register</a>@endif
             @if(in_array($period->status, ['approved', 'paid', 'locked']))
                 @can('Approve payroll')<a href="{{ route('payroll.month.bank', $period) }}" class="cb-hero-btn"><i class="ri-bank-line"></i>Bank schedule</a>@endcan
+                @canany(['Approve payroll', 'Release salary payments'])@if(\Illuminate\Support\Facades\Route::has('payroll.payouts.create'))<a href="{{ route('payroll.payouts.create', $period) }}" class="cb-hero-btn"><i class="ri-send-plane-line"></i>Pay staff</a>@endif @endcanany
             @endif
         </x-slot:actions>
         <x-slot:pills>

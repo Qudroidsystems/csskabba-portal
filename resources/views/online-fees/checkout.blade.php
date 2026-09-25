@@ -30,7 +30,7 @@
 <div class="container-fluid">
 
     <x-cb.hero :title="$mode === 'staff' ? 'Online Payment' : 'Pay School Fees'" icon="ri-secure-payment-line"
-               subtitle="Choose the bills and amounts to pay. You'll complete the payment securely on Paystack."
+               subtitle="Choose the bills and amounts to pay, then complete the payment securely with {{ implode(' or ', $gateways ?: ['Paystack']) }}."
                :back="$backUrl" :back-label="['student' => 'My Payments', 'parent' => 'Fees'][$mode] ?? 'Online payments'">
         <x-slot:pills>
             <span class="cb-meta-pill"><i class="ri-user-line"></i>{{ $fullName }}</span>
@@ -42,7 +42,7 @@
 
     @if(!$gatewayReady)
         <div class="cb-banner warning"><i class="ri-error-warning-line"></i>
-            <div>Online payment is not switched on yet. {{ $mode !== 'staff' ? 'Please contact the school bursary.' : 'Add the Paystack keys and activate Paystack under Finance › Payment Gateways.' }}</div>
+            <div>Online payment is not switched on yet. {{ $mode !== 'staff' ? 'Please contact the school bursary.' : 'Add the Paystack or OPay keys and switch the gateway on under Finance › Payment Gateways.' }}</div>
         </div>
     @endif
 
@@ -198,13 +198,24 @@
                     <div class="of-sum-row"><span>This term</span><strong id="sumCurrent">₦0.00</strong></div>
                     <div class="of-sum-row of-sum-total"><span>Total to pay</span><strong id="sumTotal">₦0.00</strong></div>
                     <div id="ofErrors" class="cb-banner warning d-none mt-3 mb-0"><i class="ri-error-warning-line"></i><div></div></div>
+                    @if(count($gateways) > 1)
+                        <div class="mt-3">
+                            <div class="small fw-semibold mb-1">Pay with</div>
+                            <div class="d-flex gap-2">
+                                @foreach($gateways as $gk => $gl)
+                                    <label class="of-gw flex-fill"><input type="radio" name="of_gateway" value="{{ $gk }}" @checked($loop->first)> <span><i class="{{ $gk === 'opay' ? 'ri-smartphone-line' : 'ri-bank-card-line' }}"></i> {{ $gl }}</span>
+                                        <small class="d-block text-muted">{{ $gk === 'opay' ? 'OPay wallet, card, bank transfer, USSD' : 'Card, bank transfer, USSD' }}</small></label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                     <button type="button" class="action-btn btn-primary-cb w-100 justify-content-center mt-3 py-2" id="ofPayBtn" disabled>
                         <i class="ri-lock-2-line"></i><span>Select bills to pay</span>
                     </button>
                     <ul class="of-notes">
-                        <li><i class="ri-shield-check-line"></i>Card, bank transfer and USSD, processed by Paystack. Card details never touch this portal.</li>
+                        <li><i class="ri-shield-check-line"></i>Processed by {{ implode(' or ', $gateways ?: ['Paystack']) }}. Card and wallet details never touch this portal.</li>
                         <li><i class="ri-price-tag-3-line"></i>No extra charge: you pay exactly the total shown.</li>
-                        <li><i class="ri-file-list-3-line"></i>Your bills update automatically once Paystack confirms the payment.</li>
+                        <li><i class="ri-file-list-3-line"></i>Your bills update automatically once the payment is confirmed.</li>
                     </ul>
                 </div>
             </div>
@@ -224,17 +235,20 @@
             <div class="modal-body">
                 <p class="mb-2">You're paying for <strong>{{ $fullName }}</strong> ({{ $student->admissionNo }}):</p>
                 <table class="table table-sm mb-2" id="ofConfirmTable"><tbody></tbody></table>
-                <p class="small text-muted mb-0">You'll be taken to Paystack to complete the payment, then brought back here for your receipt.</p>
+                <p class="small text-muted mb-0">You'll be taken to <span class="of-gw-name">{{ array_values($gateways)[0] ?? 'Paystack' }}</span> to complete the payment, then brought back here for your receipt.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="ofGo"><i class="ri-arrow-right-line me-1"></i><span>Continue to Paystack</span></button>
+                <button type="button" class="btn btn-primary" id="ofGo"><i class="ri-arrow-right-line me-1"></i><span>Continue to {{ array_values($gateways)[0] ?? 'Paystack' }}</span></button>
             </div>
         </div>
     </div>
 </div>
 
 <style>
+.of-gw { border: 1px solid var(--bs-border-color, #e2e8f0); border-radius: 10px; padding: 8px 10px; cursor: pointer; font-size: .9rem; }
+.of-gw:has(input:checked) { border-color: #0d9488; background: rgba(13,148,136,.06); }
+.of-gw input { margin-right: 4px; }
 .of-table td, .of-table th { vertical-align: middle; }
 .of-row.is-settled { opacity: .6; }
 .of-row.is-locked td { background: rgba(245,158,11,.05); }
@@ -261,6 +275,7 @@
         sessionId:   @json((int) $selectedSessionId),
         minKobo:     @json((int) $minTotalKobo),
         ready:       @json((bool) $gatewayReady),
+        gateways:    @json($gateways),
         csrf:        document.querySelector('meta[name="csrf-token"]')?.content || '',
     };
     const rows      = Array.from(document.querySelectorAll('.of-row[data-key]')).filter(r => r.querySelector('.of-check'));
@@ -360,14 +375,23 @@
         bootstrap.Modal.getOrCreateInstance(modalEl).show();
     });
 
+    const gwKey  = () => (document.querySelector('input[name="of_gateway"]:checked') || {}).value || Object.keys(CFG.gateways)[0] || 'paystack';
+    const gwName = () => CFG.gateways[gwKey()] || 'Paystack';
+    const syncGw = () => {
+        document.querySelectorAll('.of-gw-name').forEach(e => e.textContent = gwName());
+        document.querySelector('#ofGo span').textContent = 'Continue to ' + gwName();
+    };
+    document.querySelectorAll('input[name="of_gateway"]').forEach(r => r.addEventListener('change', syncGw));
+    syncGw();
+
     document.getElementById('ofGo').addEventListener('click', async function () {
         const s = collect();
-        const btn = this; btn.disabled = true; btn.querySelector('span').textContent = 'Connecting to Paystack…';
+        const btn = this; btn.disabled = true; btn.querySelector('span').textContent = 'Connecting to ' + gwName() + '…';
         try {
             const res = await fetch(CFG.checkoutUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CFG.csrf, 'X-Requested-With': 'XMLHttpRequest' },
-                body: JSON.stringify({ student_id: CFG.studentId, term_id: CFG.termId, session_id: CFG.sessionId, items: s.items }),
+                body: JSON.stringify({ student_id: CFG.studentId, term_id: CFG.termId, session_id: CFG.sessionId, items: s.items, gateway: gwKey() }),
             });
             const json = await res.json().catch(() => ({}));
             if (res.ok && json.success && json.authorization_url) {
@@ -379,7 +403,7 @@
             bootstrap.Modal.getOrCreateInstance(modalEl).hide();
             errBox.classList.remove('d-none');
             errBox.querySelector('div').textContent = e.message;
-            btn.disabled = false; btn.querySelector('span').textContent = 'Continue to Paystack';
+            btn.disabled = false; btn.querySelector('span').textContent = 'Continue to ' + gwName();
         }
     });
 

@@ -189,6 +189,11 @@ Route::prefix('webhook')->group(function () {
     Route::post('/paystack',    [OnlineFeeController::class, 'webhook'])
         ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, \App\Http\Middleware\CustomVerifyCsrfToken::class])
         ->name('webhook.paystack');
+    // OPay payment notifications (school fees). Always re-checked with OPay before posting.
+    Route::post('/opay', [OnlineFeeController::class, 'opayWebhook'])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, \App\Http\Middleware\CustomVerifyCsrfToken::class])
+        ->middleware('throttle:120,1')
+        ->name('webhook.opay');
 });
 
 /*
@@ -1639,3 +1644,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/reminders', [\App\Http\Controllers\LeaveController::class, 'saveReminders'])->name('reminders');
     });
 });
+
+// Finance operations: payouts, loans, cooperative, expenses, budgets, assets, general ledger
+require __DIR__ . '/finance.php';

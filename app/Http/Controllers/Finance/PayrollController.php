@@ -540,10 +540,10 @@ class PayrollController extends Controller
                         'utility_allowance' => $structure->utility_allowance,
                         'other_allowances' => $structure->other_allowances,
                         'custom_allowances' => $structure->custom_allowances,
-                        'is_active' => $structure->is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>',
-                        'action' => '<button class="btn btn-sm btn-info view-structure me-1" data-id="'.$structure->id.'" data-bs-toggle="modal" data-bs-target="#viewStructureModal"><i class="ri-eye-line"></i></button>
-                                     <button class="btn btn-sm btn-primary edit-structure me-1" data-id="'.$structure->id.'"><i class="ri-pencil-line"></i></button>
-                                     <button class="btn btn-sm btn-danger delete-structure" data-id="'.$structure->id.'"><i class="ri-delete-bin-line"></i></button>',
+                        'is_active' => $structure->is_active ? '<span class="status-pill st-paid">Active</span>' : '<span class="status-pill st-muted">Ended</span>',
+                        'action' => '<div class="text-end text-nowrap"><button class="action-btn btn-open view-structure" title="View" data-id="'.$structure->id.'" data-bs-toggle="modal" data-bs-target="#viewStructureModal"><i class="ri-eye-line"></i></button>
+                                     <button class="action-btn btn-open edit-structure" title="Edit" data-id="'.$structure->id.'"><i class="ri-pencil-line"></i></button>
+                                     <button class="action-btn btn-open delete-structure text-danger" title="Delete" data-id="'.$structure->id.'"><i class="ri-delete-bin-line"></i></button></div>',
                     ];
                 }
 

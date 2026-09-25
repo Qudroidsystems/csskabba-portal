@@ -26,6 +26,17 @@ class PaymentGatewayCatalog
                                  'prefix' => ['test' => 'pk_test_', 'live' => 'pk_live_']],
             ],
         ],
+        'opay' => [
+            'name'      => 'OPay',
+            'supported' => true,
+            'used_for'  => 'Online school fees',
+            'dashboard' => 'https://merchant.opaycheckout.com',
+            'fields'    => [
+                'merchant_id' => ['label' => 'Merchant ID', 'secret' => false, 'required' => true],
+                'public_key'  => ['label' => 'Public key', 'secret' => false, 'required' => true],
+                'secret_key'  => ['label' => 'Private (secret) key', 'secret' => true, 'required' => true],
+            ],
+        ],
         'flutterwave' => [
             'name'      => 'Flutterwave',
             'supported' => false,

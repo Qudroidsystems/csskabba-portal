@@ -83,6 +83,7 @@ class OnlineFeeController extends Controller
             'selectedTermId'    => $termId,
             'history'           => $history,
             'gatewayReady'      => $this->checkout->gatewayReady(),
+            'gateways'          => $this->checkout->readyGateways(),
             'minTotalKobo'      => OnlineFeeCheckoutService::MIN_TOTAL_KOBO,
         ]);
     }
@@ -96,7 +97,12 @@ class OnlineFeeController extends Controller
             'session_id' => 'required|integer|exists:schoolsession,id',
             'items'      => 'required|array|min:1',
             'items.*'    => 'nullable|string|max:20',
+            'gateway'    => 'nullable|in:paystack,opay',
         ]);
+        $gatewayKey = $data['gateway'] ?? (array_key_first($this->checkout->readyGateways()) ?: 'paystack');
+        if (!array_key_exists($gatewayKey, $this->checkout->readyGateways())) {
+            return response()->json(['success' => false, 'message' => 'That payment option is not available right now.'], 422);
+        }
 
         $user    = $request->user();
         $student = Student::find((int) $data['student_id']);
@@ -115,7 +121,8 @@ class OnlineFeeController extends Controller
             $payment = $this->checkout->start(
                 $student, $user, (int) $data['term_id'], (int) $data['session_id'],
                 array_filter($data['items'], fn ($v) => $v !== null && $v !== ''),
-                route('online-fees.callback')
+                route('online-fees.callback'),
+                $gatewayKey
             );
         } catch (ValidationException $e) {
             return response()->json([
@@ -219,6 +226,17 @@ class OnlineFeeController extends Controller
         $event = json_decode($payload, true) ?: [];
         $ref   = (string) ($event['data']['reference'] ?? '');
 
+        // Salary / loan / expense payouts (Paystack Transfers).
+        if (str_starts_with((string) ($event['event'] ?? ''), 'transfer.') && class_exists(\App\Services\Payroll\PayoutService::class)) {
+            try {
+                app(\App\Services\Payroll\PayoutService::class)->handleEvent((string) $event['event'], (array) ($event['data'] ?? []));
+            } catch (\Throwable $e) {
+                Log::error('Paystack transfer webhook failed', ['reference' => $ref, 'error' => $e->getMessage()]);
+                return response()->json(['message' => 'retry'], 500);
+            }
+            return response()->json(['message' => 'ok']);
+        }
+
         if (in_array($event['event'] ?? '', ['charge.success', 'charge.failed'], true) && str_starts_with($ref, 'CSK-')) {
             try {
                 $this->checkout->finalize($ref, $event['data'], 'webhook');
@@ -228,6 +246,32 @@ class OnlineFeeController extends Controller
             }
         }
 
+        return response()->json(['message' => 'ok']);
+    }
+
+    /**
+     * OPay callback (outside auth + CSRF). The body is only a hint: the payment
+     * is always re-checked with OPay's status API before anything is posted.
+     */
+    public function opayWebhook(Request $request, \App\Services\Payment\OpayGateway $opay)
+    {
+        $body = $request->json()->all() ?: (json_decode($request->getContent(), true) ?: []);
+        $ref  = (string) ($body['payload']['reference'] ?? '');
+
+        if (!$opay->validCallback($body)) {
+            Log::notice('OPay callback signature not matched; re-checking with OPay anyway', ['reference' => $ref, 'ip' => $request->ip()]);
+        }
+        if ($ref !== '' && str_starts_with($ref, 'CSK-')) {
+            $payment = OnlineFeePayment::where('reference', $ref)->where('gateway', 'opay')->first();
+            if ($payment) {
+                try {
+                    $this->checkout->finalize($ref, null, 'webhook');
+                } catch (\Throwable $e) {
+                    Log::error('OPay callback processing failed', ['reference' => $ref, 'error' => $e->getMessage()]);
+                    return response()->json(['message' => 'retry'], 500); // OPay retries for 72h
+                }
+            }
+        }
         return response()->json(['message' => 'ok']);
     }
 

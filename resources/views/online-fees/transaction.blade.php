@@ -35,7 +35,7 @@
                 @endif
                 @if($isStaff && !$p->posted_at && auth()->user()->can('Update online-fee-payments'))
                     <form method="POST" action="{{ route('online-fees.verify', $p->reference) }}" class="d-inline">@csrf
-                        <button class="cb-hero-btn"><i class="ri-refresh-line"></i>Re-check with Paystack</button>
+                        <button class="cb-hero-btn"><i class="ri-refresh-line"></i>Re-check with {{ $p->gateway === 'opay' ? 'OPay' : 'Paystack' }}</button>
                     </form>
                 @endif
             </x-slot:actions>
@@ -56,7 +56,7 @@
                         <p class="mb-0">
                             @switch($state)
                                 @case('success') {{ $k2n($p->paid_kobo) }} received{{ $p->paid_at ? ' on ' . $p->paid_at->format('d M Y, g:i a') : '' }} and applied to the bills below. @break
-                                @case('pending') We're waiting for Paystack to confirm this payment. This page updates by itself; you can also come back later. @break
+                                @case('pending') We're waiting for {{ $p->gateway === 'opay' ? 'OPay' : 'Paystack' }} to confirm this payment. This page updates by itself; you can also come back later. @break
                                 @case('review') {{ $p->failure_reason }} The bursary will resolve this. @break
                                 @default {{ $p->failure_reason ?: 'No money was taken for this attempt.' }}
                             @endswitch
@@ -74,7 +74,7 @@
 
                     <div class="row g-3 of-meta">
                         <div class="col-sm-6"><span>Student</span><strong>{{ $name }}</strong><small>{{ $student->admissionNo ?? '' }}</small></div>
-                        <div class="col-sm-6"><span>Reference</span><strong><code>{{ $p->reference }}</code></strong><small>{{ $p->mode === 'live' ? 'Paystack' : 'Paystack (test mode)' }}</small></div>
+                        <div class="col-sm-6"><span>Reference</span><strong><code>{{ $p->reference }}</code></strong><small>{{ $p->gateway === 'opay' ? 'OPay' : 'Paystack' }}{{ $p->mode === 'live' ? '' : ' (test mode)' }}</small></div>
                         <div class="col-sm-6"><span>Paid by</span><strong>{{ $p->payer->name ?? ucfirst($p->payer_type) }}</strong><small>{{ $p->email }}</small></div>
                         <div class="col-sm-6"><span>Channel</span><strong>{{ $p->channel ? ucwords(str_replace('_', ' ', $p->channel)) : '—' }}</strong><small>Started {{ $p->created_at->format('d M Y, g:i a') }}</small></div>
                     </div>
@@ -106,7 +106,7 @@
                     @endif
 
                     @if($isStaff && $p->gateway_fee_kobo > 0)
-                        <p class="small text-muted mt-3 mb-0 no-print">Paystack fee (paid by the school): {{ $k2n($p->gateway_fee_kobo) }} · net settlement {{ $k2n($p->paid_kobo - $p->gateway_fee_kobo) }}</p>
+                        <p class="small text-muted mt-3 mb-0 no-print">{{ $p->gateway === 'opay' ? 'OPay' : 'Paystack' }} fee (paid by the school): {{ $k2n($p->gateway_fee_kobo) }} · net settlement {{ $k2n($p->paid_kobo - $p->gateway_fee_kobo) }}</p>
                     @endif
 
                     <div class="d-flex flex-wrap gap-2 mt-4 no-print">

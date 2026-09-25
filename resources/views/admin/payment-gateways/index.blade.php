@@ -107,6 +107,18 @@
                     @endforeach
                 </div>
 
+                @if($g->provider_key === 'opay')
+                    <div class="pg-urls mt-4">
+                        <h6 class="mb-2"><i class="ri-links-line me-1"></i>OPay callback URL</h6>
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text" style="min-width:110px">Callback URL</span>
+                            <input type="text" class="form-control" value="{{ $urls['opay_webhook'] }}" readonly>
+                            <button class="btn btn-outline-secondary pg-copy" type="button" data-copy="{{ $urls['opay_webhook'] }}"><i class="ri-file-copy-line"></i> Copy</button>
+                        </div>
+                        <div class="small text-muted">The portal sends this URL with every payment, so you don't have to set it in the OPay dashboard. Use the keys from OPay Merchant › Developer (test keys while in Sandbox).</div>
+                    </div>
+                @endif
+
                 @if($g->provider_key === 'paystack')
                     <div class="pg-urls mt-4">
                         <h6 class="mb-2"><i class="ri-links-line me-1"></i>Paste these into your Paystack dashboard (Settings › API Keys &amp; Webhooks)</h6>

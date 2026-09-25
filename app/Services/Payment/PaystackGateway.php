@@ -63,6 +63,9 @@ class PaystackGateway
     }
 
     /** Why the gateway can't be used (for admins), or null when it's ready. */
+    public function key(): string { return 'paystack'; }
+    public function name(): string { return 'Paystack'; }
+
     public function problem(): ?string
     {
         if (!$this->active) return 'Paystack is switched off in Payment Gateways.';

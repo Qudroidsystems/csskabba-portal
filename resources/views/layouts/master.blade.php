@@ -1003,6 +1003,23 @@
                         </li>
                     @endcan
 
+                    @if(auth()->user()->canany(['Create expenses', 'Approve expenses', 'Pay expenses', 'Manage budgets', 'Manage assets', 'Approve purchase requests', 'View financial reports']))
+                        <li class="nav-item">
+                            <a href="#sidebarExpenses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExpenses">
+                                <i class="ri-receipt-line"></i> <span>Expenses &amp; Assets</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarExpenses">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('finance.expenses') }}" class="nav-link">Expenses</a></li>
+                                    <li class="nav-item"><a href="{{ route('finance.purchases') }}" class="nav-link">Purchase Requests</a></li>
+                                    @can('Create expenses')<li class="nav-item"><a href="{{ route('finance.vendors') }}" class="nav-link">Vendors</a></li>@endcan
+                                    @canany(['Manage budgets', 'View financial reports'])<li class="nav-item"><a href="{{ route('finance.budgets') }}" class="nav-link">Budgets</a></li>@endcanany
+                                    @canany(['Manage assets', 'View financial reports'])<li class="nav-item"><a href="{{ route('finance.assets') }}" class="nav-link">Fixed Assets</a></li>@endcanany
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
                     @can('Manage payment gateways')
                         <li class="nav-item">
                             <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
@@ -1018,10 +1035,14 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarAccounting">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link">Balance Sheet</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.income-statement') }}" class="nav-link">Income Statement</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.trial-balance') }}" class="nav-link">Trial Balance</a></li>
-                                    <li class="nav-item"><a href="{{ route('reports.financial.cash-flow') }}" class="nav-link">Cash Flow</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.dashboard') }}" class="nav-link">Accounting Overview</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.journals') }}" class="nav-link">Journal</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.ledger') }}" class="nav-link">General Ledger</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.income-statement') }}" class="nav-link">Income &amp; Expenditure</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.balance-sheet') }}" class="nav-link">Balance Sheet</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.trial-balance') }}" class="nav-link">Trial Balance</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.cash-flow') }}" class="nav-link">Cash Flow</a></li>
+                                    <li class="nav-item"><a href="{{ route('accounting.accounts') }}" class="nav-link">Chart of Accounts</a></li>
                                     <li class="nav-item"><a href="{{ route('reports.financial.debtors') }}" class="nav-link">Student Debtors List</a></li>
                                     @can('View result-access')
                                     <li class="nav-item"><a href="{{ route('result-access.index') }}" class="nav-link">Result Access Control</a></li>
@@ -1049,6 +1070,11 @@
                                     @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.rates') }}" class="nav-link">Rates &amp; Tax Bands</a></li>@endcan
                                     @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.employer') }}" class="nav-link">Employer Details</a></li>@endcan
                                     <li class="nav-item"><a href="{{ route('payroll.remittances') }}" class="nav-link">Government Remittances</a></li>
+                                    @canany(['View payroll', 'Release salary payments'])<li class="nav-item"><a href="{{ route('payroll.payouts') }}" class="nav-link">Salary Payments</a></li>@endcanany
+                                    @canany(['Manage staff loans', 'Approve staff loans', 'View payroll'])<li class="nav-item"><a href="{{ route('payroll.loans') }}" class="nav-link">Loans &amp; Advances</a></li>@endcanany
+                                    @canany(['Manage cooperative', 'View payroll'])<li class="nav-item"><a href="{{ route('payroll.coop') }}" class="nav-link">Staff Cooperative</a></li>@endcanany
+                                    <li class="nav-item"><a href="{{ route('payroll.attendance-pay') }}" class="nav-link">Attendance &amp; Pay</a></li>
+                                    @canany(['Approve duty claims', 'View payroll'])<li class="nav-item"><a href="{{ route('payroll.claims') }}" class="nav-link">Extra Duty Claims</a></li>@endcanany
                                     <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>
@@ -1066,6 +1092,8 @@
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('staff.payments.index') }}" class="nav-link">All Payments</a></li>
                                     <li class="nav-item"><a href="{{ route('staff.payments.dashboard') }}" class="nav-link">My Payments</a></li>
+                                    <li class="nav-item"><a href="{{ route('my-pay.loans') }}" class="nav-link">My Loans</a></li>
+                                    <li class="nav-item"><a href="{{ route('my-pay.claims') }}" class="nav-link">Extra Duty Claims</a></li>
                                 </ul>
                             </div>
                         </li>
@@ -1999,6 +2027,13 @@
         {title:'Payroll Summary',                       url:'{{ route("payroll.summary") }}',                                icon:'mdi-cash-multiple',           category:'Payroll',             keywords:['payroll','summary','total','staff']},
         {title:'Statutory Report',                      url:'{{ route("payroll.statutory") }}',                              icon:'mdi-file-certificate',        category:'Payroll',             keywords:['statutory','tax','pension','nhis','paye']},
         {title:'Salary Structures',                     url:'{{ route("payroll.salary-structures") }}',                      icon:'mdi-bank',                    category:'Payroll',             keywords:['salary','structure','grade','pay']},
+        {title:'Salary Payments',                       url:'{{ route("payroll.payouts") }}',                                icon:'mdi-bank-transfer',           category:'Payroll',             keywords:['pay','transfer','paystack','salary','payout']},
+        {title:'Loans & Advances',                      url:'{{ route("payroll.loans") }}',                                  icon:'mdi-hand-coin',               category:'Payroll',             keywords:['loan','advance','staff']},
+        {title:'Staff Cooperative',                     url:'{{ route("payroll.coop") }}',                                   icon:'mdi-piggy-bank',              category:'Payroll',             keywords:['cooperative','savings','coop']},
+        {title:'Expenses',                              url:'{{ route("finance.expenses") }}',                               icon:'mdi-receipt',                 category:'Finance',             keywords:['expense','voucher','spend']},
+        {title:'Budgets',                               url:'{{ route("finance.budgets") }}',                                icon:'mdi-scale-balance',           category:'Finance',             keywords:['budget','plan']},
+        {title:'Fixed Assets',                          url:'{{ route("finance.assets") }}',                                 icon:'mdi-archive',                 category:'Finance',             keywords:['asset','depreciation','register']},
+        {title:'Accounting',                            url:'{{ route("accounting.dashboard") }}',                           icon:'mdi-book-open-variant',       category:'Finance',             keywords:['ledger','journal','accounting','balance sheet']},
 
         /* ── Staff Payments ── */
         {title:'All Staff Payments',                    url:'{{ route("staff.payments.index") }}',                           icon:'mdi-cash-check',              category:'Staff Payments',      keywords:['staff','payment','salary','payslip']},

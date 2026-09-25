@@ -46,7 +46,32 @@ class OnlineFeeCheckoutService
         protected FeeLedgerService $ledger,
         protected PaystackGateway $paystack,
         protected PaymentAuditService $audit,
+        protected OpayGateway $opay,
     ) {}
+
+    /** Gateways that can take school fees, keyed by provider. */
+    public function gateways(): array
+    {
+        return ['paystack' => $this->paystack, 'opay' => $this->opay];
+    }
+
+    public function gateway(?string $key): PaystackGateway|OpayGateway
+    {
+        return $this->gateways()[$key ?: 'paystack'] ?? $this->paystack;
+    }
+
+    /** [key => label] of gateways that are switched on and have keys. */
+    public function readyGateways(): array
+    {
+        $out = [];
+        foreach ($this->gateways() as $k => $g) if ($g->isReady()) $out[$k] = $k === 'opay' ? 'OPay' : 'Paystack';
+        return $out;
+    }
+
+    public static function methodLabel(?string $gateway): string
+    {
+        return $gateway === 'opay' ? 'Online (OPay)' : self::METHOD_LABEL;
+    }
 
     public static function kobo(float|int|string $naira): int
     {
@@ -60,12 +85,12 @@ class OnlineFeeCheckoutService
 
     public function gatewayReady(): bool
     {
-        return $this->paystack->isReady();
+        return (bool) $this->readyGateways();
     }
 
     public function gatewayProblem(): ?string
     {
-        return $this->paystack->problem();
+        return $this->readyGateways() ? null : ($this->paystack->problem() . ' ' . $this->opay->problem());
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -234,9 +259,10 @@ class OnlineFeeCheckoutService
     // START
     // ─────────────────────────────────────────────────────────────────────
 
-    public function start(Student $student, User $payer, int $termId, int $sessionId, array $selection, string $callbackUrl): OnlineFeePayment
+    public function start(Student $student, User $payer, int $termId, int $sessionId, array $selection, string $callbackUrl, string $gatewayKey = 'paystack'): OnlineFeePayment
     {
-        if (!$this->paystack->isReady()) {
+        $gw = $this->gateway($gatewayKey);
+        if (!$gw->isReady()) {
             throw ValidationException::withMessages(['selection' => ['Online payment is not available right now. Please contact the school bursary.']]);
         }
 
@@ -244,7 +270,7 @@ class OnlineFeeCheckoutService
         $isStudentPayer = (int) ($payer->student_id ?? 0) === (int) $student->id;
         $email = $this->payerEmail($student, $payer, $isStudentPayer);
 
-        $payment = DB::transaction(function () use ($student, $payer, $termId, $sessionId, $built, $email, $isStudentPayer) {
+        $payment = DB::transaction(function () use ($student, $payer, $termId, $sessionId, $built, $email, $isStudentPayer, $gw) {
             // Earlier unfinished checkouts are superseded (a late webhook can still complete them).
             OnlineFeePayment::where('student_id', $student->id)->where('status', 'pending')
                 ->update(['status' => 'abandoned', 'failure_reason' => 'Replaced by a newer checkout', 'updated_at' => now()]);
@@ -261,7 +287,8 @@ class OnlineFeeCheckoutService
                 'amount_kobo'   => $built['total_kobo'],
                 'arrears_kobo'  => $built['arrears_kobo'],
                 'current_kobo'  => $built['current_kobo'],
-                'mode'          => $this->paystack->mode(),
+                'gateway'       => $gw->key(),
+                'mode'          => $gw->mode(),
                 'status'        => 'pending',
             ]);
 
@@ -283,7 +310,10 @@ class OnlineFeeCheckoutService
             return $payment;
         });
 
-        $init = $this->paystack->initialize($email, $payment->amount_kobo, $payment->reference, $callbackUrl, [
+        $init = $gw->initialize($email, $payment->amount_kobo, $payment->reference, $callbackUrl, [
+            'product_name'          => 'School fees — ' . trim($student->firstname . ' ' . $student->lastname),
+            'product_description'   => 'Admission No ' . $student->admissionNo . ' · ' . $payment->reference,
+            'user_name'             => trim($student->firstname . ' ' . $student->lastname),
             'online_fee_payment_id' => $payment->id,
             'student_id'            => $student->id,
             'admission_no'          => $student->admissionNo,
@@ -341,9 +371,10 @@ class OnlineFeeCheckoutService
             return $payment;
         }
 
-        // Always confirm with Paystack directly (never trust a browser redirect).
+        // Always confirm with the gateway directly (never trust a browser redirect or a callback body).
+        $gw = $this->gateway($payment->gateway);
         if ($data === null || $source === 'webhook') {
-            $verify = $this->paystack->verify($reference);
+            $verify = $gw->verify($reference);
             if (!$verify['ok']) {
                 $payment->update(['last_verified_at' => now()]);
                 return $payment->fresh();
@@ -352,7 +383,7 @@ class OnlineFeeCheckoutService
         }
 
         $justPosted = false;
-        $result = DB::transaction(function () use ($payment, $data, $source, &$justPosted) {
+        $result = DB::transaction(function () use ($payment, $data, $source, &$justPosted, $gw) {
             /** @var OnlineFeePayment $p */
             $p = OnlineFeePayment::whereKey($payment->id)->lockForUpdate()->first();
             if ($p->posted_at) {
@@ -371,6 +402,10 @@ class OnlineFeeCheckoutService
 
             if ($gwStatus !== 'success') {
                 $map = ['failed' => 'failed', 'abandoned' => 'abandoned', 'reversed' => 'failed'];
+                if ($gwStatus === 'pending') {
+                    $p->update($common);
+                    return $p->fresh();
+                }
                 $p->update($common + [
                     'status'         => $map[$gwStatus] ?? $p->status,
                     'failure_reason' => $data['gateway_response'] ?? $p->failure_reason,
@@ -388,7 +423,7 @@ class OnlineFeeCheckoutService
                     'status'         => 'amount_mismatch',
                     'paid_kobo'      => $paidKobo,
                     'needs_review'   => true,
-                    'failure_reason' => 'Paystack confirmed ' . ($data['currency'] ?? '') . ' ' . number_format($paidKobo / 100, 2)
+                    'failure_reason' => $gw->name() . ' confirmed ' . ($data['currency'] ?? '') . ' ' . number_format($paidKobo / 100, 2)
                         . ' but ₦' . number_format($p->amount_kobo / 100, 2) . ' was expected. Nothing was posted.',
                 ]);
                 Log::warning('Online fee payment mismatch', ['reference' => $p->reference, 'data' => $data]);
@@ -400,7 +435,7 @@ class OnlineFeeCheckoutService
                 $res = $this->ledger->post(
                     (int) $p->student_id, (int) $item->school_bill_id, (int) $item->class_id,
                     (int) $item->term_id, (int) $item->session_id,
-                    self::naira((int) $item->amount_kobo), self::METHOD_LABEL, $p->payer_user_id, $p->reference
+                    self::naira((int) $item->amount_kobo), self::methodLabel($p->gateway), $p->payer_user_id, $p->reference
                 );
                 $itemApplied = self::kobo($res['applied']);
                 $applied += $itemApplied;
@@ -420,9 +455,9 @@ class OnlineFeeCheckoutService
                             'term_id'    => $item->term_id,
                             'session_id' => $item->session_id,
                             'amount'     => $res['applied'],
-                            'payment_method' => self::METHOD_LABEL,
+                            'payment_method' => self::methodLabel($p->gateway),
                             'entity_type'    => 'payment',
-                        ], null, ['reference' => $p->reference, 'new_balance' => $res['balance']], 'Online payment (Paystack)');
+                        ], null, ['reference' => $p->reference, 'new_balance' => $res['balance']], 'Online payment (' . $gw->name() . ')');
                     } catch (\Throwable $e) {
                         Log::warning('Audit log failed for online payment', ['reference' => $p->reference, 'error' => $e->getMessage()]);
                     }
@@ -451,7 +486,7 @@ class OnlineFeeCheckoutService
         if ($justPosted && $result && $result->applied_kobo > 0) {
             \App\Services\Messaging\PaymentReceiptNotifier::queue(
                 (int) $result->student_id, self::naira((int) $result->applied_kobo),
-                'Online (' . ($result->channel ? ucwords(str_replace('_', ' ', $result->channel)) : 'Paystack') . ')',
+                $result->gateway === 'opay' ? 'Online (OPay)' : 'Online (' . ($result->channel ? ucwords(str_replace('_', ' ', $result->channel)) : 'Paystack') . ')',
                 $result->reference, $result->term_id ? (int) $result->term_id : null, $result->session_id ? (int) $result->session_id : null
             );
         }

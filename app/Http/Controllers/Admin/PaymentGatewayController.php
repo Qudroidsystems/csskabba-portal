@@ -42,6 +42,7 @@ class PaymentGatewayController extends Controller
             'urls'      => [
                 'paystack_webhook'  => route('webhook.paystack'),
                 'paystack_callback' => route('online-fees.callback'),
+                'opay_webhook'      => route('webhook.opay'),
             ],
         ]);
     }
@@ -137,6 +138,7 @@ class PaymentGatewayController extends Controller
                 'flutterwave' => $this->testBearer('https://api.flutterwave.com/v3/banks/NG', $gateway->credential('secret_key', $set)),
                 'stripe'      => $this->testBearer('https://api.stripe.com/v1/balance', $gateway->credential('secret_key', $set)),
                 'monnify'     => $this->testMonnify($gateway, $set),
+                'opay'        => \App\Services\Payment\OpayGateway::testKeys($set, $gateway->credential('merchant_id', $set), $gateway->credential('secret_key', $set)),
                 default       => ['success' => true, 'message' => "{$label} details are saved. {$gateway->name} has no automatic connection test; verify with a small payment."],
             };
         } catch (\Throwable $e) {

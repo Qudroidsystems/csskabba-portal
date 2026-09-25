@@ -14,7 +14,7 @@
 <div class="container-fluid">
 
     <x-cb.hero title="Online Fee Payments" icon="ri-secure-payment-line"
-               subtitle="School fees paid through Paystack by students or by the bursary on their behalf.">
+               subtitle="School fees paid online (Paystack or OPay) by students or by the bursary on their behalf.">
         <x-slot:actions>
             @if($canPay)
                 <button type="button" class="cb-hero-btn" data-bs-toggle="modal" data-bs-target="#payForModal"><i class="ri-user-add-line"></i>Pay for a student</button>
@@ -29,7 +29,7 @@
         @if(session($f))<div class="cb-banner {{ $cls }}"><i class="ri-information-line"></i><div>{{ session($f) }}</div></div>@endif
     @endforeach
     @if(!$gatewayReady)
-        <div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ $gatewayProblem ?? 'Paystack is not active.' }} Fix this in Gateway settings (or .env) before students can pay online.</div></div>
+        <div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ $gatewayProblem ?? 'No online gateway is active.' }} Fix this in Gateway settings (or .env) before students can pay online.</div></div>
     @endif
 
     <div class="row g-3 mb-4">
@@ -58,7 +58,7 @@
         </form>
 
         @if($payments->isEmpty())
-            <div class="empty-state"><i class="ri-secure-payment-line"></i><h6>No online payments</h6><p>Payments made through Paystack will appear here.</p></div>
+            <div class="empty-state"><i class="ri-secure-payment-line"></i><h6>No online payments</h6><p>Payments made through Paystack or OPay will appear here.</p></div>
         @else
             <div class="table-responsive">
                 <table class="cb-table mb-0">
@@ -83,7 +83,7 @@
                                 <a href="{{ route('online-fees.show', $p->reference) }}" class="action-btn btn-open"><i class="ri-eye-line"></i>View</a>
                                 @if($canVerify && !$p->posted_at && in_array($p->status, ['pending', 'abandoned', 'failed']))
                                     <form method="POST" action="{{ route('online-fees.verify', $p->reference) }}" class="d-inline">@csrf
-                                        <button class="action-btn btn-go" title="Ask Paystack for the latest status"><i class="ri-refresh-line"></i>Re-check</button>
+                                        <button class="action-btn btn-go" title="Ask the gateway for the latest status"><i class="ri-refresh-line"></i>Re-check</button>
                                     </form>
                                 @endif
                             </td>

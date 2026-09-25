@@ -32,3 +32,9 @@ Schedule::command('activity:prune --days=365')->dailyAt('02:30');
 
 // Leave reminders (starts tomorrow, days left, resume date, not back yet)
 Schedule::command('leave:reminders')->dailyAt('07:00')->withoutOverlapping(30);
+
+// Post yesterday's school-fee receipts to the general ledger
+Schedule::command('accounting:sync-fees')->dailyAt('01:30')->withoutOverlapping(30);
+
+// Monthly depreciation on fixed assets (for the month just ended)
+Schedule::command('assets:depreciate')->monthlyOn(1, '03:00')->withoutOverlapping(30);

@@ -84,16 +84,25 @@ class PayrollEngine
         if (!Schema::hasTable('loans_advances')) return [];
         $rows = DB::table('loans_advances')->where('staff_id', $staffId)->where('status', 'active')->where('balance', '>', 0)
             ->where(fn ($q) => $q->whereNull('first_repayment_date')->orWhere('first_repayment_date', '<=', $period->end_date))
+            ->when(Schema::hasColumn('loans_advances', 'paused_until'), fn ($q) => $q->where(fn ($w) => $w->whereNull('paused_until')->orWhere('paused_until', '<', $period->start_date)))
+            ->when(Schema::hasColumn('loans_advances', 'deleted_at'), fn ($q) => $q->whereNull('deleted_at'))
             ->get();
         $out = [];
         foreach ($rows as $l) {
             $amt = min((float) $l->monthly_repayment, (float) $l->balance);
             if ($amt <= 0) continue;
-            $isAdvance = strtolower((string) ($l->type ?? '')) === 'advance';
-            $out[] = ['code' => $isAdvance ? 'ADVANCE' : 'LOAN', 'label' => ($isAdvance ? 'Salary advance' : 'Loan repayment') . ($l->reference_no ? " ({$l->reference_no})" : ''),
+            $type = strtolower((string) ($l->type ?? ''));
+            $isAdvance = $type === 'advance';
+            $out[] = ['code' => $isAdvance ? 'ADVANCE' : 'LOAN', 'label' => ($isAdvance ? 'Salary advance' : ($type === 'cooperative' ? 'Cooperative loan' : 'Loan repayment')) . ($l->reference_no ? " ({$l->reference_no})" : ''),
                       'amount' => $amt, 'meta' => ['loan_id' => $l->id]];
         }
         return $out;
+    }
+
+    /** Cooperative savings deduction (phase 6). */
+    public function coopDeductions(int $staffId): array
+    {
+        return class_exists(\App\Services\Loans\CoopService::class) ? app(\App\Services\Loans\CoopService::class)->deductionFor($staffId) : [];
     }
 
     /** Calculate one staff member for a period (no saving). */
@@ -135,12 +144,21 @@ class PayrollEngine
             }
         }
 
+        // Attendance deductions and approved duty claims (phase 7).
+        $attWarnings = [];
+        if (class_exists(AttendancePayService::class)) {
+            $regularMonthly = array_sum(array_map(fn ($l) => (float) $l['amount'], $earnLines)) * $prorate;
+            $ap = app(AttendancePayService::class)->adjustments($staff, $period, $regularMonthly);
+            foreach ($ap['lines'] as $l) $items['earnings'][] = $l;
+            $attWarnings = $ap['warnings'];
+        }
+
         $calc = PayrollCalculator::compute(array_merge($earnLines, $items['earnings']), [
             'paye' => $profile->paye_enabled, 'pension' => $profile->pension_enabled, 'nhf' => $profile->nhf_enabled, 'nhia' => $profile->nhia_enabled,
             'annual_rent' => $profile->annual_rent, 'other_reliefs_annual' => $profile->other_reliefs_annual,
-        ], $rates, $prorate, array_merge($this->loanDeductions((int) $staff->id, $period), $items['deductions']));
+        ], $rates, $prorate, array_merge($this->loanDeductions((int) $staff->id, $period), $this->coopDeductions((int) $staff->id), $items['deductions']));
 
-        $warnings = array_map(fn ($g) => 'Missing ' . $g, $profile->gaps());
+        $warnings = array_merge(array_map(fn ($g) => 'Missing ' . $g, $profile->gaps()), $attWarnings);
         $minWage = (float) ($rates['limits']['minimum_wage_monthly'] ?? 0);
         $regularGross = collect($calc['lines'])->where('type', 'earning')->where('one_off', false)->sum('amount');
         if ($minWage > 0 && $prorate >= 1 && $regularGross < $minWage && $profile->employment_type === 'full_time') {
@@ -249,6 +267,7 @@ class PayrollEngine
             $period->update(['status' => 'approved', 'approved_by' => $userId, 'approved_at' => now()]);
         });
         $this->prepareRemittances($period, $userId);
+        $this->postLedger($period->fresh());
     }
 
     /** Lock: no more changes; verification codes issued; loan balances reduced once. */
@@ -257,10 +276,11 @@ class PayrollEngine
         if (!in_array($period->status, ['approved', 'paid'], true)) throw new \RuntimeException('Only an approved payroll can be locked.');
         if ($period->locked_at) return;
 
-        DB::transaction(function () use ($period, $userId) {
+        $loanSvc = class_exists(\App\Services\Loans\LoanService::class) && \App\Services\Loans\LoanService::available();
+        DB::transaction(function () use ($period, $userId, $loanSvc) {
             foreach (PayrollRun::where('payroll_period_id', $period->id)->get() as $run) {
                 if (!$run->verify_code) $run->update(['verify_code' => strtoupper(Str::random(10))]);
-                if (Schema::hasTable('loans_advances')) {
+                if (!$loanSvc && Schema::hasTable('loans_advances')) {
                     foreach ((array) $run->loan_details as $ld) {
                         if (empty($ld['loan_id']) || empty($ld['amount'])) continue;
                         DB::table('loans_advances')->where('id', $ld['loan_id'])->update([
@@ -273,6 +293,34 @@ class PayrollEngine
             $period->update(['status' => 'locked', 'locked_by' => $userId, 'locked_at' => now()]);
         });
         $this->prepareRemittances($period->fresh(), $userId);
+        $this->afterLock($period->fresh(), $userId);
+    }
+
+    /** Loans, cooperative savings, duty claims and the ledger follow a locked month. Never blocks locking. */
+    protected function afterLock(PayrollPeriod $period, int $userId): void
+    {
+        $steps = [
+            fn () => class_exists(\App\Services\Loans\LoanService::class) && \App\Services\Loans\LoanService::available() ? app(\App\Services\Loans\LoanService::class)->payrollDeducted($period, $userId) : null,
+            fn () => class_exists(\App\Services\Loans\CoopService::class) && \App\Services\Loans\CoopService::available() ? app(\App\Services\Loans\CoopService::class)->payrollContributions($period, $userId) : null,
+            fn () => class_exists(AttendancePayService::class) ? app(AttendancePayService::class)->markClaimsPaid($period) : null,
+            fn () => $this->postLedger($period),
+        ];
+        foreach ($steps as $i => $step) {
+            try { $step(); } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Payroll after-lock step failed', ['period' => $period->id, 'step' => $i, 'error' => $e->getMessage()]);
+            }
+        }
+    }
+
+    /** Salary cost and liabilities into the general ledger (phase 9). Idempotent. */
+    protected function postLedger(PayrollPeriod $period): void
+    {
+        if (!class_exists(\App\Services\Accounting\LedgerPoster::class)) return;
+        try {
+            app(\App\Services\Accounting\LedgerPoster::class)->payrollAccrual($period);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Payroll not posted to ledger', ['period' => $period->id, 'error' => $e->getMessage()]);
+        }
     }
 
     /** PAYE / pension / NHF… owed for the month (phase 4). Never blocks approval. */

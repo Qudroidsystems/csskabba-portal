@@ -98,6 +98,15 @@ class StatutoryRemittanceService
             'notes' => $d['notes'] ?? $rem->notes, 'needs_review' => false, 'recorded_by' => $userId,
         ]);
 
+        // General ledger: clear the liability against the bank.
+        if (class_exists(\App\Services\Accounting\LedgerPoster::class)) {
+            try {
+                app(\App\Services\Accounting\LedgerPoster::class)->remittancePaid($rem, (float) $d['amount'], $d['paid_at'], $d['reference'] ?? null, $rem->id . ':' . $paid);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Remittance not posted to ledger', ['remittance' => $rem->id, 'error' => $e->getMessage()]);
+            }
+        }
+
         if ($notifyStaff && $rem->status === 'paid' && in_array($rem->type, ['pension', 'nhf'], true) && class_exists(\App\Services\Messaging\PortalNotifier::class)) {
             $period = $rem->period;
             $userIds = DB::table('statutory_remittance_lines as l')->join('staffbioinfo as s', 's.id', '=', 'l.staff_id')

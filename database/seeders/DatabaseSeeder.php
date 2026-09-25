@@ -534,6 +534,12 @@ class DatabaseSeeder extends Seeder
 
             'LeavePermissionSeeder' =>
                 '🌴 Seeding staff leave permissions...',
+
+            'FinanceOpsPermissionSeeder' =>
+                '🏦 Seeding payouts, loans, expenses, assets & accounting permissions...',
+
+            'AccountingSetupSeeder' =>
+                '📒 Adding ledger accounts and linking expense categories...',
         ];
 
         $this->runSeederList(
