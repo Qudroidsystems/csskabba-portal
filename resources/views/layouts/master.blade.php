@@ -1021,6 +1021,11 @@
                             <div class="collapse menu-dropdown" id="sidebarPayroll">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('payroll.periods') }}" class="nav-link">Payroll Periods</a></li>
+                                    @canany(['Manage staff pay profiles', 'Manage payroll settings'])<li class="nav-item"><a href="{{ route('payroll.profiles') }}" class="nav-link">Staff Pay Profiles</a></li>@endcanany
+                                    <li class="nav-item"><a href="{{ route('payroll.scales') }}" class="nav-link">Salary Scales</a></li>
+                                    <li class="nav-item"><a href="{{ route('payroll.items') }}" class="nav-link">Allowances &amp; Deductions</a></li>
+                                    <li class="nav-item"><a href="{{ route('payroll.reviews') }}" class="nav-link">Salary Reviews</a></li>
+                                    @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.rates') }}" class="nav-link">Rates &amp; Tax Bands</a></li>@endcan
                                     <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>

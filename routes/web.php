@@ -864,6 +864,32 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('salary-structures.update');
         Route::delete('/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('salary-structures.destroy');
         Route::get('/structures', [PayrollController::class, 'salaryStructures'])->name('structures');
+
+        // Setup: statutory rates & staff pay profiles
+        Route::get('/rates', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'rates'])->name('rates');
+        Route::post('/rates', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'storeRate'])->name('rates.store');
+        Route::get('/profiles', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'profiles'])->name('profiles');
+        Route::post('/profiles/verify-account', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'verifyAccount'])->middleware('throttle:20,1')->name('profiles.verify');
+        Route::get('/profiles/{staff}', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'editProfile'])->whereNumber('staff')->name('profiles.edit');
+        Route::put('/profiles/{staff}', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'saveProfile'])->whereNumber('staff')->name('profiles.save');
+        Route::get('/profiles/{staff}/preview', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'preview'])->whereNumber('staff')->name('profiles.preview');
+        Route::post('/profiles/{staff}/placement', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'savePlacement'])->whereNumber('staff')->name('profiles.placement');
+
+        // Salary scales, pay items, reviews
+        Route::get('/scales', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'scales'])->name('scales');
+        Route::post('/grades', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'storeGrade'])->name('grades.store');
+        Route::put('/grades/{grade}', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'updateGrade'])->whereNumber('grade')->name('grades.update');
+        Route::post('/grades/{grade}/steps', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'saveSteps'])->whereNumber('grade')->name('grades.steps');
+        Route::get('/items', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'items'])->name('items');
+        Route::post('/items', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'storeItem'])->name('items.store');
+        Route::put('/items/{item}', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'updateItem'])->whereNumber('item')->name('items.update');
+        Route::post('/items/assign', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'assignItem'])->name('items.assign');
+        Route::delete('/staff-items/{id}', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'removeStaffItem'])->whereNumber('id')->name('staff-items.remove');
+        Route::get('/reviews', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'reviews'])->name('reviews');
+        Route::post('/reviews', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'reviewStore'])->name('reviews.store');
+        Route::get('/reviews/{review}', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'reviewShow'])->whereNumber('review')->name('reviews.show');
+        Route::post('/reviews/{review}/approve', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'reviewApprove'])->whereNumber('review')->name('reviews.approve');
+        Route::post('/reviews/{review}/apply', [\App\Http\Controllers\Finance\PayrollStructureController::class, 'reviewApply'])->whereNumber('review')->name('reviews.apply');
     });
 
     // ===================================================================

@@ -204,8 +204,11 @@ class PayrollController extends Controller
      */
     public function lockPeriod($periodId)
     {
-        $period = PayrollPeriod::findOrFail($periodId);
-        $period->update(['status' => 'locked']);
+        try {
+            $this->payrollService->lockPayroll($periodId);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
             'success' => true,

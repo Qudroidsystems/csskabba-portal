@@ -138,6 +138,42 @@ class PaystackGateway
         }
     }
 
+    /** Nigerian banks (name + code), cached for a day. */
+    public function banks(): array
+    {
+        if (!$this->secretKey) return [];
+        return \Illuminate\Support\Facades\Cache::remember('paystack_banks_ng', now()->addDay(), function () {
+            try {
+                $res = Http::withToken($this->secretKey)->acceptJson()->timeout(30)
+                    ->get(self::BASE_URL . '/bank', ['country' => 'nigeria', 'perPage' => 200]);
+                if ($res->successful() && $res->json('status') === true) {
+                    return collect($res->json('data'))->where('active', true)
+                        ->map(fn ($b) => ['code' => (string) $b['code'], 'name' => $b['name']])->unique('code')->sortBy('name')->values()->all();
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Paystack bank list failed', ['error' => $e->getMessage()]);
+            }
+            return [];
+        });
+    }
+
+    /** Look up the account name for an account number (checks the account exists). */
+    public function resolveAccount(string $accountNumber, string $bankCode): array
+    {
+        if (!$this->secretKey) return ['ok' => false, 'message' => 'Paystack is not configured.'];
+        try {
+            $res = Http::withToken($this->secretKey)->acceptJson()->timeout(30)
+                ->get(self::BASE_URL . '/bank/resolve', ['account_number' => $accountNumber, 'bank_code' => $bankCode]);
+            if ($res->successful() && $res->json('status') === true) {
+                return ['ok' => true, 'account_name' => (string) $res->json('data.account_name')];
+            }
+            return ['ok' => false, 'message' => $res->json('message') ?: 'Could not verify this account.'];
+        } catch (\Throwable $e) {
+            Log::warning('Paystack resolve failed', ['error' => $e->getMessage()]);
+            return ['ok' => false, 'message' => 'The payment service could not be reached.'];
+        }
+    }
+
     public function validSignature(string $payload, ?string $signature): bool
     {
         if (!$signature || !$this->secretKey) {
