@@ -128,6 +128,13 @@ Route::get('/test-sibling-data/{id}', function ($id) {
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
+// Maintenance mode: public info page (always reachable) + admin settings (authed, permission-gated)
+Route::view('/maintenance', 'errors.maintenance', ['m' => \App\Models\MaintenanceSetting::current()])->name('maintenance.page');
+Route::middleware('auth')->group(function () {
+    Route::get('/admin/maintenance', [\App\Http\Controllers\Admin\MaintenanceController::class, 'index'])->name('maintenance.settings');
+    Route::post('/admin/maintenance', [\App\Http\Controllers\Admin\MaintenanceController::class, 'save'])->name('maintenance.save');
+});
+
 // CSRF refresh (used by the auto-refresh feature)
 Route::get('/refresh-csrf', function () {
     if (request()->ajax()) {

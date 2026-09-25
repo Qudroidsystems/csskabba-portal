@@ -538,6 +538,9 @@ class DatabaseSeeder extends Seeder
             'FinanceOpsPermissionSeeder' =>
                 '🏦 Seeding payouts, loans, expenses, assets & accounting permissions...',
 
+            'MaintenancePermissionSeeder' =>
+                '🛠️ Seeding maintenance-mode permission...',
+
             'AccountingSetupSeeder' =>
                 '📒 Adding ledger accounts and linking expense categories...',
         ];

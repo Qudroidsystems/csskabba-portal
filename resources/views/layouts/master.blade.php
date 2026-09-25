@@ -1028,6 +1028,16 @@
                         </li>
                     @endcan
 
+                    @can('Manage maintenance mode')
+                        <li class="nav-item">
+                            <a href="{{ route('maintenance.settings') }}" class="nav-link">
+                                <i class="ri-tools-line"></i> <span>Maintenance Mode</span>
+                                @php $mmActive = false; try { $mmActive = \App\Models\MaintenanceSetting::current()->is_active; } catch (\Throwable $e) {} @endphp
+                                @if($mmActive)<span class="badge bg-danger ms-1">ON</span>@endif
+                            </a>
+                        </li>
+                    @endcan
+
                     @can('View financial reports')
                         <li class="nav-item">
                             <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
@@ -1548,6 +1558,8 @@
         </div>
     </div>
 
+    @include('layouts.partials.maintenance-banner')
+
     @yield('content')
 
     <footer class="footer">
@@ -1989,6 +2001,7 @@
         {title:'Discount Assignments',                  url:'{{ route("admin.discount.assignments") }}',                     icon:'mdi-account-tag',             category:'Finance',             keywords:['discount','assign','student']},
         {title:'All Family Groups (Sibling)',           url:'{{ route("sibling.index") }}',                                  icon:'mdi-account-group',           category:'Finance',             keywords:['sibling','family','group','discount']},
         {title:'Create Family Group',                   url:'{{ route("sibling.create") }}',                                 icon:'mdi-account-multiple-plus',   category:'Finance',             keywords:['sibling','family','group','create']},
+        {title:'Maintenance Mode',                      url:'{{ route("maintenance.settings") }}',                            icon:'mdi-wrench',                  category:'System',              keywords:['maintenance','offline','downtime','lock','close portal']},
         {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',             keywords:['gateway','paystack','flutterwave','online','configure']},
 
         /* ── Accounting & Reports ── */

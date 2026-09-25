@@ -21,10 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
             // Device authentication
             'device.auth' => \App\Http\Middleware\DeviceAuthMiddleware::class,
             'force.password' => \App\Http\Middleware\ForcePasswordChange::class,
+            'maintenance.mode' => \App\Http\Middleware\MaintenanceMode::class,
         ]);
 
         // Temporary passwords (new parent accounts) must be changed first.
-        $middleware->web(append: [\App\Http\Middleware\ForcePasswordChange::class, \App\Http\Middleware\LogActivity::class]);
+        $middleware->web(append: [\App\Http\Middleware\MaintenanceMode::class, \App\Http\Middleware\ForcePasswordChange::class, \App\Http\Middleware\LogActivity::class]);
 
         $middleware->validateCsrfTokens(except: [
             'cbt/submit',
