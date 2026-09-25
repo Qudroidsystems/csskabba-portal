@@ -77,6 +77,12 @@ class NoticeAudienceService
         return ['contacts' => $contacts, 'students' => $students->count(), 'staff' => $staffCount, 'missing' => $missing];
     }
 
+    /** Active student ids in an audience (for in-portal notifications). */
+    public function studentIds(array $audience): array
+    {
+        return $this->students($audience)->pluck('id')->map(fn ($v) => (int) $v)->all();
+    }
+
     protected function students(array $a)
     {
         $scope = $a['scope'] ?? 'school';

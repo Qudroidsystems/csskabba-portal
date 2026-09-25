@@ -58,7 +58,7 @@
                         <tr>
                             <td><div class="fw-semibold"><i class="{{ \App\Models\SchoolNotice::TYPES[$n->type]['icon'] ?? 'ri-megaphone-line' }} me-1"></i>{{ $n->title }}</div><small class="text-muted">{{ $n->typeLabel() }}</small></td>
                             <td>{{ $n->event_date?->format('D j M Y') ?? '—' }}</td>
-                            <td>@foreach($n->channels ?? [] as $c)<span class="status-pill st-muted me-1">{{ strtoupper($c) === 'WHATSAPP' ? 'WhatsApp' : strtoupper($c) }}</span>@endforeach</td>
+                            <td>@foreach($n->channels ?? [] as $c)<span class="status-pill st-muted me-1">{{ ['whatsapp' => 'WhatsApp', 'portal' => 'Portal'][$c] ?? strtoupper($c) }}</span>@endforeach</td>
                             <td>
                                 <span class="status-pill {{ \App\Models\SchoolNotice::STATUS[$n->status]['pill'] ?? 'st-muted' }}">{{ \App\Models\SchoolNotice::STATUS[$n->status]['label'] ?? $n->status }}</span>
                                 @if($n->status === 'scheduled' && $n->send_at)<br><small class="text-muted">{{ $n->send_at->format('j M, g:i a') }}</small>@endif

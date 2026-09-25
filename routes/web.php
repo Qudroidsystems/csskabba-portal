@@ -83,6 +83,7 @@ use App\Http\Controllers\ResultLinkController;
 use App\Http\Controllers\ResultVerifyController;
 use App\Http\Controllers\ParentContactController;
 use App\Http\Controllers\AutoMessageController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StudentpersonalityprofileController;
 use App\Http\Controllers\StudentResultsController;
 use App\Http\Controllers\SubjectClassController;
@@ -572,6 +573,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/{notice}/resend', [SchoolNoticeController::class, 'resendFailed'])->whereNumber('notice')->name('resend');
         Route::post('/{notice}/duplicate', [SchoolNoticeController::class, 'duplicate'])->whereNumber('notice')->name('duplicate');
     });
+
+    // In-portal notifications (bell)
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::get('/notifications/{id}/open', [NotificationController::class, 'open'])->name('notifications.open');
 
     // Parent contact clean-up (+ CSV import / export)
     Route::prefix('parent-contacts')->name('parent-contacts.')->group(function () {
@@ -1424,4 +1431,119 @@ Route::group(['middleware' => ['auth']], function () {
     // SPOTLIGHT SEARCH
     // ===================================================================
     Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
+});
+// ===================================================================
+// PARENT PORTAL
+// ===================================================================
+// Password reset by SMS code (guests)
+Route::prefix('parent')->name('parent.')->group(function () {
+    Route::get('/forgot-password', [\App\Http\Controllers\Auth\ParentPasswordController::class, 'requestForm'])->name('forgot');
+    Route::post('/forgot-password', [\App\Http\Controllers\Auth\ParentPasswordController::class, 'sendCode'])->middleware('throttle:5,10')->name('forgot.send');
+    Route::get('/reset-password', [\App\Http\Controllers\Auth\ParentPasswordController::class, 'resetForm'])->name('reset');
+    Route::post('/reset-password', [\App\Http\Controllers\Auth\ParentPasswordController::class, 'reset'])->middleware('throttle:10,10')->name('reset.update');
+});
+
+Route::middleware('auth')->group(function () {
+    // Change password (also where temporary passwords are replaced)
+    Route::get('/account/password', [\App\Http\Controllers\ParentPortalController::class, 'passwordForm'])->name('parent.password');
+    Route::put('/account/password', [\App\Http\Controllers\ParentPortalController::class, 'passwordUpdate'])->name('parent.password.update');
+
+    Route::middleware('role:Parent')->prefix('parent')->name('parent.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ParentPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/child/{student}/results', [\App\Http\Controllers\ParentPortalController::class, 'results'])->whereNumber('student')->name('results');
+        Route::get('/child/{student}/report-card/{session}/{term}/{class}', [\App\Http\Controllers\ParentPortalController::class, 'reportCard'])
+            ->whereNumber(['student', 'session', 'term', 'class'])->name('report-card');
+        Route::get('/child/{student}/fees', [\App\Http\Controllers\ParentPortalController::class, 'fees'])->whereNumber('student')->name('fees');
+        Route::get('/child/{student}/pay', [OnlineFeeController::class, 'parentPay'])->whereNumber('student')->name('pay');
+        Route::get('/child/{student}/attendance', [\App\Http\Controllers\ParentPortalController::class, 'attendance'])->whereNumber('student')->name('attendance');
+        Route::get('/child/{student}/timetable', [\App\Http\Controllers\ParentPortalController::class, 'timetable'])->whereNumber('student')->name('timetable');
+    });
+
+    // Admin: parent accounts
+    Route::prefix('parent-accounts')->name('parent-accounts.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ParentAccountController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\ParentAccountController::class, 'store'])->name('store');
+        Route::post('/sync', [\App\Http\Controllers\ParentAccountController::class, 'sync'])->name('sync');
+        Route::post('/send-all', [\App\Http\Controllers\ParentAccountController::class, 'sendAll'])->name('send-all');
+        Route::post('/{user}/send', [\App\Http\Controllers\ParentAccountController::class, 'sendCredentials'])->whereNumber('user')->name('send');
+        Route::post('/{user}/link', [\App\Http\Controllers\ParentAccountController::class, 'link'])->whereNumber('user')->name('link');
+        Route::delete('/{user}/link/{student}', [\App\Http\Controllers\ParentAccountController::class, 'unlink'])->whereNumber(['user', 'student'])->name('unlink');
+        Route::post('/{user}/toggle', [\App\Http\Controllers\ParentAccountController::class, 'toggle'])->whereNumber('user')->name('toggle');
+    });
+});
+
+// ===================================================================
+// FEE INSTALMENT PLANS
+// ===================================================================
+Route::middleware('auth')->prefix('instalment-plans')->name('instalment-plans.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\InstalmentPlanController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\InstalmentPlanController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\InstalmentPlanController::class, 'store'])->name('store');
+    Route::get('/{plan}', [\App\Http\Controllers\InstalmentPlanController::class, 'show'])->whereNumber('plan')->name('show');
+    Route::get('/{plan}/edit', [\App\Http\Controllers\InstalmentPlanController::class, 'edit'])->whereNumber('plan')->name('edit');
+    Route::put('/{plan}', [\App\Http\Controllers\InstalmentPlanController::class, 'update'])->whereNumber('plan')->name('update');
+    Route::delete('/{plan}', [\App\Http\Controllers\InstalmentPlanController::class, 'destroy'])->whereNumber('plan')->name('destroy');
+    Route::post('/{plan}/toggle', [\App\Http\Controllers\InstalmentPlanController::class, 'toggle'])->whereNumber('plan')->name('toggle');
+    Route::get('/{plan}/students', [\App\Http\Controllers\InstalmentPlanController::class, 'classStudents'])->whereNumber('plan')->name('students');
+    Route::post('/{plan}/assign', [\App\Http\Controllers\InstalmentPlanController::class, 'assign'])->whereNumber('plan')->name('assign');
+    Route::delete('/{plan}/students/{student}', [\App\Http\Controllers\InstalmentPlanController::class, 'unassign'])->whereNumber(['plan', 'student'])->name('unassign');
+});
+
+// ===================================================================
+// REPORT CARD APPROVAL
+// ===================================================================
+Route::middleware('auth')->prefix('report-approvals')->name('report-approvals.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\ReportApprovalController::class, 'index'])->name('index');
+    Route::post('/settings', [\App\Http\Controllers\ReportApprovalController::class, 'settings'])->name('settings');
+    Route::post('/approve-all', [\App\Http\Controllers\ReportApprovalController::class, 'approveAll'])->name('approve-all');
+    Route::get('/class/{class}/{term}/{session}', [\App\Http\Controllers\ReportApprovalController::class, 'open'])->whereNumber(['class', 'term', 'session'])->name('open');
+    Route::get('/{approval}', [\App\Http\Controllers\ReportApprovalController::class, 'show'])->whereNumber('approval')->name('show');
+    Route::get('/{approval}/preview/{student}', [\App\Http\Controllers\ReportApprovalController::class, 'preview'])->whereNumber(['approval', 'student'])->name('preview');
+    Route::post('/{approval}/submit', [\App\Http\Controllers\ReportApprovalController::class, 'submit'])->whereNumber('approval')->name('submit');
+    Route::post('/{approval}/approve', [\App\Http\Controllers\ReportApprovalController::class, 'approve'])->whereNumber('approval')->name('approve');
+    Route::post('/{approval}/return', [\App\Http\Controllers\ReportApprovalController::class, 'returnBack'])->whereNumber('approval')->name('return');
+    Route::post('/{approval}/reopen', [\App\Http\Controllers\ReportApprovalController::class, 'reopen'])->whereNumber('approval')->name('reopen');
+});
+
+// ===================================================================
+// MANAGEMENT DASHBOARD
+// ===================================================================
+Route::middleware('auth')->group(function () {
+    Route::get('/management', [\App\Http\Controllers\ManagementDashboardController::class, 'index'])->name('management.dashboard');
+    Route::get('/management/fee-status', [\App\Http\Controllers\ManagementDashboardController::class, 'feeStatus'])->name('management.fee-status');
+});
+
+// ===================================================================
+// CLUBS & SPORTS MEMBERSHIP / SCHOOL HOUSES
+// ===================================================================
+Route::middleware('auth')->group(function () {
+    Route::get('/activities/student', [\App\Http\Controllers\ActivityController::class, 'student'])->name('activities.student');
+    Route::post('/activities/student', [\App\Http\Controllers\ActivityController::class, 'saveStudent'])->name('activities.student.save');
+    Route::get('/activities/students/search', [\App\Http\Controllers\ActivityController::class, 'searchStudents'])->name('activities.students.search');
+    Route::post('/activities/sport/{id}/teams', [\App\Http\Controllers\ActivityController::class, 'addTeam'])->whereNumber('id')->name('activities.team');
+
+    Route::prefix('activities/{type}')->whereIn('type', ['club', 'sport'])->name('activities.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ActivityController::class, 'index'])->name('index');
+        Route::get('/{id}', [\App\Http\Controllers\ActivityController::class, 'show'])->whereNumber('id')->name('show');
+        Route::get('/{id}/students', [\App\Http\Controllers\ActivityController::class, 'classStudents'])->whereNumber('id')->name('class-students');
+        Route::get('/{id}/export', [\App\Http\Controllers\ActivityController::class, 'export'])->whereNumber('id')->name('export');
+        Route::post('/{id}/members', [\App\Http\Controllers\ActivityController::class, 'add'])->whereNumber('id')->name('add');
+        Route::put('/{id}/details', [\App\Http\Controllers\ActivityController::class, 'updateDetails'])->whereNumber('id')->name('details');
+        Route::put('/member/{member}', [\App\Http\Controllers\ActivityController::class, 'updateMember'])->whereNumber('member')->name('member.update');
+        Route::delete('/member/{member}', [\App\Http\Controllers\ActivityController::class, 'removeMember'])->whereNumber('member')->name('member.remove');
+    });
+
+    Route::prefix('houses')->name('houses.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\HouseController::class, 'index'])->name('index');
+        Route::get('/students', [\App\Http\Controllers\HouseController::class, 'classStudents'])->name('class-students');
+        Route::post('/auto/preview', [\App\Http\Controllers\HouseController::class, 'autoPreview'])->name('auto.preview');
+        Route::post('/auto/apply', [\App\Http\Controllers\HouseController::class, 'autoApply'])->name('auto.apply');
+        Route::post('/points', [\App\Http\Controllers\HouseController::class, 'award'])->name('points.award');
+        Route::delete('/points/{point}', [\App\Http\Controllers\HouseController::class, 'deletePoint'])->whereNumber('point')->name('points.delete');
+        Route::post('/student/{student}/role', [\App\Http\Controllers\HouseController::class, 'role'])->whereNumber('student')->name('role');
+        Route::post('/student/{student}/move', [\App\Http\Controllers\HouseController::class, 'move'])->whereNumber('student')->name('move');
+        Route::get('/{house}', [\App\Http\Controllers\HouseController::class, 'show'])->whereNumber('house')->name('show');
+        Route::post('/{house}/assign', [\App\Http\Controllers\HouseController::class, 'assign'])->whereNumber('house')->name('assign');
+        Route::put('/{house}/details', [\App\Http\Controllers\HouseController::class, 'details'])->whereNumber('house')->name('details');
+    });
 });

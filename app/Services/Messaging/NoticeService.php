@@ -125,6 +125,18 @@ class NoticeService
         $r = $this->audience->resolve($n->audience ?? [], $n->channels ?? []);
         $out = ['students' => $r['students'], 'staff' => $r['staff'], 'channels' => []];
 
+        if (in_array('portal', $n->channels ?? [], true)) {
+            $ids = $this->audience->studentIds($n->audience ?? []);
+            $accounts = $ids ? \App\Models\User::whereIn('student_id', $ids)->count() : 0;
+            $staff = !empty($n->audience['include_staff']) ? count(PortalNotifier::staffIds()) : 0;
+            $out['channels']['portal'] = [
+                'recipients' => $accounts + $staff, 'enabled' => PortalNotifier::available(), 'live' => true,
+                'sample' => $this->render($n->message, $n, ['name' => 'Parent/Student', 'type' => 'parent', 'student_names' => [], 'classes' => []]),
+                'sms' => null, 'sms_total' => null, 'estimate' => null,
+                'missing' => max(0, count($ids) - $accounts), 'missing_list' => [],
+            ];
+        }
+
         foreach ($r['contacts'] as $ch => $list) {
             $first  = reset($list) ?: ['name' => 'Mrs Adeyemi', 'type' => 'parent', 'student_names' => ['Tolu'], 'classes' => ['JSS 1 A']];
             $sample = $this->bodyFor($n, $ch, $first);
@@ -230,6 +242,9 @@ class NoticeService
 
         try {
             $this->buildDeliveries($d, $n);
+            if ($d->kind === 'initial') {
+                $this->notifyPortal($n);
+            }
             $this->sendQueued($d->id);
         } catch (\Throwable $e) {
             Log::error('Notice dispatch failed', ['dispatch' => $d->id, 'error' => $e->getMessage()]);
@@ -237,6 +252,26 @@ class NoticeService
         }
         $this->refreshNoticeStatus($n->fresh());
         return true;
+    }
+
+    /** In-portal bell for students (and staff) in the audience — once per notice. */
+    public function notifyPortal(SchoolNotice $n): void
+    {
+        if (!in_array('portal', $n->channels ?? [], true) || !PortalNotifier::available()) return;
+
+        $when  = $n->event_date ? ' · ' . $n->event_date->format('D j M Y') . ($n->event_end_date && !$n->event_end_date->eq($n->event_date) ? ' – ' . $n->event_end_date->format('D j M Y') : '') : '';
+        $title = $n->title . $when;
+        $key   = 'notice:' . $n->id;
+
+        $ids = $this->audience->studentIds($n->audience ?? []);
+        if ($ids) {
+            $body = $this->render($n->message, $n, ['name' => 'Parent/Student', 'type' => 'parent', 'student_names' => [], 'classes' => []]);
+            PortalNotifier::toStudents($ids, $title, $body, null, 'notice', $key);
+        }
+        if (!empty($n->audience['include_staff'])) {
+            $body = $this->render($n->message, $n, ['name' => 'Colleague', 'type' => 'staff']);
+            PortalNotifier::toUsers(PortalNotifier::staffIds(), $title, $body, null, 'notice', $key);
+        }
     }
 
     /** Resolve the audience now (fresh contacts) and create one queued row per contact/channel. */
@@ -338,7 +373,7 @@ class NoticeService
     {
         $contact = ['name' => $user->name, 'type' => 'parent', 'student_names' => ['Tolu'], 'classes' => ['JSS 1 A']];
         $results = [];
-        foreach ($n->channels ?? [] as $ch) {
+        foreach (array_diff($n->channels ?? [], ['portal']) as $ch) {
             $to = $ch === 'email' ? $user->email : MessagingService::normalizePhone($user->phone_number ?? null);
             if (!$to) { $results[$ch] = ['status' => 'skipped', 'error' => $ch === 'email' ? 'Your account has no email address.' : 'Your account has no phone number.']; continue; }
             $results[$ch] = $this->messaging->send($ch, $to, '[TEST] ' . $this->bodyFor($n, $ch, $contact), ['name' => $user->name, 'subject' => '[TEST] ' . $n->title]) + ['to' => $to];

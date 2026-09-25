@@ -219,6 +219,10 @@ class ResultSendService
                 // 3. Send
                 $this->sendItem($send, $item->fresh());
                 $item->update(['status' => 'done']);
+                $v = $this->vars($send, $item);
+                PortalNotifier::toStudents([$item->student_id], $v['{term}'] . ' report card is ready',
+                    'Your ' . $v['{term}'] . ' ' . $v['{session}'] . ' report card has been sent to your parents. You can also view your results in My Assessments.',
+                    route('assessments'), 'result', 'result:' . $send->id . ':' . $item->student_id);
             } catch (\Throwable $e) {
                 Log::error('Result send failed', ['send' => $send->id, 'item' => $item->id, 'error' => $e->getMessage()]);
                 $item->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 490)]);

@@ -56,7 +56,7 @@ class SchoolNoticeController extends Controller
         $notice = new SchoolNotice([
             'type'      => $request->get('type', 'general'),
             'audience'  => ['scope' => 'school', 'include_staff' => false],
-            'channels'  => collect(['sms', 'email'])->filter(fn ($c) => $this->messaging->enabled($c))->values()->all() ?: ['email'],
+            'channels'  => collect(['sms', 'email', 'portal'])->filter(fn ($c) => $this->messaging->enabled($c))->values()->all() ?: ['email'],
             'reminders' => [],
         ]);
         return $this->form($notice);
@@ -166,7 +166,7 @@ class SchoolNoticeController extends Controller
             'student_ids.*'        => 'integer',
             'include_staff'        => 'nullable|boolean',
             'channels'             => 'required|array|min:1',
-            'channels.*'           => 'in:sms,whatsapp,email',
+            'channels.*'           => 'in:sms,whatsapp,email,portal',
             'reminders'            => 'nullable|array',
             'reminders.*.days'     => 'nullable|integer|min:0|max:30',
             'reminders.*.time'     => 'nullable|date_format:H:i',
@@ -234,7 +234,7 @@ class SchoolNoticeController extends Controller
                 'student_ids' => array_map('intval', (array) $request->input('student_ids', [])),
                 'include_staff' => $request->boolean('include_staff'),
             ],
-            'channels' => array_values(array_intersect((array) $request->input('channels', []), ['sms', 'whatsapp', 'email'])),
+            'channels' => array_values(array_intersect((array) $request->input('channels', []), ['sms', 'whatsapp', 'email', 'portal'])),
         ];
     }
 
@@ -309,6 +309,9 @@ class SchoolNoticeController extends Controller
         foreach (['sms' => 'SMS', 'whatsapp' => 'WhatsApp', 'email' => 'Email'] as $c => $label) {
             $s = $this->messaging->setting($c);
             $out[$c] = ['label' => $label, 'enabled' => $this->messaging->enabled($c), 'live' => $s->isLive(), 'driver' => $s->driver];
+        }
+        if ($this->messaging->enabled('portal')) {
+            $out['portal'] = ['label' => 'In-portal (bell)', 'enabled' => true, 'live' => true, 'driver' => 'portal'];
         }
         return $out;
     }

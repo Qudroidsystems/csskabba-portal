@@ -29,7 +29,7 @@ class AutoMessageService
 
     public const PLACEHOLDERS = [
         'absence'  => ['{parent_name}', '{student_name}', '{class}', '{date}', '{status}', '{school_name}'],
-        'fees'     => ['{parent_name}', '{student_name}', '{class}', '{balance}', '{term_balance}', '{arrears}', '{term}', '{session}', '{pay_link}', '{school_name}'],
+        'fees'     => ['{parent_name}', '{student_name}', '{class}', '{balance}', '{term_balance}', '{arrears}', '{term}', '{session}', '{pay_link}', '{next_due}', '{school_name}'],
         'birthday' => ['{parent_name}', '{student_name}', '{first_name}', '{age}', '{school_name}'],
     ];
 
@@ -156,6 +156,17 @@ class AutoMessageService
         $targets  = $this->targets($type, $ctx);
         $messages = $this->messages($type, $targets, $channels, $cfg);
         $stats    = ['sent' => 0, 'failed' => 0, 'skipped' => 0];
+
+        // In-portal bell for the student as well (free; once per key).
+        foreach ($targets as $sid => $t) {
+            [$title, $url] = match ($type) {
+                'absence'  => ['Marked ' . ($t['vars']['{status}'] ?? 'absent') . ' today', null],
+                'fees'     => ['Fee reminder: ' . ($t['vars']['{balance}'] ?? '') . ' outstanding', route('student.fees.pay')],
+                default    => ['Happy birthday, ' . ($t['vars']['{first_name}'] ?? '') . '! 🎉', null],
+            };
+            $body = trim(strtr($cfg['message'], $t['vars'] + ['{parent_name}' => 'Parent', '{school_name}' => $this->schoolName()]));
+            PortalNotifier::toStudents([$sid], $title, $body, $url, $type, $t['key']);
+        }
 
         foreach ($messages as $m) {
             $claimed = DB::table('auto_messages')->insertOrIgnore([
@@ -289,6 +300,14 @@ class AutoMessageService
             }
             $termOwed = (float) ($st['totals']['outstanding'] ?? 0);
             $arrears  = $arrearsOn ? (float) ($st['arrears']['total_arrears'] ?? 0) : 0.0;
+
+            // On an instalment plan: only the overdue part of this term counts.
+            $plan = \App\Services\Billing\InstalmentPlanService::available()
+                ? app(\App\Services\Billing\InstalmentPlanService::class)->schedule(
+                    (int) $student->id, (int) $p->term_id, (int) $session->id,
+                    (float) ($st['totals']['adjusted'] ?? 0), (float) ($st['totals']['paid'] ?? 0), (int) ($st['class']->id ?? 0) ?: null)
+                : null;
+            if ($plan) $termOwed = (float) $plan['overdue'];
             $total    = round($termOwed + $arrears, 2);
             if ($total <= 0.009 || $total < $min) continue;
 
@@ -305,6 +324,7 @@ class AutoMessageService
                     '{term}'         => $terms[$p->term_id] ?? '',
                     '{session}'      => $session->session,
                     '{pay_link}'     => $payLink,
+                    '{next_due}'     => $plan && $plan['next'] ? $money($plan['next']['amount']) . ' by ' . $plan['next']['due_date'] : '',
                 ],
             ];
         }

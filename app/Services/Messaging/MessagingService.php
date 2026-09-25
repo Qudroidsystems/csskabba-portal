@@ -25,6 +25,9 @@ class MessagingService
     /** Channels switched on (log driver counts: it records instead of sending). */
     public function enabled(string $channel): bool
     {
+        if ($channel === 'portal') {
+            return PortalNotifier::available(); // in-portal bell: free, always on
+        }
         $s = $this->setting($channel);
         return $s->is_active && $s->isConfigured();
     }

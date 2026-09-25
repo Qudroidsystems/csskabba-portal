@@ -320,6 +320,8 @@
 <div class="page-content">
 <div class="container-fluid">
 
+@include('layouts.partials.dashboard-notices')
+
 {{-- ═══════════════════════════════════════════════════════
      HEADER
 ═══════════════════════════════════════════════════════════ --}}

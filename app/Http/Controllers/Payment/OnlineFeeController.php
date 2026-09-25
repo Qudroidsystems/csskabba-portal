@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Payment;
 
+use App\Services\Parents\ParentAccountService;
+
 use App\Http\Controllers\Controller;
 use App\Models\OnlineFeePayment;
 use App\Models\Schoolsession;
@@ -43,6 +45,14 @@ class OnlineFeeController extends Controller
         return $this->checkoutPage($request, $student, 'student');
     }
 
+    /** Parent portal: pay for one of my children. */
+    public function parentPay(Request $request, int $student)
+    {
+        abort_unless(ParentAccountService::isParentOf($request->user(), $student), 403, 'This student is not linked to your account.');
+
+        return $this->checkoutPage($request, Student::findOrFail($student), 'parent');
+    }
+
     /** Bursary: pay on behalf of a student. */
     public function payFor(Request $request, int $student)
     {
@@ -63,7 +73,7 @@ class OnlineFeeController extends Controller
             ->latest()->limit(8)->get();
 
         return view('online-fees.checkout', [
-            'pagetitle'         => $mode === 'student' ? 'Pay School Fees' : 'Online Payment for Student',
+            'pagetitle'         => $mode === 'staff' ? 'Online Payment for Student' : 'Pay School Fees',
             'mode'              => $mode,
             'student'           => $student,
             'quote'             => $quote,
@@ -95,7 +105,8 @@ class OnlineFeeController extends Controller
         }
 
         $isSelf = (int) ($user->student_id ?? 0) === (int) $student->id;
-        $allowed = $isSelf ? $user->can('View student payments') : $user->can('Create online-fee-payments');
+        $allowed = $isSelf ? $user->can('View student payments')
+            : (ParentAccountService::isParentOf($user, (int) $student->id) || $user->can('Create online-fee-payments'));
         if (!$allowed) {
             return response()->json(['success' => false, 'message' => 'You are not allowed to pay for this student.'], 403);
         }
@@ -186,7 +197,8 @@ class OnlineFeeController extends Controller
     {
         $user = auth()->user();
         $own  = (int) ($user->student_id ?? 0) === (int) $payment->student_id
-             || (int) $payment->payer_user_id === (int) $user->id;
+             || (int) $payment->payer_user_id === (int) $user->id
+             || ParentAccountService::isParentOf($user, (int) $payment->student_id);
 
         abort_unless($own || $user->can('View online-fee-payments'), 403);
     }

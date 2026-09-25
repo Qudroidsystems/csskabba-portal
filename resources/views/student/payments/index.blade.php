@@ -117,6 +117,8 @@
         </div>
     @endif
 
+    @include('instalments.partials.schedule', ['studentId' => $student->id, 'termId' => $selectedTermId, 'sessionId' => $selectedSessionId, 'payable' => $totals['adjusted'] ?? null, 'paid' => $totals['paid'] ?? null])
+
     @if($bills->isEmpty())
         <div class="cb-card">
             <div class="empty-state">

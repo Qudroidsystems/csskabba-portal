@@ -27,6 +27,13 @@ class DashboardController extends Controller
 {
     public function __construct()
     {
+        $this->middleware(function ($request, $next) {
+            $u = $request->user();
+            if ($u && $u->hasRole('Parent') && !$u->can('dashboard')) {
+                return redirect()->route('parent.dashboard');
+            }
+            return $next($request);
+        })->only(['index']);
         $this->middleware('permission:dashboard', ['only' => ['index']]);
     }
 

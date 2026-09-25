@@ -58,6 +58,11 @@ class PaymentReceiptNotifier
     public static function queue(int $studentId, float $amount, string $method, string $reference, ?int $termId, ?int $sessionId): void
     {
         try {
+            if ($amount > 0) {
+                PortalNotifier::toStudents([$studentId], 'Payment received: ₦' . number_format($amount, 2),
+                    'A payment of ₦' . number_format($amount, 2) . ' (' . $method . ') was recorded. Reference: ' . $reference . '.',
+                    route('student.payments'), 'payment', 'payment:' . $reference);
+            }
             if (!self::settings()->is_active || $amount <= 0) return;
             dispatch(function () use ($studentId, $amount, $method, $reference, $termId, $sessionId) {
                 app(self::class)->send($studentId, $amount, $method, $reference, $termId, $sessionId);

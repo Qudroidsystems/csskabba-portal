@@ -342,7 +342,7 @@
     $('refreshPreview').addEventListener('click', loadPreview);
 
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const NAMES = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'Email' };
+    const NAMES = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'Email', portal: 'In-portal' };
 
     async function loadPreview() {
         const box = $('preview');
@@ -365,6 +365,7 @@
                     if (e.cost !== null) html += '<div class="small ' + (e.enough === false ? 'text-danger fw-semibold' : 'text-muted') + '">Estimated cost ' + fmt(e.cost) + (e.balance !== null ? ' · balance ' + fmt(e.balance) : '') + (e.enough === false ? ' — not enough SMS credit' : '') + '</div>';
                     else if (e.balance !== null) html += '<div class="small text-muted">SMS balance ' + fmt(e.balance) + '</div>';
                 }
+                if (c === 'portal') { html += (x.missing ? '<div class="small text-muted">' + x.missing + ' student(s) have no portal account.</div>' : '') + '<div class="nt-sample">' + esc(x.sample) + '</div></div>'; return; }
                 if (x.missing) {
                     html += '<details class="small mt-1"><summary class="text-danger">' + x.missing + ' student(s) have no ' + (c === 'email' ? 'parent email' : 'parent phone') + '</summary><ul class="mb-0 ps-3">' +
                         x.missing_list.map(m => '<li>' + esc(m.name) + ' (' + esc(m.adm) + ')' + (m.class ? ' — ' + esc(m.class) : '') + '</li>').join('') +

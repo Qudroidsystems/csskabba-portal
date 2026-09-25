@@ -54,6 +54,16 @@ class ResultAccessService
             ]);
         }
 
+        // Report cards must be approved (released) first, when the school requires it.
+        if (!$isMock && $termId && $sessionId && \App\Services\Reporting\ReportApprovalService::enforced()
+            && !app(\App\Services\Reporting\ReportApprovalService::class)->isReleased($studentId, $termId, $sessionId)) {
+            return array_merge($result, [
+                'allowed' => false,
+                'reason'  => 'not_released',
+                'message' => 'Results for this term have not been released yet. Please check back later.',
+            ]);
+        }
+
         if (!$settings->enabled || !$termId || !$sessionId) {
             return $result;
         }
@@ -66,6 +76,16 @@ class ResultAccessService
 
         if (!$this->overThreshold($debt['owed'], $debt['payable'], $settings)) {
             return $result;
+        }
+
+        // On an instalment plan and up to date with it -> allowed (if the plan says so).
+        if (\App\Services\Billing\InstalmentPlanService::available()) {
+            $sched = app(\App\Services\Billing\InstalmentPlanService::class)
+                ->schedule($studentId, $termId, $sessionId, $debt['payable'] - $debt['arrears'], ($debt['payable'] - $debt['arrears']) - $debt['term_owed']);
+            if ($sched && $sched['plan']->results_when_on_track && $sched['on_track'] && $debt['arrears'] <= 0.009) {
+                $result['plan'] = $sched;
+                return $result;
+            }
         }
 
         $exception = ResultAccessException::where('student_id', $studentId)

@@ -12,10 +12,16 @@
     $openCur  = collect($current)->where('balance_kobo', '>', 0);
     $hasArr   = !empty($arrears);
     $fullName = trim(($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? ''));
-    $backUrl  = $mode === 'student' ? route('student.payments', ['term_id' => $selectedTermId, 'session_id' => $selectedSessionId]) : route('online-fees.index');
-    $pageRoute = fn ($params) => $mode === 'student'
-        ? route('student.fees.pay', $params)
-        : route('online-fees.pay-for', ['student' => $student->id] + $params);
+    $backUrl  = match ($mode) {
+        'student' => route('student.payments', ['term_id' => $selectedTermId, 'session_id' => $selectedSessionId]),
+        'parent'  => route('parent.fees', ['student' => $student->id, 'term_id' => $selectedTermId, 'session_id' => $selectedSessionId]),
+        default   => route('online-fees.index'),
+    };
+    $pageRoute = fn ($params) => match ($mode) {
+        'student' => route('student.fees.pay', $params),
+        'parent'  => route('parent.pay', ['student' => $student->id] + $params),
+        default   => route('online-fees.pay-for', ['student' => $student->id] + $params),
+    };
     $statusPill = ['success' => 'st-paid', 'pending' => 'st-pending', 'amount_mismatch' => 'st-warning'];
 @endphp
 
@@ -23,9 +29,9 @@
 <div class="page-content">
 <div class="container-fluid">
 
-    <x-cb.hero :title="$mode === 'student' ? 'Pay School Fees' : 'Online Payment'" icon="ri-secure-payment-line"
+    <x-cb.hero :title="$mode === 'staff' ? 'Online Payment' : 'Pay School Fees'" icon="ri-secure-payment-line"
                subtitle="Choose the bills and amounts to pay. You'll complete the payment securely on Paystack."
-               :back="$backUrl" :back-label="$mode === 'student' ? 'My Payments' : 'Online payments'">
+               :back="$backUrl" :back-label="['student' => 'My Payments', 'parent' => 'Fees'][$mode] ?? 'Online payments'">
         <x-slot:pills>
             <span class="cb-meta-pill"><i class="ri-user-line"></i>{{ $fullName }}</span>
             <span class="cb-meta-pill"><i class="ri-hashtag"></i>{{ $student->admissionNo ?? '—' }}</span>
@@ -36,9 +42,12 @@
 
     @if(!$gatewayReady)
         <div class="cb-banner warning"><i class="ri-error-warning-line"></i>
-            <div>Online payment is not switched on yet. {{ $mode === 'student' ? 'Please contact the school bursary.' : 'Add the Paystack keys and activate Paystack under Finance › Payment Gateways.' }}</div>
+            <div>Online payment is not switched on yet. {{ $mode !== 'staff' ? 'Please contact the school bursary.' : 'Add the Paystack keys and activate Paystack under Finance › Payment Gateways.' }}</div>
         </div>
     @endif
+
+    @include('instalments.partials.schedule', ['studentId' => $student->id, 'termId' => $selectedTermId, 'sessionId' => $selectedSessionId,
+        'payable' => ($quote['totals']['current_payable_kobo'] ?? 0) / 100, 'paid' => ($quote['totals']['current_paid_kobo'] ?? 0) / 100])
 
     {{-- PERIOD PICKER --}}
     <div class="cb-card">

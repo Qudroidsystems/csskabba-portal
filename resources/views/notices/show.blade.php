@@ -4,7 +4,7 @@
 @section('content')
 @php
     $st    = \App\Models\SchoolNotice::STATUS[$notice->status] ?? ['label' => $notice->status, 'pill' => 'st-muted'];
-    $names = ['sms' => 'SMS', 'whatsapp' => 'WhatsApp', 'email' => 'Email'];
+    $names = ['sms' => 'SMS', 'whatsapp' => 'WhatsApp', 'email' => 'Email', 'portal' => 'In-portal'];
     $dPill = ['pending' => 'st-info', 'processing' => 'st-pending', 'done' => 'st-paid', 'cancelled' => 'st-muted', 'failed' => 'st-danger'];
     $mPill = ['queued' => 'st-info', 'sending' => 'st-pending', 'sent' => 'st-paid', 'failed' => 'st-danger', 'skipped' => 'st-muted'];
     $aud   = $notice->audience ?? [];
@@ -49,7 +49,7 @@
     @endforeach
 
     <div class="row g-3 mb-4">
-        @foreach($notice->channels ?? [] as $c)
+        @foreach(array_diff($notice->channels ?? [], ['portal']) as $c)
             @php $t = $totals[$c] ?? collect(); $all = $t->sum(); @endphp
             <div class="col-md-4">
                 <x-cb.stat :label="($names[$c] ?? $c) . ' delivered'" :value="number_format($t['sent'] ?? 0) . ' / ' . number_format($all)" :icon="$c === 'email' ? 'ri-mail-line' : ($c === 'sms' ? 'ri-message-2-line' : 'ri-whatsapp-line')"

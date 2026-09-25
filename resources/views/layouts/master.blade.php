@@ -479,7 +479,39 @@
 
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
+                    {{-- PARENT PORTAL --}}
+                    @role('Parent')
+                        @php $ppKids = \App\Services\Parents\ParentAccountService::children(auth()->user()); @endphp
+                        <li class="nav-item">
+                            <a href="{{ route('parent.dashboard') }}" class="nav-link menu-link {{ request()->routeIs('parent.dashboard') ? 'active' : '' }}">
+                                <i class="ri-parent-line"></i> <span>My Children</span>
+                            </a>
+                        </li>
+                        @foreach($ppKids as $k)
+                            <li class="nav-item">
+                                <a href="#sidebarChild{{ $k->id }}" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarChild{{ $k->id }}">
+                                    <i class="ri-user-smile-line"></i> <span>{{ $k->firstname }}</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarChild{{ $k->id }}">
+                                    <ul class="nav nav-sm flex-column">
+                                        <li class="nav-item"><a href="{{ route('parent.results', $k->id) }}" class="nav-link">Results</a></li>
+                                        <li class="nav-item"><a href="{{ route('parent.fees', $k->id) }}" class="nav-link">Fees &amp; Payments</a></li>
+                                        <li class="nav-item"><a href="{{ route('parent.attendance', $k->id) }}" class="nav-link">Attendance</a></li>
+                                        <li class="nav-item"><a href="{{ route('parent.timetable', $k->id) }}" class="nav-link">Timetable</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        @endforeach
+                        <li class="nav-item">
+                            <a href="{{ route('notifications.index') }}" class="nav-link menu-link"><i class="ri-notification-3-line"></i> <span>Notices</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('parent.password') }}" class="nav-link menu-link"><i class="ri-lock-password-line"></i> <span>Change Password</span></a>
+                        </li>
+                    @endrole
+
                     {{-- Dashboard --}}
+                    @unless(auth()->user()->hasRole('Parent') && !auth()->user()->can('dashboard'))
                     <li class="nav-item">
                         <a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
                             <i class="ph-gauge"></i> <span data-key="t-dashboards">Dashboards</span>
@@ -489,6 +521,11 @@
                                 <li class="nav-item">
                                     <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a>
                                 </li>
+                                @can('View management dashboard')
+                                <li class="nav-item">
+                                    <a href="{{ route('management.dashboard') }}" class="nav-link">Management Overview</a>
+                                </li>
+                                @endcan
                                 @can('finance dashboard')
                                 <li class="nav-item">
                                     <a href="dashboard-crm.html" class="nav-link" data-key="t-crm">Finance Analytics</a>
@@ -502,6 +539,7 @@
                             </ul>
                         </div>
                     </li>
+                    @endunless
 
                     {{-- USERS & PRIVILEGES --}}
                     @if(auth()->user()->can('View user') || auth()->user()->can('View role') || auth()->user()->can('View user-account'))
@@ -794,7 +832,7 @@
                     @endif
 
                     {{-- RECORDS AND RESULTS --}}
-                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View admin-score-entry'))
+                    @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View admin-score-entry') || auth()->user()->can('View report-approvals') || auth()->user()->can('Submit report cards') || auth()->user()->can('Approve report cards'))
                         <li class="nav-item">
                             <a href="#sidebarRecords" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
                                 <i class="ph-folder-open"></i> <span>Records and Results</span>
@@ -804,6 +842,9 @@
                                     @can('View myresult-room')
                                         <li class="nav-item"><a href="{{ route('myresultroom.index') }}" class="nav-link">Terminal Records</a></li>
                                     @endcan
+                                    @canany(['View report-approvals', 'Submit report cards', 'Approve report cards'])
+                                        <li class="nav-item"><a href="{{ route('report-approvals.index') }}" class="nav-link">Report Card Approval</a></li>
+                                    @endcanany
                                     @can('View student-report')
                                         <li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>
                                         <li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>
@@ -873,6 +914,7 @@
                                     <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link">Student Bill</a></li>
                                     <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link">Payment Portal</a></li>
                                     @can('View online-fee-payments')<li class="nav-item"><a href="{{ route('online-fees.index') }}" class="nav-link">Online Payments</a></li>@endcan
+                                    @can('View instalment-plans')<li class="nav-item"><a href="{{ route('instalment-plans.index') }}" class="nav-link">Instalment Plans</a></li>@endcan
                                 </ul>
                             </div>
                         </li>
@@ -1002,7 +1044,7 @@
                     @endcan
 
                     {{-- COMMUNICATION --}}
-                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings') || auth()->user()->can('View result-sends') || auth()->user()->can('Manage parent contacts'))
+                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings') || auth()->user()->can('View result-sends') || auth()->user()->can('Manage parent contacts') || auth()->user()->can('Manage parent accounts'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>COMMUNICATION</span></li>
                     @endif
 
@@ -1042,6 +1084,14 @@
                         <li class="nav-item">
                             <a href="{{ route('parent-contacts.index') }}" class="nav-link">
                                 <i class="ri-contacts-book-2-line"></i> <span>Parent Contacts</span>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @can('Manage parent accounts')
+                        <li class="nav-item">
+                            <a href="{{ route('parent-accounts.index') }}" class="nav-link">
+                                <i class="ri-parent-line"></i> <span>Parent Portal Accounts</span>
                             </a>
                         </li>
                     @endcan
@@ -1087,6 +1137,25 @@
                                     @can('View session')     <li class="nav-item"><a href="{{ route('session.index') }}"    class="nav-link">School Session</a></li> @endcan
                                     @can('View term')        <li class="nav-item"><a href="{{ route('term.index') }}"       class="nav-link">School Term</a></li>    @endcan
                                     @can('View schoolhouse') <li class="nav-item"><a href="{{ route('schoolhouse.index') }}" class="nav-link">School House</a></li> @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- HOUSES, CLUBS & SPORTS --}}
+                    @if(auth()->user()->can('View schoolhouse') || auth()->user()->can('Update schoolhouse') || auth()->user()->can('Award house points') || auth()->user()->can('View club') || auth()->user()->can('Update club') || auth()->user()->can('View sport') || auth()->user()->can('Update sport'))
+                        <li class="nav-item">
+                            <a href="#sidebarActivities" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarActivities">
+                                <i class="ri-trophy-line"></i> <span>Houses, Clubs &amp; Sports</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarActivities">
+                                <ul class="nav nav-sm flex-column">
+                                    @canany(['View schoolhouse', 'Update schoolhouse', 'Award house points'])<li class="nav-item"><a href="{{ route('houses.index') }}" class="nav-link">Houses &amp; Points</a></li>@endcanany
+                                    @canany(['View club', 'Update club'])<li class="nav-item"><a href="{{ route('activities.index', 'club') }}" class="nav-link">Clubs &amp; Members</a></li>@endcanany
+                                    @canany(['View sport', 'Update sport'])<li class="nav-item"><a href="{{ route('activities.index', 'sport') }}" class="nav-link">Sports &amp; Members</a></li>@endcanany
+                                    @canany(['Update club', 'Update sport'])<li class="nav-item"><a href="{{ route('activities.student') }}" class="nav-link">By Student</a></li>@endcanany
+                                    @can('View club')<li class="nav-item"><a href="{{ route('club.index') }}" class="nav-link">Create Clubs</a></li>@endcan
+                                    @can('View sport')<li class="nav-item"><a href="{{ route('sport.index') }}" class="nav-link">Create Sports</a></li>@endcan
                                 </ul>
                             </div>
                         </li>
@@ -1308,6 +1377,9 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-1">
+                    <!-- Notifications bell -->
+                    @include('layouts.partials.notification-bell')
+
                     <!-- Theme Toggle -->
                     <div class="position-relative" id="theme-toggle-wrapper">
                         <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" style="width:38px;height:38px;">
@@ -1883,6 +1955,9 @@
         {title:'New Notice',                            url:'{{ route("notices.create") }}',                                 icon:'mdi-bullhorn-outline',        category:'Communication',       keywords:['send','sms','broadcast','parents','notify']},
         @endcan
         {title:'Student Debtors List',                  url:'{{ route("reports.financial.debtors") }}',                      icon:'mdi-account-alert',           category:'Accounting',          keywords:['debtor','outstanding','arrears','owe','unpaid']},
+        @can('View instalment-plans')
+        {title:'Instalment Plans',                      url:'{{ route("instalment-plans.index") }}',                         icon:'mdi-calendar-clock',          category:'Accounting',          keywords:['instalment','installment','plan','part','payment','schedule']},
+        @endcan
         @can('View result-access')
         {title:'Result Access Control',                 url:'{{ route("result-access.index") }}',                            icon:'mdi-lock-open-check',         category:'Accounting',          keywords:['result','access','owing','debt','block','withhold','exception']},
         @endcan

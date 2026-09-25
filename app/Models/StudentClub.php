@@ -18,6 +18,18 @@ class StudentClub extends Model
     protected $table = "studentclubs";
     protected $primaryKey = "studentid";
 
+    /** Mirror the student-form pick into activity_memberships (students can have many). */
+    protected static function booted(): void
+    {
+        static::saved(function ($m) {
+            try {
+                \App\Models\ActivityMembership::syncFromForm('club', $m->studentid, $m->clubid, $m->getOriginal('clubid'), $m->sessionid);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Membership sync failed', ['error' => $e->getMessage()]);
+            }
+        });
+    }
+
     protected $fillable = [
         'studentid',
         'clubid',

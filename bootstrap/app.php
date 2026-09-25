@@ -20,7 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             // Device authentication
             'device.auth' => \App\Http\Middleware\DeviceAuthMiddleware::class,
+            'force.password' => \App\Http\Middleware\ForcePasswordChange::class,
         ]);
+
+        // Temporary passwords (new parent accounts) must be changed first.
+        $middleware->web(append: [\App\Http\Middleware\ForcePasswordChange::class]);
 
         $middleware->validateCsrfTokens(except: [
             'cbt/submit',

@@ -18,6 +18,18 @@ class StudentSport extends Model
     protected $table = "studentsports";
     protected $primaryKey = "studentid";
 
+    /** Mirror the student-form pick into activity_memberships (students can have many). */
+    protected static function booted(): void
+    {
+        static::saved(function ($m) {
+            try {
+                \App\Models\ActivityMembership::syncFromForm('sport', $m->studentid, $m->sportid, $m->getOriginal('sportid'), $m->sessionid);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Membership sync failed', ['error' => $e->getMessage()]);
+            }
+        });
+    }
+
     protected $fillable = [
         'studentid',
         'sportid',

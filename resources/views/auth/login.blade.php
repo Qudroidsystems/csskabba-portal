@@ -651,16 +651,16 @@
                                                 @endif
 
                                                 <div class="mb-4">
-                                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                                    <label for="email" class="form-label">Email or phone number <span class="text-danger">*</span></label>
                                                     <div class="position-relative">
-                                                        <input type="email"
+                                                        <input type="text"
                                                                class="form-control apple-input @error('email') is-invalid @enderror"
                                                                id="email"
                                                                name="email"
-                                                               placeholder="Enter your email"
+                                                               placeholder="Email, or parent's phone number"
                                                                value="{{ old('email') }}"
                                                                required
-                                                               autocomplete="email"
+                                                               autocomplete="username"
                                                                autofocus>
                                                         @error('email')
                                                             <span class="invalid-feedback" role="alert">
@@ -673,9 +673,14 @@
                                                 <div class="mb-4">
                                                     <div class="d-flex justify-content-between align-items-center">
                                                         <label class="form-label" for="password">Password <span class="text-danger">*</span></label>
+                                                        <span class="small">
                                                         @if (Route::has('password.request'))
-                                                            <a href="{{ route('password.request') }}" class="text-muted small text-decoration-none">Forgot password?</a>
+                                                            <a href="{{ route('password.request') }}" class="text-muted text-decoration-none">Forgot password?</a>
                                                         @endif
+                                                        @if (Route::has('parent.forgot'))
+                                                            · <a href="{{ route('parent.forgot') }}" class="text-muted text-decoration-none">Parent reset by SMS</a>
+                                                        @endif
+                                                        </span>
                                                     </div>
                                                     <div class="position-relative auth-pass-inputgroup">
                                                         <input type="password"
