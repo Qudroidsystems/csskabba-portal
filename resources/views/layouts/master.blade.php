@@ -1035,6 +1035,7 @@
                                     <li class="nav-item"><a href="{{ route('payroll.reviews') }}" class="nav-link">Salary Reviews</a></li>
                                     @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.rates') }}" class="nav-link">Rates &amp; Tax Bands</a></li>@endcan
                                     @can('Manage payroll settings')<li class="nav-item"><a href="{{ route('payroll.employer') }}" class="nav-link">Employer Details</a></li>@endcan
+                                    <li class="nav-item"><a href="{{ route('payroll.remittances') }}" class="nav-link">Government Remittances</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link">Payroll Summary</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link">Statutory Report</a></li>
                                     <li class="nav-item"><a href="{{ route('payroll.salary-structures') }}" class="nav-link">Salary Structures</a></li>

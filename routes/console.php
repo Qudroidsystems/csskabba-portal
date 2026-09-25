@@ -23,3 +23,6 @@ Schedule::command('results:send --max=40')->everyMinute()->withoutOverlapping(20
 
 // Queued jobs (e.g. fee reminders) on hosts without a permanent queue worker.
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')->everyMinute()->withoutOverlapping(5);
+
+// Government remittance reminders (PAYE, pension, NHF) — 8am daily
+Schedule::command('payroll:remittance-reminders')->dailyAt('08:00')->withoutOverlapping(30);

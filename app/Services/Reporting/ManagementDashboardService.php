@@ -244,6 +244,10 @@ class ManagementDashboardService
             $review = DB::table('online_fee_payments')->where('needs_review', true)->count();
             if ($review) $a[] = ['danger', 'ri-bank-card-line', $review . ' online payment(s) need checking', route('online-fees.index')];
         }
+        if (\Illuminate\Support\Facades\Schema::hasTable('statutory_remittances')) {
+            $late = \App\Models\StatutoryRemittance::where('status', '!=', 'paid')->whereDate('due_date', '<', now()->toDateString())->get();
+            if ($late->count()) $a[] = ['danger', 'ri-government-line', $late->count() . ' government payment(s) overdue (₦' . number_format($late->sum(fn ($r) => $r->balance()), 2) . ')', route('payroll.remittances', ['status' => 'overdue'])];
+        }
         return $a;
     }
 }

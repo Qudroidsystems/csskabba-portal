@@ -872,6 +872,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/profiles/verify-account', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'verifyAccount'])->middleware('throttle:20,1')->name('profiles.verify');
         Route::get('/profiles/{staff}', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'editProfile'])->whereNumber('staff')->name('profiles.edit');
         Route::put('/profiles/{staff}', [\App\Http\Controllers\Finance\PayrollSetupController::class, 'saveProfile'])->whereNumber('staff')->name('profiles.save');
+        // Government remittances
+        Route::get('/remittances', [\App\Http\Controllers\Finance\RemittanceController::class, 'index'])->name('remittances');
+        Route::post('/remittances/generate', [\App\Http\Controllers\Finance\RemittanceController::class, 'generate'])->name('remittances.generate');
+        Route::get('/remittances/{remittance}', [\App\Http\Controllers\Finance\RemittanceController::class, 'show'])->whereNumber('remittance')->name('remittances.show');
+        Route::get('/remittances/{remittance}/schedule', [\App\Http\Controllers\Finance\RemittanceController::class, 'schedule'])->whereNumber('remittance')->name('remittances.schedule');
+        Route::post('/remittances/{remittance}/pay', [\App\Http\Controllers\Finance\RemittanceController::class, 'pay'])->whereNumber('remittance')->name('remittances.pay');
+        Route::get('/remittances/{remittance}/receipt', [\App\Http\Controllers\Finance\RemittanceController::class, 'evidence'])->whereNumber('remittance')->name('remittances.evidence');
+
         // Payroll month screen
         Route::get('/month/{period}', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'show'])->whereNumber('period')->name('month.show');
         Route::post('/month/{period}/calculate', [\App\Http\Controllers\Finance\PayrollMonthController::class, 'calculate'])->whereNumber('period')->name('month.calculate');
