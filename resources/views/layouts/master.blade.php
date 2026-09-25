@@ -516,6 +516,19 @@
                         <li class="nav-item">
                             <a href="{{ route('my-pay.index') }}" class="nav-link menu-link {{ request()->routeIs('my-pay.*') ? 'active' : '' }}"><i class="ri-wallet-3-line"></i> <span>My Pay</span></a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('leave.index') }}" class="nav-link menu-link {{ request()->routeIs('leave.*') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>My Leave</span></a>
+                        </li>
+                    @endif
+                    @if(auth()->user()->can('View activity log') || auth()->user()->can('View online staff'))
+                        <li class="nav-item">
+                            <a href="#sidebarActivity" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarActivity"><i class="ri-shield-user-line"></i> <span>Staff Monitoring</span></a>
+                            <div class="collapse menu-dropdown" id="sidebarActivity"><ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('online-staff.index') }}" class="nav-link">Who's Online</a></li>
+                                @can('View activity log')<li class="nav-item"><a href="{{ route('activity.index') }}" class="nav-link">Activity Log</a></li>@endcan
+                                @canany(['View leave records', 'Manage leave types'])<li class="nav-item"><a href="{{ route('leave.records') }}" class="nav-link">Leave Records</a></li>@endcanany
+                            </ul></div>
+                        </li>
                     @endif
 
                     {{-- Dashboard --}}
@@ -1393,6 +1406,7 @@
 
                 <div class="d-flex align-items-center gap-1">
                     <!-- Notifications bell -->
+                    @include('layouts.partials.online-badge')
                     @include('layouts.partials.notification-bell')
 
                     <!-- Theme Toggle -->

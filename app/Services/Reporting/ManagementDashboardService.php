@@ -77,7 +77,7 @@ class ManagementDashboardService
             $out['marked_classes'] = $classIds->intersect($marked)->count();
             $unmarked = $classIds->diff($marked)->values()->all();
             $out['unmarked'] = $unmarked ? DB::table('schoolclass as c')->leftJoin('schoolarm as a', 'a.id', '=', 'c.arm')->whereIn('c.id', $unmarked)
-                ->orderBy('c.schoolclass')->pluck(DB::raw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,'')))"))->all() : [];
+                ->orderBy('c.schoolclass')->selectRaw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,''))) as class_label")->pluck('class_label')->all() : [];
         }
 
         if ($this->has('staff_attendance')) {
@@ -243,6 +243,13 @@ class ManagementDashboardService
         if ($this->has('online_fee_payments')) {
             $review = DB::table('online_fee_payments')->where('needs_review', true)->count();
             if ($review) $a[] = ['danger', 'ri-bank-card-line', $review . ' online payment(s) need checking', route('online-fees.index')];
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn('leave_requests', 'resumed_at')) {
+            $notBack = DB::table('leave_requests')->where('status', 'approved')->whereNull('resumed_at')
+                ->where('end_date', '<', now()->subDay()->toDateString())->where('end_date', '>=', now()->subDays(30)->toDateString())->count();
+            if ($notBack) $a[] = ['warning', 'ri-user-unfollow-line', $notBack . ' staff not confirmed back from leave', route('leave.records')];
+            $away = DB::table('leave_requests')->where('status', 'approved')->where('start_date', '<=', now()->toDateString())->where('end_date', '>=', now()->toDateString())->count();
+            if ($away) $a[] = ['info', 'ri-calendar-event-line', $away . ' staff on leave today', route('leave.records')];
         }
         if (\Illuminate\Support\Facades\Schema::hasTable('statutory_remittances')) {
             $late = \App\Models\StatutoryRemittance::where('status', '!=', 'paid')->whereDate('due_date', '<', now()->toDateString())->get();

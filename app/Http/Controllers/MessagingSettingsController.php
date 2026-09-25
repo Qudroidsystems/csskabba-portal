@@ -115,15 +115,30 @@ class MessagingSettingsController extends Controller
             if (!$to) return response()->json(['success' => false, 'message' => 'Enter a valid phone number, e.g. 08031234567.']);
         }
 
+        // Test with what's on screen (even if not saved yet): an unsaved copy of the settings.
+        if ($request->filled('driver') && isset(MessagingSetting::DRIVERS[$channel][$request->input('driver')])) {
+            $tmp = MessagingSetting::for($channel)->replicate();
+            $tmp->driver = $request->input('driver');
+            foreach ($tmp->fields() as $f => $def) {
+                $v = trim((string) data_get($request->input('fields', []), $f, ''));
+                if ($v !== '') $tmp->put($f, $v);          // blank secret box = keep the saved key
+            }
+            $tmp->is_active = true;                         // a test always tries to send
+            $messaging->useSetting($channel, $tmp);
+            if ($why = $messaging->whyNotReady($channel)) return response()->json(['success' => false, 'message' => $why]);
+        }
+
         $res = $messaging->send($channel, $to, 'This is a test message from the school portal. If you received it, ' . strtoupper($channel) . ' notifications are working.', [
             'name' => $request->user()->name, 'subject' => 'Test notification',
         ]);
 
-        $driver = MessagingSetting::for($channel)->driver;
+        $driver = $messaging->setting($channel)->driver;
+        $saved = MessagingSetting::for($channel);
+        $note = !$saved->is_active ? ' Note: it is still switched OFF — turn on the switch and click Save so the portal uses it.' : '';
         return response()->json([
             'success' => $res['status'] === 'sent',
             'message' => match ($res['status']) {
-                'sent'    => $driver === 'log' ? 'Logged only (driver is "Log only") — check storage/logs/laravel.log.' : 'Sent to ' . $to . '. Check the device/inbox.',
+                'sent'    => ($driver === 'log' ? 'Logged only (provider is "Log only") — check storage/logs/laravel.log.' : 'Sent to ' . $to . '. Check the device/inbox.') . $note,
                 'skipped' => $res['error'],
                 default   => $res['error'] ?: 'Failed.',
             },

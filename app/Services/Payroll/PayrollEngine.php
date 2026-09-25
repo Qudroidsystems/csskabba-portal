@@ -123,6 +123,18 @@ class PayrollEngine
             ? $scale->staffItems((int) $staff->id, $period->start_date, $prorate, $earnLines)
             : ['earnings' => [], 'deductions' => []];
 
+        // Approved unpaid leave in the month reduces pay (by working days).
+        if (class_exists(\App\Services\Leave\LeaveService::class) && \App\Services\Leave\LeaveService::available()) {
+            $leave = app(\App\Services\Leave\LeaveService::class);
+            $unpaid = $leave->unpaidDays((int) $staff->id, $period->start_date, $period->end_date);
+            if ($unpaid > 0) {
+                $workDays = max(1, $leave->workingDays($period->start_date, $period->end_date));
+                $regular = array_sum(array_map(fn ($l) => (float) $l['amount'], $earnLines)) * $prorate;
+                $items['earnings'][] = ['code' => 'UNPAID_LEAVE', 'label' => 'Unpaid leave (' . rtrim(rtrim(number_format($unpaid, 1), '0'), '.') . ' day(s))',
+                    'amount' => -round(min($regular, $regular / $workDays * $unpaid), 2), 'taxable' => true, 'pensionable' => false, 'no_proration' => true];
+            }
+        }
+
         $calc = PayrollCalculator::compute(array_merge($earnLines, $items['earnings']), [
             'paye' => $profile->paye_enabled, 'pension' => $profile->pension_enabled, 'nhf' => $profile->nhf_enabled, 'nhia' => $profile->nhia_enabled,
             'annual_rent' => $profile->annual_rent, 'other_reliefs_annual' => $profile->other_reliefs_annual,

@@ -117,9 +117,14 @@ class HouseController extends Controller
         $data = $request->validate([
             'housemasterid' => 'nullable|integer|exists:users,id', 'housecolour' => 'nullable|string|max:30',
             'motto' => 'nullable|string|max:150', 'description' => 'nullable|string|max:2000',
+            'patron_id' => 'nullable|integer|exists:users,id', 'assistant_master_id' => 'nullable|integer|exists:users,id',
+            'mascot' => 'nullable|string|max:80', 'founded_year' => 'nullable|integer|min:1900|max:2100', 'meeting_place' => 'nullable|string|max:120',
         ]);
         $upd = ['updated_at' => now()];
         foreach (['housemasterid', 'housecolour'] as $k) if (!empty($data[$k])) $upd[$k] = $data[$k];
+        if (Schema::hasColumn('schoolhouses', 'patron_id')) {
+            foreach (['patron_id', 'assistant_master_id', 'mascot', 'founded_year', 'meeting_place'] as $k) $upd[$k] = $data[$k] ?? null;
+        }
         if (Schema::hasColumn('schoolhouses', 'motto')) { $upd['motto'] = $data['motto'] ?? null; $upd['description'] = $data['description'] ?? null; $upd['is_active'] = $request->boolean('is_active'); }
         DB::table('schoolhouses')->where('id', $house)->update($upd);
         return back()->with('success', 'House details saved.');

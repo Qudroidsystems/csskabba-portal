@@ -215,12 +215,14 @@
 
         const btn = form.querySelector('.st-test button'), input = form.querySelector('.st-test input'), out = form.querySelector('.st-result');
         btn.addEventListener('click', async () => {
-            btn.disabled = true; out.className = 'small mt-2 st-result text-muted'; out.textContent = 'Sending test… (save first if you changed anything)';
+            btn.disabled = true; out.className = 'small mt-2 st-result text-muted'; out.textContent = 'Sending test with the details on screen…';
+            const fd = new FormData(form); const fields = {};
+            for (const [k, v] of fd.entries()) { const m = k.match(/^fields\[(.+)\]$/); if (m) fields[m[1]] = v; }
             try {
                 const r = await fetch(testUrl.replace('__C__', btn.dataset.channel), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify({ to: input.value }),
+                    body: JSON.stringify({ to: input.value, driver: drv.value, fields }),
                 });
                 const j = await r.json();
                 out.className = 'small mt-2 st-result ' + (j.success ? 'text-success' : 'text-danger');

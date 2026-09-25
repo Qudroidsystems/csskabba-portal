@@ -47,6 +47,21 @@
                     </table></div>
                 @endif
             </x-cb.card>
+            @if($otherPayments->isNotEmpty())
+                <x-cb.card title="Other payments" icon="ri-hand-coin-line" :count="$otherPayments->count()" :flush="true">
+                    <div class="table-responsive"><table class="table align-middle mb-0">
+                        <thead><tr><th>Date</th><th>Type</th><th>Details</th><th class="text-end">Amount</th><th>Status</th></tr></thead>
+                        <tbody>
+                        @foreach($otherPayments as $op)
+                            <tr><td class="text-nowrap">{{ $op->payment_date ? \Carbon\Carbon::parse($op->payment_date)->format('d M Y') : '—' }}</td>
+                                <td>{{ ucfirst(str_replace('_', ' ', $op->payment_type)) }}</td><td class="small text-muted">{{ $op->purpose }}</td>
+                                <td class="text-end fw-bold">{{ $m($op->amount) }}</td>
+                                <td><span class="status-pill {{ $op->payment_status === 'paid' ? 'st-paid' : ($op->payment_status === 'reversed' ? 'st-muted' : 'st-pending') }}">{{ ucfirst($op->payment_status) }}</span></td></tr>
+                        @endforeach
+                        </tbody>
+                    </table></div>
+                </x-cb.card>
+            @endif
         </div>
         <div class="col-xl-4">
             <x-cb.card title="My pay details" icon="ri-bank-card-line">

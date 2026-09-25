@@ -140,7 +140,7 @@ class ResultSendController extends Controller
 
         $classNames = DB::table('schoolclass')->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->whereIn('schoolclass.id', $send->class_ids ?? [])
-            ->pluck(DB::raw("TRIM(CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')))"));
+            ->selectRaw("TRIM(CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, ''))) as class_label")->pluck('class_label');
 
         return view('result-sends.show', [
             'pagetitle'  => 'Result sending',

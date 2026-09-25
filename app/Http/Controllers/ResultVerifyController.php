@@ -25,7 +25,7 @@ class ResultVerifyController extends Controller
 
         $student = DB::table('studentRegistration')->where('id', $sid)->first(['id', 'firstname', 'lastname', 'othername', 'admissionNo']);
         $class   = DB::table('schoolclass as c')->leftJoin('schoolarm as a', 'a.id', '=', 'c.arm')->where('c.id', $classId)
-            ->value(DB::raw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,'')))"));
+            ->selectRaw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,''))) as class_label")->value('class_label');
         $term    = DB::table('schoolterm')->where('id', $termId)->value('term');
         $session = DB::table('schoolsession')->where('id', $sessionId)->value('session');
 

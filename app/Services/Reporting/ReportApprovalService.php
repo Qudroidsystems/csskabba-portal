@@ -205,7 +205,7 @@ class ReportApprovalService
     public function label(ReportApproval $a): string
     {
         $name = DB::table('schoolclass as c')->leftJoin('schoolarm as a', 'a.id', '=', 'c.arm')->where('c.id', $a->schoolclass_id)
-            ->value(DB::raw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,'')))"));
+            ->selectRaw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,''))) as class_label")->value('class_label');
         [$term, $session] = $this->period($a);
         return trim("{$name} — {$term}, {$session}");
     }

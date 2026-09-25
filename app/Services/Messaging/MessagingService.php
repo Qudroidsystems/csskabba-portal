@@ -22,6 +22,31 @@ class MessagingService
         return $this->settings[$channel] ??= MessagingSetting::for($channel);
     }
 
+    /** Use an unsaved copy of a channel's settings (for "Send test" with what's on screen). */
+    public function useSetting(string $channel, MessagingSetting $s): void
+    {
+        $this->settings[$channel] = $s;
+    }
+
+    /** Why a channel can't send right now (null = ready). */
+    public function whyNotReady(string $channel): ?string
+    {
+        if ($channel === 'portal') return null;
+        $s = $this->setting($channel);
+        $name = $channel === 'sms' ? 'SMS' : ucfirst($channel);
+        if (!$s->is_active) return "{$name} is switched off. In Notification Settings, turn on the \"On\" switch in the {$name} card and click Save.";
+        $missing = []; $unreadable = [];
+        foreach ($s->fields() as $f => $def) {
+            if (empty($def['required']) || $s->value($f)) continue;
+            $raw = $s->config[$f] ?? null;
+            if (is_string($raw) && str_starts_with($raw, 'enc:')) $unreadable[] = $def['label'];
+            else $missing[] = $def['label'];
+        }
+        if ($unreadable) return "The saved " . implode(', ', $unreadable) . " can't be read (the app key changed since it was saved). Type it in again and save.";
+        if ($missing) return "{$name} is on but these are missing: " . implode(', ', $missing) . '. Fill them in and save.';
+        return null;
+    }
+
     /** Channels switched on (log driver counts: it records instead of sending). */
     public function enabled(string $channel): bool
     {
@@ -35,7 +60,7 @@ class MessagingService
     public function send(string $channel, string $to, string $body, array $context = []): array
     {
         if (!$this->enabled($channel)) {
-            return $this->result('skipped', ucfirst($channel) . ' is switched off in notification settings.');
+            return $this->result('skipped', $this->whyNotReady($channel) ?? (ucfirst($channel) . ' is not ready.'));
         }
 
         try {

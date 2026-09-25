@@ -302,7 +302,7 @@ class ResultSendService
         ];
         $st = $item->student;
         $class = DB::table('schoolclass as c')->leftJoin('schoolarm as a', 'a.id', '=', 'c.arm')->where('c.id', $item->class_id)
-            ->value(DB::raw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,'')))"));
+            ->selectRaw("TRIM(CONCAT(COALESCE(c.schoolclass,''), ' ', COALESCE(a.arm,''))) as class_label")->value('class_label');
 
         return [
             '{student_name}' => $st ? trim($st->firstname . ' ' . $st->lastname) : 'your ward',

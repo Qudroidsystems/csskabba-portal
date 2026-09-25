@@ -830,13 +830,13 @@ Route::group(['middleware' => ['auth']], function () {
     Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
         Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
         Route::get('/create', [StaffPaymentController::class, 'create'])->name('create');
-        Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
-        Route::get('/{id}', [StaffPaymentController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
-        Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
         Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
         Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
+        Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
+        Route::get('/{id}', [StaffPaymentController::class, 'show'])->whereNumber('id')->name('show');
+        Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->whereNumber('id')->name('edit');
+        Route::put('/{id}', [StaffPaymentController::class, 'update'])->whereNumber('id')->name('update');
+        Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->whereNumber('id')->name('destroy');
         Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
         Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
         Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
@@ -847,7 +847,8 @@ Route::group(['middleware' => ['auth']], function () {
     // PAYROLL
     // ===================================================================
     Route::prefix('payroll')->name('payroll.')->group(function () {
-        Route::get('/periods', [PayrollController::class, 'periods'])->name('periods');
+        Route::get('/periods', [\App\Http\Controllers\Finance\PayrollReportsController::class, 'periods'])->name('periods');
+        Route::post('/periods/create', [\App\Http\Controllers\Finance\PayrollReportsController::class, 'store'])->name('periods.create');
         Route::post('/periods', [PayrollController::class, 'createPeriod'])->name('periods.store');
         Route::post('/periods/{periodId}/process', [PayrollController::class, 'processPayroll'])->name('process');
         Route::post('/periods/{periodId}/approve', [PayrollController::class, 'approvePayroll'])->name('approve');
@@ -855,8 +856,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/runs/{periodId}', [PayrollController::class, 'getPayrollRuns'])->name('runs');
         Route::get('/run/{payrollRunId}', [PayrollController::class, 'showPayrollRun'])->name('run.show');
         Route::post('/run/{payrollRunId}/pay', [PayrollController::class, 'processStaffPayment'])->name('run.pay');
-        Route::get('/summary', [PayrollController::class, 'summaryReport'])->name('summary');
-        Route::get('/statutory', [PayrollController::class, 'statutoryReport'])->name('statutory');
+        Route::get('/summary', [\App\Http\Controllers\Finance\PayrollReportsController::class, 'summary'])->name('summary');
+        Route::get('/statutory', [\App\Http\Controllers\Finance\PayrollReportsController::class, 'statutory'])->name('statutory');
         Route::get('/salary-structures', [PayrollController::class, 'salaryStructures'])->name('salary-structures');
         Route::post('/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('salary-structures.store');
         Route::get('/payroll/salary-structures/{id}', [PayrollController::class, 'showSalaryStructure'])->name('payroll.salary-structures.show');
@@ -1610,4 +1611,31 @@ Route::middleware('auth')->prefix('my-pay')->name('my-pay.')->group(function () 
 Route::middleware('throttle:30,1')->group(function () {
     Route::get('/verify/payslip/{code}', [\App\Http\Controllers\PayslipVerifyController::class, 'payslip'])->name('verify.payslip');
     Route::get('/verify/tax-certificate/{staff}/{year}/{code}', [\App\Http\Controllers\PayslipVerifyController::class, 'certificate'])->whereNumber(['staff', 'year'])->name('verify.tax-certificate');
+});
+
+// ===================================================================
+// STAFF ACTIVITY LOG, WHO'S ONLINE, STAFF LEAVE
+// ===================================================================
+Route::middleware('auth')->group(function () {
+    Route::get('/activity-log', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity.index');
+    Route::get('/activity-log/export', [\App\Http\Controllers\ActivityLogController::class, 'export'])->name('activity.export');
+    Route::get('/online-staff', [\App\Http\Controllers\ActivityLogController::class, 'online'])->name('online-staff.index');
+    Route::get('/online-staff/count', [\App\Http\Controllers\ActivityLogController::class, 'onlineCount'])->name('online-staff.count');
+
+    Route::prefix('leave')->name('leave.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\LeaveController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\LeaveController::class, 'store'])->name('store');
+        Route::post('/{id}/cancel', [\App\Http\Controllers\LeaveController::class, 'cancel'])->whereNumber('id')->name('cancel');
+        Route::get('/approvals', [\App\Http\Controllers\LeaveController::class, 'approvals'])->name('approvals');
+        Route::post('/{id}/act', [\App\Http\Controllers\LeaveController::class, 'act'])->whereNumber('id')->name('act');
+        Route::get('/{id}/document', [\App\Http\Controllers\LeaveController::class, 'attachment'])->whereNumber('id')->name('attachment');
+        Route::get('/records', [\App\Http\Controllers\LeaveController::class, 'records'])->name('records');
+        Route::post('/types', [\App\Http\Controllers\LeaveController::class, 'storeType'])->name('types.store');
+        Route::put('/types/{id}', [\App\Http\Controllers\LeaveController::class, 'updateType'])->whereNumber('id')->name('types.update');
+        Route::post('/adjust', [\App\Http\Controllers\LeaveController::class, 'adjust'])->name('adjust');
+        Route::post('/{id}/resume', [\App\Http\Controllers\LeaveController::class, 'resume'])->whereNumber('id')->name('resume');
+        Route::post('/{id}/mark-resumed', [\App\Http\Controllers\LeaveController::class, 'markResumed'])->whereNumber('id')->name('mark-resumed');
+        Route::post('/{id}/extend', [\App\Http\Controllers\LeaveController::class, 'extend'])->whereNumber('id')->name('extend');
+        Route::post('/reminders', [\App\Http\Controllers\LeaveController::class, 'saveReminders'])->name('reminders');
+    });
 });

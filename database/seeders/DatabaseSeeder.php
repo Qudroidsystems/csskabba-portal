@@ -528,6 +528,12 @@ class DatabaseSeeder extends Seeder
 
             'PayrollPermissionSeeder' =>
                 '💰 Seeding payroll permissions (pay profiles, rates, remittances)...',
+
+            'ActivityPermissionSeeder' =>
+                '🕵️ Seeding activity log & online staff permissions...',
+
+            'LeavePermissionSeeder' =>
+                '🌴 Seeding staff leave permissions...',
         ];
 
         $this->runSeederList(

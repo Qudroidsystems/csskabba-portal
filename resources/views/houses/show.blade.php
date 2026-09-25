@@ -10,7 +10,7 @@
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid" style="--hc: {{ $colour }}">
-    <x-cb.hero :title="$h->house" icon="ri-home-heart-line" :subtitle="'House master: ' . ($h->master_name ?? '—') . (!empty($h->motto) ? ' · “' . $h->motto . '”' : '')"
+    <x-cb.hero :title="$h->house" icon="ri-home-heart-line" :subtitle="'Patron: ' . ($h->patron_name ?? '—') . ' · House master: ' . ($h->master_name ?? '—') . (!empty($h->motto) ? ' · “' . $h->motto . '”' : '')"
                :back="route('houses.index', ['session_id' => $sessionId])" back-label="All houses">
         <x-slot:pills>
             <span class="cb-meta-pill"><span class="hs-dot"></span> {{ $members->count() }} members</span>
@@ -86,10 +86,23 @@
 
                 <x-cb.card title="House details" icon="ri-information-line">
                     <form method="POST" action="{{ route('houses.details', $h->id) }}">@csrf @method('PUT')
-                        <label class="form-label small">House master</label>
+                        <label class="form-label small">Patron / Matron</label>
+                        <select name="patron_id" class="form-select form-select-sm mb-2"><option value="">—</option>
+                            @foreach($staff as $sid => $sn)<option value="{{ $sid }}" @selected(($h->patron_id ?? null) == $sid)>{{ $sn }}</option>@endforeach
+                        </select>
+                        <label class="form-label small">House master / mistress</label>
                         <select name="housemasterid" class="form-select form-select-sm mb-2">
                             @foreach($staff as $sid => $sn)<option value="{{ $sid }}" @selected($h->housemasterid == $sid)>{{ $sn }}</option>@endforeach
                         </select>
+                        <label class="form-label small">Assistant house master</label>
+                        <select name="assistant_master_id" class="form-select form-select-sm mb-2"><option value="">—</option>
+                            @foreach($staff as $sid => $sn)<option value="{{ $sid }}" @selected(($h->assistant_master_id ?? null) == $sid)>{{ $sn }}</option>@endforeach
+                        </select>
+                        <div class="row g-2 mb-2">
+                            <div class="col-5"><input name="mascot" class="form-control form-control-sm" value="{{ $h->mascot ?? '' }}" placeholder="Mascot" aria-label="Mascot"></div>
+                            <div class="col-3"><input name="founded_year" type="number" min="1900" max="2100" class="form-control form-control-sm" value="{{ $h->founded_year ?? '' }}" placeholder="Year" aria-label="Founded"></div>
+                            <div class="col-4"><input name="meeting_place" class="form-control form-control-sm" value="{{ $h->meeting_place ?? '' }}" placeholder="Meeting place" aria-label="Meeting place"></div>
+                        </div>
                         <div class="row g-2 mb-2">
                             <div class="col-4"><input type="color" class="form-control form-control-sm form-control-color w-100" name="housecolour" value="{{ str_starts_with($colour, '#') && strlen($colour) === 7 ? $colour : '#0f766e' }}" aria-label="Colour"></div>
                             <div class="col-8"><input name="motto" class="form-control form-control-sm" value="{{ $h->motto ?? '' }}" placeholder="Motto" aria-label="Motto"></div>

@@ -42,6 +42,12 @@ class User extends Authenticatable
         'credentials_sent_at' => 'datetime',
     ];
 
+    /** This user's staff record (staffbioinfo). */
+    public function staff(): HasOne
+    {
+        return $this->hasOne(Staff::class, 'userid', 'id');
+    }
+
     /** Parent portal: children linked to this parent account. */
     public function parentChildren(): BelongsToMany
     {

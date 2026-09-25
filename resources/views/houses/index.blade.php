@@ -60,7 +60,10 @@
                         <div class="col-6"><div class="text-muted">Points</div><strong class="fs-5">{{ number_format($h->points) }}</strong></div>
                         <div class="col-6"><div class="text-muted">Boys / girls</div>{{ $h->boys }} / {{ $h->girls }}</div>
                         <div class="col-6"><div class="text-muted">House master</div>{{ $h->master_name ?? '—' }}</div>
+                        <div class="col-6"><div class="text-muted">Patron</div>{{ $h->patron_name ?? '—' }}</div>
+                        <div class="col-6"><div class="text-muted">Assistant</div>{{ $h->assistant_name ?? '—' }}</div>
                     </div>
+                    @if(!empty($h->mascot) || !empty($h->meeting_place))<div class="small text-muted mt-2">{{ collect([$h->mascot ? 'Mascot: ' . $h->mascot : null, $h->meeting_place ? 'Meets at ' . $h->meeting_place : null])->filter()->implode(' · ') }}</div>@endif
                     @if($h->captain)<div class="small mt-2"><i class="ri-star-line"></i> Captain: {{ $h->captain }}</div>@endif
                 </a>
             </div>

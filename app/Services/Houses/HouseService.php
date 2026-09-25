@@ -23,8 +23,11 @@ class HouseService
 
     public function houses(): Collection
     {
+        $hasPatron = Schema::hasColumn('schoolhouses', 'patron_id');
         return DB::table('schoolhouses as h')->leftJoin('users as u', 'u.id', '=', 'h.housemasterid')
-            ->orderBy('h.house')->get(['h.*', 'u.name as master_name'])
+            ->when($hasPatron, fn ($q) => $q->leftJoin('users as pu', 'pu.id', '=', 'h.patron_id')->leftJoin('users as au', 'au.id', '=', 'h.assistant_master_id'))
+            ->orderBy('h.house')
+            ->get(array_merge(['h.*', 'u.name as master_name'], $hasPatron ? ['pu.name as patron_name', 'au.name as assistant_name'] : []))
             ->map(fn ($h) => tap($h, fn ($h) => $h->active = !isset($h->is_active) || (bool) $h->is_active));
     }
 

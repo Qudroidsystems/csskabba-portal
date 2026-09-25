@@ -26,3 +26,9 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')->every
 
 // Government remittance reminders (PAYE, pension, NHF) — 8am daily
 Schedule::command('payroll:remittance-reminders')->dailyAt('08:00')->withoutOverlapping(30);
+
+// Keep a year of staff activity
+Schedule::command('activity:prune --days=365')->dailyAt('02:30');
+
+// Leave reminders (starts tomorrow, days left, resume date, not back yet)
+Schedule::command('leave:reminders')->dailyAt('07:00')->withoutOverlapping(30);

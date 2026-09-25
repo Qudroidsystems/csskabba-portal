@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Temporary passwords (new parent accounts) must be changed first.
-        $middleware->web(append: [\App\Http\Middleware\ForcePasswordChange::class]);
+        $middleware->web(append: [\App\Http\Middleware\ForcePasswordChange::class, \App\Http\Middleware\LogActivity::class]);
 
         $middleware->validateCsrfTokens(except: [
             'cbt/submit',

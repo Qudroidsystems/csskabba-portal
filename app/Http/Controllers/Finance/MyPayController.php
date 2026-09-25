@@ -64,6 +64,10 @@ class MyPayController extends Controller
         return view('finance.my-pay.index', $this->base($s, 'My Pay') + [
             'runs' => $runs, 'year' => $year, 'ytd' => $this->history->ytd((int) $s->id, $year),
             'profile' => DB::table('staff_pay_profiles')->where('staff_id', $s->id)->first(),
+            'otherPayments' => \Illuminate\Support\Facades\Schema::hasTable('staff_payments')
+                ? DB::table('staff_payments')->where('staff_id', $s->id)->whereNull('payroll_run_id')->whereNull('deleted_at')
+                    ->orderByDesc('payment_date')->limit(20)->get(['payment_date', 'payment_type', 'amount', 'purpose', 'payment_status', 'payment_reference'])
+                : collect(),
         ]);
     }
 
