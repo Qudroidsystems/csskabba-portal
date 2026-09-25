@@ -17,6 +17,7 @@ class PayrollPermissionSeeder extends Seeder
             'Manage salary structures',
             'Manage payroll settings',    // tax bands, pension/NHF rates, limits
             'Manage staff pay profiles',  // bank, TIN, pension details, holds
+            'Manage remittances',         // PAYE / pension / NHF payments to government
             'View payslip',
             'Download payslip',
         ];

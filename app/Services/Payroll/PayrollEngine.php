@@ -236,6 +236,7 @@ class PayrollEngine
             PayrollRun::where('payroll_period_id', $period->id)->update(['status' => 'approved']);
             $period->update(['status' => 'approved', 'approved_by' => $userId, 'approved_at' => now()]);
         });
+        $this->prepareRemittances($period, $userId);
     }
 
     /** Lock: no more changes; verification codes issued; loan balances reduced once. */
@@ -259,5 +260,17 @@ class PayrollEngine
             }
             $period->update(['status' => 'locked', 'locked_by' => $userId, 'locked_at' => now()]);
         });
+        $this->prepareRemittances($period->fresh(), $userId);
+    }
+
+    /** PAYE / pension / NHF… owed for the month (phase 4). Never blocks approval. */
+    protected function prepareRemittances(PayrollPeriod $period, int $userId): void
+    {
+        if (!Schema::hasTable('statutory_remittances')) return;
+        try {
+            app(StatutoryRemittanceService::class)->generate($period->fresh(), $userId);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Remittances not prepared', ['period' => $period->id, 'error' => $e->getMessage()]);
+        }
     }
 }
