@@ -65,8 +65,30 @@
                         </div>
                     </div>
                     @if($m->isScheduledPending())
-                        <div class="cb-banner info mt-3 mb-0"><i class="ri-time-line"></i><div>Scheduled for <strong>{{ $m->scheduled_at->format('d M Y, H:i') }}</strong> ({{ $m->scheduled_at->diffForHumans() }}). {{ $m->scheduled_note }}
-                            <button name="action" value="clear_schedule" class="action-btn btn-open ms-2">Cancel schedule</button></div></div>
+                        <div class="mt-3 p-3 rounded" style="background:linear-gradient(135deg,#1e293b,#334155);color:#e2e8f0">
+                            <div class="small text-uppercase" style="letter-spacing:.08em;opacity:.75">Portal goes into maintenance in</div>
+                            <div id="mtBigCountdown" data-at="{{ $m->scheduled_at->toIso8601String() }}"
+                                 style="font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2">—</div>
+                            <div class="small" style="opacity:.85">at <strong>{{ $m->scheduled_at->format('l, d M Y \a\t g:i A') }}</strong>{{ $m->scheduled_note ? ' · ' . $m->scheduled_note : '' }}</div>
+                            <button name="action" value="clear_schedule" class="action-btn btn-open mt-2"><i class="ri-close-line"></i>Cancel schedule</button>
+                        </div>
+                        <script>
+                        (function () {
+                            var el = document.getElementById('mtBigCountdown'); if (!el) return;
+                            var at = new Date(el.dataset.at).getTime();
+                            function tick() {
+                                var d = at - Date.now();
+                                if (d <= 0) { el.textContent = 'Switching on…'; return; }
+                                var days = Math.floor(d / 8.64e7),
+                                    h = Math.floor((d % 8.64e7) / 3.6e6),
+                                    m = Math.floor((d % 3.6e6) / 6e4),
+                                    s = Math.floor((d % 6e4) / 1000),
+                                    pad = function (n) { return (n < 10 ? '0' : '') + n; };
+                                el.textContent = (days > 0 ? days + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+                            }
+                            tick(); setInterval(tick, 1000);
+                        })();
+                        </script>
                     @endif
                 </x-cb.card>
             </div>
