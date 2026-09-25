@@ -23,33 +23,40 @@ class UserTableSeeder extends Seeder
      */
     public function run()
     {
-        $user = User::create([
-            'name' => 'Ilemobayo Eliab',
-            'email' => 'eliabsiji@gmail.com',
-            'avatar' => 'unnamed.png',
-            'password' => FacadesHash::make('12345678'),
-            // 'wpassword' => '12345678',
-        ]);
+        // Safe to run again: the admin user and roles are only created if missing,
+        // and an existing password is never reset.
+        $user = User::where('email', 'eliabsiji@gmail.com')->first();
+        if (!$user) {
+            $user = User::create([
+                'name' => 'Ilemobayo Eliab',
+                'email' => 'eliabsiji@gmail.com',
+                'avatar' => 'unnamed.png',
+                'password' => FacadesHash::make('12345678'),
+            ]);
+        }
 
-        BioModel::updateOrCreate(['user_id'=>$user->id],
-                                 ['firstname' =>'ilemobayo',
-                                   'lastname' => 'Eliab',
-                                   'othernames' => 'siji',
-                                   'phone' => '98385523567',
-                                   'address' => 'ondo',
-                                   'gender' =>'male',
-                                   'maritalstatus' =>'Single',
-                                    'nationality' =>'nigerian',
-                                    'dob' => '12-12-12']);
+        if (!BioModel::where('user_id', $user->id)->exists()) {
+            BioModel::create(['user_id' => $user->id,
+                              'firstname' => 'ilemobayo',
+                              'lastname' => 'Eliab',
+                              'othernames' => 'siji',
+                              'phone' => '98385523567',
+                              'address' => 'ondo',
+                              'gender' => 'male',
+                              'maritalstatus' => 'Single',
+                              'nationality' => 'nigerian',
+                              'dob' => '12-12-12']);
+        }
 
-        // $role = Role::find(1);
-        $role = Role::create(['name' => 'Super Admin','badge'=>'badge bg-success']); //creating super admin role
-        $role2 = Role::create(['name' => 'Admin','badge'=>'badge bg-primary']);//creating admin role
+        $role = Role::where('name', 'Super Admin')->where('guard_name', 'web')->first()
+            ?? Role::create(['name' => 'Super Admin', 'badge' => 'badge bg-success']);
+        $role2 = Role::where('name', 'Admin')->where('guard_name', 'web')->first()
+            ?? Role::create(['name' => 'Admin', 'badge' => 'badge bg-primary']);
+
         $permissions = Permission::pluck('id', 'id')->all();
         $role->syncPermissions($permissions);
-        $user->assignRole([$role->id]);
         $role2->syncPermissions($permissions);
-        $user->assignRole([$role2->id]);
-
+        if (!$user->hasRole($role->name)) $user->assignRole($role);
+        if (!$user->hasRole($role2->name)) $user->assignRole($role2);
     }
 }

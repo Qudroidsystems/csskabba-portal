@@ -94,46 +94,46 @@ class PermissionTableSeeder extends Seeder
 
             foreach ($words as $word) {
                 if($word == "user")
-                Permission::Create(['name' => $permission,'title'=>"User Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "User Management"]);
 
                 if($word == "role" || $word == "user-role")
-                Permission::Create(['name' => $permission,'title'=>"Role Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Role Management"]);
 
                 if($word == "permission")
-                Permission::Create(['name' => $permission,'title'=>"Permission Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Permission Management"]);
 
                 if($word == "dashboard")
-                Permission::Create(['name' => $permission,'title'=>"Dashboard Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Dashboard Management"]);
 
                 if($word == "school-arm")
-                Permission::Create(['name' => $permission,'title'=>"School Arm Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School Arm Management"]);
 
                 if($word == "school-class")
-                Permission::Create(['name' => $permission,'title'=>"School ClassManagement"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School ClassManagement"]);
 
                 if($word == "session")
-                Permission::Create(['name' => $permission,'title'=>"School Session Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School Session Management"]);
 
                 if($word == "term")
-                Permission::Create(['name' => $permission,'title'=>"School Term Management "]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School Term Management "]);
 
                 if($word == "schoolhouse")
-                Permission::Create(['name' => $permission,'title'=>"School House Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "School House Management"]);
 
                 if($word == "class-category")
-                Permission::Create(['name' => $permission,'title'=>"Class Category Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Class Category Management"]);
 
                 if($word == "class-teacher")
-                Permission::Create(['name' => $permission,'title'=>"Class Teacher Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Class Teacher Management"]);
 
                 if($word == "subjects")
-                Permission::Create(['name' => $permission,'title'=>"Subject Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Management"]);
 
                 if($word == "subject-teacher")
-                Permission::Create(['name' => $permission,'title'=>"Subject Teacher Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Teacher Management"]);
 
                 if($word == "subject-class")
-                Permission::Create(['name' => $permission,'title'=>"Subject Class Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Class Management"]);
 
 
 
@@ -168,10 +168,10 @@ class PermissionTableSeeder extends Seeder
                 // Permission::Create(['name' => $permission,'title'=>"Subject Operations Management"]);
 
                 if($word == "subject")
-                Permission::Create(['name' => $permission,'title'=>"Subject Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Management"]);
 
                 if($word == "subject_teacher")
-                Permission::Create(['name' => $permission,'title'=>"Subject Teacher Management"]);
+                Permission::updateOrCreate(['name' => $permission, 'guard_name' => 'web'], ['title' => "Subject Teacher Management"]);
 
                 // if($word == "View_student")
                 // Permission::Create(['name' => $permission,'title'=>"View Student Management "]);

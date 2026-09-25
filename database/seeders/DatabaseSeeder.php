@@ -476,6 +476,82 @@ class DatabaseSeeder extends Seeder
         );
 
         // ============================================================
+        // PART 12B: NEW MODULE PERMISSIONS (always re-run)
+        // These seeders only use updateOrCreate, so they run every time:
+        // newly added permissions reach existing installs without
+        // clearing seeder_log.
+        // ============================================================
+
+        $this->printSection(
+            '🆕 PART 12B: NEW MODULE PERMISSIONS'
+        );
+
+        $moduleSeeders = [
+            'ResultAccessPermissionSeeder' =>
+                '🔒 Seeding result access permissions...',
+
+            'OnlineFeePaymentPermissionSeeder' =>
+                '💳 Seeding online fee payment permissions...',
+
+            'PaymentGatewayPermissionSeeder' =>
+                '🌐 Seeding payment gateway permissions...',
+
+            'NoticePermissionSeeder' =>
+                '📢 Seeding school notice permissions...',
+
+            'ResultSendPermissionSeeder' =>
+                '📨 Seeding result sending permissions...',
+
+            'ParentContactPermissionSeeder' =>
+                '📇 Seeding parent contact permissions...',
+
+            'ParentPortalPermissionSeeder' =>
+                '👪 Seeding parent portal role & permissions...',
+
+            'InstalmentPlanPermissionSeeder' =>
+                '🗓️ Seeding instalment plan permissions...',
+
+            'ReportApprovalPermissionSeeder' =>
+                '🛡️ Seeding report card approval permissions...',
+
+            'ManagementDashboardPermissionSeeder' =>
+                '📊 Seeding management dashboard permissions...',
+
+            'ClubPermissionSeeder' =>
+                '🎭 Seeding club permissions...',
+
+            'SportPermissionSeeder' =>
+                '⚽ Seeding sport permissions...',
+
+            'HousePermissionSeeder' =>
+                '🏠 Seeding house points permissions...',
+
+            'PayrollPermissionSeeder' =>
+                '💰 Seeding payroll permissions (pay profiles, rates, remittances)...',
+        ];
+
+        $this->runSeederList(
+            $moduleSeeders,
+            $seededCount,
+            $failedCount,
+            $skippedCount,
+            true
+        );
+
+        // Super Admin always holds every permission, including ones added above.
+        try {
+            $superAdmin = \Spatie\Permission\Models\Role::where('name', 'Super Admin')->where('guard_name', 'web')->first();
+            if ($superAdmin) {
+                $superAdmin->syncPermissions(Permission::where('guard_name', 'web')->pluck('id')->all());
+                $this->command->info('  ✅ Super Admin now has all ' . Permission::where('guard_name', 'web')->count() . ' permissions');
+            }
+            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        } catch (\Throwable $e) {
+            $this->command->warn('  ⚠️  Could not sync Super Admin permissions: ' . $e->getMessage());
+        }
+        $this->command->info('');
+
+        // ============================================================
         // PART 13: DEMO / TEST DATA
         // ============================================================
 
@@ -680,7 +756,8 @@ class DatabaseSeeder extends Seeder
         array $seeders,
         int &$seededCount,
         int &$failedCount,
-        int &$skippedCount
+        int &$skippedCount,
+        bool $force = false
     ): void {
 
         foreach ($seeders as $seeder => $message) {
@@ -688,7 +765,8 @@ class DatabaseSeeder extends Seeder
             $result = $this->safeCall(
                 $seeder,
                 $seeder,
-                $message
+                $message,
+                $force
             );
 
             $this->updateStats(
@@ -814,6 +892,28 @@ class DatabaseSeeder extends Seeder
          * Database\Seeders\ViewClassPermissionTableSeeder
          */
         return __NAMESPACE__ . '\\' . $seeder;
+    }
+
+    // ================================================================
+    // SEEDERS THAT RUN EVERY TIME
+    // ================================================================
+
+    /**
+     * Seeders that check before inserting (create-if-missing), so running
+     * them again adds anything new without duplicating what exists:
+     * every permission seeder, plus the term and admin-user seeders.
+     */
+    protected array $repeatable = [
+        'TermTableSeeder',
+        'UserTableSeeder',
+    ];
+
+    protected function isRepeatable(string $seederClass): bool
+    {
+        $short = class_basename($seederClass);
+
+        return str_contains($short, 'Permission')
+            || in_array($short, $this->repeatable, true);
     }
 
     // ================================================================
@@ -1019,7 +1119,8 @@ class DatabaseSeeder extends Seeder
     protected function safeCall(
         $seeder,
         $name,
-        $message = null
+        $message = null,
+        bool $force = false
     ): array {
 
         if ($message) {
@@ -1069,6 +1170,8 @@ class DatabaseSeeder extends Seeder
          * Check whether this seeder has already run.
          */
         if (
+            !$force &&
+            !$this->isRepeatable($seederClass) &&
             $this->hasBeenRun(
                 $seederClass
             )

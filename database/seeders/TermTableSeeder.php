@@ -16,14 +16,11 @@ class TermTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $term1 = Schoolterm::create([
-            'term' => 'First Term',
-        ]);
-        $term2 = Schoolterm::create([
-            'term' => 'Second Term',
-        ]);
-        $term3 = Schoolterm::create([
-            'term' => 'Third Term',
-        ]);
+        // Safe to run again: each term is created only if it doesn't exist yet.
+        foreach (['First Term', 'Second Term', 'Third Term'] as $term) {
+            if (!Schoolterm::where('term', $term)->exists()) {
+                Schoolterm::create(['term' => $term]);
+            }
+        }
     }
 }
