@@ -78,6 +78,8 @@ use App\Http\Controllers\StudentPaymentController;
 use App\Http\Controllers\ResultAccessController;
 use App\Http\Controllers\SchoolNoticeController;
 use App\Http\Controllers\MessagingSettingsController;
+use App\Http\Controllers\ResultSendController;
+use App\Http\Controllers\ResultLinkController;
 use App\Http\Controllers\StudentpersonalityprofileController;
 use App\Http\Controllers\StudentResultsController;
 use App\Http\Controllers\SubjectClassController;
@@ -168,6 +170,10 @@ Route::get('/force-419', function () {
 Route::get('/timetable/ics/{teacherId}', [TimetableController::class, 'exportIcs'])
     ->name('timetable.ics')
     ->middleware('signed');
+
+// Report card download links sent to parents (no login; token + expiry)
+Route::get('/r/{token}', [ResultLinkController::class, 'show'])
+    ->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('results.link');
 
 // Payment gateway webhooks — no CSRF, no auth
 Route::prefix('webhook')->group(function () {
@@ -547,6 +553,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/students', [SchoolNoticeController::class, 'searchStudents'])->name('students');
         Route::get('/settings', [MessagingSettingsController::class, 'index'])->name('settings');
         Route::put('/settings/{channel}', [MessagingSettingsController::class, 'update'])->whereIn('channel', ['sms', 'whatsapp', 'email'])->name('settings.update');
+        Route::put('/settings/receipts', [MessagingSettingsController::class, 'receipts'])->name('settings.receipts');
         Route::post('/settings/{channel}/test', [MessagingSettingsController::class, 'test'])->whereIn('channel', ['sms', 'whatsapp', 'email'])->name('settings.test');
         Route::get('/{notice}', [SchoolNoticeController::class, 'show'])->whereNumber('notice')->name('show');
         Route::get('/{notice}/edit', [SchoolNoticeController::class, 'edit'])->whereNumber('notice')->name('edit');
@@ -555,6 +562,18 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/{notice}/cancel', [SchoolNoticeController::class, 'cancel'])->whereNumber('notice')->name('cancel');
         Route::post('/{notice}/resend', [SchoolNoticeController::class, 'resendFailed'])->whereNumber('notice')->name('resend');
         Route::post('/{notice}/duplicate', [SchoolNoticeController::class, 'duplicate'])->whereNumber('notice')->name('duplicate');
+    });
+
+    // Send report cards to parents (email / WhatsApp / SMS link)
+    Route::prefix('result-sends')->name('result-sends.')->group(function () {
+        Route::get('/', [ResultSendController::class, 'index'])->name('index');
+        Route::get('/create', [ResultSendController::class, 'create'])->name('create');
+        Route::post('/candidates', [ResultSendController::class, 'candidates'])->name('candidates');
+        Route::post('/', [ResultSendController::class, 'store'])->name('store');
+        Route::get('/{send}', [ResultSendController::class, 'show'])->whereNumber('send')->name('show');
+        Route::post('/{send}/resend', [ResultSendController::class, 'resend'])->whereNumber('send')->name('resend');
+        Route::post('/{send}/cancel', [ResultSendController::class, 'cancel'])->whereNumber('send')->name('cancel');
+        Route::get('/item/{item}/pdf', [ResultSendController::class, 'pdf'])->whereNumber('item')->name('pdf');
     });
 
     // Online school-fee payments (Paystack)

@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\MessagingSetting;
 use App\Services\Messaging\MessagingService;
+use App\Services\Messaging\PaymentReceiptNotifier;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 
 /**
@@ -27,6 +30,11 @@ class MessagingSettingsController extends Controller
             'drivers'   => MessagingSetting::DRIVERS,
             'mailFrom'  => config('mail.from.address'),
             'mailer'    => config('mail.default'),
+            'receipts'  => PaymentReceiptNotifier::settings(),
+            'receiptPlaceholders' => PaymentReceiptNotifier::PLACEHOLDERS,
+            'recentReceipts' => Schema::hasTable('payment_receipt_messages')
+                ? DB::table('payment_receipt_messages')->orderByDesc('id')->limit(10)->get()
+                : collect(),
         ]);
     }
 
@@ -64,6 +72,33 @@ class MessagingSettingsController extends Controller
         $s->save();
 
         return back()->with('success', ucfirst($channel) . ' settings saved.')->withFragment($channel);
+    }
+
+    /** Automatic payment receipts to parents. */
+    public function receipts(Request $request)
+    {
+        $d = $request->validate([
+            'is_active'  => 'nullable|boolean',
+            'channels'   => 'nullable|array',
+            'channels.*' => 'in:sms,whatsapp,email',
+            'message'    => 'required|string|max:2000',
+            'sms_text'   => 'nullable|string|max:459',
+        ]);
+        $s = PaymentReceiptNotifier::settings();
+        $s->config = [
+            'channels' => array_values(array_unique($d['channels'] ?? [])),
+            'message'  => $d['message'],
+            'sms_text' => $d['sms_text'] ?? null,
+        ];
+        $s->is_active  = $request->boolean('is_active');
+        $s->updated_by = auth()->id();
+
+        if ($s->is_active && empty($s->config['channels'])) {
+            return back()->with('error', 'Pick at least one channel for payment receipts.')->withFragment('receipts');
+        }
+        $s->save();
+
+        return back()->with('success', 'Payment receipt settings saved.')->withFragment('receipts');
     }
 
     /** Send a real test message to the given phone/email with the saved settings. */

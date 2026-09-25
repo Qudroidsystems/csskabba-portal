@@ -94,6 +94,14 @@
 — Sent via the school portal</pre>
                                 Variable 1 is the parent's name and variable 2 is the notice text. Once Meta approves it, enter its name and language above.
                             </div>
+                            <div class="small mt-3">
+                                <strong>For report cards (optional):</strong> create a second <strong>Utility</strong> template named <code>result_ready</code> with a
+                                <strong>Document</strong> header and this body (two variables):
+                                <pre class="nt-pre">Dear @{{1}},
+
+@{{2}}</pre>
+                                Enter its name in "Document template name" above. Without it, WhatsApp sends the secure download link instead of the PDF.
+                            </div>
                         </details>
                     @endif
 
@@ -109,6 +117,68 @@
             </div>
         </div>
     @endforeach
+
+    @php $rc = $receipts->config ?? []; @endphp
+    <div class="cb-card" id="receipts">
+        <div class="cb-card-header">
+            <h5><i class="ri-receipt-line"></i>Payment receipts to parents</h5>
+            <span class="status-pill {{ $receipts->is_active ? 'st-paid' : 'st-muted' }}">{{ $receipts->is_active ? 'On' : 'Off' }}</span>
+        </div>
+        <div class="cb-card-body">
+            <p class="small text-muted">When a payment is recorded — at the bursary (single or bulk) or online through Paystack — parents automatically get a receipt with the amount, reference and the term's remaining balance. Each payment is sent once per contact.</p>
+            <form method="POST" action="{{ route('notices.settings.receipts') }}">
+                @csrf @method('PUT')
+                <div class="d-flex flex-wrap gap-4 align-items-center mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" value="1" id="rc-on" @checked($receipts->is_active)>
+                        <label class="form-check-label" for="rc-on">Send payment receipts</label>
+                    </div>
+                    @foreach(['sms' => 'SMS', 'whatsapp' => 'WhatsApp', 'email' => 'Email'] as $c => $l)
+                        <label class="form-check form-check-inline mb-0">
+                            <input class="form-check-input" type="checkbox" name="channels[]" value="{{ $c }}" @checked(in_array($c, $rc['channels'] ?? []))>
+                            <span class="form-check-label">{{ $l }}@if(!$settings[$c]->is_active) <small class="text-muted">(off)</small>@endif</span>
+                        </label>
+                    @endforeach
+                </div>
+                <div class="mb-1 d-flex flex-wrap gap-1">
+                    @foreach($receiptPlaceholders as $ph => $lbl)<code class="small" title="{{ $lbl }}">{{ $ph }}</code>@endforeach
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-7">
+                        <label class="form-label" for="rc-msg">Message (email / WhatsApp)</label>
+                        <textarea class="form-control" id="rc-msg" name="message" rows="7" maxlength="2000">{{ $rc['message'] ?? \App\Services\Messaging\PaymentReceiptNotifier::DEFAULT_MESSAGE }}</textarea>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label" for="rc-sms">SMS text</label>
+                        <textarea class="form-control" id="rc-sms" name="sms_text" rows="4" maxlength="459">{{ $rc['sms_text'] ?? \App\Services\Messaging\PaymentReceiptNotifier::DEFAULT_SMS }}</textarea>
+                        <small class="text-muted">Keep it under 160 characters for a 1-page SMS.</small>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-3"><button class="action-btn btn-primary-cb"><i class="ri-save-3-line"></i>Save receipts</button></div>
+            </form>
+
+            @if($recentReceipts->isNotEmpty())
+                <h6 class="mt-4 mb-2">Recent receipts</h6>
+                <div class="table-responsive">
+                    <table class="cb-table mb-0">
+                        <thead><tr><th>Time</th><th>Reference</th><th>To</th><th class="text-end">Amount</th><th>Status</th></tr></thead>
+                        <tbody>
+                        @foreach($recentReceipts as $r)
+                            <tr>
+                                <td><small>{{ \Illuminate\Support\Carbon::parse($r->created_at)->format('j M, g:i a') }}</small></td>
+                                <td><code>{{ $r->reference }}</code></td>
+                                <td><small>{{ strtoupper($r->channel) === 'WHATSAPP' ? 'WhatsApp' : strtoupper($r->channel) }} · {{ $r->recipient_name }} {{ $r->recipient }}</small></td>
+                                <td class="text-end">₦{{ number_format($r->amount, 2) }}</td>
+                                <td><span class="status-pill {{ $r->status === 'sent' ? 'st-paid' : ($r->status === 'failed' ? 'st-danger' : 'st-muted') }}">{{ ucfirst($r->status) }}</span>
+                                    @if($r->error)<br><small class="text-danger">{{ $r->error }}</small>@endif</td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    </div>
 
     <x-cb.card title="Automatic sending (scheduled notices and reminders)" icon="ri-timer-line">
         <p class="small mb-2">Scheduled notices and reminders are sent by the Laravel scheduler. Add this <strong>one</strong> cron job in cPanel › Cron Jobs, set to run <strong>every minute</strong>:</p>

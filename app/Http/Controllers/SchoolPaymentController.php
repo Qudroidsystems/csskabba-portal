@@ -995,6 +995,12 @@ class SchoolPaymentController extends Controller
                 'new_balance'           => $balance,
             ], 'Individual payment recorded');
 
+            // Receipt to parents (SMS / WhatsApp / email) — sent after the response.
+            \App\Services\Messaging\PaymentReceiptNotifier::queue(
+                $studentId, (float) $paymentAmount, (string) $request->payment_method2,
+                'SP-' . $studentPayment->id . '-' . now()->format('ymdHis'), $termId, $sessionId
+            );
+
             return response()->json(['success' => true, 'message' => 'Payment recorded successfully.']);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1201,6 +1207,12 @@ class SchoolPaymentController extends Controller
                 'payment_method' => $request->payment_method,
                 'entity_type'    => 'bulk_payment',
             ], null, ['bills' => $paymentsProcessed], 'Bulk payment recorded (server-recomputed adjustments)');
+
+            // One receipt for the whole bulk payment.
+            \App\Services\Messaging\PaymentReceiptNotifier::queue(
+                $studentId, (float) ($totalPaymentAmount - $remainingAmount), (string) $request->payment_method,
+                'BP-' . $studentId . '-' . now()->format('ymdHis'), $termId, $sessionId
+            );
 
             return response()->json([
                 'success' => true,

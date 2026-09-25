@@ -934,6 +934,60 @@ class ViewStudentReportController extends Controller
         }
     }
 
+    /**
+     * One student's terminal report card as PDF bytes (same layout as the
+     * class export). Used by "Send results to parents".
+     * Pass $recalculate = false when positions were already refreshed for this class.
+     */
+    public function renderReportCardPdf(int $studentId, int $schoolclassid, int $sessionid, int $termid, bool $recalculate = true): ?string
+    {
+        @ini_set('memory_limit', '1024M');
+
+        if ($recalculate && !$this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)) {
+            return null;
+        }
+
+        $studentData = $this->getStudentResultData($studentId, $schoolclassid, $sessionid, $termid);
+        if (empty($studentData) || empty($studentData['students']) || $studentData['students']->isEmpty()) {
+            return null;
+        }
+        $studentData['selected_columns'] = [];
+        $all = [$studentData];
+        $this->fixImagePaths($all);
+
+        $schoolclass = Schoolclass::where('id', $schoolclassid)->with(['arms', 'classcategories'])->first(['id', 'schoolclass', 'arm']);
+        $className   = $schoolclass ? ($schoolclass->schoolclass . ($schoolclass->arms ? $schoolclass->arms->arm : '')) : 'Class';
+
+        $pdf = Pdf::loadView('studentreports.class_results_pdf', [
+            'allStudentData' => $all,
+            'metadata'       => [
+                'class_name'       => $className,
+                'session'          => Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A',
+                'term'             => $this->getTermName($termid),
+                'generation_date'  => now()->format('Y-m-d H:i:s'),
+                'student_count'    => 1,
+                'selected_columns' => [],
+                'grade_basis'      => 'total',
+            ],
+        ])->setPaper('A4', 'portrait')->setOptions([
+            'dpi'                     => 96,
+            'defaultFont'             => 'DejaVu Sans',
+            'isRemoteEnabled'         => true,
+            'isHtml5ParserEnabled'    => true,
+            'isFontSubsettingEnabled' => true,
+            'isPhpEnabled'            => false,
+            'chroot'                  => [public_path(), storage_path()],
+            'tempDir'                 => storage_path('app/temp/'),
+            'fontCache'               => storage_path('fonts/'),
+            'logOutputFile'           => storage_path('logs/dompdf.log'),
+            'isJavascriptEnabled'     => false,
+            'enable_css_float'        => true,
+        ]);
+
+        $out = $pdf->output();
+        return $out !== '' ? $out : null;
+    }
+
     public function exportClassResultsPdf(Request $request)
     {
         try {

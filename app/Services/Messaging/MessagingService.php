@@ -89,6 +89,52 @@ class MessagingService
         // Template body params may not contain new lines, tabs or 4+ spaces.
         $clean = fn ($v) => trim(preg_replace('/\s{2,}/', ' ', str_replace(["\r", "\n", "\t"], ' ', (string) $v)));
 
+        // Document (e.g. a report card PDF) through the approved document template.
+        $docTemplate = trim((string) $s->value('document_template_name'));
+        $att = $context['attachment'] ?? null;
+        if ($docTemplate !== '' && $att && (!empty($context['wa_media_id']) || is_file($att['path'] ?? ''))) {
+            $mediaId = $context['wa_media_id'] ?? null;
+            if (!$mediaId) {
+                $up = Http::withToken($s->value('access_token'))->acceptJson()->timeout(60)
+                    ->attach('file', file_get_contents($att['path']), $att['filename'] ?? 'document.pdf', ['Content-Type' => 'application/pdf'])
+                    ->post('https://graph.facebook.com/' . $s->value('api_version') . '/' . $s->value('phone_number_id') . '/media', [
+                        'messaging_product' => 'whatsapp',
+                        'type'              => 'application/pdf',
+                    ]);
+                if (!$up->successful() || !$up->json('id')) {
+                    return $this->result('failed', 'WhatsApp: could not upload the PDF (' . ($up->json('error.message') ?: 'HTTP ' . $up->status()) . ')', null, $up->status() >= 500);
+                }
+                $mediaId = (string) $up->json('id');
+            }
+
+            $res = Http::withToken($s->value('access_token'))->acceptJson()->timeout(30)
+                ->post('https://graph.facebook.com/' . $s->value('api_version') . '/' . $s->value('phone_number_id') . '/messages', [
+                    'messaging_product' => 'whatsapp',
+                    'to'       => $phone,
+                    'type'     => 'template',
+                    'template' => [
+                        'name'     => $docTemplate,
+                        'language' => ['code' => $s->value('template_lang')],
+                        'components' => [
+                            ['type' => 'header', 'parameters' => [[
+                                'type' => 'document',
+                                'document' => ['id' => $mediaId, 'filename' => $att['filename'] ?? 'document.pdf'],
+                            ]]],
+                            ['type' => 'body', 'parameters' => [
+                                ['type' => 'text', 'text' => mb_substr($clean($context['name'] ?? 'Parent'), 0, 60)],
+                                ['type' => 'text', 'text' => mb_substr($clean($text), 0, 1000)],
+                            ]],
+                        ],
+                    ],
+                ]);
+            if ($res->successful()) {
+                return $this->result('sent', null, (string) $res->json('messages.0.id')) + ['media_id' => $mediaId];
+            }
+            $err = $res->json('error') ?? [];
+            return $this->result('failed', 'WhatsApp: ' . (($err['error_user_msg'] ?? null) ?: ($err['message'] ?? 'HTTP ' . $res->status()))
+                . ' (check the document template: document header + 2 body variables)', null, $res->status() >= 500) + ['media_id' => $mediaId];
+        }
+
         $res = Http::withToken($s->value('access_token'))->acceptJson()->timeout(30)
             ->post('https://graph.facebook.com/' . $s->value('api_version') . '/' . $s->value('phone_number_id') . '/messages', [
                 'messaging_product' => 'whatsapp',
@@ -135,6 +181,7 @@ class MessagingService
             $context['name'] ?? null,
             $s->value('from_name'),
             $s->value('reply_to'),
+            $context['attachment'] ?? null,
         ));
         return $this->result('sent');
     }

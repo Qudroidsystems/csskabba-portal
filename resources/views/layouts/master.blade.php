@@ -1002,7 +1002,7 @@
                     @endcan
 
                     {{-- COMMUNICATION --}}
-                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings'))
+                    @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings') || auth()->user()->can('View result-sends'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>COMMUNICATION</span></li>
                     @endif
 
@@ -1017,6 +1017,22 @@
                                     @can('Create notices')
                                         <li class="nav-item"><a href="{{ route('notices.create') }}" class="nav-link">New Notice</a></li>
                                     @endcan
+                                </ul>
+                            </div>
+                        </li>
+                    @endcan
+
+                    @can('View result-sends')
+                        <li class="nav-item">
+                            <a href="#sidebarResultSends" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarResultSends">
+                                <i class="ri-mail-send-line"></i> <span>Send Results</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarResultSends">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('Create result-sends')
+                                        <li class="nav-item"><a href="{{ route('result-sends.create') }}" class="nav-link">Send Report Cards</a></li>
+                                    @endcan
+                                    <li class="nav-item"><a href="{{ route('result-sends.index') }}" class="nav-link">Sending History</a></li>
                                 </ul>
                             </div>
                         </li>
@@ -1840,6 +1856,9 @@
         {title:'Cash Flow',                             url:'{{ route("reports.financial.cash-flow") }}',                    icon:'mdi-cash-sync',               category:'Accounting',          keywords:['cash','flow','liquidity','report']},
         @can('View notices')
         {title:'School Notices',                        url:'{{ route("notices.index") }}',                                  icon:'mdi-bullhorn',                category:'Communication',       keywords:['notice','sms','whatsapp','email','parents','announcement','exam','holiday','midterm','ca test']},
+        @endcan
+        @can('Create result-sends')
+        {title:'Send Results to Parents',               url:'{{ route("result-sends.create") }}',                            icon:'mdi-email-send',              category:'Communication',       keywords:['result','report card','send','parents','whatsapp','email','sms']},
         @endcan
         @can('Create notices')
         {title:'New Notice',                            url:'{{ route("notices.create") }}',                                 icon:'mdi-bullhorn-outline',        category:'Communication',       keywords:['send','sms','broadcast','parents','notify']},

@@ -351,7 +351,8 @@ class OnlineFeeCheckoutService
             $data = $verify['data'];
         }
 
-        return DB::transaction(function () use ($payment, $data, $source) {
+        $justPosted = false;
+        $result = DB::transaction(function () use ($payment, $data, $source, &$justPosted) {
             /** @var OnlineFeePayment $p */
             $p = OnlineFeePayment::whereKey($payment->id)->lockForUpdate()->first();
             if ($p->posted_at) {
@@ -442,8 +443,19 @@ class OnlineFeeCheckoutService
                 'paid_at'          => !empty($data['paid_at']) ? Carbon::parse($data['paid_at']) : now(),
                 'posted_at'        => now(),
             ]);
+            $justPosted = true;
 
             return $p->fresh();
         });
+
+        if ($justPosted && $result && $result->applied_kobo > 0) {
+            \App\Services\Messaging\PaymentReceiptNotifier::queue(
+                (int) $result->student_id, self::naira((int) $result->applied_kobo),
+                'Online (' . ($result->channel ? ucwords(str_replace('_', ' ', $result->channel)) : 'Paystack') . ')',
+                $result->reference, $result->term_id ? (int) $result->term_id : null, $result->session_id ? (int) $result->session_id : null
+            );
+        }
+
+        return $result;
     }
 }

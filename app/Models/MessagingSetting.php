@@ -37,6 +37,7 @@ class MessagingSetting extends Model
                 'template_name'   => ['label' => 'Approved template name', 'secret' => false, 'required' => true, 'default' => 'school_notice'],
                 'template_lang'   => ['label' => 'Template language code', 'secret' => false, 'required' => true, 'default' => 'en'],
                 'api_version'     => ['label' => 'Graph API version', 'secret' => false, 'required' => true, 'default' => 'v21.0'],
+                'document_template_name' => ['label' => 'Document template name (for report cards, optional)', 'secret' => false, 'required' => false, 'default' => ''],
             ]],
         ],
         'email' => [

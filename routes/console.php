@@ -15,5 +15,8 @@ Artisan::command('inspire', function () {
 // School notices: scheduled sends and automatic reminders.
 Schedule::command('notices:dispatch')->everyMinute()->withoutOverlapping(15);
 
+// Report cards to parents: generate + send in batches.
+Schedule::command('results:send --max=40')->everyMinute()->withoutOverlapping(20);
+
 // Queued jobs (e.g. fee reminders) on hosts without a permanent queue worker.
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')->everyMinute()->withoutOverlapping(5);
