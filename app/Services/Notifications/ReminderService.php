@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 
 class ReminderService
@@ -176,7 +177,82 @@ class ReminderService
             $query->where('sbpb.session_id', $sessionId);
         }
 
-        return $query->get();
+        $students = $query->get();
+
+        // Attach a per-bill breakdown (the bills still owed) to each student.
+        $bookBills = DB::table('student_bill_payment_book as sbpb')
+            ->join('school_bill as sb', 'sb.id', '=', 'sbpb.school_bill_id')
+            ->whereIn('sbpb.student_id', $studentIds)
+            ->where('sbpb.amount_owed', '>', 0)
+            ->when($termId, fn ($q) => $q->where('sbpb.term_id', $termId))
+            ->when($sessionId, fn ($q) => $q->where('sbpb.session_id', $sessionId))
+            ->select('sbpb.student_id', 'sb.title', 'sbpb.amount_owed as owed')
+            ->get()->groupBy('student_id');
+        foreach ($students as $st) {
+            $st->bills = ($bookBills->get($st->student_id) ?? collect())
+                ->map(fn ($b) => ['title' => $b->title, 'owed' => (float) $b->owed])->values()->all();
+        }
+
+        // Include never-payers in the selection (no payment-book row) via the roster.
+        $found = $students->pluck('student_id')->map(fn ($v) => (int) $v)->all();
+        $missing = array_values(array_diff(array_map('intval', $studentIds), $found));
+        if ($missing) {
+            $students = $students->concat($this->rosterDebtors($missing, $termId, $sessionId));
+        }
+
+        return $students;
+    }
+
+    /** Debtors with no payment-book row yet: owed = full billed for their class/term/session. */
+    protected function rosterDebtors(array $studentIds, ?int $termId, ?int $sessionId): Collection
+    {
+        if (!$sessionId) {
+            $sessionId = (int) (DB::table('schoolsession')->where('status', 'Current')->value('id') ?? 0) ?: null;
+        }
+
+        $roster = DB::table('studentclass as scl')
+            ->join('studentRegistration as s', 's.id', '=', 'scl.studentId')
+            ->leftJoin('schoolclass as sc', 'sc.id', '=', 'scl.schoolclassid')
+            ->leftJoin('schoolarm as sa', 'sa.id', '=', 'sc.arm')
+            ->leftJoin('schoolterm as st', 'st.id', '=', 'scl.termid')
+            ->leftJoin('schoolsession as ss', 'ss.id', '=', 'scl.sessionid')
+            ->leftJoin('parentRegistration as pr', 'pr.studentId', '=', 's.id')
+            ->whereIn('scl.studentId', $studentIds)
+            ->when($termId, fn ($q) => $q->where('scl.termid', $termId))
+            ->when($sessionId, fn ($q) => $q->where('scl.sessionid', $sessionId))
+            ->select(
+                's.id as student_id', 's.firstname', 's.lastname', 's.admissionNo',
+                's.email as student_email', 's.phone_number as student_phone',
+                'pr.parent_email', 'pr.father_phone', 'pr.mother_phone',
+                DB::raw("TRIM(CONCAT(COALESCE(sc.schoolclass,''), ' ', COALESCE(sa.arm,''))) as class_name"),
+                'st.term as term_name', 'ss.session as session_name',
+                'scl.schoolclassid as class_id', 'scl.termid as term_id', 'scl.sessionid as session_id'
+            )->get()
+            ->unique(fn ($r) => $r->student_id . '_' . $r->class_id . '_' . $r->term_id . '_' . $r->session_id)
+            ->values();
+
+        if ($roster->isEmpty()) return collect();
+
+        $bills = DB::table('school_bill_class_term_session as sbcts')
+            ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id');
+        if (Schema::hasColumn('school_bill_class_term_session', 'deleted_at')) $bills->whereNull('sbcts.deleted_at');
+        if (Schema::hasColumn('school_bill_class_term_session', 'is_active')) $bills->where('sbcts.is_active', 1);
+        $billsByGroup = $bills->select('sbcts.class_id', 'sbcts.termid_id as term_id', 'sbcts.session_id', 'sb.title', 'sb.bill_amount')
+            ->get()->groupBy(fn ($b) => ((int) $b->class_id) . '_' . ((int) $b->term_id) . '_' . ((int) $b->session_id));
+
+        $out = collect();
+        foreach ($roster as $r) {
+            $gk = ((int) $r->class_id) . '_' . ((int) $r->term_id) . '_' . ((int) $r->session_id);
+            $gb = $billsByGroup->get($gk);
+            if (!$gb) continue;
+            $total = (float) $gb->sum('bill_amount');
+            if ($total <= 0) continue;
+            $r->outstanding = $total;
+            $r->amount_paid = 0;
+            $r->bills = $gb->map(fn ($b) => ['title' => $b->title, 'owed' => (float) $b->bill_amount])->values()->all();
+            $out->push($r);
+        }
+        return $out;
     }
 
     /**
@@ -243,11 +319,21 @@ class ReminderService
 
         $subject = "Fee payment reminder – {$name}";
 
+        $breakdown = '';
+        if (!empty($student->bills)) {
+            foreach ($student->bills as $b) {
+                $bt = is_array($b) ? ($b['title'] ?? 'Bill') : ($b->title ?? 'Bill');
+                $bo = is_array($b) ? ($b['owed'] ?? 0) : ($b->owed ?? 0);
+                $breakdown .= "  - {$bt}: ₦" . number_format((float) $bo, 2) . "\n";
+            }
+        }
+
         $body = "Dear Parent/Guardian,\n\n"
             . "This is a reminder that {$name} ({$student->admissionNo})"
             . ($class ? " in {$class}" : '')
             . " has an outstanding school fee balance of ₦{$outstanding}"
             . " for {$term}, {$session}.\n\n"
+            . ($breakdown ? "Breakdown of what is owed:\n{$breakdown}\n" : '')
             . "Please arrange payment at your earliest convenience.\n\n"
             . "Thank you.\n{$school}";
 
