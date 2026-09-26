@@ -237,6 +237,60 @@ class LeaveController extends Controller
         ]);
     }
 
+    public function exportRecords(Request $request)
+    {
+        abort_unless($request->user()->can('View leave records'), 403);
+        $rows = DB::table('leave_requests as r')->join('users as u', 'u.id', '=', 'r.user_id')
+            ->join('leave_types as t', 't.id', '=', 'r.leave_type_id')
+            ->join('staffbioinfo as s', 's.id', '=', 'r.staff_id')
+            ->when($request->filled('status'), fn ($x) => $x->where('r.status', $request->status))
+            ->when($request->filled('type'), fn ($x) => $x->where('r.leave_type_id', $request->type))
+            ->when($request->filled('search'), fn ($x) => $x->where('u.name', 'like', '%' . $request->search . '%'))
+            ->when($request->filled('month'), fn ($x) => $x->where('r.start_date', '<=', Carbon::parse($request->month . '-01')->endOfMonth())->where('r.end_date', '>=', $request->month . '-01'))
+            ->orderBy('r.start_date')
+            ->get(['u.name', 's.department', 't.name as type', 't.paid', 'r.start_date', 'r.end_date', 'r.days', 'r.half_day', 'r.status', 'r.approver_note']);
+
+        return response()->streamDownload(function () use ($rows) {
+            $o = fopen('php://output', 'w');
+            fputcsv($o, ['Staff', 'Department', 'Leave type', 'Paid', 'From', 'To', 'Days', 'Half day', 'Status', 'Note']);
+            foreach ($rows as $r) {
+                fputcsv($o, [$r->name, $r->department, $r->type, $r->paid ? 'Yes' : 'No',
+                    Carbon::parse($r->start_date)->toDateString(), Carbon::parse($r->end_date)->toDateString(),
+                    $r->days, $r->half_day ? 'Yes' : 'No', ucwords(str_replace('_', ' ', $r->status)), $r->approver_note]);
+            }
+            fclose($o);
+        }, 'staff-leave-' . now()->format('Ymd') . '.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    public function hrBalances(Request $request)
+    {
+        abort_unless($request->user()->can('View leave records') || $request->user()->can('Manage leave types'), 403);
+        $year = (int) ($request->get('year') ?: now()->year);
+
+        $types = DB::table('leave_types')->where('is_active', true)->orderBy('name')
+            ->get(['id', 'name', 'color', 'days_per_year', 'carry_over_max']);
+        $limited = $types->where('days_per_year', '>', 0)->values();
+
+        $staff = DB::table('staffbioinfo as s')->join('users as u', 'u.id', '=', 's.userid')
+            ->when($request->filled('search'), fn ($x) => $x->where('u.name', 'like', '%' . $request->search . '%'))
+            ->when($request->filled('department'), fn ($x) => $x->where('s.department', $request->department))
+            ->orderBy('u.name')->select('s.id', 's.gender', 's.department', 'u.name')
+            ->paginate(25)->withQueryString();
+
+        $rows = collect($staff->items())->map(function ($st) use ($year) {
+            $st->balances = $this->svc->balances((int) $st->id, $year, $st->gender ?? null)->keyBy('id');
+            return $st;
+        });
+
+        return view('leave.balances', [
+            'pagetitle' => 'Leave Balances', 'year' => $year, 'rows' => $rows, 'staff' => $staff,
+            'types' => $limited,
+            'departments' => DB::table('staffbioinfo')->whereNotNull('department')->where('department', '!=', '')
+                ->distinct()->orderBy('department')->pluck('department'),
+            'carryTypes' => $types->where('carry_over_max', '>', 0)->pluck('name')->all(),
+        ]);
+    }
+
     public function storeType(Request $request)
     {
         $d = $this->typeData($request);

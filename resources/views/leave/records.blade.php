@@ -6,7 +6,12 @@
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
-    <x-cb.hero title="Leave Records" icon="ri-table-line" subtitle="Everyone's leave, who is away this week, leave types and balance adjustments." :back="route('leave.index')" back-label="My leave" />
+    <x-cb.hero title="Leave Records" icon="ri-table-line" subtitle="Everyone's leave, who is away this week, leave types and balance adjustments." :back="route('leave.index')" back-label="My leave">
+        <x-slot name="actions">
+            @if(Route::has('leave.board'))<a href="{{ route('leave.board') }}" class="action-btn btn-go"><i class="ri-team-line"></i>Who's Away</a>@endif
+            @can('View leave records')<a href="{{ route('leave.records.export', request()->query()) }}" class="action-btn btn-primary-cb"><i class="ri-download-2-line"></i>Export CSV</a>@endcan
+        </x-slot>
+    </x-cb.hero>
 
     @if(session('success'))<div class="cb-banner info"><i class="ri-checkbox-circle-line"></i><div>{{ session('success') }}</div></div>@endif
     @if($errors->any())<div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ $errors->first() }}</div></div>@endif

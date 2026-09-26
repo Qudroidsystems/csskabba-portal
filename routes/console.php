@@ -33,6 +33,9 @@ Schedule::command('activity:prune --days=365')->dailyAt('02:30');
 // Leave reminders (starts tomorrow, days left, resume date, not back yet)
 Schedule::command('leave:reminders')->dailyAt('07:00')->withoutOverlapping(30);
 
+// Carry unused annual leave into the new year (idempotent; runs once at year start).
+Schedule::command('leave:carry-over')->yearlyOn(1, 1, '01:00')->withoutOverlapping(60);
+
 // Post yesterday's school-fee receipts to the general ledger
 Schedule::command('accounting:sync-fees')->dailyAt('01:30')->withoutOverlapping(30);
 

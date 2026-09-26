@@ -1644,6 +1644,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('leave')->name('leave.')->group(function () {
         Route::get('/', [\App\Http\Controllers\LeaveController::class, 'index'])->name('index');
+        Route::get('/board', [\App\Http\Controllers\LeaveBoardController::class, 'index'])->name('board');
+        Route::get('/records/export', [\App\Http\Controllers\LeaveController::class, 'exportRecords'])->name('records.export');
+        Route::get('/balances', [\App\Http\Controllers\LeaveController::class, 'hrBalances'])->name('balances');
         Route::post('/', [\App\Http\Controllers\LeaveController::class, 'store'])->name('store');
         Route::post('/{id}/cancel', [\App\Http\Controllers\LeaveController::class, 'cancel'])->whereNumber('id')->name('cancel');
         Route::get('/approvals', [\App\Http\Controllers\LeaveController::class, 'approvals'])->name('approvals');
@@ -1657,6 +1660,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/mark-resumed', [\App\Http\Controllers\LeaveController::class, 'markResumed'])->whereNumber('id')->name('mark-resumed');
         Route::post('/{id}/extend', [\App\Http\Controllers\LeaveController::class, 'extend'])->whereNumber('id')->name('extend');
         Route::post('/reminders', [\App\Http\Controllers\LeaveController::class, 'saveReminders'])->name('reminders');
+    });
+
+    // Student leave of absence: student/parent apply; class teacher recommends, principal approves.
+    Route::prefix('student-leave')->name('student-leave.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\StudentLeaveController::class, 'mine'])->name('mine');
+        Route::post('/', [\App\Http\Controllers\StudentLeaveController::class, 'store'])->name('store');
+        Route::post('/{leave}/cancel', [\App\Http\Controllers\StudentLeaveController::class, 'cancel'])->whereNumber('leave')->name('cancel');
+        Route::get('/approvals', [\App\Http\Controllers\StudentLeaveController::class, 'approvals'])->name('approvals');
+        Route::post('/{leave}/act', [\App\Http\Controllers\StudentLeaveController::class, 'act'])->whereNumber('leave')->name('act');
+        Route::get('/records', [\App\Http\Controllers\StudentLeaveController::class, 'records'])->name('records');
+        Route::get('/records/export', [\App\Http\Controllers\StudentLeaveController::class, 'exportRecords'])->name('records.export');
+        Route::get('/{leave}/document', [\App\Http\Controllers\StudentLeaveController::class, 'attachment'])->whereNumber('leave')->name('attachment');
     });
 });
 

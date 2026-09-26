@@ -502,6 +502,11 @@
                                 </div>
                             </li>
                         @endforeach
+                        @if(Route::has('student-leave.mine'))
+                        <li class="nav-item">
+                            <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
+                        </li>
+                        @endif
                         <li class="nav-item">
                             <a href="{{ route('notifications.index') }}" class="nav-link menu-link"><i class="ri-notification-3-line"></i> <span>Notices</span></a>
                         </li>
@@ -527,9 +532,30 @@
                                 <li class="nav-item"><a href="{{ route('online-staff.index') }}" class="nav-link">Who's Online</a></li>
                                 @can('View activity log')<li class="nav-item"><a href="{{ route('activity.index') }}" class="nav-link">Activity Log</a></li>@endcan
                                 @canany(['View leave records', 'Manage leave types'])<li class="nav-item"><a href="{{ route('leave.records') }}" class="nav-link">Leave Records</a></li>@endcanany
+                                @canany(['View leave records', 'Manage leave types'])@if(Route::has('leave.balances'))<li class="nav-item"><a href="{{ route('leave.balances') }}" class="nav-link">Leave Balances</a></li>@endif@endcanany
                             </ul></div>
                         </li>
                     @endif
+
+                    @canany(['Recommend student leave', 'Approve student leave', 'View student leave records'])
+                    @if(Route::has('student-leave.approvals'))
+                        <li class="nav-item">
+                            <a href="#sidebarStudentLeave" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentLeave"><i class="ri-user-follow-line"></i> <span>Student Leave</span></a>
+                            <div class="collapse menu-dropdown" id="sidebarStudentLeave"><ul class="nav nav-sm flex-column">
+                                @canany(['Recommend student leave', 'Approve student leave'])<li class="nav-item"><a href="{{ route('student-leave.approvals') }}" class="nav-link">Approvals</a></li>@endcanany
+                                @can('View student leave records')<li class="nav-item"><a href="{{ route('student-leave.records') }}" class="nav-link">Records</a></li>@endcan
+                            </ul></div>
+                        </li>
+                    @endif
+                    @endcanany
+
+                    @canany(['View leave records', 'View student leave records', 'Approve leave', 'Approve student leave'])
+                    @if(Route::has('leave.board'))
+                        <li class="nav-item">
+                            <a href="{{ route('leave.board') }}" class="nav-link menu-link {{ request()->routeIs('leave.board') ? 'active' : '' }}"><i class="ri-team-line"></i> <span>Who's Away</span></a>
+                        </li>
+                    @endif
+                    @endcanany
 
                     {{-- Dashboard --}}
                     @unless(auth()->user()->hasRole('Parent') && !auth()->user()->can('dashboard'))
@@ -710,6 +736,12 @@
                             </ul>
                         </div>
                     </li>
+
+                    @if(auth()->user()->student_id && Route::has('student-leave.mine'))
+                    <li class="nav-item">
+                        <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
+                    </li>
+                    @endif
 
                     @can('View parent')
                         <li class="nav-item">
@@ -2057,6 +2089,10 @@
         {title:'Create Family Group',                   url:'{{ route("sibling.create") }}',                                 icon:'mdi-account-multiple-plus',   category:'Finance',             keywords:['sibling','family','group','create']},
         @if(Route::has("maintenance.settings")){title:'Maintenance Mode',                      url:'{{ route("maintenance.settings") }}',                            icon:'mdi-wrench',                  category:'System',              keywords:['maintenance','offline','downtime','lock','close portal']},@endif
         @if(Route::has("feature-flags.index")){title:'Module Access',                         url:'{{ route("feature-flags.index") }}',                             icon:'mdi-toggle-switch',           category:'System',              keywords:['module','feature','flag','remote','enable','disable','sidebar']},@endif
+        @if(Route::has("student-leave.approvals")){title:'Student Leave Approvals',              url:'{{ route("student-leave.approvals") }}',                         icon:'mdi-account-check',           category:'Staff',               keywords:['student','leave','absence','approve','recommend','permission']},@endif
+        @if(Route::has("student-leave.records")){title:'Student Leave Records',                 url:'{{ route("student-leave.records") }}',                           icon:'mdi-file-document-multiple',  category:'Staff',               keywords:['student','leave','absence','records','export','history']},@endif
+        @if(Route::has("leave.board")){title:'Who\'s Away (Leave Board)',                url:'{{ route("leave.board") }}',                                     icon:'mdi-calendar-account',        category:'Staff',               keywords:['leave','away','absent','calendar','board','staff','student','today']},@endif
+        @if(Route::has("leave.balances")){title:'Leave Balances',                        url:'{{ route("leave.balances") }}',                                  icon:'mdi-scale-balance',           category:'Staff',               keywords:['leave','balance','entitlement','remaining','carry','over','allowance']},@endif
         {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',             keywords:['gateway','paystack','flutterwave','online','configure']},
 
         /* ── Accounting & Reports ── */

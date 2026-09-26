@@ -535,6 +535,9 @@ class DatabaseSeeder extends Seeder
             'LeavePermissionSeeder' =>
                 '🌴 Seeding staff leave permissions...',
 
+            'StudentLeavePermissionSeeder' =>
+                '🧒 Seeding student leave permissions...',
+
             'FinanceOpsPermissionSeeder' =>
                 '🏦 Seeding payouts, loans, expenses, assets & accounting permissions...',
 
