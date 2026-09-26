@@ -132,6 +132,21 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="row g-3 mt-1">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold">Backdating (teachers)</label>
+                                                        <div class="form-check mt-1">
+                                                            <input class="form-check-input" type="checkbox" name="allow_backdating" id="allowBackdating" checked>
+                                                            <label class="form-check-label" for="allowBackdating">Allow teachers to mark past days</label>
+                                                        </div>
+                                                        <small class="text-muted" style="font-size:11px;">Off = teachers can only mark today. Admins are never restricted.</small>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold" for="backdateDays">Days teachers may go back</label>
+                                                        <input type="number" name="backdate_days" id="backdateDays" class="form-control" min="0" max="180" value="{{ old('backdate_days', 7) }}">
+                                                        <small class="text-muted" style="font-size:11px;">e.g. 7 = teachers can fill up to a week of missed days.</small>
+                                                    </div>
+                                                </div>
                                                 <div class="mt-3 d-flex gap-2">
                                                     <button type="submit" class="btn btn-primary" id="saveSettingBtn">
                                                         <i class="ri-save-line me-1"></i>
@@ -229,7 +244,9 @@
                                                                         '{{ \Illuminate\Support\Carbon::parse($s->morning_end_time ?? '12:00:00')->format('H:i') }}',
                                                                         {{ (int) ($s->late_grace_minutes ?? 0) }},
                                                                         {{ $s->track_morning ? 'true' : 'false' }},
-                                                                        {{ $s->track_afternoon ? 'true' : 'false' }}
+                                                                        {{ $s->track_afternoon ? 'true' : 'false' }},
+                                                                        {{ ($s->allow_backdating ?? true) ? 'true' : 'false' }},
+                                                                        {{ (int) ($s->backdate_days ?? 7) }}
                                                                     )"
                                                                     title="Edit">
                                                                     <i class="ri-edit-line"></i>
@@ -413,7 +430,7 @@ function showToast(msg, type = 'success') {
 
 function editSetting(id, termId, sessionId, resumption, vacation,
                      resumptionTime, closingTime, morningEnd, grace,
-                     morning, afternoon) {
+                     morning, afternoon, allowBackdate, backdateDays) {
     document.getElementById('settingId').value        = id;
     document.getElementById('termId').value           = termId;
     document.getElementById('sessionId').value        = sessionId;
@@ -425,6 +442,8 @@ function editSetting(id, termId, sessionId, resumption, vacation,
     document.getElementById('lateGrace').value        = grace;
     document.getElementById('trackMorning').checked   = morning;
     document.getElementById('trackAfternoon').checked = afternoon;
+    if (typeof allowBackdate !== 'undefined') document.getElementById('allowBackdating').checked = allowBackdate;
+    if (typeof backdateDays !== 'undefined') document.getElementById('backdateDays').value = backdateDays;
 
     document.getElementById('formTitle').textContent       = 'Edit Term Calendar';
     document.getElementById('saveBtnText').textContent     = 'Update Setting';
@@ -447,6 +466,8 @@ function resetSettingForm() {
     document.getElementById('closingTime').value           = '14:00';
     document.getElementById('morningEndTime').value        = '12:00';
     document.getElementById('lateGrace').value             = 0;
+    document.getElementById('allowBackdating').checked     = true;
+    document.getElementById('backdateDays').value          = 7;
 }
 
 @can('Create attendance-settings')
@@ -455,6 +476,7 @@ document.getElementById('settingForm')?.addEventListener('submit', async functio
     const fd = new FormData(this);
     fd.set('track_morning',   document.getElementById('trackMorning').checked   ? '1' : '0');
     fd.set('track_afternoon', document.getElementById('trackAfternoon').checked ? '1' : '0');
+    fd.set('allow_backdating', document.getElementById('allowBackdating').checked ? '1' : '0');
 
     const settingId = document.getElementById('settingId').value;
 

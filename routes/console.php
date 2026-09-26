@@ -43,6 +43,9 @@ Schedule::command('calendar:reminders')->dailyAt('07:15')->withoutOverlapping(30
 // Financial audit digest to auditors each morning.
 Schedule::command('financial-audit:digest')->dailyAt('07:45')->withoutOverlapping(30);
 
+// Database backup: the command checks the admin's schedule and runs when due.
+Schedule::command('backup:run')->everyFifteenMinutes()->withoutOverlapping(30);
+
 // Post yesterday's school-fee receipts to the general ledger
 Schedule::command('accounting:sync-fees')->dailyAt('01:30')->withoutOverlapping(30);
 

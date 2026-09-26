@@ -55,5 +55,6 @@ Route::middleware('device.auth')->post('/device/attendance', [DeviceAttendanceCo
 Route::middleware('remote.portal')->prefix('feature-flags')->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\FeatureFlagApiController::class, 'index']);
     Route::get('/health', [\App\Http\Controllers\Api\FeatureFlagApiController::class, 'health']);
+    Route::get('/catalog', [\App\Http\Controllers\Api\FeatureFlagApiController::class, 'catalog']);
     Route::post('/sync', [\App\Http\Controllers\Api\FeatureFlagApiController::class, 'sync']);
 });

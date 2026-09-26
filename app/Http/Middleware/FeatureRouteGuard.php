@@ -16,7 +16,12 @@ use Illuminate\Http\Request;
 class FeatureRouteGuard
 {
     /** Route-name prefix => feature key. First match wins. */
-    protected array $map = [
+    protected array $map;
+
+    /** Route-name prefix => feature key. Shared with the API catalog. */
+    public static function moduleRouteMap(): array
+    {
+        return [
         'accounting.' => 'accounting',
         'payroll.' => 'payroll',
         'staff.payments.' => 'payroll',
@@ -53,15 +58,27 @@ class FeatureRouteGuard
         'admin.score-entry.' => 'results',
         'student-id-cards.' => 'students',
         'studentbatch' => 'students',
-    ];
+        ];
+    }
 
     /** Route names that are never blocked (prefix match). */
-    protected array $allow = [
+    protected array $allow;
+
+    public static function allowList(): array
+    {
+        return [
         'login', 'logout', 'password', 'dashboard', 'home', 'management.dashboard',
         'maintenance.', 'feature-flags.', 'my-pay.', 'leave.', 'parent.',
         'profile.', 'users.', 'roles.', 'permissions.', 'notifications.',
         'admin.payment-gateways.', 'student.payments', 'student.fees',
-    ];
+        ];
+    }
+
+    public function __construct()
+    {
+        $this->map = self::moduleRouteMap();
+        $this->allow = self::allowList();
+    }
 
     public function handle(Request $request, Closure $next)
     {

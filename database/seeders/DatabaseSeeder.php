@@ -550,6 +550,9 @@ class DatabaseSeeder extends Seeder
             'FinancialAuditPermissionSeeder' =>
                 '🔎 Seeding financial-audit permissions...',
 
+            'BackupPermissionSeeder' =>
+                '💾 Seeding database-backup permission...',
+
             'CalendarPermissionSeeder' =>
                 '📅 Seeding school-calendar permissions & default categories...',
 

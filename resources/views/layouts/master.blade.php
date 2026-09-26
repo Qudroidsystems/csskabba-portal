@@ -1119,6 +1119,16 @@
                         </li>
                     @endcan
 
+                    @can('Manage backups')
+                    @if(Route::has('admin.backups.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('admin.backups.index') }}" class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}">
+                                <i class="ri-database-2-line"></i> <span>Database Backups</span>
+                            </a>
+                        </li>
+                    @endif
+                    @endcan
+
                     @feature('accounting')
                     @can('View financial reports')
                         <li class="nav-item">
@@ -2106,6 +2116,7 @@
         {title:'Create Family Group',                   url:'{{ route("sibling.create") }}',                                 icon:'mdi-account-multiple-plus',   category:'Finance',             keywords:['sibling','family','group','create']},
         @if(Route::has("maintenance.settings")){title:'Maintenance Mode',                      url:'{{ route("maintenance.settings") }}',                            icon:'mdi-wrench',                  category:'System',              keywords:['maintenance','offline','downtime','lock','close portal']},@endif
         @if(Route::has("feature-flags.index")){title:'Module Access',                         url:'{{ route("feature-flags.index") }}',                             icon:'mdi-toggle-switch',           category:'System',              keywords:['module','feature','flag','remote','enable','disable','sidebar']},@endif
+        @if(Route::has("admin.backups.index")){title:'Database Backups',                     url:'{{ route("admin.backups.index") }}',                            icon:'mdi-database',                category:'System',              keywords:['backup','database','sql','dump','restore','schedule','export']},@endif
         @if(Route::has("student-leave.approvals")){title:'Student Leave Approvals',              url:'{{ route("student-leave.approvals") }}',                         icon:'mdi-account-check',           category:'Staff',               keywords:['student','leave','absence','approve','recommend','permission']},@endif
         @if(Route::has("student-leave.records")){title:'Student Leave Records',                 url:'{{ route("student-leave.records") }}',                           icon:'mdi-file-document-multiple',  category:'Staff',               keywords:['student','leave','absence','records','export','history']},@endif
         @if(Route::has("leave.board")){title:'Who\'s Away (Leave Board)',                url:'{{ route("leave.board") }}',                                     icon:'mdi-calendar-account',        category:'Staff',               keywords:['leave','away','absent','calendar','board','staff','student','today']},@endif

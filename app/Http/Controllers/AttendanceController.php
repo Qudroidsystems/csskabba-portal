@@ -28,6 +28,31 @@ class AttendanceController extends Controller
         $this->middleware('permission:View attendance-student-report', ['only' => ['studentReport']]);
     }
 
+    /** An attendance admin (can manage settings) is never restricted on dates. */
+    protected function isAttendanceAdmin(): bool
+    {
+        $u = Auth::user();
+        return $u && ($u->can('Create attendance-settings') || $u->hasRole(['admin', 'super-admin']));
+    }
+
+    /** Returns an error message if the current user may not mark this date, else null. */
+    protected function backdateError(int $termId, int $sessionId, string $date): ?string
+    {
+        try { $d = Carbon::parse($date)->startOfDay(); } catch (\Throwable $e) { return 'Invalid date.'; }
+        $today = today();
+        if ($d->gt($today)) return 'You cannot mark attendance for a future date.';
+        if ($this->isAttendanceAdmin()) return null;
+        $setting = AttendanceTermSetting::where('term_id', $termId)->where('session_id', $sessionId)->first();
+        $allow = $setting ? (bool) ($setting->allow_backdating ?? true) : true;
+        $days  = (int) ($setting->backdate_days ?? 7);
+        if (!$allow) {
+            return $d->isSameDay($today) ? null : "Backdating is turned off — you can only mark today's attendance. Ask an admin to open older dates.";
+        }
+        $min = $today->copy()->subDays(max(0, $days));
+        if ($d->lt($min)) return "You can only mark attendance from the last {$days} day(s). Ask an admin to open older dates.";
+        return null;
+    }
+
     // =========================================================================
     // MY CLASSES  –  class teacher landing page
     // =========================================================================
@@ -152,13 +177,18 @@ public function register(Request $request, int $classId, int $termId, int $sessi
         ? Carbon::parse($setting->morning_end_time)->format('g:i A')
         : '12:00 PM';
 
+    $backdateNote = $this->backdateError($termId, $sessionId, $date);
+    $dateEditable = $backdateNote === null;
+    $isAttendanceAdmin = $this->isAttendanceAdmin();
+
     $pagetitle = "Attendance – {$schoolclass->schoolclass} {$schoolclass->arms?->arm}";
 
     return view('attendance.teacher.register', compact(
         'students', 'existing', 'setting', 'date', 'period',
         'classId', 'termId', 'sessionId', 'isHoliday',
         'calendarDays', 'summaries', 'schoolclass', 'term', 'session',
-        'pagetitle', 'resumptionLabel', 'closingLabel', 'morningEndLabel'
+        'pagetitle', 'resumptionLabel', 'closingLabel', 'morningEndLabel',
+        'dateEditable', 'backdateNote', 'isAttendanceAdmin'
     ));
 }
     // =========================================================================
@@ -184,6 +214,10 @@ public function register(Request $request, int $classId, int $termId, int $sessi
         $sessionId = $validated['session_id'];
         $date      = $validated['attendance_date'];
         $period    = $validated['period'];
+
+        if ($err = $this->backdateError($termId, $sessionId, $date)) {
+            return response()->json(['success' => false, 'message' => $err], 422);
+        }
 
         try {
             DB::transaction(function () use ($validated, $classId, $termId, $sessionId, $date, $period) {
@@ -234,6 +268,10 @@ public function register(Request $request, int $classId, int $termId, int $sessi
             'status'          => 'required|in:present,absent,sick_leave,excused,late',
             'notes'           => 'nullable|string|max:300',
         ]);
+
+        if ($err = $this->backdateError((int) $validated['term_id'], (int) $validated['session_id'], $validated['attendance_date'])) {
+            return response()->json(['success' => false, 'message' => $err], 422);
+        }
 
         try {
             StudentAttendance::updateOrCreate(
@@ -293,6 +331,10 @@ public function register(Request $request, int $classId, int $termId, int $sessi
             'student_ids.*'   => 'exists:studentRegistration,id',
         ]);
 
+        if ($err = $this->backdateError((int) $validated['term_id'], (int) $validated['session_id'], $validated['attendance_date'])) {
+            return response()->json(['success' => false, 'message' => $err], 422);
+        }
+
         try {
             DB::transaction(function () use ($validated) {
                 foreach ($validated['student_ids'] as $sid) {
@@ -326,6 +368,40 @@ public function register(Request $request, int $classId, int $termId, int $sessi
     // =========================================================================
     // STUDENT REPORT  –  per-student attendance history
     // =========================================================================
+
+    // =========================================================================
+    // CLASS HISTORY  –  day-by-day record of what this class has marked
+    // =========================================================================
+
+    public function classHistory(Request $request, int $classId, int $termId, int $sessionId)
+    {
+        $user = Auth::user();
+        if (!$this->isAttendanceAdmin()) {
+            ClassTeacher::where('staffid', $user->id)->where('schoolclassid', $classId)
+                ->where('termid', $termId)->where('sessionid', $sessionId)->firstOrFail();
+        }
+
+        $days = StudentAttendance::where('schoolclass_id', $classId)
+            ->where('term_id', $termId)->where('session_id', $sessionId)
+            ->selectRaw("attendance_date, period,
+                SUM(CASE WHEN status='present' THEN 1 ELSE 0 END) present,
+                SUM(CASE WHEN status='late' THEN 1 ELSE 0 END) late,
+                SUM(CASE WHEN status='absent' THEN 1 ELSE 0 END) absent,
+                SUM(CASE WHEN status IN ('sick_leave','excused') THEN 1 ELSE 0 END) excused,
+                COUNT(*) total, MAX(updated_at) last_marked")
+            ->groupBy('attendance_date', 'period')
+            ->orderByDesc('attendance_date')->orderBy('period')
+            ->paginate(31)->withQueryString();
+
+        $schoolclass = Schoolclass::with('arms')->find($classId);
+        $term        = Schoolterm::find($termId);
+        $session     = Schoolsession::find($sessionId);
+        $pagetitle   = 'Attendance History';
+
+        return view('attendance.teacher.class-history', compact(
+            'days', 'schoolclass', 'term', 'session', 'classId', 'termId', 'sessionId', 'pagetitle'
+        ));
+    }
 
     public function studentReport(Request $request, int $studentId, int $classId, int $termId, int $sessionId)
     {

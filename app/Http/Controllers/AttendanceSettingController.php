@@ -58,6 +58,8 @@ class AttendanceSettingController extends Controller
             'late_grace_minutes' => 'nullable|integer|min:0|max:120',
             'track_morning'      => 'boolean',
             'track_afternoon'    => 'boolean',
+            'allow_backdating'   => 'boolean',
+            'backdate_days'      => 'nullable|integer|min:0|max:180',
         ];
     }
 
@@ -68,6 +70,8 @@ class AttendanceSettingController extends Controller
         $validated['created_by']         = Auth::id();
         $validated['track_morning']      = $request->boolean('track_morning', true);
         $validated['track_afternoon']    = $request->boolean('track_afternoon', false);
+        $validated['allow_backdating']   = $request->boolean('allow_backdating', true);
+        $validated['backdate_days']      = (int) ($request->input('backdate_days', 7));
         $validated['late_grace_minutes'] = (int) ($validated['late_grace_minutes'] ?? 0);
 
         try {
@@ -95,6 +99,8 @@ class AttendanceSettingController extends Controller
 
         $validated['track_morning']      = $request->boolean('track_morning', true);
         $validated['track_afternoon']    = $request->boolean('track_afternoon', false);
+        $validated['allow_backdating']   = $request->boolean('allow_backdating', true);
+        $validated['backdate_days']      = (int) ($request->input('backdate_days', 7));
         $validated['late_grace_minutes'] = (int) ($validated['late_grace_minutes'] ?? 0);
 
         try {

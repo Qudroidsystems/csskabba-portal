@@ -27,6 +27,24 @@
                 </div>
             @endif
 
+            {{-- Backdating / date-lock banner --}}
+            @if(!empty($backdateNote))
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" id="backdateLock">
+                <i class="ri-lock-line fs-5"></i>
+                <div>
+                    <strong>This date is locked for you.</strong>
+                    <span class="ms-1" style="font-size:13px;">{{ $backdateNote }}</span>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Prevent marking a locked date: disable inputs/buttons in the register area.
+                    document.querySelectorAll('.attendance-register-area button, .attendance-register-area input, .attendance-register-area select, .att-status-btn, #saveAttendanceBtn, #markAllPresentBtn')
+                        .forEach(function (el) { el.disabled = true; el.classList.add('disabled'); });
+                });
+            </script>
+            @endif
+
             {{-- Holiday Banner --}}
             @if($isHoliday)
             <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">

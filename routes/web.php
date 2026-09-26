@@ -1401,6 +1401,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/attendance/mark-all-present', [AttendanceController::class, 'markAllPresent'])->name('attendance.mark-all-present');
     Route::get('/attendance/student/{studentId}/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'studentReport'])->name('attendance.student-report');
     Route::get('/attendance/class-summary/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'classSummary'])->name('attendance.class-summary');
+    Route::get('/attendance/class-history/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'classHistory'])->name('attendance.class-history');
 
     Route::get('/attendance/settings', [AttendanceSettingController::class, 'index'])->name('attendance.settings');
     Route::put('/attendance/settings/{id}', [AttendanceSettingController::class, 'update'])->name('attendance.settings.update');
@@ -1452,6 +1453,14 @@ Route::group(['middleware' => ['auth']], function () {
     // ADMIN SCORE ENTRY
     // ===================================================================
     Route::prefix('admin')->name('admin.')->group(function () {
+        // Database backups
+        Route::prefix('backups')->name('backups.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('index');
+            Route::post('/run', [\App\Http\Controllers\Admin\BackupController::class, 'run'])->name('run');
+            Route::post('/settings', [\App\Http\Controllers\Admin\BackupController::class, 'saveSettings'])->name('settings');
+            Route::get('/{backup}/download', [\App\Http\Controllers\Admin\BackupController::class, 'download'])->whereNumber('backup')->name('download');
+            Route::delete('/{backup}', [\App\Http\Controllers\Admin\BackupController::class, 'destroy'])->whereNumber('backup')->name('destroy');
+        });
         Route::prefix('score-entry')->name('score-entry.')->group(function () {
             Route::get('/', [AdminScoreEntryController::class, 'index'])->name('index');
             Route::get('/lock-management', [AdminScoreEntryController::class, 'lockManagement'])->name('lock-management');

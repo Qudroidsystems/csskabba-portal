@@ -68,6 +68,10 @@
                                                         <i class="ri-bar-chart-2-line"></i>
                                                     </a>
                                                     @endcan
+                                                    <a href="{{ route('attendance.class-history', [$cls->schoolclassid, $cls->termid, $cls->sessionid]) }}"
+                                                       class="btn btn-outline-secondary btn-sm" title="Attendance history">
+                                                        <i class="ri-history-line"></i>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>

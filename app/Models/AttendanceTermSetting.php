@@ -24,6 +24,8 @@ class AttendanceTermSetting extends Model
         'late_grace_minutes',
         'track_morning',
         'track_afternoon',
+        'allow_backdating',
+        'backdate_days',
         'created_by',
     ];
 
@@ -32,6 +34,8 @@ class AttendanceTermSetting extends Model
         'vacation_date'      => 'date',
         'track_morning'      => 'boolean',
         'track_afternoon'    => 'boolean',
+        'allow_backdating'   => 'boolean',
+        'backdate_days'      => 'integer',
         'late_grace_minutes' => 'integer',
     ];
 
