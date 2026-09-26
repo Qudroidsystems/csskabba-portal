@@ -57,16 +57,33 @@ class AttendanceController extends Controller
     // MY CLASSES  –  class teacher landing page
     // =========================================================================
 
-    public function myClasses()
+    public function myClasses(Request $request)
     {
         $user = Auth::user();
 
-        $classes = ClassTeacher::where('staffid', $user->id)
-            ->join('schoolclass',   'schoolclass.id',  '=', 'classteacher.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id',    '=', 'schoolclass.arm')
-            ->join('schoolterm',    'schoolterm.id',   '=', 'classteacher.termid')
-            ->join('schoolsession', 'schoolsession.id','=', 'classteacher.sessionid')
-            ->where('schoolsession.status', 'Current')
+        // Base query: every class assigned to this teacher, across ALL sessions/terms.
+        $base = fn () => ClassTeacher::where('classteacher.staffid', $user->id)
+            ->join('schoolclass',   'schoolclass.id',   '=', 'classteacher.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id',     '=', 'schoolclass.arm')
+            ->join('schoolterm',    'schoolterm.id',    '=', 'classteacher.termid')
+            ->join('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid');
+
+        // Sessions & terms the teacher actually has assignments in (for the pickers).
+        $mySessions = $base()->select('schoolsession.id', 'schoolsession.session', 'schoolsession.status')
+            ->distinct()->orderByDesc('schoolsession.id')->get();
+        $myTerms = $base()->select('schoolterm.id', 'schoolterm.term')
+            ->distinct()->orderBy('schoolterm.id')->get();
+
+        // Default to the current session unless the teacher chose one (or "all").
+        $currentSessionId = (int) (DB::table('schoolsession')->where('status', 'Current')->value('id') ?? 0);
+        $sessionParam = $request->query('session', (string) $currentSessionId); // '' = all
+        $termParam    = $request->query('term', '');                             // '' = all
+        $selectedSession = $sessionParam === 'all' ? null : (int) $sessionParam;
+        $selectedTerm    = ($termParam === '' || $termParam === 'all') ? null : (int) $termParam;
+
+        $classes = $base()
+            ->when($selectedSession, fn ($q) => $q->where('classteacher.sessionid', $selectedSession))
+            ->when($selectedTerm, fn ($q) => $q->where('classteacher.termid', $selectedTerm))
             ->select([
                 'classteacher.id as id',
                 'classteacher.schoolclassid',
@@ -76,11 +93,16 @@ class AttendanceController extends Controller
                 'schoolarm.arm',
                 'schoolterm.term',
                 'schoolsession.session',
+                'schoolsession.status as session_status',
             ])
+            ->orderByDesc('schoolsession.id')->orderBy('schoolterm.id')
+            ->orderBy('schoolclass.schoolclass')->orderBy('schoolarm.arm')
             ->get();
 
         $pagetitle = 'My Classes – Attendance';
-        return view('attendance.teacher.my-classes', compact('classes', 'pagetitle'));
+        return view('attendance.teacher.my-classes', compact(
+            'classes', 'pagetitle', 'mySessions', 'myTerms', 'selectedSession', 'selectedTerm', 'currentSessionId'
+        ));
     }
 
     // =========================================================================

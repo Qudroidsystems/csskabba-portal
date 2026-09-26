@@ -33,7 +33,31 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted mb-4">Select a class to mark or review attendance for the current session.</p>
+                            <p class="text-muted mb-3">Pick a session and term to see the classes assigned to you, then open one to mark or review attendance.</p>
+
+                            <form method="GET" id="attFilter" class="row g-2 align-items-end mb-4">
+                                <div class="col-sm-4 col-md-3">
+                                    <label class="form-label small mb-1">Session</label>
+                                    <select name="session" class="form-select form-select-sm" onchange="document.getElementById('attFilter').submit()">
+                                        <option value="all" @selected($selectedSession===null)>All sessions</option>
+                                        @foreach($mySessions as $ss)
+                                            <option value="{{ $ss->id }}" @selected($selectedSession===(int)$ss->id)>{{ $ss->session }}@if($ss->status==='Current') (Current)@endif</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-sm-4 col-md-3">
+                                    <label class="form-label small mb-1">Term</label>
+                                    <select name="term" class="form-select form-select-sm" onchange="document.getElementById('attFilter').submit()">
+                                        <option value="all" @selected($selectedTerm===null)>All terms</option>
+                                        @foreach($myTerms as $tt)
+                                            <option value="{{ $tt->id }}" @selected($selectedTerm===(int)$tt->id)>{{ $tt->term }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-sm-4 col-md-3">
+                                    <a href="{{ route('attendance.my-classes') }}" class="btn btn-outline-secondary btn-sm"><i class="ri-refresh-line me-1"></i>Reset to current</a>
+                                </div>
+                            </form>
 
                             @if($classes->isNotEmpty())
                                 <div class="row g-3">
@@ -52,6 +76,7 @@
                                                         <div class="d-flex flex-wrap gap-1">
                                                             <span class="badge bg-primary-subtle text-primary">{{ $cls->term }}</span>
                                                             <span class="badge bg-info-subtle text-info">{{ $cls->session }}</span>
+                                                            @if(($cls->session_status ?? null)==='Current')<span class="badge bg-success-subtle text-success">Current</span>@else<span class="badge bg-secondary-subtle text-secondary">Past</span>@endif
                                                         </div>
                                                     </div>
                                                 </div>
@@ -83,8 +108,8 @@
                                     <div class="mb-3">
                                         <i class="ri-book-open-line" style="font-size: 48px; color: #cbd5e1;"></i>
                                     </div>
-                                    <h5 class="text-muted">No Classes Assigned</h5>
-                                    <p class="text-muted mb-0">You have no classes assigned for the current session.</p>
+                                    <h5 class="text-muted">No Classes Found</h5>
+                                    <p class="text-muted mb-0">You have no classes assigned for the selected session/term. Try "All sessions" above.</p>
                                 </div>
                             @endif
                         </div>
