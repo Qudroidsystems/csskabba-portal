@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Yajra\DataTables\Facades\DataTables;
@@ -108,16 +109,50 @@ class FinancialReportController extends Controller
      */
     private function buildDebtorsDataset(Request $request): Collection
     {
-        $query = DB::table('student_bill_payment_book as sbpb')
-            ->join('studentRegistration as s', 's.id', '=', 'sbpb.student_id')
-            ->leftJoin('school_bill as sb', 'sb.id', '=', 'sbpb.school_bill_id')
-            ->leftJoin('schoolclass as sc', 'sc.id', '=', 'sbpb.class_id')
-            ->leftJoin('schoolarm as sa', 'sa.id', '=', 'sc.arm')
-            ->leftJoin('schoolterm as st', 'st.id', '=', 'sbpb.term_id')
-            ->leftJoin('schoolsession as ss', 'ss.id', '=', 'sbpb.session_id')
+        // roster-based debtors: start from EVERY student in the selected
+        // class/term/session, then compute owed = billed − paid. Students who
+        // never paid (no payment-book row) are included, owing the full bill.
+        $classId   = $request->filled('class_id') ? (int) $request->class_id : null;
+        $termId    = $request->filled('term_id') ? (int) $request->term_id : null;
+        $sessionId = $request->filled('session_id') ? (int) $request->session_id : null;
+
+        // Keep the roster bounded: default to the current session when nothing is chosen.
+        if (!$sessionId && !$classId && !$termId) {
+            $sessionId = (int) (DB::table('schoolsession')->where('status', 'Current')->value('id') ?? 0) ?: null;
+        }
+
+        // 1) Bills assigned to each class/term/session group.
+        $sbcts = DB::table('school_bill_class_term_session as sbcts')
+            ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
+            ->when($classId, fn ($q) => $q->where('sbcts.class_id', $classId))
+            ->when($termId, fn ($q) => $q->where('sbcts.termid_id', $termId))
+            ->when($sessionId, fn ($q) => $q->where('sbcts.session_id', $sessionId));
+        if (Schema::hasColumn('school_bill_class_term_session', 'deleted_at')) $sbcts->whereNull('sbcts.deleted_at');
+        if (Schema::hasColumn('school_bill_class_term_session', 'is_active')) $sbcts->where('sbcts.is_active', 1);
+        $billRows = $sbcts->select(
+            'sbcts.class_id', 'sbcts.termid_id as term_id', 'sbcts.session_id',
+            'sb.id as bill_id', 'sb.title as bill_title', 'sb.bill_amount'
+        )->get();
+
+        if ($billRows->isEmpty()) {
+            return collect();
+        }
+
+        $gk = fn ($c, $t, $se) => ((int) $c) . '_' . ((int) $t) . '_' . ((int) $se);
+        $billsByGroup = $billRows->groupBy(fn ($b) => $gk($b->class_id, $b->term_id, $b->session_id));
+
+        // 2) Roster: students placed in those class/term/session groups.
+        $roster = DB::table('studentclass as sc')
+            ->join('studentRegistration as s', 's.id', '=', 'sc.studentId')
+            ->leftJoin('schoolclass as scl', 'scl.id', '=', 'sc.schoolclassid')
+            ->leftJoin('schoolarm as sa', 'sa.id', '=', 'scl.arm')
+            ->leftJoin('schoolterm as t', 't.id', '=', 'sc.termid')
+            ->leftJoin('schoolsession as ss', 'ss.id', '=', 'sc.sessionid')
             ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
             ->leftJoin('parentRegistration as pr', 'pr.studentId', '=', 's.id')
-            ->where('sbpb.amount_owed', '>', 0)
+            ->when($classId, fn ($q) => $q->where('sc.schoolclassid', $classId))
+            ->when($termId, fn ($q) => $q->where('sc.termid', $termId))
+            ->when($sessionId, fn ($q) => $q->where('sc.sessionid', $sessionId))
             ->select(
                 's.id as student_id',
                 DB::raw("CONCAT(s.firstname, ' ', s.lastname) as student_name"),
@@ -130,42 +165,17 @@ class FinancialReportController extends Controller
                 'pr.father_phone',
                 'pr.mother_phone',
                 'sp.picture as avatar',
-                'sb.id as bill_id',
-                'sb.title as bill_title',
-                'sc.id as class_id',
-                DB::raw("TRIM(CONCAT(sc.schoolclass, ' ', COALESCE(sa.arm, ''))) as class_name"),
-                'st.id as term_id',
-                'st.term as term_name',
-                'ss.id as session_id',
-                'ss.session as session_name',
-                'sbpb.original_amount',
-                'sbpb.amount_paid',
-                'sbpb.amount_owed as outstanding',
-                'sbpb.scholarship_deduction',
-                'sbpb.discount_deduction',
-                'sbpb.adjusted_amount',
-                DB::raw('(sbpb.scholarship_deduction + sbpb.discount_deduction) as total_savings')
+                'sc.schoolclassid as class_id',
+                DB::raw("TRIM(CONCAT(scl.schoolclass, ' ', COALESCE(sa.arm, ''))) as class_name"),
+                'sc.termid as term_id',
+                't.term as term_name',
+                'sc.sessionid as session_id',
+                'ss.session as session_name'
             );
-
-        if ($request->filled('class_id')) {
-            $query->where('sbpb.class_id', $request->class_id);
-        }
-        if ($request->filled('term_id')) {
-            $query->where('sbpb.term_id', $request->term_id);
-        }
-        if ($request->filled('session_id')) {
-            $query->where('sbpb.session_id', $request->session_id);
-        }
-        if ($request->filled('min_outstanding')) {
-            $query->where('sbpb.amount_owed', '>=', $request->min_outstanding);
-        }
-        if ($request->filled('max_outstanding')) {
-            $query->where('sbpb.amount_owed', '<=', $request->max_outstanding);
-        }
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
-            $query->where(function ($q) use ($search) {
+            $roster->where(function ($q) use ($search) {
                 $q->where('s.firstname', 'like', "%{$search}%")
                   ->orWhere('s.lastname', 'like', "%{$search}%")
                   ->orWhere('s.admissionNo', 'like', "%{$search}%")
@@ -173,98 +183,112 @@ class FinancialReportController extends Controller
             });
         }
 
-        $rows = $query->orderBy('sbpb.amount_owed', 'desc')->get();
-
-        if ($rows->isEmpty()) {
+        $rosterRows = $roster->get()->unique(fn ($r) => $r->student_id . '_' . $r->class_id . '_' . $r->term_id . '_' . $r->session_id)->values();
+        if ($rosterRows->isEmpty()) {
             return collect();
         }
 
-        $studentIds = $rows->pluck('student_id')->unique()->values();
+        $studentIds = $rosterRows->pluck('student_id')->unique()->values();
+
+        // 3) Payment-book rows for those students, keyed per student+group+bill.
+        $books = DB::table('student_bill_payment_book')
+            ->whereIn('student_id', $studentIds)
+            ->when($classId, fn ($q) => $q->where('class_id', $classId))
+            ->when($termId, fn ($q) => $q->where('term_id', $termId))
+            ->when($sessionId, fn ($q) => $q->where('session_id', $sessionId))
+            ->get()
+            ->keyBy(fn ($b) => ((int) $b->student_id) . '_' . ((int) $b->class_id) . '_' . ((int) $b->term_id) . '_' . ((int) $b->session_id) . '_' . ((int) $b->school_bill_id));
+
+        // Live scholarship / discount flags (for the badges), same as before.
         $now = now();
-
         $scholarships = ScholarshipAssignment::whereIn('student_id', $studentIds)
-            ->where('status', 'active')
-            ->where('effective_from', '<=', $now)
-            ->where(function ($q) use ($now) {
-                $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
-            })
-            ->with('scholarship')
-            ->get()
-            ->keyBy('student_id');
-
+            ->where('status', 'active')->where('effective_from', '<=', $now)
+            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now))
+            ->with('scholarship')->get()->keyBy('student_id');
         $discounts = DiscountAssignment::whereIn('student_id', $studentIds)
-            ->where('status', 'active')
-            ->where('effective_from', '<=', $now)
-            ->where(function ($q) use ($now) {
-                $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now);
-            })
-            ->with('discount')
-            ->get()
-            ->groupBy('student_id');
+            ->where('status', 'active')->where('effective_from', '<=', $now)
+            ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $now))
+            ->with('discount')->get()->groupBy('student_id');
 
-        return $rows
-            ->groupBy(fn ($r) => $r->student_id . '_' . $r->class_id . '_' . $r->term_id . '_' . $r->session_id)
-            ->map(function ($bills) use ($scholarships, $discounts) {
-                $first            = $bills->first();
-                $totalOriginal    = (float) $bills->sum('original_amount');
-                $totalPaid        = (float) $bills->sum('amount_paid');
-                $totalOutstanding = (float) $bills->sum('outstanding');
-                $totalSavings     = (float) $bills->sum('total_savings');
-                $totalAdjusted    = (float) $bills->sum('adjusted_amount');
-                $rate             = $totalAdjusted > 0 ? round(($totalPaid / $totalAdjusted) * 100, 1) : 0;
+        $minOut = $request->filled('min_outstanding') ? (float) $request->min_outstanding : null;
+        $maxOut = $request->filled('max_outstanding') ? (float) $request->max_outstanding : null;
 
-                $sch  = $scholarships->get($first->student_id);
-                $disc = $discounts->get($first->student_id, collect());
+        $out = collect();
+        foreach ($rosterRows as $r) {
+            $groupBills = $billsByGroup->get($gk($r->class_id, $r->term_id, $r->session_id));
+            if (!$groupBills) continue; // no bills for this group → nothing owed
 
-                $hasContact = !empty($first->parent_email)
-                    || !empty($first->father_phone)
-                    || !empty($first->mother_phone)
-                    || !empty($first->student_email)
-                    || !empty($first->student_phone);
-
-                return [
-                    'student_id'      => $first->student_id,
-                    'student_name'    => $first->student_name,
-                    'admission_no'    => $first->admission_no,
-                    'student_status'  => $first->student_status ?? 'N/A',
-                    'gender'          => $first->gender ?? 'N/A',
-                    'avatar'          => $first->avatar,
-                    'has_contact'     => $hasContact,
-                    'class_id'        => $first->class_id,
-                    'class_name'      => $first->class_name,
-                    'term_id'         => $first->term_id,
-                    'term_name'       => $first->term_name,
-                    'session_id'      => $first->session_id,
-                    'session_name'    => $first->session_name,
-                    'original_amount' => $totalOriginal,
-                    'amount_paid'     => $totalPaid,
-                    'outstanding'     => $totalOutstanding,
-                    'savings'         => $totalSavings,
-                    'collection_rate' => $rate,
-                    'bill_count'      => $bills->count(),
-                    'has_scholarship' => $sch !== null,
-                    'has_discount'    => $disc->isNotEmpty(),
-                    'scholarship'     => $sch ? [
-                        'title'      => $sch->scholarship->title ?? 'Scholarship',
-                        'value'      => $sch->value,
-                        'value_type' => $sch->value_type,
-                    ] : null,
-                    'discounts' => $disc->map(fn ($d) => [
-                        'title'      => $d->discount->title ?? 'Discount',
-                        'value'      => $d->value,
-                        'value_type' => $d->value_type,
-                    ])->values(),
-                    'bills' => $bills->map(fn ($b) => [
-                        'bill_id'         => $b->bill_id,
-                        'title'           => $b->bill_title,
-                        'original_amount' => (float) $b->original_amount,
-                        'amount_paid'     => (float) $b->amount_paid,
-                        'outstanding'     => (float) $b->outstanding,
-                        'savings'         => (float) ($b->scholarship_deduction + $b->discount_deduction),
-                    ])->values(),
+            $totalOriginal = 0.0; $totalPaid = 0.0; $totalOutstanding = 0.0; $totalSavings = 0.0;
+            $billLines = [];
+            foreach ($groupBills as $b) {
+                $billAmt = (float) $b->bill_amount;
+                $key = ((int) $r->student_id) . '_' . ((int) $r->class_id) . '_' . ((int) $r->term_id) . '_' . ((int) $r->session_id) . '_' . ((int) $b->bill_id);
+                $book = $books->get($key);
+                if ($book) {
+                    $paid    = (float) $book->amount_paid;
+                    $owed    = (float) $book->amount_owed;
+                    $savings = (float) ($book->scholarship_deduction ?? 0) + (float) ($book->discount_deduction ?? 0);
+                    $orig    = $book->original_amount !== null ? (float) $book->original_amount : $billAmt;
+                } else {
+                    $paid = 0.0; $owed = $billAmt; $savings = 0.0; $orig = $billAmt;
+                }
+                $totalOriginal += $orig; $totalPaid += $paid; $totalOutstanding += $owed; $totalSavings += $savings;
+                $billLines[] = [
+                    'bill_id' => $b->bill_id, 'title' => $b->bill_title,
+                    'original_amount' => $orig, 'amount_paid' => $paid, 'outstanding' => $owed, 'savings' => $savings,
                 ];
-            })
-            ->sortByDesc('outstanding');
+            }
+
+            if ($totalOutstanding <= 0) continue;                     // fully paid → not a debtor
+            if ($minOut !== null && $totalOutstanding < $minOut) continue;
+            if ($maxOut !== null && $totalOutstanding > $maxOut) continue;
+
+            $adjusted = max(0, $totalOriginal - $totalSavings);
+            $rate = $adjusted > 0 ? round(($totalPaid / $adjusted) * 100, 1) : 0;
+
+            $sch  = $scholarships->get($r->student_id);
+            $disc = $discounts->get($r->student_id, collect());
+            $hasContact = !empty($r->parent_email) || !empty($r->father_phone) || !empty($r->mother_phone)
+                || !empty($r->student_email) || !empty($r->student_phone);
+
+            $out->push([
+                'student_id'      => $r->student_id,
+                'student_name'    => $r->student_name,
+                'admission_no'    => $r->admission_no,
+                'student_status'  => $r->student_status ?? 'N/A',
+                'gender'          => $r->gender ?? 'N/A',
+                'avatar'          => $r->avatar,
+                'has_contact'     => $hasContact,
+                'class_id'        => $r->class_id,
+                'class_name'      => $r->class_name,
+                'term_id'         => $r->term_id,
+                'term_name'       => $r->term_name,
+                'session_id'      => $r->session_id,
+                'session_name'    => $r->session_name,
+                'original_amount' => $totalOriginal,
+                'amount_paid'     => $totalPaid,
+                'outstanding'     => $totalOutstanding,
+                'savings'         => $totalSavings,
+                'collection_rate' => $rate,
+                'bill_count'      => count($billLines),
+                'never_paid'      => $totalPaid <= 0,
+                'has_scholarship' => $sch !== null,
+                'has_discount'    => $disc->isNotEmpty(),
+                'scholarship'     => $sch ? [
+                    'title'      => $sch->scholarship->title ?? 'Scholarship',
+                    'value'      => $sch->value,
+                    'value_type' => $sch->value_type,
+                ] : null,
+                'discounts' => $disc->map(fn ($d) => [
+                    'title'      => $d->discount->title ?? 'Discount',
+                    'value'      => $d->value,
+                    'value_type' => $d->value_type,
+                ])->values(),
+                'bills' => collect($billLines)->values(),
+            ]);
+        }
+
+        return $out->sortByDesc('outstanding')->values();
     }
 
     /**
