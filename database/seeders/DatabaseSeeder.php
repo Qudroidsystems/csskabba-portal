@@ -547,6 +547,9 @@ class DatabaseSeeder extends Seeder
             'FeatureFlagPermissionSeeder' =>
                 '🔀 Seeding feature-flag (module access) permission...',
 
+            'CalendarPermissionSeeder' =>
+                '📅 Seeding school-calendar permissions & default categories...',
+
             'AccountingSetupSeeder' =>
                 '📒 Adding ledger accounts and linking expense categories...',
         ];

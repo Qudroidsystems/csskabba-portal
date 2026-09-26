@@ -506,6 +506,11 @@
                         <li class="nav-item">
                             <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
                         </li>
+                        @if(Route::has('calendar.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
+                        </li>
+                        @endif
                         @endif
                         <li class="nav-item">
                             <a href="{{ route('notifications.index') }}" class="nav-link menu-link"><i class="ri-notification-3-line"></i> <span>Notices</span></a>
@@ -523,6 +528,12 @@
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('leave.index') }}" class="nav-link menu-link {{ request()->routeIs('leave.*') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>My Leave</span></a>
+                        </li>
+                    @endif
+
+                    @if(($myStaffId || auth()->user()->can('Manage school calendar') || auth()->user()->can('View school calendar')) && Route::has('calendar.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
                         </li>
                     @endif
                     @if(auth()->user()->can('View activity log') || auth()->user()->can('View online staff'))
@@ -740,6 +751,12 @@
                     @if(auth()->user()->student_id && Route::has('student-leave.mine'))
                     <li class="nav-item">
                         <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
+                    </li>
+                    @endif
+
+                    @if(auth()->user()->student_id && Route::has('calendar.index'))
+                    <li class="nav-item">
+                        <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
                     </li>
                     @endif
 
@@ -2093,6 +2110,7 @@
         @if(Route::has("student-leave.records")){title:'Student Leave Records',                 url:'{{ route("student-leave.records") }}',                           icon:'mdi-file-document-multiple',  category:'Staff',               keywords:['student','leave','absence','records','export','history']},@endif
         @if(Route::has("leave.board")){title:'Who\'s Away (Leave Board)',                url:'{{ route("leave.board") }}',                                     icon:'mdi-calendar-account',        category:'Staff',               keywords:['leave','away','absent','calendar','board','staff','student','today']},@endif
         @if(Route::has("leave.balances")){title:'Leave Balances',                        url:'{{ route("leave.balances") }}',                                  icon:'mdi-scale-balance',           category:'Staff',               keywords:['leave','balance','entitlement','remaining','carry','over','allowance']},@endif
+        @if(Route::has("calendar.index")){title:'School Calendar',                       url:'{{ route("calendar.index") }}',                                  icon:'mdi-calendar-month',          category:'General',             keywords:['calendar','event','activity','term','holiday','reminder','schedule']},@endif
         {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',             keywords:['gateway','paystack','flutterwave','online','configure']},
 
         /* ── Accounting & Reports ── */

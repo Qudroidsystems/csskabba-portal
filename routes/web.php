@@ -198,6 +198,11 @@ Route::get('/r/{token}', [ResultLinkController::class, 'show'])
 Route::get('/verify/{code}', [ResultVerifyController::class, 'show'])
     ->where('code', '[0-9a-f\-]{10,80}')->middleware('throttle:60,1')->name('results.verify');
 
+// Public school calendar (no login) + iCal subscribe feed.
+Route::get('/calendar/public', [\App\Http\Controllers\PublicCalendarController::class, 'index'])->name('calendar.public');
+Route::get('/calendar/feed/{token}.ics', [\App\Http\Controllers\PublicCalendarController::class, 'ical'])
+    ->where('token', '[a-f0-9]{32}')->middleware('throttle:120,1')->name('calendar.ical');
+
 // Payment gateway webhooks — no CSRF, no auth
 Route::prefix('webhook')->group(function () {
     // School-fee payments (online-fees). Signature-checked; CSRF is skipped for webhook/*.
@@ -1672,6 +1677,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/records', [\App\Http\Controllers\StudentLeaveController::class, 'records'])->name('records');
         Route::get('/records/export', [\App\Http\Controllers\StudentLeaveController::class, 'exportRecords'])->name('records.export');
         Route::get('/{leave}/document', [\App\Http\Controllers\StudentLeaveController::class, 'attachment'])->whereNumber('leave')->name('attachment');
+    });
+
+    // School calendar (authenticated view for everyone; management gated in-controller).
+    Route::prefix('calendar')->name('calendar.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CalendarController::class, 'index'])->name('index');
+        Route::get('/event/{event}', [\App\Http\Controllers\CalendarController::class, 'show'])->whereNumber('event')->name('show');
+        Route::post('/', [\App\Http\Controllers\CalendarController::class, 'store'])->name('store');
+        Route::put('/{event}', [\App\Http\Controllers\CalendarController::class, 'update'])->whereNumber('event')->name('update');
+        Route::delete('/{event}', [\App\Http\Controllers\CalendarController::class, 'destroy'])->whereNumber('event')->name('destroy');
+        Route::post('/{event}/rsvp', [\App\Http\Controllers\CalendarController::class, 'rsvp'])->whereNumber('event')->name('rsvp');
+        Route::post('/{event}/attachments', [\App\Http\Controllers\CalendarController::class, 'uploadAttachment'])->whereNumber('event')->name('attachments.store');
+        Route::get('/attachments/{attachment}', [\App\Http\Controllers\CalendarController::class, 'attachment'])->whereNumber('attachment')->name('attachment');
+        Route::delete('/attachments/{attachment}', [\App\Http\Controllers\CalendarController::class, 'deleteAttachment'])->whereNumber('attachment')->name('attachments.destroy');
+        Route::post('/categories', [\App\Http\Controllers\CalendarController::class, 'storeCategory'])->name('categories.store');
+        Route::put('/categories/{category}', [\App\Http\Controllers\CalendarController::class, 'updateCategory'])->whereNumber('category')->name('categories.update');
+        Route::delete('/categories/{category}', [\App\Http\Controllers\CalendarController::class, 'destroyCategory'])->whereNumber('category')->name('categories.destroy');
+        Route::post('/sync-fees', [\App\Http\Controllers\CalendarController::class, 'syncFees'])->name('sync-fees');
     });
 });
 
