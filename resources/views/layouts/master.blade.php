@@ -539,9 +539,11 @@
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarDashboards">
                             <ul class="nav nav-sm flex-column">
+                                @feature('dashboard')
                                 <li class="nav-item">
                                     <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics">Administration Analytics</a>
                                 </li>
+                                @endfeature
                                 @can('View management dashboard')
                                 <li class="nav-item">
                                     <a href="{{ route('management.dashboard') }}" class="nav-link">Management Overview</a>
@@ -655,6 +657,7 @@
                         <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
                     @endif
 
+                    @feature('students')
                     @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload'))
                         <li class="nav-item">
                             <a href="#sidebarStudentmanagement" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentmanagement">
@@ -675,11 +678,13 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     @if(auth()->user()->can('View student assessments') || auth()->user()->can('View student payments'))
                         <li class="menu-title"><i class="ph-graduation-cap"></i> <span>STUDENT PORTAL</span></li>
                     @endif
 
+                    @feature('exams')
                     @can('View student assessments')
                         <li class="nav-item">
                             <a href="#sidebarAssessments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAssessments">
@@ -692,6 +697,7 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
                     <li class="nav-item">
                         <a href="#sidebarPayment" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayment">
@@ -719,6 +725,7 @@
                     @endcan
 
                     {{-- SUBJECT REGISTRATION --}}
+                    @feature('subjects')
                     @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject'))
                         <li class="menu-title"><i class="ph-folder-open"></i> <span>SUBJECT REGISTRATION</span></li>
                         <li class="nav-item">
@@ -734,12 +741,14 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     {{-- EXAMS AND CBT --}}
                     @if(auth()->user()->can('View exam') || auth()->user()->can('View cbt-exam'))
                         <li class="menu-title"><i class="ph-graduation-cap"></i> <span>EXAMS AND CBT</span></li>
                     @endif
 
+                    @feature('exams')
                     @can('View exam')
                         <li class="nav-item">
                             <a href="#sidebarExams" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
@@ -755,7 +764,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('cbt')
                     @can('View cbt-exam')
                         <li class="nav-item">
                             <a href="#sidebarCBT" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCBT">
@@ -768,8 +779,10 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
                     {{-- TIMETABLE --}}
+                    @feature('timetable')
                     @if(auth()->user()->can('View timetable') || auth()->user()->can('View my timetable'))
                         <li class="nav-item">
                             <a href="#sidebartimetable" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartimetable">
@@ -796,12 +809,14 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     {{-- CLASSES & RECORDS --}}
                     @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View my-principals-comment'))
                         <li class="menu-title"><i class="ph-folder-open"></i> <span>CLASSES & RECORDS</span></li>
                     @endif
 
+                    @feature('classes')
                     @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View my-principals-comment'))
                         <li class="nav-item">
                             <a href="#sidebarClasses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClasses">
@@ -828,8 +843,10 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     {{-- ATTENDANCE --}}
+                    @feature('attendance')
                     @if(auth()->user()->can('View attendance-register') || 
                         auth()->user()->can('View attendance-class-summary') || 
                         auth()->user()->can('View attendance-student-report') ||
@@ -851,8 +868,10 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     {{-- RECORDS AND RESULTS --}}
+                    @feature('results')
                     @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View admin-score-entry') || auth()->user()->can('View report-approvals') || auth()->user()->can('Submit report cards') || auth()->user()->can('Approve report cards'))
                         <li class="nav-item">
                             <a href="#sidebarRecords" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
@@ -880,8 +899,10 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     {{-- TRANSCRIPTS --}}
+                    @feature('transcripts')
                     @if(auth()->user()->can('View student-transcript') || auth()->user()->can('Preview student-transcript') || auth()->user()->can('Download student-transcript'))
                         <li class="menu-title"><i class="ph-folder-open"></i> <span>TRANSCRIPTS</span></li>
                         <li class="nav-item">
@@ -897,8 +918,10 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     {{-- PROMOTION MANAGEMENT --}}
+                    @feature('promotions')
                     @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>PROMOTION MANAGEMENT</span></li>
                         <li class="nav-item">
@@ -916,6 +939,7 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     {{-- BURSARY & FINANCE --}}
                     @if(auth()->user()->can('View school-payment') || auth()->user()->can('View analysis') ||
@@ -925,6 +949,7 @@
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>BURSARY & FINANCE</span></li>
                     @endif
 
+                    @feature('finance')
                     @can('View school-payment')
                         <li class="nav-item">
                             <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
@@ -940,7 +965,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('reports')
                     @can('View analysis')
                         <li class="nav-item">
                             <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
@@ -953,7 +980,9 @@
                             </div> --}}
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('scholarships')
                     @can('View scholarship')
                         <li class="nav-item">
                             <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
@@ -971,7 +1000,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('scholarships')
                     @can('View discount')
                         <li class="nav-item">
                             <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
@@ -988,7 +1019,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('finance')
                     @can('View sibling groups')
                         <li class="nav-item">
                             <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
@@ -1002,7 +1035,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('expenses')
                     @if(auth()->user()->canany(['Create expenses', 'Approve expenses', 'Pay expenses', 'Manage budgets', 'Manage assets', 'Approve purchase requests', 'View financial reports']))
                         <li class="nav-item">
                             <a href="#sidebarExpenses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExpenses">
@@ -1019,6 +1054,7 @@
                             </div>
                         </li>
                     @endif
+                    @endfeature
 
                     @can('Manage payment gateways')
                         <li class="nav-item">
@@ -1038,6 +1074,15 @@
                         </li>
                     @endcan
 
+                    @can('Manage feature flags')
+                        <li class="nav-item">
+                            <a href="{{ route('feature-flags.index') }}" class="nav-link">
+                                <i class="ri-toggle-line"></i> <span>Module Access</span>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @feature('accounting')
                     @can('View financial reports')
                         <li class="nav-item">
                             <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
@@ -1064,7 +1109,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('payroll')
                     @can('View payroll')
                         <li class="nav-item">
                             <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
@@ -1092,7 +1139,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('payroll')
                     @can('View staff payments')
                         <li class="nav-item">
                             <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
@@ -1108,12 +1157,14 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
                     {{-- COMMUNICATION --}}
                     @if(auth()->user()->can('View notices') || auth()->user()->can('Create notices') || auth()->user()->can('Manage notification settings') || auth()->user()->can('View result-sends') || auth()->user()->can('Manage parent contacts') || auth()->user()->can('Manage parent accounts'))
                         <li class="menu-title"><i class="ri-more-fill"></i> <span>COMMUNICATION</span></li>
                     @endif
 
+                    @feature('communication')
                     @can('View notices')
                         <li class="nav-item">
                             <a href="#sidebarNotices" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarNotices">
@@ -1129,7 +1180,9 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
+                    @feature('communication')
                     @can('View result-sends')
                         <li class="nav-item">
                             <a href="#sidebarResultSends" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarResultSends">
@@ -1145,6 +1198,7 @@
                             </div>
                         </li>
                     @endcan
+                    @endfeature
 
                     @can('Manage parent contacts')
                         <li class="nav-item">
@@ -2002,6 +2056,7 @@
         {title:'All Family Groups (Sibling)',           url:'{{ route("sibling.index") }}',                                  icon:'mdi-account-group',           category:'Finance',             keywords:['sibling','family','group','discount']},
         {title:'Create Family Group',                   url:'{{ route("sibling.create") }}',                                 icon:'mdi-account-multiple-plus',   category:'Finance',             keywords:['sibling','family','group','create']},
         {title:'Maintenance Mode',                      url:'{{ route("maintenance.settings") }}',                            icon:'mdi-wrench',                  category:'System',              keywords:['maintenance','offline','downtime','lock','close portal']},
+        {title:'Module Access',                         url:'{{ route("feature-flags.index") }}',                             icon:'mdi-toggle-switch',           category:'System',              keywords:['module','feature','flag','remote','enable','disable','sidebar']},
         {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',             keywords:['gateway','paystack','flutterwave','online','configure']},
 
         /* ── Accounting & Reports ── */
