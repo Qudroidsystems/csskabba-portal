@@ -479,95 +479,7 @@
 
                     <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
-                    {{-- PARENT PORTAL --}}
-                    @role('Parent')
-                        @php $ppKids = \App\Services\Parents\ParentAccountService::children(auth()->user()); @endphp
-                        <li class="nav-item">
-                            <a href="{{ route('parent.dashboard') }}" class="nav-link menu-link {{ request()->routeIs('parent.dashboard') ? 'active' : '' }}">
-                                <i class="ri-parent-line"></i> <span>My Children</span>
-                            </a>
-                        </li>
-                        @foreach($ppKids as $k)
-                            <li class="nav-item">
-                                <a href="#sidebarChild{{ $k->id }}" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarChild{{ $k->id }}">
-                                    <i class="ri-user-smile-line"></i> <span>{{ $k->firstname }}</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarChild{{ $k->id }}">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('parent.results', $k->id) }}" class="nav-link">Results</a></li>
-                                        <li class="nav-item"><a href="{{ route('parent.fees', $k->id) }}" class="nav-link">Fees &amp; Payments</a></li>
-                                        <li class="nav-item"><a href="{{ route('parent.attendance', $k->id) }}" class="nav-link">Attendance</a></li>
-                                        <li class="nav-item"><a href="{{ route('parent.timetable', $k->id) }}" class="nav-link">Timetable</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        @endforeach
-                        @if(Route::has('student-leave.mine'))
-                        <li class="nav-item">
-                            <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
-                        </li>
-                        @if(Route::has('calendar.index'))
-                        <li class="nav-item">
-                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
-                        </li>
-                        @endif
-                        @endif
-                        <li class="nav-item">
-                            <a href="{{ route('notifications.index') }}" class="nav-link menu-link"><i class="ri-notification-3-line"></i> <span>Notices</span></a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('parent.password') }}" class="nav-link menu-link"><i class="ri-lock-password-line"></i> <span>Change Password</span></a>
-                        </li>
-                    @endrole
-
-                    {{-- MY PAY (staff self-service) --}}
-                    @php $myStaffId = \Illuminate\Support\Facades\DB::table('staffbioinfo')->where('userid', auth()->id())->value('id'); @endphp
-                    @if($myStaffId)
-                        <li class="nav-item">
-                            <a href="{{ route('my-pay.index') }}" class="nav-link menu-link {{ request()->routeIs('my-pay.*') ? 'active' : '' }}"><i class="ri-wallet-3-line"></i> <span>My Pay</span></a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('leave.index') }}" class="nav-link menu-link {{ request()->routeIs('leave.*') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>My Leave</span></a>
-                        </li>
-                    @endif
-
-                    @if(($myStaffId || auth()->user()->can('Manage school calendar') || auth()->user()->can('View school calendar')) && Route::has('calendar.index'))
-                        <li class="nav-item">
-                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
-                        </li>
-                    @endif
-                    @if(auth()->user()->can('View activity log') || auth()->user()->can('View online staff'))
-                        <li class="nav-item">
-                            <a href="#sidebarActivity" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarActivity"><i class="ri-shield-user-line"></i> <span>Staff Monitoring</span></a>
-                            <div class="collapse menu-dropdown" id="sidebarActivity"><ul class="nav nav-sm flex-column">
-                                <li class="nav-item"><a href="{{ route('online-staff.index') }}" class="nav-link">Who's Online</a></li>
-                                @can('View activity log')<li class="nav-item"><a href="{{ route('activity.index') }}" class="nav-link">Activity Log</a></li>@endcan
-                                @canany(['View leave records', 'Manage leave types'])<li class="nav-item"><a href="{{ route('leave.records') }}" class="nav-link">Leave Records</a></li>@endcanany
-                                @canany(['View leave records', 'Manage leave types'])@if(Route::has('leave.balances'))<li class="nav-item"><a href="{{ route('leave.balances') }}" class="nav-link">Leave Balances</a></li>@endif@endcanany
-                            </ul></div>
-                        </li>
-                    @endif
-
-                    @canany(['Recommend student leave', 'Approve student leave', 'View student leave records'])
-                    @if(Route::has('student-leave.approvals'))
-                        <li class="nav-item">
-                            <a href="#sidebarStudentLeave" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentLeave"><i class="ri-user-follow-line"></i> <span>Student Leave</span></a>
-                            <div class="collapse menu-dropdown" id="sidebarStudentLeave"><ul class="nav nav-sm flex-column">
-                                @canany(['Recommend student leave', 'Approve student leave'])<li class="nav-item"><a href="{{ route('student-leave.approvals') }}" class="nav-link">Approvals</a></li>@endcanany
-                                @can('View student leave records')<li class="nav-item"><a href="{{ route('student-leave.records') }}" class="nav-link">Records</a></li>@endcan
-                            </ul></div>
-                        </li>
-                    @endif
-                    @endcanany
-
-                    @canany(['View leave records', 'View student leave records', 'Approve leave', 'Approve student leave'])
-                    @if(Route::has('leave.board'))
-                        <li class="nav-item">
-                            <a href="{{ route('leave.board') }}" class="nav-link menu-link {{ request()->routeIs('leave.board') ? 'active' : '' }}"><i class="ri-team-line"></i> <span>Who's Away</span></a>
-                        </li>
-                    @endif
-                    @endcanany
-
+                    {{-- MOVED_ADMIN_TOP: Dashboards + Users first --}}
                     {{-- Dashboard --}}
                     @unless(auth()->user()->hasRole('Parent') && !auth()->user()->can('dashboard'))
                     <li class="nav-item">
@@ -688,6 +600,96 @@
                             </div>
                         </li>
                     @endcan
+
+
+                    {{-- PARENT PORTAL --}}
+                    @role('Parent')
+                        @php $ppKids = \App\Services\Parents\ParentAccountService::children(auth()->user()); @endphp
+                        <li class="nav-item">
+                            <a href="{{ route('parent.dashboard') }}" class="nav-link menu-link {{ request()->routeIs('parent.dashboard') ? 'active' : '' }}">
+                                <i class="ri-parent-line"></i> <span>My Children</span>
+                            </a>
+                        </li>
+                        @foreach($ppKids as $k)
+                            <li class="nav-item">
+                                <a href="#sidebarChild{{ $k->id }}" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarChild{{ $k->id }}">
+                                    <i class="ri-user-smile-line"></i> <span>{{ $k->firstname }}</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarChild{{ $k->id }}">
+                                    <ul class="nav nav-sm flex-column">
+                                        <li class="nav-item"><a href="{{ route('parent.results', $k->id) }}" class="nav-link">Results</a></li>
+                                        <li class="nav-item"><a href="{{ route('parent.fees', $k->id) }}" class="nav-link">Fees &amp; Payments</a></li>
+                                        <li class="nav-item"><a href="{{ route('parent.attendance', $k->id) }}" class="nav-link">Attendance</a></li>
+                                        <li class="nav-item"><a href="{{ route('parent.timetable', $k->id) }}" class="nav-link">Timetable</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        @endforeach
+                        @if(Route::has('student-leave.mine'))
+                        <li class="nav-item">
+                            <a href="{{ route('student-leave.mine') }}" class="nav-link menu-link {{ request()->routeIs('student-leave.mine') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>Leave of Absence</span></a>
+                        </li>
+                        @if(Route::has('calendar.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
+                        </li>
+                        @endif
+                        @endif
+                        <li class="nav-item">
+                            <a href="{{ route('notifications.index') }}" class="nav-link menu-link"><i class="ri-notification-3-line"></i> <span>Notices</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('parent.password') }}" class="nav-link menu-link"><i class="ri-lock-password-line"></i> <span>Change Password</span></a>
+                        </li>
+                    @endrole
+
+                    {{-- MY PAY (staff self-service) --}}
+                    @php $myStaffId = \Illuminate\Support\Facades\DB::table('staffbioinfo')->where('userid', auth()->id())->value('id'); @endphp
+                    @if($myStaffId)
+                        <li class="nav-item">
+                            <a href="{{ route('my-pay.index') }}" class="nav-link menu-link {{ request()->routeIs('my-pay.*') ? 'active' : '' }}"><i class="ri-wallet-3-line"></i> <span>My Pay</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('leave.index') }}" class="nav-link menu-link {{ request()->routeIs('leave.*') ? 'active' : '' }}"><i class="ri-calendar-event-line"></i> <span>My Leave</span></a>
+                        </li>
+                    @endif
+
+                    @if(($myStaffId || auth()->user()->can('Manage school calendar') || auth()->user()->can('View school calendar')) && Route::has('calendar.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('calendar.index') }}" class="nav-link menu-link {{ request()->routeIs('calendar.index') ? 'active' : '' }}"><i class="ri-calendar-2-line"></i> <span>School Calendar</span></a>
+                        </li>
+                    @endif
+                    @if(auth()->user()->can('View activity log') || auth()->user()->can('View online staff'))
+                        <li class="nav-item">
+                            <a href="#sidebarActivity" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarActivity"><i class="ri-shield-user-line"></i> <span>Staff Monitoring</span></a>
+                            <div class="collapse menu-dropdown" id="sidebarActivity"><ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('online-staff.index') }}" class="nav-link">Who's Online</a></li>
+                                @can('View activity log')<li class="nav-item"><a href="{{ route('activity.index') }}" class="nav-link">Activity Log</a></li>@endcan
+                                @canany(['View leave records', 'Manage leave types'])<li class="nav-item"><a href="{{ route('leave.records') }}" class="nav-link">Leave Records</a></li>@endcanany
+                                @canany(['View leave records', 'Manage leave types'])@if(Route::has('leave.balances'))<li class="nav-item"><a href="{{ route('leave.balances') }}" class="nav-link">Leave Balances</a></li>@endif@endcanany
+                            </ul></div>
+                        </li>
+                    @endif
+
+                    @canany(['Recommend student leave', 'Approve student leave', 'View student leave records'])
+                    @if(Route::has('student-leave.approvals'))
+                        <li class="nav-item">
+                            <a href="#sidebarStudentLeave" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentLeave"><i class="ri-user-follow-line"></i> <span>Student Leave</span></a>
+                            <div class="collapse menu-dropdown" id="sidebarStudentLeave"><ul class="nav nav-sm flex-column">
+                                @canany(['Recommend student leave', 'Approve student leave'])<li class="nav-item"><a href="{{ route('student-leave.approvals') }}" class="nav-link">Approvals</a></li>@endcanany
+                                @can('View student leave records')<li class="nav-item"><a href="{{ route('student-leave.records') }}" class="nav-link">Records</a></li>@endcan
+                            </ul></div>
+                        </li>
+                    @endif
+                    @endcanany
+
+                    @canany(['View leave records', 'View student leave records', 'Approve leave', 'Approve student leave'])
+                    @if(Route::has('leave.board'))
+                        <li class="nav-item">
+                            <a href="{{ route('leave.board') }}" class="nav-link menu-link {{ request()->routeIs('leave.board') ? 'active' : '' }}"><i class="ri-team-line"></i> <span>Who's Away</span></a>
+                        </li>
+                    @endif
+                    @endcanany
 
                     {{-- STUDENT & PARENTS --}}
                     @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
@@ -1140,6 +1142,9 @@
                                     <li class="nav-item"><a href="{{ route('reports.financial.collection-summary') }}" class="nav-link">Collection Summary</a></li>
                                     <li class="nav-item"><a href="{{ route('reports.analysis.index') }}" class="nav-link">Class Analysis</a></li>
                                     <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link">School-Wide Analysis</a></li>
+                                    @can('View financial audit')@if(Route::has('finance.audit.dashboard'))
+                                    <li class="nav-item"><a href="{{ route('finance.audit.dashboard') }}" class="nav-link">Financial Audit</a></li>
+                                    @endif@endcan
                                 </ul>
                             </div>
                         </li>
@@ -1881,24 +1886,33 @@
 
     /* ── active sidebar ── */
     function initActiveSidebar() {
-        var cur = window.location.pathname;
-        qsa('#navbar-nav .nav-sm a.nav-link').forEach(function(link){
-            try {
-                var lp = new URL(link.href, window.location.origin).pathname;
-                if (lp !== cur && !(lp.length > 1 && cur.startsWith(lp))) return;
-                link.classList.add('nav-active-child');
-                var col = link.closest('.collapse');
-                if (!col) return;
-                col.classList.add('show');
-                var tog = qs('[data-bs-target="#'+col.id+'"],[href="#'+col.id+'"]');
-                if (tog) {
-                    tog.setAttribute('aria-expanded','true');
-                    tog.classList.remove('collapsed');
-                    tog.classList.add('nav-active-parent');
-                }
-                setTimeout(function(){ link.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 350);
-            } catch(e){}
+        var cur = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+        var best = null, bestLen = -1;
+        // Consider every real sidebar link (top-level direct links AND submenu children).
+        qsa('#navbar-nav a.nav-link[href]').forEach(function(link){
+            var href = link.getAttribute('href') || '';
+            if (!href || href.charAt(0) === '#' || href.indexOf('javascript') === 0) return;
+            var lp;
+            try { lp = (new URL(link.href, window.location.origin).pathname || '/').replace(/\/+$/, '') || '/'; }
+            catch(e){ return; }
+            var match = (lp === cur) || (lp.length > 1 && cur.indexOf(lp + '/') === 0);
+            if (match && lp.length > bestLen) { best = link; bestLen = lp.length; }
         });
+        if (!best) return;
+        best.classList.add('active');
+        if (best.closest('.nav-sm')) best.classList.add('nav-active-child');
+        else best.classList.add('nav-active-parent');
+        var col = best.closest('.collapse');
+        if (col) {
+            col.classList.add('show');
+            var tog = qs('[data-bs-target="#'+col.id+'"],[href="#'+col.id+'"]');
+            if (tog) {
+                tog.setAttribute('aria-expanded','true');
+                tog.classList.remove('collapsed');
+                tog.classList.add('nav-active-parent','active');
+            }
+        }
+        setTimeout(function(){ try { best.scrollIntoView({behavior:'smooth',block:'nearest'}); } catch(e){} }, 350);
     }
 
     /* ── ripple ── */
@@ -2100,6 +2114,7 @@
         {title:'Payment Gateways',                      url:'{{ route("admin.payment-gateways.index") }}',                   icon:'mdi-credit-card',             category:'Finance',             keywords:['gateway','paystack','flutterwave','online','configure']},
 
         /* ── Accounting & Reports ── */
+        @if(Route::has("finance.audit.dashboard")){title:'Financial Audit',                       url:'{{ route("finance.audit.dashboard") }}',                        icon:'mdi-shield-search',           category:'Accounting',          keywords:['audit','financial','exception','trail','fraud','review','accountant']},@endif
         {title:'Balance Sheet',                         url:'{{ route("reports.financial.balance-sheet") }}',                icon:'mdi-scale-balance',           category:'Accounting',          keywords:['balance','sheet','financial','report']},
         {title:'Income Statement',                      url:'{{ route("reports.financial.income-statement") }}',             icon:'mdi-chart-line',              category:'Accounting',          keywords:['income','profit','loss','statement','p&l']},
         {title:'Trial Balance',                         url:'{{ route("reports.financial.trial-balance") }}',                icon:'mdi-calculator',              category:'Accounting',          keywords:['trial','balance','ledger','accounts']},

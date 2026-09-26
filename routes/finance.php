@@ -9,6 +9,7 @@
 */
 
 use App\Http\Controllers\Accounting\AccountingController;
+use App\Http\Controllers\Finance\FinancialAuditController;
 use App\Http\Controllers\Finance\AssetController;
 use App\Http\Controllers\Finance\AttendancePayController;
 use App\Http\Controllers\Finance\BudgetController;
@@ -134,5 +135,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings', [AccountingController::class, 'saveSettings'])->name('settings');
         Route::post('/sync-fees', [AccountingController::class, 'syncFees'])->name('sync-fees');
         Route::post('/catch-up', [AccountingController::class, 'catchUp'])->name('catch-up');
+    });
+
+    // ── Financial audit: trail, exceptions, analysis (accountant's audit) ──
+    Route::prefix('finance/audit')->name('finance.audit.')->group(function () {
+        Route::get('/', [FinancialAuditController::class, 'dashboard'])->name('dashboard');
+        Route::get('/trail', [FinancialAuditController::class, 'trail'])->name('trail');
+        Route::get('/trail/export', [FinancialAuditController::class, 'exportTrail'])->name('trail.export');
+        Route::get('/exceptions', [FinancialAuditController::class, 'exceptions'])->name('exceptions');
+        Route::post('/exceptions/review', [FinancialAuditController::class, 'review'])->name('exceptions.review');
+        Route::get('/users', [FinancialAuditController::class, 'users'])->name('users');
     });
 });

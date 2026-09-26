@@ -547,6 +547,9 @@ class DatabaseSeeder extends Seeder
             'FeatureFlagPermissionSeeder' =>
                 '🔀 Seeding feature-flag (module access) permission...',
 
+            'FinancialAuditPermissionSeeder' =>
+                '🔎 Seeding financial-audit permissions...',
+
             'CalendarPermissionSeeder' =>
                 '📅 Seeding school-calendar permissions & default categories...',
 

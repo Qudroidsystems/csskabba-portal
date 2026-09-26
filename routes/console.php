@@ -40,6 +40,9 @@ Schedule::command('leave:carry-over')->yearlyOn(1, 1, '01:00')->withoutOverlappi
 Schedule::command('calendar:sync-fees')->dailyAt('06:30')->withoutOverlapping(30);
 Schedule::command('calendar:reminders')->dailyAt('07:15')->withoutOverlapping(30);
 
+// Financial audit digest to auditors each morning.
+Schedule::command('financial-audit:digest')->dailyAt('07:45')->withoutOverlapping(30);
+
 // Post yesterday's school-fee receipts to the general ledger
 Schedule::command('accounting:sync-fees')->dailyAt('01:30')->withoutOverlapping(30);
 
