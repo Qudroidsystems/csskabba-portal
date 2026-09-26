@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'device.auth' => \App\Http\Middleware\DeviceAuthMiddleware::class,
             'force.password' => \App\Http\Middleware\ForcePasswordChange::class,
             'maintenance.mode' => \App\Http\Middleware\MaintenanceMode::class,
+            'remote.portal' => \App\Http\Middleware\VerifyRemotePortal::class,
         ]);
 
         // Temporary passwords (new parent accounts) must be changed first.

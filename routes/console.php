@@ -38,3 +38,6 @@ Schedule::command('accounting:sync-fees')->dailyAt('01:30')->withoutOverlapping(
 
 // Monthly depreciation on fixed assets (for the month just ended)
 Schedule::command('assets:depreciate')->monthlyOn(1, '03:00')->withoutOverlapping(30);
+
+// Pull module feature flags from the remote control portal (only if auto-pull is on)
+Schedule::command('features:pull')->hourly()->withoutOverlapping(10);

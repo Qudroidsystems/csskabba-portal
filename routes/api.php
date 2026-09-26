@@ -47,3 +47,13 @@ Route::middleware('auth:sanctum')->prefix('timetable')->group(function () {
 // Device -> server attendance ingestion (protected by X-Device-Key)
 // =========================================================================
 Route::middleware('device.auth')->post('/device/attendance', [DeviceAttendanceController::class, 'store']);
+
+// =========================================================================
+// Module feature flags — the remote control portal reads/sets 1/0 here.
+// Protected by the shared key (bearer) + HMAC signature on writes.
+// =========================================================================
+Route::middleware('remote.portal')->prefix('feature-flags')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\FeatureFlagApiController::class, 'index']);
+    Route::get('/health', [\App\Http\Controllers\Api\FeatureFlagApiController::class, 'health']);
+    Route::post('/sync', [\App\Http\Controllers\Api\FeatureFlagApiController::class, 'sync']);
+});

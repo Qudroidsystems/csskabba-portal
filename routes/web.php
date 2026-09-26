@@ -133,6 +133,14 @@ Route::view('/maintenance', 'errors.maintenance', ['m' => \App\Models\Maintenanc
 Route::middleware('auth')->group(function () {
     Route::get('/admin/maintenance', [\App\Http\Controllers\Admin\MaintenanceController::class, 'index'])->name('maintenance.settings');
     Route::post('/admin/maintenance', [\App\Http\Controllers\Admin\MaintenanceController::class, 'save'])->name('maintenance.save');
+
+    // Module access (feature flags)
+    Route::get('/admin/feature-flags', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'index'])->name('feature-flags.index');
+    Route::post('/admin/feature-flags/sync-settings', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'saveSync'])->name('feature-flags.sync-settings');
+    Route::post('/admin/feature-flags/regenerate-key', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'regenerateKey'])->name('feature-flags.regenerate-key');
+    Route::post('/admin/feature-flags/pull', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'pullNow'])->name('feature-flags.pull');
+    Route::post('/admin/feature-flags/{flag}/toggle', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'toggle'])->whereNumber('flag')->name('feature-flags.toggle');
+    Route::post('/admin/feature-flags/{flag}/control', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'setControl'])->whereNumber('flag')->name('feature-flags.control');
 });
 
 // CSRF refresh (used by the auto-refresh feature)

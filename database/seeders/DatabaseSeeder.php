@@ -541,6 +541,9 @@ class DatabaseSeeder extends Seeder
             'MaintenancePermissionSeeder' =>
                 '🛠️ Seeding maintenance-mode permission...',
 
+            'FeatureFlagPermissionSeeder' =>
+                '🔀 Seeding feature-flag (module access) permission...',
+
             'AccountingSetupSeeder' =>
                 '📒 Adding ledger accounts and linking expense categories...',
         ];
