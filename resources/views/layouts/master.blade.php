@@ -1016,20 +1016,6 @@
                     @endcan
                     @endfeature
 
-                    @feature('reports')
-                    @can('View analysis')
-                        <li class="nav-item">
-                            <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
-                                <i class="ph-storefront"></i> <span>Payment Analysis</span>
-                            </a>
-                            {{-- <div class="collapse menu-dropdown" id="sidebarAnalysis">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item"><a href="{{ route('analysis.index') }}" class="nav-link">School Payment Analysis</a></li>
-                                </ul>
-                            </div> --}}
-                        </li>
-                    @endcan
-                    @endfeature
 
                     @feature('scholarships')
                     @can('View scholarship')
