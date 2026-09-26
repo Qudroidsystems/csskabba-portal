@@ -423,6 +423,14 @@
             </div>
         </div>
         <div class="card-body">
+            <div id="selectionBar" class="alert alert-primary align-items-center justify-content-between mb-3 d-none">
+                <div><i class="ri-checkbox-multiple-line me-1"></i><strong id="selCount">0</strong> student(s) selected</div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" id="selSendReminders"><i class="ri-mail-send-line me-1"></i>Send reminders</button>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="selExportCsv"><i class="ri-file-excel-2-line me-1"></i>Export selected</button>
+                    <button type="button" class="btn btn-sm btn-light" id="selClear">Clear</button>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table debtors-table w-100" id="debtorsTable">
                     <thead>
@@ -494,6 +502,7 @@ let debtorsTable;
 let currentFilters = {};
 let studentData = {};
 let allRowData = [];
+let selectedIds = new Set();
 let popTimer = null;
 let hideTimer = null;
 
@@ -863,7 +872,7 @@ $(document).ready(function () {
                 data: null,
                 orderable: false,
                 render: function (d, t, row) {
-                    return '<input type="checkbox" class="row-selector" data-student-id="' + row.student_id + '">';
+                    return '<input type="checkbox" class="row-selector" data-student-id="' + row.student_id + '"' + (selectedIds.has(String(row.student_id)) ? ' checked' : '') + '>';
                 }
             },
             {
@@ -936,7 +945,12 @@ $(document).ready(function () {
             row.setAttribute('data-student-id', data.student_id);
         },
         drawCallback: function () {
-            setTimeout(function () { attachRowEvents(); }, 50);
+            setTimeout(function () {
+                attachRowEvents();
+                Array.from(selectedIds).forEach(function (id) { if (!studentData[id]) selectedIds.delete(id); });
+                reflectCheckboxes();
+                updateSelectionUI();
+            }, 50);
         },
         language: {
             emptyTable: '<div class="text-center py-5 text-muted">' +
@@ -956,8 +970,69 @@ $(document).ready(function () {
         order: [[10, 'desc']]
     });
 
+    function filteredIds() {
+        var ids = [];
+        debtorsTable.rows({ search: 'applied' }).every(function () {
+            var d = this.data();
+            if (d && d.student_id != null) ids.push(String(d.student_id));
+        });
+        return ids;
+    }
+    function reflectCheckboxes() {
+        $('#debtorsTable .row-selector').each(function () {
+            this.checked = selectedIds.has(String($(this).data('student-id')));
+        });
+    }
+    function syncHeaderCheckbox() {
+        var cb = document.getElementById('selectAll');
+        if (!cb) return;
+        var all = filteredIds();
+        var sel = all.filter(function (id) { return selectedIds.has(id); });
+        if (all.length === 0 || sel.length === 0) { cb.checked = false; cb.indeterminate = false; }
+        else if (sel.length === all.length) { cb.checked = true; cb.indeterminate = false; }
+        else { cb.checked = false; cb.indeterminate = true; }
+    }
+    function updateSelectionUI() {
+        var bar = document.getElementById('selectionBar');
+        var n = selectedIds.size;
+        var el = document.getElementById('selCount'); if (el) el.textContent = n;
+        if (bar) { if (n > 0) { bar.classList.remove('d-none'); bar.classList.add('d-flex'); } else { bar.classList.add('d-none'); bar.classList.remove('d-flex'); } }
+        syncHeaderCheckbox();
+    }
+    function selectedIdArray() {
+        return Array.from(selectedIds).map(function (x) { return parseInt(x, 10); }).filter(function (x) { return !!x; });
+    }
+
     $('#selectAll').on('change', function () {
-        $('.row-selector').prop('checked', $(this).is(':checked'));
+        var check = $(this).is(':checked');
+        filteredIds().forEach(function (id) { if (check) { selectedIds.add(id); } else { selectedIds.delete(id); } });
+        reflectCheckboxes();
+        updateSelectionUI();
+    });
+
+    $('#debtorsTable tbody').on('change', '.row-selector', function () {
+        var id = String($(this).data('student-id'));
+        if (this.checked) { selectedIds.add(id); } else { selectedIds.delete(id); }
+        updateSelectionUI();
+    });
+
+    $('#selClear').on('click', function () {
+        selectedIds.clear(); reflectCheckboxes(); updateSelectionUI();
+    });
+
+    $('#selExportCsv').on('click', function () {
+        var ids = selectedIdArray();
+        if (!ids.length) { Swal.fire('No students selected', 'Tick some students first.', 'info'); return; }
+        var rows = ids.map(function (id) { return studentData[id]; }).filter(Boolean);
+        var head = ['Student', 'Admission', 'Class', 'Term', 'Session', 'Billed', 'Paid', 'Outstanding'];
+        var csv = head.join(',') + '\n';
+        rows.forEach(function (r) {
+            csv += [r.student_name, r.admission_no, r.class_name, r.term_name, r.session_name, r.original_amount, r.amount_paid, r.outstanding]
+                .map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(',') + '\n';
+        });
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'selected_debtors_' + Date.now() + '.csv'; document.body.appendChild(a); a.click(); a.remove();
     });
 
     $('#loadReportBtn').on('click', function () {
@@ -985,11 +1060,9 @@ $(document).ready(function () {
         showLoading(false);
     });
 
-    $('#sendRemindersBtn').on('click', function () {
-        var ids = [];
-        $('.row-selector:checked').each(function () {
-            ids.push($(this).data('student-id'));
-        });
+    $('#sendRemindersBtn, #selSendReminders').on('click', function () {
+        var ids = selectedIdArray();
+        if (!ids.length) { Swal.fire('No students selected', 'Tick the students you want (or use Select all), then send reminders.', 'info'); return; }
         sendReminders(ids);
     });
 
