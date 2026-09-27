@@ -94,8 +94,8 @@ class CertificateController extends Controller
         $ctx = [
             'title'        => $d['title'] ?? $template->name,
             'session_id'   => $d['session_id'] ?? null,
-            'session_name' => $d['session_id'] ? DB::table('schoolsession')->where('id', $d['session_id'])->value('session') : null,
-            'term_name'    => $d['term_id'] ? DB::table('schoolterm')->where('id', $d['term_id'])->value('term') : null,
+            'session_name' => !empty($d['session_id']) ? DB::table('schoolsession')->where('id', $d['session_id'])->value('session') : null,
+            'term_name'    => !empty($d['term_id']) ? DB::table('schoolterm')->where('id', $d['term_id'])->value('term') : null,
             'custom'       => $d['custom'] ?? [],
         ];
 
