@@ -203,6 +203,10 @@ Route::get('/calendar/public', [\App\Http\Controllers\PublicCalendarController::
 Route::get('/calendar/feed/{token}.ics', [\App\Http\Controllers\PublicCalendarController::class, 'ical'])
     ->where('token', '[a-f0-9]{32}')->middleware('throttle:120,1')->name('calendar.ical');
 
+// Public certificate verification (QR scan, no login).
+Route::get('/verify-certificate/{token}', [\App\Http\Controllers\PublicCertificateController::class, 'verify'])
+    ->where('token', '[A-Za-z0-9]{20,64}')->middleware('throttle:60,1')->name('certificates.verify');
+
 // Payment gateway webhooks — no CSRF, no auth
 Route::prefix('webhook')->group(function () {
     // School-fee payments (online-fees). Signature-checked; CSRF is skipped for webhook/*.
@@ -1703,6 +1707,34 @@ Route::middleware('auth')->group(function () {
         Route::put('/categories/{category}', [\App\Http\Controllers\CalendarController::class, 'updateCategory'])->whereNumber('category')->name('categories.update');
         Route::delete('/categories/{category}', [\App\Http\Controllers\CalendarController::class, 'destroyCategory'])->whereNumber('category')->name('categories.destroy');
         Route::post('/sync-fees', [\App\Http\Controllers\CalendarController::class, 'syncFees'])->name('sync-fees');
+    });
+
+    // Certificates (confidential) — templates, generation, approval, audit.
+    Route::prefix('certificates')->name('certificates.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CertificateController::class, 'index'])->name('index');
+        Route::get('/generate', [\App\Http\Controllers\Admin\CertificateController::class, 'generate'])->name('generate');
+        Route::get('/students', [\App\Http\Controllers\Admin\CertificateController::class, 'students'])->name('students');
+        Route::post('/issue', [\App\Http\Controllers\Admin\CertificateController::class, 'issue'])->name('issue');
+        Route::get('/logs', [\App\Http\Controllers\Admin\CertificateController::class, 'logs'])->name('logs');
+
+        Route::prefix('templates')->name('templates.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'store'])->name('store');
+            Route::get('/{template}/edit', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'edit'])->whereNumber('template')->name('edit');
+            Route::post('/{template}', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'update'])->whereNumber('template')->name('update');
+            Route::delete('/{template}', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'destroy'])->whereNumber('template')->name('destroy');
+            Route::post('/{template}/duplicate', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'duplicate'])->whereNumber('template')->name('duplicate');
+        });
+        Route::post('/assets', [\App\Http\Controllers\Admin\CertificateTemplateController::class, 'uploadAsset'])->name('assets.upload');
+
+        Route::get('/{certificate}', [\App\Http\Controllers\Admin\CertificateController::class, 'show'])->whereNumber('certificate')->name('show');
+        Route::get('/{certificate}/print', [\App\Http\Controllers\Admin\CertificateController::class, 'print'])->whereNumber('certificate')->name('print');
+        Route::post('/{certificate}/generate-hit', [\App\Http\Controllers\Admin\CertificateController::class, 'generateHit'])->whereNumber('certificate')->name('generate-hit');
+        Route::post('/{certificate}/rendered', [\App\Http\Controllers\Admin\CertificateController::class, 'storeRendered'])->whereNumber('certificate')->name('rendered');
+        Route::get('/{certificate}/download', [\App\Http\Controllers\Admin\CertificateController::class, 'download'])->whereNumber('certificate')->name('download');
+        Route::post('/{certificate}/approve', [\App\Http\Controllers\Admin\CertificateController::class, 'approve'])->whereNumber('certificate')->name('approve');
+        Route::post('/{certificate}/revoke', [\App\Http\Controllers\Admin\CertificateController::class, 'revoke'])->whereNumber('certificate')->name('revoke');
     });
 });
 

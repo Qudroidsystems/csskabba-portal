@@ -553,6 +553,9 @@ class DatabaseSeeder extends Seeder
             'BackupPermissionSeeder' =>
                 '💾 Seeding database-backup permission...',
 
+            'CertificatePermissionSeeder' =>
+                '🎓 Seeding certificate module permissions...',
+
             'CalendarPermissionSeeder' =>
                 '📅 Seeding school-calendar permissions & default categories...',
 
