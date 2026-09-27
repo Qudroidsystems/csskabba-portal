@@ -20,7 +20,8 @@ class CertificateTemplateController extends Controller
     {
         return view('certificates.templates.index', [
             'pagetitle' => 'Certificate Templates',
-            'templates' => CertificateTemplate::withCount('certificates')->orderByDesc('id')->paginate(20),
+            'templates' => CertificateTemplate::withCount('certificates')->when(request('kind'), fn ($q) => $q->where('kind', request('kind')))->orderByDesc('id')->paginate(20)->withQueryString(),
+            'kind'      => request('kind'),
         ]);
     }
 
@@ -28,7 +29,7 @@ class CertificateTemplateController extends Controller
     {
         return view('certificates.templates.designer', [
             'pagetitle' => 'New Certificate Template',
-            'template'  => new CertificateTemplate(['orientation' => 'landscape', 'width' => 1123, 'height' => 794, 'requires_approval' => true, 'serial_prefix' => 'CERT']),
+            'template'  => new CertificateTemplate(['orientation' => request('kind') === 'testimonial' ? 'portrait' : 'landscape', 'width' => request('kind') === 'testimonial' ? 794 : 1123, 'height' => request('kind') === 'testimonial' ? 1123 : 794, 'requires_approval' => true, 'serial_prefix' => request('kind') === 'testimonial' ? 'TST' : 'CERT', 'kind' => request('kind') === 'testimonial' ? 'testimonial' : 'certificate']),
             'catalog'   => $this->resolver->catalog(),
         ]);
     }
@@ -84,6 +85,7 @@ class CertificateTemplateController extends Controller
     {
         $d = $request->validate([
             'name'              => 'required|string|max:150',
+            'kind'              => 'nullable|in:certificate,testimonial',
             'description'       => 'nullable|string|max:500',
             'orientation'       => 'required|in:landscape,portrait',
             'width'             => 'required|integer|min:200|max:5000',
@@ -98,6 +100,7 @@ class CertificateTemplateController extends Controller
 
         return [
             'name'              => $d['name'],
+            'kind'              => $d['kind'] ?? 'certificate',
             'description'       => $d['description'] ?? null,
             'orientation'       => $d['orientation'],
             'width'             => (int) $d['width'],

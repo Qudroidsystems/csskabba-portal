@@ -28,6 +28,7 @@ class CertificateController extends Controller
     public function index(Request $request)
     {
         $q = Certificate::with('template', 'student')
+            ->when($request->filled('kind'), fn ($x) => $x->whereHas('template', fn ($t) => $t->where('kind', $request->kind)))
             ->when($request->filled('template'), fn ($x) => $x->where('template_id', $request->template))
             ->when($request->filled('status'), fn ($x) => $x->where('status', $request->status))
             ->when($request->filled('q'), fn ($x) => $x->whereIn('student_id',
@@ -86,6 +87,7 @@ class CertificateController extends Controller
             'whole_class' => 'nullable|boolean',
             'title'       => 'nullable|string|max:180',
             'custom'      => 'nullable|array',
+            'testimonial' => 'nullable|array',
         ]);
 
         $template = CertificateTemplate::findOrFail($d['template_id']);
@@ -97,6 +99,7 @@ class CertificateController extends Controller
             'session_name' => !empty($d['session_id']) ? DB::table('schoolsession')->where('id', $d['session_id'])->value('session') : null,
             'term_name'    => !empty($d['term_id']) ? DB::table('schoolterm')->where('id', $d['term_id'])->value('term') : null,
             'custom'       => $d['custom'] ?? [],
+            'testimonial'  => $d['testimonial'] ?? [],
         ];
 
         // Determine target students.
@@ -148,6 +151,7 @@ class CertificateController extends Controller
         $verifyUrl = route('certificates.verify', ['token' => $cert->verify_token ?: ($cert->verify_token = $this->uniqueToken())]);
         $resolved = $this->resolver->resolve($studentId, array_merge($ctx, [
             'serial' => $cert->serial, 'verify_url' => $verifyUrl, 'date' => now()->format('d M Y'),
+            'testimonial' => $ctx['testimonial'] ?? [],
         ]));
 
         $cert->title = $ctx['title'];

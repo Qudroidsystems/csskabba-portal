@@ -5,7 +5,7 @@
 <div class="main-content"><div class="page-content"><div class="container-fluid">
     <x-cb.hero title="Certificate Templates" icon="ri-award-line" subtitle="Design certificate layouts on a canvas. Generate and verify certificates from the Certificates page.">
         <x-slot name="actions">
-            <a href="{{ route('certificates.templates.create') }}" class="action-btn btn-primary-cb"><i class="ri-add-line"></i>New template</a>
+            <a href="{{ route('certificates.templates.create', request('kind') ? ['kind'=>request('kind')] : []) }}" class="action-btn btn-primary-cb"><i class="ri-add-line"></i>New template</a>
             @can('Generate certificates')<a href="{{ route('certificates.index') }}" class="action-btn btn-go"><i class="ri-award-fill"></i>Certificates</a>@endcan
         </x-slot>
     </x-cb.hero>
@@ -18,11 +18,12 @@
             <div class="empty-state"><i class="ri-award-line"></i><h6>No templates yet</h6><p>Create your first certificate template to start.</p></div>
         @else
             <div class="table-responsive"><table class="table align-middle mb-0">
-                <thead><tr><th>Name</th><th>Orientation</th><th>Approval</th><th>Limit / student</th><th>Certificates</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                <thead><tr><th>Name</th><th>Type</th><th>Orientation</th><th>Approval</th><th>Limit / student</th><th>Certificates</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
                 <tbody>
                 @foreach($templates as $t)
                     <tr>
                         <td class="fw-semibold">{{ $t->name }}<div class="small text-muted">{{ \Illuminate\Support\Str::limit($t->description, 60) }}</div></td>
+                        <td>@if(($t->kind ?? 'certificate')==='testimonial')<span class="status-pill st-info">Testimonial</span>@else<span class="status-pill st-muted">Certificate</span>@endif</td>
                         <td class="small text-capitalize">{{ $t->orientation }} <span class="text-muted">{{ $t->width }}×{{ $t->height }}</span></td>
                         <td>@if($t->requires_approval)<span class="status-pill st-info">Required</span>@else<span class="text-muted small">Not required</span>@endif</td>
                         <td class="small">{{ $t->generation_limit ?? 'Unlimited' }}</td>

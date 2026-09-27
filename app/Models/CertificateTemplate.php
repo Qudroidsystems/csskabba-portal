@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CertificateTemplate extends Model
 {
     protected $fillable = [
-        'name', 'description', 'orientation', 'width', 'height', 'background_path',
+        'name', 'kind', 'description', 'orientation', 'width', 'height', 'background_path',
         'design', 'serial_prefix', 'requires_approval', 'generation_limit', 'is_active', 'created_by',
     ];
 
@@ -16,6 +16,8 @@ class CertificateTemplate extends Model
         'requires_approval' => 'boolean', 'is_active' => 'boolean',
         'generation_limit' => 'integer',
     ];
+
+    public function isTestimonial(): bool { return $this->kind === 'testimonial'; }
 
     public function certificates()
     {

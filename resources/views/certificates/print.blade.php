@@ -54,6 +54,7 @@
     const orient = '{{ $t->orientation ?? 'landscape' }}';
 
     function isText(o) { return o.type === 'textbox' || o.type === 'text' || o.type === 'i-text'; }
+    function substituteTokens(txt) { return String(txt).replace(/\{\{\s*([\w.]+)\s*\}\}/g, function (m, k) { return (fields[k] != null ? fields[k] : ''); }); }
     function qrDataUrl() { try { const q = new QRious({ value: verifyUrl, size: 400, level: 'M' }); return q.toDataURL('image/png'); } catch (e) { return null; } }
 
     function replaceWithImage(canvas, obj, url) {
@@ -79,7 +80,10 @@
                 const objs = c.getObjects().slice();
                 for (const o of objs) {
                     const key = o.fieldKey;
-                    if (!key) continue;
+                    if (!key) {
+                        if (isText(o) && typeof o.text === 'string' && o.text.indexOf('{{') !== -1) { o.set('text', substituteTokens(o.text)); }
+                        continue;
+                    }
                     if (isText(o)) { o.set('text', String(fields[key] != null ? fields[key] : '')); }
                     else {
                         let url = key === 'cert.qr' ? qrDataUrl() : (images[key] || null);

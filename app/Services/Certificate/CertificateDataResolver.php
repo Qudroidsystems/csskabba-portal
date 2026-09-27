@@ -45,6 +45,21 @@ class CertificateDataResolver
                 ['key' => 'cert.term', 'label' => 'Term'],
                 ['key' => 'cert.qr', 'label' => 'Verification QR code (image)', 'image' => true],
             ],
+            'Testimonial' => [
+                ['key' => 'testimonial.admission_date', 'label' => 'Date of admission'],
+                ['key' => 'testimonial.leaving_date', 'label' => 'Date of leaving'],
+                ['key' => 'testimonial.entry_class', 'label' => 'Class admitted into'],
+                ['key' => 'testimonial.leaving_class', 'label' => 'Class on leaving'],
+                ['key' => 'testimonial.duration', 'label' => 'Duration of stay'],
+                ['key' => 'testimonial.conduct', 'label' => 'Conduct'],
+                ['key' => 'testimonial.character', 'label' => 'Character remark'],
+                ['key' => 'testimonial.positions', 'label' => 'Positions held'],
+                ['key' => 'testimonial.clubs', 'label' => 'Clubs / societies'],
+                ['key' => 'testimonial.awards', 'label' => 'Awards'],
+                ['key' => 'testimonial.academic', 'label' => 'Academic ability'],
+                ['key' => 'testimonial.reason', 'label' => 'Reason for leaving'],
+                ['key' => 'testimonial.remark', 'label' => "Principal's remark"],
+            ],
         ];
     }
 
@@ -64,7 +79,7 @@ class CertificateDataResolver
             ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
             ->where('s.id', $studentId)
             ->select(
-                's.firstname', 's.lastname', 's.othername', 's.admissionNo', 's.gender', 's.dateofbirth',
+                's.firstname', 's.lastname', 's.othername', 's.admissionNo', 's.gender', 's.dateofbirth', 's.admission_date', 's.admissionYear',
                 DB::raw("TRIM(CONCAT(COALESCE(c.schoolclass,''),' ',COALESCE(a.arm,''))) as class_name"),
                 'sp.picture'
             )->first();
@@ -102,6 +117,32 @@ class CertificateDataResolver
 
         foreach (($ctx['custom'] ?? []) as $k => $v) {
             $fields['custom.' . $k] = (string) $v;
+        }
+
+        // Testimonial fields: admin-entered values (ctx['testimonial']) override sensible auto-fills.
+        $tin = $ctx['testimonial'] ?? [];
+        $admission = $s->admission_date ?? null;
+        if ($admission && strtoupper((string) $admission) !== 'N/A') {
+            try { $admission = Carbon::parse($admission)->format('d M Y'); } catch (\Throwable $e) {}
+        }
+        $tAuto = [
+            'admission_date' => $admission ?: ($s->admissionYear ?? ''),
+            'leaving_date'   => $ctx['date'] ?? now()->format('d M Y'),
+            'entry_class'    => '',
+            'leaving_class'  => $s->class_name ?? '',
+            'duration'       => '',
+            'conduct'        => '',
+            'character'      => '',
+            'positions'      => '',
+            'clubs'          => '',
+            'awards'         => '',
+            'academic'       => '',
+            'reason'         => '',
+            'remark'         => '',
+        ];
+        foreach ($tAuto as $k => $auto) {
+            $val = $tin[$k] ?? null;
+            $fields['testimonial.' . $k] = (string) (($val !== null && $val !== '') ? $val : $auto);
         }
 
         $images = [

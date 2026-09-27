@@ -42,12 +42,18 @@
                     @endforeach
                 </select>
                 <div class="small text-muted">Text fields drop as «Label»; image fields (photo, logo, QR) drop as a placeholder box that fills at generation.</div>
+                <div class="small text-muted mt-2">Tip: inside any text you can also type inline tokens like <code>{{'{{'}}student.name{{'}}'}}</code> or <code>{{'{{'}}testimonial.conduct{{'}}'}}</code> — great for testimonial letters.</div>
             </div></div>
 
             <div class="card mt-3"><div class="card-body">
                 <h6 class="fw-semibold"><i class="ri-settings-3-line me-1"></i>Template settings</h6>
                 <label class="form-label small mb-1">Name *</label>
                 <input class="form-control form-control-sm mb-2" id="tName" value="{{ $template->name }}" maxlength="150">
+                <label class="form-label small mb-1">Type</label>
+                <select class="form-select form-select-sm mb-2" id="tKind">
+                    <option value="certificate" @selected(($template->kind ?? 'certificate')==='certificate')>Certificate</option>
+                    <option value="testimonial" @selected(($template->kind ?? '')==='testimonial')>Testimonial (leaving)</option>
+                </select>
                 <label class="form-label small mb-1">Description</label>
                 <input class="form-control form-control-sm mb-2" id="tDesc" value="{{ $template->description }}" maxlength="500">
                 <label class="form-label small mb-1">Orientation</label>
@@ -269,6 +275,7 @@
         const design = JSON.stringify(canvas.toJSON(['fieldKey', 'fieldLabel']));
         const payload = {
             name: name,
+            kind: document.getElementById('tKind').value,
             description: document.getElementById('tDesc').value,
             orientation: document.getElementById('tOrient').value,
             width: W, height: H,
