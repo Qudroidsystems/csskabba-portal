@@ -621,6 +621,7 @@
                                         <li class="nav-item"><a href="{{ route('parent.fees', $k->id) }}" class="nav-link">Fees &amp; Payments</a></li>
                                         <li class="nav-item"><a href="{{ route('parent.attendance', $k->id) }}" class="nav-link">Attendance</a></li>
                                         <li class="nav-item"><a href="{{ route('parent.timetable', $k->id) }}" class="nav-link">Timetable</a></li>
+                                        @if(Route::has('lms.parent.child'))<li class="nav-item"><a href="{{ route('lms.parent.child', $k->id) }}" class="nav-link">Learning</a></li>@endif
                                     </ul>
                                 </div>
                             </li>
@@ -737,6 +738,12 @@
                         </li>
                     @endcan
                     @endfeature
+
+                    @if(auth()->user()->student_id && Route::has('lms.learn.index'))
+                    <li class="nav-item">
+                        <a href="{{ route('lms.learn.index') }}" class="nav-link menu-link {{ request()->routeIs('lms.learn.*') ? 'active' : '' }}"><i class="ri-graduation-cap-line"></i> <span>My Learning</span></a>
+                    </li>
+                    @endif
 
                     <li class="nav-item">
                         <a href="#sidebarPayment" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayment">
@@ -1128,6 +1135,22 @@
                         </li>
                     @endif
                     @endcan
+
+                    @canany(['Manage courses', 'Grade coursework'])
+                    @if(Route::has('lms.courses.index'))
+                        <li class="nav-item">
+                            <a href="#sidebarElearning" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarElearning">
+                                <i class="ri-book-open-line"></i> <span>E-Learning</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarElearning">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item"><a href="{{ route('lms.courses.index') }}" class="nav-link">Courses</a></li>
+                                    <li class="nav-item"><a href="{{ route('lms.courses.create') }}" class="nav-link">New Course</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+                    @endcanany
 
                     @canany(['Manage certificate templates', 'Generate certificates', 'View certificate audit'])
                     @if(Route::has('certificates.index'))
@@ -2067,6 +2090,8 @@
         {title:'All Parents',                           url:'{{ route("parent.index") }}',                                   icon:'mdi-account-group',           category:'Parents',             keywords:['guardian','parent','family','mother','father']},
 
         /* ── Student Portal ── */
+        {title:'My Learning',                             url:'{{ route("lms.learn.index") }}',                              icon:'mdi-school-outline',          category:'Student Portal',      keywords:['course','lesson','learn','elearning','lms','video']},
+        {title:'Courses (E-Learning)',                   url:'{{ route("lms.courses.index") }}',                            icon:'mdi-book-open-page-variant',  category:'Academics',           keywords:['course','lms','elearning','lesson','quiz','assignment','teach']},
         {title:'My Assessments',                        url:'{{ route("assessments") }}',                                    icon:'mdi-clipboard-list',          category:'Student Portal',      keywords:['test','quiz','cbt','assessment']},
         {title:'Pay School Fees',                       url:'{{ route("student.fees.pay") }}',                           icon:'mdi-credit-card-outline',     category:'Student Portal',      keywords:['pay','fees','paystack','online','card','transfer']},
         {title:'My Payments',                           url:'{{ route("student.payments") }}',                               icon:'mdi-cash-multiple',           category:'Student Portal',      keywords:['fees','invoice','payment','student']},

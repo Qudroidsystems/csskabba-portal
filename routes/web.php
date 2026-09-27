@@ -1740,3 +1740,6 @@ Route::middleware('auth')->group(function () {
 
 // Finance operations: payouts, loans, cooperative, expenses, budgets, assets, general ledger
 require __DIR__ . '/finance.php';
+
+// E-learning (LMS): courses, lessons, coursework, live classes, learner & parent views
+require __DIR__ . '/lms.php';

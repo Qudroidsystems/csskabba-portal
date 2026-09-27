@@ -57,6 +57,7 @@ class FeatureRouteGuard
         'myresultroom.' => 'results',
         'admin.score-entry.' => 'results',
         'student-id-cards.' => 'students',
+        'lms.' => 'elearning',
         'studentbatch' => 'students',
         ];
     }
