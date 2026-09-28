@@ -36,11 +36,11 @@ class GradebookController extends Controller
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Admission No', 'Student', 'Progress %', 'Quiz avg %', 'Assignment avg %', 'Status']);
+            fputcsv($out, ['Admission No', 'Student', 'Progress %', 'Quiz avg %', 'Assignment avg %', 'Overall %', 'Status']);
             foreach ($rows as $r) {
                 fputcsv($out, [
                     $r['admissionNo'], $r['name'], $r['progress'],
-                    $r['quiz_avg'] ?? '', $r['assignment_avg'] ?? '', $r['status'],
+                    $r['quiz_avg'] ?? '', $r['assignment_avg'] ?? '', $r['overall'] ?? '', $r['status'],
                 ]);
             }
             fclose($out);

@@ -166,21 +166,45 @@ class ProgressService
             }
         }
 
+        $weights = $course->gradeWeights(); // ['quiz'=>x,'assignment'=>y] summing to 100
+
         $out = [];
         foreach ($enrols as $e) {
             $sid = (int) $e->student_id;
             $s = $students[$sid] ?? null;
+            $q = $quizAvg[$sid] ?? null;
+            $a = $assignAvg[$sid] ?? null;
             $out[] = [
                 'student_id'     => $sid,
                 'name'           => $s ? trim(($s->firstname ?? '') . ' ' . ($s->lastname ?? '')) : ('Student #' . $sid),
                 'admissionNo'    => $s->admissionNo ?? null,
                 'progress'       => (int) $e->progress_percent,
-                'quiz_avg'       => $quizAvg[$sid] ?? null,
-                'assignment_avg' => $assignAvg[$sid] ?? null,
+                'quiz_avg'       => $q,
+                'assignment_avg' => $a,
+                'overall'        => $this->weightedOverall($q, $a, $weights),
                 'status'         => $e->status,
             ];
         }
         usort($out, fn ($a, $b) => strcmp($a['name'], $b['name']));
         return $out;
+    }
+
+    /**
+     * Weighted overall grade. When only one component has data, it takes the
+     * full weight; when neither does, returns null.
+     */
+    protected function weightedOverall(?float $quiz, ?float $assign, array $weights): ?float
+    {
+        $qw = $weights['quiz'] ?? 50;
+        $aw = $weights['assignment'] ?? 50;
+        $parts = [];
+        if ($quiz !== null)   $parts[] = ['v' => $quiz,   'w' => $qw];
+        if ($assign !== null) $parts[] = ['v' => $assign, 'w' => $aw];
+        if (!$parts) return null;
+        $wsum = array_sum(array_column($parts, 'w'));
+        if ($wsum <= 0) return null;
+        $total = 0.0;
+        foreach ($parts as $p) $total += $p['v'] * $p['w'];
+        return round($total / $wsum, 1);
     }
 }

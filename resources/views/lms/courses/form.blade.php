@@ -74,6 +74,15 @@
                     </div>
                 </x-cb.card>
 
+                <x-cb.card title="Grade weighting" icon="ri-scales-3-line">
+                    @php $gw = $course->exists ? $course->gradeWeights() : ['quiz'=>50,'assignment'=>50]; @endphp
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label small">Quizzes %</label><input type="number" min="0" max="100" name="quiz_weight" value="{{ old('quiz_weight', $gw['quiz']) }}" class="form-control"></div>
+                        <div class="col-6"><label class="form-label small">Assignments %</label><input type="number" min="0" max="100" name="assignment_weight" value="{{ old('assignment_weight', $gw['assignment']) }}" class="form-control"></div>
+                    </div>
+                    <div class="form-text">Used for each learner's overall course grade. Auto-normalised to 100%.</div>
+                </x-cb.card>
+
                 <x-cb.card title="Publish" icon="ri-global-line">
                     <div class="form-check form-switch mb-3">
                         <input type="hidden" name="is_published" value="0">

@@ -205,6 +205,10 @@ class LearnController extends Controller
         $sid = $this->ensureEnrolled($course);
         abort_unless($quiz->is_published, 404);
 
+        if (!$quiz->isOpen()) {
+            return redirect()->route('lms.learn.show', $course)->with('error', 'This quiz is not open right now.' . ($quiz->availabilityNote() ? ' ' . $quiz->availabilityNote() . '.' : ''));
+        }
+
         $left = $quiz->attemptsLeft($sid);
         if ($left !== null && $left <= 0) {
             return redirect()->route('lms.learn.show', $course)->with('error', 'You have used all attempts for this quiz.');
@@ -228,41 +232,60 @@ class LearnController extends Controller
         $sid = $this->ensureEnrolled($course);
         abort_unless($quiz->is_published, 404);
 
+        if (!$quiz->isOpen()) {
+            return redirect()->route('lms.learn.show', $course)->with('error', 'This quiz is not open right now.');
+        }
+
         $left = $quiz->attemptsLeft($sid);
         if ($left !== null && $left <= 0) {
             return redirect()->route('lms.learn.show', $course)->with('error', 'No attempts remaining.');
         }
 
-        $answers = (array) $request->input('answers', []); // [question_id => [idx,...] or idx]
+        $answers = (array) $request->input('answers', []); // [question_id => idx|[idx,..]|text]
         $questions = $quiz->questions()->get();
+        $partial = (bool) $quiz->allow_partial;
 
-        $score = 0.0; $max = 0.0; $stored = [];
+        $score = 0.0; $max = 0.0; $stored = []; $marks = []; $needsReview = false;
         foreach ($questions as $qn) {
             $max += $qn->points;
-            $sel = $answers[$qn->id] ?? [];
-            $sel = is_array($sel) ? $sel : [$sel];
-            $sel = array_values(array_filter(array_map('intval', $sel), fn ($v) => $v >= 0));
-            $stored[$qn->id] = $sel;
-            if ($qn->isCorrect($sel)) $score += $qn->points;
+            $ans = $answers[$qn->id] ?? null;
+
+            if ($qn->isChoice()) {
+                $sel = is_array($ans) ? $ans : ($ans === null || $ans === '' ? [] : [$ans]);
+                $sel = array_values(array_filter(array_map('intval', $sel), fn ($v) => $v >= 0));
+                $stored[$qn->id] = $sel;
+                $awarded = $qn->award($sel, $partial);
+            } else {
+                // text (short_answer / fill_blank / essay)
+                $text = is_array($ans) ? implode(' ', $ans) : (string) $ans;
+                $stored[$qn->id] = $text;
+                $awarded = $qn->award($text, $partial);
+                if ($qn->isManual()) $needsReview = true; // essay graded later
+            }
+            $marks[$qn->id] = $awarded;
+            $score += $awarded;
         }
 
         $percent = $max > 0 ? (int) round($score / $max * 100) : 0;
-        $passed = $percent >= (int) $quiz->pass_mark;
+        // Only decide pass/fail once no manual grading is pending.
+        $passed = !$needsReview && $percent >= (int) $quiz->pass_mark;
 
         $attempt = LmsQuizAttempt::create([
             'quiz_id'      => $quiz->id,
             'student_id'   => $sid,
             'answers'      => $stored,
+            'marks'        => $marks,
             'score'        => $score,
             'max_score'    => $max,
             'percent'      => $percent,
             'passed'       => $passed,
+            'needs_review' => $needsReview,
             'attempt_no'   => $quiz->attemptsUsed($sid) + 1,
             'started_at'   => $request->input('started_at') ? now()->parse($request->input('started_at')) : now(),
             'submitted_at' => now(),
         ]);
 
-        // completing a quiz on a lesson can auto-complete that lesson
+        // auto-complete the lesson only for a clean pass (no pending manual grade)
         if ($passed && $quiz->lesson_id) {
             $lesson = LmsLesson::find($quiz->lesson_id);
             if ($lesson && $lesson->course_id === $course->id) {
@@ -270,8 +293,11 @@ class LearnController extends Controller
             }
         }
 
-        return redirect()->route('lms.learn.quiz.result', [$course, $quiz, $attempt])
-            ->with('success', "You scored {$percent}%.");
+        $msg = $needsReview
+            ? 'Submitted. Some answers need to be graded by your teacher — your final score will appear once reviewed.'
+            : "You scored {$percent}%.";
+
+        return redirect()->route('lms.learn.quiz.result', [$course, $quiz, $attempt])->with('success', $msg);
     }
 
     public function quizResult(LmsCourse $course, LmsQuiz $quiz, LmsQuizAttempt $attempt)

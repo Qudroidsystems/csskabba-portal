@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Lms;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Lms\Concerns\InteractsWithLms;
 use App\Models\LmsCourse;
+use App\Models\LmsLesson;
 use App\Models\LmsQuiz;
+use App\Models\LmsQuizAttempt;
 use App\Models\LmsQuizQuestion;
+use App\Services\Lms\ProgressService;
+use App\Services\Messaging\PortalNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -111,6 +115,78 @@ class QuizController extends Controller
         ]);
     }
 
+    /** Attempts awaiting manual grading (essay / short-answer overrides). */
+    public function review(LmsCourse $course, LmsQuiz $quiz)
+    {
+        $this->authorizeGrade($course);
+        abort_unless($quiz->course_id === $course->id, 404);
+
+        $quiz->load('questions');
+        $attempts = LmsQuizAttempt::where('quiz_id', $quiz->id)
+            ->where('needs_review', true)->orderBy('submitted_at')->get();
+
+        $students = DB::table('studentRegistration')
+            ->whereIn('id', $attempts->pluck('student_id')->all())
+            ->get(['id', 'firstname', 'lastname', 'admissionNo'])->keyBy('id');
+
+        return view('lms.quizzes.review', [
+            'pagetitle' => 'Grade — ' . $quiz->title,
+            'course'    => $course,
+            'quiz'      => $quiz,
+            'attempts'  => $attempts,
+            'students'  => $students,
+        ]);
+    }
+
+    /** Save teacher-awarded marks for an attempt and finalise its score. */
+    public function gradeAttempt(Request $request, LmsCourse $course, LmsQuiz $quiz, LmsQuizAttempt $attempt)
+    {
+        $this->authorizeGrade($course);
+        abort_unless($quiz->course_id === $course->id && $attempt->quiz_id === $quiz->id, 404);
+
+        $questions = $quiz->questions()->get()->keyBy('id');
+        $marks = is_array($attempt->marks) ? $attempt->marks : [];
+        foreach ((array) $request->input('marks', []) as $qid => $pts) {
+            if (!isset($questions[$qid])) continue;
+            $max = (float) $questions[$qid]->points;
+            $marks[$qid] = max(0, min($max, (float) $pts));
+        }
+
+        $score = array_sum(array_map('floatval', $marks));
+        $maxScore = (float) ($attempt->max_score ?: $questions->sum('points'));
+        $percent = $maxScore > 0 ? (int) round($score / $maxScore * 100) : 0;
+        $passed = $percent >= (int) $quiz->pass_mark;
+
+        $attempt->update([
+            'marks'        => $marks,
+            'score'        => $score,
+            'percent'      => $percent,
+            'passed'       => $passed,
+            'needs_review' => false,
+            'graded_by'    => $this->me()->id,
+            'graded_at'    => now(),
+        ]);
+
+        // notify student + auto-complete the linked lesson on a pass
+        try {
+            $userId = DB::table('users')->where('student_id', $attempt->student_id)->value('id');
+            if ($userId) {
+                PortalNotifier::toUsers([(int) $userId], 'Quiz graded',
+                    "Your attempt at \"{$quiz->title}\" was graded: {$percent}%.",
+                    route('lms.learn.show', $course), 'result');
+            }
+        } catch (\Throwable $e) {}
+
+        if ($passed && $quiz->lesson_id) {
+            $lesson = LmsLesson::find($quiz->lesson_id);
+            if ($lesson && $lesson->course_id === $course->id) {
+                app(ProgressService::class)->markLesson($course, $lesson, (int) $attempt->student_id, true);
+            }
+        }
+
+        return back()->with('success', 'Attempt graded.');
+    }
+
     // ── validation ────────────────────────────────────────────────────────
     protected function quizRules(Request $request): array
     {
@@ -121,47 +197,81 @@ class QuizController extends Controller
             'pass_mark'          => 'required|integer|min:0|max:100',
             'max_attempts'       => 'required|integer|min:0|max:100',
             'time_limit_minutes' => 'nullable|integer|min:0|max:100000',
+            'available_from'     => 'nullable|date',
+            'available_until'    => 'nullable|date|after_or_equal:available_from',
             'shuffle'            => 'nullable|boolean',
+            'allow_partial'      => 'nullable|boolean',
             'is_published'       => 'nullable|boolean',
         ]);
-        $v['shuffle']      = $request->boolean('shuffle');
-        $v['is_published'] = $request->boolean('is_published', true);
+        $v['shuffle']       = $request->boolean('shuffle');
+        $v['allow_partial'] = $request->boolean('allow_partial');
+        $v['is_published']  = $request->boolean('is_published', true);
         return $v;
     }
 
     protected function questionRules(Request $request): array
     {
         $data = $request->validate([
-            'question' => 'required|string',
-            'type'     => 'required|in:single,multiple,boolean',
-            'points'   => 'required|integer|min:1|max:100',
-            'options'  => 'nullable|array',
-            'options.*'=> 'nullable|string|max:500',
-            'correct'  => 'required|array|min:1',
-            'correct.*'=> 'integer|min:0',
+            'question'          => 'required|string',
+            'type'              => 'required|in:single,multiple,boolean,short_answer,fill_blank,essay',
+            'points'            => 'required|integer|min:1|max:100',
+            'options'           => 'nullable|array',
+            'options.*'         => 'nullable|string|max:500',
+            'correct'           => 'nullable|array',
+            'correct.*'         => 'integer|min:0',
+            'accepted'          => 'nullable|array',
+            'accepted.*'        => 'nullable|string|max:500',
+            'explanation'       => 'nullable|string|max:5000',
+            'image'             => 'nullable|image|max:4096',
+            'remove_image'      => 'nullable|boolean',
         ]);
 
-        if ($data['type'] === 'boolean') {
-            $data['options'] = ['True', 'False'];
-        } else {
-            $data['options'] = array_values(array_filter(
-                array_map(fn ($o) => trim((string) $o), $data['options'] ?? []),
-                fn ($o) => $o !== ''
+        $type = $data['type'];
+        $out = [
+            'question'    => $data['question'],
+            'type'        => $type,
+            'points'      => $data['points'],
+            'explanation' => $data['explanation'] ?? null,
+            'options'     => null,
+            'correct'     => null,
+            'accepted_answers' => null,
+        ];
+
+        if (in_array($type, ['single', 'multiple', 'boolean'], true)) {
+            if ($type === 'boolean') {
+                $out['options'] = ['True', 'False'];
+            } else {
+                $out['options'] = array_values(array_filter(
+                    array_map(fn ($o) => trim((string) $o), $data['options'] ?? []),
+                    fn ($o) => $o !== ''
+                ));
+            }
+            $max = count($out['options']);
+            if ($max < 2) abort(422, 'Add at least two options.');
+            $correct = array_values(array_filter(
+                array_unique(array_map('intval', $data['correct'] ?? [])),
+                fn ($i) => $i >= 0 && $i < $max
             ));
+            if ($type !== 'multiple') $correct = array_slice($correct, 0, 1);
+            if (empty($correct)) abort(422, 'Select at least one valid correct answer.');
+            $out['correct'] = $correct;
+        } elseif (in_array($type, ['short_answer', 'fill_blank'], true)) {
+            $accepted = array_values(array_filter(
+                array_map(fn ($a) => trim((string) $a), $data['accepted'] ?? []),
+                fn ($a) => $a !== ''
+            ));
+            if (empty($accepted)) abort(422, 'Add at least one accepted answer.');
+            $out['accepted_answers'] = $accepted;
+        }
+        // essay: no options/correct/accepted — graded manually.
+
+        // image handling
+        if ($request->hasFile('image')) {
+            $out['image_path'] = $request->file('image')->store('lms/questions', 'public');
+        } elseif ($request->boolean('remove_image')) {
+            $out['image_path'] = null;
         }
 
-        // keep only correct indexes that point at a real option; single → one
-        $max = count($data['options']);
-        $data['correct'] = array_values(array_filter(
-            array_unique(array_map('intval', $data['correct'])),
-            fn ($i) => $i >= 0 && $i < $max
-        ));
-        if ($data['type'] !== 'multiple') {
-            $data['correct'] = array_slice($data['correct'], 0, 1);
-        }
-        if (empty($data['correct'])) {
-            abort(422, 'Select at least one valid correct answer.');
-        }
-        return $data;
+        return $out;
     }
 }

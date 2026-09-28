@@ -15,7 +15,7 @@
             <div class="empty-state"><i class="ri-bar-chart-box-line"></i><h6>No learners</h6><p>Enrol students to see grades.</p></div>
         @else
             <div class="table-responsive"><table class="table align-middle mb-0">
-                <thead><tr><th>Student</th><th>Admission</th><th style="width:200px">Progress</th><th class="text-end">Quiz avg</th><th class="text-end">Assignment avg</th><th>Status</th></tr></thead>
+                <thead><tr><th>Student</th><th>Admission</th><th style="width:200px">Progress</th><th class="text-end">Quiz avg</th><th class="text-end">Assignment avg</th><th class="text-end">Overall</th><th>Status</th></tr></thead>
                 <tbody>
                 @foreach($rows as $r)
                     <tr>
@@ -27,6 +27,7 @@
                         </td>
                         <td class="text-end">{{ $r['quiz_avg'] !== null ? $r['quiz_avg'].'%' : '—' }}</td>
                         <td class="text-end">{{ $r['assignment_avg'] !== null ? $r['assignment_avg'].'%' : '—' }}</td>
+                        <td class="text-end fw-semibold">{{ $r['overall'] !== null ? $r['overall'].'%' : '—' }}</td>
                         <td><span class="status-pill {{ $r['status']==='completed' ? 'st-paid' : 'st-pending' }}">{{ ucfirst($r['status']) }}</span></td>
                     </tr>
                 @endforeach

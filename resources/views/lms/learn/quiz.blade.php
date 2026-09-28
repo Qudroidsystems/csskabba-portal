@@ -20,14 +20,23 @@
             <x-cb.card>
                 <div class="fw-semibold mb-2"><span class="badge bg-secondary">Q{{ $i+1 }}</span> {{ $qn->question }}
                     <span class="text-muted small">({{ $qn->points }} pt @if($qn->type==='multiple') · select all that apply @endif)</span></div>
-                @foreach(($qn->options ?? []) as $oi => $opt)
-                    <div class="form-check">
-                        <input class="form-check-input" type="{{ $qn->type==='multiple' ? 'checkbox' : 'radio' }}"
-                               name="answers[{{ $qn->id }}]{{ $qn->type==='multiple' ? '[]' : '' }}"
-                               value="{{ $oi }}" id="q{{ $qn->id }}o{{ $oi }}">
-                        <label class="form-check-label" for="q{{ $qn->id }}o{{ $oi }}">{{ $opt }}</label>
-                    </div>
-                @endforeach
+                @if($qn->imageUrl())<img src="{{ $qn->imageUrl() }}" class="img-fluid rounded mb-2" style="max-height:260px" alt="">@endif
+
+                @if(in_array($qn->type, ['single','multiple','boolean']))
+                    @foreach(($qn->options ?? []) as $oi => $opt)
+                        <div class="form-check">
+                            <input class="form-check-input" type="{{ $qn->type==='multiple' ? 'checkbox' : 'radio' }}"
+                                   name="answers[{{ $qn->id }}]{{ $qn->type==='multiple' ? '[]' : '' }}"
+                                   value="{{ $oi }}" id="q{{ $qn->id }}o{{ $oi }}">
+                            <label class="form-check-label" for="q{{ $qn->id }}o{{ $oi }}">{{ $opt }}</label>
+                        </div>
+                    @endforeach
+                @elseif(in_array($qn->type, ['short_answer','fill_blank']))
+                    <input type="text" class="form-control" name="answers[{{ $qn->id }}]" placeholder="Your answer" autocomplete="off">
+                @else
+                    <textarea class="form-control" rows="5" name="answers[{{ $qn->id }}]" placeholder="Write your answer…"></textarea>
+                    <div class="small text-muted mt-1"><i class="ri-quill-pen-line"></i> This answer will be graded by your teacher.</div>
+                @endif
             </x-cb.card>
         @endforeach
 

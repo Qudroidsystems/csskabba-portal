@@ -66,4 +66,23 @@ class LmsCourse extends Model
     {
         return $this->cover_path ? asset('storage/' . ltrim($this->cover_path, '/')) : null;
     }
+
+    /**
+     * Overall-grade weighting (percent) for quizzes vs assignments, stored in
+     * settings. Defaults to 50/50; normalised so the two always sum to 100.
+     *
+     * @return array{quiz:int,assignment:int}
+     */
+    public function gradeWeights(): array
+    {
+        $s = $this->settings ?? [];
+        $q = (int) ($s['quiz_weight'] ?? 50);
+        $a = (int) ($s['assignment_weight'] ?? 50);
+        $q = max(0, min(100, $q));
+        $a = max(0, min(100, $a));
+        if ($q + $a === 0) { $q = 50; $a = 50; }
+        // normalise to 100
+        $sum = $q + $a;
+        return ['quiz' => (int) round($q / $sum * 100), 'assignment' => (int) round($a / $sum * 100)];
+    }
 }

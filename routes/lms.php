@@ -94,6 +94,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/quizzes/{quiz}', [QuizController::class, 'update'])->whereNumber('quiz')->name('lms.quizzes.update');
         Route::delete('/quizzes/{quiz}', [QuizController::class, 'destroy'])->whereNumber('quiz')->name('lms.quizzes.destroy');
         Route::get('/quizzes/{quiz}/results', [QuizController::class, 'results'])->whereNumber('quiz')->name('lms.quizzes.results');
+        Route::get('/quizzes/{quiz}/review', [QuizController::class, 'review'])->whereNumber('quiz')->name('lms.quizzes.review');
+        Route::post('/quizzes/{quiz}/attempts/{attempt}/grade', [QuizController::class, 'gradeAttempt'])->whereNumber(['quiz', 'attempt'])->name('lms.attempts.grade');
         Route::post('/quizzes/{quiz}/questions', [QuizController::class, 'storeQuestion'])->whereNumber('quiz')->name('lms.questions.store');
         Route::put('/quizzes/{quiz}/questions/{question}', [QuizController::class, 'updateQuestion'])->whereNumber(['quiz', 'question'])->name('lms.questions.update');
         Route::delete('/quizzes/{quiz}/questions/{question}', [QuizController::class, 'destroyQuestion'])->whereNumber(['quiz', 'question'])->name('lms.questions.destroy');

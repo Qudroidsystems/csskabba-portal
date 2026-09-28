@@ -243,10 +243,17 @@ class CourseController extends Controller
             'completion_cert_template_id' => 'nullable|integer',
             'is_published'                => 'nullable|boolean',
             'cover'                       => 'nullable|image|max:4096',
+            'quiz_weight'                 => 'nullable|integer|min:0|max:100',
+            'assignment_weight'           => 'nullable|integer|min:0|max:100',
         ]);
         $v['allow_self_enroll'] = $request->boolean('allow_self_enroll');
         $v['is_published']      = $request->boolean('is_published');
-        unset($v['cover']);
+        // grade weighting lives in settings (JSON)
+        $v['settings'] = [
+            'quiz_weight'       => (int) $request->input('quiz_weight', 50),
+            'assignment_weight' => (int) $request->input('assignment_weight', 50),
+        ];
+        unset($v['cover'], $v['quiz_weight'], $v['assignment_weight']);
         return $v;
     }
 
