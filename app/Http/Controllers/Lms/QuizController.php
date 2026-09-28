@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Lms\Concerns\InteractsWithLms;
 use App\Models\LmsCourse;
 use App\Models\LmsLesson;
+use App\Models\LmsQuestionBank;
 use App\Models\LmsQuiz;
 use App\Models\LmsQuizAttempt;
 use App\Models\LmsQuizQuestion;
@@ -42,10 +43,13 @@ class QuizController extends Controller
         $this->authorizeManage($course);
         abort_unless($quiz->course_id === $course->id, 404);
         $quiz->load('questions');
+        $subjects = \Illuminate\Support\Facades\Schema::hasTable('subject')
+            ? DB::table('subject')->orderBy('subject')->get(['id', 'subject']) : collect();
         return view('lms.quizzes.edit', [
             'pagetitle' => 'Quiz — ' . $quiz->title,
             'course'    => $course,
             'quiz'      => $quiz,
+            'subjects'  => $subjects,
         ]);
     }
 
@@ -185,6 +189,102 @@ class QuizController extends Controller
         }
 
         return back()->with('success', 'Attempt graded.');
+    }
+
+    /** Import questions from the shared bank into this quiz (copies rows). */
+    public function importBank(Request $request, LmsCourse $course, LmsQuiz $quiz)
+    {
+        $this->authorizeManage($course);
+        abort_unless($quiz->course_id === $course->id, 404);
+
+        $pos = (int) $quiz->questions()->max('position');
+        $imported = 0;
+
+        if ($request->input('mode') === 'random') {
+            $count = max(1, min(100, (int) $request->input('count', 5)));
+            $pool = LmsQuestionBank::query()
+                ->when($request->filled('subject'), fn ($q) => $q->where('subject_id', $request->subject))
+                ->when($request->filled('type'), fn ($q) => $q->where('type', $request->type))
+                ->when($request->filled('tag'), fn ($q) => $q->where('tag', 'like', "%{$request->tag}%"))
+                ->inRandomOrder()->limit($count)->get();
+        } else {
+            $ids = array_filter(array_map('intval', (array) $request->input('ids', [])));
+            $pool = $ids ? LmsQuestionBank::whereIn('id', $ids)->get() : collect();
+        }
+
+        foreach ($pool as $bq) {
+            LmsQuizQuestion::create($bq->toQuizFields() + ['quiz_id' => $quiz->id, 'position' => ++$pos]);
+            $imported++;
+        }
+
+        return back()->with($imported ? 'success' : 'error',
+            $imported ? "Imported {$imported} question(s) from the bank." : 'No questions imported.');
+    }
+
+    /** Copy an existing quiz question into the shared bank. */
+    public function saveToBank(Request $request, LmsCourse $course, LmsQuiz $quiz, LmsQuizQuestion $question)
+    {
+        $this->authorizeManage($course);
+        abort_unless($quiz->course_id === $course->id && $question->quiz_id === $quiz->id, 404);
+
+        LmsQuestionBank::create([
+            'subject_id'       => $course->subject_id,
+            'question'         => $question->question,
+            'type'             => $question->type,
+            'options'          => $question->options,
+            'correct'          => $question->correct,
+            'accepted_answers' => $question->accepted_answers,
+            'explanation'      => $question->explanation,
+            'image_path'       => $question->image_path,
+            'points'           => $question->points,
+            'created_by'       => $this->me()->id,
+        ]);
+
+        return back()->with('success', 'Question saved to the bank.');
+    }
+
+    /** Per-question difficulty report for a quiz. */
+    public function itemAnalysis(LmsCourse $course, LmsQuiz $quiz)
+    {
+        $this->authorizeGrade($course);
+        abort_unless($quiz->course_id === $course->id, 404);
+
+        $questions = $quiz->questions()->get();
+        $attempts = LmsQuizAttempt::where('quiz_id', $quiz->id)->get(['answers', 'marks']);
+
+        $stats = [];
+        foreach ($questions as $qn) {
+            $answered = 0; $correct = 0; $optionTally = [];
+            foreach ($attempts as $at) {
+                $marks = $at->marks ?? [];
+                $answers = $at->answers ?? [];
+                if (!array_key_exists($qn->id, $answers)) continue;
+                $answered++;
+                $awarded = (float) ($marks[$qn->id] ?? 0);
+                if ($qn->points > 0 && $awarded >= (float) $qn->points) $correct++;
+                if ($qn->isChoice()) {
+                    foreach ((array) $answers[$qn->id] as $oi) {
+                        $oi = (int) $oi;
+                        $optionTally[$oi] = ($optionTally[$oi] ?? 0) + 1;
+                    }
+                }
+            }
+            $stats[] = [
+                'question' => $qn,
+                'answered' => $answered,
+                'correct'  => $correct,
+                'pct'      => $answered > 0 ? (int) round($correct / $answered * 100) : null,
+                'tally'    => $optionTally,
+            ];
+        }
+
+        return view('lms.quizzes.analysis', [
+            'pagetitle' => 'Item analysis — ' . $quiz->title,
+            'course'    => $course,
+            'quiz'      => $quiz,
+            'stats'     => $stats,
+            'attempts'  => $attempts->count(),
+        ]);
     }
 
     // ── validation ────────────────────────────────────────────────────────

@@ -1146,6 +1146,7 @@
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item"><a href="{{ route('lms.courses.index') }}" class="nav-link">Courses</a></li>
                                     <li class="nav-item"><a href="{{ route('lms.courses.create') }}" class="nav-link">New Course</a></li>
+                                    @if(Route::has('lms.bank.index'))<li class="nav-item"><a href="{{ route('lms.bank.index') }}" class="nav-link">Question Bank</a></li>@endif
                                 </ul>
                             </div>
                         </li>

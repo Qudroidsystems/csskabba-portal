@@ -29,12 +29,25 @@
                         <td><span class="status-pill {{ $s->status==='graded' ? 'st-paid' : 'st-pending' }}">{{ ucfirst($s->status) }}</span></td>
                         <td>
                             <form method="POST" action="{{ route('lms.assignments.grade', [$course, $assignment, $s->id]) }}" class="d-flex flex-column gap-1">@csrf
-                                <div class="input-group input-group-sm">
-                                    <input type="number" step="0.01" min="0" max="{{ $assignment->max_score }}" name="score" value="{{ $s->score }}" class="form-control" placeholder="Score">
-                                    <span class="input-group-text">/ {{ $assignment->max_score }}</span>
-                                    <button class="btn btn-sm btn-primary"><i class="ri-check-line"></i></button>
-                                </div>
-                                <input name="feedback" value="{{ $s->feedback }}" class="form-control form-control-sm" placeholder="Feedback (optional)">
+                                @if($assignment->hasRubric())
+                                    @php $rs = json_decode($s->rubric_scores ?? '[]', true) ?: []; @endphp
+                                    @foreach($assignment->rubric as $ci => $crit)
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text" style="max-width:150px" title="{{ $crit['name'] }}">{{ Str::limit($crit['name'], 16) }}</span>
+                                            <input type="number" step="0.01" min="0" max="{{ $crit['max'] }}" name="rubric_scores[{{ $ci }}]" value="{{ $rs[$ci] ?? '' }}" class="form-control" placeholder="0">
+                                            <span class="input-group-text">/ {{ $crit['max'] }}</span>
+                                        </div>
+                                    @endforeach
+                                    <input name="feedback" value="{{ $s->feedback }}" class="form-control form-control-sm" placeholder="Feedback (optional)">
+                                    <button class="btn btn-sm btn-primary"><i class="ri-check-line"></i> Save ({{ rtrim(rtrim(number_format((float)($s->score ?? 0),2),'0'),'.') }}/{{ $assignment->max_score }})</button>
+                                @else
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.01" min="0" max="{{ $assignment->max_score }}" name="score" value="{{ $s->score }}" class="form-control" placeholder="Score">
+                                        <span class="input-group-text">/ {{ $assignment->max_score }}</span>
+                                        <button class="btn btn-sm btn-primary"><i class="ri-check-line"></i></button>
+                                    </div>
+                                    <input name="feedback" value="{{ $s->feedback }}" class="form-control form-control-sm" placeholder="Feedback (optional)">
+                                @endif
                             </form>
                         </td>
                     </tr>

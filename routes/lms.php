@@ -8,6 +8,7 @@ use App\Http\Controllers\Lms\EnrollmentController;
 use App\Http\Controllers\Lms\GradebookController;
 use App\Http\Controllers\Lms\LearnController;
 use App\Http\Controllers\Lms\ParentLmsController;
+use App\Http\Controllers\Lms\QuestionBankController;
 use App\Http\Controllers\Lms\QuizController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,15 @@ Route::middleware('auth')->group(function () {
     Route::prefix('learning/children')->name('lms.parent.')->group(function () {
         Route::get('/', [ParentLmsController::class, 'index'])->name('index');
         Route::get('/{student}', [ParentLmsController::class, 'child'])->whereNumber('student')->name('child');
+    });
+
+    // ── Question bank (shared, reusable across quizzes) ──────────────────
+    Route::prefix('question-bank')->name('lms.bank.')->group(function () {
+        Route::get('/', [QuestionBankController::class, 'index'])->name('index');
+        Route::get('/candidates', [QuestionBankController::class, 'candidates'])->name('candidates');
+        Route::post('/', [QuestionBankController::class, 'store'])->name('store');
+        Route::put('/{question}', [QuestionBankController::class, 'update'])->whereNumber('question')->name('update');
+        Route::delete('/{question}', [QuestionBankController::class, 'destroy'])->whereNumber('question')->name('destroy');
     });
 
     // ── Admin / teacher management ──────────────────────────────────────
@@ -95,7 +105,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/quizzes/{quiz}', [QuizController::class, 'destroy'])->whereNumber('quiz')->name('lms.quizzes.destroy');
         Route::get('/quizzes/{quiz}/results', [QuizController::class, 'results'])->whereNumber('quiz')->name('lms.quizzes.results');
         Route::get('/quizzes/{quiz}/review', [QuizController::class, 'review'])->whereNumber('quiz')->name('lms.quizzes.review');
+        Route::get('/quizzes/{quiz}/analysis', [QuizController::class, 'itemAnalysis'])->whereNumber('quiz')->name('lms.quizzes.analysis');
         Route::post('/quizzes/{quiz}/attempts/{attempt}/grade', [QuizController::class, 'gradeAttempt'])->whereNumber(['quiz', 'attempt'])->name('lms.attempts.grade');
+        Route::post('/quizzes/{quiz}/import-bank', [QuizController::class, 'importBank'])->whereNumber('quiz')->name('lms.quizzes.import-bank');
+        Route::post('/quizzes/{quiz}/questions/{question}/to-bank', [QuizController::class, 'saveToBank'])->whereNumber(['quiz', 'question'])->name('lms.questions.to-bank');
         Route::post('/quizzes/{quiz}/questions', [QuizController::class, 'storeQuestion'])->whereNumber('quiz')->name('lms.questions.store');
         Route::put('/quizzes/{quiz}/questions/{question}', [QuizController::class, 'updateQuestion'])->whereNumber(['quiz', 'question'])->name('lms.questions.update');
         Route::delete('/quizzes/{quiz}/questions/{question}', [QuizController::class, 'destroyQuestion'])->whereNumber(['quiz', 'question'])->name('lms.questions.destroy');

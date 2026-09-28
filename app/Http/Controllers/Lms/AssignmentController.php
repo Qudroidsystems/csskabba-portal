@@ -78,25 +78,45 @@ class AssignmentController extends Controller
         $this->authorizeGrade($course);
         abort_unless($assignment->course_id === $course->id && $submission->assignment_id === $assignment->id, 404);
 
-        $data = $request->validate([
-            'score'    => 'required|numeric|min:0|max:' . $assignment->max_score,
-            'feedback' => 'nullable|string|max:5000',
-        ]);
+        $rubricScores = null;
+        if ($assignment->hasRubric()) {
+            // score is the sum of per-criterion marks, each capped at its max
+            $request->validate(['rubric_scores' => 'nullable|array', 'feedback' => 'nullable|string|max:5000']);
+            $rubricScores = [];
+            $score = 0.0;
+            foreach ($assignment->rubric as $i => $crit) {
+                $max = (float) ($crit['max'] ?? 0);
+                $val = max(0, min($max, (float) ($request->input("rubric_scores.$i", 0))));
+                $rubricScores[$i] = $val;
+                $score += $val;
+            }
+            $feedback = $request->input('feedback');
+        } else {
+            $data = $request->validate([
+                'score'    => 'required|numeric|min:0|max:' . $assignment->max_score,
+                'feedback' => 'nullable|string|max:5000',
+            ]);
+            $score = (float) $data['score'];
+            $feedback = $data['feedback'] ?? null;
+        }
+
         $submission->update([
-            'score'     => $data['score'],
-            'feedback'  => $data['feedback'] ?? null,
-            'status'    => 'graded',
-            'graded_by' => $this->me()->id,
-            'graded_at' => now(),
+            'score'         => $score,
+            'rubric_scores' => $rubricScores,
+            'feedback'      => $feedback,
+            'status'        => 'graded',
+            'graded_by'     => $this->me()->id,
+            'graded_at'     => now(),
         ]);
 
         // notify the student
         try {
             $userId = DB::table('users')->where('student_id', $submission->student_id)->value('id');
             if ($userId) {
+                $shown = rtrim(rtrim(number_format($score, 2), '0'), '.');
                 PortalNotifier::toUsers([(int) $userId],
                     'Assignment graded',
-                    "Your submission for \"{$assignment->title}\" was graded: {$data['score']}/{$assignment->max_score}.",
+                    "Your submission for \"{$assignment->title}\" was graded: {$shown}/{$assignment->max_score}.",
                     route('lms.learn.show', $course), 'result');
             }
         } catch (\Throwable $e) {}
@@ -107,19 +127,40 @@ class AssignmentController extends Controller
     protected function rules(Request $request): array
     {
         $v = $request->validate([
-            'title'        => 'required|string|max:200',
-            'instructions' => 'nullable|string',
-            'lesson_id'    => 'nullable|integer',
-            'max_score'    => 'required|numeric|min:1|max:100000',
-            'due_at'       => 'nullable|date',
-            'allow_file'   => 'nullable|boolean',
-            'allow_text'   => 'nullable|boolean',
-            'is_published' => 'nullable|boolean',
+            'title'            => 'required|string|max:200',
+            'instructions'     => 'nullable|string',
+            'lesson_id'        => 'nullable|integer',
+            'max_score'        => 'required|numeric|min:1|max:100000',
+            'due_at'           => 'nullable|date',
+            'allow_file'       => 'nullable|boolean',
+            'allow_text'       => 'nullable|boolean',
+            'is_published'     => 'nullable|boolean',
+            'rubric_name'      => 'nullable|array',
+            'rubric_name.*'    => 'nullable|string|max:200',
+            'rubric_max'       => 'nullable|array',
+            'rubric_max.*'     => 'nullable|numeric|min:0|max:100000',
         ]);
         $v['allow_file']   = $request->boolean('allow_file');
         $v['allow_text']   = $request->boolean('allow_text');
         $v['is_published'] = $request->boolean('is_published', true);
         if (!$v['allow_file'] && !$v['allow_text']) $v['allow_text'] = true;
+
+        // rubric: pair name[] with max[]; when present, max_score = sum of maxes
+        $names = $request->input('rubric_name', []);
+        $maxes = $request->input('rubric_max', []);
+        $rubric = [];
+        foreach ($names as $i => $name) {
+            $name = trim((string) $name);
+            if ($name === '') continue;
+            $rubric[] = ['name' => $name, 'max' => (float) ($maxes[$i] ?? 0)];
+        }
+        if ($rubric) {
+            $v['rubric'] = $rubric;
+            $v['max_score'] = array_sum(array_column($rubric, 'max')) ?: $v['max_score'];
+        } else {
+            $v['rubric'] = null;
+        }
+        unset($v['rubric_name'], $v['rubric_max']);
         return $v;
     }
 }

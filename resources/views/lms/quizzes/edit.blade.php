@@ -11,6 +11,8 @@
             @if($pending)
                 <a href="{{ route('lms.quizzes.review', [$course, $quiz]) }}" class="action-btn btn-primary-cb"><i class="ri-quill-pen-line"></i>Grade attempts ({{ $pending }})</a>
             @endif
+            <button type="button" class="action-btn btn-go" data-bs-toggle="modal" data-bs-target="#bankModal"><i class="ri-database-2-line"></i>Import from bank</button>
+            <a href="{{ route('lms.quizzes.analysis', [$course, $quiz]) }}" class="action-btn btn-go"><i class="ri-bar-chart-2-line"></i>Item analysis</a>
             <a href="{{ route('lms.quizzes.results', [$course, $quiz]) }}" class="action-btn btn-go"><i class="ri-bar-chart-line"></i>Results</a>
         </x-slot>
     </x-cb.hero>
@@ -61,6 +63,7 @@
                                     data-accepted="{{ e(json_encode($qn->accepted_answers ?? [])) }}"
                                     data-explanation="{{ e($qn->explanation) }}"
                                     data-image="{{ $qn->imageUrl() }}"><i class="ri-edit-line"></i></button>
+                                <form method="POST" action="{{ route('lms.questions.to-bank', [$course, $quiz, $qn]) }}" title="Save to bank">@csrf<button class="action-btn btn-open"><i class="ri-save-3-line"></i></button></form>
                                 <form method="POST" action="{{ route('lms.questions.destroy', [$course, $quiz, $qn]) }}" onsubmit="return confirm('Remove question?')">@csrf @method('DELETE')<button class="action-btn btn-open"><i class="ri-delete-bin-line"></i></button></form>
                             </div>
                         </div>
@@ -242,5 +245,49 @@ function lmsQPrepare(){
     return true;
 }
 document.addEventListener('DOMContentLoaded', function(){ lmsQType(); });
+</script>
+
+{{-- Import from bank --}}
+<div class="modal fade" id="bankModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+    <form method="POST" action="{{ route('lms.quizzes.import-bank', [$course, $quiz]) }}">@csrf
+        <input type="hidden" name="mode" id="bankMode" value="selected">
+        <div class="modal-header"><h5 class="modal-title">Import from question bank</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <div class="row g-2 mb-2">
+                <div class="col-md-4"><select name="subject" id="bkSubject" class="form-select"><option value="">All subjects</option>@foreach($subjects as $s)<option value="{{ $s->id }}">{{ $s->subject }}</option>@endforeach</select></div>
+                <div class="col-md-3"><select name="type" id="bkType" class="form-select"><option value="">All types</option>@foreach(\App\Models\LmsQuizQuestion::TYPES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
+                <div class="col-md-3"><input name="tag" id="bkTag" class="form-control" placeholder="Tag"></div>
+                <div class="col-md-2"><button type="button" class="action-btn btn-open w-100 justify-content-center" onclick="lmsBankSearch()"><i class="ri-search-line"></i></button></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small text-muted" id="bkCount"></span>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small mb-0">or add random</label>
+                    <input type="number" min="1" max="100" name="count" id="bkRandom" class="form-control form-control-sm" style="width:80px" placeholder="N">
+                    <button type="submit" class="action-btn btn-open" onclick="document.getElementById('bankMode').value='random'"><i class="ri-shuffle-line"></i>Add random</button>
+                </div>
+            </div>
+            <div id="bkList" class="border rounded p-2" style="max-height:340px;overflow:auto"><div class="text-muted small">Search to list bank questions.</div></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="action-btn btn-primary-cb" onclick="document.getElementById('bankMode').value='selected'"><i class="ri-add-line"></i>Add selected</button></div>
+    </form>
+</div></div></div>
+
+<script>
+function lmsBankSearch(){
+    var qs = new URLSearchParams({subject:document.getElementById('bkSubject').value, type:document.getElementById('bkType').value, tag:document.getElementById('bkTag').value});
+    var box=document.getElementById('bkList'); box.innerHTML='<div class="text-muted small">Loading…</div>';
+    fetch("{{ route('lms.bank.candidates') }}?"+qs.toString(), {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        var d=res.data||[]; document.getElementById('bkCount').textContent = d.length ? d.length+' found' : '';
+        if(!d.length){ box.innerHTML='<div class="text-muted small">No matching bank questions.</div>'; return; }
+        box.innerHTML = d.map(function(q){
+            return '<div class="form-check"><input class="form-check-input" type="checkbox" name="ids[]" value="'+q.id+'" id="bk'+q.id+'"><label class="form-check-label small" for="bk'+q.id+'">'+q.question+' <span class="text-muted">('+q.type+' · '+q.points+' pt'+(q.tag?' · '+q.tag:'')+')</span></label></div>';
+        }).join('');
+    }).catch(function(e){ box.innerHTML='<div class="text-danger small">Could not load ('+e.message+').</div>'; });
+}
+var _bankModal=document.getElementById('bankModal');
+if(_bankModal){ _bankModal.addEventListener('shown.bs.modal', lmsBankSearch); }
 </script>
 @endsection

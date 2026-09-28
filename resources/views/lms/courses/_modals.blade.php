@@ -86,6 +86,11 @@
                     <div class="form-check form-switch"><input type="hidden" name="allow_file" value="0"><input class="form-check-input" type="checkbox" name="allow_file" value="1" id="aFile" checked><label class="form-check-label small" for="aFile">File upload</label></div>
                     <div class="form-check form-switch"><input type="hidden" name="is_published" value="0"><input class="form-check-input" type="checkbox" name="is_published" value="1" id="aPub" checked><label class="form-check-label small" for="aPub">Published</label></div>
                 </div>
+                <div class="col-12">
+                    <label class="form-label small mb-1">Rubric (optional) — adds criteria; the max score becomes their total</label>
+                    <div id="rubricRows"></div>
+                    <button type="button" class="action-btn btn-open mt-1" onclick="lmsRubricRow('','')"><i class="ri-add-line"></i>Add criterion</button>
+                </div>
             </div>
         </div>
         <div class="modal-footer"><button class="action-btn btn-primary-cb">Create</button></div>
@@ -147,6 +152,14 @@ document.addEventListener('DOMContentLoaded', function(){
     var am=document.getElementById('assignmentModal');
     if(am){ am.addEventListener('show.bs.modal',function(){ if(lmsAsgQuill){ lmsAsgQuill.root.innerHTML=''; document.getElementById('aInstr').value=''; } }); }
 });
+function lmsRubricRow(name, max){
+    var w=document.getElementById('rubricRows'); if(!w) return;
+    var r=document.createElement('div'); r.className='input-group input-group-sm mb-1';
+    r.innerHTML='<input type="text" class="form-control" name="rubric_name[]" placeholder="Criterion (e.g. Structure)" value="'+String(name||'').replace(/"/g,'&quot;')+'">'
+        +'<input type="number" min="0" class="form-control" name="rubric_max[]" placeholder="Max" style="max-width:110px" value="'+(max||'')+'">'
+        +'<button type="button" class="btn btn-outline-danger" onclick="this.closest(\'.input-group\').remove()"><i class="ri-close-line"></i></button>';
+    w.appendChild(r);
+}
 function lmsToggleLessonFields(){
     var t = document.getElementById('lType').value;
     document.querySelectorAll('#lessonForm .lf').forEach(function(el){ el.style.display='none'; });
