@@ -16,6 +16,10 @@
     @if(session('success'))<div class="cb-banner info"><i class="ri-checkbox-circle-line"></i><div>{{ session('success') }}</div></div>@endif
     @if(session('error'))<div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ session('error') }}</div></div>@endif
 
+    @unless($course->schoolclass_id)
+        <div class="cb-banner warning"><i class="ri-information-line"></i><div>This course has no class assigned, so “Auto-enrol class” won’t find anyone. Use <strong>Add students</strong> (choose <em>All classes</em> to search everyone), or set a class in the course settings.</div></div>
+    @endunless
+
     <x-cb.card title="Enrolled" icon="ri-group-line" :count="$rows->total()" :flush="true">
         <div class="p-3">
             <form method="GET" class="row g-2"><div class="col-md-5"><input name="q" value="{{ request('q') }}" class="form-control" placeholder="Search name / admission no"></div><div class="col-md-2"><button class="action-btn btn-open w-100 justify-content-center"><i class="ri-search-line"></i></button></div></form>
@@ -53,12 +57,23 @@
     <form method="POST" action="{{ route('lms.enrollments.store', $course) }}">@csrf
         <div class="modal-header"><h5 class="modal-title">Add students</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
-            <div class="d-flex gap-2 mb-2">
-                <input id="candSearch" class="form-control" placeholder="Search students not yet enrolled">
-                <button type="button" class="action-btn btn-open" onclick="lmsLoadCandidates()"><i class="ri-search-line"></i></button>
+            <div class="row g-2 mb-2">
+                <div class="col-md-5">
+                    <select id="candClass" class="form-select" onchange="lmsLoadCandidates()">
+                        @if($course->schoolclass_id)<option value="">Course class</option>@endif
+                        <option value="all" @if(!$course->schoolclass_id) selected @endif>All classes</option>
+                        @foreach($classes as $c)<option value="{{ $c->id }}">{{ $c->name }}</option>@endforeach
+                    </select>
+                </div>
+                <div class="col-md-5"><input id="candSearch" class="form-control" placeholder="Search name / admission no"></div>
+                <div class="col-md-2"><button type="button" class="action-btn btn-open w-100 justify-content-center" onclick="lmsLoadCandidates()"><i class="ri-search-line"></i></button></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small text-muted" id="candCount"></span>
+                <button type="button" class="btn btn-sm btn-link p-0" onclick="lmsToggleAll(this)">Select all</button>
             </div>
             <div id="candList" class="border rounded p-2" style="max-height:340px;overflow:auto">
-                <div class="text-muted small">Search to list students of this class who are not yet enrolled.</div>
+                <div class="text-muted small">Loading…</div>
             </div>
         </div>
         <div class="modal-footer"><button class="action-btn btn-primary-cb"><i class="ri-user-add-line"></i>Enrol selected</button></div>
@@ -68,15 +83,30 @@
 <script>
 function lmsLoadCandidates(){
     var q = document.getElementById('candSearch').value;
-    var url = "{{ route('lms.enrollments.candidates', $course) }}" + "?q=" + encodeURIComponent(q);
-    fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(function(res){
-        var box = document.getElementById('candList');
-        if(!res.data || !res.data.length){ box.innerHTML='<div class="text-muted small">No matching students.</div>'; return; }
-        box.innerHTML = res.data.map(function(s){
-            return '<div class="form-check"><input class="form-check-input" type="checkbox" name="student_ids[]" value="'+s.id+'" id="cand'+s.id+'"><label class="form-check-label" for="cand'+s.id+'">'+s.name+' <span class="text-muted small">'+(s.admissionNo||'')+'</span></label></div>';
+    var cls = document.getElementById('candClass').value;
+    var box = document.getElementById('candList');
+    box.innerHTML = '<div class="text-muted small">Loading…</div>';
+    var url = "{{ route('lms.enrollments.candidates', $course) }}" + "?q=" + encodeURIComponent(q) + "&class_id=" + encodeURIComponent(cls);
+    fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin'})
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(res){
+        var data = res.data || [];
+        document.getElementById('candCount').textContent = data.length ? (data.length + ' student(s) found' + (data.length>=500 ? ' (showing first 500 — narrow your search)' : '')) : '';
+        if(!data.length){ box.innerHTML='<div class="text-muted small">No matching students. Try “All classes” or a different search.</div>'; return; }
+        box.innerHTML = data.map(function(s){
+            return '<div class="form-check"><input class="form-check-input candbox" type="checkbox" name="student_ids[]" value="'+s.id+'" id="cand'+s.id+'"><label class="form-check-label" for="cand'+s.id+'">'+s.name+' <span class="text-muted small">'+(s.admissionNo||'')+'</span></label></div>';
         }).join('');
-    });
+    })
+      .catch(function(err){ box.innerHTML='<div class="text-danger small">Could not load students ('+err.message+'). Please refresh and try again.</div>'; });
+}
+function lmsToggleAll(btn){
+    var boxes = document.querySelectorAll('#candList .candbox');
+    var check = btn.textContent.indexOf('Select all') !== -1;
+    boxes.forEach(function(b){ b.checked = check; });
+    btn.textContent = check ? 'Clear all' : 'Select all';
 }
 document.getElementById('candSearch').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); lmsLoadCandidates(); }});
+var _addModalEl = document.getElementById('addModal');
+if(_addModalEl){ _addModalEl.addEventListener('shown.bs.modal', function(){ lmsLoadCandidates(); }); }
 </script>
 @endsection
