@@ -5,6 +5,6 @@
     <span class="flex-grow-1">{{ $l->title }}
         @if($l->is_preview)<span class="badge bg-info-subtle text-info ms-1">preview</span>@endif
     </span>
-    <span class="small text-muted">{{ $l->typeLabel() }}@if($l->duration_minutes) · {{ $l->duration_minutes }}m@endif</span>
+    <span class="small text-muted">{{ $l->typeLabel() }}@if($l->duration_minutes) · {{ $l->duration_minutes }}m @endif</span>
     <i class="ri-arrow-right-s-line text-muted"></i>
 </a>

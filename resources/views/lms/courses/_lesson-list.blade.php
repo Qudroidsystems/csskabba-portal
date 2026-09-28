@@ -11,7 +11,7 @@ $icons = ['text'=>'ri-article-line','file'=>'ri-file-3-line','video_embed'=>'ri-
         <td style="width:36px" class="text-muted"><i class="{{ $icons[$l->type] ?? 'ri-file-line' }}"></i></td>
         <td>
             <span class="fw-semibold">{{ $l->title }}</span>
-            <div class="small text-muted">{{ $l->typeLabel() }}@if($l->duration_minutes) · {{ $l->duration_minutes }} min@endif
+            <div class="small text-muted">{{ $l->typeLabel() }}@if($l->duration_minutes) · {{ $l->duration_minutes }} min @endif
                 @if($l->is_preview) · <span class="text-info">preview</span>@endif
                 @unless($l->is_published) · <span class="text-warning">hidden</span>@endunless
             </div>

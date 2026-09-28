@@ -19,7 +19,7 @@
         @foreach($questions as $i => $qn)
             <x-cb.card>
                 <div class="fw-semibold mb-2"><span class="badge bg-secondary">Q{{ $i+1 }}</span> {{ $qn->question }}
-                    <span class="text-muted small">({{ $qn->points }} pt@if($qn->type==='multiple') · select all that apply@endif)</span></div>
+                    <span class="text-muted small">({{ $qn->points }} pt @if($qn->type==='multiple') · select all that apply @endif)</span></div>
                 @foreach(($qn->options ?? []) as $oi => $opt)
                     <div class="form-check">
                         <input class="form-check-input" type="{{ $qn->type==='multiple' ? 'checkbox' : 'radio' }}"
