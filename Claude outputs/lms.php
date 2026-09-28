@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{course}/self-enroll', [LearnController::class, 'selfEnroll'])->whereNumber('course')->name('self-enroll');
         Route::get('/{course}', [LearnController::class, 'show'])->whereNumber('course')->name('show');
         Route::get('/{course}/lesson/{lesson}', [LearnController::class, 'lesson'])->whereNumber(['course', 'lesson'])->name('lesson');
+        Route::get('/{course}/lesson/{lesson}/media', [LearnController::class, 'lessonMedia'])->whereNumber(['course', 'lesson'])->name('lesson.media');
         Route::post('/{course}/lesson/{lesson}/complete', [LearnController::class, 'completeLesson'])->whereNumber(['course', 'lesson'])->name('lesson.complete');
         Route::post('/{course}/assignment/{assignment}/submit', [LearnController::class, 'submitAssignment'])->whereNumber(['course', 'assignment'])->name('assignment.submit');
         Route::get('/{course}/quiz/{quiz}', [LearnController::class, 'takeQuiz'])->whereNumber(['course', 'quiz'])->name('quiz');
@@ -80,6 +81,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/lessons/{lesson}', [ContentController::class, 'updateLesson'])->whereNumber('lesson')->name('lms.lessons.update');
         Route::delete('/lessons/{lesson}', [ContentController::class, 'destroyLesson'])->whereNumber('lesson')->name('lms.lessons.destroy');
         Route::post('/lessons/reorder', [ContentController::class, 'reorderLessons'])->name('lms.lessons.reorder');
+        Route::post('/media/chunk', [ContentController::class, 'uploadChunk'])->name('lms.media.chunk');
 
         // Enrolment
         Route::get('/learners', [EnrollmentController::class, 'index'])->name('lms.enrollments.index');
@@ -92,6 +94,7 @@ Route::middleware('auth')->group(function () {
         // Gradebook
         Route::get('/gradebook', [GradebookController::class, 'show'])->name('lms.gradebook.show');
         Route::get('/gradebook/export', [GradebookController::class, 'export'])->name('lms.gradebook.export');
+        Route::get('/gradebook/export-ca', [GradebookController::class, 'exportCa'])->name('lms.gradebook.export-ca');
 
         // Assignments
         Route::post('/assignments', [AssignmentController::class, 'store'])->name('lms.assignments.store');

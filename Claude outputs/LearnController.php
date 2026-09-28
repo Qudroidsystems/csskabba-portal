@@ -156,6 +156,29 @@ class LearnController extends Controller
         ]);
     }
 
+    /**
+     * Stream a lesson's uploaded video/file through the app (access-controlled,
+     * with HTTP range support so players can seek without downloading the whole
+     * file). Enrolled learners, preview lessons, or course managers only.
+     */
+    public function lessonMedia(LmsCourse $course, LmsLesson $lesson)
+    {
+        abort_unless($lesson->course_id === $course->id, 404);
+        $sid = $this->currentStudentId();
+        $enrolled = $sid && $course->isEnrolled($sid);
+        if (!$enrolled && !$lesson->is_preview && !$this->canGrade($course)) {
+            throw new HttpException(403, 'You are not enrolled in this course.');
+        }
+        if (!$lesson->attachment_path || !Storage::disk('public')->exists($lesson->attachment_path)) abort(404);
+
+        // response()->file streams from disk and honours Range requests (206), so
+        // videos are seekable and never loaded fully into memory.
+        return response()->file(
+            Storage::disk('public')->path($lesson->attachment_path),
+            ['Content-Disposition' => 'inline; filename="' . addslashes($lesson->attachment_name ?: 'file') . '"']
+        );
+    }
+
     public function completeLesson(Request $request, LmsCourse $course, LmsLesson $lesson)
     {
         abort_unless($lesson->course_id === $course->id, 404);
