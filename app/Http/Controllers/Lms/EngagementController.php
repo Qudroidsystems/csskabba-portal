@@ -8,6 +8,7 @@ use App\Models\LmsAnnouncement;
 use App\Models\LmsCourse;
 use App\Models\LmsDiscussion;
 use App\Models\LmsLiveClass;
+use App\Services\Lms\CalendarSync;
 use App\Services\Messaging\PortalNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,7 @@ class EngagementController extends Controller
         $data['course_id']  = $course->id;
         $data['created_by'] = $this->me()->id;
         $live = LmsLiveClass::create($data);
+        CalendarSync::pushLiveClass($course, $live);
 
         $this->notifyLearners($course, 'New live class scheduled',
             "\"{$live->title}\" is scheduled" . ($live->scheduled_at ? ' for ' . $live->scheduled_at->format('D, d M Y H:i') : '') . '.');
@@ -46,6 +48,7 @@ class EngagementController extends Controller
         $this->authorizeManage($course);
         abort_unless($live->course_id === $course->id, 404);
         $live->update($this->liveRules($request));
+        CalendarSync::pushLiveClass($course, $live->fresh());
         return back()->with('success', 'Live class updated.');
     }
 
@@ -53,6 +56,7 @@ class EngagementController extends Controller
     {
         $this->authorizeManage($course);
         abort_unless($live->course_id === $course->id, 404);
+        CalendarSync::remove('lms-live-' . $live->id);
         $live->delete();
         return back()->with('success', 'Live class removed.');
     }

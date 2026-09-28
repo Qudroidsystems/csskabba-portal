@@ -12,6 +12,7 @@ use App\Models\LmsQuiz;
 use App\Models\LmsQuizQuestion;
 use App\Models\LmsSection;
 use App\Models\User;
+use App\Services\Lms\CalendarSync;
 use App\Services\Lms\EnrollmentService;
 use App\Services\Lms\ProgressService;
 use Illuminate\Http\Request;
@@ -150,6 +151,15 @@ class CourseController extends Controller
         return back()->with('success', $course->is_published ? 'Course published.' : 'Course unpublished.');
     }
 
+    /** Mirror this course's assignment due-dates & live classes into the school calendar. */
+    public function syncCalendar(LmsCourse $course)
+    {
+        $this->authorizeManage($course);
+        if (!CalendarSync::available()) return back()->with('error', 'The school calendar module is not available.');
+        $n = CalendarSync::syncCourse($course);
+        return back()->with('success', "Synced {$n} item(s) to the school calendar.");
+    }
+
     /** Bulk publish/unpublish from the course list. */
     public function bulkPublish(Request $request)
     {
@@ -245,15 +255,17 @@ class CourseController extends Controller
             'cover'                       => 'nullable|image|max:4096',
             'quiz_weight'                 => 'nullable|integer|min:0|max:100',
             'assignment_weight'           => 'nullable|integer|min:0|max:100',
+            'fees_gate'                   => 'nullable|boolean',
         ]);
         $v['allow_self_enroll'] = $request->boolean('allow_self_enroll');
         $v['is_published']      = $request->boolean('is_published');
-        // grade weighting lives in settings (JSON)
+        // grade weighting + fee gate live in settings (JSON)
         $v['settings'] = [
             'quiz_weight'       => (int) $request->input('quiz_weight', 50),
             'assignment_weight' => (int) $request->input('assignment_weight', 50),
+            'fees_gate'         => $request->boolean('fees_gate'),
         ];
-        unset($v['cover'], $v['quiz_weight'], $v['assignment_weight']);
+        unset($v['cover'], $v['quiz_weight'], $v['assignment_weight'], $v['fees_gate']);
         return $v;
     }
 

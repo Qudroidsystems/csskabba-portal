@@ -14,6 +14,11 @@
             <form method="POST" action="{{ route('lms.courses.duplicate', $course) }}" class="d-inline" onsubmit="return confirm('Make a draft copy of this course (content only, no learners)?')">@csrf
                 <button class="action-btn btn-go"><i class="ri-file-copy-line"></i>Duplicate</button>
             </form>
+            @if(Route::has('calendar.index'))
+            <form method="POST" action="{{ route('lms.courses.sync-calendar', $course) }}" class="d-inline">@csrf
+                <button class="action-btn btn-go" title="Add due dates & live classes to the school calendar"><i class="ri-calendar-2-line"></i>Sync calendar</button>
+            </form>
+            @endif
             <form method="POST" action="{{ route('lms.courses.publish', $course) }}" class="d-inline">@csrf
                 <button class="action-btn {{ $course->is_published ? 'btn-open' : 'btn-primary-cb' }}"><i class="ri-global-line"></i>{{ $course->is_published ? 'Unpublish' : 'Publish' }}</button>
             </form>

@@ -73,6 +73,12 @@ class LmsCourse extends Model
      *
      * @return array{quiz:int,assignment:int}
      */
+    /** Whether access is blocked for students who owe school fees. */
+    public function feesGateOn(): bool
+    {
+        return (bool) ($this->settings['fees_gate'] ?? false);
+    }
+
     public function gradeWeights(): array
     {
         $s = $this->settings ?? [];

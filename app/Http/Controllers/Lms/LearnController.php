@@ -82,6 +82,7 @@ class LearnController extends Controller
     public function show(LmsCourse $course)
     {
         $sid = $this->ensureEnrolledOrManage($course);
+        if ($blocked = $this->feeBlock($course, $sid)) return $blocked;
 
         $course->load(['sections' => fn ($q) => $q->where('is_published', true)->orderBy('position')]);
         $lessons = $course->publishedLessons()->get();
@@ -116,6 +117,7 @@ class LearnController extends Controller
             throw new HttpException(403, 'You are not enrolled in this course.');
         }
         if (!$lesson->is_published && !$this->canGrade($course)) abort(404);
+        if ($enrolled && ($blocked = $this->feeBlock($course, $sid))) return $blocked;
 
         $lessons = $course->publishedLessons()->get();
         $idx = $lessons->search(fn ($l) => $l->id === $lesson->id);
@@ -371,6 +373,20 @@ class LearnController extends Controller
         return LmsCourse::where('is_published', true)->where('allow_self_enroll', true)
             ->when($enrolled, fn ($q) => $q->whereNotIn('id', $enrolled))
             ->orderByDesc('id');
+    }
+
+    /**
+     * When the course's fee gate is on and the student owes fees, return a
+     * redirect that blocks access; otherwise null. Managers (sid null) pass.
+     */
+    protected function feeBlock(LmsCourse $course, ?int $sid)
+    {
+        if (!$sid || !$course->feesGateOn()) return null;
+        if (EnrollmentService::owesFees($sid, $course->session_id, $course->term_id)) {
+            return redirect()->route('lms.learn.index')
+                ->with('error', 'Access to “' . $course->title . '” is on hold until your school fees are cleared. Please contact the bursary.');
+        }
+        return null;
     }
 
     /** Enrolled student id, or null when a course manager is previewing. */

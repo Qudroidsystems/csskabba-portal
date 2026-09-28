@@ -9,6 +9,11 @@
             <form method="POST" action="{{ route('lms.enrollments.sync', $course) }}" class="d-inline" onsubmit="return confirm('Enrol all {{ $eligible }} students of this class?')">@csrf
                 <button class="action-btn btn-go"><i class="ri-refresh-line"></i>Auto-enrol class ({{ $eligible }})</button>
             </form>
+            @if($course->subject_id)
+            <form method="POST" action="{{ route('lms.enrollments.sync-subject', $course) }}" class="d-inline" onsubmit="return confirm('Enrol everyone registered for this subject?')">@csrf
+                <button class="action-btn btn-go"><i class="ri-book-mark-line"></i>Enrol by subject</button>
+            </form>
+            @endif
             <button class="action-btn btn-primary-cb" data-bs-toggle="modal" data-bs-target="#addModal"><i class="ri-user-add-line"></i>Add students</button>
         </x-slot>
     </x-cb.hero>

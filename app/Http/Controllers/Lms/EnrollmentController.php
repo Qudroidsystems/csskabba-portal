@@ -55,6 +55,16 @@ class EnrollmentController extends Controller
         return back()->with('success', $n > 0 ? "Enrolled {$n} student(s) from the class." : 'No new students to enrol (check the course has a class with students for its session).');
     }
 
+    public function syncSubject(LmsCourse $course)
+    {
+        $this->authorizeManage($course);
+        if (!$course->subject_id) {
+            return back()->with('error', 'Set a subject on the course first to enrol by subject registration.');
+        }
+        $n = $this->enroller->syncBySubject($course);
+        return back()->with('success', $n > 0 ? "Enrolled {$n} student(s) registered for this subject." : 'No new students registered for this subject to enrol.');
+    }
+
     /**
      * AJAX: students available to enrol. Base is the whole student roster so an
      * admin can add any student; an optional class filter narrows it. Already-

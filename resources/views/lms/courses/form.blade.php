@@ -72,6 +72,11 @@
                         <input class="form-check-input" type="checkbox" name="allow_self_enroll" value="1" id="selfEnroll" @checked(old('allow_self_enroll',$course->allow_self_enroll))>
                         <label class="form-check-label small" for="selfEnroll">Allow student self-enrolment</label>
                     </div>
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="fees_gate" value="0">
+                        <input class="form-check-input" type="checkbox" name="fees_gate" value="1" id="feesGate" @checked(old('fees_gate', $course->exists ? $course->feesGateOn() : false))>
+                        <label class="form-check-label small" for="feesGate">Block access for students who owe fees</label>
+                    </div>
                 </x-cb.card>
 
                 <x-cb.card title="Grade weighting" icon="ri-scales-3-line">

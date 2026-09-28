@@ -7,6 +7,7 @@ use App\Http\Controllers\Lms\Concerns\InteractsWithLms;
 use App\Models\LmsAssignment;
 use App\Models\LmsAssignmentSubmission;
 use App\Models\LmsCourse;
+use App\Services\Lms\CalendarSync;
 use App\Services\Messaging\PortalNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,8 @@ class AssignmentController extends Controller
         $data = $this->rules($request);
         $data['course_id']  = $course->id;
         $data['created_by'] = $this->me()->id;
-        LmsAssignment::create($data);
+        $a = LmsAssignment::create($data);
+        CalendarSync::pushAssignment($course, $a);
         return back()->with('success', 'Assignment created.');
     }
 
@@ -39,6 +41,7 @@ class AssignmentController extends Controller
         $this->authorizeManage($course);
         abort_unless($assignment->course_id === $course->id, 404);
         $assignment->update($this->rules($request));
+        CalendarSync::pushAssignment($course, $assignment->fresh());
         return back()->with('success', 'Assignment updated.');
     }
 
@@ -47,6 +50,7 @@ class AssignmentController extends Controller
         $this->authorizeManage($course);
         abort_unless($assignment->course_id === $course->id, 404);
         DB::table('lms_assignment_submissions')->where('assignment_id', $assignment->id)->delete();
+        CalendarSync::remove('lms-assignment-' . $assignment->id);
         $assignment->delete();
         return back()->with('success', 'Assignment deleted.');
     }

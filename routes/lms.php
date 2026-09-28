@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{course}', [CourseController::class, 'destroy'])->whereNumber('course')->name('destroy');
         Route::post('/{course}/publish', [CourseController::class, 'togglePublish'])->whereNumber('course')->name('publish');
         Route::post('/{course}/duplicate', [CourseController::class, 'duplicate'])->whereNumber('course')->name('duplicate');
+        Route::post('/{course}/sync-calendar', [CourseController::class, 'syncCalendar'])->whereNumber('course')->name('sync-calendar');
         Route::post('/bulk/publish', [CourseController::class, 'bulkPublish'])->name('bulk-publish');
     });
 
@@ -83,6 +84,7 @@ Route::middleware('auth')->group(function () {
         // Enrolment
         Route::get('/learners', [EnrollmentController::class, 'index'])->name('lms.enrollments.index');
         Route::post('/learners/sync', [EnrollmentController::class, 'syncAuto'])->name('lms.enrollments.sync');
+        Route::post('/learners/sync-subject', [EnrollmentController::class, 'syncSubject'])->name('lms.enrollments.sync-subject');
         Route::get('/learners/candidates', [EnrollmentController::class, 'candidates'])->name('lms.enrollments.candidates');
         Route::post('/learners', [EnrollmentController::class, 'store'])->name('lms.enrollments.store');
         Route::delete('/learners/{student}', [EnrollmentController::class, 'destroy'])->whereNumber('student')->name('lms.enrollments.destroy');
@@ -90,6 +92,7 @@ Route::middleware('auth')->group(function () {
         // Gradebook
         Route::get('/gradebook', [GradebookController::class, 'show'])->name('lms.gradebook.show');
         Route::get('/gradebook/export', [GradebookController::class, 'export'])->name('lms.gradebook.export');
+        Route::get('/gradebook/export-ca', [GradebookController::class, 'exportCa'])->name('lms.gradebook.export-ca');
 
         // Assignments
         Route::post('/assignments', [AssignmentController::class, 'store'])->name('lms.assignments.store');

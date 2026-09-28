@@ -47,10 +47,46 @@ class EnrollmentService
         return $q->pluck('studentId')->map(fn ($v) => (int) $v)->filter()->unique()->values()->all();
     }
 
+    /**
+     * Student ids registered for the course's SUBJECT this session/term, via the
+     * existing subject-registration tables (subjectclass → subjectRegistrationStatus).
+     */
+    public function eligibleBySubject(LmsCourse $course): array
+    {
+        if (!$course->subject_id || !Schema::hasTable('subjectclass') || !Schema::hasTable('subjectRegistrationStatus')) {
+            return [];
+        }
+        $sessionId = $course->session_id ?: self::currentSessionId();
+
+        $sc = DB::table('subjectclass')->where('subjectid', $course->subject_id);
+        if ($course->schoolclass_id) $sc->where('schoolclassid', $course->schoolclass_id);
+        if ($sessionId)              $sc->where('sessionid', $sessionId);
+        if ($course->term_id)        $sc->where('termid', $course->term_id);
+        $scIds = $sc->pluck('id')->all();
+        if (!$scIds) return [];
+
+        $q = DB::table('subjectRegistrationStatus')->whereIn('subjectclassid', $scIds);
+        if ($sessionId)       $q->where('sessionid', $sessionId);
+        if ($course->term_id) $q->where('termid', $course->term_id);
+
+        return $q->pluck('studentid')->map(fn ($v) => (int) $v)->filter()->unique()->values()->all();
+    }
+
     /** Enrol the whole eligible class. Returns the number newly enrolled. */
     public function syncAuto(LmsCourse $course): int
     {
-        $ids = $this->eligibleStudentIds($course);
+        return $this->insertAuto($course, $this->eligibleStudentIds($course));
+    }
+
+    /** Enrol everyone registered for the course's subject. */
+    public function syncBySubject(LmsCourse $course): int
+    {
+        return $this->insertAuto($course, $this->eligibleBySubject($course));
+    }
+
+    /** Bulk-insert the given student ids as auto enrolments, skipping existing. */
+    protected function insertAuto(LmsCourse $course, array $ids): int
+    {
         if (!$ids) return 0;
 
         $existing = LmsEnrollment::where('course_id', $course->id)
@@ -72,6 +108,20 @@ class EnrollmentService
             LmsEnrollment::insert($chunk);
         }
         return count($new);
+    }
+
+    /** True if the student has any outstanding school-fee balance for the session/term. */
+    public static function owesFees(int $studentId, ?int $sessionId = null, ?int $termId = null): bool
+    {
+        if (!$studentId || !Schema::hasTable('student_bill_payment_book')) return false;
+        $sessionId = $sessionId ?: self::currentSessionId();
+
+        $q = DB::table('student_bill_payment_book')
+            ->where('student_id', $studentId)->where('amount_owed', '>', 0);
+        if ($sessionId) $q->where('session_id', $sessionId);
+        if ($termId)    $q->where('term_id', $termId);
+
+        return $q->exists();
     }
 
     /** Manually enrol specific students. Returns number newly enrolled. */
