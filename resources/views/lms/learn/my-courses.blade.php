@@ -12,6 +12,20 @@
     @if(session('success'))<div class="cb-banner info"><i class="ri-checkbox-circle-line"></i><div>{{ session('success') }}</div></div>@endif
     @if(session('error'))<div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ session('error') }}</div></div>@endif
 
+    @php $resume = $rows->first(fn($c) => (int)$c->progress_percent > 0 && (int)$c->progress_percent < 100); @endphp
+    @if($resume)
+        <div class="cb-card mb-3" style="border-left:4px solid var(--bs-primary,#4f46e5)">
+            <div class="cb-card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <div class="small text-muted"><i class="ri-history-line"></i> Continue where you left off</div>
+                    <div class="fw-semibold">{{ $resume->title }}</div>
+                    <div class="progress mt-1" style="height:6px;width:220px"><div class="progress-bar" style="width: {{ (int)$resume->progress_percent }}%"></div></div>
+                </div>
+                <a href="{{ route('lms.learn.show', $resume->id) }}" class="action-btn btn-primary-cb"><i class="ri-play-line"></i>Resume ({{ (int)$resume->progress_percent }}%)</a>
+            </div>
+        </div>
+    @endif
+
     @if($rows->isEmpty())
         <x-cb.card title="Courses" icon="ri-book-open-line">
             <div class="empty-state"><i class="ri-book-open-line"></i><h6>You're not enrolled in any course yet</h6>

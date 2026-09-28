@@ -1,5 +1,9 @@
 {{-- Partials: modals for section, lesson, assignment, quiz, live class + JS. --}}
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+<style>#lContentEditor .ql-editor,#aInstrEditor .ql-editor{min-height:150px}.ql-toolbar.ql-snow,.ql-container.ql-snow{border-color:#dee2e6}</style>
+
 {{-- Section --}}
 <div class="modal fade" id="sectionModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
     <form method="POST" action="{{ route('lms.sections.store', $course) }}">@csrf
@@ -35,7 +39,9 @@
                     </select></div>
                 <div class="col-md-4"><label class="form-label small">Duration (min)</label><input type="number" min="0" name="duration_minutes" id="lDuration" class="form-control"></div>
 
-                <div class="col-12 lf lf-text"><label class="form-label small">Content</label><textarea name="content" id="lContent" rows="6" class="form-control" placeholder="Lesson text — basic HTML allowed"></textarea></div>
+                <div class="col-12 lf lf-text"><label class="form-label small">Content</label>
+                    <textarea name="content" id="lContent" style="display:none"></textarea>
+                    <div id="lContentEditor" class="bg-white"></div></div>
 
                 <div class="col-12 lf lf-video_embed"><label class="form-label small">Video link (YouTube / Vimeo / embed URL)</label><input name="video_url" id="lVideo" class="form-control" placeholder="https://youtu.be/..."></div>
 
@@ -69,7 +75,9 @@
             <div class="row g-2">
                 <div class="col-md-8"><label class="form-label small">Title *</label><input name="title" class="form-control" required></div>
                 <div class="col-md-4"><label class="form-label small">Max score *</label><input type="number" min="1" name="max_score" value="100" class="form-control" required></div>
-                <div class="col-12"><label class="form-label small">Instructions</label><textarea name="instructions" rows="4" class="form-control"></textarea></div>
+                <div class="col-12"><label class="form-label small">Instructions</label>
+                    <textarea name="instructions" id="aInstr" style="display:none"></textarea>
+                    <div id="aInstrEditor" class="bg-white"></div></div>
                 <div class="col-md-6"><label class="form-label small">Lesson (optional)</label>
                     <select name="lesson_id" class="form-select"><option value="">—</option>@foreach($course->lessons as $l)<option value="{{ $l->id }}">{{ $l->title }}</option>@endforeach</select></div>
                 <div class="col-md-6"><label class="form-label small">Due date</label><input type="datetime-local" name="due_at" class="form-control"></div>
@@ -124,6 +132,21 @@
 </div></div></div>
 
 <script>
+var lmsQuill=null, lmsAsgQuill=null;
+document.addEventListener('DOMContentLoaded', function(){
+    if(!window.Quill) return;
+    var mods={toolbar:[['bold','italic','underline'],[{list:'ordered'},{list:'bullet'}],[{header:[2,3,false]}],['link','blockquote','code-block'],['clean']]};
+    if(document.getElementById('lContentEditor')){
+        lmsQuill=new Quill('#lContentEditor',{theme:'snow',modules:mods,placeholder:'Write the lesson…'});
+        lmsQuill.on('text-change',function(){document.getElementById('lContent').value=lmsQuill.root.innerHTML;});
+    }
+    if(document.getElementById('aInstrEditor')){
+        lmsAsgQuill=new Quill('#aInstrEditor',{theme:'snow',modules:mods,placeholder:'Instructions for students…'});
+        lmsAsgQuill.on('text-change',function(){document.getElementById('aInstr').value=lmsAsgQuill.root.innerHTML;});
+    }
+    var am=document.getElementById('assignmentModal');
+    if(am){ am.addEventListener('show.bs.modal',function(){ if(lmsAsgQuill){ lmsAsgQuill.root.innerHTML=''; document.getElementById('aInstr').value=''; } }); }
+});
 function lmsToggleLessonFields(){
     var t = document.getElementById('lType').value;
     document.querySelectorAll('#lessonForm .lf').forEach(function(el){ el.style.display='none'; });
@@ -143,6 +166,7 @@ function lmsPrepLesson(btn){
         document.getElementById('lType').value = g('data-type') || 'text';
         document.getElementById('lSection').value = g('data-section');
         document.getElementById('lContent').value = g('data-content');
+        if(lmsQuill){ lmsQuill.root.innerHTML = g('data-content') || ''; }
         document.getElementById('lVideo').value = g('data-video');
         document.getElementById('lExam').value = g('data-exam');
         document.getElementById('lDuration').value = g('data-duration');
@@ -157,6 +181,7 @@ function lmsPrepLesson(btn){
         document.getElementById('lType').value = 'text';
         document.getElementById('lPublished').checked = true;
         document.getElementById('lAttachCurrent').textContent = '';
+        if(lmsQuill){ lmsQuill.root.innerHTML = ''; document.getElementById('lContent').value = ''; }
     }
     lmsToggleLessonFields();
 }

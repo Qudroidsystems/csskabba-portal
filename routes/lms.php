@@ -53,11 +53,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/{course}', [CourseController::class, 'update'])->whereNumber('course')->name('update');
         Route::delete('/{course}', [CourseController::class, 'destroy'])->whereNumber('course')->name('destroy');
         Route::post('/{course}/publish', [CourseController::class, 'togglePublish'])->whereNumber('course')->name('publish');
+        Route::post('/{course}/duplicate', [CourseController::class, 'duplicate'])->whereNumber('course')->name('duplicate');
+        Route::post('/bulk/publish', [CourseController::class, 'bulkPublish'])->name('bulk-publish');
     });
 
     Route::prefix('courses/{course}')->whereNumber('course')->group(function () {
         // Sections
         Route::post('/sections', [ContentController::class, 'storeSection'])->name('lms.sections.store');
+        Route::post('/sections/reorder', [ContentController::class, 'reorderSections'])->name('lms.sections.reorder');
         Route::put('/sections/{section}', [ContentController::class, 'updateSection'])->whereNumber('section')->name('lms.sections.update');
         Route::delete('/sections/{section}', [ContentController::class, 'destroySection'])->whereNumber('section')->name('lms.sections.destroy');
 

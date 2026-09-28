@@ -33,28 +33,48 @@
         @if($rows->isEmpty())
             <div class="empty-state"><i class="ri-book-open-line"></i><h6>No courses yet</h6><p>Create your first course to get started.</p></div>
         @else
-            <div class="table-responsive"><table class="table align-middle mb-0">
-                <thead><tr><th>Course</th><th>Class</th><th class="text-end">Lessons</th><th class="text-end">Learners</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
-                <tbody>
-                @foreach($rows as $c)
-                    <tr>
-                        <td>
-                            <a href="{{ route('lms.courses.show', $c) }}" class="fw-semibold text-decoration-none">{{ $c->title }}</a>
-                            <div class="small text-muted">{{ $c->code ?: '—' }}</div>
-                        </td>
-                        <td class="small">{{ optional($c->schoolclass)->schoolclass ?? '—' }}</td>
-                        <td class="text-end">{{ $c->lessons_count }}</td>
-                        <td class="text-end">{{ $c->enrollments_count }}</td>
-                        <td><span class="status-pill {{ $c->is_published ? 'st-paid' : 'st-muted' }}">{{ $c->is_published ? 'Published' : 'Draft' }}</span></td>
-                        <td class="text-end">
-                            <a href="{{ route('lms.courses.show', $c) }}" class="action-btn btn-open" title="Manage"><i class="ri-settings-3-line"></i></a>
-                            <a href="{{ route('lms.enrollments.index', $c) }}" class="action-btn btn-open" title="Learners"><i class="ri-group-line"></i></a>
-                            <a href="{{ route('lms.gradebook.show', $c) }}" class="action-btn btn-open" title="Gradebook"><i class="ri-bar-chart-box-line"></i></a>
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table></div>
+            <form method="POST" action="{{ route('lms.courses.bulk-publish') }}" id="bulkForm">@csrf
+                <input type="hidden" name="action" id="bulkAction">
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                    <span class="small text-muted"><span id="bulkCount">0</span> selected</span>
+                    <div class="d-flex gap-1">
+                        <button type="button" class="action-btn btn-open" onclick="lmsBulk('publish')"><i class="ri-global-line"></i>Publish</button>
+                        <button type="button" class="action-btn btn-open" onclick="lmsBulk('unpublish')"><i class="ri-eye-off-line"></i>Unpublish</button>
+                    </div>
+                </div>
+                <div class="table-responsive"><table class="table align-middle mb-0">
+                    <thead><tr><th style="width:34px"><input type="checkbox" class="form-check-input" id="bulkAll" onclick="lmsBulkAll(this)"></th><th>Course</th><th>Class</th><th class="text-end">Lessons</th><th class="text-end">Learners</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                    <tbody>
+                    @foreach($rows as $c)
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input bulkbox" name="ids[]" value="{{ $c->id }}" onclick="lmsBulkCount()"></td>
+                            <td>
+                                <a href="{{ route('lms.courses.show', $c) }}" class="fw-semibold text-decoration-none">{{ $c->title }}</a>
+                                <div class="small text-muted">{{ $c->code ?: '—' }}</div>
+                            </td>
+                            <td class="small">{{ optional($c->schoolclass)->schoolclass ?? '—' }}</td>
+                            <td class="text-end">{{ $c->lessons_count }}</td>
+                            <td class="text-end">{{ $c->enrollments_count }}</td>
+                            <td><span class="status-pill {{ $c->is_published ? 'st-paid' : 'st-muted' }}">{{ $c->is_published ? 'Published' : 'Draft' }}</span></td>
+                            <td class="text-end">
+                                <a href="{{ route('lms.courses.show', $c) }}" class="action-btn btn-open" title="Manage"><i class="ri-settings-3-line"></i></a>
+                                <a href="{{ route('lms.enrollments.index', $c) }}" class="action-btn btn-open" title="Learners"><i class="ri-group-line"></i></a>
+                                <a href="{{ route('lms.gradebook.show', $c) }}" class="action-btn btn-open" title="Gradebook"><i class="ri-bar-chart-box-line"></i></a>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table></div>
+            </form>
+            <script>
+            function lmsBulkCount(){ document.getElementById('bulkCount').textContent = document.querySelectorAll('.bulkbox:checked').length; }
+            function lmsBulkAll(cb){ document.querySelectorAll('.bulkbox').forEach(function(b){b.checked=cb.checked;}); lmsBulkCount(); }
+            function lmsBulk(a){
+                if(!document.querySelectorAll('.bulkbox:checked').length){ alert('Select at least one course.'); return; }
+                document.getElementById('bulkAction').value=a;
+                document.getElementById('bulkForm').submit();
+            }
+            </script>
         @endif
     </x-cb.card>
     @if($rows->hasPages())<div class="mt-3">{{ $rows->links() }}</div>@endif

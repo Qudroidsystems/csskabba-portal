@@ -1,14 +1,15 @@
-{{-- Partial: lesson rows for a section. Expects $items (collection), $course. --}}
-@if($items->count())
+{{-- Partial: sortable lesson rows for a section. Expects $items, $course, optional $sectionId. --}}
+@php $sid = isset($sectionId) ? $sectionId : ''; @endphp
 <div class="table-responsive">
 <table class="table align-middle mb-0">
-<tbody>
+<tbody class="lms-lesson-list" data-section="{{ $sid }}">
 @php
 $icons = ['text'=>'ri-article-line','file'=>'ri-file-3-line','video_embed'=>'ri-video-line','video_upload'=>'ri-film-line','cbt'=>'ri-questionnaire-line','live'=>'ri-live-line'];
 @endphp
-@foreach($items as $l)
-    <tr>
-        <td style="width:36px" class="text-muted"><i class="{{ $icons[$l->type] ?? 'ri-file-line' }}"></i></td>
+@forelse($items as $l)
+    <tr data-id="{{ $l->id }}">
+        <td style="width:28px" class="text-muted text-center"><i class="ri-draggable lms-lhandle" style="cursor:grab" title="Drag to reorder"></i></td>
+        <td style="width:32px" class="text-muted"><i class="{{ $icons[$l->type] ?? 'ri-file-line' }}"></i></td>
         <td>
             <span class="fw-semibold">{{ $l->title }}</span>
             <div class="small text-muted">{{ $l->typeLabel() }}@if($l->duration_minutes) · {{ $l->duration_minutes }} min @endif
@@ -34,10 +35,9 @@ $icons = ['text'=>'ri-article-line','file'=>'ri-file-3-line','video_embed'=>'ri-
             <form method="POST" action="{{ route('lms.lessons.destroy', [$course, $l]) }}" class="d-inline" onsubmit="return confirm('Delete this lesson?')">@csrf @method('DELETE')<button class="action-btn btn-open" title="Delete"><i class="ri-delete-bin-line"></i></button></form>
         </td>
     </tr>
-@endforeach
+@empty
+    <tr class="lms-empty-row"><td colspan="4" class="small text-muted px-3 py-2">No lessons here yet — add one, or drag a lesson in.</td></tr>
+@endforelse
 </tbody>
 </table>
 </div>
-@else
-<div class="px-3 py-2 small text-muted">No lessons in this section yet.</div>
-@endif

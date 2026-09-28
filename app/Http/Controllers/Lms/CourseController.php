@@ -5,7 +5,12 @@ namespace App\Http\Controllers\Lms;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Lms\Concerns\InteractsWithLms;
 use App\Models\CertificateTemplate;
+use App\Models\LmsAssignment;
 use App\Models\LmsCourse;
+use App\Models\LmsLesson;
+use App\Models\LmsQuiz;
+use App\Models\LmsQuizQuestion;
+use App\Models\LmsSection;
 use App\Models\User;
 use App\Services\Lms\EnrollmentService;
 use App\Services\Lms\ProgressService;
@@ -143,6 +148,82 @@ class CourseController extends Controller
         $this->authorizeManage($course);
         $course->update(['is_published' => !$course->is_published]);
         return back()->with('success', $course->is_published ? 'Course published.' : 'Course unpublished.');
+    }
+
+    /** Bulk publish/unpublish from the course list. */
+    public function bulkPublish(Request $request)
+    {
+        $ids = array_values(array_filter(array_map('intval', (array) $request->input('ids', []))));
+        $publish = $request->input('action') === 'publish';
+        if (!$ids) return back()->with('error', 'No courses selected.');
+
+        $q = LmsCourse::whereIn('id', $ids);
+        if (!Auth::user()->can('Manage courses')) {
+            $q->where('teacher_id', Auth::id()); // graders only their own
+        }
+        $n = $q->update(['is_published' => $publish]);
+
+        return back()->with('success', "{$n} course(s) " . ($publish ? 'published.' : 'unpublished.'));
+    }
+
+    /** Deep-duplicate a course: sections, lessons, quizzes+questions, assignments. */
+    public function duplicate(LmsCourse $course)
+    {
+        $this->authorizeManage($course);
+
+        $new = DB::transaction(function () use ($course) {
+            $copy = $course->replicate(['slug']);
+            $copy->title = $course->title . ' (Copy)';
+            $copy->slug = null;             // regenerated on create
+            $copy->is_published = false;
+            $copy->created_by = Auth::id();
+            $copy->save();
+
+            // sections (old id => new id)
+            $sectionMap = [];
+            foreach ($course->sections()->get() as $s) {
+                $ns = $s->replicate();
+                $ns->course_id = $copy->id;
+                $ns->save();
+                $sectionMap[$s->id] = $ns->id;
+            }
+
+            // lessons (old id => new id)
+            $lessonMap = [];
+            foreach ($course->lessons()->get() as $l) {
+                $nl = $l->replicate();
+                $nl->course_id = $copy->id;
+                $nl->section_id = $l->section_id ? ($sectionMap[$l->section_id] ?? null) : null;
+                $nl->save();
+                $lessonMap[$l->id] = $nl->id;
+            }
+
+            // assignments
+            foreach ($course->assignments()->get() as $a) {
+                $na = $a->replicate();
+                $na->course_id = $copy->id;
+                $na->lesson_id = $a->lesson_id ? ($lessonMap[$a->lesson_id] ?? null) : null;
+                $na->created_by = Auth::id();
+                $na->save();
+            }
+
+            // quizzes + questions
+            foreach ($course->quizzes()->with('questions')->get() as $qz) {
+                $nq = $qz->replicate();
+                $nq->course_id = $copy->id;
+                $nq->lesson_id = $qz->lesson_id ? ($lessonMap[$qz->lesson_id] ?? null) : null;
+                $nq->save();
+                foreach ($qz->questions as $qn) {
+                    $nqn = $qn->replicate();
+                    $nqn->quiz_id = $nq->id;
+                    $nqn->save();
+                }
+            }
+
+            return $copy;
+        });
+
+        return redirect()->route('lms.courses.show', $new)->with('success', 'Course duplicated. This copy is a draft — review and publish when ready.');
     }
 
     // ── helpers ───────────────────────────────────────────────────────────

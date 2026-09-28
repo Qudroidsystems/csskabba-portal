@@ -11,6 +11,9 @@
             <a href="{{ route('lms.enrollments.index', $course) }}" class="action-btn btn-go"><i class="ri-group-line"></i>Learners</a>
             <a href="{{ route('lms.gradebook.show', $course) }}" class="action-btn btn-go"><i class="ri-bar-chart-box-line"></i>Gradebook</a>
             <a href="{{ route('lms.courses.edit', $course) }}" class="action-btn btn-go"><i class="ri-edit-line"></i>Edit</a>
+            <form method="POST" action="{{ route('lms.courses.duplicate', $course) }}" class="d-inline" onsubmit="return confirm('Make a draft copy of this course (content only, no learners)?')">@csrf
+                <button class="action-btn btn-go"><i class="ri-file-copy-line"></i>Duplicate</button>
+            </form>
             <form method="POST" action="{{ route('lms.courses.publish', $course) }}" class="d-inline">@csrf
                 <button class="action-btn {{ $course->is_published ? 'btn-open' : 'btn-primary-cb' }}"><i class="ri-global-line"></i>{{ $course->is_published ? 'Unpublish' : 'Publish' }}</button>
             </form>
@@ -44,11 +47,15 @@
                 </x-slot>
 
                 @php $bySection = $course->lessons->groupBy('section_id'); @endphp
+                @if($course->sections->count() || $course->lessons->count())
+                    <p class="small text-muted mb-2"><i class="ri-drag-move-2-line"></i> Drag the handle to reorder sections and lessons; drag a lesson between sections to move it.</p>
+                @endif
 
+                <div id="sectionSortable">
                 @forelse($course->sections as $section)
-                    <div class="border rounded mb-2">
+                    <div class="border rounded mb-2 lms-section" data-id="{{ $section->id }}">
                         <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light">
-                            <div><i class="ri-folder-3-line me-1"></i><strong>{{ $section->title }}</strong>
+                            <div><i class="ri-draggable sec-handle me-1" style="cursor:grab" title="Drag to reorder"></i><i class="ri-folder-3-line me-1"></i><strong>{{ $section->title }}</strong>
                                 @unless($section->is_published)<span class="status-pill st-muted ms-2">Hidden</span>@endunless
                                 @if($section->description)<div class="small text-muted">{{ $section->description }}</div>@endif
                             </div>
@@ -56,19 +63,18 @@
                                 <form method="POST" action="{{ route('lms.sections.destroy', [$course, $section]) }}" onsubmit="return confirm('Remove this section? Its lessons are kept.')">@csrf @method('DELETE')<button class="action-btn btn-open" title="Remove section"><i class="ri-delete-bin-line"></i></button></form>
                             </div>
                         </div>
-                        @include('lms.courses._lesson-list', ['items' => $bySection->get($section->id, collect())])
+                        @include('lms.courses._lesson-list', ['items' => $bySection->get($section->id, collect()), 'sectionId' => $section->id])
                     </div>
                 @empty
                 @endforelse
+                </div>
 
-                {{-- lessons with no section --}}
+                {{-- lessons with no section (always shown as a drop target) --}}
                 @php $loose = $bySection->get(null, collect()); @endphp
-                @if($loose->count())
-                    <div class="border rounded mb-2">
-                        <div class="px-3 py-2 bg-light"><i class="ri-file-list-line me-1"></i><strong>Ungrouped lessons</strong></div>
-                        @include('lms.courses._lesson-list', ['items' => $loose])
-                    </div>
-                @endif
+                <div class="border rounded mb-2">
+                    <div class="px-3 py-2 bg-light"><i class="ri-file-list-line me-1"></i><strong>Ungrouped lessons</strong></div>
+                    @include('lms.courses._lesson-list', ['items' => $loose, 'sectionId' => ''])
+                </div>
 
                 @if($course->lessons->isEmpty() && $course->sections->isEmpty())
                     <div class="empty-state"><i class="ri-list-check-2"></i><h6>No content yet</h6><p>Add a section, then add lessons.</p></div>
@@ -165,4 +171,31 @@
 </div></div></div>
 
 @include('lms.courses._modals')
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js"></script>
+<script>
+(function(){
+    if(!window.Sortable) return;
+    var CSRF = '{{ csrf_token() }}';
+    function post(url, body){
+        return fetch(url, {method:'POST', headers:{'X-CSRF-TOKEN':CSRF,'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'}, credentials:'same-origin', body:JSON.stringify(body)});
+    }
+    // Reorder sections
+    var secWrap = document.getElementById('sectionSortable');
+    if(secWrap){
+        new Sortable(secWrap, {handle:'.sec-handle', animation:150, draggable:'.lms-section', onEnd:function(){
+            var order = Array.from(secWrap.querySelectorAll('.lms-section')).map(function(el){return el.getAttribute('data-id');});
+            post('{{ route('lms.sections.reorder', $course) }}', {order:order});
+        }});
+    }
+    // Reorder / move lessons (shared group so they move between sections)
+    document.querySelectorAll('tbody.lms-lesson-list').forEach(function(tb){
+        new Sortable(tb, {group:'lms-lessons', handle:'.lms-lhandle', draggable:'tr[data-id]', animation:150, onEnd:function(evt){
+            var target = evt.to;
+            var order = Array.from(target.querySelectorAll('tr[data-id]')).map(function(tr){return tr.getAttribute('data-id');});
+            post('{{ route('lms.lessons.reorder', $course) }}', {order:order, section_id: target.getAttribute('data-section')});
+        }});
+    });
+})();
+</script>
 @endsection

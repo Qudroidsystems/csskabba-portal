@@ -92,13 +92,33 @@ class ContentController extends Controller
         return back()->with('success', 'Lesson deleted.');
     }
 
-    /** Persist a new lesson order (array of lesson ids). */
+    /** Persist a new lesson order (array of lesson ids). Optional section_id to
+     *  also move a lesson into a section during the drag. */
     public function reorderLessons(Request $request, LmsCourse $course)
     {
         $this->authorizeManage($course);
         $order = (array) $request->input('order', []);
+        $sectionId = $request->input('section_id');
+        if ($sectionId !== null && $sectionId !== '' && !$course->sections()->where('id', $sectionId)->exists()) {
+            $sectionId = null;
+        }
         foreach (array_values($order) as $i => $id) {
-            LmsLesson::where('course_id', $course->id)->where('id', (int) $id)->update(['position' => $i + 1]);
+            $update = ['position' => $i + 1];
+            if ($request->has('section_id')) {
+                $update['section_id'] = ($sectionId === '' ? null : $sectionId);
+            }
+            LmsLesson::where('course_id', $course->id)->where('id', (int) $id)->update($update);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    /** Persist a new section order (array of section ids). */
+    public function reorderSections(Request $request, LmsCourse $course)
+    {
+        $this->authorizeManage($course);
+        $order = (array) $request->input('order', []);
+        foreach (array_values($order) as $i => $id) {
+            LmsSection::where('course_id', $course->id)->where('id', (int) $id)->update(['position' => $i + 1]);
         }
         return response()->json(['ok' => true]);
     }

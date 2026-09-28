@@ -43,7 +43,16 @@
                         <div class="d-flex justify-content-between">
                             <div><span class="badge bg-secondary">Q{{ $i+1 }}</span> <strong>{{ $qn->question }}</strong>
                                 <span class="text-muted small">· {{ ucfirst($qn->type) }} · {{ $qn->points }} pt</span></div>
-                            <form method="POST" action="{{ route('lms.questions.destroy', [$course, $quiz, $qn]) }}" onsubmit="return confirm('Remove question?')">@csrf @method('DELETE')<button class="action-btn btn-open"><i class="ri-delete-bin-line"></i></button></form>
+                            <div class="d-flex gap-1">
+                                <button class="action-btn btn-open" title="Edit" onclick="lmsEditQuestion(this)"
+                                    data-id="{{ $qn->id }}"
+                                    data-question="{{ e($qn->question) }}"
+                                    data-type="{{ $qn->type }}"
+                                    data-points="{{ $qn->points }}"
+                                    data-options="{{ e(json_encode($qn->options ?? [])) }}"
+                                    data-correct="{{ e(json_encode($qn->correct ?? [])) }}"><i class="ri-edit-line"></i></button>
+                                <form method="POST" action="{{ route('lms.questions.destroy', [$course, $quiz, $qn]) }}" onsubmit="return confirm('Remove question?')">@csrf @method('DELETE')<button class="action-btn btn-open"><i class="ri-delete-bin-line"></i></button></form>
+                            </div>
                         </div>
                         <ul class="mb-0 mt-1 small">
                             @foreach(($qn->options ?? []) as $oi => $opt)
@@ -56,8 +65,12 @@
                 @endforelse
 
                 <hr>
-                <h6 class="mb-2"><i class="ri-add-line"></i> Add question</h6>
-                <form method="POST" action="{{ route('lms.questions.store', [$course, $quiz]) }}" id="qForm" onsubmit="return lmsRenumber()">@csrf
+                <h6 class="mb-2"><i class="ri-add-line"></i> <span id="qFormTitle">Add question</span></h6>
+                <form method="POST" action="{{ route('lms.questions.store', [$course, $quiz]) }}" id="qForm"
+                      data-store="{{ route('lms.questions.store', [$course, $quiz]) }}"
+                      data-update="{{ route('lms.questions.update', [$course, $quiz, 0]) }}"
+                      onsubmit="return lmsRenumber()">@csrf
+                    <input type="hidden" name="_method" id="qMethod" value="POST">
                     <div class="row g-2 align-items-end mb-2">
                         <div class="col-md-8"><label class="form-label small">Question *</label><textarea name="question" rows="2" class="form-control" required></textarea></div>
                         <div class="col-md-2"><label class="form-label small">Type</label>
@@ -69,7 +82,10 @@
                         <div id="optRows"></div>
                         <button type="button" class="action-btn btn-open mt-1" onclick="lmsAddOpt()"><i class="ri-add-line"></i>Add option</button>
                     </div>
-                    <button class="action-btn btn-primary-cb mt-3"><i class="ri-add-circle-line"></i>Add question</button>
+                    <div class="mt-3 d-flex gap-2">
+                        <button class="action-btn btn-primary-cb" id="qSubmit"><i class="ri-add-circle-line"></i>Add question</button>
+                        <button type="button" class="action-btn btn-open d-none" id="qCancel" onclick="lmsResetQuestionForm()"><i class="ri-close-line"></i>Cancel edit</button>
+                    </div>
                 </form>
             </x-cb.card>
         </div>
@@ -77,14 +93,47 @@
 </div></div></div>
 
 <script>
-function lmsOptRow(val){
+function lmsEsc(v){ return String(v==null?'':v).replace(/"/g,'&quot;'); }
+function lmsOptRow(val, checked){
     var wrap = document.getElementById('optRows');
     var row = document.createElement('div');
     row.className = 'input-group input-group-sm mb-1 optrow';
-    row.innerHTML = '<span class="input-group-text"><input type="checkbox" class="optcheck"></span>'
-        + '<input type="text" class="form-control opttext" placeholder="Option text" value="'+(val||'')+'">'
+    row.innerHTML = '<span class="input-group-text"><input type="checkbox" class="optcheck"'+(checked?' checked':'')+'></span>'
+        + '<input type="text" class="form-control opttext" placeholder="Option text" value="'+lmsEsc(val)+'">'
         + '<button type="button" class="btn btn-outline-danger" onclick="this.closest(\'.optrow\').remove()"><i class="ri-close-line"></i></button>';
     wrap.appendChild(row);
+}
+function lmsResetQuestionForm(){
+    var f=document.getElementById('qForm');
+    f.action=f.getAttribute('data-store');
+    document.getElementById('qMethod').value='POST';
+    document.getElementById('qFormTitle').textContent='Add question';
+    document.getElementById('qSubmit').innerHTML='<i class="ri-add-circle-line"></i>Add question';
+    document.getElementById('qCancel').classList.add('d-none');
+    f.querySelector('[name=question]').value='';
+    document.getElementById('qType').value='single';
+    f.querySelector('[name=points]').value='1';
+    document.getElementById('optRows').innerHTML='';
+    lmsOptRow(''); lmsOptRow('');
+}
+function lmsEditQuestion(btn){
+    var g=function(a){return btn.getAttribute(a);};
+    var f=document.getElementById('qForm');
+    f.action=f.getAttribute('data-update').replace(/0$/, g('data-id'));
+    document.getElementById('qMethod').value='PUT';
+    document.getElementById('qFormTitle').textContent='Edit question';
+    document.getElementById('qSubmit').innerHTML='<i class="ri-save-line"></i>Save question';
+    document.getElementById('qCancel').classList.remove('d-none');
+    f.querySelector('[name=question]').value=g('data-question')||'';
+    document.getElementById('qType').value=g('data-type')||'single';
+    f.querySelector('[name=points]').value=g('data-points')||'1';
+    var opts=[], corr=[];
+    try{opts=JSON.parse(g('data-options')||'[]');}catch(e){}
+    try{corr=JSON.parse(g('data-correct')||'[]');}catch(e){}
+    var wrap=document.getElementById('optRows'); wrap.innerHTML='';
+    opts.forEach(function(o,i){ lmsOptRow(o, corr.indexOf(i)!==-1); });
+    if(!opts.length){ lmsOptRow(''); lmsOptRow(''); }
+    f.scrollIntoView({behavior:'smooth', block:'center'});
 }
 function lmsAddOpt(){ lmsQType(); if(document.getElementById('qType').value!=='boolean') lmsOptRow(''); }
 function lmsQType(){
