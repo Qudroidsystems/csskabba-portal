@@ -2,7 +2,7 @@
 @extends('layouts.master')
 
 @section('content')
-<link rel="stylesheet" href="[cdn.datatables.net](https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css)">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
 :root {
     --bill-primary: #1e3a5f;
@@ -15,6 +15,12 @@
     --bill-bg:      #f8fafc;
     --bill-radius:  12px;
     --bill-shadow:  0 2px 8px rgba(0,0,0,.08);
+}
+
+@keyframes spin      { to { transform: rotate(360deg); } }
+@keyframes readyGlow {
+    0%,100% { box-shadow: 0 4px 12px rgba(37,99,235,.35); }
+    50%     { box-shadow: 0 4px 12px rgba(37,99,235,.35), 0 0 0 5px rgba(37,99,235,.16); }
 }
 
 /* ── Hero ──────────────────────────────────────────────── */
@@ -49,8 +55,73 @@
 /* ── Filter card ───────────────────────────────────────── */
 .filter-card {
     background:#fff; border:1px solid var(--bill-border);
-    border-radius:var(--bill-radius); padding:20px 24px;
+    border-top:3px solid var(--bill-accent);
+    border-radius:var(--bill-radius); padding:20px 24px 16px;
     margin-bottom:24px; box-shadow:var(--bill-shadow);
+}
+.filter-title {
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:700; color:var(--bill-primary);
+    margin-bottom:14px;
+}
+.filter-title i { color:var(--bill-accent); }
+.filter-hint {
+    display:flex; align-items:center; gap:6px;
+    margin-top:14px; padding-top:12px;
+    border-top:1px dashed var(--bill-border);
+    font-size:12px; color:var(--bill-muted);
+}
+.filter-hint i { color:var(--bill-accent); }
+.filter-hint strong { color:var(--bill-primary); }
+
+/* Same-height controls in the filter row */
+.filter-card .form-select,
+.filter-card .form-control { height:42px; }
+.filter-card .btn { height:42px; }
+
+.btn-icon-flex {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+}
+
+/* ── Search button — obvious call to action ───────────── */
+.btn.search-btn {
+    background:linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    border:none; color:#fff;
+    min-width:158px; padding:9px 22px;
+    font-size:13.5px; font-weight:700; letter-spacing:.2px;
+    border-radius:9px; cursor:pointer;
+    box-shadow:0 4px 12px rgba(37,99,235,.35);
+    transition:transform .15s, box-shadow .15s;
+}
+.btn.search-btn:hover {
+    color:#fff; transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(37,99,235,.45);
+    animation:none;
+}
+.btn.search-btn:active {
+    transform:translateY(0);
+    box-shadow:0 2px 6px rgba(37,99,235,.35);
+}
+.btn.search-btn:focus-visible { box-shadow:0 0 0 3px rgba(37,99,235,.4); }
+.btn.search-btn.is-ready { animation:readyGlow 2.2s ease-in-out infinite; }
+.btn.search-btn .btn-spinner {
+    display:none; width:15px; height:15px;
+    border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff; border-radius:50%;
+    animation:spin .7s linear infinite;
+}
+.btn.search-btn.is-loading { pointer-events:none; opacity:.85; animation:none; }
+.btn.search-btn.is-loading .btn-spinner { display:inline-block; }
+.btn.search-btn.is-loading .btn-icon    { display:none; }
+
+.btn.reset-btn {
+    background:#fff; color:var(--bill-muted);
+    border:1.5px solid var(--bill-border);
+    border-radius:9px; font-weight:600; font-size:13px;
+    transition:all .15s;
+}
+.btn.reset-btn:hover {
+    color:var(--bill-danger); border-color:#fecaca; background:#fef2f2;
 }
 
 /* ── Table ─────────────────────────────────────────────── */
@@ -64,6 +135,8 @@
     border-bottom:1px solid var(--bill-border); font-size:13px;
 }
 .bill-table tr:hover td { background:#eff6ff; }
+.bill-table tbody tr.table-active > td { background:#eff6ff; box-shadow:none; }
+.bill-table tbody tr.table-active > td:first-child { box-shadow:inset 3px 0 0 var(--bill-accent); }
 
 /* ── Form controls ─────────────────────────────────────── */
 .form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
@@ -116,6 +189,12 @@
 .grade-basis-option .form-check-input { margin-top: 3px; }
 .grade-basis-option .gb-title { font-weight: 700; font-size: 13px; color: var(--bill-primary); }
 .grade-basis-option .gb-desc  { font-size: 11.5px; color: var(--bill-muted); margin-top: 2px; }
+
+/* ── Small screens ─────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .filter-actions { width:100%; flex-wrap:wrap; }
+    .filter-actions .btn { flex:1; }
+}
 </style>
 
 <div class="main-content">
@@ -190,9 +269,13 @@
 
     {{-- Filter card --}}
     <div class="filter-card">
+        <div class="filter-title">
+            <i class="ri-filter-3-line"></i> Find Students
+        </div>
+
         <div class="row g-3 align-items-end">
-            <div class="col-xxl-3 col-sm-6">
-                <label class="form-label"><i class="ri-graduation-cap-line me-1"></i>Class</label>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label" for="idclass"><i class="ri-graduation-cap-line me-1"></i>Class</label>
                 <select class="form-select" id="idclass" name="schoolclassid">
                     <option value="ALL">— Select Class —</option>
                     @foreach ($schoolclasses as $class)
@@ -200,8 +283,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-xxl-3 col-sm-6">
-                <label class="form-label"><i class="ri-calendar-line me-1"></i>Session</label>
+            <div class="col-sm-6 col-lg-2">
+                <label class="form-label" for="idsession"><i class="ri-calendar-line me-1"></i>Session</label>
                 <select class="form-select" id="idsession" name="sessionid">
                     <option value="ALL">— Select Session —</option>
                     @foreach ($schoolsessions as $session)
@@ -209,8 +292,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-xxl-3 col-sm-6" id="termSelectContainer" style="display:none;">
-                <label class="form-label"><i class="ri-time-line me-1"></i>Term</label>
+            <div class="col-sm-6 col-lg-2" id="termSelectContainer" style="display:none;">
+                <label class="form-label" for="idterm"><i class="ri-time-line me-1"></i>Term</label>
                 <select class="form-select" id="idterm" name="termid">
                     <option value="ALL">— Select Term —</option>
                     <option value="1">First Term</option>
@@ -218,21 +301,34 @@
                     <option value="3">Third Term</option>
                 </select>
             </div>
-            <div class="col-xxl-3 col-sm-6">
-                <label class="form-label"><i class="ri-search-line me-1"></i>Search</label>
+            <div class="col-sm-6 col-lg">
+                <label class="form-label" for="searchInput"><i class="ri-search-line me-1"></i>Search</label>
                 <input type="text" class="form-control" id="searchInput"
-                       name="search" placeholder="Search students...">
+                       name="search" placeholder="Name, admission no…" autocomplete="off">
             </div>
-            <div class="col-xxl-3 col-sm-6 d-flex gap-2">
-                <button type="button" class="btn btn-primary w-50"
-                        id="searchBtn" style="display:none;" onclick="filterData()">
-                    <i class="ri-search-line me-1"></i>Search
-                </button>
-                <button type="button" class="btn btn-success w-50"
-                        id="printAllBtn" style="display:none;" onclick="printAllResults()">
-                    <i class="ri-printer-line me-1"></i>Print Selected
-                </button>
+            <div class="col-12 col-lg-auto">
+                <div class="d-flex gap-2 filter-actions">
+                    <button type="button" class="btn search-btn btn-icon-flex" id="searchBtn"
+                            onclick="filterData()" title="Load students for the selected class and session">
+                        <i class="ri-search-line btn-icon"></i>
+                        <span class="btn-spinner"></span>
+                        <span class="btn-label">Click to Search</span>
+                    </button>
+                    <button type="button" class="btn reset-btn btn-icon-flex" id="resetBtn"
+                            onclick="resetFilters()" title="Clear all filters">
+                        <i class="ri-refresh-line"></i> Reset
+                    </button>
+                    <button type="button" class="btn btn-success btn-icon-flex"
+                            id="printAllBtn" style="display:none;" onclick="printAllResults()">
+                        <i class="ri-printer-line"></i> Print Selected
+                    </button>
+                </div>
             </div>
+        </div>
+
+        <div class="filter-hint">
+            <i class="ri-information-line"></i>
+            <span>Choose a class and session, then click <strong>Click to Search</strong>. Pick a term to export PDF reports.</span>
         </div>
     </div>
 
@@ -389,7 +485,7 @@
                             <div class="card border" style="border-radius:var(--bill-radius);">
                                 <div class="card-header bg-white fw-semibold"
                                      style="font-size:13px; color:var(--bill-primary);">
-                                    <i class="ri-bar-chart-line me-1"></i>Scores & Metrics
+                                    <i class="ri-bar-chart-line me-1"></i>Scores &amp; Metrics
                                 </div>
                                 <div class="card-body">
                                     <div class="row" id="scoreColumns"></div>
@@ -432,15 +528,15 @@
             <div class="modal-footer border-0 px-4 pb-4 pt-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="saveColumnSelection" disabled>
-                    <i class="ri-file-pdf-line me-1"></i>Apply & Generate PDF
+                    <i class="ri-file-pdf-line me-1"></i>Apply &amp; Generate PDF
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js)"></script>
-<script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/sweetalert2@11)"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     console.log("Script loaded at", new Date().toISOString());
@@ -475,12 +571,21 @@
         }
     }
 
+    /** Search button stays visible; it glows once class + session are both chosen. */
     function updateSearchButtonVisibility() {
         const classValue   = document.getElementById("idclass").value;
         const sessionValue = document.getElementById("idsession").value;
-        document.getElementById("searchBtn").style.display =
-            (classValue !== 'ALL' && sessionValue !== 'ALL') ? 'block' : 'none';
+        document.getElementById("searchBtn").classList.toggle(
+            'is-ready', classValue !== 'ALL' && sessionValue !== 'ALL'
+        );
         updateSelectionAlert();
+    }
+
+    /** Spinner + "Searching…" label while a search request is running. */
+    function setSearchLoading(isLoading) {
+        const btn = document.getElementById('searchBtn');
+        btn.classList.toggle('is-loading', isLoading);
+        btn.querySelector('.btn-label').textContent = isLoading ? 'Searching…' : 'Click to Search';
     }
 
     // Only controls term dropdown visibility — never touches print button
@@ -496,7 +601,7 @@
         const termValue = document.getElementById("idterm").value;
         const checked   = document.querySelectorAll('tbody input[name="chk_child"]:checked');
         const show      = termValue !== 'ALL' && checked.length > 0;
-        document.getElementById("printAllBtn").style.display = show ? 'block' : 'none';
+        document.getElementById("printAllBtn").style.display = show ? 'inline-flex' : 'none';
         updateSelectionAlert();
     }
 
@@ -525,6 +630,8 @@
             '<tr><td colspan="10" class="text-center py-4">' +
             '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...</td></tr>';
 
+        setSearchLoading(true);
+
         axios.get('{{ route("studentreports.index") }}', {
             params: { search: searchValue, schoolclassid: classValue,
                       sessionid: sessionValue, termid: termValue },
@@ -546,9 +653,8 @@
             setupPaginationLinks();
             setupCheckboxListeners();
             updateTermSelectVisibility();
-            // Do NOT call updatePrintButtonVisibility here —
-            // newly loaded rows have no checkboxes ticked yet,
-            // so the print button should stay hidden until the user checks some.
+            // Newly loaded rows have no checkboxes ticked yet,
+            // so the print button stays hidden until the user checks some.
             updatePrintButtonVisibility();
 
             if (!response.data.tableBody ||
@@ -564,19 +670,32 @@
                 'Error loading data. Please try again.</td></tr>';
             Swal.fire({ icon: "error", title: "Error",
                         text: error.response?.data?.message || "Failed to fetch student data." });
+        }).finally(function () {
+            setSearchLoading(false);
         });
     }
 
     function resetTable() {
         document.getElementById('studentTableBody').innerHTML =
             '<tr><td colspan="10" class="text-center py-4 text-muted">' +
-            'Select class and session to view students.</td></tr>';
+            'Select class and session, then click Search to view students.</td></tr>';
         document.getElementById('pagination-container').innerHTML = '';
         document.getElementById('studentcount').innerText = '0';
         document.getElementById('statTotal').innerText    = '0';
         document.getElementById('printAllBtn').style.display     = 'none';
         document.getElementById('termSelectContainer').style.display = 'none';
+        const checkAll = document.getElementById('checkAll');
+        if (checkAll) checkAll.checked = false;
         updateSelectionAlert();
+    }
+
+    function resetFilters() {
+        document.getElementById('idclass').value     = 'ALL';
+        document.getElementById('idsession').value   = 'ALL';
+        document.getElementById('idterm').value      = 'ALL';
+        document.getElementById('searchInput').value = '';
+        resetTable();
+        updateSearchButtonVisibility();
     }
 
     // ── Print / PDF ─────────────────────────────────────────────────────
@@ -845,6 +964,7 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         setupCheckboxListeners();
+        updateSearchButtonVisibility();
 
         const classSelect   = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
@@ -870,6 +990,11 @@
                 document.getElementById("printAllBtn").style.display = 'none';
                 updateSelectionAlert();
             }
+        });
+
+        // Keyboard search trigger
+        document.getElementById('searchInput').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') filterData();
         });
 
         const imageModal = document.getElementById('imageViewModal');
