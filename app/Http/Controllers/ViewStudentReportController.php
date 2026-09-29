@@ -387,16 +387,16 @@ class ViewStudentReportController extends Controller
                         $ca2 = $arr->count() > 1 ? (float)($arr->get(1)->score ?? 0) : 0;
                         $ca3 = $arr->count() > 2 ? (float)($arr->get(2)->score ?? 0) : 0;
                         $exam = $arr->count() > 3 ? (float)($arr->get(3)->score ?? 0) : 0;
-                        
+
                         $score->ca1 = $ca1;
                         $score->ca2 = $ca2;
                         $score->ca3 = $ca3;
                         $score->exam = $exam;
-                        
+
                         // CALCULATE TOTAL FROM INDIVIDUAL SCORES
                         $calculatedTotal = $ca1 + $ca2 + $ca3 + $exam;
                         $storedTotal = (float)($score->total ?? 0);
-                        
+
                         // ALWAYS use calculated total
                         $score->total = $calculatedTotal;
                         $score->total_stored_original = $storedTotal;
@@ -437,7 +437,7 @@ class ViewStudentReportController extends Controller
                     }
                 } catch (\Exception $e) {
                     Log::error('Error loading assessment scores', [
-                        'error' => $e->getMessage(), 
+                        'error' => $e->getMessage(),
                         'broadsheet_id' => $score->broadsheet_id
                     ]);
                     $score->total = (float)($score->total ?? 0);
@@ -622,7 +622,7 @@ class ViewStudentReportController extends Controller
         $termGradePoints = $scores->map(function($score) {
             return $this->getGradePoint(round($score->cum_ave ?? 0));
         });
-        
+
         $gpa                = $termGradePoints->avg() ?? 0.0;
         $num_subjects       = $scores->count();
         $total_grade_points = $termGradePoints->sum();
@@ -631,7 +631,7 @@ class ViewStudentReportController extends Controller
         $termGPAs = [];
         for ($t = 1; $t <= $termId; $t++) {
             if ($t == $termId) continue;
-            
+
             $termBroadsheets = Broadsheets::where('broadsheets.term_id', $t)
                 ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
                     $q->where('student_id', $studentId)->where('session_id', $sessionId);
@@ -852,13 +852,14 @@ class ViewStudentReportController extends Controller
             return response()->json(['success' => false, 'message' => 'Please select a valid class and session.'], 400);
         }
 
+        // The session is already chosen explicitly via $sessionId, so no
+        // "Current" status restriction is applied — any session works.
         $classes = Studentclass::query()
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
             ->where('schoolclass.id', $classId)
             ->where('schoolsession.id', $sessionId)
-            ->where('schoolsession.status', 'Current')
             ->groupBy('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session')
             ->selectRaw('schoolclass.schoolclass as class_name, schoolarm.arm as name_arm, schoolsession.session as session_name, COUNT(DISTINCT studentclass.studentId) as student_count')
             ->get();
@@ -1297,13 +1298,15 @@ class ViewStudentReportController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         $pagetitle   = "Student Terminal Report Management";
-        $current     = "Current";
         $allstudents = new LengthAwarePaginator([], 0, 10);
 
         if (
             $request->filled('schoolclassid') && $request->filled('sessionid') &&
             $request->input('schoolclassid') !== 'ALL' && $request->input('sessionid') !== 'ALL'
         ) {
+            // No "Current" session restriction: the session picked in the
+            // dropdown (sessionid) is what limits the results, so previous
+            // sessions can be viewed too.
             $query = Studentclass::query()
                 ->where('schoolclassid', $request->input('schoolclassid'))
                 ->where('sessionid', $request->input('sessionid'))
@@ -1311,8 +1314,7 @@ class ViewStudentReportController extends Controller
                 ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
                 ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
                 ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-                ->where('schoolsession.status', '=', $current);
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid');
 
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
@@ -1339,7 +1341,8 @@ class ViewStudentReportController extends Controller
             ])->latest('studentclass.created_at')->paginate(100);
         }
 
-        $schoolsessions = Schoolsession::where('status', 'Current')->get();
+        // All sessions, newest first (previously only status = 'Current').
+        $schoolsessions = Schoolsession::orderByDesc('id')->get();
         $schoolclasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
 
