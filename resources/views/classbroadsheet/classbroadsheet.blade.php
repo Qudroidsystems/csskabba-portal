@@ -840,7 +840,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                     $caScore = $cumAveMap[$sid][$subject->subject]   ?? 0;
                                     $bf = $bfMap[$sid][$subject->subject] ?? 0;
                                     $displayScore = $gradeBasis === 'total' ? $tScore : $caScore;
-                                    
+
                                     $tGrade = $cGrade = $caGrade = '-';
                                     if ($isSenior) {
                                         if ($tScore >= 75) $tGrade='A1'; elseif ($tScore >= 70) $tGrade='B2'; elseif ($tScore >= 65) $tGrade='B3'; elseif ($tScore >= 60) $tGrade='C4'; elseif ($tScore >= 55) $tGrade='C5'; elseif ($tScore >= 50) $tGrade='C6'; elseif ($tScore >= 45) $tGrade='D7'; elseif ($tScore >= 40) $tGrade='E8'; elseif ($tScore > 0) $tGrade='F9';
@@ -1037,7 +1037,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                     $tScore = $termScoreMap[$sid][$subject->subject] ?? 0;
                                     $caScore = $cumAveMap[$sid][$subject->subject] ?? 0;
                                     $displayScore = $gradeBasis === 'total' ? $tScore : $caScore;
-                                    $displayGrade = $displayScore ? ($isSenior ? 
+                                    $displayGrade = $displayScore ? ($isSenior ?
                                         ($displayScore >= 75 ? 'A1' : ($displayScore >= 70 ? 'B2' : ($displayScore >= 65 ? 'B3' : ($displayScore >= 60 ? 'C4' : ($displayScore >= 55 ? 'C5' : ($displayScore >= 50 ? 'C6' : ($displayScore >= 45 ? 'D7' : ($displayScore >= 40 ? 'E8' : 'F9')))))))) :
                                         ($displayScore >= 70 ? 'A' : ($displayScore >= 60 ? 'B' : ($displayScore >= 50 ? 'C' : ($displayScore >= 40 ? 'D' : 'F'))))
                                     ) : '-';
@@ -1050,7 +1050,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </div>
                             @endforeach
                         </div>
-                        
+
                         <!-- Mobile comment sections -->
                         <div class="comment-field-group">
                             <label>Teacher's Comment</label>
@@ -1221,8 +1221,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 (function () {
     'use strict';
 
-    var SA          = {!! $cbAnalyticsJson !!};
-    var PM          = {!! $positionMapJson !!};
+    // The two variables below are only defined when the class has students.
+    // Fall back to empty objects so the page still renders the
+    // "No Students Found" state instead of throwing "Undefined variable".
+    var SA          = {!! $cbAnalyticsJson ?? '{}' !!};
+    var PM          = {!! $positionMapJson ?? '{}' !!};
     var SAVE_URL    = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
     var CSRF        = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
     var CLASS_NAME  = '{{ $schoolclass ? $schoolclass->schoolclass . " " . $schoolclass->arm : "" }}';
