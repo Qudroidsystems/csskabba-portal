@@ -701,72 +701,81 @@ class SubjectClassController extends Controller
     // BULK DESTROY
     // =========================================================================
 
-    public function deleteMultiple(Request $request): JsonResponse
-    {
-        try {
-            $ids = $request->input('ids', []);
+   public function deleteMultiple(Request $request): JsonResponse
+{
+    try {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array) $request->input('ids', []))
+        )));
 
-            if (empty($ids)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No subject classes selected.'
-                ], 400);
-            }
-
-            $existingIds = Subjectclass::whereIn('id', $ids)->pluck('id')->toArray();
-            $invalidIds  = array_diff($ids, $existingIds);
-
-            if (!empty($invalidIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Some selected subject classes do not exist.'
-                ], 400);
-            }
-
-            $blockedIds = [];
-            foreach ($ids as $id) {
-                $hasBroadsheets   = Broadsheets::where('subjectclass_id', $id)->exists();
-                $hasRegistrations = SubjectRegistrationStatus::where('subjectclassid', $id)->exists();
-                $hasMockRecords   = BroadsheetsMock::where('subjectclass_id', $id)->exists();
-
-                if ($hasBroadsheets || $hasRegistrations || $hasMockRecords) {
-                    $blockedIds[] = $id;
-                }
-            }
-
-            if (!empty($blockedIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot delete ' . count($blockedIds) . ' subject class(es) because they have existing records. Please unregister all students first.',
-                    'blocked_ids' => $blockedIds
-                ], 422);
-            }
-
-            DB::beginTransaction();
-            $deleted = Subjectclass::whereIn('id', $ids)->delete();
-            DB::commit();
-
-            Log::info('Bulk delete completed', [
-                'total'   => count($ids),
-                'deleted' => $deleted
-            ]);
-
-            return response()->json([
-                'success'       => true,
-                'message'       => $deleted . ' subject class(es) deleted successfully.',
-                'deleted_count' => $deleted
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Bulk delete failed:', ['error' => $e->getMessage()]);
+        if (empty($ids)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting subject classes: ' . $e->getMessage()
-            ], 500);
+                'message' => 'No subject classes selected.',
+            ], 400);
         }
-    }
 
+        $existingIds = Subjectclass::whereIn('id', $ids)->pluck('id')
+            ->map(fn($v) => (int) $v)->all();
+
+        if (empty($existingIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The selected subject classes no longer exist.',
+            ], 404);
+        }
+
+        // One query per table instead of several per row
+        $blockedIds = array_values(array_unique(array_merge(
+            Broadsheets::whereIn('subjectclass_id', $existingIds)->pluck('subjectclass_id')->map(fn($v) => (int) $v)->all(),
+            BroadsheetsMock::whereIn('subjectclass_id', $existingIds)->pluck('subjectclass_id')->map(fn($v) => (int) $v)->all(),
+            SubjectRegistrationStatus::whereIn('subjectclassid', $existingIds)->pluck('subjectclassid')->map(fn($v) => (int) $v)->all(),
+            DB::table('student_subject_register_record')->whereIn('subjectclassid', $existingIds)->pluck('subjectclassid')->map(fn($v) => (int) $v)->all()
+        )));
+
+        $deletableIds = array_values(array_diff($existingIds, $blockedIds));
+
+        if (empty($deletableIds)) {
+            return response()->json([
+                'success'     => false,
+                'message'     => 'None of the selected assignments can be deleted because they have scores or student registrations. Unregister the students first.',
+                'blocked_ids' => $blockedIds,
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        $deleted = Subjectclass::whereIn('id', $deletableIds)->delete();
+        DB::commit();
+
+        $skipped = count($blockedIds);
+        $message = $deleted . ' subject class(es) deleted successfully.';
+        if ($skipped > 0) {
+            $message .= " {$skipped} skipped because they have scores or student registrations.";
+        }
+
+        Log::info('Bulk delete completed', [
+            'requested' => count($ids),
+            'deleted'   => $deleted,
+            'skipped'   => $skipped,
+        ]);
+
+        return response()->json([
+            'success'       => true,
+            'message'       => $message,
+            'deleted_count' => $deleted,
+            'skipped_count' => $skipped,
+            'blocked_ids'   => $blockedIds,
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Bulk delete failed:', ['error' => $e->getMessage()]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Error deleting subject classes: ' . $e->getMessage(),
+        ], 500);
+    }
+}
     // =========================================================================
     // ASSIGNMENTS
     // =========================================================================
