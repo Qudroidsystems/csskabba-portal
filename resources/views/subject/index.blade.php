@@ -119,6 +119,72 @@
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 
+/* ── Multi-row add subjects ──────────────────────────────── */
+.multi-head, .multi-row {
+    display:grid;
+    grid-template-columns:30px 1.6fr 1fr 1.2fr 38px;
+    gap:8px; align-items:start;
+}
+.multi-head {
+    font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.4px; color:var(--sub-muted); padding:0 4px 6px 0;
+}
+.multi-rows { max-height:340px; overflow-y:auto; padding:2px 6px 2px 0; }
+.multi-row { margin-bottom:8px; }
+.multi-row .row-num {
+    width:26px; height:26px; margin-top:7px; border-radius:50%;
+    background:#eff6ff; color:var(--sub-accent);
+    font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+}
+.multi-row .form-control { padding:8px 10px; }
+.multi-row .form-control.is-invalid {
+    border-color:var(--sub-danger);
+    box-shadow:0 0 0 3px rgba(220,38,38,.1);
+    background-image:none;
+}
+.multi-row .row-remove { height:36px; padding:0; }
+.multi-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }
+.multi-actions .ready-note { margin-left:auto; font-size:12px; color:var(--sub-muted); }
+.multi-actions .ready-note strong { color:var(--sub-primary); }
+.multi-with-teacher .multi-head,
+.multi-with-teacher .multi-row { grid-template-columns:30px 1.4fr .9fr 1fr 1.3fr 38px; }
+.multi-row .form-select { padding:8px 10px; }
+.multi-row .form-select.is-invalid {
+    border-color:var(--sub-danger);
+    box-shadow:0 0 0 3px rgba(220,38,38,.1);
+    background-image:none;
+}
+.multi-actions .form-select-sm { max-width:230px; font-size:12px; padding:5px 10px; }
+
+.assign-panel {
+    margin-top:14px; padding:14px 16px;
+    border:1.5px solid #bae6fd; background:#f0f9ff; border-radius:10px;
+}
+.assign-panel .assign-title { font-size:12px; font-weight:700; color:var(--sub-primary); margin-bottom:10px; }
+.assign-panel .assign-title i { color:#0891b2; margin-right:4px; }
+.assign-panel .assign-label {
+    font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.4px; color:var(--sub-muted); margin:8px 0 4px;
+}
+.assign-panel .assign-group { display:flex; flex-wrap:wrap; gap:6px 16px; }
+.assign-panel .form-check { margin:0; }
+.assign-panel .form-check-label { font-size:13px; cursor:pointer; }
+.assign-panel .form-check-input:checked { background-color:var(--sub-accent); border-color:var(--sub-accent); }
+.assign-panel.is-invalid-panel { border-color:var(--sub-danger); background:#fef2f2; }
+
+@media (max-width:576px) {
+    .multi-head { display:none; }
+    .multi-row,
+    .multi-with-teacher .multi-row { grid-template-columns:26px 1fr 38px; }
+    .multi-row .row-num { grid-column:1; grid-row:1; }
+    .multi-row .row-subject,
+    .multi-row .row-code,
+    .multi-row .row-remark,
+    .multi-row .row-teacher { grid-column:2; }
+    .multi-row .row-remove { grid-column:3; grid-row:1; }
+}
+
 /* ── Bulk bar ────────────────────────────────────────────── */
 .bulk-bar {
     background:#fff3cd; border:1px solid #ffc107;
@@ -319,7 +385,7 @@
                     </button>
                     @can('Create subjects')
                     <button class="btn btn-primary" id="createSubjectBtn">
-                        <i class="ri-add-line me-1"></i>Create Subject
+                        <i class="ri-add-line me-1"></i>Create Subjects
                     </button>
                     @endcan
                 </div>
@@ -362,15 +428,16 @@
 </div>
 </div>
 
-{{-- ═══════════════════════ ADD MODAL ═══════════════════════ --}}
+{{-- ═══════════════════════ ADD MODAL (multi-row) ═══════════════════════ --}}
 <div class="modal fade sub-modal" id="addSubjectModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="ri-add-circle-line me-2"></i>Add Subject</h5>
+                <h5><i class="ri-add-circle-line me-2"></i>Add Subjects</h5>
             </div>
-            <form id="add-subject-form" autocomplete="off">
+            <form id="add-subject-form" autocomplete="off"
+                  class="@can('Create subject-teacher') multi-with-teacher @endcan">
                 @csrf
                 <div class="modal-body-loader" id="add-modal-loader">
                     <div class="inner">
@@ -379,22 +446,77 @@
                     </div>
                 </div>
                 <div class="modal-body p-4" style="position:relative">
-                    <div class="mb-3">
-                        <label class="form-label">Subject Name <span class="text-danger">*</span></label>
-                        <input type="text" name="subject" id="add-subject" class="form-control"
-                               placeholder="e.g. Mathematics" required>
+
+                    <div class="multi-head">
+                        <div>#</div>
+                        <div>Subject Name <span class="text-danger">*</span></div>
+                        <div>Code <span class="text-danger">*</span></div>
+                        <div>Remark <span class="text-danger">*</span></div>
+                        @can('Create subject-teacher')
+                        <div>Teacher <span class="text-muted fw-normal">(optional)</span></div>
+                        @endcan
+                        <div></div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Subject Code <span class="text-danger">*</span></label>
-                        <input type="text" name="subject_code" id="add-subject-code" class="form-control"
-                               placeholder="e.g. MTH101" required>
+
+                    <div class="multi-rows" id="add-rows"></div>
+
+                    <div class="multi-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-row-btn">
+                            <i class="ri-add-line me-1"></i>Add Row
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="add-5-rows-btn">
+                            <i class="ri-add-line me-1"></i>Add 5 Rows
+                        </button>
+                        @can('Create subject-teacher')
+                        <select id="add-teacher-all" class="form-select form-select-sm">
+                            <option value="">Set teacher for all rows…</option>
+                            @foreach ($staffs as $staff)
+                                <option value="{{ $staff->userid }}">{{ $staff->name }}</option>
+                            @endforeach
+                        </select>
+                        @endcan
+                        <span class="ready-note">
+                            <strong id="add-ready-count">0</strong> subject(s) ready
+                            <span id="add-assign-note"></span>
+                        </span>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Remark <span class="text-danger">*</span></label>
-                        <input type="text" name="remark" id="add-remark" class="form-control"
-                               placeholder="e.g. Core Subject" required>
+
+                    @can('Create subject-teacher')
+                    {{-- Shown only once at least one row has a teacher --}}
+                    <div class="assign-panel d-none" id="assign-panel">
+                        <div class="assign-title">
+                            <i class="ri-user-star-line"></i>Teacher assignment — applies to every row that has a teacher
+                        </div>
+
+                        <div class="assign-label">Term(s) <span class="text-danger">*</span></div>
+                        <div class="assign-group">
+                            @foreach ($terms as $term)
+                                <div class="form-check">
+                                    <input class="form-check-input add-term-checkbox" type="checkbox"
+                                           id="add-term-{{ $term->id }}" value="{{ $term->id }}">
+                                    <label class="form-check-label" for="add-term-{{ $term->id }}">{{ $term->term }}</label>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="assign-label">Session <span class="text-danger">*</span></div>
+                        <div class="assign-group">
+                            @foreach ($schoolsessions as $session)
+                                <div class="form-check">
+                                    <input class="form-check-input add-session-radio" type="radio" name="add_sessionid"
+                                           id="add-session-{{ $session->id }}" value="{{ $session->id }}">
+                                    <label class="form-check-label" for="add-session-{{ $session->id }}">{{ $session->session }}</label>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-                    <div class="alert alert-danger d-none" id="add-error-msg"></div>
+                    @endcan
+
+                    <small class="text-muted d-block mt-2">
+                        Tip: press <kbd>Enter</kbd> in the Remark field to jump to the next row. Completely empty rows are ignored.
+                    </small>
+
+                    <div class="alert alert-danger d-none mt-3 mb-0" id="add-error-msg"></div>
                 </div>
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -479,6 +601,11 @@
 $(document).ready(function () {
 
     const CSRF = $('meta[name="csrf-token"]').attr('content');
+    const MAX_ROWS = 50;
+    const CAN_ASSIGN = @can('Create subject-teacher') true @else false @endcan;
+    const TEACHERS = @can('Create subject-teacher')
+        @json($staffs->map(fn ($s) => ['id' => $s->userid, 'name' => $s->name])->values())
+    @else [] @endcan;
     let deleteId = null;
 
     // =========================================================================
@@ -540,7 +667,7 @@ $(document).ready(function () {
             warning: 'ri-alert-fill',
             info:    'ri-information-fill',
         };
-        const id  = 'sub-toast-' + Date.now();
+        const id  = 'sub-toast-' + Date.now() + Math.floor(Math.random() * 1000);
         const $el = $(`
             <div class="sub-toast sub-toast-${type}" id="${id}">
                 <span class="sub-toast-icon"><i class="${icons[type] || icons.info}"></i></span>
@@ -566,6 +693,23 @@ $(document).ready(function () {
             `<i class="ri-error-warning-line me-1"></i>${msg}`
         );
     }
+
+    // =========================================================================
+    // SAFETY NET — reset loading state whenever a modal closes
+    // =========================================================================
+
+    $('#addSubjectModal').on('hidden.bs.modal', function () {
+        btnReset('#add-btn');
+        hideModalLoader('add');
+        updateCreateBtn();
+    });
+    $('#editModal').on('hidden.bs.modal', function () {
+        btnReset('#update-btn');
+        hideModalLoader('edit');
+    });
+    $('#addSubjectModal').on('shown.bs.modal', function () {
+        $('#add-rows .row-subject').first().trigger('focus');
+    });
 
     // =========================================================================
     // DATATABLE (server-side)
@@ -652,27 +796,281 @@ $(document).ready(function () {
     }
 
     // =========================================================================
-    // CREATE MODAL — guard button
+    // ADD MODAL — MULTI-ROW
     // =========================================================================
 
-    function updateCreateBtn() {
-        var ok = $('#add-subject').val().trim() !== '' &&
-                 $('#add-subject-code').val().trim() !== '' &&
-                 $('#add-remark').val().trim() !== '';
-        $('#add-btn').prop('disabled', !ok);
+    function rowValues($r) {
+        return {
+            subject:      $r.find('.row-subject').val().trim(),
+            subject_code: $r.find('.row-code').val().trim(),
+            remark:       $r.find('.row-remark').val().trim(),
+            staffid:      CAN_ASSIGN ? ($r.find('.row-teacher').val() || '') : '',
+        };
     }
 
-    $('#add-subject, #add-subject-code, #add-remark').on('input', updateCreateBtn);
+    // values a freshly added row inherits from the row above it
+    function carryFrom($last) {
+        if (!$last || !$last.length) return {};
+        var v = rowValues($last);
+        return { remark: v.remark, staffid: v.staffid };
+    }
+
+    function renumberRows() {
+        var $rows = $('#add-rows .multi-row');
+        $rows.each(function (i) { $(this).find('.row-num').text(i + 1); });
+        // never allow removing the last remaining row
+        $rows.find('.row-remove').prop('disabled', $rows.length === 1);
+        var full = $rows.length >= MAX_ROWS;
+        $('#add-row-btn, #add-5-rows-btn').prop('disabled', full);
+    }
+
+    function addRow(vals) {
+        if ($('#add-rows .multi-row').length >= MAX_ROWS) return null;
+        vals = vals || {};
+        var $r = $(
+            '<div class="multi-row">' +
+                '<div class="row-num"></div>' +
+                '<input type="text" class="form-control row-subject" placeholder="e.g. Mathematics">' +
+                '<input type="text" class="form-control row-code" placeholder="e.g. MTH101">' +
+                '<input type="text" class="form-control row-remark" placeholder="e.g. Core Subject">' +
+                (CAN_ASSIGN ? '<select class="form-select row-teacher"></select>' : '') +
+                '<button type="button" class="btn btn-sm btn-outline-danger row-remove" title="Remove row">' +
+                    '<i class="ri-close-line"></i>' +
+                '</button>' +
+            '</div>'
+        );
+        $r.find('.row-subject').val(vals.subject || '');
+        $r.find('.row-code').val(vals.subject_code || '');
+        $r.find('.row-remark').val(vals.remark || '');
+        if (CAN_ASSIGN) {
+            var $sel = $r.find('.row-teacher');
+            $sel.append($('<option>').val('').text('— None —'));
+            TEACHERS.forEach(function (t) { $sel.append($('<option>').val(t.id).text(t.name)); });
+            $sel.val(vals.staffid ? String(vals.staffid) : '');
+        }
+        $('#add-rows').append($r);
+        renumberRows();
+        updateCreateBtn();
+        return $r;
+    }
+
+    function updateCreateBtn() {
+        var ready = 0, assigned = 0, anyTeacher = false;
+        $('#add-rows .multi-row').each(function () {
+            var v = rowValues($(this));
+            if (v.staffid) anyTeacher = true;
+            if (v.subject && v.subject_code && v.remark) {
+                ready++;
+                if (v.staffid) assigned++;
+            }
+        });
+        $('#add-ready-count').text(ready);
+        $('#add-assign-note').text(assigned > 0 ? ' · ' + assigned + ' with a teacher' : '');
+        $('#assign-panel').toggleClass('d-none', !anyTeacher);
+        $('#add-btn').prop('disabled', ready === 0);
+        if (!$('#add-btn').hasClass('btn-loading')) {
+            var label = ready > 1 ? 'Add ' + ready + ' Subjects' : 'Add Subject';
+            if (assigned > 0) label += ' & Assign';
+            $('#add-btn .btn-text').text(label);
+        }
+    }
+
+    // typing clears the red highlight and refreshes the button
+    $('#add-rows').on('input change', 'input, select', function () {
+        $(this).removeClass('is-invalid');
+        updateCreateBtn();
+    });
+
+    // clear the red state on the term/session panel once the user picks something
+    $('#assign-panel').on('change', 'input', function () {
+        $('#assign-panel').removeClass('is-invalid-panel');
+    });
+
+    // "Set teacher for all rows"
+    $('#add-teacher-all').on('change', function () {
+        var id = $(this).val();
+        if (!id) return;
+        $('#add-rows .row-teacher').val(id).removeClass('is-invalid');
+        $(this).val('');
+        updateCreateBtn();
+    });
+
+    // remove a row
+    $('#add-rows').on('click', '.row-remove', function () {
+        $(this).closest('.multi-row').remove();
+        renumberRows();
+        updateCreateBtn();
+    });
+
+    // Enter in Remark → next row (create one if this is the last)
+    $('#add-rows').on('keydown', '.row-remark', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        var $row  = $(this).closest('.multi-row');
+        var $next = $row.next('.multi-row');
+        if (!$next.length) {
+            $next = addRow(carryFrom($row));   // carry remark + teacher forward
+        }
+        if ($next) $next.find('.row-subject').trigger('focus');
+    });
+
+    $('#add-row-btn').on('click', function () {
+        var $r = addRow(carryFrom($('#add-rows .multi-row').last()));
+        if ($r) {
+            $r.find('.row-subject').trigger('focus');
+            $('#add-rows').scrollTop($('#add-rows')[0].scrollHeight);
+        }
+    });
+
+    $('#add-5-rows-btn').on('click', function () {
+        var carry  = carryFrom($('#add-rows .multi-row').last());
+        var $first = null;
+        for (var i = 0; i < 5; i++) {
+            var $r = addRow(carry);
+            if ($r && !$first) $first = $r;
+        }
+        if ($first) $first.find('.row-subject').trigger('focus');
+        $('#add-rows').scrollTop($('#add-rows')[0].scrollHeight);
+    });
 
     // ── Open CREATE ───────────────────────────────────────────
     $('#createSubjectBtn').on('click', function() {
-        $('#add-subject').val('');
-        $('#add-subject-code').val('');
-        $('#add-remark').val('');
-        $('#add-btn').prop('disabled', true);
+        $('#add-rows').empty();
+        addRow(); addRow(); addRow();
+        $('.add-term-checkbox').prop('checked', false);
+        $('.add-session-radio').prop('checked', false);
+        $('#assign-panel').addClass('d-none').removeClass('is-invalid-panel');
+        $('#add-teacher-all').val('');
         $('#add-error-msg').addClass('d-none').html('');
+        btnReset('#add-btn');
+        updateCreateBtn();
         hideModalLoader('add');
         new bootstrap.Modal(document.getElementById('addSubjectModal')).show();
+    });
+
+    // Map server-side row errors back onto the matching rows
+    function applyRowErrors(errors, rowEls, fallbackMsg) {
+        var fieldSel = { subject: '.row-subject', subject_code: '.row-code', remark: '.row-remark', staffid: '.row-teacher' };
+        var lines = [];
+
+        Object.keys(errors || {}).forEach(function (key) {
+            var msg = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
+            var m = key.match(/^subjects\.(\d+)\.(subject|subject_code|remark|staffid)$/);
+            if (!m) {
+                lines.push(msg);
+                if (key === 'termid' || key.indexOf('termid.') === 0 || key === 'sessionid') {
+                    $('#assign-panel').addClass('is-invalid-panel');
+                }
+                return;
+            }
+            var $r = rowEls[parseInt(m[1], 10)];
+            if (!$r) { lines.push(msg); return; }
+            $r.find(fieldSel[m[2]]).addClass('is-invalid');
+            lines.push('Row ' + $r.find('.row-num').text() + ': ' + msg);
+        });
+
+        showError('#add-error-msg', lines.length ? lines.join('<br>') : (fallbackMsg || 'An error occurred.'));
+        var $bad = $('#add-rows .is-invalid').first();
+        if ($bad.length) $bad[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+
+    // =========================================================================
+    // SUBMIT: CREATE (many)
+    // =========================================================================
+
+    $('#add-subject-form').on('submit', function(e) {
+        e.preventDefault();
+
+        var payload = [];
+        var rowEls  = [];
+        var partial = false;
+
+        $('#add-rows .multi-row').each(function () {
+            var $r = $(this);
+            var v  = rowValues($r);
+            var filled = [v.subject, v.subject_code, v.remark].filter(Boolean).length;
+
+            $r.find('input').removeClass('is-invalid');
+            if (filled === 0) return;                       // blank row → ignored
+            if (filled < 3) {                               // partly filled → flag it
+                partial = true;
+                $r.find('input').each(function () {
+                    if (!$(this).val().trim()) $(this).addClass('is-invalid');
+                });
+                return;
+            }
+            payload.push(v);
+            rowEls.push($r);
+        });
+
+        if (partial) {
+            showError('#add-error-msg', 'Some rows are incomplete — fill in all three fields or remove the row.');
+            return;
+        }
+        if (!payload.length) {
+            showError('#add-error-msg', 'Add at least one subject.');
+            return;
+        }
+
+        // teacher assignment (optional) — needs terms + session when any row has a teacher
+        var withTeacher = CAN_ASSIGN && payload.some(function (p) { return !!p.staffid; });
+        var termids     = [];
+        var sessionid   = '';
+        if (withTeacher) {
+            termids   = $('.add-term-checkbox:checked').map(function () { return this.value; }).get();
+            sessionid = $('.add-session-radio:checked').val() || '';
+            if (!termids.length || !sessionid) {
+                $('#assign-panel').addClass('is-invalid-panel');
+                showError('#add-error-msg', 'Choose at least one term and a session for the teacher assignment.');
+                return;
+            }
+        }
+
+        btnLoad('#add-btn', 'Adding…');
+        showModalLoader('add', 'Saving ' + payload.length + ' subject(s)…');
+        $('#add-error-msg').addClass('d-none').html('');
+
+        $.ajax({
+            url:     '{{ route("subject.store") }}',
+            type:    'POST',
+            // no "traditional" → jQuery sends subjects[0][subject]=… so PHP gets a real nested array
+            data:    withTeacher
+                       ? { subjects: payload, termid: termids, sessionid: sessionid, _token: CSRF }
+                       : { subjects: payload, _token: CSRF },
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+
+            success: function(res) {
+                if (res.success) {
+                    // reset BEFORE hiding so the next open is clean
+                    hideModalLoader('add');
+                    btnReset('#add-btn');
+
+                    $('#addSubjectModal').modal('hide');
+                    toast('success', 'Added!', res.message);
+                    table.ajax.reload();
+                    loadStats();
+                } else {
+                    hideModalLoader('add');
+                    btnReset('#add-btn');
+                    updateCreateBtn();
+                    showError('#add-error-msg', res.message || 'Could not add subjects.');
+                }
+            },
+
+            error: function(xhr) {
+                hideModalLoader('add');
+                btnReset('#add-btn');
+                updateCreateBtn();
+                var json = xhr.responseJSON;
+                if (json && json.errors) {
+                    applyRowErrors(json.errors, rowEls, json.message);
+                } else {
+                    var msg = (json && json.message) || 'An error occurred.';
+                    showError('#add-error-msg', msg);
+                    toast('error', 'Failed', msg);
+                }
+            },
+        });
     });
 
     // =========================================================================
@@ -695,60 +1093,6 @@ $(document).ready(function () {
         btnReset('#update-btn');
 
         new bootstrap.Modal(document.getElementById('editModal')).show();
-    });
-
-    // =========================================================================
-    // SUBMIT: CREATE
-    // =========================================================================
-
-    $('#add-subject-form').on('submit', function(e) {
-        e.preventDefault();
-
-        var subject = $('#add-subject').val().trim();
-        var code    = $('#add-subject-code').val().trim();
-        var remark  = $('#add-remark').val().trim();
-
-        if (!subject || !code || !remark) {
-            showError('#add-error-msg', 'All fields are required.');
-            return;
-        }
-
-        btnLoad('#add-btn', 'Adding…');
-        showModalLoader('add', 'Saving subject…');
-        $('#add-error-msg').addClass('d-none').html('');
-
-        $.ajax({
-            url:     '{{ route("subject.store") }}',
-            type:    'POST',
-            data:    { subject, subject_code: code, remark, _token: CSRF },
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-
-            success: function(res) {
-                if (res.success) {
-                    $('#addSubjectModal').modal('hide');
-                    toast('success', 'Added!', res.message);
-                    table.ajax.reload();
-                    loadStats();
-                } else {
-                    hideModalLoader('add');
-                    btnReset('#add-btn');
-                    updateCreateBtn();
-                    showError('#add-error-msg', res.message || 'Could not add subject.');
-                }
-            },
-
-            error: function(xhr) {
-                hideModalLoader('add');
-                btnReset('#add-btn');
-                updateCreateBtn();
-                var json = xhr.responseJSON;
-                var msg = (json && json.message) ||
-                          (json && json.errors && Object.values(json.errors).flat().join(', ')) ||
-                          'An error occurred.';
-                showError('#add-error-msg', msg);
-                toast('error', 'Failed', msg);
-            },
-        });
     });
 
     // =========================================================================
@@ -780,6 +1124,8 @@ $(document).ready(function () {
 
             success: function(res) {
                 if (res.success) {
+                    hideModalLoader('edit');
+                    btnReset('#update-btn');
                     $('#editModal').modal('hide');
                     toast('success', 'Updated!', res.message);
                     table.ajax.reload();
@@ -854,78 +1200,78 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-// DELETE: BULK - FIXED
-// =========================================================================
+    // DELETE: BULK
+    // =========================================================================
 
-function doBulkDelete() {
-    var ids = [];
-    $('.row-checkbox:checked').each(function() {
-        ids.push($(this).val());
-    });
-    
-    if (ids.length === 0) {
-        toast('warning', 'No Selection', 'Please select at least one subject to delete.');
-        return;
-    }
+    function doBulkDelete() {
+        var ids = [];
+        $('.row-checkbox:checked').each(function() {
+            ids.push($(this).val());
+        });
 
-    Swal.fire({
-        title: 'Delete ' + ids.length + ' subject(s)?',
-        html: 'This will permanently remove the selected subjects.<br><strong>This action cannot be undone!</strong>',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Yes, delete them!',
-        cancelButtonText: 'Cancel',
-        reverseButtons: true,
-        showLoaderOnConfirm: true,
-        preConfirm: function() {
-            return new Promise(function(resolve, reject) {
-                PageLoader.show('Deleting subjects…');
-                
-                // Send as JSON with proper array format
-                $.ajax({
-                    url: '{{ route("subject.bulk-destroy") }}',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        ids: ids,
-                        _token: CSRF
-                    }),
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    success: function(res) {
-                        PageLoader.hide();
-                        if (res.success) {
-                            resolve(res);
-                        } else {
-                            reject(res.message || 'Failed to delete subjects');
+        if (ids.length === 0) {
+            toast('warning', 'No Selection', 'Please select at least one subject to delete.');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Delete ' + ids.length + ' subject(s)?',
+            html: 'This will permanently remove the selected subjects.<br><strong>This action cannot be undone!</strong>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Yes, delete them!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: function() {
+                return new Promise(function(resolve, reject) {
+                    PageLoader.show('Deleting subjects…');
+
+                    // Send as JSON with proper array format
+                    $.ajax({
+                        url: '{{ route("subject.bulk-destroy") }}',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            ids: ids,
+                            _token: CSRF
+                        }),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        success: function(res) {
+                            PageLoader.hide();
+                            if (res.success) {
+                                resolve(res);
+                            } else {
+                                reject(res.message || 'Failed to delete subjects');
+                            }
+                        },
+                        error: function(xhr) {
+                            PageLoader.hide();
+                            var errorMsg = 'An error occurred while deleting.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            reject(errorMsg);
                         }
-                    },
-                    error: function(xhr) {
-                        PageLoader.hide();
-                        var errorMsg = 'An error occurred while deleting.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMsg = xhr.responseJSON.message;
-                        }
-                        reject(errorMsg);
-                    }
+                    });
                 });
-            });
-        }
-    }).then(function(result) {
-        if (result.isConfirmed && result.value) {
-            toast('success', 'Deleted!', result.value.message || 'Subjects deleted successfully.');
-            table.ajax.reload();
-            loadStats();
-            $('#selectAll').prop('checked', false);
-            updateBulkBar();
-        }
-    }).catch(function(error) {
-        toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete subjects.');
-    });
-}
+            }
+        }).then(function(result) {
+            if (result.isConfirmed && result.value) {
+                toast('success', 'Deleted!', result.value.message || 'Subjects deleted successfully.');
+                table.ajax.reload();
+                loadStats();
+                $('#selectAll').prop('checked', false);
+                updateBulkBar();
+            }
+        }).catch(function(error) {
+            toast('error', 'Failed', typeof error === 'string' ? error : 'Could not delete subjects.');
+        });
+    }
 
     $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
 
