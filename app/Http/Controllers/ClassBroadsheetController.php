@@ -228,9 +228,8 @@ class ClassBroadsheetController extends Controller
 
             // CUM: BF + Total (raw sum)
             $cum = round($bf + $rawTotal, 2);
-            
+
             // CUM AVE: Cum ÷ term number → (BF + Total) ÷ Term Number
-            // Example: 181.0 ÷ 3 = 60.3
             $cumAve = $termid > 0 ? round($cum / $termid, 2) : $cum;
 
             $termScoreMap[$sid][$subjName] = $rawTotal;
@@ -309,7 +308,7 @@ class ClassBroadsheetController extends Controller
                     if ($termScore > 0 || $cumScore > 0) $subjectCount++;
                     $termTotal += $termScore;
                     $cumTotal += $cumScore;
-                    
+
                     // Only add to cumAveTotal if the score is valid
                     if ($cumAveScore > 0) {
                         $cumAveTotal += $cumAveScore;
@@ -359,9 +358,8 @@ class ClassBroadsheetController extends Controller
             $totalObtainable = $subjectCount * 100;
             $termPercentage = $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0;
             $cumPercentage = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
-            
+
             // Cum Ave: Average of all subject Cum Aves
-            // Example: 884.3 ÷ 15 = 59.0%
             $cumAveAverage = $cumAveCount > 0 ? round($cumAveTotal / $cumAveCount, 1) : 0;
             $cumAvePercentage = $cumAveAverage; // Already a percentage (0-100 scale)
 
@@ -370,8 +368,8 @@ class ClassBroadsheetController extends Controller
             $studentAnalytics[$sid] = [
                 'term_total' => round($termTotal, 1),
                 'cum_total' => round($cumTotal, 1),
-                'cum_ave_total' => round($cumAveTotal, 1),  // Sum of subject Cum Aves (for reference)
-                'cum_ave_average' => $cumAveAverage,  // Average of subject Cum Aves
+                'cum_ave_total' => round($cumAveTotal, 1),
+                'cum_ave_average' => $cumAveAverage,
                 'term_average' => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
                 'cum_average' => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
                 'subject_count' => $subjectCount,
@@ -384,35 +382,35 @@ class ClassBroadsheetController extends Controller
                 'grades' => $grades,
                 'grade_basis' => $gradeBasis,
             ];
-
-            // Calculate positions after we have all percentages
         }
 
         // Calculate positions (ranking) based on the selected grade basis
         $positionMap = [];
         $rankKey = $gradeBasis === 'total' ? 'term_percentage' : 'cum_ave_percentage';
-        $rankedBySelected = collect($studentAnalytics)->sortByDesc($rankKey)->values();
+
+        $rankedStudentIds = collect($studentAnalytics)
+            ->sortByDesc($rankKey)
+            ->keys()
+            ->values();
+
         $prevPct = null;
         $prevPos = 0;
         $counter = 0;
-        foreach ($rankedBySelected as $an) {
+
+        foreach ($rankedStudentIds as $sid) {
             $counter++;
-            $sid = null;
-            foreach ($studentAnalytics as $s => $a) {
-                if ($a === $an) { $sid = $s; break; }
+            $pct = $studentAnalytics[$sid][$rankKey];
+
+            if ($prevPct !== null && $pct == $prevPct) {
+                $positionMap[$sid] = $prevPos;
+            } else {
+                $positionMap[$sid] = $counter;
+                $prevPos = $counter;
             }
-            if ($sid) {
-                if ($prevPct !== null && $an[$rankKey] == $prevPct) {
-                    $positionMap[$sid] = $prevPos;
-                } else {
-                    $positionMap[$sid] = $counter;
-                    $prevPos = $counter;
-                }
-                $prevPct = $an[$rankKey];
-            }
+            $prevPct = $pct;
         }
 
-        // Add position to analytics
+        // Add position to analytics + track top performers
         foreach ($studentAnalytics as $sid => &$an) {
             $an['position'] = $positionMap[$sid] ?? 0;
 
@@ -421,7 +419,9 @@ class ClassBroadsheetController extends Controller
                 $student = $students->firstWhere('id', $sid);
                 if ($student) {
                     $topPerformerByCum = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
-                    $topPerformerPicture = $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+                    $topPerformerPicture = $student->picture
+                        ? asset('storage/student_avatars/' . basename($student->picture))
+                        : null;
                 }
             }
 
@@ -433,6 +433,7 @@ class ClassBroadsheetController extends Controller
                 }
             }
         }
+        unset($an); // break reference
 
         $personalityProfiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
@@ -458,6 +459,10 @@ class ClassBroadsheetController extends Controller
             $avgCumAvePercentage = round($totalCumAvePct / count($studentAnalytics), 1);
         }
 
+        // JSON for the frontend JS (SA / PM) — this fixes the Undefined variable error
+        $cbAnalyticsJson = json_encode($studentAnalytics);
+        $positionMapJson = json_encode($positionMap);
+
         return view('classbroadsheet.classbroadsheet', compact(
             'students', 'subjects', 'assessments',
             'termScoreMap', 'cumScoreMap', 'cumAveMap', 'bfMap',
@@ -467,7 +472,9 @@ class ClassBroadsheetController extends Controller
             'isSenior', 'studentAnalytics', 'pagetitle', 'positionMap',
             'topPerformerByCum', 'topPerformerByTerm', 'topPerformerPicture',
             'avgTermPercentage', 'avgCumPercentage', 'avgCumAvePercentage',
-            'gradeBasis'
+            'gradeBasis',
+            'cbAnalyticsJson',
+            'positionMapJson'
         ));
     }
 
