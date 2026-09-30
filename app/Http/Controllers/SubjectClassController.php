@@ -362,45 +362,46 @@ class SubjectClassController extends Controller
     // STORE
     // =========================================================================
 
-    public function store(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'schoolclassid'      => 'required|exists:schoolclass,id',
-            'subjectteacherid'   => 'required|array|min:1',
-            'subjectteacherid.*' => 'required|exists:subjectteacher,id',
-        ], [
-            'schoolclassid.required'      => 'Please select a class!',
-            'schoolclassid.exists'        => 'Selected class does not exist!',
-            'subjectteacherid.required'   => 'Please select at least one subject teacher!',
-            'subjectteacherid.*.required' => 'Please select at least one subject teacher!',
-            'subjectteacherid.*.exists'   => 'One or more selected subject teachers do not exist!',
-        ]);
+   public function store(Request $request): JsonResponse
+{
+    // Accept a single id or an array of ids for backward compatibility
+    $request->merge([
+        'schoolclassid' => array_values(array_filter((array) $request->input('schoolclassid', []))),
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()->first(),
-                'errors'  => $validator->errors(),
-            ], 422);
-        }
+    $validator = Validator::make($request->all(), [
+        'schoolclassid'      => 'required|array|min:1',
+        'schoolclassid.*'    => 'required|exists:schoolclass,id',
+        'subjectteacherid'   => 'required|array|min:1',
+        'subjectteacherid.*' => 'required|exists:subjectteacher,id',
+    ], [
+        'schoolclassid.required'      => 'Please select at least one class!',
+        'schoolclassid.min'           => 'Please select at least one class!',
+        'schoolclassid.*.exists'      => 'One or more selected classes do not exist!',
+        'subjectteacherid.required'   => 'Please select at least one subject teacher!',
+        'subjectteacherid.*.required' => 'Please select at least one subject teacher!',
+        'subjectteacherid.*.exists'   => 'One or more selected subject teachers do not exist!',
+    ]);
 
-        $schoolClassId     = $request->input('schoolclassid');
-        $subjectTeacherIds = $request->input('subjectteacherid', []);
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => $validator->errors()->first(),
+            'errors'  => $validator->errors(),
+        ], 422);
+    }
 
-        if (empty($subjectTeacherIds)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please select at least one subject teacher.',
-            ], 422);
-        }
+    $schoolClassIds    = array_unique($request->input('schoolclassid'));
+    $subjectTeacherIds = array_unique($request->input('subjectteacherid'));
 
-        DB::beginTransaction();
-        try {
-            $createdRecords = [];
-            $skippedCount   = 0;
+    DB::beginTransaction();
+    try {
+        $createdRecords = [];
+        $skippedCount   = 0;
 
-            $subjectTeachers = SubjectTeacher::whereIn('id', $subjectTeacherIds)->get()->keyBy('id');
+        $subjectTeachers = SubjectTeacher::whereIn('id', $subjectTeacherIds)->get()->keyBy('id');
 
+        foreach ($schoolClassIds as $schoolClassId) {
             foreach ($subjectTeacherIds as $subjectTeacherId) {
                 $subjectTeacher = $subjectTeachers->get($subjectTeacherId);
                 if (!$subjectTeacher) {
@@ -416,44 +417,43 @@ class SubjectClassController extends Controller
                     continue;
                 }
 
-                $subjectclass = Subjectclass::create([
+                $createdRecords[] = Subjectclass::create([
                     'schoolclassid'    => $schoolClassId,
                     'subjectteacherid' => $subjectTeacherId,
                     'subjectid'        => $subjectTeacher->subjectid,
                 ]);
-
-                $createdRecords[] = $subjectclass;
             }
+        }
 
-            DB::commit();
+        DB::commit();
 
-            if (empty($createdRecords)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'All selected subject teachers are already assigned to this class.',
-                ], 422);
-            }
-
-            $message = count($createdRecords) . ' Subject Class(es) added successfully.';
-            if ($skippedCount > 0) {
-                $message .= " ({$skippedCount} already existed and were skipped.)";
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'data'    => $createdRecords,
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating subject class:', ['error' => $e->getMessage()]);
+        if (empty($createdRecords)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create subject class: ' . $e->getMessage()
-            ], 500);
+                'message' => 'All selected assignments already exist for the chosen class(es).',
+            ], 422);
         }
+
+        $message = count($createdRecords) . ' Subject Class(es) added successfully.';
+        if ($skippedCount > 0) {
+            $message .= " ({$skippedCount} already existed and were skipped.)";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data'    => $createdRecords,
+        ], 201);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Error creating subject class:', ['error' => $e->getMessage()]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to create subject class: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
     // =========================================================================
     // UPDATE — swap the STAFF MEMBER on an existing subject-class assignment
