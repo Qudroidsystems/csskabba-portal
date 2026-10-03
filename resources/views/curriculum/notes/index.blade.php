@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="main-content"><div class="page-content"><div class="container-fluid">
-    <x-cb.hero title="My Lesson Notes" icon="ri-booklet-fill" subtitle="Write, submit and deliver your lesson notes.">
+    <x-cb.hero title="My Lesson Notes" icon="ri-booklet-fill" subtitle="Write, submit and deliver your lesson notes." :back="route('dashboard')" back-label="Dashboard">
         <x-slot name="actions">
             @can('Write lesson notes')<a href="{{ route('curriculum.notes.create') }}" class="action-btn btn-primary-cb"><i class="ri-add-line"></i>New note</a>@endcan
             @can('Review lesson notes')<a href="{{ route('curriculum.notes.review') }}" class="action-btn btn-go"><i class="ri-inbox-line"></i>Review queue</a>@endcan

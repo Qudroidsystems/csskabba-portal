@@ -162,6 +162,28 @@ class ExamPaperController extends Controller
         ]);
     }
 
+    /** Download the vetted paper as a professionally formatted Word (.docx) file. */
+    public function word(ExamPaper $paper)
+    {
+        $this->authorizeView($paper);
+        abort_unless(in_array($paper->status, ['approved', 'locked'], true), 403,
+            'Only a vetted (approved/locked) paper can be exported to Word.');
+
+        $school = DB::table('school_information')->where('is_active', 1)->first()
+            ?? DB::table('school_information')->first();
+
+        $meta = [
+            'school' => $school,
+            'label'  => $this->labelsFor([$paper->subjectclass_id])[$paper->subjectclass_id] ?? '',
+            'vetter' => $paper->vetted_by ? DB::table('users')->where('id', $paper->vetted_by)->value('name') : null,
+        ];
+
+        $path  = app(\App\Services\ExamWordExport::class)->build($paper, $meta);
+        $fname = \Illuminate\Support\Str::slug($paper->title ?: 'exam-paper').'.docx';
+
+        return response()->download($path, $fname)->deleteFileAfterSend(true);
+    }
+
     public function destroy(ExamPaper $paper)
     {
         $this->authorizeOwner($paper);

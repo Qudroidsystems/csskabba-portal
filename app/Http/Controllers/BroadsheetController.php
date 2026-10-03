@@ -239,10 +239,12 @@ class BroadsheetController extends Controller
 
         if (!$prevTerm) return [];
 
+        // Scoped by student + session only (not schoolclass_id): senior results can be
+        // keyed to a different class id than the name-matched arm, which would hide
+        // their previous-term cumulative. $studentIds already limits the cohort.
         $rows = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
             ->where('broadsheets.term_id', $prevTerm->id)
             ->where('broadsheet_records.session_id', $sessionid)
-            ->whereIn('broadsheet_records.schoolclass_id', $classIds)
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->select([
                 'broadsheet_records.student_id',
@@ -1155,10 +1157,13 @@ class BroadsheetController extends Controller
 
         $prevCumMap = $this->fetchPreviousTermCums($allStudentIds, $sessionid, $termid, $classIds);
 
+        // NOTE: scoped by student_id + term + session only. The schoolclass_id filter
+        // is intentionally omitted here: senior results are sometimes keyed to a class
+        // id that differs from the name-matched arm, which would drop the whole senior
+        // sheet. Students are already limited to this class group for the chosen session.
         $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $allStudentIds)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
-            ->whereIn('broadsheet_records.schoolclass_id', $classIds)
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
             ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')

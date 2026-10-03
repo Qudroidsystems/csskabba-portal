@@ -4,7 +4,7 @@
 @section('content')
 <div class="main-content"><div class="page-content"><div class="container-fluid">
     <x-cb.hero title="Term-end Topic Analysis" icon="ri-line-chart-fill"
-        subtitle="Across all approved papers: what was taught, what was examined, and how students performed per topic." />
+        subtitle="Across all approved papers: what was taught, what was examined, and how students performed per topic." :back="route('dashboard')" back-label="Dashboard" />
 
     <x-cb.card title="Choose a class" icon="ri-filter-3-line">
         <form method="GET" class="row g-2">

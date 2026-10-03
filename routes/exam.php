@@ -55,6 +55,7 @@ Route::middleware('auth')->prefix('exams')->name('exam.')->group(function () {
         Route::put('/{paper}', [ExamPaperController::class, 'update'])->whereNumber('paper')->name('update');
         Route::post('/{paper}/submit', [ExamPaperController::class, 'submit'])->whereNumber('paper')->name('submit');
         Route::get('/{paper}/print', [ExamPaperController::class, 'print'])->whereNumber('paper')->name('print');
+        Route::get('/{paper}/word', [ExamPaperController::class, 'word'])->whereNumber('paper')->name('word');
         Route::delete('/{paper}', [ExamPaperController::class, 'destroy'])->whereNumber('paper')->name('destroy');
     });
 });

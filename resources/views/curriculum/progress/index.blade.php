@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="main-content"><div class="page-content"><div class="container-fluid">
-    <x-cb.hero title="My Topics" icon="ri-task-fill" subtitle="Track the topics you've taught in each class." />
+    <x-cb.hero title="My Topics" icon="ri-task-fill" subtitle="Track the topics you've taught in each class." :back="route('dashboard')" back-label="Dashboard" />
 
     @if(session('success'))<div class="cb-banner info"><i class="ri-checkbox-circle-line"></i><div>{{ session('success') }}</div></div>@endif
 

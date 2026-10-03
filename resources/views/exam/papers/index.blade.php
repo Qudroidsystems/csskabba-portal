@@ -4,7 +4,7 @@
 @section('content')
 <div class="main-content"><div class="page-content"><div class="container-fluid">
     <x-cb.hero title="Exam Papers" icon="ri-file-list-3-fill"
-        subtitle="Build, tag to topics, submit for vetting, and print approved papers.">
+        subtitle="Build, tag to topics, submit for vetting, and print approved papers." :back="route('dashboard')" back-label="Dashboard">
         <x-slot:actions>
             <a href="{{ route('exam.papers.create') }}" class="action-btn btn-primary-cb"><i class="ri-add-line"></i>New paper</a>
         </x-slot:actions>
@@ -54,6 +54,7 @@
                             @endif
                             @if(in_array($p->status,['approved','locked']))
                                 <a href="{{ route('exam.papers.print', $p) }}" target="_blank" class="action-btn btn-open" title="Print"><i class="ri-printer-line"></i></a>
+                                <a href="{{ route('exam.papers.word', $p) }}" class="action-btn btn-open" title="Download Word"><i class="ri-file-word-2-line"></i></a>
                             @endif
                             @if($p->subjectclass_id)
                                 <a href="{{ route('exam.coverage.report', $p) }}" class="action-btn btn-open" title="Coverage"><i class="ri-bar-chart-2-line"></i></a>

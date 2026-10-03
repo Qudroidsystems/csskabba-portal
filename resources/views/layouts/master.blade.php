@@ -1186,7 +1186,7 @@
                     @canany(['Write exam papers', 'Vet exam papers', 'Manage exam bank'])
                     <li class="nav-item">
                         <a href="#sidebarExamVetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExamVetting">
-                            <i class="ri-file-list-3-line"></i> <span>Exam Vetting</span>
+                            <i class="ri-file-list-3-line"></i> <span>Paper Exams &amp; Vetting</span>
                         </a>
                         <div class="collapse menu-dropdown" id="sidebarExamVetting">
                             <ul class="nav nav-sm flex-column">

@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="main-content"><div class="page-content"><div class="container-fluid">
-    <x-cb.hero title="Teaching Methods" icon="ri-lightbulb-fill" subtitle="The library teachers choose from in lesson notes." />
+    <x-cb.hero title="Teaching Methods" icon="ri-lightbulb-fill" subtitle="The library teachers choose from in lesson notes." :back="route('dashboard')" back-label="Dashboard" />
 
     @if(session('success'))<div class="cb-banner info"><i class="ri-checkbox-circle-line"></i><div>{{ session('success') }}</div></div>@endif
     @if($errors->any())<div class="cb-banner warning"><i class="ri-error-warning-line"></i><div>{{ $errors->first() }}</div></div>@endif

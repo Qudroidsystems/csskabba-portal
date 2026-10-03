@@ -11,6 +11,7 @@
             <span class="status-pill {{ $cls }}">{{ $lbl }}</span>
             @if(in_array($paper->status,['approved','locked']))
                 <a href="{{ route('exam.papers.print', $paper) }}" target="_blank" class="action-btn btn-open"><i class="ri-printer-line"></i>Print</a>
+                <a href="{{ route('exam.papers.word', $paper) }}" class="action-btn btn-open"><i class="ri-file-word-2-line"></i>Word</a>
             @endif
             @if($canVet && in_array($paper->status,['submitted','changes_requested']))
                 <a href="{{ route('exam.vet.review', $paper) }}" class="action-btn btn-primary-cb"><i class="ri-shield-check-line"></i>Vet this paper</a>

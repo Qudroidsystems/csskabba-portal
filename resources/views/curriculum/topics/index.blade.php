@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="main-content"><div class="page-content"><div class="container-fluid">
-    <x-cb.hero title="Curriculum Topics" icon="ri-booklet-fill" subtitle="Build the syllabus per subject, class level and term.">
+    <x-cb.hero title="Curriculum Topics" icon="ri-booklet-fill" subtitle="Build the syllabus per subject, class level and term." :back="route('dashboard')" back-label="Dashboard">
         <x-slot name="actions">
             <a href="{{ route('curriculum.topics.coverage', request()->only('subject','class_level','term')) }}" class="action-btn btn-go"><i class="ri-bar-chart-2-line"></i>Coverage</a>
         </x-slot>
