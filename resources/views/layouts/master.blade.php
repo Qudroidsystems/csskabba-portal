@@ -947,6 +947,9 @@
                                         <li class="nav-item"><a href="{{ route('studentreports.index') }}" class="nav-link">Terminal Result Reports</a></li>
                                         <li class="nav-item"><a href="{{ route('broadsheet.index') }}" class="nav-link">Terminal Result Broadsheet</a></li>
                                     @endcan
+                                    @can('Manage broadsheet ranking')
+                                        <li class="nav-item"><a href="{{ route('broadsheet.ranking.index') }}" class="nav-link {{ request()->routeIs('broadsheet.ranking.*') ? 'active' : '' }}">Broadsheet Ranking</a></li>
+                                    @endcan
                                     @can('View student-mock-report')
                                         <li class="nav-item"><a href="{{ route('studentmockreports.index') }}" class="nav-link">Mock Result Reports</a></li>
                                     @endcan

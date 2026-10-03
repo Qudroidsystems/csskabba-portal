@@ -15,6 +15,8 @@ use App\Models\SchoolInformation;
 use App\Models\BroadsheetAssessmentScore;
 use App\Models\Subjectclass;
 use App\Services\PromotionEvaluator;
+use App\Services\BroadsheetRankingService;
+use App\Models\BroadsheetRankingSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\JsonResponse;
@@ -775,6 +777,8 @@ class BroadsheetController extends Controller
             $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
             $data['pagetitle']          = 'Class Broadsheet – Web View';
 
+            $data = $this->attachRanking($data, $request);
+
             return view('broadsheet.web', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->with('error', 'Invalid input.');
@@ -990,6 +994,8 @@ class BroadsheetController extends Controller
             $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
             $data['pagetitle']          = 'All Classes Broadsheet – ' . $validated['classgroup'];
             $data['is_combined']        = true;
+
+            $data = $this->attachRanking($data, $request);
 
             return view('broadsheet.web', $data);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1251,6 +1257,57 @@ class BroadsheetController extends Controller
     // =========================================================================
     // AJAX: Get class groups
     // =========================================================================
+
+    /**
+     * Attach the UNOFFICIAL configurable best-student ranking to the view data.
+     * Operates only on the assembled $studentRows; never touches the official
+     * position columns. Best-effort — failures are logged, not fatal.
+     */
+    private function attachRanking(array $data, Request $request): array
+    {
+        try {
+            $rows = $data['studentRows'] ?? [];
+            if (empty($rows)) return $data;
+
+            $isSenior = false; $classIds = [];
+            if (!empty($data['is_combined'])) {
+                $group   = (string) $request->input('classgroup');
+                $classes = Schoolclass::with('classcategories')->where('schoolclass', $group)->get();
+                $classIds = $classes->pluck('id')->map(fn ($v) => (int) $v)->all();
+                foreach ($classes as $c) {
+                    if ($c->classcategories->isNotEmpty()) { $isSenior = (bool) $c->classcategories->first()->is_senior; break; }
+                }
+            } else {
+                $scid = (int) $request->input('schoolclassid');
+                $c = Schoolclass::with('classcategories')->find($scid);
+                if ($c) {
+                    $classIds = [$scid];
+                    if ($c->classcategories->isNotEmpty()) $isSenior = (bool) $c->classcategories->first()->is_senior;
+                }
+            }
+
+            $section  = $isSenior ? 'senior' : 'junior';
+            $settings = BroadsheetRankingSetting::where('section', $section)->first()
+                ?? BroadsheetRankingSetting::defaultFor($section);
+
+            $compulsory = [];
+            if ($settings->require_all_compulsory && $classIds) {
+                $compulsory = DB::table('compulsory_subject_classes')
+                    ->whereIn('schoolclassid', $classIds)
+                    ->when($request->input('sessionid'), fn ($q) => $q->where('sessionid', (int) $request->input('sessionid')))
+                    ->pluck('subjectId')->map(fn ($v) => (int) $v)->unique()->values()->all();
+            }
+
+            $override = $request->input('rank_by');
+            $ranking  = app(BroadsheetRankingService::class)->rank($rows, $settings, $override, $isSenior, $compulsory);
+
+            $data['ranking']  = $ranking;
+            $data['rank_map'] = $ranking['rank_map'];
+        } catch (\Throwable $e) {
+            Log::warning('Broadsheet ranking attach failed: ' . $e->getMessage());
+        }
+        return $data;
+    }
 
     public function getClassGroups(): JsonResponse
     {

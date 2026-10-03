@@ -1749,3 +1749,6 @@ require __DIR__ . '/curriculum.php';
 
 // Exams (Phase 4): paper building, vetting, topic tagging, scores, bank, coverage
 require __DIR__ . '/exam.php';
+
+// Broadsheet ranking settings (unofficial best-student ranking)
+require __DIR__ . '/broadsheet.php';

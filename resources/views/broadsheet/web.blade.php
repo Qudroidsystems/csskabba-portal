@@ -621,6 +621,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
+@isset($ranking)
+@include('broadsheet.partials.ranking')
+@endisset
+
 {{-- ── School Header ── --}}
 <div class="school-header-bar">
     <div class="d-flex align-items-center">

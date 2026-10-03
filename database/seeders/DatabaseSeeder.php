@@ -574,6 +574,9 @@ class DatabaseSeeder extends Seeder
             'ExamPermissionSeeder' =>
                 '📝 Seeding exam vetting permissions...',
 
+            'BroadsheetRankingPermissionSeeder' =>
+                '🏆 Seeding broadsheet-ranking permission...',
+
             'LmsPermissionSeeder' =>
                 '🎓 Seeding e-learning (LMS) permissions...',
 
