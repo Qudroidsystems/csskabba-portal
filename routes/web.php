@@ -1746,3 +1746,6 @@ require __DIR__ . '/lms.php';
 
 // Curriculum: topics, scheme of work, coverage, teacher board, class reps
 require __DIR__ . '/curriculum.php';
+
+// Exams (Phase 4): paper building, vetting, topic tagging, scores, bank, coverage
+require __DIR__ . '/exam.php';

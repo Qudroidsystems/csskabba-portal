@@ -1163,6 +1163,7 @@
                                 <li class="nav-item"><a href="{{ route('curriculum.topics.index') }}" class="nav-link">Topics &amp; Scheme</a></li>
                                 <li class="nav-item"><a href="{{ route('curriculum.topics.coverage') }}" class="nav-link">Coverage</a></li>
                                 @can('Manage topics')<li class="nav-item"><a href="{{ route('curriculum.reps.index') }}" class="nav-link">Class Reps</a></li>@endcan
+                                @can('Manage teaching methods')<li class="nav-item"><a href="{{ route('curriculum.methods.index') }}" class="nav-link">Teaching Methods</a></li>@endcan
                             </ul>
                         </div>
                     </li>
@@ -1170,11 +1171,30 @@
 
                     @canany(['Track topics', 'Manage topics', 'Verify topics'])
                     <li class="nav-item"><a href="{{ route('curriculum.progress.index') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.progress.*') ? 'active' : '' }}"><i class="ri-task-line"></i> <span>My Topics</span></a></li>
+                    @canany(['Write lesson notes', 'Review lesson notes'])
+                    <li class="nav-item"><a href="{{ route('curriculum.notes.index') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.notes.*') ? 'active' : '' }}"><i class="ri-booklet-line"></i> <span>Lesson Notes</span></a></li>
+                    @endcanany
                     @endcanany
 
                     @role('Class Rep')
                     <li class="nav-item"><a href="{{ route('curriculum.reps.confirm') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.reps.confirm') ? 'active' : '' }}"><i class="ri-shield-check-line"></i> <span>Confirm Topics</span></a></li>
                     @endrole
+
+                    @canany(['Write exam papers', 'Vet exam papers', 'Manage exam bank'])
+                    <li class="nav-item">
+                        <a href="#sidebarExamVetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExamVetting">
+                            <i class="ri-file-list-3-line"></i> <span>Exam Vetting</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarExamVetting">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('exam.papers.index') }}" class="nav-link {{ request()->routeIs('exam.papers.*') ? 'active' : '' }}">Exam Papers</a></li>
+                                @can('Vet exam papers')<li class="nav-item"><a href="{{ route('exam.vet.queue') }}" class="nav-link {{ request()->routeIs('exam.vet.*') ? 'active' : '' }}">Vetting Queue</a></li>@endcan
+                                @canany(['Manage exam bank', 'Write exam papers'])<li class="nav-item"><a href="{{ route('exam.bank.index') }}" class="nav-link {{ request()->routeIs('exam.bank.*') ? 'active' : '' }}">Question Bank</a></li>@endcanany
+                                <li class="nav-item"><a href="{{ route('exam.coverage.index') }}" class="nav-link {{ request()->routeIs('exam.coverage.index') ? 'active' : '' }}">Term-end Analysis</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    @endcanany
 
                     @canany(['Manage certificate templates', 'Generate certificates', 'View certificate audit'])
                     @if(Route::has('certificates.index'))
