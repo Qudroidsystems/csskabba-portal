@@ -1743,3 +1743,6 @@ require __DIR__ . '/finance.php';
 
 // E-learning (LMS): courses, lessons, coursework, live classes, learner & parent views
 require __DIR__ . '/lms.php';
+
+// Curriculum: topics, scheme of work, coverage, teacher board, class reps
+require __DIR__ . '/curriculum.php';

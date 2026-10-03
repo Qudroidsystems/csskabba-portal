@@ -562,6 +562,9 @@ class DatabaseSeeder extends Seeder
             'CertificateTestimonialTemplateSeeder' =>
                 '📜 Adding the default leaving-testimonial template...',
 
+            'CurriculumPermissionSeeder' =>
+                '📚 Seeding curriculum (topics) permissions...',
+
             'LmsPermissionSeeder' =>
                 '🎓 Seeding e-learning (LMS) permissions...',
 

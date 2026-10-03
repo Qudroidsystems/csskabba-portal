@@ -1153,6 +1153,29 @@
                     @endif
                     @endcanany
 
+                    @canany(['Manage topics', 'Verify topics'])
+                    <li class="nav-item">
+                        <a href="#sidebarCurriculum" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCurriculum">
+                            <i class="ri-booklet-line"></i> <span>Curriculum</span>
+                        </a>
+                        <div class="collapse menu-dropdown" id="sidebarCurriculum">
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item"><a href="{{ route('curriculum.topics.index') }}" class="nav-link">Topics &amp; Scheme</a></li>
+                                <li class="nav-item"><a href="{{ route('curriculum.topics.coverage') }}" class="nav-link">Coverage</a></li>
+                                @can('Manage topics')<li class="nav-item"><a href="{{ route('curriculum.reps.index') }}" class="nav-link">Class Reps</a></li>@endcan
+                            </ul>
+                        </div>
+                    </li>
+                    @endcanany
+
+                    @canany(['Track topics', 'Manage topics', 'Verify topics'])
+                    <li class="nav-item"><a href="{{ route('curriculum.progress.index') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.progress.*') ? 'active' : '' }}"><i class="ri-task-line"></i> <span>My Topics</span></a></li>
+                    @endcanany
+
+                    @role('Class Rep')
+                    <li class="nav-item"><a href="{{ route('curriculum.reps.confirm') }}" class="nav-link menu-link {{ request()->routeIs('curriculum.reps.confirm') ? 'active' : '' }}"><i class="ri-shield-check-line"></i> <span>Confirm Topics</span></a></li>
+                    @endrole
+
                     @canany(['Manage certificate templates', 'Generate certificates', 'View certificate audit'])
                     @if(Route::has('certificates.index'))
                         <li class="nav-item">
