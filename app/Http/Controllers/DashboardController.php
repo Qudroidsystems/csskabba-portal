@@ -18,10 +18,15 @@ use App\Models\Broadsheets;
 use App\Models\Subjectclass;
 use App\Models\ClassTeacher;
 use App\Models\StudentAttendance;
+use App\Models\BroadsheetRankingSetting;
+use App\Services\BestStudentsService;
+use App\Services\ClassResultsLoader;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -43,12 +48,10 @@ class DashboardController extends Controller
 
         // ============================================================
         // TERM / SESSION SELECTOR
-        // All terms, all sessions for dropdowns
         // ============================================================
         $allTerms    = Schoolterm::orderBy('id')->get();
         $allSessions = Schoolsession::orderByDesc('id')->get();
 
-        // Resolve selected term/session (default = current active ones)
         $currentTerm    = Schoolterm::where('status', true)->first()
                        ?? $allTerms->last();
         $currentSession = Schoolsession::where('status', 'Current')->first()
@@ -138,7 +141,6 @@ class DashboardController extends Controller
         $total_classes  = Schoolclass::count();
         $total_subjects = Subject::count();
 
-        // Classes with arm details
         $classes_with_arms = Schoolclass::with(['armRelation'])
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.*', 'schoolarm.arm as arm_label'])
@@ -150,7 +152,6 @@ class DashboardController extends Controller
             ])
             ->toArray();
 
-        // Class capacity utilization (selected session)
         $class_capacity_data = Schoolclass::withCount([
                 'studentCurrentTerms as student_count' => fn($q) =>
                     $selectedSession ? $q->where('sessionId', $selectedSession->id) : $q
@@ -181,11 +182,10 @@ class DashboardController extends Controller
         $top_students          = [];
         $subject_performance   = [];
         $grade_distribution    = [];
-        $class_performance     = [];
+        $best_students         = $this->emptyBestStudents();
 
         if (class_exists(Broadsheets::class) && $selectedTerm && $selectedSession) {
 
-            // Average score per class + arm
             $academic_performance = Broadsheets::where('broadsheets.term_id', $selectedTerm->id)
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->where('broadsheet_records.session_id', $selectedSession->id)
@@ -215,51 +215,10 @@ class DashboardController extends Controller
                 ->values()
                 ->toArray();
 
-            // Top 10 performing students with class, arm, grade details
-            $top_students = Broadsheets::where('broadsheets.term_id', $selectedTerm->id)
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->where('broadsheet_records.session_id', $selectedSession->id)
-                ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-                ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->select(
-                    'broadsheet_records.student_id',
-                    'broadsheet_records.schoolclass_id',
-                    'schoolclass.schoolclass as class_name',
-                    'schoolarm.arm as arm_name',
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'studentRegistration.admissionNo as admission_no',
-                    DB::raw('AVG(broadsheets.total) as avg_score'),
-                    DB::raw('SUM(broadsheets.cum) as total_cum'),
-                    DB::raw('COUNT(DISTINCT broadsheet_records.subject_id) as subject_count')
-                )
-                ->groupBy(
-                    'broadsheet_records.student_id',
-                    'broadsheet_records.schoolclass_id',
-                    'schoolclass.schoolclass',
-                    'schoolarm.arm',
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'studentRegistration.admissionNo'
-                )
-                ->orderByDesc('avg_score')
-                ->limit(10)
-                ->get()
-                ->map(fn($item) => [
-                    'student_id'   => $item->student_id,
-                    'name'         => $item->firstname . ' ' . $item->lastname,
-                    'admission_no' => $item->admission_no,
-                    'class'        => $item->class_name ?? 'N/A',
-                    'arm'          => $item->arm_name ?? '',
-                    'average'      => round($item->avg_score, 1),
-                    'total_cum'    => round($item->total_cum, 1),
-                    'subject_count'=> $item->subject_count,
-                    'grade'        => $this->calculateGrade((float)$item->avg_score),
-                ])
-                ->toArray();
+            // Best students — same maths and rules as the broadsheet
+            $best_students = $this->getBestStudents($selectedTerm, $selectedSession);
+            $top_students  = $best_students['overall'];
 
-            // Subject performance with teacher info - FIXED: Convert teachers to arrays
             $subject_performance = Broadsheets::where('broadsheets.term_id', $selectedTerm->id)
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->where('broadsheet_records.session_id', $selectedSession->id)
@@ -276,7 +235,6 @@ class DashboardController extends Controller
                 ->groupBy('broadsheet_records.subject_id', 'subject.subject')
                 ->get()
                 ->map(function ($item) use ($selectedSession, $selectedTerm) {
-                    // Get teacher(s) for this subject - convert to array explicitly
                     $teachers = DB::table('subjectteacher as st')
                         ->join('subjectclass as sc', 'sc.subjectteacherid', '=', 'st.id')
                         ->join('users', 'users.id', '=', 'st.staffid')
@@ -285,15 +243,12 @@ class DashboardController extends Controller
                         ->distinct()
                         ->limit(3)
                         ->get()
-                        ->map(function($teacher) {
-                            // Convert each teacher to an array
-                            return [
-                                'id' => $teacher->id,
-                                'name' => $teacher->name,
-                                'avatar' => $teacher->avatar
-                            ];
-                        })
-                        ->toArray(); // Convert the collection to an array
+                        ->map(fn($teacher) => [
+                            'id'     => $teacher->id,
+                            'name'   => $teacher->name,
+                            'avatar' => $teacher->avatar,
+                        ])
+                        ->toArray();
 
                     $passRate = $item->total_entries > 0
                         ? round(($item->passed / $item->total_entries) * 100, 1) : 0;
@@ -306,20 +261,18 @@ class DashboardController extends Controller
                         'min_score'    => round($item->min_score, 1),
                         'pass_rate'    => $passRate,
                         'total_entries'=> $item->total_entries,
-                        'teachers'     => $teachers, // Now this is an array, not stdClass objects
+                        'teachers'     => $teachers,
                     ];
                 })
                 ->sortByDesc('avg_score')
                 ->values()
                 ->toArray();
 
-            // Grade distribution
             $grade_distribution = $this->getGradeDistribution($selectedTerm, $selectedSession);
         }
 
         // ============================================================
         // BEST PERFORMING TEACHERS
-        // Teacher score = average of their students' scores in their subjects
         // ============================================================
         $top_teachers = $this->getTopTeachers($selectedTerm, $selectedSession);
 
@@ -331,7 +284,6 @@ class DashboardController extends Controller
         $attendance_trend        = [];
 
         if (class_exists(AttendanceSummary::class) && $selectedTerm && $selectedSession) {
-            // Overall rate
             $att = AttendanceSummary::where('term_id', $selectedTerm->id)
                 ->where('session_id', $selectedSession->id)
                 ->selectRaw('SUM(days_present) as total_present, SUM(total_school_days) as total_days')
@@ -341,7 +293,6 @@ class DashboardController extends Controller
                 $overall_attendance_rate = round(($att->total_present / $att->total_days) * 100, 1);
             }
 
-            // Attendance by class + arm
             $attendance_by_class = AttendanceSummary::where('attendance_summaries.term_id', $selectedTerm->id)
                 ->where('attendance_summaries.session_id', $selectedSession->id)
                 ->join('schoolclass', 'schoolclass.id', '=', 'attendance_summaries.schoolclass_id')
@@ -378,7 +329,6 @@ class DashboardController extends Controller
                 ->values()
                 ->toArray();
 
-            // Attendance trend — last 30 recorded days (deduplicated dates)
             if (class_exists(StudentAttendance::class)) {
                 $attendance_trend = StudentAttendance::where('term_id', $selectedTerm->id)
                     ->where('session_id', $selectedSession->id)
@@ -404,7 +354,7 @@ class DashboardController extends Controller
         }
 
         // ============================================================
-        // PAYMENT / FINANCE (selected session)
+        // PAYMENT / FINANCE
         // ============================================================
         $total_payments     = 0;
         $payment_percentage = 0;
@@ -437,7 +387,7 @@ class DashboardController extends Controller
         }
 
         // ============================================================
-        // ALL-TERM COMPARISON (for dropdown history graphs)
+        // ALL-TERM COMPARISON
         // ============================================================
         $all_terms_performance = [];
         if (class_exists(Broadsheets::class) && $selectedSession) {
@@ -474,7 +424,7 @@ class DashboardController extends Controller
         $recent_activities = $this->getRecentActivities();
 
         // ============================================================
-        // CLASS TEACHER MAP (for display)
+        // CLASS TEACHER MAP
         // ============================================================
         $class_teachers = [];
         if (class_exists(ClassTeacher::class) && $selectedTerm && $selectedSession) {
@@ -505,37 +455,187 @@ class DashboardController extends Controller
 
         return view('dashboards.dashboard', compact(
             'pagetitle',
-            // Selectors
             'allTerms', 'allSessions', 'selectedTerm', 'selectedSession',
             'currentTerm', 'currentSession',
-            // Population
             'total_population', 'population_percentage',
             'gender_counts', 'status_counts',
-            // Enrollment
             'students_in_selected_term', 'students_by_class',
-            // Staff
             'staff_count', 'staff_by_role',
-            // Classes
             'total_classes', 'total_subjects',
             'classes_with_arms', 'class_capacity_data',
-            // Academic
-            'academic_performance', 'top_students',
+            'academic_performance', 'top_students', 'best_students',
             'subject_performance', 'grade_distribution',
             'all_terms_performance',
-            // Teachers
             'top_teachers',
-            // Attendance
             'overall_attendance_rate', 'attendance_by_class', 'attendance_trend',
-            // Finance
             'total_payments', 'payment_percentage',
             'pending_payments', 'completed_payments',
             'total_bills', 'collection_rate',
-            // Exams
             'total_exams', 'upcoming_exams', 'completed_exams',
-            // Misc
             'recent_activities', 'yearly_trends',
             'class_teachers'
         ));
+    }
+
+    // =========================================================================
+    // BEST STUDENTS — whole school, each class (all arms), each arm
+    //
+    // Uses ClassResultsLoader (same BF / Cum / Cum Ave maths as the broadsheet)
+    // and BestStudentsService (same ranking + eligibility rules as the
+    // broadsheet's toppers panel), driven by the saved junior / senior
+    // Broadsheet Ranking settings. Best-effort: failures are logged and the
+    // dashboard still renders.
+    // =========================================================================
+
+    private function emptyBestStudents(): array
+    {
+        return [
+            'overall'       => [],
+            'by_class'      => [],
+            'by_arm'        => [],
+            'measure_label' => 'Cumulative average',
+            'ranked'        => 0,
+            'students'      => 0,
+        ];
+    }
+
+    private function getBestStudents(Schoolterm $term, Schoolsession $session): array
+    {
+        $result = $this->emptyBestStudents();
+
+        try {
+            $data = app(ClassResultsLoader::class)->load((int) $term->id, (int) $session->id);
+            $rows = $data['rows'];
+            if (empty($rows)) return $result;
+
+            $service  = app(BestStudentsService::class);
+            $settings = [
+                'junior' => $this->rankingSettings('junior'),
+                'senior' => $this->rankingSettings('senior'),
+            ];
+
+            // ── Per class (all arms together) + per arm inside it ──
+            $groups = [];
+            foreach ($rows as $row) {
+                $groups[$row['class_name']][] = $row;
+            }
+            uksort($groups, 'strnatcasecmp');
+
+            foreach ($groups as $className => $groupRows) {
+                $section    = !empty($groupRows[0]['is_senior']) ? 'senior' : 'junior';
+                $s          = $settings[$section];
+                $classIds   = array_values(array_unique(array_column($groupRows, 'schoolclassid')));
+                $compulsory = $s->require_all_compulsory
+                    ? $this->compulsorySubjectIds($classIds, (int) $session->id)
+                    : [];
+
+                $r = $service->rank($groupRows, $this->optionsFrom($s, $compulsory), $data['subjects']);
+
+                $lookup = [];
+                foreach ($groupRows as $gr) $lookup[(int) $gr['id']] = $gr;
+
+                $result['by_class'][$className] = [
+                    'arms'     => count($classIds),
+                    'students' => count($groupRows),
+                    'ranked'   => $r['eligible_count'],
+                    'top'      => $this->decorate($r['overall'], $lookup),
+                ];
+
+                foreach ($r['by_arm'] as $armLabel => $entries) {
+                    $result['by_arm'][$armLabel] = [
+                        'class_name' => $className,
+                        'top'        => $this->decorate($entries, $lookup),
+                    ];
+                }
+            }
+            uksort($result['by_arm'], 'strnatcasecmp');
+
+            // ── Whole school ──
+            // A student enrolled in two arms in the same session keeps the
+            // record with more scored subjects, so they appear once.
+            $unique = [];
+            foreach ($rows as $row) {
+                $sid = (int) $row['id'];
+                if (!isset($unique[$sid]) || $row['num_subjects'] > $unique[$sid]['num_subjects']) {
+                    $unique[$sid] = $row;
+                }
+            }
+
+            $schoolOpts = $this->optionsFrom($settings['junior'], []);
+            $schoolOpts['measure']      = $settings['junior']->primary_measure === $settings['senior']->primary_measure
+                ? $settings['junior']->primary_measure : 'cum_ave';
+            $schoolOpts['min_subjects'] = min((int) ($settings['junior']->min_subjects ?? 0), (int) ($settings['senior']->min_subjects ?? 0));
+            $schoolOpts['min_average']  = null;
+            $schoolOpts['exclude_failed'] = false;
+            $schoolOpts['top_n']        = 10;
+
+            $overall = $service->rank(array_values($unique), $schoolOpts, $data['subjects']);
+
+            $result['overall']       = $this->decorate($overall['overall'], $unique);
+            $result['measure_label'] = $overall['measure_label'];
+            $result['ranked']        = $overall['eligible_count'];
+            $result['students']      = count($unique);
+        } catch (\Throwable $e) {
+            Log::warning('Dashboard best students failed: ' . $e->getMessage());
+        }
+
+        return $result;
+    }
+
+    private function rankingSettings(string $section)
+    {
+        return BroadsheetRankingSetting::where('section', $section)->first()
+            ?? BroadsheetRankingSetting::defaultFor($section);
+    }
+
+    private function optionsFrom($s, array $compulsory): array
+    {
+        return [
+            'measure'          => $s->primary_measure,
+            'tiebreakers'      => (array) ($s->tiebreakers ?? []),
+            'top_n'            => (int) ($s->top_n ?? 3),
+            'subject_top_n'    => (int) ($s->subject_top_n ?? 3),
+            'min_subjects'     => (int) ($s->min_subjects ?? 0),
+            'min_average'      => $s->min_average,
+            'exclude_failed'   => (bool) $s->exclude_failed,
+            'compulsory'       => $compulsory,
+            'core_subject_ids' => (array) ($s->core_subject_ids ?? []),
+            'basis'            => 'cum_ave',
+        ];
+    }
+
+    private function compulsorySubjectIds(array $classIds, int $sessionId): array
+    {
+        if (empty($classIds) || !Schema::hasTable('compulsory_subject_classes')) return [];
+
+        return DB::table('compulsory_subject_classes')
+            ->whereIn('schoolclassid', $classIds)
+            ->where('sessionid', $sessionId)
+            ->pluck('subjectId')->map(fn ($v) => (int) $v)->unique()->values()->all();
+    }
+
+    /** Ranked entries → the shape the dashboard view uses. */
+    private function decorate(array $entries, array $rowsById): array
+    {
+        return array_map(function ($e) use ($rowsById) {
+            $row = $rowsById[$e['id']] ?? [];
+            $avg = (float) ($row['cum_ave'] ?? 0);
+            return [
+                'student_id'    => $e['id'],
+                'rank'          => $e['rank'],
+                'name'          => trim(($row['firstname'] ?? '') . ' ' . ($row['lastname'] ?? '')),
+                'admission_no'  => $e['admissionno'],
+                'class'         => $row['class_name'] ?? '',
+                'arm'           => $row['arm'] ?? '',
+                'class_label'   => $row['class_label'] ?? '',
+                'picture'       => $row['picture'] ?? null,
+                'value'         => $e['value'],
+                'average'       => $avg,
+                'total_cum'     => (float) ($row['total_cum'] ?? 0),
+                'subject_count' => (int) ($row['num_subjects'] ?? 0),
+                'grade'         => $this->calculateGrade($avg),
+            ];
+        }, $entries);
     }
 
     // =========================================================================
@@ -547,7 +647,6 @@ class DashboardController extends Controller
             return [];
         }
 
-        // Simplified query to avoid closure issues
         $rows = DB::table('broadsheets')
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->where('broadsheets.term_id', $term->id)
@@ -571,7 +670,6 @@ class DashboardController extends Controller
             ->get();
 
         return $rows->map(function ($row) use ($term, $session) {
-            // Get subjects this teacher handles - convert to array
             $subjects = DB::table('subjectteacher')
                 ->where('staffid', $row->teacher_id)
                 ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
@@ -579,9 +677,8 @@ class DashboardController extends Controller
                 ->distinct()
                 ->limit(4)
                 ->pluck('subject')
-                ->toArray(); // Ensure this is an array
+                ->toArray();
 
-            // Subjects taught in this term - convert to array
             $termSubjects = DB::table('broadsheet_records')
                 ->where('broadsheet_records.session_id', $session->id)
                 ->join('subjectteacher', 'subjectteacher.subjectid', '=', 'broadsheet_records.subject_id')
@@ -593,7 +690,7 @@ class DashboardController extends Controller
                 ->distinct()
                 ->limit(4)
                 ->pluck('subject')
-                ->toArray(); // Ensure this is an array
+                ->toArray();
 
             $passRate = $row->total_entries > 0
                 ? round(($row->passed / $row->total_entries) * 100, 1) : 0;

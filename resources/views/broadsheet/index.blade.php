@@ -291,6 +291,28 @@
                 </div>
             </div>
 
+            {{-- Best Students --}}
+            <div class="step-card">
+                <div class="step-title">
+                    <span class="step-badge" style="background:#b7791f;"><i class="ri-medal-line" style="font-size:15px;"></i></span>
+                    Best Students
+                    <span class="step-subtitle">Across classes &amp; arms</span>
+                </div>
+                <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">
+                    Top students overall, per class, per arm and in each subject — for any mix of classes and arms.
+                </p>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('broadsheet.best-students') }}" class="btn btn-warning flex-grow-1">
+                        <i class="ri-medal-line me-1"></i>Open report
+                    </a>
+                    @if(Route::has('broadsheet.ranking.index'))
+                        <a href="{{ route('broadsheet.ranking.index') }}" class="btn btn-outline-secondary" title="Ranking settings" aria-label="Ranking settings">
+                            <i class="ri-settings-3-line"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+
             <div class="step-card" id="step2Card">
                 <div class="step-title">
                     <span class="step-badge">2</span>
@@ -765,6 +787,10 @@ function doExport(type) {
     document.getElementById('ef_term').value    = termId;
     document.getElementById('ef_paper').value   = document.getElementById('paperSize').value;
     document.getElementById('ef_orient').value  = document.getElementById('orientation').value;
+
+    // Clear a classgroup left over from an earlier All Classes export
+    const cgLeft = document.getElementById('ef_classgroup');
+    if (cgLeft) cgLeft.value = '';
 
     // Selected columns
     const colDiv = document.getElementById('ef_columns');

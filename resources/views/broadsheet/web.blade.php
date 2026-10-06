@@ -48,31 +48,31 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .spin { animation:spin .8s linear infinite; }
 
 /* ── Grade Basis Toggle ── */
-.gb-toggle { 
-    display:inline-flex; 
-    background:#e6fffa; 
-    border:1px solid #99f6e4; 
-    border-radius:20px; 
-    padding:2px; 
+.gb-toggle {
+    display:inline-flex;
+    background:#e6fffa;
+    border:1px solid #99f6e4;
+    border-radius:20px;
+    padding:2px;
 }
-.gb-toggle-btn { 
-    border:none; 
-    background:transparent; 
-    padding:6px 16px; 
-    font-size:12px; 
-    font-weight:700; 
-    border-radius:18px; 
-    cursor:pointer; 
-    color:var(--cb-muted); 
-    transition:all .25s ease; 
+.gb-toggle-btn {
+    border:none;
+    background:transparent;
+    padding:6px 16px;
+    font-size:12px;
+    font-weight:700;
+    border-radius:18px;
+    cursor:pointer;
+    color:var(--cb-muted);
+    transition:all .25s ease;
 }
-.gb-toggle-btn.active { 
-    background:var(--cb-teal); 
-    color:#fff; 
-    box-shadow:0 2px 6px rgba(13,148,136,.35); 
+.gb-toggle-btn.active {
+    background:var(--cb-teal);
+    color:#fff;
+    box-shadow:0 2px 6px rgba(13,148,136,.35);
 }
-.gb-toggle-btn:hover:not(.active) { 
-    color:var(--cb-teal); 
+.gb-toggle-btn:hover:not(.active) {
+    color:var(--cb-teal);
 }
 #printGradeBasisNote { display:none; }
 
@@ -623,6 +623,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 @isset($ranking)
 @include('broadsheet.partials.ranking')
+@endisset
+
+{{-- Best per arm (combined view) + best per subject --}}
+@isset($toppers)
+@include('broadsheet.partials.toppers')
 @endisset
 
 {{-- ── School Header ── --}}
@@ -1601,10 +1606,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             grades.forEach(function (g) {
                 var tC = g.term_score > 0 ? (g.term_score < 50 ? 'score-red' : (g.term_score >= 70 ? 'score-green' : 'score-amber')) : '';
                 var caC = g.cum_ave_score > 0 ? (g.cum_ave_score < 50 ? 'score-red' : (g.cum_ave_score >= 70 ? 'score-green' : 'score-amber')) : '';
-                
+
                 var termGrBadge = gradeBadge(g.term_grade || g.grade);
                 var cumGrBadge = gradeBadge(g.cum_grade || g.grade);
-                
+
                 var tS  = g.term_score    > 0 ? parseFloat(g.term_score).toFixed(1)    : '—';
                 var cS  = g.cum_score     > 0 ? parseFloat(g.cum_score).toFixed(1)     : '—';
                 var caS = g.cum_ave_score > 0 ? parseFloat(g.cum_ave_score).toFixed(1) : '—';
@@ -1878,7 +1883,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     window.scrollToTop = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
     window.closeSlistModal = function() { document.getElementById('slistModalOverlay').classList.remove('open'); };
     window.openStudentListModal = function() { document.getElementById('slistModalOverlay').classList.add('open'); };
-    
+
     window.switchGradeBasis = function (basis) {
         document.getElementById('gb_input').value = basis;
         document.getElementById('gradeBasisForm').submit();

@@ -338,7 +338,7 @@ Route::group(['middleware' => ['auth']], function () {
         });
         Route::resource('subjectteacher', SubjectTeacherController::class);
 
-        
+
     // ===================================================================
     // CLASS TEACHER
     // ===================================================================
@@ -1035,7 +1035,7 @@ Route::group(['middleware' => ['auth']], function () {
     });
     Route::resource('compulsorysubjectclass', CompulsorySubjectClassController::class);
 
-  
+
     // ===================================================================
     // PRINCIPAL'S COMMENT
     // ===================================================================
@@ -1053,7 +1053,7 @@ Route::group(['middleware' => ['auth']], function () {
     // ===================================================================
     // SUBJECT / MOCK VETTING
     // ===================================================================
- 
+
     // Subject Vetting (Terminal)
     Route::get('subjectvetting/data',  [SubjectVettingController::class, 'data'])->name('subjectvetting.data');
     Route::get('subjectvetting/stats', [SubjectVettingController::class, 'stats'])->name('subjectvetting.stats');
@@ -1064,7 +1064,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('api/subject-classes/selected', [SubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.subject-classes.selected');
 
     Route::resource('subjectvetting', SubjectVettingController::class);
-  
+
     Route::get('mocksubjectvetting/data',  [MockSubjectVettingController::class, 'data'])->name('mocksubjectvetting.data');
     Route::get('mocksubjectvetting/stats', [MockSubjectVettingController::class, 'stats'])->name('mocksubjectvetting.stats');
     Route::post('mocksubjectvetting/bulk-delete', [MockSubjectVettingController::class, 'bulkDelete'])->name('mocksubjectvetting.bulkDelete');
@@ -1158,12 +1158,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
         Route::match(['GET', 'POST'], '/student-list', [BroadsheetController::class, 'studentList'])->name('student-list');
     });
-
+    Route::get('broadsheet/best-students', [BroadsheetController::class, 'bestStudents'])->name('broadsheet.best-students');
+    Route::post('broadsheet/best-students', [BroadsheetController::class, 'bestStudentsReport'])->name('broadsheet.best-students.report');
     Route::post('/broadsheet/all-classes/web', [BroadsheetController::class, 'allClassesWebView'])->name('broadsheet.all-classes.web');
     Route::post('/broadsheet/all-classes/pdf', [BroadsheetController::class, 'allClassesExportPdf'])->name('broadsheet.all-classes.pdf');
     Route::get('/broadsheet/class-groups', [BroadsheetController::class, 'getClassGroups'])->name('broadsheet.class-groups');
 
- 
+
 
 
      // ===================================================================
