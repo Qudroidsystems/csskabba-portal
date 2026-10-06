@@ -1159,6 +1159,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::match(['GET', 'POST'], '/student-list', [BroadsheetController::class, 'studentList'])->name('student-list');
     });
     Route::get('broadsheet/best-students', [BroadsheetController::class, 'bestStudents'])->name('broadsheet.best-students');
+    Route::get('dashboard/best-students/print', [DashboardController::class, 'bestStudentsPrint'])->name('dashboard.best-students.print');
+
     Route::post('broadsheet/best-students', [BroadsheetController::class, 'bestStudentsReport'])->name('broadsheet.best-students.report');
     Route::post('/broadsheet/all-classes/web', [BroadsheetController::class, 'allClassesWebView'])->name('broadsheet.all-classes.web');
     Route::post('/broadsheet/all-classes/pdf', [BroadsheetController::class, 'allClassesExportPdf'])->name('broadsheet.all-classes.pdf');

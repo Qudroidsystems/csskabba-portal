@@ -21,6 +21,8 @@ use App\Models\StudentAttendance;
 use App\Models\BroadsheetRankingSetting;
 use App\Services\BestStudentsService;
 use App\Services\ClassResultsLoader;
+use App\Services\BestStudentsExplorer;
+use App\Models\SchoolInformation;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Carbon\Carbon;
@@ -39,7 +41,7 @@ class DashboardController extends Controller
             }
             return $next($request);
         })->only(['index']);
-        $this->middleware('permission:dashboard', ['only' => ['index']]);
+        $this->middleware('permission:dashboard', ['only' => ['index', 'bestStudentsPrint']]);
     }
 
     public function index(Request $request)
@@ -453,8 +455,13 @@ class DashboardController extends Controller
                 ->toArray();
         }
 
+        // ============================================================
+        // BEST STUDENTS EXPLORER (admin-selected classes/arms + criteria)
+        // ============================================================
+        $best_explorer = $this->bestStudentsExplorer($request, $selectedTerm, $selectedSession);
+
         return view('dashboards.dashboard', compact(
-            'pagetitle',
+            'pagetitle', 'best_explorer',
             'allTerms', 'allSessions', 'selectedTerm', 'selectedSession',
             'currentTerm', 'currentSession',
             'total_population', 'population_percentage',
@@ -496,7 +503,25 @@ class DashboardController extends Controller
             'measure_label' => 'Cumulative average',
             'ranked'        => 0,
             'students'      => 0,
+            'notice'        => null,   // why nothing could be loaded (shown on the dashboard)
+            'excluded_summary' => [],  // [reason => count] when nobody met the ranking rules
         ];
+    }
+
+    /** Group exclusion reasons so the dashboard can say WHY a list is empty. */
+    private function summariseExclusions(array $excluded): array
+    {
+        $out = [];
+        foreach ($excluded as $reason) {
+            $key = preg_match('/^Only \d+ subject\(s\) scored \(minimum (\d+)\)/', $reason, $m)
+                ? "Fewer than {$m[1]} subjects scored (Ranking settings → minimum subjects)"
+                : (preg_match('/^Average .* is below (.+)$/', $reason, $m2)
+                    ? "Average below {$m2[1]} (Ranking settings → minimum average)"
+                    : $reason);
+            $out[$key] = ($out[$key] ?? 0) + 1;
+        }
+        arsort($out);
+        return $out;
     }
 
     private function getBestStudents(Schoolterm $term, Schoolsession $session): array
@@ -506,7 +531,10 @@ class DashboardController extends Controller
         try {
             $data = app(ClassResultsLoader::class)->load((int) $term->id, (int) $session->id);
             $rows = $data['rows'];
-            if (empty($rows)) return $result;
+            if (empty($rows)) {
+                $result['notice'] = 'No student results were found for this term and session.';
+                return $result;
+            }
 
             $service  = app(BestStudentsService::class);
             $settings = [
@@ -575,8 +603,12 @@ class DashboardController extends Controller
             $result['measure_label'] = $overall['measure_label'];
             $result['ranked']        = $overall['eligible_count'];
             $result['students']      = count($unique);
+            if (empty($result['overall'])) {
+                $result['excluded_summary'] = $this->summariseExclusions($overall['excluded']);
+            }
         } catch (\Throwable $e) {
             Log::warning('Dashboard best students failed: ' . $e->getMessage());
+            $result['notice'] = 'Best students could not be loaded: ' . $e->getMessage();
         }
 
         return $result;
@@ -636,6 +668,108 @@ class DashboardController extends Controller
                 'grade'         => $this->calculateGrade($avg),
             ];
         }, $entries);
+    }
+
+    // =========================================================================
+    // BEST STUDENTS EXPLORER — admin picks classes/arms + criteria; shows best
+    // overall, per class and per arm, and the best in EVERY subject at class
+    // and arm level. Same figures as the broadsheet (ClassResultsLoader).
+    // Query params: bx_groups[] (class names = all arms), bx_ids[] (arms),
+    // bx_basis, bx_measure, bx_top, bx_subject_top, bx_min, bx_fail.
+    // =========================================================================
+
+    private function bestStudentsExplorer(Request $request, ?Schoolterm $term, ?Schoolsession $session): array
+    {
+        $explorer = app(BestStudentsExplorer::class);
+
+        $groups = array_values(array_filter((array) $request->input('bx_groups', [])));
+        $ids    = array_values(array_filter(array_map('intval', (array) $request->input('bx_ids', []))));
+        $opts   = $explorer->normaliseOptions([
+            'basis'          => $request->input('bx_basis'),
+            'measure'        => $request->input('bx_measure'),
+            'top_n'          => $request->input('bx_top', 5),
+            'subject_top_n'  => $request->input('bx_subject_top', 3),
+            'min_subjects'   => $request->input('bx_min', 0),
+            'exclude_failed' => $request->input('bx_fail', false),
+        ]);
+
+        $result = [
+            'classes'  => Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
+                ->orderBy('schoolclass.schoolclass')->orderBy('schoolarm.arm')
+                ->get()->groupBy('schoolclass'),
+            'bases'    => BestStudentsExplorer::BASES,
+            'measures' => BestStudentsExplorer::MEASURES,
+            'opts'     => $opts,
+            'groups'   => $groups,
+            'ids'      => $ids,
+            'report'   => null,
+            'error'    => null,
+        ];
+
+        if (!$request->boolean('bx') || (!$groups && !$ids)) {
+            if ($request->boolean('bx')) $result['error'] = 'Select at least one class or arm.';
+            return $result;
+        }
+        if (!$term || !$session) {
+            $result['error'] = 'Select a term and session first.';
+            return $result;
+        }
+
+        try {
+            $classIds = $explorer->resolveClassIds($groups, $ids);
+            $result['report'] = $explorer->build((int) $term->id, (int) $session->id, $classIds, $opts);
+        } catch (\Throwable $e) {
+            Log::warning('Best students explorer failed: ' . $e->getMessage());
+            $result['error'] = 'Could not build the report: ' . $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    /** Printable, comprehensive Best Students report (same params as the dashboard explorer). */
+    public function bestStudentsPrint(Request $request)
+    {
+        $term = Schoolterm::find((int) $request->input('term_id'))
+            ?? Schoolterm::where('status', true)->first();
+        $session = Schoolsession::find((int) $request->input('session_id'))
+            ?? Schoolsession::where('status', 'Current')->first();
+
+        $request->merge(['bx' => 1]);
+        $bx = $this->bestStudentsExplorer($request, $term, $session);
+
+        if (!$bx['report']) {
+            return redirect()->back()->with('error', $bx['error'] ?? 'Select at least one class or arm.');
+        }
+
+        $school = SchoolInformation::getActiveSchool();
+
+        return view('dashboards.best-students-print', [
+            'bx'          => $bx,
+            'report'      => $bx['report'],
+            'term'        => $term,
+            'session'     => $session,
+            'school'      => $school,
+            'logo'        => $this->schoolLogoBase64($school),
+            'generatedAt' => now()->format('d M Y, g:i A'),
+            'generatedBy' => optional($request->user())->name,
+        ]);
+    }
+
+    private function schoolLogoBase64($school): ?string
+    {
+        if (!$school || empty($school->school_logo)) return null;
+
+        foreach ([
+            storage_path('app/public/' . $school->school_logo),
+            public_path('storage/' . $school->school_logo),
+            public_path($school->school_logo),
+        ] as $path) {
+            if (is_file($path) && filesize($path) > 100) {
+                return 'data:' . (mime_content_type($path) ?: 'image/png') . ';base64,' . base64_encode(file_get_contents($path));
+            }
+        }
+        return null;
     }
 
     // =========================================================================

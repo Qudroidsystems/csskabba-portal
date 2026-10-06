@@ -32,7 +32,7 @@ class BestStudentsService
      * @param array $rows        assembled studentRows
      * @param array $opts        measure, tiebreakers[], top_n, subject_top_n, min_subjects,
      *                           min_average, exclude_failed, compulsory[], core_subject_ids[],
-     *                           basis ('cum_ave'|'total')
+     *                           basis ('cum_ave'|'total'), skip_subjects (bool)
      * @param array $subjectsMap [subject_id => ['subject_name' => ...]]
      */
     public function rank(array $rows, array $opts, array $subjectsMap = []): array
@@ -91,7 +91,9 @@ class BestStudentsService
             'subject_top_n'  => $subTopN,
             'overall'        => $this->top($ranked, $topN),
             'by_arm'         => $byArm,
-            'by_subject'     => $this->rankSubjects($rows, $subjectsMap, $basis, $subTopN),
+            'by_subject'     => empty($opts['skip_subjects'])
+                ? $this->rankSubjects($rows, $subjectsMap, $basis, $subTopN)
+                : [],
             'eligible_count' => count($eligible),
             'excluded'       => $excluded,
         ];
@@ -270,6 +272,17 @@ class BestStudentsService
                 'rank'        => $item['rank'],
                 'value'       => round((float) $item['vals'][0], 2),
                 'grade'       => $item['grade'] ?? null,
+                // extra context for dashboards / reports
+                'firstname'     => $row['firstname'] ?? '',
+                'lastname'      => $row['lastname'] ?? '',
+                'class_name'    => $row['class_name'] ?? '',
+                'arm_name'      => $row['arm'] ?? '',
+                'schoolclassid' => (int) ($row['schoolclassid'] ?? 0),
+                'picture'       => $row['picture'] ?? null,
+                'cum_ave'       => (float) ($row['cum_ave'] ?? 0),
+                'total_cum'     => (float) ($row['total_cum'] ?? 0),
+                'num_subjects'  => (int) ($row['num_subjects'] ?? 0),
+                'gpa'           => (float) ($row['gpa'] ?? 0),
             ];
         }
         return $out;
