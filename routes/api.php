@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\DeviceAttendanceController;
 use App\Http\Controllers\Api\TimetableApiController;
 use App\Http\Controllers\TimetableController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -11,6 +12,11 @@ use App\Http\Controllers\TimetableController;
 | Laravel automatically prefixes every route here with /api.
 | All routes below therefore live under /api/timetable/... etc.
 */
+
+// =========================================================================
+// Mobile app API v1 (Sanctum tokens) — see routes/api_v1.php
+// =========================================================================
+Route::prefix('v1')->name('api.v1.')->group(base_path('routes/api_v1.php'));
 
 // =========================================================================
 // Teacher / Student / Parent-facing timetable endpoints (mobile app)
