@@ -63,7 +63,26 @@ class SubjectController extends ApiController
             'classes'     => $withClass->pluck('schoolclass_id')->unique()->count(),
             'students'    => (int) $withClass->sum('students'),
             'progress'    => $withClass->count() ? (int) round($withClass->avg('progress')) : 0,
+            'periods'     => $this->periods($user->id),
         ]);
+    }
+
+    /** Sessions (newest first) and their terms in which this teacher had subjects — for the history picker. */
+    protected function periods(int $staffId): array
+    {
+        $rows = DB::table('subjectteacher as st')
+            ->join('schoolsession as ss', 'ss.id', '=', 'st.sessionid')
+            ->join('schoolterm as t', 't.id', '=', 'st.termid')
+            ->where('st.staffid', $staffId)
+            ->distinct()->orderByDesc('st.sessionid')->orderBy('st.termid')
+            ->get(['st.sessionid', 'ss.session', 'ss.status', 'st.termid', 't.term']);
+
+        return $rows->groupBy('sessionid')->map(fn ($g) => [
+            'session_id' => (int) $g->first()->sessionid,
+            'session'    => $g->first()->session,
+            'current'    => strcasecmp((string) $g->first()->status, 'Current') === 0,
+            'terms'      => $g->map(fn ($r) => ['id' => (int) $r->termid, 'name' => $r->term])->unique('id')->values(),
+        ])->values()->all();
     }
 
     /** Same counting rules as MySubjectController::attachProgress(). */

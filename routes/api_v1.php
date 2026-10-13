@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\Staff\PayController as StaffPay;
 use App\Http\Controllers\Api\V1\Staff\ScoresheetController;
 use App\Http\Controllers\Api\V1\Staff\SubjectController as StaffSubjects;
 use App\Http\Controllers\Api\V1\StudentController;
+use App\Http\Controllers\Api\V1\StudentExtrasController;
 use App\Http\Controllers\Api\V1\StudentLeaveController;
 use Illuminate\Support\Facades\Route;
 
@@ -92,6 +93,10 @@ Route::middleware(['auth:sanctum', 'api.active', 'throttle:120,1,api'])->group(f
         Route::get('payments', [PaymentController::class, 'history'])->middleware('api.feature:online_payments')->name('payments');
         Route::get('attendance', [StudentController::class, 'attendance'])->name('attendance');
         Route::get('timetable', [StudentController::class, 'timetable'])->middleware('api.feature:timetable')->name('timetable');
+        Route::get('teachers', [StudentExtrasController::class, 'teachers'])->name('teachers');
+        Route::get('performance', [StudentExtrasController::class, 'performance'])->middleware('api.feature:results')->name('performance');
+        Route::get('learning', [StudentExtrasController::class, 'learning'])->name('learning');
+        Route::get('payment-statement', [StudentExtrasController::class, 'receipt'])->middleware('api.feature:finance')->name('payment-statement');
     });
 
     Route::middleware('api.feature:online_payments')->group(function () {
@@ -113,6 +118,9 @@ Route::middleware(['auth:sanctum', 'api.active', 'throttle:120,1,api'])->group(f
             Route::get('scoresheets/{subjectclass}', [ScoresheetController::class, 'sheet'])->whereNumber('subjectclass')->name('scoresheets.show');
             Route::post('scoresheets/score', [ScoresheetController::class, 'saveScore'])->name('scoresheets.score');
             Route::post('scoresheets/{subjectclass}/bulk', [ScoresheetController::class, 'saveBulk'])->whereNumber('subjectclass')->name('scoresheets.bulk');
+            Route::get('scoresheets/{subjectclass}/excel', [ScoresheetController::class, 'excelDownload'])->whereNumber('subjectclass')->name('scoresheets.excel');
+            Route::post('scoresheets/{subjectclass}/excel', [ScoresheetController::class, 'excelUpload'])->whereNumber('subjectclass')->middleware('throttle:20,1,api-import')->name('scoresheets.import');
+            Route::get('scoresheets/{subjectclass}/marksheet', [ScoresheetController::class, 'marksheet'])->whereNumber('subjectclass')->name('scoresheets.marksheet');
         });
 
         Route::get('classes', [StaffAttendance::class, 'classes'])->name('classes');

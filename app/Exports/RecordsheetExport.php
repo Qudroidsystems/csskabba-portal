@@ -58,8 +58,8 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
     {
         $subjectClass = \App\Models\Subjectclass::with('subject')->find($this->subjectclassId);
         $schoolclass = \App\Models\Schoolclass::find($this->schoolclassId);
-        $term = \App\Models\SchoolTerm::find($this->termId);
-        $session = \App\Models\SchoolSession::find($this->sessionId);
+        $term = \App\Models\Schoolterm::find($this->termId);
+        $session = \App\Models\Schoolsession::find($this->sessionId);
 
         $subjectCode = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject_code : 'SUBJ';
         $className = $schoolclass ? $schoolclass->schoolclass : 'CLASS';
@@ -123,8 +123,8 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
     {
         $subjectClass = \App\Models\Subjectclass::with('subject')->find($this->subjectclassId);
         $schoolclass = \App\Models\Schoolclass::find($this->schoolclassId);
-        $term = \App\Models\SchoolTerm::find($this->termId);
-        $session = \App\Models\SchoolSession::find($this->sessionId);
+        $term = \App\Models\Schoolterm::find($this->termId);
+        $session = \App\Models\Schoolsession::find($this->sessionId);
 
         $subjectName = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject : 'subject';
         $className = $schoolclass ? $schoolclass->schoolclass : 'class';

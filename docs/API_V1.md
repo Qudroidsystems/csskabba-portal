@@ -84,6 +84,10 @@ A parent may open their linked children; a student only themselves; staff with *
 | GET | `/students/{id}/payments` | Online payment history (paged). |
 | GET | `/students/{id}/attendance?term_id=&session_id=` | Summary + day-by-day marks. |
 | GET | `/students/{id}/timetable` | Published class timetable: `days`, `periods`, `slots`. Module: `timetable`. |
+| GET | `/students/{id}/teachers` | `class_teachers` and `subject_teachers` (name, photo, subjects, `phone`, `email`). Contacts are hidden when `MOBILE_SHARE_TEACHER_CONTACTS=false`. |
+| GET | `/students/{id}/performance` | Term-by-term `average` and `class_average`, per-subject `scores` across terms with `trend`, `summary` (latest, change, strongest, needs attention). Held results are left out (`hidden_terms`). Module: `results`. |
+| GET | `/students/{id}/learning` | E-learning: enrolled `courses` (progress, quiz average) and `assignments` with `state` = pending / overdue / submitted / graded, score and feedback. |
+| GET | `/students/{id}/payment-statement?term_id=&session_id=` | Payment statement PDF (same layout as the portal receipt). Module: `finance`. |
 | GET | `/student-leave` | My students' leave requests; `meta.reasons`. |
 | POST | `/student-leave` | `student_id`, `reason_type`, `reason`, `start_date`, `end_date`, optional `contact_phone`, `attachment` (multipart). |
 | POST | `/student-leave/{id}/cancel` | Withdraw while still pending. |
@@ -94,10 +98,13 @@ A parent may open their linked children; a student only themselves; staff with *
 |---|---|---|
 | GET | `/staff/home` | Current period, today's lessons, `next_lesson` (with `starts_in_minutes` / `in_progress`), subject / class counts, pending leave. |
 | GET | `/staff/timetable` | The teacher's week across all classes. |
-| GET | `/staff/subjects?session_id=&term_id=` | Subject assignments with score-entry progress (same counts as *My Subjects*). |
+| GET | `/staff/subjects?session_id=&term_id=` | Subject assignments with score-entry progress (same counts as *My Subjects*). `meta.periods` lists every session (newest first, `current` flag) and its terms the teacher has taught in — for opening past score sheets / results. |
 | GET | `/staff/scoresheets/{subjectclass}?term_id=&session_id=[&recalculate=1]` | Assessments (with sub-assessments) and one row per student: scores by assessment id, total, cum, grade, position, lock state. Only the assigned teacher. |
 | POST | `/staff/scoresheets/score` | One score: `broadsheet_id`, `assessment_id`, `score` (+ `is_sub`, `sub_assessment_id`). Returns new total, grade, positions, GPA. |
 | POST | `/staff/scoresheets/{subjectclass}/bulk` | `term_id`, `session_id`, `scores: [{ id: broadsheet_id, assessments: { "<assessment_id>": score } }]`. Returns the refreshed sheet. 423-style `locked` failures when the sheet is locked. **Parts of an assessment** (e.g. Exam → Theory / Objective): add `is_sub: true`, `assessment_id: <parent>`, and key the scores by sub-assessment id; the parent score is worked out and scaled as on the portal. |
+| GET | `/staff/scoresheets/{subjectclass}/excel?term_id=&session_id=` | The protected Excel template the portal's *Download* button builds (xlsx). |
+| POST | `/staff/scoresheets/{subjectclass}/excel` | Multipart `file` (xlsx/xls ≤ 10 MB), `term_id`, `session_id`. Imports with the portal's importer, recalculates totals and positions, and returns the refreshed sheet; `meta.imported` and `meta.warnings` ([{row, errors}]). 423 `locked` when the sheet is locked; 422 `import_failed` with `errors.rows` when nothing could be imported. |
+| GET | `/staff/scoresheets/{subjectclass}/marksheet?term_id=&session_id=` | Printable marks sheet (PDF). |
 | GET | `/staff/classes` | Classes the user is class teacher of. |
 | GET | `/staff/attendance/register?class_id&term_id&session_id&date&period` | Students with today's marks, whether the date can be edited (backdating rules), holiday flag. |
 | POST | `/staff/attendance` | `schoolclass_id`, `term_id`, `session_id`, `attendance_date`, `period`, `records: [{student_id, status, notes?}]`. Status: `present`, `absent`, `late`, `excused`, `sick_leave`. |
@@ -159,5 +166,5 @@ Optional `.env`: `SANCTUM_EXPIRATION=` minutes before a token expires (empty = n
 
 ## Not in v1 yet
 
-LMS / assignments, CBT, notices composer, finance back-office and payroll administration. These stay on the portal
+Submitting LMS assignments from the app, CBT, notices composer, finance back-office and payroll administration. These stay on the portal
 for now.

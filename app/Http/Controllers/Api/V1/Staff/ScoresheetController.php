@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1\Staff;
 
 use App\Http\Controllers\Api\V1\Concerns\RespondsWithApi;
 use App\Http\Controllers\MyScoreSheetController;
+use App\Exports\RecordsheetExport;
+use App\Imports\ScoresheetImport;
 use App\Models\Assessment;
 use App\Models\Broadsheets;
 use App\Models\Schoolclass;
@@ -11,6 +13,8 @@ use App\Models\ScoresheetLock;
 use App\Models\Subjectclass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Score entry from the app. Extends the web score-sheet controller so the
@@ -96,6 +100,123 @@ class ScoresheetController extends MyScoreSheetController
         $payload = $this->payload($sjc, $staffId, $classId, $termId, $sessionId, $schoolclass, $this->assessmentsFor($schoolclass));
 
         return $this->ok($payload, $body['message'] ?? 'Scores saved.', 200, isset($body['warnings']) ? ['warnings' => $body['warnings']] : []);
+    }
+
+    /**
+     * GET staff/scoresheets/{subjectclass}/excel?term_id=&session_id=
+     * The same protected template the portal's "Download" button produces.
+     */
+    public function excelDownload(Request $request, int $subjectclass)
+    {
+        $ctx = $this->context($request, $subjectclass);
+        if ($ctx instanceof \Illuminate\Http\JsonResponse) return $ctx;
+        [$sjc, $staffId, $classId, $termId, $sessionId] = $ctx;
+
+        $slug = fn ($v, $d) => trim(preg_replace('/[^a-zA-Z0-9-]+/', '_', (string) ($v ?: $d)), '_');
+        $term = DB::table('schoolterm')->where('id', $termId)->value('term');
+        $session = DB::table('schoolsession')->where('id', $sessionId)->value('session');
+        $filename = $slug($sjc->subject, 'subject') . '_' . $slug($sjc->class_name, 'class') . '_'
+            . $slug($term, 'term') . '_' . $slug($session, 'session') . '_scoresheet.xlsx';
+
+        try {
+            $export = new RecordsheetExport($classId, $subjectclass, $termId, $sessionId, $staffId);
+            return Excel::download($export, $filename);
+        } catch (\Throwable $e) {
+            Log::error('API scoresheet export failed', ['sjc' => $subjectclass, 'error' => $e->getMessage()]);
+            return $this->fail('Could not build the spreadsheet: ' . $e->getMessage(), 500, 'export_failed');
+        }
+    }
+
+    /**
+     * POST staff/scoresheets/{subjectclass}/excel  (multipart: file, term_id, session_id)
+     * Imports a filled template and returns the refreshed sheet.
+     */
+    public function excelUpload(Request $request, int $subjectclass)
+    {
+        $ctx = $this->context($request, $subjectclass);
+        if ($ctx instanceof \Illuminate\Http\JsonResponse) return $ctx;
+        [$sjc, $staffId, $classId, $termId, $sessionId] = $ctx;
+
+        $request->validate(['file' => 'required|file|mimes:xlsx,xls|max:10240']);
+
+        $schoolclass = Schoolclass::with('classcategories')->find($classId);
+        $assessments = $this->assessmentsFor($schoolclass);
+        $before = $this->payload($sjc, $staffId, $classId, $termId, $sessionId, $schoolclass, $assessments);
+        if (!$before['editable']) {
+            return $this->fail($before['lock_message'] ?? 'This score sheet is locked.', 423, 'locked');
+        }
+
+        $importer = new ScoresheetImport([
+            'subjectclass_id' => $subjectclass, 'staff_id' => $staffId, 'term_id' => $termId,
+            'session_id' => $sessionId, 'schoolclass_id' => $classId,
+        ]);
+
+        try {
+            $importer->validateExcelFile($request->file('file'));
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage(), 422, 'invalid_file');
+        }
+
+        try {
+            Excel::import($importer, $request->file('file'));
+        } catch (\Throwable $e) {
+            Log::error('API scoresheet import failed', ['sjc' => $subjectclass, 'error' => $e->getMessage()]);
+            return $this->fail('Import failed: ' . $e->getMessage(), 422, 'import_failed');
+        } finally {
+            if ($request->hasSession()) session()->forget(['import_progress', 'import_status', 'import_message']);
+        }
+
+        $failures = array_values(array_map(
+            fn ($f) => is_array($f) ? $f : ['message' => (string) $f],
+            (array) $importer->getFailures()
+        ));
+        $count = (int) $importer->getSuccessCount();
+
+        if ($count === 0 && $failures) {
+            $lines = array_map(fn ($f) => (isset($f['row']) ? 'Row ' . $f['row'] . ': ' : '') . implode('; ', (array) ($f['errors'] ?? $f['message'] ?? '')), $failures);
+            return $this->fail('No records were imported. Check the file and try again.', 422, 'import_failed', ['rows' => array_values($lines)]);
+        }
+
+        // Make sure totals and positions reflect the imported scores.
+        $sheets = $this->getBroadsheets($staffId, $termId, $sessionId, $classId, $subjectclass);
+        if ($sheets->isNotEmpty()) {
+            $this->updateClassMetrics($subjectclass, $staffId, $termId, $sessionId);
+            $this->computeDynamicTotals($sheets, $assessments, $schoolclass, $termId, $sessionId);
+            $this->updateSubjectPositions($subjectclass, $staffId, $termId, $sessionId);
+            $this->updateClassPositions($classId, $termId, $sessionId);
+        }
+
+        $message = $failures
+            ? "Imported {$count} record(s) with " . count($failures) . ' warning(s).'
+            : "Imported {$count} record(s).";
+
+        return $this->ok(
+            $this->payload($sjc, $staffId, $classId, $termId, $sessionId, $schoolclass, $assessments),
+            $message, 200, ['imported' => $count, 'warnings' => $failures]
+        );
+    }
+
+    /**
+     * GET staff/scoresheets/{subjectclass}/marksheet?term_id=&session_id=
+     * Printable marks sheet (PDF).
+     */
+    public function marksheet(Request $request, int $subjectclass)
+    {
+        $ctx = $this->context($request, $subjectclass);
+        if ($ctx instanceof \Illuminate\Http\JsonResponse) return $ctx;
+        [, $staffId, $classId, $termId, $sessionId] = $ctx;
+
+        $request->merge([
+            'subjectclass_id' => $subjectclass, 'staff_id' => $staffId, 'term_id' => $termId,
+            'session_id' => $sessionId, 'schoolclass_id' => $classId,
+        ]);
+
+        $res = $this->downloadMarksSheet($request);
+        if ($res instanceof \Illuminate\Http\JsonResponse) {
+            $b = $res->getData(true);
+            return $this->fail($b['message'] ?? 'Could not build the marks sheet.', $res->getStatusCode(), 'marksheet_failed');
+        }
+        return $res;
     }
 
     // ── helpers ─────────────────────────────────────────────────────────

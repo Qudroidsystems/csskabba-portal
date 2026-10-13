@@ -63,6 +63,11 @@ return [
     ],
 
     // Lesson reminders pushed to teachers before each class.
+    'mobile' => [
+        // Show teachers' phone/e-mail to parents in the app's "Teachers" screen.
+        'share_teacher_contacts' => env('MOBILE_SHARE_TEACHER_CONTACTS', true),
+    ],
+
     'timetable_reminders' => [
         'minutes' => (int) env('TIMETABLE_REMINDER_MINUTES', 10),
     ],
