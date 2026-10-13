@@ -34,6 +34,7 @@ class SchoolController extends ApiController
             'current'   => $this->currentPeriod(),
             'sessions'  => DB::table('schoolsession')->orderByDesc('id')->get(['id', 'session', 'status']),
             'terms'     => DB::table('schoolterm')->orderBy('id')->get(['id', 'term']),
+            'portal_url'  => rtrim(url('/'), '/'),
             'api_version' => 'v1',
         ]);
     }

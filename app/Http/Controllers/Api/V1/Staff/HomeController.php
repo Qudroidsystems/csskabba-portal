@@ -33,10 +33,25 @@ class HomeController extends ApiController
         $pendingLeave = $staff ? DB::table('leave_requests')->where('staff_id', $staff->id)
             ->whereIn('status', ['pending_hod', 'pending_principal'])->count() : 0;
 
+        // The next lesson today (or the one in progress).
+        $now = Carbon::now()->format('H:i');
+        $next = null;
+        foreach ($today as $l) {
+            if (($l['end_time'] ?? '') > $now) {
+                $start = Carbon::parse(Carbon::today()->toDateString() . ' ' . $l['start_time']);
+                $next = $l + [
+                    'in_progress'       => ($l['start_time'] ?? '') <= $now,
+                    'starts_in_minutes' => max(0, (int) ceil(Carbon::now()->diffInSeconds($start, false) / 60)),
+                ];
+                break;
+            }
+        }
+
         return $this->ok([
             'current'         => $this->currentPeriod(),
             'today'           => Carbon::now()->format('l'),
             'today_lessons'   => $today,
+            'next_lesson'     => $next,
             'subject_count'   => $subjects,
             'class_count'     => $classes,
             'pending_leave'   => $pendingLeave,

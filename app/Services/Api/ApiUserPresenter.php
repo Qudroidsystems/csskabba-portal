@@ -45,13 +45,17 @@ class ApiUserPresenter
             'student_leave.approve' => $can('Approve student leave', 'Recommend student leave'),
             'payroll.self'          => $isStaff,
             'notices.view'          => $can('View notices'),
+            'results.board'         => $classTeacher || $can('View report-approvals', 'Approve report cards', 'View student-report'),
+            'reports.submit'        => $classTeacher && $can('Submit report cards', 'Approve report cards'),
+            'reports.approve'       => $can('Approve report cards'),
+            'timetable.reminders'   => $isStaff,
         ];
 
         $faces = array_values(array_filter([
             $isParent ? 'parent' : null,
             $isStudent ? 'student' : null,
             $isStaff ? 'staff' : null,
-            $abilities['management.dashboard'] ? 'admin' : null,
+            ($abilities['management.dashboard'] || $abilities['reports.approve']) ? 'admin' : null,
         ]));
 
         $flags = self::safe(fn () => FeatureFlag::map(), []);
@@ -73,6 +77,7 @@ class ApiUserPresenter
             'abilities'            => $abilities,
             'modules'              => $modules,
             'unread_notifications' => Schema::hasTable('notifications') ? $user->unreadNotifications()->count() : 0,
+            'push_available'       => \App\Services\Push\PushService::enabled(),
         ];
     }
 

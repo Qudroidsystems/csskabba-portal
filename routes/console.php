@@ -57,3 +57,6 @@ Schedule::command('assets:depreciate')->monthlyOn(1, '03:00')->withoutOverlappin
 
 // Pull module feature flags from the remote control portal (only if auto-pull is on)
 Schedule::command('features:pull')->hourly()->withoutOverlapping(10);
+
+// Mobile app: push "your lesson starts soon" to teachers (TIMETABLE_REMINDER_MINUTES before each period).
+Schedule::command('timetable:lesson-reminders')->everyMinute()->withoutOverlapping(5);

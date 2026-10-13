@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\V1\CalendarController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PreferenceController;
+use App\Http\Controllers\Api\V1\ResultsController;
 use App\Http\Controllers\Api\V1\SchoolController;
 use App\Http\Controllers\Api\V1\Staff\AttendanceController as StaffAttendance;
 use App\Http\Controllers\Api\V1\Staff\HomeController as StaffHome;
@@ -61,6 +63,22 @@ Route::middleware(['auth:sanctum', 'api.active', 'throttle:120,1,api'])->group(f
     Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
+
+    Route::get('me/preferences', [PreferenceController::class, 'show'])->name('preferences.show');
+    Route::put('me/preferences', [PreferenceController::class, 'update'])->name('preferences.update');
+
+    // ── Broadsheets & report-card approval (class teachers, principal) ────
+    Route::prefix('results')->name('results.')->middleware('api.feature:results')->group(function () {
+        Route::get('board', [ResultsController::class, 'board'])->name('board');
+        Route::post('approve-all', [ResultsController::class, 'approveAll'])->name('approve-all');
+        Route::get('classes/{class}/broadsheet', [ResultsController::class, 'broadsheet'])->whereNumber('class')->name('broadsheet');
+        Route::get('classes/{class}/approval', [ResultsController::class, 'approval'])->whereNumber('class')->name('approval');
+        Route::post('approvals/{approval}/submit', [ResultsController::class, 'submit'])->whereNumber('approval')->name('submit');
+        Route::post('approvals/{approval}/approve', [ResultsController::class, 'approve'])->whereNumber('approval')->name('approve');
+        Route::post('approvals/{approval}/return', [ResultsController::class, 'returnBack'])->whereNumber('approval')->name('return');
+        Route::post('approvals/{approval}/reopen', [ResultsController::class, 'reopen'])->whereNumber('approval')->name('reopen');
+        Route::get('approvals/{approval}/preview/{student}', [ResultsController::class, 'preview'])->whereNumber(['approval', 'student'])->name('preview');
+    });
 
     // ── Parent / student: my students ───────────────────────────────────
     Route::get('students', [StudentController::class, 'index'])->name('students.index');
