@@ -87,19 +87,40 @@ class ScoresheetController extends MyScoreSheetController
         $foreign = Broadsheets::whereIn('id', $ids)->where('subjectclass_id', '!=', $subjectclass)->exists();
         if ($foreign) return $this->fail('Some rows do not belong to this score sheet.', 422, 'invalid_rows');
 
-        $request->merge([
-            'term_id' => $termId, 'session_id' => $sessionId, 'subjectclass_id' => $subjectclass,
-            'staff_id' => $staffId, 'schoolclass_id' => $classId,
-        ]);
-
-        $res = $this->bulkUpdateScores($request);
-        $body = $res->getData(true);
-        if (empty($body['success'])) return $this->wrap($res);
+        // Offline-safe saving: a row may carry `base` — the values the teacher saw
+        // when typing. A score changed on the server since then (another device or
+        // the portal) is not overwritten; it is reported back as a conflict.
+        [$scores, $conflicts] = $this->dropConflicts($request->input('scores', []), $request->boolean('is_sub'), (int) $request->input('assessment_id'));
 
         $schoolclass = Schoolclass::with('classcategories')->find($classId);
-        $payload = $this->payload($sjc, $staffId, $classId, $termId, $sessionId, $schoolclass, $this->assessmentsFor($schoolclass));
+        $assessments = $this->assessmentsFor($schoolclass);
 
-        return $this->ok($payload, $body['message'] ?? 'Scores saved.', 200, isset($body['warnings']) ? ['warnings' => $body['warnings']] : []);
+        $message = null;
+        $warnings = [];
+        if ($scores) {
+            $request->merge([
+                'scores' => $scores,
+                'term_id' => $termId, 'session_id' => $sessionId, 'subjectclass_id' => $subjectclass,
+                'staff_id' => $staffId, 'schoolclass_id' => $classId,
+            ]);
+
+            $res = $this->bulkUpdateScores($request);
+            $body = $res->getData(true);
+            if (empty($body['success'])) return $this->wrap($res);
+            $message = $body['message'] ?? null;
+            $warnings = (array) ($body['warnings'] ?? []);
+        }
+
+        $payload = $this->payload($sjc, $staffId, $classId, $termId, $sessionId, $schoolclass, $assessments);
+        if ($conflicts) {
+            $message = ($scores ? ($message ?? 'Scores saved.') . ' ' : '')
+                . count($conflicts) . ' score(s) were changed elsewhere and were not overwritten.';
+        }
+
+        return $this->ok($payload, $message ?? 'Scores saved.', 200, array_filter([
+            'warnings'  => $warnings ?: null,
+            'conflicts' => $conflicts ?: null,
+        ]));
     }
 
     /**
@@ -221,6 +242,87 @@ class ScoresheetController extends MyScoreSheetController
 
     // ── helpers ─────────────────────────────────────────────────────────
 
+    /**
+     * Splits incoming rows into those safe to save and the scores whose server
+     * value no longer matches the `base` the app sent.
+     * @return array{0: array, 1: array<int, array>}
+     */
+    protected function dropConflicts(array $rows, bool $isSub, int $parentId): array
+    {
+        $keep = [];
+        $conflicts = [];
+        $ids = collect($rows)->pluck('id')->map(fn ($v) => (int) $v)->all();
+        $current = $isSub
+            ? DB::table('broadsheet_sub_assessment_scores')->whereIn('broadsheet_id', $ids)->get(['broadsheet_id', 'sub_assessment_id as k', 'score'])
+            : DB::table('broadsheet_assessment_scores')->whereIn('broadsheet_id', $ids)->get(['broadsheet_id', 'assessment_id as k', 'score']);
+        $now = [];
+        foreach ($current as $c) $now[(int) $c->broadsheet_id][(int) $c->k] = (float) $c->score;
+        if (!$isSub && $ids) {
+            $first = \App\Models\Broadsheets::find($ids[0]);
+            $class = $first ? DB::table('broadsheet_records')->where('id', $first->broadsheet_record_id)->value('schoolclass_id') : null;
+            $assessments = $this->assessmentsFor($class ? Schoolclass::with('classcategories')->find($class) : null);
+            foreach ($this->legacyScores($ids, $assessments) as $bid => $vals) {
+                foreach ($vals as $aid => $v) $now[$bid][$aid] = $v;
+            }
+        }
+
+        foreach ($rows as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            $values = (array) ($row['assessments'] ?? []);
+            $base = $row['base'] ?? null;
+            if (!is_array($base)) { $keep[] = ['id' => $id, 'assessments' => $values]; continue; }
+
+            $ok = [];
+            foreach ($values as $k => $v) {
+                if (!array_key_exists($k, $base)) { $ok[$k] = $v; continue; }
+                $was = $base[$k];
+                $is = $now[$id][(int) $k] ?? null;
+                $same = ($was === null || $was === '') ? ($is === null || abs($is) < 0.0001) : ($is !== null && abs($is - (float) $was) < 0.0001);
+                if ($same) {
+                    $ok[$k] = $v;
+                } else {
+                    $conflicts[] = ['broadsheet_id' => $id, 'key' => (int) $k, 'is_sub' => $isSub, 'assessment_id' => $parentId ?: null,
+                                    'yours' => is_numeric($v) ? (float) $v : null, 'server' => $is];
+                }
+            }
+            if ($ok) $keep[] = ['id' => $id, 'assessments' => $ok];
+        }
+        return [$keep, $conflicts];
+    }
+
+    /**
+     * Marks of rows entered before dynamic assessments existed (still in the
+     * old ca1/ca2/ca3/exam columns and with no assessment scores):
+     * [broadsheet id => [assessment id => score]]. CAs map in order to ca1–ca3,
+     * an assessment named "exam" to exam; split assessments are left alone.
+     */
+    protected function legacyScores(array $ids, $assessments): array
+    {
+        if (!$ids || $assessments->isEmpty()) return [];
+        $map = [];
+        $ca = 0;
+        foreach ($assessments as $a) {
+            if ($a->subAssessments->isNotEmpty()) continue;
+            if (stripos($a->name, 'exam') !== false) { $map[(int) $a->id] = 'exam'; continue; }
+            if ($ca < 3) $map[(int) $a->id] = 'ca' . (++$ca);
+        }
+        if (!$map) return [];
+
+        $hasScores = DB::table('broadsheet_assessment_scores')->whereIn('broadsheet_id', $ids)->where('score', '>', 0)
+            ->distinct()->pluck('broadsheet_id')->map(fn ($v) => (int) $v)->flip();
+        $out = [];
+        foreach (DB::table('broadsheets')->whereIn('id', $ids)->get(['id', 'ca1', 'ca2', 'ca3', 'exam']) as $b) {
+            if (isset($hasScores[(int) $b->id])) continue;
+            $vals = [];
+            foreach ($map as $aid => $col) {
+                $v = (float) ($b->{$col} ?? 0);
+                if ($v > 0) $vals[$aid] = $v;
+            }
+            if ($vals) $out[(int) $b->id] = $vals;
+        }
+        return $out;
+    }
+
     /** Validates term/session and that the subject class belongs to the user. */
     protected function context(Request $request, int $subjectclass)
     {
@@ -262,6 +364,7 @@ class ScoresheetController extends MyScoreSheetController
     protected function payload(object $sjc, int $staffId, int $classId, int $termId, int $sessionId, ?Schoolclass $schoolclass, $assessments): array
     {
         $rows = $this->getBroadsheets($staffId, $termId, $sessionId, $classId, (int) $sjc->id);
+        $legacy = $this->legacyScores($rows->pluck('id')->map(fn ($v) => (int) $v)->all(), $assessments);
 
         $lock = ScoresheetLock::where(['subjectclass_id' => $sjc->id, 'term_id' => $termId, 'session_id' => $sessionId, 'is_active' => true])->first();
         $editingEnabled = (bool) (Subjectclass::find($sjc->id)?->teacher_editing_enabled ?? true);
@@ -280,6 +383,9 @@ class ScoresheetController extends MyScoreSheetController
             'session'         => DB::table('schoolsession')->where('id', $sessionId)->value('session'),
             'is_senior'       => $isSenior,
             'editable'        => $editingEnabled && !$lock,
+            // How the app previews a total while typing: 'sum' = sum of assessments
+            // (parts are scaled to their assessment's maximum, as on the portal).
+            'total_formula'   => 'sum',
             'lock_message'    => $lock ? ($lock->reason ?? $lock->lock_reason ?? 'This score sheet has been locked by an administrator.')
                 : (!$editingEnabled ? 'Teacher editing has been disabled for this subject by an administrator.' : null),
             'assessments'     => $assessments->map(fn ($a) => [
@@ -288,11 +394,16 @@ class ScoresheetController extends MyScoreSheetController
                     'id' => (int) $s->id, 'name' => $s->name, 'max_score' => (float) $s->max_score,
                 ])->values(),
             ])->values(),
-            'students' => $rows->map(function ($b) use ($assessments) {
+            'students' => $rows->map(function ($b) use ($assessments, $legacy) {
                 $scores = [];
                 foreach ($assessments as $a) {
                     $s = $b->assessmentScores->firstWhere('assessment_id', $a->id);
                     $scores[(string) $a->id] = $s ? (float) $s->score : null;
+                }
+                // Rows scored before assessments were set up keep their marks in
+                // the old ca1/ca2/ca3/exam columns: show those instead of 0.
+                if (isset($legacy[(int) $b->id])) {
+                    foreach ($legacy[(int) $b->id] as $aid => $v) $scores[(string) $aid] = $v;
                 }
                 $subs = [];
                 foreach ($b->subAssessmentScores as $s) {

@@ -187,6 +187,59 @@ class StudentExtrasController extends ApiController
         return preg_match('/(\d{2})(\d{2})\D+(\d{2})?(\d{2})/', (string) $s, $m) ? "{$m[2]}/{$m[4]}" : (string) $s;
     }
 
+    // ── AI learning & career guidance ──────────────────────────────────
+
+    /** GET students/{id}/guidance — the stored or freshly built guidance. */
+    public function guidance(Request $request, int $student)
+    {
+        return $this->guidanceReply($request, $student, false);
+    }
+
+    /** POST students/{id}/guidance/refresh — rebuild (limited per term by the admin). */
+    public function refreshGuidance(Request $request, int $student)
+    {
+        return $this->guidanceReply($request, $student, true);
+    }
+
+    protected function guidanceReply(Request $request, int $student, bool $refresh)
+    {
+        if ($deny = $this->deny($request, $student)) return $deny;
+
+        $settings = \App\Models\AiGuidanceSetting::current();
+        $user = $request->user();
+        $self = (int) $user->student_id === $student;
+        if (!$settings->enabled || ($self && !$settings->for_students) || (!$self && !$settings->for_parents && !$user->can('View student'))) {
+            return $this->fail('Learning guidance is not switched on by the school.', 403, 'guidance_disabled');
+        }
+
+        $allowed = $this->allowedTerms($student);
+        $data = app(\App\Services\Ai\GuidanceService::class)->forStudent($student, $allowed, $refresh, $user->id);
+
+        return $this->ok($data);
+    }
+
+    /** Terms with results the family may see, oldest first: [['session_id','term_id','label']]. */
+    protected function allowedTerms(int $student): array
+    {
+        $rows = DB::table('broadsheet_records as br')->join('broadsheets as b', 'b.broadsheet_record_id', '=', 'br.id')
+            ->join('schoolterm as t', 't.id', '=', 'b.term_id')->join('schoolsession as ss', 'ss.id', '=', 'br.session_id')
+            ->where('br.student_id', $student)->where('b.total', '>', 0)
+            ->groupBy('br.session_id', 'b.term_id', 't.term', 'ss.session')
+            ->orderBy('br.session_id')->orderBy('b.term_id')
+            ->get(['br.session_id', 'b.term_id', 't.term', 'ss.session']);
+
+        $access = class_exists(ResultAccessService::class) ? app(ResultAccessService::class) : null;
+        $out = [];
+        foreach ($rows as $r) {
+            if ($access) {
+                $chk = $access->check($student, (int) $r->term_id, (int) $r->session_id, false);
+                if (empty($chk['allowed'])) continue;
+            }
+            $out[] = ['session_id' => (int) $r->session_id, 'term_id' => (int) $r->term_id, 'label' => $r->term . ' ' . $r->session];
+        }
+        return $out;
+    }
+
     // ── E-learning / homework ───────────────────────────────────────────
 
     public function learning(Request $request, int $student)

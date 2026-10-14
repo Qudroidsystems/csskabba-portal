@@ -106,9 +106,11 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return redirect('/login');
-});
+// The school's public website home (falls back to the login page when the website is switched off).
+Route::get('/', [\App\Http\Controllers\Website\SiteController::class, 'home'])->name('site.home');
+
+// School website pages and the Website admin.
+require __DIR__ . '/website.php';
 
 Route::get('/test-sibling-data/{id}', function ($id) {
     $group = DB::table('sibling_groups')->where('id', $id)->first();
@@ -133,6 +135,11 @@ Route::view('/maintenance', 'errors.maintenance', ['m' => \App\Models\Maintenanc
 Route::middleware('auth')->group(function () {
     Route::get('/admin/maintenance', [\App\Http\Controllers\Admin\MaintenanceController::class, 'index'])->name('maintenance.settings');
     Route::post('/admin/maintenance', [\App\Http\Controllers\Admin\MaintenanceController::class, 'save'])->name('maintenance.save');
+
+    // Mobile app: AI learning & career guidance settings
+    Route::get('/admin/ai-guidance', [\App\Http\Controllers\Admin\AiGuidanceController::class, 'index'])->name('ai-guidance.index');
+    Route::post('/admin/ai-guidance', [\App\Http\Controllers\Admin\AiGuidanceController::class, 'save'])->name('ai-guidance.save');
+    Route::post('/admin/ai-guidance/reset', [\App\Http\Controllers\Admin\AiGuidanceController::class, 'reset'])->name('ai-guidance.reset');
 
     // Module access (feature flags)
     Route::get('/admin/feature-flags', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'index'])->name('feature-flags.index');

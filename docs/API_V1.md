@@ -154,6 +154,81 @@ Optional `.env`: `FCM_ENABLED=false` to switch pushes off, `FCM_PROJECT_ID`, `TI
 | GET | `/admin/leave/pending` · POST `/admin/leave/{id}/decide` | *Recommend leave* / *Approve leave*. Body: `decision` (`yes`/`no`), `note` (required to decline). |
 | GET | `/admin/student-leave/pending` · POST `/admin/student-leave/{id}/decide` | *Recommend student leave* (class teacher) / *Approve student leave*. |
 
+## Score sheets: totals and safe saving
+
+* `GET /staff/scoresheets/{subjectclass}` returns `total_formula`: `sum` (CSS Kabba — assessments are added) or
+  `avg_ca_exam` (Topclass — `((CA1 + CA2 + CA3) / 3 + Exam) / 2`, each out of 100). The app's live total preview uses it.
+* Rows whose new assessment scores are all empty fall back to the legacy `ca1`–`ca3` / `exam` columns, so old scores
+  show in the entry boxes instead of 0.
+* **Conflict protection.** Each bulk score row and each attendance record may carry `base` — the value the phone last
+  saw. If someone else has changed that cell on the server since, the server keeps their value, skips yours and
+  lists it in `meta.conflicts` (`[{broadsheet_id, key, is_sub, assessment_id, yours, server}]` for scores,
+  `[{student_id, yours, server}]` for attendance). Everything else in the request is saved.
+
+## AI learning & career guidance
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/students/{id}/guidance?term_id=&session_id=` | The saved report for that term (made on first request). Module: `results`. Held results are never used. |
+| POST | `/students/{id}/guidance/refresh` | Rebuild from the latest scores. Limited per term (`refreshes_per_term`, default 3) and 6/min. |
+
+Report keys: `summary`, `strengths`, `areas_to_improve`, `learning_model {style, description, tips}`,
+`study_plan [{period, focus, actions}]`, `reading_plan [{focus, what, how_often, why}]`,
+`cognitive_profile [{trait, level, evidence}]`, `passions`, `vocational_interests [{field, why}]`,
+`higher_education [{discipline, fit, why, key_subjects}]`, `parent_tips`, `disclaimer`. `meta`: `provider`,
+`generated_at`, `refreshes_left`.
+
+**Admin → AI Learning Guidance** (permission *Manage AI guidance*) chooses the engine: *Built-in rules* (free,
+offline, no data leaves the server), Anthropic Claude, OpenAI or Google Gemini (API key stored encrypted;
+"Save & test connection"), whether parents and/or students see it, refresh limit, and a short school context.
+**Privacy:** the AI receives only class level, subject scores per term, attendance rate, teacher behaviour ratings
+and e-learning stats — never the student's name, admission number, photo or parents' details. If the AI call fails,
+the built-in rules answer instead.
+
+## Offline use (app)
+
+The app caches every screen it loads (per school and per user) and shows a "You're offline — showing data from …"
+bar. Changes made offline go into an outbox that sends itself when the connection returns (every 30 s, on app
+resume, and from **Account → Sync**).
+
+**Safe offline** — read anything already opened (results, fees, attendance, timetable, report-card list, notices,
+calendar, AI guide, class lists, score sheets — the staff home pre-loads score sheets, timetable and classes);
+**enter scores** and **mark attendance** for a register already opened online (queued; sent with `base`, so nothing overwrites a colleague's newer entry —
+conflicts are shown after sync).
+
+**Online only** (refused cleanly offline, nothing half-done): sign in / password changes, fee payments, Excel
+upload / download and PDFs not yet downloaded, leave requests and approvals, report-card approval, AI guide refresh,
+admin dashboard and student search.
+
+## Topclass portal differences
+
+Same API and same app. Topclass enters the portal URL in the app like any school.
+
+* Scores: fixed CA1, CA2, CA3, Exam (assessment ids 1–4, each out of 100), `total_formula: avg_ca_exam`. Excel
+  template and import are Topclass's own layout; marks sheet uses `resources/views/api/marksheet.blade.php`.
+* Results: no report-card approval workflow — `/results/board` sends `meta.approvals: false` (the app hides the
+  approval tab) and the approval endpoints answer 404 `not_available`. Broadsheet uses Topclass's `ClassResultsLoader`.
+* Parents' results follow `MOBILE_PARENT_RESULTS` (default `true`) via `App\Services\Api\ResultGate`.
+* Attendance backdating: past dates allowed, future dates refused.
+* Setup: `composer update laravel/sanctum`, then `php artisan migrate`.
+
+## School website (both portals)
+
+The portal's home page (`/`) is now the school's public website; the portal sign-in moves to `/login` (signing out
+returns there). Content is managed under **Admin → Website** (permission *Manage website*): settings (hero, intro,
+colours, socials, map, admission open/closed), home slides, pages (About, Principal's welcome, Admission criteria /
+policy, Curriculum, …), news / events / stories, gallery albums (multi-photo upload, auto-resized with thumbnails),
+our people (can import from staff records), testimonials, FAQs, core values, highlights, partners, messages
+(applications, contacts, visit bookings, newsletter — CSV export) and the mobile app page (Play / App Store links,
+APK upload up to 200 MB, install steps). Class levels, subjects, staff and calendar events come straight from the
+portal's own tables. Turning the website off in settings sends `/` to the login page.
+
+Public routes: `/pages/{slug}`, `/news`, `/news/{slug}`, `/gallery`, `/gallery/{slug}`, `/our-people`, `/academics`,
+`/admissions` (+ online application), `/contact`, `/school-calendar`, `/app`, `/app/download`.
+
+Setup: `php artisan migrate`, `php artisan storage:link` (uploads also work without it through `/media/...`), and for
+APK uploads raise PHP `upload_max_filesize` / `post_max_size` to ~210M.
+
 ## Setup on a server
 
 ```bash

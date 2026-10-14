@@ -128,7 +128,40 @@ class AttendanceController extends WebAttendanceController
     public function saveRegister(Request $request)
     {
         if ($deny = $this->denyFromBody($request)) return $deny;
-        return $this->wrap($this->save($request));
+
+        // Offline-safe: each record may carry `base` — the status the teacher saw.
+        // A mark changed on the school since then is kept, not overwritten.
+        $records = collect($request->input('records', []));
+        $conflicts = [];
+        if ($records->contains(fn ($r) => is_array($r) && array_key_exists('base', $r))) {
+            $current = DB::table('student_attendance')
+                ->where('schoolclass_id', (int) $request->schoolclass_id)
+                ->where('attendance_date', $request->input('attendance_date'))
+                ->when($request->filled('period'), fn ($q) => $q->where('period', $request->input('period')))
+                ->whereIn('student_id', $records->pluck('student_id'))
+                ->pluck('status', 'student_id');
+            $records = $records->filter(function ($r) use ($current, &$conflicts) {
+                if (!is_array($r) || !array_key_exists('base', $r)) return true;
+                $now = $current[(int) ($r['student_id'] ?? 0)] ?? null;
+                if (($r['base'] ?? null) === $now || $now === ($r['status'] ?? null)) return true;
+                $conflicts[] = ['student_id' => (int) $r['student_id'], 'yours' => $r['status'] ?? null, 'server' => $now];
+                return false;
+            })->map(fn ($r) => is_array($r) ? array_diff_key($r, ['base' => 1]) : $r)->values();
+            $request->merge(['records' => $records->all()]);
+        }
+
+        if ($records->isEmpty()) {
+            return $this->ok(null, count($conflicts) . ' mark(s) were changed by someone else and were kept.', 200, ['conflicts' => $conflicts]);
+        }
+
+        $res = $this->wrap($this->save($request));
+        if ($conflicts && $res->getStatusCode() < 300) {
+            $body = $res->getData(true);
+            $body['meta'] = array_merge((array) ($body['meta'] ?? []), ['conflicts' => $conflicts]);
+            $body['message'] = ($body['message'] ?? 'Saved.') . ' ' . count($conflicts) . ' mark(s) changed by someone else were kept.';
+            $res->setData($body);
+        }
+        return $res;
     }
 
     /** POST staff/attendance/mark-all-present { schoolclass_id, term_id, session_id, attendance_date, period, student_ids[] } */

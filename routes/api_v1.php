@@ -96,6 +96,8 @@ Route::middleware(['auth:sanctum', 'api.active', 'throttle:120,1,api'])->group(f
         Route::get('teachers', [StudentExtrasController::class, 'teachers'])->name('teachers');
         Route::get('performance', [StudentExtrasController::class, 'performance'])->middleware('api.feature:results')->name('performance');
         Route::get('learning', [StudentExtrasController::class, 'learning'])->name('learning');
+        Route::get('guidance', [StudentExtrasController::class, 'guidance'])->middleware('api.feature:results')->name('guidance');
+        Route::post('guidance/refresh', [StudentExtrasController::class, 'refreshGuidance'])->middleware(['api.feature:results', 'throttle:6,1,api-guidance'])->name('guidance.refresh');
         Route::get('payment-statement', [StudentExtrasController::class, 'receipt'])->middleware('api.feature:finance')->name('payment-statement');
     });
 

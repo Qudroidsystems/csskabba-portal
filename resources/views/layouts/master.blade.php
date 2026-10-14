@@ -667,7 +667,7 @@
                                 <li class="nav-item"><a href="{{ route('online-staff.index') }}" class="nav-link">Who's Online</a></li>
                                 @can('View activity log')<li class="nav-item"><a href="{{ route('activity.index') }}" class="nav-link">Activity Log</a></li>@endcan
                                 @canany(['View leave records', 'Manage leave types'])<li class="nav-item"><a href="{{ route('leave.records') }}" class="nav-link">Leave Records</a></li>@endcanany
-                                @canany(['View leave records', 'Manage leave types'])@if(Route::has('leave.balances'))<li class="nav-item"><a href="{{ route('leave.balances') }}" class="nav-link">Leave Balances</a></li>@endif@endcanany
+                                @canany(['View leave records', 'Manage leave types'])@if(Route::has('leave.balances'))<li class="nav-item"><a href="{{ route('leave.balances') }}" class="nav-link">Leave Balances</a></li>@endif @endcanany
                             </ul></div>
                         </li>
                     @endif
@@ -1121,6 +1121,24 @@
                         </li>
                     @endcan
 
+                    @can('Manage website')
+                        <li class="nav-item">
+                            <a href="{{ route('website.admin.index') }}" class="nav-link">
+                                <i class="ri-global-line"></i> <span>Website</span>
+                                @php $wsUnread = 0; try { $wsUnread = \App\Models\Website\WebsiteMessage::whereNull('read_at')->where('type', '!=', 'newsletter')->count(); } catch (\Throwable $e) {} @endphp
+                                @if($wsUnread)<span class="badge bg-danger ms-1">{{ $wsUnread }}</span>@endif
+                            </a>
+                        </li>
+                    @endcan
+
+                    @can('Manage AI guidance')
+                        <li class="nav-item">
+                            <a href="{{ route('ai-guidance.index') }}" class="nav-link">
+                                <i class="ri-sparkling-2-line"></i> <span>AI Learning Guidance</span>
+                            </a>
+                        </li>
+                    @endcan
+
                     @can('Manage feature flags')
                         <li class="nav-item">
                             <a href="{{ route('feature-flags.index') }}" class="nav-link">
@@ -1244,7 +1262,7 @@
                                     <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link">School-Wide Analysis</a></li>
                                     @can('View financial audit')@if(Route::has('finance.audit.dashboard'))
                                     <li class="nav-item"><a href="{{ route('finance.audit.dashboard') }}" class="nav-link">Financial Audit</a></li>
-                                    @endif@endcan
+                                    @endif @endcan
                                 </ul>
                             </div>
                         </li>
