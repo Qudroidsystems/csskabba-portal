@@ -70,6 +70,7 @@ class ParentPortalController extends Controller
     public function results(Request $request, int $student)
     {
         $child = $this->child($request, $student);
+        $visible = \App\Services\Results\ResultDisplay::viewerMaySee($request->user(), $student);
 
         $terms = DB::table('broadsheet_records as br')->join('broadsheets as b', 'b.broadsheet_record_id', '=', 'br.id')
             ->join('schoolterm as t', 't.id', '=', 'b.term_id')->join('schoolsession as ss', 'ss.id', '=', 'br.session_id')
@@ -82,9 +83,11 @@ class ParentPortalController extends Controller
                    DB::raw('COUNT(*) as subjects'), DB::raw('SUM(b.vettedstatus = 1) as vetted'),
                    DB::raw('ROUND(AVG(b.total), 1) as average')]);
 
-        $access = app(ResultAccessService::class);
-        $terms = $terms->map(function ($t) use ($access, $student) {
-            $chk = $access->check($student, (int) $t->term_id, (int) $t->session_id, false);
+        $access = app(\App\Services\ResultAccessService::class);
+        $terms = $terms->map(function ($t) use ($access, $student, $visible) {
+            $chk = $visible
+                ? $access->check($student, (int) $t->term_id, (int) $t->session_id, false)
+                : ['allowed' => false, 'reason' => 'not_released', 'message' => 'The school has not made results available on the portal yet.'];
             $t->allowed = !empty($chk['allowed']);
             $t->hold_message = $chk['message'] ?? null;
             $t->not_released = ($chk['reason'] ?? '') === 'not_released';
@@ -94,27 +97,26 @@ class ParentPortalController extends Controller
         });
 
         $selected = $terms->first(fn ($t) => $t->term_id == $request->get('term_id') && $t->session_id == $request->get('session_id')) ?? $terms->first();
-        $scores = collect();
+        $result = null;
         if ($selected && $selected->allowed) {
-            $scores = DB::table('broadsheets as b')->join('broadsheet_records as br', 'br.id', '=', 'b.broadsheet_record_id')
-                ->join('subject as sj', 'sj.id', '=', 'br.subject_id')
-                ->where('br.student_id', $student)->where('br.session_id', $selected->session_id)
-                ->where('br.schoolclass_id', $selected->class_id)->where('b.term_id', $selected->term_id)
-                ->orderBy('sj.subject')
-                ->get(['sj.subject', 'b.total', 'b.grade', 'b.remark', 'b.subject_position_class as position', 'b.avg as class_average']);
+            $result = app(\App\Http\Controllers\Api\V1\StudentController::class)->detailFor($student, [
+                'term_id' => (int) $selected->term_id, 'session_id' => (int) $selected->session_id, 'class_id' => (int) $selected->class_id,
+            ]);
         }
 
         return view('parent.results', [
             'pagetitle' => 'Results — ' . $child->firstname,
             'child' => $child, 'children' => ParentAccountService::children($request->user()),
-            'terms' => $terms, 'selected' => $selected, 'scores' => $scores,
+            'terms' => $terms, 'selected' => $selected, 'result' => $result,
         ]);
     }
 
     public function reportCard(Request $request, int $student, int $session, int $term, int $class)
     {
         $this->child($request, $student);
-        $chk = app(ResultAccessService::class)->check($student, $term, $session, false);
+        abort_unless(\App\Services\Results\ResultDisplay::viewerMaySee($request->user(), $student)
+            && \App\Services\Results\ResultDisplay::show('summary', 'report_card'), 403, 'The school has not made report cards available here.');
+        $chk = app(\App\Services\ResultAccessService::class)->check($student, $term, $session, false);
         abort_unless(!empty($chk['allowed']), 403, $chk['message'] ?? 'This result is on hold.');
 
         $pdf = app(ViewStudentReportController::class)->renderReportCardPdf($student, $class, $session, $term);

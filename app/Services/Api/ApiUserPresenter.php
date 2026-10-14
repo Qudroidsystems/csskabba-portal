@@ -61,6 +61,11 @@ class ApiUserPresenter
         $flags = self::safe(fn () => FeatureFlag::map(), []);
         $modules = [];
         foreach (self::MODULES as $m) $modules[$m] = array_key_exists($m, $flags) ? (bool) $flags[$m] : true;
+        // Results switched off for families by the admin (Admin → Result display).
+        if (!$isStaff && class_exists(\App\Services\Results\ResultDisplay::class)) {
+            $rd = self::safe(fn () => \App\Services\Results\ResultDisplay::settings(), null);
+            if ($rd && !(($isParent && $rd['parents_can_view']) || ($isStudent && $rd['students_can_view']))) $modules['results'] = false;
+        }
 
         return [
             'id'                   => $user->id,

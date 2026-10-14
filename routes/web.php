@@ -141,6 +141,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/ai-guidance', [\App\Http\Controllers\Admin\AiGuidanceController::class, 'save'])->name('ai-guidance.save');
     Route::post('/admin/ai-guidance/reset', [\App\Http\Controllers\Admin\AiGuidanceController::class, 'reset'])->name('ai-guidance.reset');
 
+    // What parents/students see on result pages (portal + mobile app)
+    Route::get('/admin/result-display', [\App\Http\Controllers\Admin\ResultDisplayController::class, 'index'])->name('result-display.index');
+    Route::post('/admin/result-display', [\App\Http\Controllers\Admin\ResultDisplayController::class, 'save'])->name('result-display.save');
+
     // Module access (feature flags)
     Route::get('/admin/feature-flags', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'index'])->name('feature-flags.index');
     Route::post('/admin/feature-flags/sync-settings', [\App\Http\Controllers\Admin\FeatureFlagController::class, 'saveSync'])->name('feature-flags.sync-settings');
