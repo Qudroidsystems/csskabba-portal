@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'remote.portal' => \App\Http\Middleware\VerifyRemotePortal::class,
             // Mobile app API (routes/api_v1.php)
             'api.active' => \App\Http\Middleware\EnsureApiUserActive::class,
+            'api.website' => \App\Http\Middleware\VerifyWebsiteKey::class,
             'api.feature' => \App\Http\Middleware\ApiFeatureEnabled::class,
         ]);
 

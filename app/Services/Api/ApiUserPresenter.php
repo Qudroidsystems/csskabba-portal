@@ -49,6 +49,7 @@ class ApiUserPresenter
             'reports.submit'        => $classTeacher && $can('Submit report cards', 'Approve report cards'),
             'reports.approve'       => $can('Approve report cards'),
             'timetable.reminders'   => $isStaff,
+            'website.manage'        => $can('Manage website'),
         ];
 
         $faces = array_values(array_filter([
