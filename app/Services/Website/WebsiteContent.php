@@ -121,11 +121,13 @@ class WebsiteContent
     {
         static $school;
         if ($school) return $school;
-        $row = Schema::hasTable('school_information') ? DB::table('school_information')->orderByDesc('is_active')->first() : null;
+        // The portal's School information (model), active record first.
+        $row = null;
+        try { $row = \App\Models\SchoolInformation::getActiveSchool() ?? \App\Models\SchoolInformation::first(); } catch (\Throwable $e) {}
         // Portal data first; the website's own saved copy when the portal's isn't available.
         $pick = fn ($v, string $key) => (is_string($v) ? trim($v) !== '' : !empty($v)) ? $v : self::get($key);
         $logo = $pick($row->school_logo ?? null, 'school_logo');
-        $phones = collect(preg_split('/[,;\/]+/', (string) $pick($row->school_phones ?? null, 'school_phones')))->map(fn ($p) => trim($p))->filter()->values()->all();
+        $phones = self::phones($pick($row->school_phones ?? null, 'school_phones'));
         return $school = (object) [
             'name'    => $pick($row->school_name ?? null, 'school_name') ?: config('app.name'),
             'motto'   => $pick($row->school_motto ?? null, 'school_motto'),
@@ -136,6 +138,17 @@ class WebsiteContent
             'logo'    => $logo ? self::fileUrl($logo) : null,
             'next_term_begins' => $row->date_next_term_begins ?? null,
         ];
+    }
+
+    /** Phone numbers from a JSON array (how School information stores them), an array, or "a, b / c". */
+    public static function phones($value): array
+    {
+        if (is_string($value)) {
+            $t = trim($value);
+            $decoded = str_starts_with($t, '[') ? json_decode($t, true) : null;
+            $value = is_array($decoded) ? $decoded : preg_split('/[,;\/\n]+/', $t);
+        }
+        return collect((array) $value)->map(fn ($p) => trim((string) $p, " \t\n\r\0\x0B\"'[]"))->filter()->values()->all();
     }
 
     /** A stored file path (relative to the public disk, or a full URL) as a URL. */
