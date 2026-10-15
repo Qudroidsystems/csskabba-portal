@@ -126,7 +126,8 @@ class WebsiteContent
         try { $row = \App\Models\SchoolInformation::getActiveSchool() ?? \App\Models\SchoolInformation::first(); } catch (\Throwable $e) {}
         // Portal data first; the website's own saved copy when the portal's isn't available.
         $pick = fn ($v, string $key) => (is_string($v) ? trim($v) !== '' : !empty($v)) ? $v : self::get($key);
-        $logo = $pick($row->school_logo ?? null, 'school_logo');
+        // Logo uploaded under Website › Settings wins; otherwise the portal's, then the saved copy.
+        $logo = self::get('website_logo') ?: $pick($row->school_logo ?? null, 'school_logo');
         $phones = self::phones($pick($row->school_phones ?? null, 'school_phones'));
         return $school = (object) [
             'name'    => $pick($row->school_name ?? null, 'school_name') ?: config('app.name'),
@@ -138,6 +139,19 @@ class WebsiteContent
             'logo'    => $logo ? self::fileUrl($logo) : null,
             'next_term_begins' => $row->date_next_term_begins ?? null,
         ];
+    }
+
+    /** Top-bar links: "Label | /path" per line (admin setting), with the standard four as default. @return array<int,array{0:string,1:string}> */
+    public static function topbarLinks(): array
+    {
+        $raw = (string) self::get('topbar_links', "Apply | /admissions#apply\nVisit us | /contact#visit\nNews & updates | /news\nGallery | /gallery");
+        $out = [];
+        foreach (preg_split('/\R/', $raw) as $line) {
+            [$label, $url] = array_pad(array_map('trim', explode('|', $line, 2)), 2, '');
+            if ($label === '' || $url === '') continue;
+            $out[] = [$label, str_starts_with($url, '/') ? self::websiteUrl($url) : $url];
+        }
+        return $out;
     }
 
     /** Phone numbers from a JSON array (how School information stores them), an array, or "a, b / c". */
